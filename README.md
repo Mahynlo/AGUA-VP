@@ -1,4 +1,4 @@
-# aguavp
+# AGUA-VP
 
 An Electron application with React
 
@@ -8,19 +8,19 @@ An Electron application with React
 
 ## Project Setup
 
-### Install
+### Install (Dependencias)
 
 ```bash
 $ npm install
 ```
 
-### Development
+### Development (Corer el proyecto en modo de desarollo)
 
 ```bash
 $ npm run dev
 ```
 
-### Build
+### Build (Compilar para produccion)
 
 ```bash
 # For windows
