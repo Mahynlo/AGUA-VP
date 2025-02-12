@@ -13,8 +13,8 @@ const InicioVista = () => {
 
     return (
         <>
-
-            <div className="p-4 sm:ml-64 pt-20  min-h-screen ">
+            
+            <div className="p-4 sm:ml-64 pt-20 min-h-screen overflow-hidden ">
 
 
                 <div className="grid grid-cols-4 gap-4 mb-4 mt-3">
@@ -28,10 +28,11 @@ const InicioVista = () => {
                     </a>
 
 
-                    <a href="#" className="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                    <a as={Link} to="/" className="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
 
                         <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Cantidad de Clientes</h5>
                         <h1 className="mb-2 text-6xl font-bold tracking-tight text-gray-900 dark:text-white">800</h1>
+                       
 
                     </a>
 
@@ -47,7 +48,9 @@ const InicioVista = () => {
 
                 </div>
 
+
                 <LineChart />
+                
             </div>
         </>
 

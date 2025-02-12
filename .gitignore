@@ -5,3 +5,4 @@ out
 .vscode
 package-lock.json
 *.log*
+.env

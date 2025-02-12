@@ -43,6 +43,7 @@ function createWindow() {
   }, 5000)
 }
 
+
 // Función para verificar actualizaciones
 function checkForUpdates(mainWindow) {
   autoUpdater.checkForUpdatesAndNotify()

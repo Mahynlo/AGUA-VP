@@ -8,7 +8,7 @@ const Clientes = () => {
   return (
     <div className="p-4 sm:ml-64 pt-20 min-h-screen">
 
-      <Tabs aria-label="Default tabs" variant="default" >
+      <Tabs aria-label="Default tabs" variant="default" className="bg-gray-100 dark:bg-gray-800" >
         <Tabs.Item active title="Clientes" icon={HiUserCircle} >
           <TabClientes/>
         </Tabs.Item>

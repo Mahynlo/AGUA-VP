@@ -1,12 +1,9 @@
-import { useState } from 'react'
 import logoagua from '../../assets/images/logo_login.png'
-import AvatarFoto from '../../assets/images/Avatar.png'
 import { Link } from 'react-router-dom';
 import { Config } from '../Configuracion/Config';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar, Tooltip } from "@nextui-org/react";
 import AvatarPerfil from '../../assets/images/Avatar.png'
-
-
+import { useLocation } from 'react-router-dom';
 const CerrarSeccionIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
     <path fill-rule="evenodd" d="M7.5 3.75A1.5 1.5 0 0 0 6 5.25v13.5a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5V15a.75.75 0 0 1 1.5 0v3.75a3 3 0 0 1-3 3h-6a3 3 0 0 1-3-3V5.25a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3V9A.75.75 0 0 1 15 9V5.25a1.5 1.5 0 0 0-1.5-1.5h-6Zm5.03 4.72a.75.75 0 0 1 0 1.06l-1.72 1.72h10.94a.75.75 0 0 1 0 1.5H10.81l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06l3-3a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
@@ -15,6 +12,7 @@ const CerrarSeccionIcon = () => (
 );
 
 function NavbarApp() {
+  const location = useLocation(); // Hook para obtener la ruta actual
   const handleMinimize = () => {
     window.electronAPI.minimize();
   };
@@ -28,7 +26,7 @@ function NavbarApp() {
   };
   return (
     <>
-      <nav className="fixed top-0 z-50 w-full bg-blue-600 border-b border-blue-200 dark:bg-blue-800 dark:border-blue-700  overflow-hidden" style={{
+      <nav className="fixed top-0 z-50 w-full  bg-blue-600 border-b border-blue-200 dark:bg-blue-800 dark:border-blue-700  overflow-hidden" style={{
         WebkitAppRegion: "drag", // Hace que el área sea arrastrable
       }}>
         <div className="px-3 py-3 lg:px-5 lg:pl-3">
@@ -49,38 +47,45 @@ function NavbarApp() {
             <div className="flex items-center justify-end flex space-x-4 " style={{
               WebkitAppRegion: "no-drag", // Evita que los botones sean arrastrables
             }}>
-              <Config />
 
-              {/*Avatar*/}
-              <Tooltip content="Cuenta" delay={2000}>
-                <div>
-                  <Dropdown placement="bottom-end">
-                    <DropdownTrigger>
-                      <Avatar
-                        isBordered
-                        as="button"
-                        className="transition-transform"
-                        src={AvatarPerfil}
-                      />
-                    </DropdownTrigger>
-                    <DropdownMenu aria-label="Profile Actions" variant="flat">
-                      <DropdownItem key="profile" className="h-14 gap-2">
-                        <p className="font-semibold">Signed in as</p>
-                        <p className="font-semibold">zoey@example.com</p>
-                      </DropdownItem>
-                      <DropdownItem key="settings" color="primary" as={Link} to="/perfil">Mi Perfil</DropdownItem>
-                      <DropdownItem key="configurations" color="primary">Configurations</DropdownItem>
-                      <DropdownItem key="help_and_feedback" color="primary" as={Link} to="/ayuda" >Ayuda</DropdownItem>
-                      <DropdownItem key="logout" color="danger">
-                        Cerar Sesion
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-              </Tooltip>
 
-              {/*Linea de separacion*/}
-              <div class="h-10 w-[2px] bg-gray-200"></div>
+              {location.pathname !== '/' &&
+                <>
+
+                  <Config />
+                  {/*Avatar*/}
+                  <Tooltip content="Cuenta" delay={2000}>
+                    <div>
+                      <Dropdown placement="bottom-end">
+                        <DropdownTrigger>
+                          <Avatar
+                            isBordered
+                            as="button"
+                            className="transition-transform"
+                            src={AvatarPerfil}
+                          />
+                        </DropdownTrigger>
+                        <DropdownMenu aria-label="Profile Actions" variant="flat">
+                          <DropdownItem key="profile" className="h-14 gap-2">
+                            <p className="font-semibold">Signed in as</p>
+                            <p className="font-semibold">zoey@example.com</p>
+                          </DropdownItem>
+                          <DropdownItem key="settings" color="primary" as={Link} to="/perfil">Mi Perfil</DropdownItem>
+                          <DropdownItem key="configurations" color="primary">Configurations</DropdownItem>
+                          <DropdownItem key="help_and_feedback" color="primary" as={Link} to="/ayuda" >Ayuda</DropdownItem>
+                          <DropdownItem key="logout" color="danger" as={Link} to="/login">
+                            Cerar Sesion
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </div>
+                  </Tooltip>
+
+                  {/*Linea de separacion*/}
+                  <div class="h-10 w-[2px] bg-gray-200"></div>
+                </>
+
+              }
 
 
               {/* Botones de control */}

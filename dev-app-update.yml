@@ -1,3 +1,6 @@
-provider: generic
-url: http://localhost:9000/auto-updates/
-updaterCacheDirName: aguavp-updater
+provider: github #de provider
+owner: Mahynlo #nombre del propietario del repositorio
+repo: AGUA-VP # nombre del repositorio
+releaseType: release # tipo de lanzamiento
+private: true # si es un repositorio privado
+token: ${GH_TOKEN} # token definido en las variables de entorno de GitHub

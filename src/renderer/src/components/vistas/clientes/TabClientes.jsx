@@ -74,7 +74,7 @@ export function TabClientes() {
     };
 
     return (
-        <div className="p-3 bg-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:text-white ">
+        <div className="p-3 bg-gray-50 rounded-lg shadow-lg dark:bg-gray-800 dark:text-white ">
 
             {/* Header */}
             <div className="flex justify-between items-center mb-4">

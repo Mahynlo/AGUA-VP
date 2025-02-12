@@ -4,6 +4,7 @@ import imagenLogin from '../../assets/images/LoginPrueba.jpg'
 import imagenLogin2 from '../../assets/images/LoginPrueba2.jpg'
 import imagenLogin3 from '../../assets/images/LoginPrueba3.jpg'
 import { Avatar, Button, FloatingLabel, Carousel } from "flowbite-react";
+import { Link } from 'react-router-dom';
 function LoginApp() {
     return (
         <section class="flex flex-col md:flex-row h-screen items-center">
@@ -53,6 +54,10 @@ function LoginApp() {
                         <Button color="blue" className="w-full py-3 mt-6">
                             Iniciar Secion
                         </Button>
+                        <Button as={Link} to="/home" color="blue" className="w-full py-3 mt-6">
+                            Home
+                        </Button>
+
                     </form>
 
 
