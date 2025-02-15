@@ -46,7 +46,13 @@ function createWindow() {
 
 // Función para verificar actualizaciones
 function checkForUpdates(mainWindow) {
-  autoUpdater.checkForUpdatesAndNotify()
+  autoUpdater.setFeedURL({ // Configuracion de la actualización automática con GitHub
+    provider: 'github',
+    owner: 'Mahynlo',
+    repo: 'AGUA-VP',
+    token: process.env.GITHUB_TOKEN
+  })
+  autoUpdater.checkForUpdatesAndNotify() // Comprobar actualizaciones y notificar al usuario
 
   // Notificar cuando haya una actualización disponible
   autoUpdater.on('update-available', (info) => {

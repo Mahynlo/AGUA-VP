@@ -3,4 +3,4 @@ owner: Mahynlo #nombre del propietario del repositorio
 repo: AGUA-VP # nombre del repositorio
 releaseType: release # tipo de lanzamiento
 private: true # si es un repositorio privado
-token: ${GH_TOKEN} # token definido en las variables de entorno de GitHub
+token: ${{GH_TOKEN}} # token de acceso a github

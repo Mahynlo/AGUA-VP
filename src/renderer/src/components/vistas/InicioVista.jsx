@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 
 const InicioVista = () => {
     const [openModal, setOpenModal] = useState(true);
-
+   
     return (
         <>
             
@@ -23,8 +23,6 @@ const InicioVista = () => {
 
                         <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Consumo Diario</h5>
                         <h1 className="mb-2 text-6xl font-bold tracking-tight text-gray-900 dark:text-white">6</h1>
-
-
                     </a>
 
 
