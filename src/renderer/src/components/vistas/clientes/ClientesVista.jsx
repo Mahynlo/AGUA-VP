@@ -6,8 +6,7 @@ import { TabClientes } from "./TabClientes";
 import { TabRegistro } from "./TabRegistro";
 const Clientes = () => {
   return (
-    <div className="p-4 sm:ml-64 pt-20 min-h-screen">
-
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
       <Tabs aria-label="Default tabs" variant="default" className="bg-gray-100 dark:bg-gray-800" >
         <Tabs.Item active title="Clientes" icon={HiUserCircle} >
           <TabClientes/>

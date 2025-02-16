@@ -16,6 +16,7 @@ import { CustomTitleBar } from './TitleBar';
 function App() {
   return (
     <Router>
+      <NavbarApp />
       <MainApp />
     </Router>
   );
@@ -25,8 +26,7 @@ function MainApp() {
   const location = useLocation(); // Hook para obtener la ruta actual
 
   return (
-    <main className='dark:bg-gray-900 bg-gray-200 '>
-      <NavbarApp />
+    <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>
       {/* Solo mostramos el Sidebar si no estamos en la ruta de Login */}
       {location.pathname !== '/' && <SidebarApp />}
         

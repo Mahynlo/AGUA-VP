@@ -8,7 +8,7 @@ function SidebarApp() {
   const location = useLocation();
 
   return (
-    <aside className="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full border-r sm:translate-x-0 bg-gray-800 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
+    <aside className="fixed top-0 left-0 z-40 w-64 h-screen mt-20 transition-transform -translate-x-full border-r sm:translate-x-0 bg-gray-800 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
 
       <Sidebar aria-label="Default sidebar example" className="-mt-2 h-dvh" >
         <Sidebar.Items >

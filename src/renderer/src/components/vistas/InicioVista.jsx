@@ -14,7 +14,7 @@ const InicioVista = () => {
     return (
         <>
             
-            <div className="p-4 sm:ml-64 pt-20 min-h-screen overflow-hidden ">
+            <div className="  mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
 
 
                 <div className="grid grid-cols-4 gap-4 mb-4 mt-3">
@@ -49,10 +49,9 @@ const InicioVista = () => {
 
                 <LineChart />
                 
+                
             </div>
         </>
-
-
 
 
     )

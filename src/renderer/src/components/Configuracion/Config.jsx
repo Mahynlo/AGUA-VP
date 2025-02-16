@@ -11,7 +11,7 @@ import {
     Tooltip
 } from "@nextui-org/react";
 import { ConfiguracionIcon } from "../../IconsApp/IconsSidebar";
-import Versions from "../Versions";
+
 export function Config() {
 
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -50,7 +50,8 @@ export function Config() {
                                 <Card className="w-80 mt-2 block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 ">
                                     <CardBody>
                                         <p className="text-xl">Info Aplicacion</p>
-                                        v 1.0.2
+                                        v 1.0.4
+                                      
                                     </CardBody>
                                 </Card>
                                
