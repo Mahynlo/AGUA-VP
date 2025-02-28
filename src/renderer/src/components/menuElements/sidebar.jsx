@@ -3,10 +3,10 @@ import { HiChartPie } from "react-icons/hi";
 import React, { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { ClientsIcon, HistorialIcon, ResibosIcon, ImpresionIcon, CerrarSeccionIcon, AyudaIcon } from "../../IconsApp/IconsSidebar";
-
+import { useAuth } from "../../context/AuthContext";
 function SidebarApp() {
   const location = useLocation();
-
+  const {logout} = useAuth();
   return (
     <aside className="fixed top-0 left-0 z-40 w-64 h-screen mt-20 transition-transform -translate-x-full border-r sm:translate-x-0 bg-gray-800 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
 
@@ -32,7 +32,7 @@ function SidebarApp() {
             <Sidebar.Item as={Link} to="/ayuda" icon={AyudaIcon} label="" className={location.pathname === "/ayuda" ? "flex items-center p-2 rounded-lg  bg-blue-500 dark:bg-blue-900 dark:text-white text-gray-900 hover:bg-blue-500 dark:hover:bg-blue-900" : "flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-blue-200 dark:hover:bg-blue-700 group"}>
               Ayuda
             </Sidebar.Item>
-            <Sidebar.Item href="#" icon={CerrarSeccionIcon} className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-red-200 dark:hover:bg-red-700 group">
+            <Sidebar.Item href="#" onClick={logout} icon={CerrarSeccionIcon} className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-red-200 dark:hover:bg-red-700 group">
               Cerrar Sesion
             </Sidebar.Item>
             <Sidebar.CTA>
@@ -59,14 +59,13 @@ function SidebarApp() {
                 </button>
               </div>
               <div className="mb-3 text-sm text-cyan-900 dark:text-gray-400">
-                Preview the new Flowbite dashboard navigation! You can turn the new navigation off for a limited time in your
-                profile.
+                Aplicacion en version beta con nuevas funcionalidades y mejoras.
               </div>
               <a
                 className="text-sm text-cyan-900 underline hover:text-cyan-800 dark:text-gray-400 dark:hover:text-gray-300"
                 href="#"
               >
-                Turn new navigation off
+                Leer mas ...
               </a>
             </Sidebar.CTA>
           </Sidebar.ItemGroup>

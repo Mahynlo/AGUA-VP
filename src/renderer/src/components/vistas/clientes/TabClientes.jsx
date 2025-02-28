@@ -1,26 +1,21 @@
 //TabClientes
 
-import { Chip, Select, SelectItem, Input,Pagination} from "@nextui-org/react";
+import { Chip, Select, SelectItem, Input, Pagination, Button, Tooltip} from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
+import { useClientes } from "../../../context/ClientesContext";
+import { Spinner } from "@nextui-org/react";
+import { EditIcon } from "../../../IconsApp/IconsSidebar";
+import { EliminarClienteIcon } from "../../../IconsApp/IconsSidebar";
+import RegistrarClientes from "./RegistrarCliente";
+
+
 export function TabClientes() {
-    const data = [
-        { id: 1, name: "Jane Fisher", city: "New York", accountStatus: "Active" },
-        { id: 2, name: "Kristen Copper", city: "Los Angeles", accountStatus: "Inactive" },
-        { id: 3, name: "Zoey Lang", city: "Chicago", accountStatus: "Paused" },
-        { id: 4, name: "William Howard", city: "New York", accountStatus: "Active" },
-        { id: 5, name: "Tony Reichert", city: "San Francisco", accountStatus: "Inactive" },
-        { id: 6, name: "Linda Johnson", city: "Los Angeles", accountStatus: "Active" },
-        { id: 7, name: "John Doe", city: "Chicago", accountStatus: "Inactive" },
-        { id: 8, name: "Jane Fisher", city: "New York", accountStatus: "Active" },
-        { id: 9, name: "Kristen Copper", city: "Los Angeles", accountStatus: "Inactive" },
-        { id: 10, name: "Zoey Lang", city: "Chicago", accountStatus: "Paused" },
-        { id: 11, name: "William Howard", city: "New York", accountStatus: "Active" },
-        { id: 12, name: "Tony Reichert", city: "San Francisco", accountStatus: "Inactive" },
-        { id: 13, name: "Linda Johnson", city: "Los Angeles", accountStatus: "Active" },
-        { id: 14, name: "John Doe", city: "Chicago", accountStatus: "Inactive" },
-        { id: 15, name: "Juan Acosta del Valle Verde", city: "New York", accountStatus: "Active" },
-    ];
+
+    const { clientes, loading } = useClientes();
+
+
+    if (loading) return <div className="text-center"><Spinner classNames={{ label: "text-foreground mt-4" }} label="wave" variant="wave" /></div>;
 
     const [search, setSearch] = useState("");
     const [cityFilter, setCityFilter] = useState("All");
@@ -39,10 +34,10 @@ export function TabClientes() {
     }, []);
 
     // Filtrar datos por búsqueda y ciudad
-    const filteredData = data.filter(
+    const filteredData = clientes.filter(
         (item) =>
-            item.name.toLowerCase().includes(search.toLowerCase()) &&
-            (cityFilter === "All" || item.city === cityFilter)
+            item.nombre.toLowerCase().includes(search.toLowerCase()) &&
+            (cityFilter === "All" || item.ciudad === cityFilter)
     );
 
     // Manejar la búsqueda
@@ -87,23 +82,22 @@ export function TabClientes() {
                 />
 
                 {/* Select para filtrar por ciudad */}
-               
+
                 <Select
                     className="max-w-40 border rounded-xl border-gray-200 dark:border-gray-500 "
-                   color="default"
-                    aria-label="City"
+                    color="default"
+                    aria-label="ciudad"
                     selectedKeys={new Set([cityFilter])}
                     onSelectionChange={handleCityFilter}
                 >
                     <SelectItem key="All">Todos</SelectItem>
-                    <SelectItem key="New York">New York</SelectItem>
-                    <SelectItem key="Los Angeles">Los Angeles</SelectItem>
-                    <SelectItem key="Chicago">Chicago</SelectItem>
-                    <SelectItem key="San Francisco">San Francisco</SelectItem>
+                    <SelectItem key="Adivino">Adivino</SelectItem>
+                    <SelectItem key="Matape">Matape</SelectItem>
+                    <SelectItem key="Nacori Grande">Nacori Grande</SelectItem>
                 </Select>
-                
+
                 {/* Select para cantidad de clientes por página */}
-              
+               
                 <Select
                     className="max-w-24 border rounded-xl border-gray-200 dark:border-gray-500"
                     aria-label="Rows per page"
@@ -115,14 +109,17 @@ export function TabClientes() {
                     <SelectItem key="12">12</SelectItem>
                     <SelectItem key="16">16</SelectItem>
                 </Select>
+                
+                <RegistrarClientes />
+                
             </div>
 
             {/* Table */}
 
             <div className={`overflow-y-auto ${tableHeight}`}>
-                <table className="w-full bg-white rounded-lg shadow-lg overflow-hidden dark:bg-gray-700">
+                <table className="w-full bg-white rounded-lg shadow-lg  dark:bg-gray-700 ">
                     <thead>
-                        <tr className="bg-blue-200 text-gray-600 text-left dark:bg-gray-500 dark:text-gray-200">
+                        <tr className="sticky top-0 bg-blue-200 text-gray-600 text-left dark:bg-gray-500 dark:text-gray-200">
                             <th className="p-3">Nombre</th>
                             <th className="p-3">Pueblo</th>
                             <th className="p-3">Estado de la cuenta</th>
@@ -133,30 +130,40 @@ export function TabClientes() {
                         {paginatedData.length > 0 ? (
                             paginatedData.map((item) => (
                                 <tr key={item.id} className="border-b hover:bg-gray-100 text-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 dark:border-gray-600">
-                                    <td className="p-3">{item.name}</td>
-                                    <td className="p-3">{item.city}</td>
+                                    <td className="p-3">{item.nombre}</td>
+                                    <td className="p-3">{item.ciudad}</td>
                                     <td className="p-3">
                                         <Chip
                                             color={
-                                                item.accountStatus === "Active"
+                                                item.estado_cliente === "Activo"
                                                     ? "success"
-                                                    : item.accountStatus === "Inactive"
+                                                    : item.estado_cliente === "Inactivo"
                                                         ? "danger"
                                                         : "warning"
                                             }
                                             className="px-2 py-1 rounded-full text-white"
                                         >
-                                            {item.accountStatus}
+                                            {item.estado_cliente}
                                         </Chip>
                                     </td>
-                                    <td className="p-3">
-                                        <button className="text-blue-500 hover:underline">Edit</button>
+                                    <td className="p-3 space-x-2">
+                                        <Tooltip color="primary" content="Editar" delay={1000}>
+                                            <Button isIconOnly aria-label="Editar" color="" variant="faded">
+                                                <EditIcon />
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip color="danger" content="Eliminar" delay={1000}>
+                                            <Button isIconOnly aria-label="Eliminar" color="danger" variant="faded">
+                                                <EliminarClienteIcon />
+                                            </Button>
+                                        </Tooltip>
+
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="4" className="p-3 text-center h-[388px] text-gray-500 dark:text-gray-300">
+                                <td colSpan="4" className="p-3 text-center h-[590px] text-gray-500 dark:text-gray-300">
                                     No se encontraron resultados
                                 </td>
                             </tr>
@@ -174,8 +181,8 @@ export function TabClientes() {
                         } de ${filteredData.length} resultados`}
                 </span>
                 <div className="flex space-x-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-200">Pag:</span>
-                    <Pagination total={Math.ceil(filteredData.length/rowsPerPage)} current={currentPage} pageSize={rowsPerPage} onChange={handlePagination} />
+                    <span className="text-sm text-gray-600 dark:text-gray-200"><Pagination total={Math.ceil(filteredData.length / rowsPerPage)} current={currentPage} pageSize={rowsPerPage} onChange={handlePagination} /></span>
+
                 </div>
             </div>
         </div>

@@ -6,7 +6,7 @@ import AvatarPerfil from '../../assets/images/Avatar.png'
 import { useLocation } from 'react-router-dom';
 import { Button, Modal } from "flowbite-react";
 import { useState } from "react";
-import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { CloseAppModal } from '../../IconsApp/IconsSidebar';
 const CerrarSeccionIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
     <path fill-rule="evenodd" d="M7.5 3.75A1.5 1.5 0 0 0 6 5.25v13.5a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5V15a.75.75 0 0 1 1.5 0v3.75a3 3 0 0 1-3 3h-6a3 3 0 0 1-3-3V5.25a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3V9A.75.75 0 0 1 15 9V5.25a1.5 1.5 0 0 0-1.5-1.5h-6Zm5.03 4.72a.75.75 0 0 1 0 1.06l-1.72 1.72h10.94a.75.75 0 0 1 0 1.5H10.81l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06l3-3a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
@@ -53,7 +53,7 @@ function NavbarApp() {
             }}>
 
 
-              {location.pathname !== '/' &&
+              {location.pathname !== '/' &&  location.pathname !== '/registro' &&
                 <>
 
                   <Config />
@@ -126,7 +126,7 @@ function NavbarApp() {
                   <Modal.Header />
                   <Modal.Body>
                     <div className="text-center">
-                      <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
+                      <CloseAppModal/>
                       <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
                         ¿Esta seguro de que desea cerrar la aplicacion?
                       </h3>

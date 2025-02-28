@@ -3,7 +3,8 @@ import { Tabs } from "flowbite-react";
 import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import { TabClientes } from "./TabClientes";
-import { TabRegistro } from "./TabRegistro";
+import { TabMetricas } from "./TabMetricas";
+import { TabMedidores } from "./TabMedidores";
 const Clientes = () => {
   return (
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
@@ -11,18 +12,12 @@ const Clientes = () => {
         <Tabs.Item active title="Clientes" icon={HiUserCircle} >
           <TabClientes/>
         </Tabs.Item>
-        <Tabs.Item title="Registro"  icon={HiClipboardList}>
-          <TabRegistro />
-        </Tabs.Item>
+        
         <Tabs.Item title="Metricas" icon={HiAdjustments}>
-          This is <span className="font-medium text-gray-800 dark:text-white">Settings tab's associated content</span>.
-          Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classNamees to
-          control the content visibility and styling.
+         <TabMetricas/>
         </Tabs.Item>
-        <Tabs.Item title="Info" icon={HiClipboardList}>
-          This is <span className="font-medium text-gray-800 dark:text-white">Contacts tab's associated content</span>.
-          Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classNamees to
-          control the content visibility and styling.
+        <Tabs.Item title="Medidores" icon={HiClipboardList}>
+          <TabMedidores/>
         </Tabs.Item>
       </Tabs>
 

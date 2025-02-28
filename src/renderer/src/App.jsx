@@ -11,13 +11,21 @@ import Impresion from './components/vistas/ImpresionVista';
 import LoginApp from './components/login/login';
 import PerfilPage from './components/perfil/perfilpage';
 import NotFoundVista from './components/vistas/NotFoundVista';
-import { CustomTitleBar } from './TitleBar';
-
+import { ClientesProvider } from './context/ClientesContext';
+import RegistroApp from "./components/registroUsuarios/Registro";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./ProtectedRoutes/ProtectedRoute";
 function App() {
+
   return (
     <Router>
+      
+      <AuthProvider>
       <NavbarApp />
-      <MainApp />
+        <ClientesProvider>
+          <MainApp />
+        </ClientesProvider>
+      </AuthProvider>
     </Router>
   );
 }
@@ -27,18 +35,22 @@ function MainApp() {
 
   return (
     <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>
-      {/* Solo mostramos el Sidebar si no estamos en la ruta de Login */}
-      {location.pathname !== '/' && <SidebarApp />}
-        
+      {/* Solo mostramos el Sidebar si no estamos en la ruta de Login y registro */}
+      {location.pathname !== '/' && location.pathname !== '/registro' && <SidebarApp />}
+
+
       <Routes>
-        <Route path="/home" element={<InicioVista />} />
-        <Route path="/clientes" element={<Clientes />} />
-        <Route path="/historial" element={<Historial />} />
-        <Route path="/resibos" element={<Resibos />} />
-        <Route path="/impresion" element={<Impresion />} />
-        <Route path="/ayuda" element={<Ayuda />} />
-        <Route path='/perfil' element={<PerfilPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/home" element={<InicioVista />} />
+          <Route path="/clientes" element={<Clientes />} />
+          <Route path="/historial" element={<Historial />} />
+          <Route path="/resibos" element={<Resibos />} />
+          <Route path="/impresion" element={<Impresion />} />
+          <Route path="/ayuda" element={<Ayuda />} />
+          <Route path='/perfil' element={<PerfilPage />} />
+        </Route>
         <Route path='/' element={<LoginApp />} />
+        <Route path='/registro' element={<RegistroApp />} />
         <Route path='*' element={<NotFoundVista />} />
       </Routes>
     </main>

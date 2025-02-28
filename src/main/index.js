@@ -3,6 +3,11 @@ import { join } from 'path'
 import { autoUpdater } from 'electron-updater'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { db } from '../db/Cliente.js'; // Importa la base de datos SQLite
+import { console } from 'inspector'
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const SECRET_KEY = "mi_secreto_super_seguro"; // Cambia esto en producción
 
 function createWindow() {
   // Create the browser window.
@@ -37,6 +42,8 @@ function createWindow() {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  // Abrir las herramientas de desarrollo
+  mainWindow.webContents.openDevTools();
   // Iniciar la búsqueda de actualizaciones después de que la ventana esté lista
   setTimeout(() => {
     checkForUpdates(mainWindow)
@@ -108,7 +115,7 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.on('ping', () => console.log('pong')) 
 
   createWindow() // crea la ventana
 
@@ -153,3 +160,104 @@ ipcMain.on("close", (event) => { // Cerrar la ventana
   const window = BrowserWindow.getFocusedWindow();
   if (window) window.close();
 });
+
+
+// Evento para obtener clientes desde la base de datos
+ipcMain.handle("fetch-clientes", async () => {  // Usa ipcMain.handle en lugar de ipcMain.on para manejar promesas
+  try {
+    const result = await db.execute("SELECT * FROM clientes"); // Usa .execute() en lugar de .query()
+    return result.rows; // Asegúrate de devolver solo las filas de la consulta
+  } catch (error) {
+    console.error("Error al obtener clientes:", error);
+    return [];
+  }
+});
+
+
+
+
+
+
+// 📌 Función para registrar usuarios
+const registerUser = async (correo, contrasena, username, rol) => {
+  const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+  try {
+    await db.execute({
+      sql: "INSERT INTO usuarios (correo, contraseña, username, rol) VALUES (?, ?, ?, ?)",
+      args: [correo, hashedPassword, username, rol],
+    });
+
+    return { success: true, message: "Usuario registrado con éxito" };
+  } catch (error) {
+    return { success: false, message: "El usuario ya existe o hubo un error" };
+  }
+};
+
+// 📌 Función para autenticar usuarios
+const loginUser = async (correo, contrasena) => {
+  try {
+
+    // Realizar la consulta a la base de datos
+    const result = await db.execute({
+      sql: "SELECT * FROM usuarios WHERE correo = ?",
+      args: [correo],
+    });
+
+    if (!result || !result.rows || result.rows.length === 0) {
+      return { success: false, message: "Usuario no encontrado", result: null };
+    }
+
+    const hashedPassword = await bcrypt.hash(contrasena, 10); // Encriptar la contraseña ingresada por el usuario para compararla con la almacenada
+
+    // Verificar la contraseña ingresada contra la almacenada
+    const isMatch = await bcrypt.compare(contrasena,hashedPassword);
+    if (!isMatch) {
+      return { success: false, message: "Contraseña incorrecta", result: null };
+    }
+
+    // Generar el token JWT si la contraseña es correcta
+    const token = jwt.sign(
+      { id: result.rows[0].id, correo: result.rows[0].correo, rol: result.rows[0].rol },
+      SECRET_KEY,
+      { expiresIn: "1h" }
+    );
+
+    return { success: true, token, username: result.rows[0].username, rol: result.rows[0].rol };
+
+  } catch (error) {
+    console.error("Error en loginUser:", error);
+    return { success: false, message: "Error en la autenticación", result: null };
+  }
+};
+
+
+
+// 📌 Manejar autenticación login
+ipcMain.handle("login", async (event, data) => {
+  return await loginUser(data.correo, data.contrasena);
+});
+
+
+
+// 📌 Función para verificar token
+const verifyToken = (token) => {
+  try {
+    return jwt.verify(token, SECRET_KEY);
+  } catch (error) {
+    return null;
+  }
+};
+
+// 📌 Manejar autenticación registro
+ipcMain.handle("register", async (event, data) => {
+  return await registerUser(data.correo, data.contrasena, data.username, data.rol);
+});
+
+// 📌 Manejar verificación de sesión
+ipcMain.handle("verify-session", async (event, token) => {
+  return verifyToken(token) ? { success: true, user: verifyToken(token) } : { success: false };
+});
+
+
+
