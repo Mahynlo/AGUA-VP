@@ -4,7 +4,8 @@ import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import { TabClientes } from "./TabClientes";
 import { TabMetricas } from "./TabMetricas";
-import { TabMedidores } from "./TabMedidores";
+
+
 const Clientes = () => {
   return (
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
@@ -16,10 +17,10 @@ const Clientes = () => {
         <Tabs.Item title="Metricas" icon={HiAdjustments}>
          <TabMetricas/>
         </Tabs.Item>
-        <Tabs.Item title="Medidores" icon={HiClipboardList}>
-          <TabMedidores/>
-        </Tabs.Item>
+       
       </Tabs>
+      
+
 
     </div>
   )

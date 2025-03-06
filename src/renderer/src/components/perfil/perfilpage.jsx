@@ -1,7 +1,9 @@
 import { Chip } from "@nextui-org/chip";
 import { Avatar } from "@nextui-org/avatar";
 import AvatarPerfil from '../../assets/images/Avatar.png'
+import { useAuth } from "../../context/AuthContext";
 function PerfilPage() {
+    const { user } = useAuth();
     return (
 
         <div className="p-4 sm:ml-64 pt-20 dark:bg-gray-900  min-h-screen">
@@ -19,10 +21,7 @@ function PerfilPage() {
                             />
                         </div>
                         <h1 className="text-gray-900 font-bold text-xl leading-8 my-1 dark:text-white">Bonnie Green</h1>
-                        <h3 className="text-gray-600 font-lg text-semibold leading-6 dark:text-white">Descripcion</h3>
-                        <p className="text-sm text-gray-500 hover:text-gray-600 leading-6 dark:text-gray-300">Lorem ipsum dolor sit amet
-                            consectetur adipisicing elit.
-                            Reprehenderit, eligendi dolorum sequi illum qui unde aspernatur non deserunt</p>
+                        
                         <ul
                             className="bg-gray-200 text-gray-600 hover:text-gray-700 dark:bg-gray-700 dark:text-white hover:shadow py-2 px-3 mt-3 divide-y rounded shadow-sm">
                             <li className="flex items-center py-3">
@@ -40,7 +39,7 @@ function PerfilPage() {
                 </div>
                 <div className="w-full md:w-9/12 mx-2 h-64 ">
 
-                    <div className="bg-gray-100 p-3 shadow-sm   dark:bg-gray-800 rounded-lg">
+                    <div className="bg-gray-100 p-3 shadow-sm  dark:bg-gray-800 rounded-lg">
                         <div className="flex items-center space-x-2 font-semibold text-gray-900 leading-8 dark:text-white">
                             <span className="text-green-500">
                                 <svg className="h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -61,29 +60,15 @@ function PerfilPage() {
                                     <div className="px-4 py-2 font-semibold">Apellidos:</div>
                                     <div className="px-4 py-2">Doe</div>
                                 </div>
-                                <div className="grid grid-cols-2">
-                                    <div className="px-4 py-2 font-semibold">Genero:</div>
-                                    <div className="px-4 py-2">Female</div>
-                                </div>
-                                <div className="grid grid-cols-2">
-                                    <div className="px-4 py-2 font-semibold">No. de telefono</div>
-                                    <div className="px-4 py-2">+11 998001001</div>
-                                </div>
-                                <div className="grid grid-cols-2">
-                                    <div className="px-4 py-2 font-semibold">Direccion Actual:</div>
-                                    <div className="px-4 py-2">Beech Creek, PA, Pennsylvania</div>
-                                </div>
+                            
 
                                 <div className="grid grid-cols-2">
-                                    <div className="px-4 py-2 font-semibold">Email:</div>
+                                    <div className="px-4 py-2 font-semibold">Correo electronico:</div>
                                     <div className="px-4 py-2">
-                                        <a className="text-blue-800 dark:text-blue-300" href="mailto:jane@example.com">jane@example.com</a>
+                                        <a className="text-blue-800 dark:text-blue-300" href="mailto:jane@example.com">{user.correo}</a>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2">
-                                    <div className="px-4 py-2 font-semibold">Fecha de Nacimiento: </div>
-                                    <div className="px-4 py-2">Feb 06, 1998</div>
-                                </div>
+                               
                             </div>
                         </div>
 
@@ -138,14 +123,10 @@ function PerfilPage() {
                                 <ul className="list-inside space-y-2">
                                     <li>
                                         <Chip color="success" variant="dot">
-                                            Admin
+                                            {user.rol}
                                         </Chip>
                                     </li>
-                                    <li>
-                                        <Chip color="success" variant="dot">
-                                            User
-                                        </Chip>
-                                    </li>
+                                    
                                 </ul>
                             </div>
                         </div>

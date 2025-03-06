@@ -23,6 +23,7 @@ function createWindow() {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false // Deshabilitar el aislamiento del contexto
+      
     }
   })
 
@@ -42,15 +43,18 @@ function createWindow() {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
   // Abrir las herramientas de desarrollo
-  mainWindow.webContents.openDevTools();
+  //mainWindow.webContents.openDevTools();
   // Iniciar la búsqueda de actualizaciones después de que la ventana esté lista
   setTimeout(() => {
     checkForUpdates(mainWindow)
   }, 5000)
 }
 
-
+/**
+ * Actualizaciones automáticas
+ * **/
 // Función para verificar actualizaciones
 function checkForUpdates(mainWindow) {
 
@@ -233,13 +237,6 @@ const loginUser = async (correo, contrasena) => {
 
 
 
-// 📌 Manejar autenticación login
-ipcMain.handle("login", async (event, data) => {
-  return await loginUser(data.correo, data.contrasena);
-});
-
-
-
 // 📌 Función para verificar token
 const verifyToken = (token) => {
   try {
@@ -248,6 +245,11 @@ const verifyToken = (token) => {
     return null;
   }
 };
+
+// 📌 Manejar autenticación login
+ipcMain.handle("login", async (event, data) => {
+  return await loginUser(data.correo, data.contrasena);
+});
 
 // 📌 Manejar autenticación registro
 ipcMain.handle("register", async (event, data) => {
@@ -258,6 +260,8 @@ ipcMain.handle("register", async (event, data) => {
 ipcMain.handle("verify-session", async (event, token) => {
   return verifyToken(token) ? { success: true, user: verifyToken(token) } : { success: false };
 });
+
+
 
 
 

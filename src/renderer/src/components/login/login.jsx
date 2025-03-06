@@ -40,10 +40,10 @@ function LoginApp() {
         setError("La contrasena debe tener al menos 6 caracteres.");
         return;
     }
-    console.log("Datos enviados al proceso principal:", { correo, contrasena });
+    //console.log("Datos enviados al proceso principal:", { correo, contrasena });
     try {
         const response = await window.api.login({ correo, contrasena });
-        console.log("Respuesta del servidor:", response);
+        //console.log("Respuesta del servidor:", response);
 
         if (response.success) {
             //localStorage.setItem("token", response.token);
@@ -54,7 +54,7 @@ function LoginApp() {
         }
     } catch (err) {
         setError("Ocurrió un error en la autenticación.");
-        console.error(err);
+        //console.error(err);
     }
 };
 
@@ -104,7 +104,7 @@ function LoginApp() {
                         </div>
 
                         <div className="text-right mt-2">
-                            <Link to="/recuperar-password" className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-700">
+                            <Link to="/recuperarPassword" className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-700">
                                 ¿Olvidaste tu contrasena?
                             </Link>
                         </div>
@@ -117,12 +117,7 @@ function LoginApp() {
                     <hr className="my-6 border-gray-300 w-full" />
                     
 
-                    <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
-                        ¿No tienes una cuenta?{" "}
-                        <Link to="/registro" className="text-blue-700 font-semibold">
-                            Regístrate aquí
-                        </Link>
-                    </p>
+                    
                 </div>
             </div>
         </section>

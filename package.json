@@ -32,6 +32,7 @@
     "jsonwebtoken": "^9.0.2",
     "leaflet": "^1.9.4",
     "react-chartjs-2": "^5.2.0",
+    "react-leaflet": "^4.2.1",
     "react-router-dom": "^7.1.1"
   },
   "devDependencies": {

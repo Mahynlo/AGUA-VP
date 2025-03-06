@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 import { Button, Modal } from "flowbite-react";
 import { useState } from "react";
 import { CloseAppModal } from '../../IconsApp/IconsSidebar';
+import { useAuth } from  '../../context/AuthContext';
 const CerrarSeccionIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
     <path fill-rule="evenodd" d="M7.5 3.75A1.5 1.5 0 0 0 6 5.25v13.5a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5V15a.75.75 0 0 1 1.5 0v3.75a3 3 0 0 1-3 3h-6a3 3 0 0 1-3-3V5.25a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3V9A.75.75 0 0 1 15 9V5.25a1.5 1.5 0 0 0-1.5-1.5h-6Zm5.03 4.72a.75.75 0 0 1 0 1.06l-1.72 1.72h10.94a.75.75 0 0 1 0 1.5H10.81l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06l3-3a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
@@ -17,6 +18,8 @@ const CerrarSeccionIcon = () => (
 function NavbarApp() {
   const location = useLocation(); // Hook para obtener la ruta actual
   const [openModal, setOpenModal] = useState(false);
+  const { logout,user } = useAuth();
+
   const handleMinimize = () => {
     window.electronAPI.minimize();
   };
@@ -53,7 +56,7 @@ function NavbarApp() {
             }}>
 
 
-              {location.pathname !== '/' &&  location.pathname !== '/registro' &&
+              {location.pathname !== '/' &&  location.pathname !== '/registro' &&  location.pathname !== '/recuperarPassword' &&
                 <>
 
                   <Config />
@@ -71,13 +74,16 @@ function NavbarApp() {
                         </DropdownTrigger>
                         <DropdownMenu aria-label="Profile Actions" variant="flat">
                           <DropdownItem key="profile" className="h-14 gap-2">
-                            <p className="font-semibold">Signed in as</p>
-                            <p className="font-semibold">zoey@example.com</p>
+                            <p className="font-semibold"></p>
+                            <p className="font-semibold">{user.correo}</p>
                           </DropdownItem>
                           <DropdownItem key="settings" color="primary" as={Link} to="/perfil">Mi Perfil</DropdownItem>
-                          <DropdownItem key="configurations" color="primary">Configurations</DropdownItem>
+                          {user?.rol === 'superadmin' && // Si el usuario es superadmin muestra el botón de configuraciones
+                            <DropdownItem key="configurations" color="primary" as={Link} to="/administrador">Permisos de administrador</DropdownItem>
+                          }
+                          
                           <DropdownItem key="help_and_feedback" color="primary" as={Link} to="/ayuda" >Ayuda</DropdownItem>
-                          <DropdownItem key="logout" color="danger" as={Link} to="/login">
+                          <DropdownItem key="logout" color="danger" onClick={logout}>
                             Cerar Sesion
                           </DropdownItem>
                         </DropdownMenu>
@@ -132,10 +138,10 @@ function NavbarApp() {
                       </h3>
                       <div className="flex justify-center gap-4">
                         <Button color="failure" onClick={handleClose}>
-                          {"Cerrar"}
+                          {"Si"}
                         </Button>
                         <Button color="blue" onClick={() => setOpenModal(false)}>
-                          Cancelar
+                          No
                         </Button>
                       </div>
                     </div>

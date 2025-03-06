@@ -2,7 +2,7 @@ import { Sidebar, Badge } from "flowbite-react";
 import { HiChartPie } from "react-icons/hi";
 import React, { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { ClientsIcon, HistorialIcon, ResibosIcon, ImpresionIcon, CerrarSeccionIcon, AyudaIcon } from "../../IconsApp/IconsSidebar";
+import { ClientsIcon, HistorialIcon, ResibosIcon, ImpresionIcon, CerrarSeccionIcon, AyudaIcon,MedidoresIcon } from "../../IconsApp/IconsSidebar";
 import { useAuth } from "../../context/AuthContext";
 function SidebarApp() {
   const location = useLocation();
@@ -19,6 +19,9 @@ function SidebarApp() {
             </Sidebar.Item>
             <Sidebar.Item as={Link} to="/clientes" icon={ClientsIcon} label="" labelColor="dark" className={location.pathname === "/clientes" ? "flex items-center p-2 rounded-lg  bg-blue-500 dark:bg-blue-900 dark:text-white text-gray-900 hover:bg-blue-500 dark:hover:bg-blue-900" : "flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-blue-200 dark:hover:bg-blue-700 group"}>
               Clientes
+            </Sidebar.Item>
+            <Sidebar.Item as={Link} to="/medidores" icon={MedidoresIcon} label="" className={location.pathname === "/medidores" ? "flex items-center p-2 rounded-lg  bg-blue-500 dark:bg-blue-900 dark:text-white text-gray-900 hover:bg-blue-500 dark:hover:bg-blue-900" : "flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-blue-200 dark:hover:bg-blue-700 group"}>
+              Medidores
             </Sidebar.Item>
             <Sidebar.Item as={Link} to="/resibos" icon={ResibosIcon} label="" className={location.pathname === "/resibos" ? "flex items-center p-2 rounded-lg  bg-blue-500 dark:bg-blue-900 dark:text-white text-gray-900 hover:bg-blue-500 dark:hover:bg-blue-900" : "flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-blue-200 dark:hover:bg-blue-700 group"}>
               Resibos

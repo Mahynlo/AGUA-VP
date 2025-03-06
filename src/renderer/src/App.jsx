@@ -15,14 +15,18 @@ import { ClientesProvider } from './context/ClientesContext';
 import RegistroApp from "./components/registroUsuarios/Registro";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoute";
+import Medidores from "./components/vistas/medidores/MedidoresVista";
+import Administrador from "./components/administrador/Administrador";
+import RecuperarPassword from "./components/AdministrarPassword/Recuperacion";
 function App() {
 
   return (
     <Router>
       
       <AuthProvider>
-      <NavbarApp />
+      
         <ClientesProvider>
+          <NavbarApp />
           <MainApp />
         </ClientesProvider>
       </AuthProvider>
@@ -35,10 +39,10 @@ function MainApp() {
 
   return (
     <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>
-      {/* Solo mostramos el Sidebar si no estamos en la ruta de Login y registro */}
-      {location.pathname !== '/' && location.pathname !== '/registro' && <SidebarApp />}
+      {/* Solo mostramos el Sidebar si no estamos en la ruta de Login y registro o recuperarPassword */}
+      {location.pathname !== '/' && location.pathname !== '/registro' && location.pathname !== '/recuperarPassword' && <SidebarApp/> }
 
-
+      
       <Routes>
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<InicioVista />} />
@@ -48,8 +52,11 @@ function MainApp() {
           <Route path="/impresion" element={<Impresion />} />
           <Route path="/ayuda" element={<Ayuda />} />
           <Route path='/perfil' element={<PerfilPage />} />
+          <Route path="/medidores" element={<Medidores />} />
+          <Route path="/administrador" element={<Administrador />} />
         </Route>
         <Route path='/' element={<LoginApp />} />
+        <Route path='/recuperarPassword' element={<RecuperarPassword />} />
         <Route path='/registro' element={<RegistroApp />} />
         <Route path='*' element={<NotFoundVista />} />
       </Routes>
