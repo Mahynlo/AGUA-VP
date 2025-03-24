@@ -45,7 +45,7 @@ function createWindow() {
   }
 
   // Abrir las herramientas de desarrollo
-  mainWindow.webContents.openDevTools();
+  //mainWindow.webContents.openDevTools();
   // Iniciar la búsqueda de actualizaciones después de que la ventana esté lista
   setTimeout(() => {
     checkForUpdates(mainWindow)
@@ -135,7 +135,7 @@ app.whenReady().then(() => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
+app.on('window-all-closed', () => { 
   if (process.platform !== 'darwin') {
     app.quit()
   }
@@ -163,8 +163,9 @@ ipcMain.on("maximize", (event) => { // Maximizar la ventana
 });
 
 ipcMain.on("close", (event) => { // Cerrar la ventana
-  const window = BrowserWindow.getFocusedWindow();
-  if (window) window.close();
+  if (process.platform !== 'darwin') { // Solo cerrar en Windows y Linux (no en macOS)
+    app.quit() // Cierra la aplicación por completo
+  }
 });
 
 
