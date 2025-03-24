@@ -5,15 +5,13 @@ import React, { useEffect, useState } from "react";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { useClientes } from "../../../context/ClientesContext";
 import { Spinner } from "@nextui-org/react";
-import { EditIcon } from "../../../IconsApp/IconsSidebar";
-import { EliminarClienteIcon } from "../../../IconsApp/IconsSidebar";
 import RegistrarClientes from "./RegistrarCliente";
+import EditarClientes from "./EditarCliente";
 
 
 export function TabClientes() {
 
     const { clientes, loading } = useClientes();
-
 
     if (loading) return <div className="text-center"><Spinner classNames={{ label: "text-foreground mt-4" }} label="wave" variant="wave" /></div>;
 
@@ -67,6 +65,7 @@ export function TabClientes() {
     const handlePagination = (page) => {
         setCurrentPage(page);
     };
+  
 
     return (
         <div className="p-3 bg-gray-50 rounded-lg shadow-lg dark:bg-gray-800 dark:text-white ">
@@ -147,16 +146,8 @@ export function TabClientes() {
                                         </Chip>
                                     </td>
                                     <td className="p-3 space-x-2">
-                                        <Tooltip color="primary" content="Editar" delay={1000}>
-                                            <Button isIconOnly aria-label="Editar" color="" variant="faded">
-                                                <EditIcon />
-                                            </Button>
-                                        </Tooltip>
-                                        <Tooltip color="danger" content="Eliminar" delay={1000}>
-                                            <Button isIconOnly aria-label="Eliminar" color="danger" variant="faded">
-                                                <EliminarClienteIcon />
-                                            </Button>
-                                        </Tooltip>
+                                        <EditarClientes id={item.id} />
+                                        
 
                                     </td>
                                 </tr>

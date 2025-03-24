@@ -7,8 +7,10 @@ const api = {
     return await ipcRenderer.invoke("fetch-clientes");
   },
   register: (data) => ipcRenderer.invoke("register", data),
+  registerClient: (data) => ipcRenderer.invoke("register-cliente", data),
   login: (data) => ipcRenderer.invoke("login", data),
   verifySession: (token) => ipcRenderer.invoke("verify-session", token),
+  updateClient: (data) => ipcRenderer.invoke("update-cliente", data),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

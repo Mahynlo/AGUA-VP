@@ -1,6 +1,6 @@
 
 import RegistroApp from "../registroUsuarios/Registro"
-import { Tabs, Tab, Chip} from "@nextui-org/react";
+import {Tabs, Tab, Card, CardBody} from "@nextui-org/react";
 
 export default function Administrador() {
     return (

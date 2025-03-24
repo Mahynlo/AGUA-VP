@@ -4,16 +4,17 @@ import imagenLogin2 from '../../assets/images/LoginPrueba2.jpg';
 import imagenLogin3 from '../../assets/images/LoginPrueba3.jpg';
 import { Avatar, Button, FloatingLabel, Carousel } from "flowbite-react";
 import { useState } from "react";
-import { Link, useNavigate,Navigate } from 'react-router-dom'; 
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 function LoginApp() {
     const [correo, setCorreo] = useState("");
     const [contrasena, setContrasena] = useState("");
     const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar la contraseña
     const navigate = useNavigate();
-    const {user, login } = useAuth();
+    const { user, login, isAuthenticated } = useAuth();
     // Si el usuario ya está autenticado, lo redirigimos a /home
-    if (user) {
+    if (isAuthenticated()) {
         return <Navigate to="/home" />;
     }
     // Validación de correo electrónico
@@ -23,40 +24,40 @@ function LoginApp() {
     };
 
     const handleLogin = async () => {
-    setError(""); // Limpiar errores previos
+        setError(""); // Limpiar errores previos
 
-    // Validaciones
-    if (!correo || !contrasena) {
-        setError("Por favor, completa todos los campos.");
-        return;
-    }
-
-    if (!validateEmail(correo)) {
-        setError("Por favor, ingresa un correo electrónico válido.");
-        return;
-    }
-
-    if (contrasena.length < 6) {
-        setError("La contrasena debe tener al menos 6 caracteres.");
-        return;
-    }
-    //console.log("Datos enviados al proceso principal:", { correo, contrasena });
-    try {
-        const response = await window.api.login({ correo, contrasena });
-        //console.log("Respuesta del servidor:", response);
-
-        if (response.success) {
-            //localStorage.setItem("token", response.token);
-            login(response.token);
-            navigate(response.rol === "administrador" ? "/home" : "/ayuda");// Redirigir a home si es administrador o a ayuda si es usuario normal 
-        } else {
-            setError(response.message || "Error en la autenticación.");
+        // Validaciones
+        if (!correo || !contrasena) {
+            setError("Por favor, completa todos los campos.");
+            return;
         }
-    } catch (err) {
-        setError("Ocurrió un error en la autenticación.");
-        //console.error(err);
-    }
-};
+
+        if (!validateEmail(correo)) {
+            setError("Por favor, ingresa un correo electrónico válido.");
+            return;
+        }
+
+        if (contrasena.length < 6) {
+            setError("La contrasena debe tener al menos 6 caracteres.");
+            return;
+        }
+        //console.log("Datos enviados al proceso principal:", { correo, contrasena });
+        try {
+            const response = await window.api.login({ correo, contrasena });
+            console.log("Respuesta del servidor:", response);
+
+            if (response.success) {
+                //localStorage.setItem("token", response.token);
+                login(response.token);
+                navigate(response.rol === "administrador" ? "/home" : "/ayuda");// Redirigir a home si es administrador o a ayuda si es usuario normal 
+            } else {
+                setError(response.message || "Error en la autenticación.");
+            }
+        } catch (err) {
+            setError("Ocurrió un error en la autenticación.");
+            //console.error(err);
+        }
+    };
 
 
     return (
@@ -93,14 +94,24 @@ function LoginApp() {
                             />
                         </div>
 
-                        <div className="mt-5">
+                        <div className="mt-5 relative">
                             <FloatingLabel
                                 variant="standard"
                                 label="Contrasena"
-                                type="password"
+                                type={showPassword ? "text" : "password"} // Cambiar tipo dependiendo del estado
                                 value={contrasena}
                                 onChange={(e) => setContrasena(e.target.value)}
                             />
+                            {/**Mostrar el boton si ya se escribio texto  */}
+                            {contrasena.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)} // Alternar visibilidad
+                                    className="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500"
+                                >
+                                    {showPassword ? "Ocultar" : "Mostrar"}
+                                </button>
+                            )}
                         </div>
 
                         <div className="text-right mt-2">
@@ -112,12 +123,13 @@ function LoginApp() {
                         <Button color="blue" className="w-full py-3 mt-6" onClick={handleLogin}>
                             Iniciar Sesión
                         </Button>
+
                     </form>
 
                     <hr className="my-6 border-gray-300 w-full" />
-                    
 
-                    
+
+
                 </div>
             </div>
         </section>

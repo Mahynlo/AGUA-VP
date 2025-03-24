@@ -10,12 +10,12 @@ function SidebarApp() {
   return (
     <aside className="fixed top-0 left-0 z-40 w-64 h-screen mt-20 transition-transform -translate-x-full border-r sm:translate-x-0 bg-gray-800 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
 
-      <Sidebar aria-label="Default sidebar example" className="-mt-2 h-dvh" >
+      <Sidebar aria-label="Default sidebar example" className="-mt-4 h-dvh" >
         <Sidebar.Items >
           <Sidebar.ItemGroup>
 
             <Sidebar.Item as={Link} to="/home" icon={HiChartPie} label="" labelColor="dark" className={location.pathname === "/home" ? "flex items-center p-2 rounded-lg  bg-blue-500 dark:bg-blue-900 dark:text-white text-gray-900  hover:bg-blue-500 dark:hover:bg-blue-900 " : "flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-blue-200 dark:hover:bg-blue-700 group"}>
-              Dashboard
+              Inicio
             </Sidebar.Item>
             <Sidebar.Item as={Link} to="/clientes" icon={ClientsIcon} label="" labelColor="dark" className={location.pathname === "/clientes" ? "flex items-center p-2 rounded-lg  bg-blue-500 dark:bg-blue-900 dark:text-white text-gray-900 hover:bg-blue-500 dark:hover:bg-blue-900" : "flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-blue-200 dark:hover:bg-blue-700 group"}>
               Clientes
@@ -35,7 +35,7 @@ function SidebarApp() {
             <Sidebar.Item as={Link} to="/ayuda" icon={AyudaIcon} label="" className={location.pathname === "/ayuda" ? "flex items-center p-2 rounded-lg  bg-blue-500 dark:bg-blue-900 dark:text-white text-gray-900 hover:bg-blue-500 dark:hover:bg-blue-900" : "flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-blue-200 dark:hover:bg-blue-700 group"}>
               Ayuda
             </Sidebar.Item>
-            <Sidebar.Item href="#" onClick={logout} icon={CerrarSeccionIcon} className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-red-200 dark:hover:bg-red-700 group">
+            <Sidebar.Item  onClick={logout} icon={CerrarSeccionIcon} className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-red-200 dark:hover:bg-red-700 group">
               Cerrar Sesion
             </Sidebar.Item>
             <Sidebar.CTA>
