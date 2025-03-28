@@ -110,9 +110,9 @@ const LineChart = () => {
     };
 
     return (
-        <div className="flex items-center justify-center p-3 rounded-lg bg-white border shadow border-gray-200 dark:border-gray-700 dark:bg-gray-800" 
-             style={{ width: "100%", height: `${chartHeight}px` }}>
-            <div style={{ width: "100%", height: "100%" }}>
+        <div className="flex items-center justify-center p-3 rounded-lg bg-white  border shadow border-gray-200 dark:border-gray-700 dark:bg-gray-800"
+            style={{ width: "100%", height: `${chartHeight}px` }}>
+            <div className="h-full w-full">
                 <Line data={data} options={options} />
             </div>
         </div>

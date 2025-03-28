@@ -11,15 +11,15 @@ export const ThemeProvider = ({ children }) => {
         return savedTheme || (prefersDark ? "dark" : "light");
     });
 
-    useEffect(() => {
+    useEffect(() => {// Cambiar el tema en el DOM al cambiar el estado
         const html = document.documentElement;
 
-        const applyTheme = (currentTheme) => {
-            html.classList.remove("light", "dark");
-            if (currentTheme === "system") {
+        const applyTheme = (currentTheme) => { // Remover clases existentes y agregar la clase del tema actual
+            html.classList.remove("light", "dark"); // Remover clases existentes 
+            if (currentTheme === "system") { // Si el tema es el sistema, obtener el tema del sistema y aplicarlo al HTML
                 const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
                 html.classList.add(prefersDark ? "dark" : "light");
-            } else {
+            } else { // Si el tema es claro u oscuro, aplicarlo al HTML
                 html.classList.add(currentTheme);
             }
         };

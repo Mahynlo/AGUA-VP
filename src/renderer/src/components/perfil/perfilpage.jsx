@@ -20,7 +20,7 @@ function PerfilPage() {
                                 src={AvatarPerfil}
                             />
                         </div>
-                        <h1 className="text-gray-900 font-bold text-xl leading-8 my-1 dark:text-white">Bonnie Green</h1>
+                        <h1 className="text-gray-900 font-bold text-3xl leading-8 my-1 dark:text-white">Jane</h1>
                         
                         <ul
                             className="bg-gray-200 text-gray-600 hover:text-gray-700 dark:bg-gray-700 dark:text-white hover:shadow py-2 px-3 mt-3 divide-y rounded shadow-sm">
@@ -33,6 +33,7 @@ function PerfilPage() {
                                 <span className="ml-auto">Nov 07, 2016</span>
                             </li>
                         </ul>
+                        <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 mt-4 rounded-md shadow-sm">Editar Perfil</button>
                     </div>
 
 
@@ -51,20 +52,20 @@ function PerfilPage() {
                             <span className="tracking-wide">Mi Cuenta</span>
                         </div>
                         <div className="text-gray-700 dark:text-white">
-                            <div className="grid md:grid-cols-2 text-sm">
+                            <div className="text-sm">
                                 <div className="grid grid-cols-2">
                                     <div className="px-4 py-2 font-semibold">Nombres:</div>
-                                    <div className="px-4 py-2">Jane</div>
+                                    <div className="py-2">Jane</div>
                                 </div>
                                 <div className="grid grid-cols-2">
                                     <div className="px-4 py-2 font-semibold">Apellidos:</div>
-                                    <div className="px-4 py-2">Doe</div>
+                                    <div className="py-2">Doe</div>
                                 </div>
                             
 
                                 <div className="grid grid-cols-2">
                                     <div className="px-4 py-2 font-semibold">Correo electronico:</div>
-                                    <div className="px-4 py-2">
+                                    <div className="py-2">
                                         <a className="text-blue-800 dark:text-blue-300" href="mailto:jane@example.com">{user.correo}</a>
                                     </div>
                                 </div>
