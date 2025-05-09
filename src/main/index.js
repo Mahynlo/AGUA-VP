@@ -56,7 +56,7 @@ function createWindow() {
     setTimeout(() => {
       splash.destroy();       // Cierra la pantalla de carga
       mainWindow.show();      // Muestra la app
-    }, 1500); // duración mínima del splash
+    }, 3500); // duración mínima del splash
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
