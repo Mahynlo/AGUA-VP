@@ -33,7 +33,7 @@ function createWindow() {
     show: true // Mostrar la pantalla de inicio
   });
 
-  splash.loadFile(join(__dirname, '../renderer/splash.html'));
+  splash.loadFile(join(__dirname, '../../src/renderer/splash.html')); // Carga el archivo HTML del splash
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
