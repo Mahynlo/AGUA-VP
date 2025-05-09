@@ -10,7 +10,7 @@ import {
     SelectItem,
 } from "@nextui-org/react";
 import { useState } from "react";
-import { AgregarClienteIcon } from "../../../IconsApp/IconsSidebar";
+import { AgregarClienteIcon } from "../../../IconsApp/IconsClientes";
 import { useAuth } from "../../../context/AuthContext";
 import { useClientes } from "../../../context/ClientesContext";
 
@@ -83,13 +83,14 @@ export default function RegistrarClientes() {
                 className="ml-2 min-w-[50px] px-8 py-2"
                 onPress={onOpen}
             >
-                <AgregarClienteIcon />
+                <AgregarClienteIcon/>
                 Nuevo Cliente
             </Button>
 
             <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl" backdrop="transparent"
                 scrollBehavior="inside"
-                
+                isDismissable={false}
+                isKeyboardDismissDisabled={true}
                 classNames={{
                     header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
                     footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",

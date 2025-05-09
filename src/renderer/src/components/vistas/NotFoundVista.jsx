@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@nextui-org/react";
-
+import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
 const NotFoundVista = () => {
     const navigate = useNavigate(); // Hook de navegación
 
@@ -18,36 +18,14 @@ const NotFoundVista = () => {
                     to="/home"
                     className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-gray-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-gray-200 px-4 py-2 mt-6 rounded transition duration-150"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                    >
-                        <path
-                            fillRule="evenodd"
-                            d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
-                            clipRule="evenodd"
-                        ></path>
-                    </svg>
+                    <FlechaReturnIcon className="w-6 h-6" />
                     Return Home
                 </Button>
                 <Button
                     onClick={() => navigate(-1)}
                     className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-gray-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-gray-200 px-4 py-2 mt-6 rounded transition duration-150"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                    >
-                        <path
-                            fillRule="evenodd"
-                            d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
-                            clipRule="evenodd"
-                        ></path>
-                    </svg>
+                    <FlechaReturnIcon className="w-6 h-6" />
                     Return to Previous Page
                 </Button>
             </div>

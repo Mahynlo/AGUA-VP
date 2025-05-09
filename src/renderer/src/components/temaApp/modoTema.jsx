@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
-import { ModoClaroIcon, ModoOscuroIcon, ModoSistemaIcon } from "../../IconsApp/IconsSidebar";
+import { ModoClaroIcon, ModoOscuroIcon, ModoSistemaIcon } from "../../IconsApp/IconsAppSystem";
 
 function ModoTema() {
     const [theme, setTheme] = useState(() => {
@@ -45,29 +45,29 @@ function ModoTema() {
                 <Button>
                     {theme === "light" && (
                         <>
-                            <ModoClaroIcon /> Claro
+                            <ModoClaroIcon className="w-6 h-6"/> Claro
                         </>
                     )}
                     {theme === "dark" && (
                         <>
-                            <ModoOscuroIcon /> Oscuro
+                            <ModoOscuroIcon className="w-6 h-6"/> Oscuro
                         </>
                     )}
                     {theme === "system" && (
                         <>
-                            <ModoSistemaIcon /> Sistema
+                            <ModoSistemaIcon className="w-6 h-6"/> Sistema
                         </>
                     )}
                 </Button>
             </DropdownTrigger>
             <DropdownMenu aria-label="Cambiar tema">
-                <DropdownItem key="light" onClick={() => setTheme("light")} startContent={<ModoClaroIcon />} isSelected={theme === "light"}>
+                <DropdownItem key="light" onClick={() => setTheme("light")} startContent={<ModoClaroIcon className="w-6 h-6" />} isSelected={theme === "light"}>
                     Claro
                 </DropdownItem>
-                <DropdownItem key="dark" onClick={() => setTheme("dark")} startContent={<ModoOscuroIcon />} isSelected={theme === "dark"}>
+                <DropdownItem key="dark" onClick={() => setTheme("dark")} startContent={<ModoOscuroIcon className="w-6 h-6" />} isSelected={theme === "dark"}>
                     Oscuro
                 </DropdownItem>
-                <DropdownItem key="system" onClick={() => setTheme("system")} startContent={<ModoSistemaIcon />} isSelected={theme === "system"}>
+                <DropdownItem key="system" onClick={() => setTheme("system")} startContent={<ModoSistemaIcon className="w-6 h-6" />} isSelected={theme === "system"}>
                     Sistema
                 </DropdownItem>
             </DropdownMenu>

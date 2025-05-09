@@ -3,7 +3,7 @@ import { Avatar } from "@nextui-org/avatar";
 import AvatarPerfil from '../../assets/images/Avatar.png'
 import { useAuth } from "../../context/AuthContext";
 function PerfilPage() {
-    const { user } = useAuth();
+    const { user,sesiones } = useAuth();
     return (
 
         <div className="p-4 sm:ml-64 pt-20 dark:bg-gray-900  min-h-screen">
@@ -90,26 +90,33 @@ function PerfilPage() {
                                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                     </span>
-                                    <span className="tracking-wide">Inicios de secion</span>
+                                    <span className="tracking-wide">Inicios de sesión</span>
                                 </div>
-                                <ul className="list-inside space-y-2">
-                                    <li>
-                                        <div className="text-teal-600 dark:text-teal-300">Inicio de Seccion</div>
-                                        <div className="text-gray-500 text-xs dark:text-white">March 2020 - Now</div>
-                                    </li>
-                                    <li>
-                                        <div className="text-teal-600 dark:text-teal-300">Inicio de Seccion</div>
-                                        <div className="text-gray-500 text-xs dark:text-white">March 2020 - Now</div>
-                                    </li>
-                                    <li>
-                                        <div className="text-teal-600 dark:text-teal-300">Inicio de Seccion</div>
-                                        <div className="text-gray-500 text-xs dark:text-white">March 2020 - Now</div>
-                                    </li>
-                                    <li>
-                                        <div className="text-teal-600 dark:text-teal-300">Inicio de Seccion</div>
-                                        <div className="text-gray-500 text-xs dark:text-white">March 2020 - Now</div>
-                                    </li>
-                                </ul>
+                                {sesiones.length > 0 ? (
+                                    <ul className="list-inside space-y-2">
+                                    {sesiones.map((sesion, index) => (
+                                      <li key={index}>
+                                        <div className="text-teal-600 dark:text-teal-300">🖥️{sesion.dispositivo}</div>
+                                        <div className="text-gray-500 text-xs pl-8  dark:text-white">
+                                         
+                                          {new Date(sesion.fecha_inicio).toLocaleString("es-MX", {
+                                            day: "2-digit",
+                                            month: "2-digit",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            second: "2-digit",
+                                            hour12: false,
+                                          })}
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  
+                                ) :
+                                    <div className="text-gray-500 text-xs dark:text-white">No hay inicios de sesión registrados.</div>
+                                }
+                                
                             </div>
                             <div>
                                 <div className="flex items-center space-x-2 font-semibold text-gray-900 leading-8 mb-3 dark:text-white">

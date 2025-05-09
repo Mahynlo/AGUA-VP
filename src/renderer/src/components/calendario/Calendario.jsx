@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-
+import { FlechaIzquierdaIcon, FlechaDerechaIcon } from "../../IconsApp/IconsAppSystem";
+import { CalendarioHomeIcon } from "../../IconsApp/IconsHome";
 // Definición de eventos
 const events = {
     "2025-03-10": [{ time: "09:30 pm", title: "Products Introduction Meeting" }],
@@ -10,16 +11,23 @@ const events = {
     "2025-03-15": [
         { time: "05:00 pm", title: "Product test and acceptance" },
         { time: "06:30 pm", title: "Reporting" }
-    ]
+    ],
+    "2025-05-20": [
+        { time: "10:00 am", title: "Se venden tamales de carne" },
+        { time: "01:00 pm", title: "Tambien de Elote" }
+    ],
 };
 
 const CalendarComponent = () => {
     const [selectedDate, setSelectedDate] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
-    const handleDateChange = (date) => {
-        setSelectedDate(date);
+
+    const handleDateChange = (dateString) => {
+        setSelectedDate(dateString);
     };
+
+
 
     const getDaysInMonth = (date) => {
         const days = [];
@@ -75,62 +83,100 @@ const CalendarComponent = () => {
     const daysInMonth = getDaysInMonth(currentMonth);
 
     return (
-        <div className="flex">
+        <div className="flex w-full h-full">
             {/* Calendario */}
-            <div className="w-2/3 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border">
-                <div className="flex justify-between items-center mb-4">
-                    <button onClick={() => changeMonth(-1)} className="p-2 text-gray-700 dark:text-gray-300">
-                        {"<"}
-                    </button>
-                    <h2 className="text-xl font-bold text-gray-700 dark:text-gray-100">
-                        {currentMonth.toLocaleString("default", { month: "long" })} {currentMonth.getFullYear()}
-                    </h2>
-                    <button onClick={() => changeMonth(1)} className="p-2 text-gray-700 dark:text-gray-300">
-                        {">"}
-                    </button>
-                </div>
+            <div className="flex w-full h-full">
+                {/* Calendario */}
+                <div className="w-full p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg  flex flex-col h-full min-h-[250px] max-h-[90vh]">
+                    {/*Titulo del calaendario e icono */}
+                    <div className="flex justify-between items-start">
+                        <div className="flex flex-col">
+                            <p className="text-3xl text-gray-600 dark:text-gray-100  font-bold tracking-wide">Calendario</p>
 
-                {/* Días de la semana */}
-                <div className="grid grid-cols-7 gap-2 text-center font-semibold text-gray-700 dark:text-gray-100">
-                    {["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"].map((day) => (
-                        <div key={day} className="py-2">{day}</div>
-                    ))}
-                </div>
+                        </div>
+                        <div className="bg-orange-500 p-2 md:p-1 xl:p-2 rounded-md text-white h-full">
+                            <CalendarioHomeIcon className="h-6 w-6" />
+                        </div>
+                    </div>
 
-                {/* Días del mes */}
-                <div className="grid grid-cols-7 gap-2">
-                    {daysInMonth.map(({ date, currentMonth }, index) => {
-                        const dateString = date.toISOString().split("T")[0];
+                    <div className="flex justify-between items-center mb-4 h-[40px] mt-4">
 
-                        return (
-                            <div
-                                key={index}
-                                className={`text-center p-2 rounded-lg cursor-pointer transition-all
-                                    ${
-                                        currentMonth
+                        <button onClick={() => changeMonth(-1)} className="p-2 text-gray-700 bg-gray-300 dark:bg-gray-800  dark:text-gray-300 border border-gray-300 rounded-full">
+                            <FlechaIzquierdaIcon className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-xl font-bold text-gray-700 dark:text-gray-100">
+                            {currentMonth.toLocaleString("default", { month: "long" })} {currentMonth.getFullYear()}
+                        </h2>
+                        <button onClick={() => changeMonth(1)} className="p-2 text-gray-700 bg-gray-300 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 rounded-full">
+                            <FlechaDerechaIcon className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    {/* Días de la semana */}
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-100 h-[30px]">
+
+
+                        {["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"].map((day) => (
+                            <div key={day} className="py-2">{day}</div>
+                        ))}
+                    </div>
+
+                    {/* Días del mes */}
+                    <div className="grid grid-cols-7 gap-1 sm:gap-2  flex-1 overflow-auto ">
+
+                        {daysInMonth.map(({ date, currentMonth }, index) => {
+                            const dateString = date.toISOString().split("T")[0];
+
+                            return (
+                                <div
+                                    key={index}
+                                    className={`w-full  flex  p-4 rounded-lg cursor-pointer transition-all
+                                                    ${currentMonth
                                             ? isToday(date)
-                                                ? "bg-green-500 text-white font-bold" // Día actual resaltado
+                                                ? "bg-green-500 text-white font-bold " // Día actual resaltado
                                                 : hasEvent(date)
-                                                    ? "bg-blue-500 text-white"
-                                                    : "bg-transparent"
-                                            : "text-gray-400 dark:text-gray-500" // Días del mes anterior/siguiente
-                                    }
-                                    hover:bg-blue-200 dark:hover:bg-blue-500
-                                `}
-                                onClick={() => handleDateChange(dateString)}
-                            >
-                                {date.getDate()}
-                            </div>
-                        );
-                    })}
+                                                    ? "bg-blue-500 text-white" // Día con evento
+                                                    : "bg-transparent border-2 border-gray-200 dark:border-slate-700" // Días del mes actual 
+                                            : "text-gray-400 dark:text-gray-500 bg-gray-200  dark:bg-gray-700" // Días del mes anterior/siguiente
+                                        }
+                                                    hover:bg-blue-200 hover:text-gray-700 dark:hover:bg-blue-400 dark:hover:text-white
+                                                `}
+                                    onClick={() => handleDateChange(dateString)}
+                                >
+                                    <div className="flex flex-col">
+                                        <span className="text-lg">{date.getDate()}</span>
+                                        {hasEvent(date) && (
+                                            <span className="text-xs text-gray-200 dark:text-gray-200 bg-green-600 rounded-full px-2 py-1 ">
+                                                {events[dateString].length} evento{events[dateString].length > 1 ? "s" : ""}
+                                            </span>
+                                        )}
+                                    </div>
+
+
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
+
+
             </div>
 
             {/* Lista de eventos */}
             <div className="w-1/3 ml-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border ">
                 <h2 className="text-xl font-bold text-gray-700 dark:text-gray-100 mb-4">
-                    {selectedDate ? selectedDate : "Seleccione una fecha"}
+                    {selectedDate ? (() => {
+                        const [year, month, day] = selectedDate.split("-");
+                        const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+                        return localDate.toLocaleDateString("es-ES", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                        });
+                    })() : "Selecciona una fecha"}
                 </h2>
+
 
                 {selectedDate && events[selectedDate] ? (
                     <ul className="space-y-3">
@@ -146,7 +192,7 @@ const CalendarComponent = () => {
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-gray-500">No events for this day.</p>
+                    <p className="text-gray-500">No Hay eventos para este dia.</p>
                 )}
             </div>
         </div>

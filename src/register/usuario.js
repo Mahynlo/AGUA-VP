@@ -1,10 +1,11 @@
 import { db } from '../db/Cliente.js'; // Importa la base de datos SQLite
+import bcrypt from 'bcryptjs';
 
 /**************************************************************************************************************
  * registro de usuario
  * ************************************************************************************************************
  */
-// 📌 Función para registrar usuarios
+// Función para registrar usuarios
 const registerUser = async (correo, contrasena, username, rol) => {
     const hashedPassword = await bcrypt.hash(contrasena, 10);
   

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Line } from "react-chartjs-2";
 import {
     Chart as ChartJS,
@@ -14,35 +14,6 @@ import {
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Title);
 
 const LineChart = () => {
-    const [chartHeight, setChartHeight] = useState(600); // Altura inicial
-
-    // Función para calcular el tamaño basado en el zoom de la pantalla
-    const updateChartHeight = () => {
-        const zoomLevel = window.devicePixelRatio; // Obtiene el zoom del sistema
-        let newHeight = 600; // Altura por defecto al 100%
-
-        if (zoomLevel >= 1.25) {
-            newHeight = 388; // Ajuste para 125%
-        } else if (zoomLevel < 1.25 && zoomLevel >= 1) {
-            newHeight = 600; // Ajuste para 100%
-        }
-
-        setChartHeight(newHeight);
-    };
-
-    useEffect(() => {
-        updateChartHeight(); // Ajuste inicial
-
-        // Detectar cambios en el zoom o tamaño de la ventana
-        window.addEventListener("resize", updateChartHeight);
-        window.addEventListener("devicePixelRatioChange", updateChartHeight);
-
-        return () => {
-            window.removeEventListener("resize", updateChartHeight);
-            window.removeEventListener("devicePixelRatioChange", updateChartHeight);
-        };
-    }, []);
-
     const data = {
         labels: [
             "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -110,9 +81,8 @@ const LineChart = () => {
     };
 
     return (
-        <div className="flex items-center justify-center p-3 rounded-lg bg-white  border shadow border-gray-200 dark:border-gray-700 dark:bg-gray-800"
-            style={{ width: "100%", height: `${chartHeight}px` }}>
-            <div className="h-full w-full">
+        <div className="flex items-center justify-center  p-3 rounded-lg bg-white border shadow border-gray-200 dark:border-gray-700 dark:bg-gray-800 w-full h-full">
+            <div className="relative w-full h-full">
                 <Line data={data} options={options} />
             </div>
         </div>
@@ -120,4 +90,5 @@ const LineChart = () => {
 };
 
 export default LineChart;
+
 

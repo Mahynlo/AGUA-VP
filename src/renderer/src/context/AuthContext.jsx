@@ -6,6 +6,21 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null); // Inicializamos en `null` para indicar que no hay un usuario.
     const navigate = useNavigate(); // Hook para redirigir a una ruta
+    const [sesiones, setSesiones] = useState([]);
+
+
+    const obtenerSesionesActivas = async (usuarioId) => {
+        try {
+            const response = await window.api.getSession(usuarioId)
+            if (response.success) {
+                setSesiones(response.sesiones);
+            } else {
+                console.error("No se pudieron obtener las sesiones activas:", response.error);
+            }
+        } catch (error) {
+            console.error("Error al obtener sesiones activas:", error);
+        }
+    };
 
     useEffect(() => {
         const storedToken = localStorage.getItem("token");
@@ -15,6 +30,7 @@ export const AuthProvider = ({ children }) => {
                 // Verificamos si los datos decodificados son válidos
                 if (decoded?.id && decoded?.correo && decoded?.rol) {
                     setUser({ id: decoded.id, correo: decoded.correo, rol: decoded.rol });
+                    obtenerSesionesActivas(decoded.id);
                 } else {
                     logout(); // Si no es válido, salimos
                 }
@@ -33,6 +49,7 @@ export const AuthProvider = ({ children }) => {
             // Validamos si el token es válido
             if (decoded?.id && decoded?.correo && decoded?.rol) {
                 setUser({ id: decoded.id, correo: decoded.correo, rol: decoded.rol });
+                obtenerSesionesActivas(decoded.id); // Obtenemos las sesiones activas del usuario
                 // Redirigimos dependiendo del rol
                 navigate(decoded.rol === "administrador" ? "/home" : "/ayuda");
             } else {
@@ -44,9 +61,23 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
+    
+    
+
+    const logout = async () => { // Limpiar el token y el estado del usuario 
+        const token = localStorage.getItem("token");
+
+        if (token) { // Si hay un token, intentamos cerrar sesión en el backend 
+            try {
+                await window.electron.ipcRenderer.invoke("logout", token);
+            } catch (error) {
+                console.error("Error al cerrar sesión:", error);
+            }
+        }
+
         localStorage.removeItem("token"); // Eliminar token del almacenamiento local
         setUser(null); // Limpiar el estado del usuario
+        setSesiones([]); // Limpiar sesiones activas
         navigate("/"); // Redirigir al login
     };
 
@@ -56,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+        <AuthContext.Provider value={{ user, login, logout, isAuthenticated, sesiones }}>
             {children}
         </AuthContext.Provider>
     );

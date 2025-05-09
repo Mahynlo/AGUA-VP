@@ -2,8 +2,9 @@ import logoagua from '../../assets/images/logo_login.png';
 import imagenLogin from '../../assets/images/LoginPrueba.jpg';
 import imagenLogin2 from '../../assets/images/LoginPrueba2.jpg';
 import imagenLogin3 from '../../assets/images/LoginPrueba3.jpg';
-import { Avatar, Button, FloatingLabel, Carousel } from "flowbite-react";
-import { useState } from "react";
+import { Avatar, Button, FloatingLabel, Carousel} from "flowbite-react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-org/react';
+import { useState,useEffect } from "react";
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 function LoginApp() {
@@ -11,8 +12,18 @@ function LoginApp() {
     const [contrasena, setContrasena] = useState("");
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar la contraseña
+    const [correosGuardados, setCorreosGuardados] = useState([]);
+    const [dropdownVisible, setDropdownVisible] = useState(false);
+
+
     const navigate = useNavigate();
     const { user, login, isAuthenticated } = useAuth();
+
+    useEffect(() => {
+        const correos = JSON.parse(localStorage.getItem("correos_anteriores")) || [];
+        setCorreosGuardados(correos);
+    }, []);
+
     // Si el usuario ya está autenticado, lo redirigimos a /home
     if (isAuthenticated()) {
         return <Navigate to="/home" />;
@@ -47,6 +58,13 @@ function LoginApp() {
             console.log("Respuesta del servidor:", response);
 
             if (response.success) {
+                const actual = [...correosGuardados];
+                if (!actual.includes(correo)) {
+                    actual.push(correo);
+                    localStorage.setItem("correos_anteriores", JSON.stringify(actual));
+                    setCorreosGuardados(actual);
+                }
+                
                 //localStorage.setItem("token", response.token);
                 login(response.token);
                 navigate(response.rol === "administrador" ? "/home" : "/ayuda");// Redirigir a home si es administrador o a ayuda si es usuario normal 
@@ -87,16 +105,30 @@ function LoginApp() {
                     <form className="mt-6">
                         <div className="mb-4">
                             <FloatingLabel
-                                variant="standard"
+                                variant="filled"
                                 label="Correo"
+                                labelClassName="text-gray-700 dark:text-gray-200"
                                 value={correo}
                                 onChange={(e) => setCorreo(e.target.value)}
+                                list='correosGuardados'
+                                autoComplete="on"
+                                
+                                
                             />
+                          
+                            <datalist id='correosGuardados'>
+                                {correosGuardados.map((correoGuardado, index) => (
+                                    <option key={index} value={correoGuardado} />
+                                ))}
+                            </datalist>
+
+                            
                         </div>
+
 
                         <div className="mt-5 relative">
                             <FloatingLabel
-                                variant="standard"
+                                variant="filled"
                                 label="Contrasena"
                                 type={showPassword ? "text" : "password"} // Cambiar tipo dependiendo del estado
                                 value={contrasena}
