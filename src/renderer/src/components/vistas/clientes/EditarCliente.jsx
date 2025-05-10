@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useClientes } from "../../../context/ClientesContext";
-import { EliminarClienteIcon,EditIcon  } from "../../../IconsApp/IconsClientes";
+import { EliminarClienteIcon, EditIcon } from "../../../IconsApp/IconsClientes";
+import { useMedidores } from "../../../context/MedidoresContext";
+import BuscarMedidor from "./BuscarMedidor";
 import {
     Modal,
     ModalContent,
@@ -21,6 +23,7 @@ export default function EditarClientes({ id }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
     const { user } = useAuth();
     const { clientes, loading, actualizarClientes } = useClientes();
+
     //console.log("clientes", clientes);
     const pueblos = [
         { key: "Nacori Grande", label: "Nacori Grande" },
@@ -44,23 +47,25 @@ export default function EditarClientes({ id }) {
     const [estadoCliente, setEstadoCliente] = useState("Activo");
     const [success, setSuccess] = useState("");
     const [error, setError] = useState("");
-    const [valuesmedidores, setValuesmedidores] = useState([]);
+    const [medidorAsignado, setMedidorAsignado] = useState(null);
+
+
+
 
     const cliente = clientes.find((c) => c.id === id); //busca el cliente por id 
     // Cargar datos del cliente cuando se abre el modal
-    useEffect(() => {
-        if (id) {// si el id existe 
-
-            if (cliente) {
-                setNombre(cliente.nombre);
-                setDireccion(cliente.direccion);
-                setTelefono(cliente.telefono);
-                setCiudad(cliente.ciudad);
-                setCorreo(cliente.correo);
-                setEstadoCliente(cliente.estado_cliente);
-            }
+    useEffect(() => { // cuando se abre el modal
+        if (id && cliente) {
+            setNombre(cliente.nombre);
+            setDireccion(cliente.direccion);
+            setTelefono(cliente.telefono);
+            setCiudad(cliente.ciudad);
+            setCorreo(cliente.correo);
+            setEstadoCliente(cliente.estado_cliente);
+            setMedidorAsignado(cliente.id_medidor || null); // Asume que se guarda en esa propiedad
         }
     }, [id, clientes]);
+
 
 
 
@@ -89,6 +94,7 @@ export default function EditarClientes({ id }) {
                 },
                 datosAnteriores: cliente, // O los datos que tenías antes de editar
                 modificado_por: user.id,
+                medidor_id: medidorAsignado ?? null, // Asignar el medidor seleccionado
             });
 
             //console.log(response);
@@ -109,7 +115,9 @@ export default function EditarClientes({ id }) {
 
     const handleSelectionChange = (e) => {
         setValuesmedidores(new Set(e.target.value.split(",")));
-      };
+    };
+
+
 
 
     return (
@@ -148,6 +156,9 @@ export default function EditarClientes({ id }) {
                                 {error && <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
 
                                 <form onSubmit={(e) => { e.preventDefault(); handleActualizarCliente(); }}>
+                                    <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
+                                        Información del Cliente
+                                    </div>
                                     <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
                                         <div>
                                             <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombres</label>
@@ -209,60 +220,45 @@ export default function EditarClientes({ id }) {
                                             />
                                         </div>
                                     </div>
+                                    <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
+                                        Asignar medidor
+                                    </div>
+                                    <BuscarMedidor
+                                        clienteId={id}
+                                        medidorAsignado={medidorAsignado} // si lo soporta
+                                        onMedidorSeleccionado={(medidorId) => {
+                                            setMedidorAsignado(medidorId); // puede ser null si lo desasigna
+                                        }}
+                                    />
+
+
+
+                                    <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
+                                        Eliminar Cliente
+                                    </div>
+                                    <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
+
+
+                                        <Checkbox defaultSelected={false}>Estas Segro que deseas borrar el cliente?</Checkbox>
+                                        <div>
+                                            <Tooltip color="danger" content="Eliminar" delay={3000}>
+                                                <Button aria-label="Eliminar" color="danger" variant="faded">
+                                                    <EliminarClienteIcon /> Eliminar
+                                                </Button>
+                                            </Tooltip>
+                                            <p className="mt-3">Se elminiara al usuario y su informacion de registro existente en la base de datos.</p>
+                                        </div>
+
+                                    </div>
 
                                     <button
                                         type="submit"
-                                        className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5"
+                                        className="text-white bg-blue-700  hover:bg-blue-800 font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5"
                                     >
                                         {id ? "Actualizar" : "Registrar"}
                                     </button>
                                 </form>
 
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
-                                    Asignar medidor
-                                </div>
-                                <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
-
-                                    
-
-                                    <Select
-                                        className="max-w-xs border rounded-xl border-gray-300"
-                                       
-                                        placeholder="Select an animal"
-                                        aria-label="Select an animal"
-                                        selectedKeys={valuesmedidores}
-                                        selectionMode="multiple"
-                                        onChange={handleSelectionChange}
-                                    >
-                                        {medidores.map((medidor) => (
-                                            <SelectItem key={medidor.key}>{medidor.label}</SelectItem>
-                                        ))}
-                                    </Select>
-                                    <p>
-                                        Selecciona un medidor disponible en el pueblo del cliente para asignarle un medidor.
-                                    </p>
-                                    <p className="text-small text-default-500">Selected: {Array.from(valuesmedidores).join(", ")}</p>
-                                    
-                                    
-                                </div>
-
-                                <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
-                                    Eliminar Cliente
-                                </div>
-                                <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
-
-
-                                    <Checkbox defaultSelected={false}>Estas Segro que deseas borrar el cliente?</Checkbox>
-                                    <div>
-                                        <Tooltip color="danger" content="Eliminar" delay={3000}>
-                                            <Button aria-label="Eliminar" color="danger" variant="faded">
-                                                <EliminarClienteIcon /> Eliminar
-                                            </Button>
-                                        </Tooltip>
-                                        <p className="mt-3">Se elminiara al usuario y su informacion de registro existente en la base de datos.</p>
-                                    </div>
-
-                                </div>
 
                             </ModalBody>
                             <ModalFooter className="bg-gray-300 dark:bg-gray-700">

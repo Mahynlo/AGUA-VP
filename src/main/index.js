@@ -57,7 +57,7 @@ function createWindow() {
   }
 
   // Abrir las herramientas de desarrollo
-  //mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
   // Iniciar la búsqueda de actualizaciones después de que la ventana esté lista
   setTimeout(() => {
     checkForUpdates(mainWindow)
@@ -150,7 +150,7 @@ ipcMain.handle("fetch-medidores", async () => {  // Usa ipcMain.handle en lugar 
 
 // 📌 Manejar la actualización de un cliente
 ipcMain.handle("update-cliente", async (event, data) => {
-  return await updateCliente(data.id, data.nuevosDatos, data.datosAnteriores, data.modificado_por);
+  return await updateCliente(data.id, data.nuevosDatos, data.datosAnteriores, data.modificado_por,data.medidor_id);
 });
 
 

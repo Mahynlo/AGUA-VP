@@ -50,7 +50,7 @@ export function Config() {
                                 <Card className="w-80 mt-2 block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 ">
                                     <CardBody>
                                         <p className="text-xl">Info Aplicacion</p>
-                                        v 1.1.3
+                                        v 1.1.4
                                       
                                     </CardBody>
                                 </Card>
