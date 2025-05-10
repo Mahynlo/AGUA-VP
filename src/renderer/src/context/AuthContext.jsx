@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null); // Inicializamos en `null` para indicar que no hay un usuario.
     const navigate = useNavigate(); // Hook para redirigir a una ruta
     const [sesiones, setSesiones] = useState([]);
+    const [loading, setLoading] = useState(true); // Estado para manejar la carga
 
 
     const obtenerSesionesActivas = async (usuarioId) => {
@@ -26,18 +27,21 @@ export const AuthProvider = ({ children }) => {
         const storedToken = localStorage.getItem("token");
         if (storedToken) {
             try {
-                const decoded = JSON.parse(atob(storedToken.split(".")[1])); // Decodificar el payload del JWT
-                // Verificamos si los datos decodificados son válidos
+                const decoded = JSON.parse(atob(storedToken.split(".")[1]));
                 if (decoded?.id && decoded?.correo && decoded?.rol) {
                     setUser({ id: decoded.id, correo: decoded.correo, rol: decoded.rol });
-                    obtenerSesionesActivas(decoded.id);
+                    obtenerSesionesActivas(decoded.id).finally(() => setLoading(false));
                 } else {
-                    logout(); // Si no es válido, salimos
+                    logout();
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error("Error al decodificar el token", error);
-                logout(); // Si no se puede decodificar el token, salimos
+                logout();
+                setLoading(false);
             }
+        } else {
+            setLoading(false);
         }
     }, []);
 
@@ -61,8 +65,8 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    
-    
+
+
 
     const logout = async () => { // Limpiar el token y el estado del usuario 
         const token = localStorage.getItem("token");
@@ -87,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated, sesiones }}>
+        <AuthContext.Provider value={{ user, login, logout, isAuthenticated, sesiones, loading}}>
             {children}
         </AuthContext.Provider>
     );

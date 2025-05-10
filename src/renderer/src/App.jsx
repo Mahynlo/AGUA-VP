@@ -25,6 +25,9 @@ import Tarifas from "./components/vistas/TarifasVista";
 //Impresion de recibos
 import Recibo from "./components/recibo/Recibo";
 import ReporteLecturas from "./components/recibo/ReporteLecturas";
+
+import { useAuth } from "./context/AuthContext";
+import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
 function App() {
   return (
     <Router>
@@ -44,6 +47,14 @@ function MainApp() {
   const location = useLocation(); 
   const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo','/reporteLecturas']; // Rutas donde no se muestra el sidebar 
   const hideNavbarRoutes = ['/recibo','/reporteLecturas']; // Rutas donde no se muestra el navbar
+
+  const { loading } = useAuth(); 
+
+
+  // Si está cargando, no mostrar el Sidebar ni el Navbar
+  if (loading) {
+    return <PantallaCarga tiempo={4000} />; // Aquí puedes colocar un componente de carga mientras esperas
+  }
 
   return (
     <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>

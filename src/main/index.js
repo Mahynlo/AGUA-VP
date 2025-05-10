@@ -21,20 +21,7 @@ import { fetchClientes } from '../fetch/clientes.js'; // Importa la función fet
 import { fetchMedidores } from '../fetch/medidores.js' // Importa la función fetchMedidores
 
 function createWindow() {
-  // Splash screen
-  const splash = new BrowserWindow({
-    width: 400, // Ancho de la pantalla de inicio
-    height: 300, // Altura de la pantalla de inicio
-    frame: false, // Sin marco
-    transparent: true, // Fondo transparente
-    alwaysOnTop: true, // Siempre en la parte superior
-    resizable: false, // No redimensionable
-    center: true, // Centrar la pantalla de inicio
-    show: true // Mostrar la pantalla de inicio
-  });
-
-  splash.loadFile(join(__dirname, '../../src/renderer/splash.html')); // Carga el archivo HTML del splash
-
+  
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1200, // Ancho inicial 
@@ -53,10 +40,7 @@ function createWindow() {
   })
 
   mainWindow.on('ready-to-show', () => { // Mostrar la ventana cuando esté lista 
-    setTimeout(() => {
-      splash.destroy();       // Cierra la pantalla de carga
-      mainWindow.show();      // Muestra la app
-    }, 3500); // duración mínima del splash
+    mainWindow.show();      // Muestra la app
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -73,7 +57,7 @@ function createWindow() {
   }
 
   // Abrir las herramientas de desarrollo
-  mainWindow.webContents.openDevTools();
+  //mainWindow.webContents.openDevTools();
   // Iniciar la búsqueda de actualizaciones después de que la ventana esté lista
   setTimeout(() => {
     checkForUpdates(mainWindow)
