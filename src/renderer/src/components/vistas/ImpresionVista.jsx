@@ -37,14 +37,14 @@ const Impresion = () => {
 
   return (
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="w-full h-full bg-white overflow-x-hidden gap-4 p-4 rounded-lg shadow-md dark:bg-gray-800">
+        <div className="text-2xl font-bold text-gray-900 dark:text-white">
         <Button color="gray" className="mb-4" onClick={() => navigate(-1)}>
           <FlechaReturnIcon className="w-6 h-6" />
           <span className="mr-2">Volver</span>
         </Button>
         Impresion
       </div>
-
       <div>
         <h1>Impresión y Vista Previa</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
@@ -65,6 +65,10 @@ const Impresion = () => {
         </Link>
 
       </div>
+      </div>
+      
+
+      
     </div>
   );
 };

@@ -1,94 +1,145 @@
 import React from "react";
-import { Line } from "react-chartjs-2";
-import {
-    Chart as ChartJS,
-    LineElement,
-    PointElement,
-    CategoryScale,
-    LinearScale,
-    Tooltip,
-    Legend,
-    Title,
-} from "chart.js";
-
-ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Title);
+import Chart from "react-apexcharts";
 
 const LineChart = () => {
-    const data = {
-        labels: [
-            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-        ],
-        datasets: [
-            {
-                label: "Consumo Nacori Grande",
-                data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240],
-                borderColor: "rgba(75, 192, 192, 1)",
-                backgroundColor: "rgba(75, 192, 192, 0.2)",
-                borderWidth: 2,
-                tension: 0.4,
-            },
-            {
-                label: "Consumo Matape",
-                data: [110, 140, 90, 180, 230, 290, 200, 180, 210, 260, 240, 220],
-                borderColor: "rgba(54, 162, 235, 1)",
-                backgroundColor: "rgba(54, 162, 235, 0.2)",
-                borderWidth: 2,
-                tension: 0.4,
-            },
-            {
-                label: "Consumo Adivino",
-                data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720],
-                borderColor: "rgb(54, 235, 117)",
-                backgroundColor: "rgba(255, 255, 255, 0.2)",
-                borderWidth: 2,
-                tension: 0.4,
-            },
-        ],
-    };
+  const series = [
+    {
+      name: "Consumo Nacori Grande",
+      data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240],
+    },
+    {
+      name: "Consumo Matape",
+      data: [110, 140, 90, 180, 230, 290, 200, 180, 210, 260, 240, 220],
+    },
+    {
+      name: "Consumo Adivino",
+      data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720],
+    },
+  ];
 
-    const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: "top" },
-            title: {
-                display: true,
-                text: "Consumo del Municipio",
-                color: "rgba(75, 192, 192, 1)",
-                font: { size: 20, weight: "bold", family: "Arial" },
-            },
-        },
-        scales: {
-            x: {
-                title: {
-                    display: true,
-                    text: "Meses",
-                    color: "rgba(75, 192, 192, 1)",
-                    font: { size: 16, weight: "bold", family: "Arial" },
-                },
-            },
-            y: {
-                title: {
-                    display: true,
-                    text: "Consumo (metros cúbicos)",
-                    color: "rgba(75, 192, 192, 1)",
-                    font: { size: 16, weight: "bold", family: "Arial" },
-                },
-                beginAtZero: true,
-            },
-        },
-    };
+  // Detectar modo oscuro basándonos en la clase dark del html
+  const isDarkMode = document.documentElement.classList.contains("dark");
 
-    return (
-        <div className="flex items-center justify-center  p-3 rounded-lg bg-white border shadow border-gray-200 dark:border-gray-700 dark:bg-gray-800 w-full h-full">
-            <div className="relative w-full h-full">
-                <Line data={data} options={options} />
-            </div>
-        </div>
-    );
+  const options = {
+    chart: {
+      type: "line",
+      height: "100%",
+      toolbar: {
+        show: true,
+      },
+      zoom: {
+        enabled: true,
+      },
+      background: isDarkMode ? "#1f2937" : "#ffffff", // ejemplo de fondo para el chart
+    },
+    theme: {
+      mode: isDarkMode ? "dark" : "light",
+    },
+    title: {
+      text: "Consumo del Municipio",
+      align: "center",
+      style: {
+        fontSize: "20px",
+        fontWeight: "bold",
+        color: isDarkMode ? "#5eead4" : "rgba(75, 192, 192, 1)", // color título según tema
+        fontFamily: "Arial",
+      },
+    },
+    colors: isDarkMode
+      ? ["#5eead4", "#22d3ee", "#4ade80"] // colores claros para modo oscuro
+      : ["rgba(75, 192, 192, 1)", "rgba(54, 162, 235, 1)", "rgb(54, 235, 117)"],
+    dataLabels: {
+      enabled: false,
+    },
+    stroke: {
+      curve: "smooth",
+      width: 2,
+    },
+    xaxis: {
+      categories: [
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+      ],
+      title: {
+        text: "Meses",
+        style: {
+          fontSize: "16px",
+          fontWeight: "bold",
+          color: isDarkMode ? "#5eead4" : "rgba(75, 192, 192, 1)",
+          fontFamily: "Arial",
+        },
+      },
+      labels: {
+        style: {
+          colors: isDarkMode ? "#cbd5e1" : "#374151", // colores para etiquetas eje X
+        },
+      },
+      axisBorder: {
+        show: true,
+        color: isDarkMode ? "#475569" : "#94a3b8",
+      },
+      axisTicks: {
+        show: true,
+        color: isDarkMode ? "#475569" : "#94a3b8",
+      },
+    },
+    yaxis: {
+      title: {
+        text: "Consumo (metros cúbicos)",
+        style: {
+          fontSize: "16px",
+          fontWeight: "bold",
+          color: isDarkMode ? "#5eead4" : "rgba(75, 192, 192, 1)",
+          fontFamily: "Arial",
+        },
+      },
+      labels: {
+        style: {
+          colors: isDarkMode ? "#cbd5e1" : "#374151",
+        },
+      },
+      min: 0,
+    },
+    legend: {
+      position: "top",
+      horizontalAlign: "center",
+      labels: {
+        colors: isDarkMode ? "#cbd5e1" : "#374151",
+      },
+    },
+    responsive: [
+      {
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: 300,
+          },
+        },
+      },
+    ],
+  };
+
+  return (
+    <div className="flex items-center justify-center p-3 rounded-lg bg-white border shadow border-gray-200 dark:border-gray-700 dark:bg-gray-800 w-full h-full">
+      <div className="relative w-full h-full">
+        <Chart options={options} series={series} type="line" height="100%" width="100%" />
+      </div>
+    </div>
+  );
 };
 
 export default LineChart;
+
+
 
 

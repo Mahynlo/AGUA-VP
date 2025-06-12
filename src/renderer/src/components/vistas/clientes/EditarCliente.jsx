@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useClientes } from "../../../context/ClientesContext";
-import { EliminarClienteIcon, EditIcon } from "../../../IconsApp/IconsClientes";
 import { useMedidores } from "../../../context/MedidoresContext";
+import { EliminarClienteIcon, EditIcon } from "../../../IconsApp/IconsClientes";
 import BuscarMedidor from "./BuscarMedidor";
 import {
     Modal,
@@ -18,11 +18,15 @@ import {
     Checkbox,
 } from "@nextui-org/react";
 
+import FeedbackMessages from "../../toast/FeedbackMessages";
 
 export default function EditarClientes({ id }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
     const { user } = useAuth();
     const { clientes, loading, actualizarClientes } = useClientes();
+    const { actualizarMedidores } = useMedidores();
+    const [isUpdating, setIsUpdating] = useState(false);
+
 
     //console.log("clientes", clientes);
     const pueblos = [
@@ -31,13 +35,11 @@ export default function EditarClientes({ id }) {
         { key: "Adivino", label: "Adivino" },
     ];
 
-
     const medidores = [
         { key: 1, label: "NG-123445" },
         { key: 2, label: "MP-123499" },
         { key: 3, label: "AD-123450" },
     ];
-
 
     const [nombre, setNombre] = useState("shdhdued");
     const [direccion, setDireccion] = useState("");
@@ -48,8 +50,7 @@ export default function EditarClientes({ id }) {
     const [success, setSuccess] = useState("");
     const [error, setError] = useState("");
     const [medidorAsignado, setMedidorAsignado] = useState(null);
-
-
+    const [medidoresLiberados, setMedidoresLiberados] = useState(new Set()); // Usar un Set para evitar duplicados
 
 
     const cliente = clientes.find((c) => c.id === id); //busca el cliente por id 
@@ -67,34 +68,46 @@ export default function EditarClientes({ id }) {
     }, [id, clientes]);
 
 
+    const handleLiberarMedidores = (idsActuales) => {
+        const nuevoSet = new Set(idsActuales);
+        setMedidoresLiberados(nuevoSet);
 
+    };
 
 
     const handleActualizarCliente = async () => {
         setError("");
         setSuccess("");
+        setIsUpdating(true); // activar loading
 
         if (!nombre || !direccion || !telefono || !ciudad || !correo) {
             setError("Todos los campos son obligatorios.");
+            setIsUpdating(false); // desactivar loading
             return;
         }
         //console.log(clientes);
         try {
             let response;
+            const tokensession = localStorage.getItem("token");
+
+            const nuevosDatos = {
+                nombre,
+                direccion,
+                telefono,
+                ciudad,
+                correo,
+                estado_cliente: estadoCliente,
+                // datosAnteriores: cliente, // O los datos que tenías antes de editar
+                modificado_por: user.id,
+                medidor_id: medidorAsignado ?? null, // Asignar el medidor seleccionado
+                medidores_liberados: Array.from(medidoresLiberados), // Convertir Set a Array
+            }
+            console.log("nuevosDatos", nuevosDatos);
             // Actualizar cliente existente con el id cliente informacion anterior y informacion modifca por el usuario y id Usuario
             response = await window.api.updateClient({
                 id,
-                nuevosDatos: {
-                    nombre,
-                    direccion,
-                    telefono,
-                    ciudad,
-                    correo,
-                    estado_cliente: estadoCliente,
-                },
-                datosAnteriores: cliente, // O los datos que tenías antes de editar
-                modificado_por: user.id,
-                medidor_id: medidorAsignado ?? null, // Asignar el medidor seleccionado
+                nuevosDatos: nuevosDatos,
+                token_session: tokensession,  // Asegúrate de tener este valor
             });
 
             //console.log(response);
@@ -103,13 +116,17 @@ export default function EditarClientes({ id }) {
                 setSuccess(id ? "Cliente actualizado correctamente." : "Cliente registrado exitosamente.");
                 setTimeout(() => {
                     onClose();
-                    actualizarClientes();
+                    actualizarClientes(); // Actualizar clientes si es necesario
+                    actualizarMedidores(); // Actualizar medidores si es necesario
+                    setIsUpdating(false); // desactivar al finalizar todo
                 }, 2000);
             } else {
                 setError(response.message);
+                setIsUpdating(false);
             }
         } catch (err) {
             setError("Ocurrió un error. Intenta nuevamente.");
+            setIsUpdating(false);
         }
     };
 
@@ -143,6 +160,7 @@ export default function EditarClientes({ id }) {
                 classNames={{
                     header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
                     footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
+                    closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
             >
                 <ModalContent>
@@ -152,10 +170,14 @@ export default function EditarClientes({ id }) {
                                 {id ? "Editar Cliente" : "Registrar Cliente"}
                             </ModalHeader>
                             <ModalBody className="bg-gray-200 dark:bg-gray-800">
-                                {success && <div className="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">{success}</div>}
-                                {error && <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
+                                <FeedbackMessages
+                                    success={success}
+                                    error={error}
+                                    setSuccess={setSuccess}
+                                    setError={setError}
+                                />
 
-                                <form onSubmit={(e) => { e.preventDefault(); handleActualizarCliente(); }}>
+                                <form id="form-editar-cliente" onSubmit={(e) => { e.preventDefault(); handleActualizarCliente(); }}>
                                     <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
                                         Información del Cliente
                                     </div>
@@ -226,6 +248,7 @@ export default function EditarClientes({ id }) {
                                     <BuscarMedidor
                                         clienteId={id}
                                         medidorAsignado={medidorAsignado} // si lo soporta
+                                        onLiberarMedidor={handleLiberarMedidores}
                                         onMedidorSeleccionado={(medidorId) => {
                                             setMedidorAsignado(medidorId); // puede ser null si lo desasigna
                                         }}
@@ -251,17 +274,30 @@ export default function EditarClientes({ id }) {
 
                                     </div>
 
-                                    <button
-                                        type="submit"
-                                        className="text-white bg-blue-700  hover:bg-blue-800 font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5"
-                                    >
-                                        {id ? "Actualizar" : "Registrar"}
-                                    </button>
+
                                 </form>
 
 
                             </ModalBody>
                             <ModalFooter className="bg-gray-300 dark:bg-gray-700">
+                                <Button
+                                    type="submit"
+                                    color="primary"
+                                    form="form-editar-cliente"
+                                    variant="light"
+                                    isDisabled={isUpdating} // desactiva mientras actualiza
+                                    className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5"
+                                >
+                                    {isUpdating ? (
+                                        <span className="flex items-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                            Procesando...
+                                        </span>
+                                    ) : (
+                                        id ? "Actualizar" : "Registrar"
+                                    )}
+                                </Button>
+
                                 <Button
                                     color="danger"
                                     className="text-white bg-red-700 hover:bg-red-800 font-medium rounded-xl text-sm px-5 py-2.5"

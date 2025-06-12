@@ -11,7 +11,8 @@ export function ClientesProvider({ children }) {
   // Función para obtener los clientes
   async function fetchClientes() {
     try {
-      const data = await window.api.fetchClientes();
+      const token_session = localStorage.getItem("token");
+      const data = await window.api.fetchClientes(token_session);
       setClientes(data);
     } catch (error) {
       console.error("Error al obtener clientes:", error);

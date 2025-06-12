@@ -11,7 +11,8 @@ export function MedidoresProvider({ children }) {
   // Función para obtener todos los medidores
   async function fetchMedidores() {
     try {
-      const data = await window.api.fetchMedidores(); // Asume que tienes expuesta la API en preload
+      const token_session = localStorage.getItem("token");
+      const data = await window.api.fetchMedidores(token_session); // Asume que tienes expuesta la API en preload
       setMedidores(data);
       //console.log("Medidores obtenidos:", data);
 

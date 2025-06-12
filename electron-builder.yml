@@ -13,12 +13,17 @@ asarUnpack:
 win:
   executableName: Agua-vp
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
-  createDesktopShortcut: always
+  oneClick: false #se instalará en una carpeta específica
+  perMachine: true #instalación para todos los usuarios
+  allowElevation: true #permite la elevación de privilegios
+  allowToChangeInstallationDirectory: true #permite cambiar el directorio de instalación
+  createStartMenuShortcut: true #crea un acceso directo en el menú de inicio
+  artifactName: ${name}-${version}-setup.${ext} #nombre del archivo de instalación
+  shortcutName: ${productName} #nombre del acceso directo 
+  uninstallDisplayName: ${productName} #nombre que se mostrará en el desinstalador
+  createDesktopShortcut: always #crea un acceso directo en el escritorio
 mac:
-  entitlementsInherit: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist 
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.

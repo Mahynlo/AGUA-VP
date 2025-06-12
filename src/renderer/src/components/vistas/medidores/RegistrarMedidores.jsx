@@ -11,11 +11,13 @@ import {
 } from "@nextui-org/react";
 import { useState } from "react";
 import { AgregarClienteIcon } from "../../../IconsApp/IconsClientes";
-import {RegistrarMedidorIcon} from "../../../IconsApp/IconsMedior";
+import { RegistrarMedidorIcon } from "../../../IconsApp/IconsMedior";
 import { useClientes } from "../../../context/ClientesContext";
 import { useMedidores } from "../../../context/MedidoresContext";
 import BuscarCliente from "./BuscarCliente";
 
+//para los iconos de los mensajes de feedback
+import FeedbackMessages from "../../toast/FeedbackMessages";
 export default function RegistrarMedidor() {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
     const pueblos = [
@@ -46,31 +48,40 @@ export default function RegistrarMedidor() {
 
     const numeroSerieCompleto = `${ciudad}${numeroSerie}`;
 
+    const [isUpdating, setIsUpdating] = useState(false);
+
     const handleRegistroMedidor = async () => {
         setError("");
         setSuccess("");
+        setIsUpdating(true); // Indica que se está realizando una actualización
 
         // Validaciones de campos
         if (!numeroSerie || !ubicacion || !fechaInstalacion || !latitud || !longitud) {
             setError("Todos los campos son obligatorios.");
+            setIsUpdating(false); // Indica que la actualización ha finalizado
             return;
         }
 
         if (isNaN(parseFloat(latitud)) || isNaN(parseFloat(longitud))) {
             setError("Latitud y longitud deben ser números válidos.");
+            setIsUpdating(false); // Indica que la actualización ha finalizado
             return;
         }
-        
+
 
         try {
+            const tokensession = localStorage.getItem("token");
             const response = await window.api.registerMeter({
-                cliente_id: clienteIdBusqueda || null, // Si no hay cliente seleccionado, se envía null
-                numero_serie: numeroSerieCompleto,
-                ubicacion,
-                fecha_instalacion: fechaInstalacion,
-                latitud,
-                longitud,
-                estado_medidor: estadoMedidor,
+                medidor: {
+                    cliente_id: clienteIdBusqueda || null, // Si no hay cliente seleccionado, se envía null
+                    numero_serie: numeroSerieCompleto,
+                    ubicacion,
+                    fecha_instalacion: fechaInstalacion,
+                    latitud,
+                    longitud,
+                    estado_medidor: estadoMedidor,
+                },
+                token_session: tokensession, // Asegúrate de enviar el token de sesión
             });
 
             //console.log("Respuesta del servidor:", response);
@@ -88,12 +99,15 @@ export default function RegistrarMedidor() {
                     setLongitud("");
                     onClose(); // Cierra el modal automáticamente
                     actualizarMedidores(); // Actualiza la lista de clientes si es necesario
+                    setIsUpdating(false); // Indica que la actualización ha finalizado
                 }, 2000);
             } else {
                 setError(response.message);
+                setIsUpdating(false); // Indica que la actualización ha finalizado
             }
         } catch (err) {
             setError("Ocurrió un error en el registro. Intenta nuevamente.");
+            setIsUpdating(false); // Indica que la actualización ha finalizado
         }
     };
 
@@ -120,6 +134,7 @@ export default function RegistrarMedidor() {
                 classNames={{
                     header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
                     footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
+                    closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
             >
                 <ModalContent>
@@ -129,17 +144,12 @@ export default function RegistrarMedidor() {
                                 Registrar Medidor
                             </ModalHeader>
                             <ModalBody className="bg-gray-200 dark:bg-gray-800">
-                                {success && (
-                                    <div className="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-900 dark:text-green-300">
-                                        {success}
-                                    </div>
-                                )}
-                                {error && (
-                                    <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300">
-                                        {error}
-                                    </div>
-                                )}
-
+                                <FeedbackMessages
+                                    success={success}
+                                    error={error}
+                                    setSuccess={setSuccess}
+                                    setError={setError}
+                                />
                                 <form onSubmit={(e) => { e.preventDefault(); handleRegistroMedidor(); }}>
                                     <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
                                         <div>
@@ -237,20 +247,33 @@ export default function RegistrarMedidor() {
                                         </div>
                                     </div>
 
-                                    <button
-                                        type="submit"
-                                        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700"
-                                    >
-                                        Registrar Medidor
-                                    </button>
+
                                 </form>
                             </ModalBody>
                             <ModalFooter className="bg-gray-300 dark:bg-gray-700">
+                                <Button
+                                    color="primary"
+                                    onClick={handleRegistroMedidor}
+                                    isDisabled={isUpdating}
+                                    variant="light"
+                                    className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700"
+                                >
+                                    {isUpdating ? (
+                                        <span className="flex items-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                            Procesando...
+                                        </span>
+                                    ) : (
+                                        "Registrar Medidor"
+                                    )}
+                                </Button>
+                                
                                 <Button
                                     color="danger"
                                     className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 font-medium rounded-xl text-sm px-5 py-2.5"
                                     variant="light"
                                     onPress={onClose}
+
                                 >
                                     Cancelar
                                 </Button>

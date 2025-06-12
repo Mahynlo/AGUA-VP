@@ -1,6 +1,6 @@
 import { Select, SelectItem, Input } from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
-
+import ClientesRegistradosChart from "../../charts/ClientesRegistrados";
 
 
 export const TabMetricas = () => {
@@ -17,12 +17,7 @@ export const TabMetricas = () => {
     }, []);
 
     return (
-        <div className={`p-3 bg-gray-100 rounded-lg shadow-lg dark:bg-gray-800 dark:text-white ${tableHeight}`}>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Metricas de clientes</h1>
-            
-            
-
-        </div>
+        <ClientesRegistradosChart />
     )
 }
 

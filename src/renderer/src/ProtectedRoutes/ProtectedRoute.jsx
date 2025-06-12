@@ -3,9 +3,17 @@ import { useAuth } from "../context/AuthContext";
 import LoadingVistas from "../components/pantalladecarga/LoadingVistas";
 import { useEffect, useState } from "react";
 
+import { useClientes } from "../context/ClientesContext";
+import { useMedidores } from "../context/MedidoresContext";
+import { useTarifas } from "../context/TarifasContext";
+
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
   const [espera, setEspera] = useState(true);
+
+  const {actualizarClientes} = useClientes();
+  const {actualizarMedidores} = useMedidores();
+  const {actualizarTarifas} = useTarifas();
 
   useEffect(() => {
     const temporizador = setTimeout(() => {

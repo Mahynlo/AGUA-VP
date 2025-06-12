@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -29,7 +30,7 @@ export const AuthProvider = ({ children }) => {
             try {
                 const decoded = JSON.parse(atob(storedToken.split(".")[1]));
                 if (decoded?.id && decoded?.correo && decoded?.rol) {
-                    setUser({ id: decoded.id, correo: decoded.correo, rol: decoded.rol });
+                    setUser({ id: decoded.id,username:decoded.username, correo: decoded.correo, rol: decoded.rol });
                     obtenerSesionesActivas(decoded.id).finally(() => setLoading(false));
                 } else {
                     logout();
@@ -52,7 +53,7 @@ export const AuthProvider = ({ children }) => {
             const decoded = JSON.parse(atob(token.split(".")[1])); // Decodificar token
             // Validamos si el token es válido
             if (decoded?.id && decoded?.correo && decoded?.rol) {
-                setUser({ id: decoded.id, correo: decoded.correo, rol: decoded.rol });
+                setUser({ id: decoded.id,username:decoded.username, correo: decoded.correo, rol: decoded.rol });
                 obtenerSesionesActivas(decoded.id); // Obtenemos las sesiones activas del usuario
                 // Redirigimos dependiendo del rol
                 navigate(decoded.rol === "administrador" ? "/home" : "/ayuda");
@@ -64,7 +65,6 @@ export const AuthProvider = ({ children }) => {
             logout();
         }
     };
-
 
 
 

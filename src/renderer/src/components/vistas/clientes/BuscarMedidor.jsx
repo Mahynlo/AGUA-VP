@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { Chip, Button } from "@nextui-org/react";
 
-const BuscarMedidor = ({ onMedidorSeleccionado, clienteId }) => {
-    const { medidores } = useMedidores();
+const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) => {
+    const { medidores, actualizarMedidores } = useMedidores();
     const [busqueda, setBusqueda] = useState("");
     const [resultados, setResultados] = useState([]);
     const [medidoresSeleccionados, setMedidoresSeleccionados] = useState([]);
+    const [medidoresLiberados, setMedidoresLiberados] = useState(new Set());
+
 
     const medidoresAsignadosCliente = medidores.filter(
         (medidor) => medidor.cliente_id === clienteId
@@ -73,9 +75,36 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId }) => {
                             Medidores ya asignados a este cliente:
                         </p>
                         {medidoresAsignadosCliente.map(medidor => (
-                            <p key={medidor.id} className="text-sm dark:text-white">
-                                <strong>{medidor.numero_serie}</strong> – {medidor.ubicacion}
-                            </p>
+                            <div
+                                key={medidor.id}
+                                className="flex justify-between items-center mt-1 text-sm dark:text-white"
+                            >
+                                <span>
+                                    <strong>{medidor.numero_serie}</strong> – {medidor.ubicacion}
+                                </span>
+                                <Button
+                                    size="sm"
+                                    color={medidoresLiberados.has(medidor.id) ? "success" : "warning"}
+                                    variant={medidoresLiberados.has(medidor.id) ? "solid" : "flat"}
+                                    onClick={() => {
+                                        setMedidoresLiberados(prev => {
+                                            const nuevoSet = new Set(prev);
+                                            if (nuevoSet.has(medidor.id)) {
+                                                nuevoSet.delete(medidor.id);
+                                            } else {
+                                                nuevoSet.add(medidor.id);
+                                            }
+                                            onLiberarMedidor(Array.from(nuevoSet)); // Convertimos a array solo para enviar
+                                            //console.log("Medidores liberados:", Array.from(nuevoSet));
+                                            return nuevoSet;
+                                        });
+                                    }}
+                                >
+                                    {medidoresLiberados.has(medidor.id) ? "Liberado" : "Liberar"}
+                                </Button>
+
+
+                            </div>
                         ))}
                     </div>
                 )}

@@ -1,8 +1,9 @@
-import { db } from '../db/Cliente.js'; // Importa la base de datos SQLite
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
-import os from 'os';
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY; // clave secreta para firmar el token de acceso a la API
+import {leerToken} from '../appConfig/authApp.js'
+const URL_LOGIN = import.meta.env.VITE_API_LOGIN; // URL del endpoint de login
+
 
 /**************************************************************************************************************
  * Login de usuario
@@ -12,45 +13,40 @@ import os from 'os';
 const loginUser = async (correo, contrasena) => {
   try {
 
-    // Realizar la consulta a la base de datos
-    const result = await db.execute({
-      sql: "SELECT * FROM usuarios WHERE correo = ?",
-      args: [correo],
+    // 1. Leer token de la app
+    const token = leerToken();
+    console.log("Token de la app:", token); // Para depuración, puedes eliminarlo después
+    if (!token) {
+      return { success: false, message: "Token de la app no disponible" };
+    }
+
+    const response = await fetch(URL_LOGIN, {
+      method: "POST",
+      headers: {
+        "x-app-key": `AppKey ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ correo, contraseña: contrasena }) // Ojo con "contraseña" vs "contrasena"
     });
 
-    if (!result || !result.rows || result.rows.length === 0) {
-      return { success: false, message: "Usuario no encontrado", result: null };
+    const data = await response.json();
+    //console.log("Respuesta del servidor:", data); // Para depuración, puedes eliminarlo después
+
+    if (!response.ok) {
+      return { success: false, message: data.error || "Error al iniciar sesión" };
     }
 
-    const hashedPassword = await bcrypt.hash(contrasena, 10); // Encriptar la contraseña ingresada por el usuario para compararla con la almacenada
+    // Podrías guardarlo en almacenamiento local si es necesario
+    // localStorage.setItem("token", token); // si estás en un entorno que lo soporta
 
-    // Verificar la contraseña ingresada contra la almacenada
-    const isMatch = await bcrypt.compare(contrasena,hashedPassword);
-    if (!isMatch) {
-      return { success: false, message: "Contraseña incorrecta", result: null };
-    }
-
-    // Generar el token JWT si la contraseña es correcta
-    const token = jwt.sign(
-      { id: result.rows[0].id, correo: result.rows[0].correo, rol: result.rows[0].rol },
-      SECRET_KEY,
-      { expiresIn: "30d" } // expiración del token en 30 días
-    );
-
-    const getDeviceInfo = () => {
-      const hostname = os.hostname(); // Nombre del equipo
-      const platform = `${os.type()} ${os.release()} (${os.arch()})`; // Sistema operativo
-      return `${hostname} - ${platform}`;
+    //retornar como string
+    return {
+      success: true,
+      token: data.token,
+      username: data.usuario.username,
+      rol: data.usuario.rol,
+      id: data.usuario.id
     };
-
-    // 💾 Registrar la sesión en la base de datos
-    await db.execute({
-      sql: `INSERT INTO sesiones (usuario_id, token, direccion_ip, dispositivo)
-            VALUES (?, ?, ?, ?)`,
-      args: [result.rows[0].id, token, '127.0.0.1', getDeviceInfo()] // puedes obtener IP real si la tienes
-    });
-
-    return { success: true, token, username: result.rows[0].username, rol: result.rows[0].rol };
 
   } catch (error) {
     console.error("Error en loginUser:", error);
@@ -76,31 +72,37 @@ const verifyToken = (token) => {
  * Cerrar sesión
  * ************************************************************************************************************
  */
-const cerrarSesion = async (token) => {
+const cerrarSesion = async (token_session) => {
   try {
-    //const decoded = jwt.verify(token, SECRET_KEY);
-    // Decodificar el token sin verificar expiración
-    const decoded = jwt.decode(token);
-
-    if (!decoded || !decoded.id) { // Verificar si el token es válido y contiene el id del usuario
-      throw new Error("Token inválido");
+    const token = leerToken();
+    if (!token) {
+      return { success: false, message: "Token de la app no disponible" };
     }
-
-    await db.execute({
-      sql: `
-        UPDATE sesiones 
-        SET fecha_fin = datetime('now'), activo = 0
-        WHERE token = ? AND usuario_id = ? AND fecha_fin IS NULL
-      `,
-      args: [token, decoded.id]
+    console.log("Token de la app:", token_session); // Para depuración, puedes eliminarlo después
+    const response = await fetch('http://localhost:3000/api/auth/logout', {
+      method: "POST",
+      headers: {
+        "x-app-key": `AppKey ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ token: token_session }) // Enviar el token de sesión para cerrar sesión
     });
 
-    return { success: true };
+
+    const data = await response.json();
+    console.log("Respuesta del servidor al cerrar sesión:", data); // Para depuración, puedes eliminarlo después
+
+    if (!response.ok) {
+      return { success: false, message: data.error || "Error al cerrar sesión" };
+    }
+
+    return { success: true, message: data.mensaje };
   } catch (error) {
-    console.error("Error cerrando sesión en BD:", error);
-    return { success: false, error: error.message };
+    console.error("Error al cerrar sesión:", error);
+    return { success: false, message: "Error de red" };
   }
 };
+
 
 
 /**************************************************************************************************************
@@ -109,28 +111,41 @@ const cerrarSesion = async (token) => {
  */
 const obtenerSesionesActivas = async (usuario_id) => {
   try {
-    const result = await db.execute({
-      sql: `
-        SELECT id, token, fecha_inicio, direccion_ip, dispositivo, ubicacion
-        FROM sesiones
-        WHERE usuario_id = ? AND fecha_fin IS NULL AND activo = 1
-        ORDER BY fecha_inicio DESC
-      `,
-      args: [usuario_id]
+
+    console.log("Obteniendo sesiones activas para el usuario:", usuario_id); // Para depuración, puedes eliminarlo después
+    const token = leerToken();
+    if (!token) {
+      return { success: false, message: "Token de la app no disponible" };
+    }
+    const response = await fetch(`http://localhost:3000/api/auth/sesionesActivas/${usuario_id}`, {
+      method: "GET",
+      headers: {
+        "x-app-key": `AppKey ${token}`,
+        "Content-Type": "application/json"
+      }
     });
+
+    const data = await response.json();
+
+    console.log("Respuesta del servidor al obtener sesiones:", data); // Para depuración, puedes eliminarlo después
+
+    if (!response.ok) {
+      return { success: false, message: data.error || "Error al obtener sesiones" };
+    }
 
     return {
       success: true,
-      sesiones: result.rows
+      sesiones: data
     };
   } catch (error) {
     console.error("Error al obtener sesiones activas:", error);
     return {
       success: false,
-      error: error.message
+      message: "Error de red o servidor no disponible"
     };
   }
 };
+
 
 
 

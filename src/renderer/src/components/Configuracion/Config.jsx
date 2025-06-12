@@ -8,7 +8,9 @@ import {
     DrawerFooter,
     Button,
     useDisclosure,
-    Tooltip
+    Tooltip,
+    chip,
+    Chip
 } from "@nextui-org/react";
 import { ConfiguracionIcon } from "../../IconsApp/IconsAppSystem";
 
@@ -29,6 +31,7 @@ export function Config() {
                 onOpenChange={onOpenChange}
                 classNames={{
                     base: " top-[80px] rounded-medium",
+                    closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
             >
                 <DrawerContent>
@@ -50,14 +53,16 @@ export function Config() {
                                 <Card className="w-80 mt-2 block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 ">
                                     <CardBody>
                                         <p className="text-xl">Info Aplicacion</p>
-                                        v 1.1.4
+                                        <div className="flex items-center mt-2">
+                                            Version 1.2.0 <Chip color="success" className="ml-2 dark:text-gray-700">Dev</Chip>
+                                        </div>
                                       
                                     </CardBody>
                                 </Card>
                                
                             </DrawerBody>
                             <DrawerFooter>
-                                <Button color="danger" variant="light" onPress={onClose}>
+                                <Button color="danger" variant="light"  onPress={onClose}>
                                     Cerrar
                                 </Button>
 

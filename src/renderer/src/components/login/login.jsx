@@ -88,6 +88,7 @@ function LoginApp() {
                     <img src={imagenLogin3} alt="Imagen 3" className="w-full h-full object-cover" />
                 </Carousel>
             </div>
+         
 
             {/* Formulario de inicio de sesión */}
             <div className="bg-white dark:bg-gray-800 w-full md:max-w-md lg:max-w-full md:mx-auto md:w-1/2 xl:w-1/3 h-screen px-6 lg:px-16 xl:px-12 flex items-center justify-center">
@@ -100,6 +101,7 @@ function LoginApp() {
                         Iniciar Sesión
                     </h1>
 
+                    
                     {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
                     <form className="mt-6">

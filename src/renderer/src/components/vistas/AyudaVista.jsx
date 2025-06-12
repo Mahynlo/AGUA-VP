@@ -4,13 +4,66 @@ import { useReactToPrint } from "react-to-print";
 import { useRef } from "react";
 import ReporteLecturas from "../recibo/ReporteLecturas";
 const Ayuda = () => {
+  const [reciboData, setReciboData] = useState({
+    nombre: 'Juan Pérez',
+    monto: 100,
+    fecha: '2025-05-11',
+  });
+
+  const handleVistaPreviaReporte = async () => {
+    const response = await window.api.previewRecibohtml(reciboData);
+    console.log('Respuesta del Main Process:', response);  // Puedes hacer algo con la respuesta si es necesario
+  };
+
+  const [respuesta, setRespuesta] = useState(null);
+
+
+  const handleRegistrar = async () => {
+    const res = await window.authApp.registrarApp("Mi App desde React");
+    setRespuesta(res);
+  };
+
+  //verificar si el token existe
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const verificarToken = async () => {
+      const res = await window.authApp.leerToken();
+      if (res && res.token) {
+        setToken(res.token);
+      }
+    };
+
+    verificarToken();
+  }, []);
+
+  const handleBorrarToken = async () => {
+  await window.authApp.borrarToken();
+  localStorage.removeItem("appRegistrada"); // <- Elimina la marca de app registrada
+  console.log("Token y appRegistrada eliminados");
+};
+
+//leer id 
+const [id, setId] = useState(null);
+
+useEffect(() => {
+  const verificarId = async () => {
+    const res = await window.authApp.leerId();
+    if (res && res.id) {
+      setId(res.id);
+    }
+  };
+  verificarId();
+}
+, []);
+
+
 
 
   return (
-    <div className="  mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div class="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
+      <div className="text-2xl font-bold text-gray-900 dark:text-white">
         Ayuda
-
       </div>
 
       <Link to="/pantallaCarga">
@@ -19,13 +72,39 @@ const Ayuda = () => {
         </button>
       </Link>
 
-      
+      <button
+        onClick={handleVistaPreviaReporte}
+        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4"
+      >
+        Vista Previa de Reporte
+      </button>
 
+      <div>
+        <button onClick={handleRegistrar}>Registrar App</button>
+        {respuesta && (
+          <pre>{JSON.stringify(respuesta, null, 2)}</pre>
+        )}
+      </div>
+      <div className="mt-4">
+        <button onClick={handleBorrarToken}>Borrar Token</button>
+        {token && (
+          <div className="mt-4 p-2 bg-gray-100 rounded">
+            <strong>Token guardado:</strong> {token}
+          </div>
+          
+        )}
+        {id && (
+          <div className="mt-4 p-2 bg-gray-100 rounded">
+            <strong>ID guardado:</strong> {id}
+          </div>
+        )}
+      </div>
+     
 
 
 
     </div>
-  )
+  );
 };
 
 export default Ayuda;

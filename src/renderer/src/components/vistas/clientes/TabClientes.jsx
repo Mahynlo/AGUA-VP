@@ -1,6 +1,6 @@
 //TabClientes
 
-import { Chip, Select, SelectItem, Input, Pagination, Button, Tooltip} from "@nextui-org/react";
+import { Chip, Select, SelectItem, Input, Pagination, Button, Tooltip } from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { useClientes } from "../../../context/ClientesContext";
@@ -22,7 +22,7 @@ export function TabClientes() {
     const [tableHeight, setTableHeight] = useState(getTableHeight()); // Altura inicial de la tabla
 
     function getTableHeight() { // Función para calcular la altura de la tabla
-        return window.devicePixelRatio >= 1.25 ? "min-h-[29.8rem] max-h-[29.8rem]" : "min-h-[40rem] max-h-[40rem]";
+        return window.devicePixelRatio >= 1.25 ? "min-h-[28.8rem] max-h-[28.8rem]" : "min-h-[40rem] max-h-[40rem]";
     }
 
     useEffect(() => { // Ajustar la altura de la tabla al cambiar el tamaño de la ventana
@@ -65,20 +65,44 @@ export function TabClientes() {
     const handlePagination = (page) => {
         setCurrentPage(page);
     };
-  
+
 
     return (
-        <div className="p-3 bg-gray-50 rounded-lg shadow-lg dark:bg-gray-800 dark:text-white ">
+        <div className="p-3 bg-gray-50  rounded-lg shadow-lg dark:bg-gray-800 dark:text-white ">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Clientes</h1>
 
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
-                <input
-                    type="text"
-                    placeholder="Buscar por nombre ..."
-                    value={search}
-                    onChange={handleSearch}
-                    className="border border-gray-300 text-gray-600 rounded-xl px-4 py-2 w-1/3 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                />
+
+
+                <div className="relative w-1/3">
+                    {/* Ícono de lupa */}
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                        <SearchIcon className="inline-block mr-2" />
+                    </span>
+
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre ..."
+                        value={search}
+                        onChange={handleSearch}
+                        className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    />
+
+                    {/* Botón para limpiar */}
+                    {search && (
+                        <button
+                            onClick={() => setSearch("")}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+
+
+
+
 
                 {/* Select para filtrar por ciudad */}
 
@@ -96,7 +120,7 @@ export function TabClientes() {
                 </Select>
 
                 {/* Select para cantidad de clientes por página */}
-               
+
                 <Select
                     className="max-w-24 border rounded-xl border-gray-200 dark:border-gray-500"
                     aria-label="Rows per page"
@@ -108,14 +132,14 @@ export function TabClientes() {
                     <SelectItem key="12">12</SelectItem>
                     <SelectItem key="16">16</SelectItem>
                 </Select>
-                
+
                 <RegistrarClientes />
-                
+
             </div>
 
             {/* Table */}
 
-            <div className={`overflow-y-auto ${tableHeight}`}>
+            <div className={`overflow-y-auto  ${tableHeight}`}>
                 <table className="w-full bg-white rounded-lg shadow-lg  dark:bg-gray-700 ">
                     <thead>
                         <tr className="sticky top-0 bg-blue-200 text-gray-600 text-left dark:bg-gray-500 dark:text-gray-200">
@@ -147,7 +171,7 @@ export function TabClientes() {
                                     </td>
                                     <td className="p-3 space-x-2">
                                         <EditarClientes id={item.id} />
-                                        
+
 
                                     </td>
                                 </tr>

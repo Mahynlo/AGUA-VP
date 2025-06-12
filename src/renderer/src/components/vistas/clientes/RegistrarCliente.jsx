@@ -13,6 +13,7 @@ import { useState } from "react";
 import { AgregarClienteIcon } from "../../../IconsApp/IconsClientes";
 import { useAuth } from "../../../context/AuthContext";
 import { useClientes } from "../../../context/ClientesContext";
+import FeedbackMessages from "../../toast/FeedbackMessages";
 
 export default function RegistrarClientes() {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
@@ -32,27 +33,37 @@ export default function RegistrarClientes() {
     const [estadoCliente, setEstadoCliente] = useState("");
     const [success, setSuccess] = useState("");
     const [error, setError] = useState("");
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const handleRegistroCliente = async () => {
         setError("");
         setSuccess("");
+        setIsUpdating(true); // activar loading
 
         // Validaciones de campos
         if (!nombre || !direccion || !telefono || !ciudad || !correo) {
             setError("Todos los campos son obligatorios.");
+            setIsUpdating(false); // desactivar al finalizar todo
             return;
         }
+
         //console.log("Datos enviados al proceso principal:", { nombre, direccion, telefono, ciudad, correo, estadoCliente: "Activo", modificado_por: user.id });
         try {
+
+            const tokensession = localStorage.getItem("token");
             const response = await window.api.registerClient({
-                nombre,
-                direccion,
-                telefono,
-                ciudad,
-                correo,
-                estado_cliente: "Activo",
-                modificado_por: user.id,
+                cliente: {
+                    nombre,
+                    direccion,
+                    telefono,
+                    ciudad,
+                    correo,
+                    estado_cliente: "Activo",
+                    modificado_por: user.id,
+                },
+                token_session: tokensession,  // Asegúrate de tener este valor
             });
+
             //console.log("Respuesta del servidor:", response);
 
             if (response.success) {
@@ -66,12 +77,15 @@ export default function RegistrarClientes() {
                     setCorreo("");
                     onClose(); // Cierra el modal automáticamente
                     actualizarClientes(); // Actualiza la lista de clientes
+                    setIsUpdating(false); // desactivar al finalizar todo
                 }, 2000);
             } else {
                 setError(response.message);
+                setIsUpdating(false); // desactivar al finalizar todo
             }
         } catch (err) {
             setError("Ocurrió un error en el registro. Intenta nuevamente.");
+            setIsUpdating(false); // desactivar al finalizar todo
         }
     };
 
@@ -83,7 +97,7 @@ export default function RegistrarClientes() {
                 className="ml-2 min-w-[50px] px-8 py-2"
                 onPress={onOpen}
             >
-                <AgregarClienteIcon/>
+                <AgregarClienteIcon />
                 Nuevo Cliente
             </Button>
 
@@ -94,6 +108,7 @@ export default function RegistrarClientes() {
                 classNames={{
                     header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
                     footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
+                    closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
             >
                 <ModalContent>
@@ -103,18 +118,14 @@ export default function RegistrarClientes() {
                                 Registrar Cliente
                             </ModalHeader>
                             <ModalBody className="bg-gray-200 dark:bg-gray-800">
-                                {success && (
-                                    <div className="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-900 dark:text-green-300">
-                                        {success}
-                                    </div>
-                                )}
-                                {error && (
-                                    <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300">
-                                        {error}
-                                    </div>
-                                )}
+                                <FeedbackMessages
+                                    success={success}
+                                    error={error}
+                                    setSuccess={setSuccess}
+                                    setError={setError}
+                                />
 
-                                <form onSubmit={(e) => { e.preventDefault(); handleRegistroCliente(); }}>
+                                <form id="form-registro-cliente" onSubmit={(e) => { e.preventDefault(); handleRegistroCliente(); }}>
                                     <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2 ">
                                         <div>
                                             <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
@@ -187,15 +198,26 @@ export default function RegistrarClientes() {
                                         </div>
                                     </div>
 
-                                    <button
-                                        type="submit"
-                                        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700"
-                                    >
-                                        Registrar
-                                    </button>
+
                                 </form>
                             </ModalBody>
                             <ModalFooter className="bg-gray-300 dark:bg-gray-700">
+                                <Button
+                                    color="primary"
+                                    onClick={handleRegistroCliente}
+                                    isDisabled={isUpdating}
+                                    className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700"
+                                >
+                                    {isUpdating ? (
+                                        <span className="flex items-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                            Procesando...
+                                        </span>
+                                    ) : (
+                                        "Registrar Cliente"
+                                    )}
+                                </Button>
+
                                 <Button
                                     color="danger"
                                     className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 font-medium rounded-xl text-sm px-5 py-2.5"
