@@ -45,7 +45,7 @@ function createWindow() {
   }
 
   // Abrir las herramientas de desarrollo
-  mainWindow.webContents.openDevTools(); 
+  //mainWindow.webContents.openDevTools(); 
   // Iniciar la búsqueda de actualizaciones después de que la ventana esté lista
   setTimeout(() => {
     checkForUpdates(mainWindow)
