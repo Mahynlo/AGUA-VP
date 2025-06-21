@@ -34,6 +34,7 @@ export default function RegistrarClientes() {
     const [success, setSuccess] = useState("");
     const [error, setError] = useState("");
     const [isUpdating, setIsUpdating] = useState(false);
+    
 
     const handleRegistroCliente = async () => {
         setError("");
@@ -144,7 +145,7 @@ export default function RegistrarClientes() {
                                             <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                                 Dirección
                                             </label>
-                                            <input
+                                            <textarea
                                                 type="text"
                                                 className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm  block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
                                                 value={direccion}

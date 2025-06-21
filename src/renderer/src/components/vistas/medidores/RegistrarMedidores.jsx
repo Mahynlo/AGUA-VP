@@ -8,13 +8,17 @@ import {
     useDisclosure,
     Select,
     SelectItem,
+
 } from "@nextui-org/react";
+import { Datepicker } from "flowbite-react";
+
 import { useState } from "react";
 import { AgregarClienteIcon } from "../../../IconsApp/IconsClientes";
 import { RegistrarMedidorIcon } from "../../../IconsApp/IconsMedior";
 import { useClientes } from "../../../context/ClientesContext";
 import { useMedidores } from "../../../context/MedidoresContext";
 import BuscarCliente from "./BuscarCliente";
+import SelectorCoordenadas from "../../mapa/SelectorCoordenadas";
 
 //para los iconos de los mensajes de feedback
 import FeedbackMessages from "../../toast/FeedbackMessages";
@@ -196,11 +200,12 @@ export default function RegistrarMedidor() {
                                         </div>
                                         <div>
                                             <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                                Ubicación
+                                                Comentarios de Ubicación de Medidor
                                             </label>
-                                            <input
+                                            <textarea
                                                 type="text"
-                                                className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+                                                className="bg-gray-50 border h-32 rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
+
                                                 placeholder="ej. Frente a la casa"
                                                 value={ubicacion}
                                                 onChange={(e) => setUbicacion(e.target.value)}
@@ -218,34 +223,16 @@ export default function RegistrarMedidor() {
                                                 onChange={(e) => setFechaInstalacion(e.target.value)}
                                                 required
                                             />
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                                Latitud
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                placeholder="ej. -29.1180777"
-                                                value={latitud}
-                                                onChange={(e) => setLatitud(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                                Longitud
-                                            </label>
-                                            <input
-                                                type="text"
-                                                className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                placeholder="ej. -109.9669819"
-                                                value={longitud}
-                                                onChange={(e) => setLongitud(e.target.value)}
-                                                required
-                                            />
+                                        
                                         </div>
                                     </div>
+                                    <SelectorCoordenadas
+                                        valorInicial={{ lat: parseFloat(latitud) || 29.1180777, lng: parseFloat(longitud) || -109.9669819 }}
+                                        onChange={({ lat, lng }) => {
+                                            setLatitud(lat.toFixed(6));
+                                            setLongitud(lng.toFixed(6));
+                                        }}
+                                    />
 
 
                                 </form>
@@ -267,7 +254,7 @@ export default function RegistrarMedidor() {
                                         "Registrar Medidor"
                                     )}
                                 </Button>
-                                
+
                                 <Button
                                     color="danger"
                                     className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 font-medium rounded-xl text-sm px-5 py-2.5"

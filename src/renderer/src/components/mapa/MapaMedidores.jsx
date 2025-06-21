@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import municipiojson from "../../../../public/VillaPesqueira.json";
-import MarkerMap from "../../assets/svgs/MarkerMap.svg";
+import MarkerMap from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 import L from "leaflet";
 const MapaMedidores = ({ medidores = [] }) => {
   // SVG personalizado como icono
@@ -16,11 +16,13 @@ const MapaMedidores = ({ medidores = [] }) => {
   const position2 = [29.116943, -109.968017]; // Coordenadas de Hermosillo (Ejemplo)
   const [municipioData, setMunicipioData] = useState(null);
 
+
   useEffect(() => {
     // Cargar los datos del municipio
     setMunicipioData(municipiojson);
 
   }, []);
+  
 
   return (
     <div className="h-full z-0 relative w-full grid place-items-center">
@@ -47,9 +49,6 @@ const MapaMedidores = ({ medidores = [] }) => {
             </Popup>
           </Marker>
         ))}
-
-
-
 
 
         {/* 📍 Marcador en la ciudad */}

@@ -46,6 +46,9 @@ const Ayuda = () => {
 //leer id 
 const [id, setId] = useState(null);
 
+//token de session 
+const tokensession = localStorage.getItem("token");
+
 useEffect(() => {
   const verificarId = async () => {
     const res = await window.authApp.leerId();
@@ -98,6 +101,15 @@ useEffect(() => {
             <strong>ID guardado:</strong> {id}
           </div>
         )}
+
+        {
+          tokensession && (
+            <div className="mt-4 p-2 bg-gray-100 rounded">
+            <strong>Token de sesión:</strong> {tokensession}
+          </div>  
+          )
+
+        }
       </div>
      
 
