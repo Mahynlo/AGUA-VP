@@ -1,15 +1,16 @@
 appId: com.electron.app
 productName: Agua-vp
-directories:
+directories: # directorio de la aplicación
   buildResources: build
-files:
+files: # archivos que se incluirán en la aplicación
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
-asarUnpack:
+asarUnpack: # archivos que no se empaquetarán en el archivo asar
   - resources/**
+  - grafos/**
 win:
   executableName: Agua-vp
 nsis:
