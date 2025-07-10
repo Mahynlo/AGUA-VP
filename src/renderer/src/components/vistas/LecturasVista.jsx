@@ -1,11 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "flowbite-react";
+import { Button, Modal } from "flowbite-react";
 import { Tabs, Tab, Card, CardBody } from "@nextui-org/react";
 import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
 import { useState } from "react";
 import ModalLectura from "./lecturas/ModalLectura";
 import CarruselLecturasModal from "./lecturas/CarruselLecturasModal";
-import RegistrarRuta from "../mapa/RegistrarRuta";
+
+
 
 import TabRutas from "./lecturas/TabRutas";
 
@@ -34,7 +35,7 @@ const Lecturas = () => {
               title={
                 <div className="flex items-center gap-2">
                   <RutaLecturaIcon className="w-6 h-6" />
-                  <span>Rutas</span>
+                  <span>Rutas </span>
                 </div>
               }
             >
@@ -57,7 +58,6 @@ const Lecturas = () => {
                     </Button>
                   </div>
                   
-                  <RegistrarRuta />
             </Tab>
             <Tab key="Metricas"
               title={
@@ -78,6 +78,7 @@ const Lecturas = () => {
                   </div>
                   Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
                   mollit anim id est laborum.
+                
                 </CardBody>
               </Card>
             </Tab>

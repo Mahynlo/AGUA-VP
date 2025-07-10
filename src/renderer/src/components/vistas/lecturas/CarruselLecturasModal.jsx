@@ -36,8 +36,8 @@ const clientesMock = [
     medidor: "C54321",
     ciudad: "Adivino",
     lat: 29.123,
-    lng: -109.678,  
-  }
+    lng: -109.678,
+  },
 ];
 
 export default function CarruselLecturasModal() {
@@ -46,26 +46,22 @@ export default function CarruselLecturasModal() {
   const [lecturas, setLecturas] = useState({});
 
   const total = clientesMock.length;
-  const clienteActual = clientesMock[currentIndex];
-  const lecturaActual = lecturas[clienteActual.id] || "";
+  const cliente = clientesMock[currentIndex];
+  const lecturaActual = lecturas[cliente.id] || "";
 
   const handleLecturaChange = (e) => {
     setLecturas({
       ...lecturas,
-      [clienteActual.id]: e.target.value,
+      [cliente.id]: e.target.value,
     });
   };
 
   const handleNext = () => {
-    if (currentIndex < total - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+    if (currentIndex < total - 1) setCurrentIndex(currentIndex + 1);
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
+    if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
 
   return (
@@ -80,50 +76,49 @@ export default function CarruselLecturasModal() {
         size="4xl"
         isDismissable={false}
         isKeyboardDismissDisabled={true}
+        backdrop="transparent"
         classNames={{
-          header: "dark:border-b border-b border-gray-400 dark:border-[#6879bd]",
-          footer: "dark:border-t border-t border-gray-400 dark:border-[#6879bd]",
+          header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
+          footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
           closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
         }}
-        backdrop="transparent"
       >
         <ModalContent>
           {(onClose) => (
             <>
               <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
-                Toma de lectura {currentIndex + 1}/{total}
+                Lectura {currentIndex + 1} de {total}
               </ModalHeader>
 
-              <ModalBody className="bg-gray-200 dark:bg-gray-80">
-                <div className="flex flex-col lg:flex-row gap-4">
-                  {/* Información del cliente */}
-                  <div className="lg:w-1/2 bg-gray-200 dark:bg-gray-700 p-4 rounded-lg shadow-inner dark:text-white">
-                    <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
+              <ModalBody className="bg-gray-100 dark:bg-gray-800 px-6 py-4">
+                <div className="flex flex-col lg:flex-row gap-6">
+                  {/* Cliente info */}
+                  <div className="lg:w-1/2 bg-white dark:bg-gray-700 rounded-lg p-4 shadow-inner">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
                       Información del Cliente
                     </h3>
-                    <div className="flex flex-col gap-6">
-                      <div className="grid grid-cols-[40%_1fr] gap-x-6 text-gray-900 dark:text-white">
-                        {[
-                          ["Cliente", clienteActual.nombre],
-                          ["Fecha", "15 de mayo de 2024"],
-                          ["Dirección", clienteActual.dirección],
-                          ["Número de Medidor", clienteActual.medidor],
-                          ["Ruta", "Ruta 7"],
-                          ["Ciudad", clienteActual.ciudad],
-                          ["Latitud", clienteActual.lat],
-                          ["Longitud", clienteActual.lng],
-                        ].map(([label, value], idx) => (
-                          <div
-                            key={idx}
-                            className="col-span-2 grid grid-cols-subgrid border-t border-t-[#314c68] py-4 dark:border-t-gray-600"
-                          >
-                            <p className="text-[#90accb] text-sm text-black dark:text-white">{label}</p>
-                            <p className="text-sm text-gray-800 dark:text-white">{value}</p>
-                          </div>
-                        ))}
-                      </div>
 
-                      <div className="mt-2">
+                    <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                      {[
+                        ["Cliente", cliente.nombre],
+                        ["Fecha", "15 de mayo de 2024"],
+                        ["Dirección", cliente.dirección],
+                        ["Número de Medidor", cliente.medidor],
+                        ["Ruta", "Ruta 7"],
+                        ["Ciudad", cliente.ciudad],
+                        ["Latitud", cliente.lat],
+                        ["Longitud", cliente.lng],
+                      ].map(([label, value], idx) => (
+                        <div
+                          key={idx}
+                          className="flex justify-between border-b border-dashed border-gray-300 dark:border-gray-600 pb-1"
+                        >
+                          <span className="font-medium text-[#90accb]">{label}:</span>
+                          <span>{value}</span>
+                        </div>
+                      ))}
+
+                      <div className="mt-4">
                         <label className="block text-sm font-medium text-[#90accb] mb-1">
                           Lectura Actual
                         </label>
@@ -131,7 +126,7 @@ export default function CarruselLecturasModal() {
                           type="number"
                           value={lecturaActual}
                           onChange={handleLecturaChange}
-                          placeholder="Ingrese la lectura del medidor"
+                          placeholder="Ingrese la lectura"
                           className="w-full max-w-xs"
                           color="gray"
                         />
@@ -139,29 +134,40 @@ export default function CarruselLecturasModal() {
                     </div>
                   </div>
 
-                  {/* Mapa */}
-                  <div className="lg:w-1/2 bg-gray-100 dark:bg-gray-600 p-4 rounded-lg shadow-inner">
-                    <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
-                      Ubicación del Cliente
+                  {/* Mapa simulado */}
+                  <div className="lg:w-1/2 bg-white dark:bg-gray-700 rounded-lg p-4 shadow-inner">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
+                      Ubicación
                     </h3>
-                    <div className="h-[250px] bg-gray-300 dark:bg-gray-500 rounded-lg flex items-center justify-center">
-                      Mapa de {clienteActual.ciudad} (aquí iría el mapa)
+                    <div className="h-[250px] bg-gray-300 dark:bg-gray-600 rounded-lg flex items-center justify-center text-gray-700 dark:text-gray-200">
+                      Mapa de {cliente.ciudad}
                     </div>
-                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                      Guardado automáticamente al cambiar de cliente.
-                      </div>
+                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-400 italic">
+                      * La lectura se guarda automáticamente al avanzar.
+                    </p>
                   </div>
                 </div>
               </ModalBody>
 
               <ModalFooter className="bg-gray-300 dark:bg-gray-700">
-                <div className="flex justify-between w-full">
-                  <Button color="warning" onClick={handlePrev} isDisabled={currentIndex === 0}>
-                    Anterior
+                <Button
+                  onClick={handlePrev}
+                  color="default"
+                  variant="ghost"
+                  isDisabled={currentIndex === 0}
+                >
+                  ← Anterior
+                </Button>
+
+                <div className="space-x-2">
+                  <Button
+                    onClick={handleNext}
+                    color="primary"
+                    isDisabled={currentIndex === total - 1}
+                  >
+                    Siguiente →
                   </Button>
-                  <Button color="primary" onClick={handleNext} isDisabled={currentIndex === total - 1}>
-                    Siguiente
-                  </Button>
+
                   <Button color="success" onClick={onClose}>
                     Guardar y Cerrar
                   </Button>
@@ -174,4 +180,5 @@ export default function CarruselLecturasModal() {
     </>
   );
 }
+
 

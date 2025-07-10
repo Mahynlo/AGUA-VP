@@ -15,7 +15,7 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200, // Ancho inicial 
     height: 750, // Altura Inicial
-    minWidth: 1200, // Ancho mínimo
+    minWidth: 1000, // Ancho mínimo
     minHeight: 750, // Altura mínima
     show: false, // Ocultar la ventana hasta que esté lista
     autoHideMenuBar: true, // Ocultar la barra de menú
@@ -45,7 +45,7 @@ function createWindow() {
   }
 
   // Abrir las herramientas de desarrollo
-  //mainWindow.webContents.openDevTools(); 
+  mainWindow.webContents.openDevTools(); 
   // Iniciar la búsqueda de actualizaciones después de que la ventana esté lista
   setTimeout(() => {
     checkForUpdates(mainWindow)
@@ -120,5 +120,6 @@ ipcMain.on("close", (event) => { // Cerrar la ventana
 
 // Handlers de aplicaicon
 AllIpcHandlers()
+
 
 

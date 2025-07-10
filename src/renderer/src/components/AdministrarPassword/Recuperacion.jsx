@@ -9,6 +9,7 @@ export default function RecuperarPassword() {
                 <Link to="/" className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-700">
                     Regresar
                 </Link>
+                
             </div>
         </div>
     )

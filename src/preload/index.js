@@ -2,7 +2,6 @@ import { contextBridge,ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 
-
 // Custom APIs for renderer
 const api = {
   fetchClientes: async (token_session) => {
@@ -20,6 +19,14 @@ const api = {
   getSession: (usuario_id) => ipcRenderer.invoke("active-sessions-user", usuario_id),
   registerMeter: (data) => ipcRenderer.invoke("register-medidor", data),
 
+calcularRuta: async (puntos_gps) => {
+  return await ipcRenderer.invoke("calcular-ruta", puntos_gps);
+},
+
+
+
+
+ //impresion
   printComponent: async (url, callback) => {
     let response = await ipcRenderer.invoke('printComponent', url);
     callback(response);  // Aquí pasas el resultado de la operación al callback
