@@ -6,11 +6,16 @@ import App from './App'
 import { NextUIProvider } from '@nextui-org/react'
 import { ThemeProvider } from './theme/useTheme'
 import { CustomTitleBar } from './TitleBar';
+import { FeedbackProvider } from './context/FeedbackContext';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <NextUIProvider>
       <ThemeProvider>
-        <App />
+        <FeedbackProvider>
+        
+          <App />
+        </FeedbackProvider>
+      
       </ThemeProvider>
     </NextUIProvider>
   </React.StrictMode>

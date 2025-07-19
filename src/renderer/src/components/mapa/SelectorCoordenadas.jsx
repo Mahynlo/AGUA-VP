@@ -74,30 +74,7 @@ export default function SelectorCoordenadas({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Inputs */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700 dark:text-white">Latitud</label>
-        <input
-          type="number"
-          name="lat"
-          value={coordenadas.lat}
-          onChange={handleInputChange}
-          step="0.000001"
-          placeholder="Ej: 29.1180777"
-          className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-        />
-
-        <label className="block text-sm font-medium text-gray-700 dark:text-white">Longitud</label>
-        <input
-          type="number"
-          name="lng"
-          value={coordenadas.lng}
-          onChange={handleInputChange}
-          step="0.000001"
-          placeholder="Ej: -109.9669819"
-          className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-        />
-      </div>
+      
 
       {/* Mapa */}
       <div className="h-[250px] rounded-md overflow-hidden border dark:border-gray-600">
@@ -138,6 +115,31 @@ export default function SelectorCoordenadas({
           />
         </MapContainer>
 
+      </div>
+
+      {/* Inputs */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-white">Latitud</label>
+        <input
+          type="number"
+          name="lat"
+          value={coordenadas.lat}
+          onChange={handleInputChange}
+          step="0.000001"
+          placeholder="Ej: 29.1180777"
+          className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+        />
+
+        <label className="block text-sm font-medium text-gray-700 dark:text-white">Longitud</label>
+        <input
+          type="number"
+          name="lng"
+          value={coordenadas.lng}
+          onChange={handleInputChange}
+          step="0.000001"
+          placeholder="Ej: -109.9669819"
+          className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+        />
       </div>
     </div>
   );

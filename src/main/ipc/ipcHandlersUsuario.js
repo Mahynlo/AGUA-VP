@@ -14,7 +14,7 @@ export default function IpcHandlerUsuario () {
     
     // 📌 Manejar autenticación registro
     ipcMain.handle("register", async (event, data) => {
-        return await registerUser(data.correo, data.contrasena, data.username, data.rol);
+        return await registerUser(data.correo,data.nombre, data.contrasena, data.username, data.rol);
     });
     
     

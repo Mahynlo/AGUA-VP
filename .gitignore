@@ -6,3 +6,5 @@ out
 package-lock.json
 *.log*
 .env
+cache_rutas.pkl
+cache_rutas*

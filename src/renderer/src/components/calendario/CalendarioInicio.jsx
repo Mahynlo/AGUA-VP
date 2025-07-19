@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FlechaIzquierdaIcon, FlechaDerechaIcon } from "../../IconsApp/IconsAppSystem";
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@nextui-org/chip";
 import { CalendarioHomeIcon } from "../../IconsApp/IconsHome";
 const events = {
     "2025-03-10": [{ time: "09:30 pm", title: "Products Introduction Meeting" }],

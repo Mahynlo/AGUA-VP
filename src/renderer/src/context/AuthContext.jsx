@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
 
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -9,6 +10,7 @@ export const AuthProvider = ({ children }) => {
     const navigate = useNavigate(); // Hook para redirigir a una ruta
     const [sesiones, setSesiones] = useState([]);
     const [loading, setLoading] = useState(true); // Estado para manejar la carga
+    
 
 
     const obtenerSesionesActivas = async (usuarioId) => {
@@ -30,7 +32,8 @@ export const AuthProvider = ({ children }) => {
             try {
                 const decoded = JSON.parse(atob(storedToken.split(".")[1]));
                 if (decoded?.id && decoded?.correo && decoded?.rol) {
-                    setUser({ id: decoded.id,username:decoded.username, correo: decoded.correo, rol: decoded.rol });
+                    setUser({ id: decoded.id,nombre:decoded.nombre,username:decoded.username, correo: decoded.correo, rol: decoded.rol, fecha_creacion: decoded.fecha_creacion });
+                    console.log("Usuario autenticado:", decoded);
                     obtenerSesionesActivas(decoded.id).finally(() => setLoading(false));
                 } else {
                     logout();
@@ -53,10 +56,11 @@ export const AuthProvider = ({ children }) => {
             const decoded = JSON.parse(atob(token.split(".")[1])); // Decodificar token
             // Validamos si el token es válido
             if (decoded?.id && decoded?.correo && decoded?.rol) {
-                setUser({ id: decoded.id,username:decoded.username, correo: decoded.correo, rol: decoded.rol });
+                setUser({ id: decoded.id,nombre:decoded.nombre,username:decoded.username, correo: decoded.correo, rol: decoded.rol,fecha_creacion: decoded.fecha_creacion });
                 obtenerSesionesActivas(decoded.id); // Obtenemos las sesiones activas del usuario
                 // Redirigimos dependiendo del rol
                 navigate(decoded.rol === "administrador" ? "/home" : "/ayuda");
+
             } else {
                 throw new Error("Token inválido");
             }
@@ -80,6 +84,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         localStorage.removeItem("token"); // Eliminar token del almacenamiento local
+        localStorage.removeItem("datosInicializados"); // 👈 limpia el flag de datos iniciales
         setUser(null); // Limpiar el estado del usuario
         setSesiones([]); // Limpiar sesiones activas
         navigate("/"); // Redirigir al login

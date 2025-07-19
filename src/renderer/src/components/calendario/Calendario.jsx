@@ -1,31 +1,78 @@
 import React, { useState } from "react";
 import { FlechaIzquierdaIcon, FlechaDerechaIcon } from "../../IconsApp/IconsAppSystem";
 import { CalendarioHomeIcon } from "../../IconsApp/IconsHome";
+import { useTarifas } from "../../context/TarifasContext";
+
 // Definición de eventos
-const events = {
-    "2025-03-10": [{ time: "09:30 pm", title: "Products Introduction Meeting" }],
-    "2025-03-12": [
-        { time: "12:30 pm", title: "Client entertaining" },
-        { time: "02:00 pm", title: "Product design discussion" }
-    ],
-    "2025-03-15": [
-        { time: "05:00 pm", title: "Product test and acceptance" },
-        { time: "06:30 pm", title: "Reporting" }
-    ],
-    "2025-05-20": [
-        { time: "10:00 am", title: "Se venden tamales de carne" },
-        { time: "01:00 pm", title: "Tambien de Elote" }
-    ],
-};
+
 
 const CalendarComponent = () => {
     const [selectedDate, setSelectedDate] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
-
+    const { tarifas } = useTarifas();
+    console.log("Tarifas:", tarifas);
 
     const handleDateChange = (dateString) => {
         setSelectedDate(dateString);
     };
+
+
+    const events = {};
+
+    tarifas.forEach((tarifa) => {
+        const startDate = parseDate(tarifa.fecha_inicio);
+        const startDateString = startDate.toISOString().split("T")[0];
+        if (!events[startDateString]) events[startDateString] = [];
+        events[startDateString].push({
+            title: `Inicio de tarifa ${tarifa.nombre}`,
+            descripcion: tarifa.descripcion,
+            time: null,
+        });
+
+        if (tarifa.fecha_fin) {
+            const endDate = parseDate(tarifa.fecha_fin);
+            const endDateString = endDate.toISOString().split("T")[0];
+            if (!events[endDateString]) events[endDateString] = [];
+            events[endDateString].push({
+                title: `Fin de tarifa ${tarifa.nombre}`,
+                descripcion: tarifa.descripcion,
+                time: null,
+            });
+        }
+    });
+
+    // Ejemplo de agregar eventos adicionales que no son tarifas:
+    events["2025-07-20"] = events["2025-07-20"] || [];
+    events["2025-07-20"].push({
+        title: "Evento especial fuera de tarifas",
+        descripcion: "Descripción adicional",
+        time: "10:00 am",
+    });
+    
+    events["2025-07-20"].push({
+        title: "Evento especial fuera de tarifas 2",
+        descripcion: "Descripción adicional",
+        time: "11:00 am",
+    });
+
+    events["2025-07-20"].push({
+        title: "Evento especial fuera de tarifas 3",
+        descripcion: "Descripción adicional",
+        time: "12:00 am",
+    });
+
+   
+
+   
+
+
+    // Función auxiliar para parsear fechas yyyy-mm-dd
+    function parseDate(str) {
+        const [year, month, day] = str.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+
 
 
 
@@ -83,7 +130,9 @@ const CalendarComponent = () => {
     const daysInMonth = getDaysInMonth(currentMonth);
 
     return (
+
         <div className="flex w-full h-full">
+
             {/* Calendario */}
             <div className="flex w-full h-full">
                 {/* Calendario */}
@@ -91,7 +140,7 @@ const CalendarComponent = () => {
                     {/*Titulo del calaendario e icono */}
                     <div className="flex justify-between items-start">
                         <div className="flex flex-col">
-                            <p className="text-3xl text-gray-600 dark:text-gray-100  font-bold tracking-wide">Calendario</p>
+                            <p className="text-3xl text-gray-600 dark:text-gray-100 p-2  font-bold tracking-wide">Calendario</p>
 
                         </div>
                         <div className="bg-orange-500 p-2 md:p-1 xl:p-2 rounded-md text-white h-full">
@@ -146,8 +195,11 @@ const CalendarComponent = () => {
                                     <div className="flex flex-col">
                                         <span className="text-lg">{date.getDate()}</span>
                                         {hasEvent(date) && (
-                                            <span className="text-xs text-gray-200 dark:text-gray-200 bg-green-600 rounded-full px-2 py-1 ">
-                                                {events[dateString].length} evento{events[dateString].length > 1 ? "s" : ""}
+                                            <span className=" text-xs text-gray-200 dark:text-gray-200 bg-green-600 rounded-full px-2 py-1 ">
+                                                {events[dateString].length}
+                                                {events[dateString].length > 1 ? " eventos" : " evento"}
+                                                
+                                                
                                             </span>
                                         )}
                                     </div>
@@ -165,10 +217,12 @@ const CalendarComponent = () => {
             {/* Lista de eventos */}
             <div className="w-1/3 ml-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border ">
                 <h2 className="text-xl font-bold text-gray-700 dark:text-gray-100 mb-4">
+                    
                     {selectedDate ? (() => {
                         const [year, month, day] = selectedDate.split("-");
                         const localDate = new Date(Number(year), Number(month) - 1, Number(day));
-                        return localDate.toLocaleDateString("es-ES", {
+                        return localDate.toLocaleDateString("es-MX", {
+                            timeZone: "America/Hermosillo",
                             weekday: "long",
                             year: "numeric",
                             month: "long",
@@ -179,9 +233,9 @@ const CalendarComponent = () => {
 
 
                 {selectedDate && events[selectedDate] ? (
-                    <ul className="space-y-3">
+                    <ul className="space-y-3 overflow-y-auto max-h-[500px] w-full">
                         {events[selectedDate].map((event, index) => (
-                            <li key={index} className="flex items-center space-x-3">
+                            <li key={index} className="flex items-center space-x-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg shadow hover:bg-gray-200 dark:hover:bg-gray-600 transition-all ">
                                 <div className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                     {event.time}
                                 </div>

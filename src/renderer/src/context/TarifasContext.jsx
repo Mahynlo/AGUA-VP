@@ -16,7 +16,8 @@ export function TarifasProvider({ children }) {
       const data = await window.tarifasApp.fetchTarifas({token_session}); // Asegúrate de exponer esta función en preload
       setTarifas(data); // Actualiza el estado con las tarifas obtenidas
     } catch (error) {
-      console.error("Error al obtener tarifas:", error);
+      console.error("Error al obtener tarifas(contx):", error);
+
     } finally {
       setLoading(false);
     }

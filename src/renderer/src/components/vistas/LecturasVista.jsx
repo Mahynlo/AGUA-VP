@@ -16,7 +16,7 @@ const Lecturas = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div class="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div className="w-full h-full bg-white overflow-x-hidden gap-4 p-4 rounded-lg shadow-md dark:bg-gray-800">
+      <div className="w-full h-full bg-white overflow-x-hidden gap-4 p-2 rounded-lg shadow-md dark:bg-gray-800">
 
 
         <div className="flex w-full flex-col">

@@ -66,7 +66,7 @@ function LoginApp() {
                 }
                 
                 //localStorage.setItem("token", response.token);
-                login(response.token);
+                login(response.token,response.usuario);
                 navigate(response.rol === "administrador" ? "/home" : "/ayuda");// Redirigir a home si es administrador o a ayuda si es usuario normal 
             } else {
                 setError(response.message || "Error en la autenticación.");

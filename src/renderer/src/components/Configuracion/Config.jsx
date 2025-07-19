@@ -54,7 +54,7 @@ export function Config() {
                                     <CardBody>
                                         <p className="text-xl">Info Aplicacion</p>
                                         <div className="flex items-center mt-2">
-                                            Version 1.2.1 <Chip color="success" className="ml-2 dark:text-gray-700">Dev</Chip>
+                                            Version 1.2.2 <Chip color="success" className="ml-2 dark:text-gray-700">Dev</Chip>
                                         </div>
                                       
                                     </CardBody>

@@ -58,6 +58,7 @@ function NavbarApp() {
                   {/*Avatar*/}
                   <Tooltip content="Cuenta" delay={2000}>
                     <div>
+                      
                       <Dropdown placement="bottom-end" arrow={false}>
                         <DropdownTrigger>
                           <Avatar
@@ -70,7 +71,9 @@ function NavbarApp() {
                         <DropdownMenu aria-label="Profile Actions" variant="flat" >
                           <DropdownItem key="profile" className="h-14 gap-2" textValue="Perfil" color="default" as={Link} to="/perfil">
                             <p className="font-semibold"></p>
-                            <p className="font-semibold" ><span>{user && user.correo}</span> </p>
+                            <p className="font-semibold" ><span> {user && user.nombre}</span> </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{user && user.correo}</p>
+                          
                           </DropdownItem>
                           <DropdownItem key="settings" color="primary" as={Link} to="/perfil">Mi Perfil</DropdownItem>
                           {user?.rol === 'superadmin' && // Si el usuario es superadmin muestra el botón de configuraciones
@@ -123,7 +126,7 @@ function NavbarApp() {
                   </button>
                 </Tooltip>
 
-                <Modal show={openModal} size="md" onClose={() => setOpenModal(false)} popup>
+                <Modal show={openModal} size="md"  onClose={() => setOpenModal(false)} popup>
                   <Modal.Header />
                   <Modal.Body>
                     <div className="text-center">

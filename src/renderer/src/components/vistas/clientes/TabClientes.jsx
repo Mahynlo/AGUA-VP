@@ -21,6 +21,11 @@ export function TabClientes() {
     const [rowsPerPage, setRowsPerPage] = useState(8); // Cantidad de clientes por página
     const [tableHeight, setTableHeight] = useState(getTableHeight()); // Altura inicial de la tabla
 
+
+    const [registroSuccess, setRegistroSuccess] = useState("");
+const [registroError, setRegistroError] = useState("");
+
+
     function getTableHeight() { // Función para calcular la altura de la tabla
         return window.devicePixelRatio >= 1.25 ? "min-h-[28.8rem] max-h-[28.8rem]" : "min-h-[40rem] max-h-[40rem]";
     }
@@ -68,7 +73,7 @@ export function TabClientes() {
 
 
     return (
-        <div className="p-3 bg-gray-50  rounded-lg shadow-lg dark:bg-gray-800 dark:text-white ">
+        <div >
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Clientes</h1>
 
             {/* Header */}

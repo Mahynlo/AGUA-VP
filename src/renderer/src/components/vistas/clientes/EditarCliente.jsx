@@ -3,6 +3,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { useClientes } from "../../../context/ClientesContext";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { EliminarClienteIcon, EditIcon } from "../../../IconsApp/IconsClientes";
+import {formatUTCtoHermosillo} from "../../../utils/formatFecha";
 import BuscarMedidor from "./BuscarMedidor";
 import {
     Modal,
@@ -18,7 +19,7 @@ import {
     Checkbox,
 } from "@nextui-org/react";
 
-import FeedbackMessages from "../../toast/FeedbackMessages";
+import { useFeedback } from "../../../context/FeedbackContext";
 
 export default function EditarClientes({ id }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
@@ -47,10 +48,13 @@ export default function EditarClientes({ id }) {
     const [ciudad, setCiudad] = useState("");
     const [correo, setCorreo] = useState("");
     const [estadoCliente, setEstadoCliente] = useState("Activo");
-    const [success, setSuccess] = useState("");
-    const [error, setError] = useState("");
     const [medidorAsignado, setMedidorAsignado] = useState(null);
     const [medidoresLiberados, setMedidoresLiberados] = useState(new Set()); // Usar un Set para evitar duplicados
+    const [fechaRegistroCliente, setFechaRegistroCliente] = useState("");
+    const [erroresCampos, setErroresCampos] = useState({});
+     const { setSuccess, setError } = useFeedback();
+    
+    
 
 
     const cliente = clientes.find((c) => c.id === id); //busca el cliente por id 
@@ -64,6 +68,7 @@ export default function EditarClientes({ id }) {
             setCorreo(cliente.correo);
             setEstadoCliente(cliente.estado_cliente);
             setMedidorAsignado(cliente.id_medidor || null); // Asume que se guarda en esa propiedad
+            setFechaRegistroCliente(cliente.fecha_creacion || ""); // Asume que se guarda en esa propiedad
         }
     }, [id, clientes]);
 
@@ -80,11 +85,34 @@ export default function EditarClientes({ id }) {
         setSuccess("");
         setIsUpdating(true); // activar loading
 
-        if (!nombre || !direccion || !telefono || !ciudad || !correo) {
-            setError("Todos los campos son obligatorios.");
-            setIsUpdating(false); // desactivar loading
+    
+        const nuevosErrores = {};
+
+        if (!nombre) nuevosErrores.nombre = true;
+        if (!direccion) nuevosErrores.direccion = true;
+        if (!telefono) nuevosErrores.telefono = true;
+        if (!ciudad) nuevosErrores.ciudad = true;
+        if (!correo) nuevosErrores.correo = true;
+
+        if (Object.keys(nuevosErrores).length > 0) {
+            setErroresCampos(nuevosErrores);
+            const camposFaltantes = Object.keys(nuevosErrores)
+            .map((campo) => {
+                switch (campo) {
+                case "nombre": return "Nombre";
+                case "direccion": return "Dirección";
+                case "telefono": return "Teléfono";
+                case "ciudad": return "Ciudad";
+                case "correo": return "Correo Electrónico";
+                default: return campo;
+                }
+            });
+            setError(`Los siguientes campos son obligatorios: ${camposFaltantes.join(", ")}`, "Registro de Clientes");
+            setIsUpdating(false);
             return;
         }
+
+        setErroresCampos({}); // limpia errores si todo está lleno
         //console.log(clientes);
         try {
             let response;
@@ -153,6 +181,8 @@ export default function EditarClientes({ id }) {
             </Tooltip>
 
 
+
+
             <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl" backdrop="transparent"
                 scrollBehavior="inside"
                 isDismissable={false}
@@ -170,12 +200,6 @@ export default function EditarClientes({ id }) {
                                 {id ? "Editar Cliente" : "Registrar Cliente"}
                             </ModalHeader>
                             <ModalBody className="bg-gray-200 dark:bg-gray-800">
-                                <FeedbackMessages
-                                    success={success}
-                                    error={error}
-                                    setSuccess={setSuccess}
-                                    setError={setError}
-                                />
 
                                 <form id="form-editar-cliente" onSubmit={(e) => { e.preventDefault(); handleActualizarCliente(); }}>
                                     <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
@@ -242,6 +266,12 @@ export default function EditarClientes({ id }) {
                                             />
                                         </div>
                                     </div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Este Cliente fue registrado por: <span className="font-semibold">{user && user.nombre}</span>
+                                    {fechaRegistroCliente && (
+                                        <span className="ml-2">Fecha de registro: {formatUTCtoHermosillo(fechaRegistroCliente)}</span>
+                                    )}
+                                </p>
                                     <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
                                         Asignar medidor
                                     </div>
@@ -276,6 +306,8 @@ export default function EditarClientes({ id }) {
 
 
                                 </form>
+
+
 
 
                             </ModalBody>

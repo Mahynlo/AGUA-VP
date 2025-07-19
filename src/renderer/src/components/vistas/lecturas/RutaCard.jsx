@@ -52,14 +52,17 @@ export default function RutaCard({ ruta }) {
             {ruta.nombre}
           </h2>
           <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Completadas: {ruta.completadas}/{ruta.total}
+            Completadas: {ruta.completadas}/{ruta.total_puntos}
           </span>
+
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
           {ruta.descripcion}
         </p>
-
+        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          Periodo: {ruta.periodo_mostrado}
+        </span>
         <div className="mt-4">
           <CarruselLecturasModal />
         </div>

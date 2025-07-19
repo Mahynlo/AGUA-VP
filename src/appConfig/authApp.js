@@ -4,8 +4,8 @@ import path from "path"; // Asegúrate de tener instalado el módulo 'path'
 import fs from "fs"; // Asegúrate de tener instalado el módulo 'fs'
 import fetch from "node-fetch"; // Asegúrate de tener instalado node-fetch
 
-const tokenPath = path.join(app.getPath("userData"), "token_Key_App.enc"); // Ruta para guardar el token encriptado
-const appId = path.join(app.getPath("userData"), "id_App.enc"); // Ruta para guardar el ID de la app
+const tokenPath = path.join(app.getPath("userData"), "Token_Key_App.enc"); // Ruta para guardar el token encriptado
+const appId = path.join(app.getPath("userData"), "Id_App.enc"); // Ruta para guardar el ID de la app
 const APP_KEY_INICIAL = import.meta.env.VITE_APPKEY_INICIAL; // Clave inicial de la app
 const API_URL = import.meta.env.VITE_API_REGISTRAR_APP; // URL de registro de la app
 
@@ -58,10 +58,9 @@ export function borrarToken() {
   return null;
 }
 
-
-
 // 🔁 Función que registra la app al iniciar y guarda el token
 export async function registrarApp(nombre = "Electron App") {
+ 
   try {
     const response = await fetch(API_URL, {
       method: "POST",

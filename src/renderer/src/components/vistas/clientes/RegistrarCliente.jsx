@@ -13,9 +13,9 @@ import { useState } from "react";
 import { AgregarClienteIcon } from "../../../IconsApp/IconsClientes";
 import { useAuth } from "../../../context/AuthContext";
 import { useClientes } from "../../../context/ClientesContext";
-import FeedbackMessages from "../../toast/FeedbackMessages";
+import { useFeedback } from "../../../context/FeedbackContext";
 
-export default function RegistrarClientes() {
+export default function RegistrarClientes({ onSuccess, onError }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
     const pueblos = [
         { key: "Nacori Grande", label: "Nacori Grande" },
@@ -31,22 +31,48 @@ export default function RegistrarClientes() {
     const [ciudad, setCiudad] = useState("");
     const [correo, setCorreo] = useState("");
     const [estadoCliente, setEstadoCliente] = useState("");
-    const [success, setSuccess] = useState("");
-    const [error, setError] = useState("");
+    const { setSuccess, setError } = useFeedback();
     const [isUpdating, setIsUpdating] = useState(false);
-    
+    const [erroresCampos, setErroresCampos] = useState({});
+
+
 
     const handleRegistroCliente = async () => {
         setError("");
         setSuccess("");
         setIsUpdating(true); // activar loading
 
-        // Validaciones de campos
-        if (!nombre || !direccion || !telefono || !ciudad || !correo) {
-            setError("Todos los campos son obligatorios.");
-            setIsUpdating(false); // desactivar al finalizar todo
+        // Validaciones de campos espesifica si fata alguno 
+
+        const nuevosErrores = {};
+
+        if (!nombre) nuevosErrores.nombre = true;
+        if (!direccion) nuevosErrores.direccion = true;
+        if (!telefono) nuevosErrores.telefono = true;
+        if (!ciudad) nuevosErrores.ciudad = true;
+        if (!correo) nuevosErrores.correo = true;
+
+        if (Object.keys(nuevosErrores).length > 0) {
+            setErroresCampos(nuevosErrores);
+            const camposFaltantes = Object.keys(nuevosErrores)
+            .map((campo) => {
+                switch (campo) {
+                case "nombre": return "Nombre";
+                case "direccion": return "Dirección";
+                case "telefono": return "Teléfono";
+                case "ciudad": return "Ciudad";
+                case "correo": return "Correo Electrónico";
+                default: return campo;
+                }
+            });
+            setError(`Los siguientes campos son obligatorios: ${camposFaltantes.join(", ")}`, "Registro de Clientes");
+            setIsUpdating(false);
             return;
         }
+
+        setErroresCampos({}); // limpia errores si todo está lleno
+
+
 
         //console.log("Datos enviados al proceso principal:", { nombre, direccion, telefono, ciudad, correo, estadoCliente: "Activo", modificado_por: user.id });
         try {
@@ -68,9 +94,9 @@ export default function RegistrarClientes() {
             //console.log("Respuesta del servidor:", response);
 
             if (response.success) {
-                setSuccess("Cliente registrado exitosamente.");
+                setSuccess("Cliente registrado exitosamente.", "Registro de Clientes");
                 setTimeout(() => {
-                    setSuccess("");
+                    //setSuccess("");
                     setNombre("");
                     setDireccion("");
                     setTelefono("");
@@ -81,11 +107,11 @@ export default function RegistrarClientes() {
                     setIsUpdating(false); // desactivar al finalizar todo
                 }, 2000);
             } else {
-                setError(response.message);
+                setError(response.message, "Registro de Clientes");
                 setIsUpdating(false); // desactivar al finalizar todo
             }
         } catch (err) {
-            setError("Ocurrió un error en el registro. Intenta nuevamente.");
+            setError("Ocurrió un error en el registro. Intenta nuevamente.", "Registro de Clientes");
             setIsUpdating(false); // desactivar al finalizar todo
         }
     };
@@ -101,6 +127,7 @@ export default function RegistrarClientes() {
                 <AgregarClienteIcon />
                 Nuevo Cliente
             </Button>
+
 
             <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl" backdrop="transparent"
                 scrollBehavior="inside"
@@ -119,12 +146,7 @@ export default function RegistrarClientes() {
                                 Registrar Cliente
                             </ModalHeader>
                             <ModalBody className="bg-gray-200 dark:bg-gray-800">
-                                <FeedbackMessages
-                                    success={success}
-                                    error={error}
-                                    setSuccess={setSuccess}
-                                    setError={setError}
-                                />
+
 
                                 <form id="form-registro-cliente" onSubmit={(e) => { e.preventDefault(); handleRegistroCliente(); }}>
                                     <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2 ">
@@ -165,6 +187,7 @@ export default function RegistrarClientes() {
                                                 onChange={(e) => setCiudad(e.target.value)}
                                                 color="default"
                                                 aria-label="Pueblo"
+                                                required
                                             >
                                                 {pueblos.map((pueblo) => (
                                                     <SelectItem key={pueblo.key}>{pueblo.label}</SelectItem>
@@ -206,6 +229,8 @@ export default function RegistrarClientes() {
                                 <Button
                                     color="primary"
                                     onClick={handleRegistroCliente}
+                                    form="form-registro-cliente"
+                                    type="submit"
                                     isDisabled={isUpdating}
                                     className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700"
                                 >

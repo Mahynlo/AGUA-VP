@@ -27,7 +27,7 @@ export const GenerarRutaLectura = async (puntos_gps) => {
     // Finalmente calcular la ruta
     const resultado = await calcularRuta({
         puntos: puntos_validos,
-        grafo: "grafos/grafo_mazatan_villapesqueira.pkl",
+        //grafo: "grafos/grafo_mazatan_villapesqueira.pkl",
     });
 
     return resultado;

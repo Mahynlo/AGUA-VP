@@ -1,15 +1,5 @@
+// src/components/rutas/ModalRegistrarRuta.jsx
 import { useState, useCallback } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Polyline,
-  Popup,
-  useMapEvents,
-  CircleMarker,
-  Tooltip,
-} from "react-leaflet";
-import { LatLng } from "leaflet";
-import "leaflet/dist/leaflet.css";
 import {
   Modal,
   ModalContent,
@@ -17,71 +7,46 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  Input,
-  Textarea,
   useDisclosure,
 } from "@nextui-org/react";
 
-function MapaSeleccion({ onAgregarPunto }) {
-  useMapEvents({
-    click(e) {
-      const { lat, lng } = e.latlng;
-      onAgregarPunto({ lat, lng });
-    },
-  });
-  return null;
-}
+import MapaRutas from "../../mapa/MapaRutas";
+import { useMedidores } from "../../../context/MedidoresContext";
+import { useAuth } from "../../../context/AuthContext";
+import { useRutas } from "../../../context/RutasContext";
 
-function getClosestPoint(punto, ruta) {
-  const p = new LatLng(punto[0], punto[1]);
-  let minDist = Infinity;
-  let closest = null;
-
-  for (let i = 0; i < ruta.length - 1; i++) {
-    const a = new LatLng(ruta[i][0], ruta[i][1]);
-    const b = new LatLng(ruta[i + 1][0], ruta[i + 1][1]);
-
-    const [ax, ay] = [a.lng, a.lat];
-    const [bx, by] = [b.lng, b.lat];
-    const [px, py] = [p.lng, p.lat];
-
-    const abx = bx - ax,
-      aby = by - ay;
-    const apx = px - ax,
-      apy = py - ay;
-
-    const ab_ap = abx * apx + aby * apy;
-    const ab_ab = abx * abx + aby * aby;
-    let t = ab_ap / ab_ab;
-
-    t = Math.max(0, Math.min(1, t));
-    const closestX = ax + abx * t;
-    const closestY = ay + aby * t;
-
-    const candidate = new LatLng(closestY, closestX);
-    const dist = p.distanceTo(candidate);
-
-    if (dist < minDist) {
-      minDist = dist;
-      closest = [closestY, closestX];
-    }
-  }
-
-  return { closest, distance: minDist };
-}
+//para los iconos de los mensajes de feedback
+import { useFeedback } from "../../../context/FeedbackContext";
 
 export default function ModalRegistrarRuta() {
+  // Hook para manejar el estado del modal
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+
+  // Estados para manejar los datos de la ruta
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [puntosRuta, setPuntosRuta] = useState([]);
   const [dibujar, setDibujar] = useState(false);
   const [rutaCalculada, setRutaCalculada] = useState(null);
 
+  // Contextos para manejar feedback, medidores, autenticación y rutas
+  const { setSuccess, setError } = useFeedback(); // Importa el contexto de feedback
+  const [isRegistering, setIsRegistering] = useState(false);
+  const { medidores } = useMedidores();
+  const { user } = useAuth();
+  const { actualizarRutas } = useRutas();
+
+  // Maneja el evento de agregar un punto a la ruta
   const handleAgregarPunto = useCallback((punto) => {
     setPuntosRuta((prev) => [...prev, punto]);
   }, []);
 
+  // Elimina un punto de la ruta por su índice
+  const eliminarPuntoRuta = useCallback((index) => {
+    setPuntosRuta((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Maneja el evento de agregar un punto al mapa
   const handleDibujarRuta = async () => {
     try {
       const resultado = await window.api.calcularRuta(puntosRuta);
@@ -89,160 +54,201 @@ export default function ModalRegistrarRuta() {
       setDibujar(true);
     } catch (error) {
       console.error("❌ Error al calcular ruta:", error.message);
-      alert("No se pudo calcular la ruta.");
+      setError("No se pudo calcular la ruta añade puntos al mapa.", "Registro de Rutas");
     }
   };
 
+  // Reiniciar los estados de la ruta 
   const reiniciarRuta = () => {
     setPuntosRuta([]);
     setRutaCalculada(null);
     setDibujar(false);
+    
   };
 
-  const guardarRuta = () => {
-    const ruta = {
-      nombre,
-      descripcion,
-      puntos: puntosRuta,
-      ruta_calculada: rutaCalculada?.ruta || [],
-      distancia_km: rutaCalculada?.distancia_total_km || 0,
-      instrucciones: rutaCalculada?.instrucciones || [],
-    };
+  const guardarRuta = async () => {
+    setError("");
+    setSuccess("");
+    setIsRegistering(true);
 
-    console.log("📦 Ruta guardada:", ruta);
-    alert("Ruta guardada.");
-    onClose();
+    //validación de campos
+    const camposFaltantes = [];
+
+    if (!nombre.trim()) camposFaltantes.push("Nombre");
+    if (!descripcion.trim()) camposFaltantes.push("Descripción");
+
+    if (puntosRuta.length < 2) {
+      camposFaltantes.push("Al menos 2 puntos deben ser seleccionados");
+    }
+
+    if (!rutaCalculada || !Array.isArray(rutaCalculada.ruta) || rutaCalculada.ruta.length === 0) {
+      camposFaltantes.push("Ruta calculada (usa el botón 'Dibujar Ruta')");
+    }
+
+    if (camposFaltantes.length > 0) {
+      setError(
+        `Los siguientes campos son obligatorios:\n ${camposFaltantes.join("\n, ")}`,
+        "Registro de Rutas"
+      );
+      setIsRegistering(false);
+      return;
+    }
+
+
+    // Preparar datos para enviar al backend
+    try {
+      const token_session = localStorage.getItem("token"); // Obtener el token de sesión del almacenamiento local
+
+      const ruta = {// Estructura del objeto ruta
+        nombre,
+        descripcion,
+        puntos: puntosRuta.map(p => ({ id: p.id })),
+        ruta_calculada: rutaCalculada?.ruta || [],
+        distancia_km: rutaCalculada?.distancia_total_km || 0,
+        instrucciones: rutaCalculada?.instrucciones || [],
+        creado_por: user?.id,
+      };
+
+
+      const response = await window.api.registerRuta({ ruta, token_session });
+      //console.log("📌 Respuesta al registrar ruta:", response);
+
+      if (response.success) { // Si la respuesta es exitosa
+        setSuccess("Ruta registrada exitosamente.", "Registro de Rutas");
+
+        setTimeout(() => {
+          reiniciarRuta();
+          setNombre("");
+          setDescripcion("");
+        
+          onClose(); // Cerrar modal
+          actualizarRutas(); // Actualizar rutas en el contexto
+          setIsRegistering(false);
+        }, 2000);
+      } else { // Si hubo un error al registrar la ruta
+        setError(response.message || "No se pudo registrar la ruta.", "Registro de Rutas");
+        setIsRegistering(false);
+      }
+    } catch (err) { // Manejo de errores al registrar la ruta
+      //console.error("❌ Error al guardar ruta:", err);
+      setError("Ocurrió un error al registrar la ruta.", "Registro de Rutas");
+      setIsRegistering(false);
+    }
   };
 
   return (
     <>
       <Button color="primary" onPress={onOpen}>
-        Registrar nueva ruta
+        Añadir Ruta
       </Button>
 
-      <Modal
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        size="5xl"
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl" backdrop="transparent"
+
+        scrollBehavior="inside"
         isDismissable={false}
         isKeyboardDismissDisabled={true}
-        scrollBehavior="inside" // Permite el scroll dentro del modal
+
         classNames={{
-          header: "dark:border-b border-b border-gray-400 dark:border-[#6879bd]",
-          footer: "dark:border-t border-t border-gray-400 dark:border-[#6879bd]",
+          header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
+          footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
           closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
+          content: "bg-gray-200 dark:bg-gray-800",
         }}
-        backdrop="transparent"
       >
-        <ModalContent className="bg-gray-200 dark:bg-gray-800 rounded-2xl shadow-lg">
+        <ModalContent className="bg-gray-200 dark:bg-gray-800 ">
           <>
             <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
               Registro de Ruta
             </ModalHeader>
-            <ModalBody className="bg-gray-200 dark:bg-gray-800">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2 dark:text-white dark:bg-gray-800">
+            <ModalBody className="bg-gray-100 dark:bg-gray-800 px-6 py-4">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2 dark:text-white">
                 <div className="space-y-4">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Nombre de la ruta
-                  </label>
+                  <label className="text-sm font-semibold">Nombre de la ruta</label>
                   <input
                     type="text"
-                    className="bg-gray-50 border dark:border-gray-500 text-gray-900 text-sm rounded-xl block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                    placeholder="Nombre de la ruta"
+                    className="rounded-xl p-2.5 w-full dark:bg-neutral-800"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                     required
                   />
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Descripción de la ruta
-                  </label>
+                  <label className="text-sm font-semibold">Descripción de la ruta</label>
                   <textarea
-                    type="text"
-                    className="bg-gray-50 border h-32 rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
-                    placeholder="Descripción de la ruta"
+                    className="rounded-xl p-2.5 w-full h-32 dark:bg-neutral-800"
                     value={descripcion}
                     onChange={(e) => setDescripcion(e.target.value)}
                     required
                   />
 
-
                   <div className="flex gap-2">
-                    <Button color="primary" onClick={guardarRuta}>Guardar Ruta</Button>
                     <Button color="secondary" onClick={handleDibujarRuta}>Dibujar Ruta</Button>
                     <Button color="danger" onClick={reiniciarRuta}>Reiniciar</Button>
                   </div>
 
-                  <div className="flex text-sm text-gray-600 dark:text-gray-300 items-center gap-2 ">
-                    <div className="bg-white p-4 rounded shadow text-sm max-h-[250px] overflow-auto dark:bg-gray-700">
-                      <h3 className="text-md font-semibold mb-2">📍 Puntos de la ruta:</h3>
-                      <ul className="list-disc list-inside space-y-1">
-
+                  <div className="flex flex-col md:flex-row gap-2 text-sm">
+                    <div className="bg-white p-2 rounded h-[250px] w-[250px] shadow max-h-[250px] overflow-auto dark:bg-gray-700">
+                      <h3 className="font-semibold mb-2">📍 Puntos:</h3>
+                      <ul className="space-y-1">
                         {puntosRuta.map((p, idx) => (
-
-                          <li key={idx}>🧭 Punto {idx + 1}: ({p.lat.toFixed(4)}, {p.lng.toFixed(4)})</li>
+                          <li key={idx} className="flex items-center justify-between bg-gray-100 dark:bg-gray-600 p-1 rounded">
+                            🧭 Punto {idx + 1}: ({p.lat.toFixed(4)}, {p.lng.toFixed(4)})
+                            <button
+                              onClick={() => eliminarPuntoRuta(idx)}
+                              className="ml-2 text-red-600 dark:text-gray-200 text-xs bg-red-200 dark:bg-red-600 rounded px-2 py-1 hover:bg-red-300 dark:hover:bg-red-700"
+                            >
+                              Quitar
+                            </button>
+                          </li>
                         ))}
                       </ul>
                     </div>
 
-
                     {rutaCalculada?.instrucciones?.length > 0 && (
-                      <div className="bg-white p-4 rounded shadow text-sm max-h-[250px] overflow-auto dark:bg-gray-700">
-                        <h3 className="text-md font-semibold mb-2">📌 Instrucciones:</h3>
-                        <ul className="list-disc list-inside space-y-1">
+                      <div className="bg-white p-2 rounded shadow max-h-[250px] w-[200px] overflow-auto dark:bg-gray-700">
+                        <h3 className="font-semibold mb-2">📌 Instrucciones:</h3>
+                        <ul className="space-y-1">
                           {rutaCalculada.instrucciones.map((ins, idx) => (
-                            <li key={idx}>{ins.accion} sobre {ins.calle} ({ins.distancia_m.toFixed(0)} m)</li>
+                            <li key={idx}>
+                              {ins.accion} sobre {ins.calle} ({ins.distancia_m.toFixed(0)} m)
+                            </li>
                           ))}
                         </ul>
                       </div>
                     )}
                   </div>
-
                 </div>
 
-                <MapContainer center={[29.1180777, -109.9669819]} zoom={15} className="w-full h-[300px] md:h-[500px] rounded-2xl shadow-lg">
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                  <MapaSeleccion onAgregarPunto={handleAgregarPunto} />
-
-                  {dibujar && rutaCalculada?.ruta?.length >= 2 && (
-                    <Polyline
-                      positions={rutaCalculada.ruta.map(([lat, lng]) => [lat, lng])}
-                      color="blue"
-                    />
-                  )}
-
-                  {dibujar && rutaCalculada?.puntos_gps?.map((punto, idx) => {
-                    const { closest, distance } = getClosestPoint(punto, rutaCalculada.ruta);
-                    return distance > 5 ? (
-                      <Polyline
-                        key={`conex-${idx}`}
-                        positions={[punto, closest]}
-                        color="green"
-                        dashArray="5,10"
-                        weight={2}
-                      />
-                    ) : null;
-                  })}
-
-                  {puntosRuta.map((p, i) => (
-                    <CircleMarker
-                      key={`previo-${i}`}
-                      center={[p.lat, p.lng]}
-                      radius={6}
-                      color="orange"
-                      fillColor="orange"
-                      fillOpacity={0.8}
-                    >
-                      <Tooltip direction="top" offset={[0, -10]} permanent>
-                        {i + 1}
-                      </Tooltip>
-                      <Popup>Punto marcado #{i + 1}</Popup>
-                    </CircleMarker>
-                  ))}
-                </MapContainer>
+                <div className="h-[300px] md:h-[580px] rounded-2xl shadow-lg z-0">
+                  <MapaRutas
+                    medidores={medidores}
+                    puntosRuta={puntosRuta}
+                    rutaCalculada={rutaCalculada}
+                    dibujar={dibujar}
+                    onAgregarMedidor={handleAgregarPunto}
+                    onEliminarMedidor={eliminarPuntoRuta}
+                  />
+                </div>
               </div>
             </ModalBody>
             <ModalFooter className="bg-gray-300 dark:bg-gray-700">
-              <Button color="default" onClick={onClose}>Cancelar</Button>
+
+              <Button
+                color="success"
+                onClick={guardarRuta}
+                isDisabled={isRegistering}
+                variant="light"
+                className="text-white bg-green-700 hover:bg-green-800 focus:ring-2 focus:outline-none font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-green-600 dark:hover:bg-green-700"
+              >
+                {isRegistering ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Procesando...
+                  </span>
+                ) : (
+                  "Guardar Ruta"
+                )}
+              </Button>
+              <Button color="danger" className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 font-medium rounded-xl text-sm px-5 py-2.5" onClick={onClose}>Cancelar</Button>
             </ModalFooter>
           </>
         </ModalContent>
@@ -250,11 +256,3 @@ export default function ModalRegistrarRuta() {
     </>
   );
 }
-
-
-
-
-
-
-
-

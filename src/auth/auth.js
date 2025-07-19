@@ -3,7 +3,8 @@ const jwt = require("jsonwebtoken");
 const SECRET_KEY = import.meta.env.VITE_SECRET_KEY; // clave secreta para firmar el token de acceso a la API
 import {leerToken} from '../appConfig/authApp.js'
 const URL_LOGIN = import.meta.env.VITE_API_LOGIN; // URL del endpoint de login
-
+const os = require('os');
+const nombreDispositivo = `${os.hostname()}`;
 
 /**************************************************************************************************************
  * Login de usuario
@@ -26,7 +27,7 @@ const loginUser = async (correo, contrasena) => {
         "x-app-key": `AppKey ${token}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ correo, contraseña: contrasena }) // Ojo con "contraseña" vs "contrasena"
+      body: JSON.stringify({ correo, contraseña: contrasena,dispositivo: nombreDispositivo }) // Ojo con "contraseña" vs "contrasena"
     });
 
     const data = await response.json();
@@ -44,6 +45,7 @@ const loginUser = async (correo, contrasena) => {
       success: true,
       token: data.token,
       username: data.usuario.username,
+      nombre:data.usuario.nombre,
       rol: data.usuario.rol,
       id: data.usuario.id
     };

@@ -7,7 +7,7 @@ const URL_REGISTRO_USUARIO = import.meta.env.VITE_API_REGISTRAR_USUARIO; // URL 
  * ************************************************************************************************************
  */
 // Función para registrar usuarios
-const registerUser = async (correo, contrasena, username, rol) => {
+const registerUser = async (correo,nombre, contrasena, username, rol) => {
     
     try {
       // 1. Leer token de la app
@@ -23,10 +23,11 @@ const registerUser = async (correo, contrasena, username, rol) => {
         "x-app-key": `AppKey ${token}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ correo, contrasena, username, rol }),
+      body: JSON.stringify({ correo,nombre, contrasena, username, rol }),
     });
 
     const data = await response.json();
+
 
     if (!response.ok) {
       return { success: false, message: data.error || "Error en servidor remoto" };

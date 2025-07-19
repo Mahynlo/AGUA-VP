@@ -1,7 +1,7 @@
 import RegistrarRangoTarifa from "./RegistrarRango";
 import EditarTarifaYRangos from "./EditarTarifaY_Rangos";
-
-export default function TarifaCard({ tarifa, onActualizar }) {
+import {formatoFirstDay} from "../../../utils/formatFecha";
+export default function TarifaCard({ tarifa }) {
   const tieneRangos = (tarifa.rangos?.length ?? 0) > 0;
 
   return (
@@ -14,14 +14,12 @@ export default function TarifaCard({ tarifa, onActualizar }) {
           {!tieneRangos && (
             <RegistrarRangoTarifa
               tarifaId={tarifa.id}
-              onRangoRegistrado={onActualizar}
             />
           )}
           {tieneRangos && (
             <EditarTarifaYRangos
               tarifa={tarifa}
               rangosIniciales={tarifa.rangos}
-              onCambio={onActualizar}
             />
           )}
         </div>
@@ -31,8 +29,8 @@ export default function TarifaCard({ tarifa, onActualizar }) {
         {tarifa.descripcion || "Sin descripción disponible."}
       </p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-        Vigencia: <strong>{tarifa.fecha_inicio}</strong> a{" "}
-        {tarifa.fecha_fin || "sin fecha de finalización"}
+        Vigencia: <strong>{formatoFirstDay(tarifa.fecha_inicio)}</strong> a{" "}
+        {formatoFirstDay(tarifa.fecha_fin) || "sin fecha de finalización"}
       </p>
 
       {tieneRangos ? (

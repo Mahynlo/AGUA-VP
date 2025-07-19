@@ -1,7 +1,26 @@
-import React from "react";
 import Chart from "react-apexcharts";
+import { useEffect, useState } from "react";
 
 const LineChart = () => {
+  const [isDarkMode, setIsDarkMode] = useState(
+    document.documentElement.classList.contains("dark")
+  );
+
+  // Detectar cambios en el modo oscuro con MutationObserver
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const dark = document.documentElement.classList.contains("dark");
+      setIsDarkMode(dark);
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const series = [
     {
       name: "Consumo Nacori Grande",
@@ -17,20 +36,13 @@ const LineChart = () => {
     },
   ];
 
-  // Detectar modo oscuro basándonos en la clase dark del html
-  const isDarkMode = document.documentElement.classList.contains("dark");
-
   const options = {
     chart: {
       type: "line",
       height: "100%",
-      toolbar: {
-        show: true,
-      },
-      zoom: {
-        enabled: true,
-      },
-      background: isDarkMode ? "#1f2937" : "#ffffff", // ejemplo de fondo para el chart
+      toolbar: { show: true },
+      zoom: { enabled: true },
+      background: isDarkMode ? "#1f2937" : "#ffffff",
     },
     theme: {
       mode: isDarkMode ? "dark" : "light",
@@ -41,34 +53,19 @@ const LineChart = () => {
       style: {
         fontSize: "20px",
         fontWeight: "bold",
-        color: isDarkMode ? "#5eead4" : "rgba(75, 192, 192, 1)", // color título según tema
+        color: isDarkMode ? "#5eead4" : "rgba(75, 192, 192, 1)",
         fontFamily: "Arial",
       },
     },
     colors: isDarkMode
-      ? ["#5eead4", "#22d3ee", "#4ade80"] // colores claros para modo oscuro
+      ? ["#5eead4", "#22d3ee", "#4ade80"]
       : ["rgba(75, 192, 192, 1)", "rgba(54, 162, 235, 1)", "rgb(54, 235, 117)"],
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      curve: "smooth",
-      width: 2,
-    },
+    dataLabels: { enabled: false },
+    stroke: { curve: "smooth", width: 2 },
     xaxis: {
       categories: [
-        "Enero",
-        "Febrero",
-        "Marzo",
-        "Abril",
-        "Mayo",
-        "Junio",
-        "Julio",
-        "Agosto",
-        "Septiembre",
-        "Octubre",
-        "Noviembre",
-        "Diciembre",
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
       ],
       title: {
         text: "Meses",
@@ -81,7 +78,7 @@ const LineChart = () => {
       },
       labels: {
         style: {
-          colors: isDarkMode ? "#cbd5e1" : "#374151", // colores para etiquetas eje X
+          colors: isDarkMode ? "#cbd5e1" : "#374151",
         },
       },
       axisBorder: {
@@ -132,13 +129,21 @@ const LineChart = () => {
   return (
     <div className="flex items-center justify-center p-3 rounded-lg bg-white border shadow border-gray-200 dark:border-gray-700 dark:bg-gray-800 w-full h-full">
       <div className="relative w-full h-full">
-        <Chart options={options} series={series} type="line" height="100%" width="100%" />
+        <Chart
+          options={options}
+          series={series}
+          type="line"
+          height="100%"
+          width="100%"
+          key={isDarkMode ? "dark" : "light"} // 🔁 Fuerza re-render al cambiar el tema
+        />
       </div>
     </div>
   );
 };
 
 export default LineChart;
+
 
 
 

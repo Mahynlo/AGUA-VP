@@ -1,6 +1,6 @@
 {
   "name": "aguavp",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Aguas de Villa Pesquerira",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -40,7 +40,7 @@
     "react-router-dom": "^7.1.1",
     "react-to-print": "^3.0.6",
     "recharts": "^2.15.3",
-    "ruta-craft-osm": "file:../OSM_VP/Rutas_Auto_Generadas_OSM/ruta-craft-osm/ruta-craft-osm-0.0.2.tgz"
+    "ruta-craft-osm": "file:../OSM_VP/Rutas_Auto_Generadas_OSM/ruta-craft-osm/ruta-craft-osm-0.0.3.tgz"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^1.0.2",

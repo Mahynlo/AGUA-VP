@@ -15,7 +15,7 @@ import Impresion from './components/vistas/ImpresionVista';
 import LoginApp from './components/login/login';
 import PerfilPage from './components/perfil/perfilpage';
 import NotFoundVista from './components/vistas/NotFoundVista';
-import RegistroApp from "./components/registroUsuarios/Registro";
+
 import Medidores from "./components/vistas/medidores/MedidoresVista";
 import Administrador from "./components/administrador/Administrador";
 import Lecturas from "./components/vistas/LecturasVista";
@@ -29,6 +29,7 @@ import { MedidoresProvider } from './context/MedidoresContext';
 import { AuthProvider } from "./context/AuthContext";
 import { AuthAppProvider } from "./context/appAuthContext";
 import { TarifasProvider } from "./context/TarifasContext";
+import { RutasProvider } from "./context/RutasContext";
 
 // Rutas protegidas
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoute";
@@ -45,19 +46,30 @@ import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
 import ModalBienvenida from "./components/appBienvenida/ModalBienvenida";
 //cargar datos al iniciar sección en la aplicacion 
 import InitDataLoader from "./context/InitDataLoader";
+
+import FeedbackMessages from "./components/toast/FeedbackMessages"; // Importar el componente de mensajes de feedback
+
 function App() {
   return (
     <Router>
       <AuthAppProvider>
 
         <AuthProvider>
-          
+
           <ClientesProvider>
             <MedidoresProvider>
               <TarifasProvider>
-                <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
-              <MainApp /> {/* Solo aquí */}
-              <ModalBienvenida /> {/* Modal de bienvenida */}
+                <RutasProvider>
+
+
+                  <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
+
+                  <MainApp /> {/* Aqui se cargan las rutas de al apalicacion*/}
+                  {/* Componente global de mensajes */}
+                  <FeedbackMessages position="bottom-right" />
+
+                  <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
+                </RutasProvider>
               </TarifasProvider>
             </MedidoresProvider>
           </ClientesProvider>
@@ -111,7 +123,6 @@ function MainApp() {
         <Route path="/reporteLecturas" element={<ReporteLecturas />} /> {/* protegida pero sin nav ni sidebar */}
         {/* Rutas públicas */}
         <Route path='/' element={<LoginApp />} />
-        <Route path='/registro' element={<RegistroApp />} />
         <Route path='/recuperarPassword' element={<RecuperarPassword />} />
         <Route path='*' element={<NotFoundVista />} />
       </Routes>

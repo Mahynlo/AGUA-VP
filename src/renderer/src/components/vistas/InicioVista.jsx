@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PieChart from "../charts/piechart";
 import LineChart from "../charts/lineChart";
 import CalendarInicio from "../calendario/CalendarioInicio";
+import CalendarComponent from "../calendario/Calendario";
 import { ConsumoIcon, ClientesHomeIcon, MedidioresIcon } from "../../IconsApp/IconsHome";
 import { useMedidores } from "../../../src/context/MedidoresContext";
 import { useClientes } from "../../../src/context/ClientesContext";
@@ -86,7 +87,7 @@ const InicioVista = () => {
                 {/* Calendario */}
                 <div
                     className="
-                        p-6 bg-gray-100 border rounded-lg shadow dark:bg-gray-800 dark:border-gray-700
+                       
                         col-span-1
                         md:col-span-4
                         lg:col-span-4
@@ -98,13 +99,14 @@ const InicioVista = () => {
                 >
                     {/* LineChart */}
 
-                    <CalendarInicio />
+                    
+                    <CalendarComponent/>
                 </div>
 
                 {/* Linechart*/}
                 <div
                     className="
-                        p-6 bg-gray-100 border rounded-lg shadow dark:bg-gray-800 dark:border-gray-700
+                        
                         col-span-1
                         md:col-span-4
                         md:h-[500px]

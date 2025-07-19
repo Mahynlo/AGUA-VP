@@ -97,7 +97,6 @@ export default function Tarifas() {
                 <TarifaCard
                   key={tarifa.id}
                   tarifa={tarifa}
-                  onActualizar={actualizarTarifas}
                 />
               ))
             )}

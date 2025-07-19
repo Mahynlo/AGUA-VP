@@ -1,29 +1,40 @@
 import { contextBridge,ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-
 // Custom APIs for renderer
 const api = {
+  //clintes
   fetchClientes: async (token_session) => {
     return await ipcRenderer.invoke("fetch-clientes", token_session);
   },
+  registerClient: (data) => ipcRenderer.invoke("register-cliente", data),
+  updateClient: (data) => ipcRenderer.invoke("update-cliente", data),
+
+  //medidores
   fetchMedidores: async (token_session) => {
     return await ipcRenderer.invoke("fetch-medidores",token_session);
   },
-  register: (data) => ipcRenderer.invoke("register", data),
-  registerClient: (data) => ipcRenderer.invoke("register-cliente", data),
+  registerMeter: (data) => ipcRenderer.invoke("register-medidor", data),
+  
+  
+  //login y registro de usuario
   login: (data) => ipcRenderer.invoke("login", data),
+  register: (data) => ipcRenderer.invoke("register", data),
+
+  //sesiones (cerrar sesión, verificar sesión, obtener sesiones activas)
   verifySession: (token) => ipcRenderer.invoke("verify-session", token),
-  updateClient: (data) => ipcRenderer.invoke("update-cliente", data),
   logout: (token) => ipcRenderer.invoke("logout", token),
   getSession: (usuario_id) => ipcRenderer.invoke("active-sessions-user", usuario_id),
-  registerMeter: (data) => ipcRenderer.invoke("register-medidor", data),
+  
 
-calcularRuta: async (puntos_gps) => {
-  return await ipcRenderer.invoke("calcular-ruta", puntos_gps);
-},
-
-
+  // Rutas
+  calcularRuta: async (puntos_gps) => {
+    return await ipcRenderer.invoke("calcular-ruta", puntos_gps);
+  },
+  registerRuta: async (data) => ipcRenderer.invoke("registrar-ruta", data),
+  listarRutas: async (token_session, periodo) => {
+    return await ipcRenderer.invoke("listar-rutas", token_session, periodo);
+  },
 
 
  //impresion

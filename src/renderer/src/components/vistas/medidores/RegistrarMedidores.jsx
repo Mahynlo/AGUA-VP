@@ -21,7 +21,7 @@ import BuscarCliente from "./BuscarCliente";
 import SelectorCoordenadas from "../../mapa/SelectorCoordenadas";
 
 //para los iconos de los mensajes de feedback
-import FeedbackMessages from "../../toast/FeedbackMessages";
+import { useFeedback } from "../../../context/FeedbackContext";
 export default function RegistrarMedidor() {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
     const pueblos = [
@@ -47,8 +47,7 @@ export default function RegistrarMedidor() {
     const [latitud, setLatitud] = useState("");
     const [longitud, setLongitud] = useState("");
     const [estadoMedidor, setEstadoMedidor] = useState("Activo");
-    const [success, setSuccess] = useState("");
-    const [error, setError] = useState("");
+    const { setSuccess, setError } = useFeedback(); // Importa el contexto de feedback
 
     const numeroSerieCompleto = `${ciudad}${numeroSerie}`;
 
@@ -60,17 +59,36 @@ export default function RegistrarMedidor() {
         setIsUpdating(true); // Indica que se está realizando una actualización
 
         // Validaciones de campos
-        if (!numeroSerie || !ubicacion || !fechaInstalacion || !latitud || !longitud) {
-            setError("Todos los campos son obligatorios.");
-            setIsUpdating(false); // Indica que la actualización ha finalizado
+        const camposFaltantes = [];
+        if (!numeroSerie) camposFaltantes.push("Número de serie");
+        if (!ubicacion) camposFaltantes.push("Ubicación");
+        if (!fechaInstalacion) camposFaltantes.push("Fecha de instalación");
+        if (!ciudad) camposFaltantes.push("Ciudad");
+        if (!latitud) camposFaltantes.push("Latitud");
+        if (!longitud) camposFaltantes.push("Longitud");
+
+        if (camposFaltantes.length > 0) {
+            setError(`Los siguientes campos son obligatorios: ${camposFaltantes.join(", ")}.`,
+                "Registro de Medidores");
+            setIsUpdating(false);
             return;
         }
 
-        if (isNaN(parseFloat(latitud)) || isNaN(parseFloat(longitud))) {
-            setError("Latitud y longitud deben ser números válidos.");
-            setIsUpdating(false); // Indica que la actualización ha finalizado
+        // Validar que latitud y longitud sean números válidos
+        const lat = parseFloat(latitud);
+        const lon = parseFloat(longitud);
+
+        if (isNaN(lat) || isNaN(lon)) {
+            const erroresNumericos = [];
+            if (isNaN(lat)) erroresNumericos.push("Latitud");
+            if (isNaN(lon)) erroresNumericos.push("Longitud");
+
+            setError(`${erroresNumericos.join(" y ")} deben ser números válidos.`,
+                "Registro de Medidores");
+            setIsUpdating(false);
             return;
         }
+
 
 
         try {
@@ -91,10 +109,10 @@ export default function RegistrarMedidor() {
             //console.log("Respuesta del servidor:", response);
 
             if (response.success) {
-                setSuccess("Medidor registrado exitosamente.");
+                setSuccess("Medidor registrado exitosamente.", "Registro de Medidores");
                 setTimeout(() => {
-                    setSuccess("");
-                    setClienteIdBusqueda(null);
+                    //setSuccess("");
+                    setClienteIdBusqueda(null); // Resetea el cliente seleccionado
                     setCiudad("");
                     setNumeroSerie("");
                     setUbicacion("");
@@ -106,11 +124,11 @@ export default function RegistrarMedidor() {
                     setIsUpdating(false); // Indica que la actualización ha finalizado
                 }, 2000);
             } else {
-                setError(response.message);
+                setError(response.message, "Registro de Medidores");
                 setIsUpdating(false); // Indica que la actualización ha finalizado
             }
         } catch (err) {
-            setError("Ocurrió un error en el registro. Intenta nuevamente.");
+            setError("Ocurrió un error en el registro. Intenta nuevamente.", "Registro de Medidores");
             setIsUpdating(false); // Indica que la actualización ha finalizado
         }
     };
@@ -148,13 +166,8 @@ export default function RegistrarMedidor() {
                                 Registrar Medidor
                             </ModalHeader>
                             <ModalBody className="bg-gray-200 dark:bg-gray-800">
-                                <FeedbackMessages
-                                    success={success}
-                                    error={error}
-                                    setSuccess={setSuccess}
-                                    setError={setError}
-                                />
-                                <form onSubmit={(e) => { e.preventDefault(); handleRegistroMedidor(); }}>
+
+                                <form id="form-registro-medidor" onSubmit={(e) => { e.preventDefault(); handleRegistroMedidor(); }}>
                                     <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
                                         <div>
                                             <BuscarCliente onClienteSeleccionado={handleClienteSeleccionado} />
@@ -223,9 +236,12 @@ export default function RegistrarMedidor() {
                                                 onChange={(e) => setFechaInstalacion(e.target.value)}
                                                 required
                                             />
-                                        
+
                                         </div>
                                     </div>
+                                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                        Ubicación del Medidor (Latitud y Longitud)
+                                    </label>
                                     <SelectorCoordenadas
                                         valorInicial={{ lat: parseFloat(latitud) || 29.1180777, lng: parseFloat(longitud) || -109.9669819 }}
                                         onChange={({ lat, lng }) => {
@@ -241,6 +257,8 @@ export default function RegistrarMedidor() {
                                 <Button
                                     color="primary"
                                     onClick={handleRegistroMedidor}
+                                    type="submit"
+                                    form="form-registro-medidor"
                                     isDisabled={isUpdating}
                                     variant="light"
                                     className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700"

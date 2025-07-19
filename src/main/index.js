@@ -27,6 +27,7 @@ function createWindow() {
     }
   })
 
+
   mainWindow.on('ready-to-show', () => { // Mostrar la ventana cuando esté lista 
     mainWindow.show();      // Muestra la app
   })
