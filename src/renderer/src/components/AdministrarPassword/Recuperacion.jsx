@@ -1,16 +1,74 @@
 
 import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 
 export default function RecuperarPassword() {
-    return (
-        <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-            <h1>Recuperar Password</h1>
-            <div className="text-right mt-2">
-                <Link to="/" className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-700">
-                    Regresar
-                </Link>
-                
-            </div>
-        </div>
-    )
+  const [reciboData, setReciboData] = useState({
+    nombre: 'Juan Pérez',
+    monto: 100,
+    fecha: '2025-05-11',
+  });
+
+  const handleVistaPreviaReporte = async () => {
+    const response = await window.api.previewRecibohtml(reciboData);
+    console.log('Respuesta del Main Process:', response);  // Puedes hacer algo con la respuesta si es necesario
+  };
+
+  const [respuesta, setRespuesta] = useState(null);
+
+
+  const handleRegistrar = async () => {
+    const res = await window.authApp.registrarApp("Mi App desde React");
+    setRespuesta(res);
+  };
+
+  //verificar si el token existe
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const verificarToken = async () => {
+      const res = await window.authApp.leerToken();
+      if (res && res.token) {
+        setToken(res.token);
+      }
+    };
+
+    verificarToken();
+  }, []);
+
+  const handleBorrarToken = async () => {
+    await window.authApp.borrarToken();
+    localStorage.removeItem("appRegistrada"); // <- Elimina la marca de app registrada
+    console.log("Token y appRegistrada eliminados");
+  };
+
+  //leer id 
+  const [id, setId] = useState(null);
+
+  //token de session 
+  const tokensession = localStorage.getItem("token");
+
+  useEffect(() => {
+    const verificarId = async () => {
+      const res = await window.authApp.leerId();
+      if (res && res.id) {
+        setId(res.id);
+      }
+    };
+    verificarId();
+  }
+    , []);
+  return (
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
+      <h1>Recuperar Password</h1>
+      <div className="text-right mt-2">
+        <Link to="/" className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-blue-700">
+          Regresar
+        </Link>
+
+      </div>
+      
+
+    </div>
+  )
 }

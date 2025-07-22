@@ -48,13 +48,14 @@ export default function ModalRegistrarRuta() {
 
   // Maneja el evento de agregar un punto al mapa
   const handleDibujarRuta = async () => {
+    console.log("📌 Puntos GPS para calcular ruta:", puntosRuta);
     try {
       const resultado = await window.api.calcularRuta(puntosRuta);
       setRutaCalculada(resultado);
       setDibujar(true);
     } catch (error) {
       console.error("❌ Error al calcular ruta:", error.message);
-      setError("No se pudo calcular la ruta añade puntos al mapa.", "Registro de Rutas");
+      setError(`No se pudo calcular la ruta añade puntos al mapa.->${error.message}`, "Registro de Rutas");
     }
   };
 
