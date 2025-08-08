@@ -1,12 +1,15 @@
 import React, { useState } from "react";
+import { Card, CardBody, Chip, Progress } from "@nextui-org/react";
 import PieChart from "../charts/piechart";
 import LineChart from "../charts/lineChart";
 import CalendarInicio from "../calendario/CalendarioInicio";
 import CalendarComponent from "../calendario/Calendario";
 import { ConsumoIcon, ClientesHomeIcon, MedidioresIcon } from "../../IconsApp/IconsHome";
+import { HiCurrencyDollar, HiTrendingUp, HiTrendingDown, HiUsers, HiChartBar, HiCalendar,HiChartPie } from "react-icons/hi";
 import { useMedidores } from "../../../src/context/MedidoresContext";
 import { useClientes } from "../../../src/context/ClientesContext";
 import { parseDate } from "@internationalized/date";
+
 
 const InicioVista = () => {
     const { medidores } = useMedidores();
@@ -14,135 +17,219 @@ const InicioVista = () => {
     const [openModal, setOpenModal] = useState(true);
     let [value, setValue] = useState(parseDate("2024-04-07"));
 
+    // Cálculos para las métricas del dashboard
+    const totalPagos = 1250; // Ejemplo - deberías obtener esto de tu contexto
+    const consumoTotal = 600;
+    const crecimientoClientes = 8.5; // Porcentaje de crecimiento
+
     return (
-        <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-            <div
-                className="
-      grid gap-4 auto-rows-max h-full p-2
-      grid-cols-1
-      sm:grid-cols-1
-      md:grid-cols-4
-      lg:grid-cols-4
-      2xl:grid-cols-4 
-    "
-            >
-                {/* Tarjetas */}
-                <div className="p-6 bg-gray-100 border rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                    {/* Consumo */}
-                    <div className="flex justify-between items-start">
-                        <div className="flex flex-col">
-                            <p className="2xl:text-3xl lg:text-2xl text-gray-600 dark:text-gray-100 font-bold tracking-wide">Consumo</p>
-                            <h3 className="mt-1 text-5xl text-red-500 font-bold mt-4">600 m³</h3>
-                            <span className="mt-4 text-xs text-gray-500">Número corresponde al consumo diario correspondiente al mes anterior.</span>
-                        </div>
-                        <div className="bg-red-500 p-2 rounded-md text-white">
-                            <ConsumoIcon className="w-6 h-6" />
-                        </div>
-                    </div>
-                </div>
+        <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-3 sm:p-4 md:p-6 sm:ml-64 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+            {/* Header del Dashboard */}
+            <div className="mb-4 sm:mb-6 md:mb-8">
+               
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                <HiChartPie className="bg-blue-500 text-white rounded-full p-2 h-12 w-12" />
+                                 Dashboard General
+                              </h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                    Resumen general del sistema de agua Villa Pesqueira
+                </p>
+            </div>
 
+            <div className="grid gap-3 sm:gap-4 md:gap-6 auto-rows-max h-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4">
+                
+                {/* Tarjeta de Consumo */}
+                <Card className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-1 border-none bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/50 dark:to-red-900/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <CardBody className="p-3 sm:p-4 md:p-6">
+                        <div className="flex justify-between items-start">
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <ConsumoIcon className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
+                                    <p className="text-sm sm:text-base md:text-lg font-semibold text-red-700 dark:text-red-400 truncate">Consumo</p>
+                                </div>
+                                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-red-600 dark:text-red-400 mb-2 truncate">
+                                    {consumoTotal} m³
+                                </h3>
+                                <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                                    <Chip size="sm" color="danger" variant="flat" startContent={<HiTrendingUp className="w-3 h-3" />}>
+                                        +5.2%
+                                    </Chip>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">vs mes anterior</span>
+                                </div>
+                                <Progress 
+                                    value={75} 
+                                    color="danger" 
+                                    size="sm" 
+                                    className="mt-auto"
+                                    label="Capacidad utilizada"
+                                    showValueLabel={false}
+                                />
+                            </div>
+                            <div className="bg-gradient-to-br from-red-500 to-red-600 p-2 sm:p-3 rounded-xl sm:rounded-2xl text-white shadow-lg ml-2 flex-shrink-0">
+                                <ConsumoIcon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
+                            </div>
+                        </div>
+                    </CardBody>
+                </Card>
 
-                <div className="p-6 bg-gray-100 border rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                    {/* Clientes */}
-                    <div className="flex justify-between items-start">
-                        <div className="flex flex-col">
-                            <p className="2xl:text-3xl lg:text-2xl text-gray-600 dark:text-gray-100 font-bold tracking-wide">Clientes</p>
-                            <h3 className="mt-1 text-5xl text-green-500 font-bold mt-4">{clientes.length}</h3>
-                            <span className="mt-4 text-xs text-gray-500">Número correspondiente a los clientes registrados hasta el mes anterior.</span>
+                {/* Tarjeta de Clientes */}
+                <Card className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-1 border-none bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <CardBody className="p-3 sm:p-4 md:p-6">
+                        <div className="flex justify-between items-start">
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <HiUsers className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                                    <p className="text-sm sm:text-base md:text-lg font-semibold text-green-700 dark:text-green-400 truncate">Clientes</p>
+                                </div>
+                                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400 mb-2 truncate">
+                                    {clientes.length}
+                                </h3>
+                                <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                                    <Chip size="sm" color="success" variant="flat" startContent={<HiTrendingUp className="w-3 h-3" />}>
+                                        +{crecimientoClientes}%
+                                    </Chip>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">crecimiento mensual</span>
+                                </div>
+                                <Progress 
+                                    value={85} 
+                                    color="success" 
+                                    size="sm" 
+                                    className="mt-auto"
+                                    label="Meta mensual"
+                                    showValueLabel={false}
+                                />
+                            </div>
+                            <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 sm:p-3 rounded-xl sm:rounded-2xl text-white shadow-lg ml-2 flex-shrink-0">
+                                <ClientesHomeIcon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
+                            </div>
                         </div>
-                        <div className="bg-green-500 p-2 rounded-md text-white">
-                            <ClientesHomeIcon className="w-6 h-6" />
-                        </div>
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
 
-                <div className="p-6 bg-gray-100 border rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                    {/* Medidores */}
-                    <div className="flex justify-between items-start">
-                        <div className="flex flex-col">
-                            <p className="2xl:text-3xl lg:text-2xl text-gray-600 dark:text-gray-100 font-bold tracking-wide">Medidores</p>
-                            <h3 className="mt-1 text-5xl text-blue-500 font-bold mt-4">{medidores.length}</h3>
-                            <span className="mt-4 text-xs text-gray-500">Número correspondiente al mes anterior.</span>
+                {/* Tarjeta de Medidores */}
+                <Card className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-1 border-none bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <CardBody className="p-3 sm:p-4 md:p-6">
+                        <div className="flex justify-between items-start">
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <MedidioresIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                                    <p className="text-sm sm:text-base md:text-lg font-semibold text-blue-700 dark:text-blue-400 truncate">Medidores</p>
+                                </div>
+                                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2 truncate">
+                                    {medidores.length}
+                                </h3>
+                                <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                                    <Chip size="sm" color="primary" variant="flat" startContent={<HiChartBar className="w-3 h-3" />}>
+                                        {Math.round((medidores.length / (clientes.length || 1)) * 100)}% activos
+                                    </Chip>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">cobertura</span>
+                                </div>
+                                <Progress 
+                                    value={(medidores.length / (clientes.length || 1)) * 100} 
+                                    color="primary" 
+                                    size="sm" 
+                                    className="mt-auto"
+                                    label="Cobertura de medidores"
+                                    showValueLabel={false}
+                                />
+                            </div>
+                            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 sm:p-3 rounded-xl sm:rounded-2xl text-white shadow-lg ml-2 flex-shrink-0">
+                                <MedidioresIcon className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
+                            </div>
                         </div>
-                        <div className="bg-blue-500 p-2 rounded-md text-white">
-                            <MedidioresIcon className="w-6 h-6" />
-                        </div>
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
 
-                <div className="p-6 bg-gray-100 border rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                    {/* Medidores */}
-                    <div className="flex justify-between items-start">
-                        <div className="flex flex-col">
-                            <p className="2xl:text-3xl lg:text-2xl text-gray-600 dark:text-gray-100 font-bold tracking-wide">Pagos</p>
-                            <h3 className="mt-1 text-5xl text-blue-500 font-bold mt-4">{medidores.length}</h3>
-                            <span className="mt-4 text-xs text-gray-500">Número correspondiente al mes anterior.</span>
+                {/* Tarjeta de Pagos */}
+                <Card className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-1 border-none bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <CardBody className="p-3 sm:p-4 md:p-6">
+                        <div className="flex justify-between items-start">
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <HiCurrencyDollar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                                    <p className="text-sm sm:text-base md:text-lg font-semibold text-purple-700 dark:text-purple-400 truncate">Pagos</p>
+                                </div>
+                                <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2 truncate">
+                                    ${totalPagos.toLocaleString()}
+                                </h3>
+                                <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                                    <Chip size="sm" color="secondary" variant="flat" startContent={<HiTrendingUp className="w-3 h-3" />}>
+                                        +12.3%
+                                    </Chip>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">ingresos mensuales</span>
+                                </div>
+                                <Progress 
+                                    value={92} 
+                                    color="secondary" 
+                                    size="sm" 
+                                    className="mt-auto"
+                                    label="Tasa de cobro"
+                                    showValueLabel={false}
+                                />
+                            </div>
+                            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-2 sm:p-3 rounded-xl sm:rounded-2xl text-white shadow-lg ml-2 flex-shrink-0">
+                                <HiCurrencyDollar className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
+                            </div>
                         </div>
-                        <div className="bg-blue-500 p-2 rounded-md text-white">
-                            <MedidioresIcon className="w-6 h-6" />
-                        </div>
-                    </div>
-                </div>
+                    </CardBody>
+                </Card>
 
                 {/* Calendario */}
-                <div
-                    className="
-                       
-                        col-span-1
-                        md:col-span-4
-                        lg:col-span-4
-                        lg:h-[600px]
-                        2xl:col-span-4
-                        2xl:h-[600px]
-                    
-                    "
-                >
-                    {/* LineChart */}
-
-                    
-                    <CalendarComponent/>
-                </div>
-
-                {/* Linechart*/}
-                <div
-                    className="
+                <Card className="col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-4 xl:col-span-4 2xl:col-span-4 border-none bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg shadow-xl max max-h-[900px]">
+                    <CardBody className="p-3 sm:p-4 md:p-6">
                         
-                        col-span-1
-                        md:col-span-4
-                        md:h-[500px]
-                        lg:col-span-3
-                        lg:h-[500px]
-                        2xl:col-span-3
-                        2xl:h-[500px]
-                    "
-                >
-                    <LineChart />
-                </div>
+                        <div className="min-h-[300px] sm:min-h-[400px] md:min-h-[851px] overflow-hidden">
+                            <CalendarComponent/>
+                        </div>
+                    </CardBody>
+                </Card>
 
-                {/* PieChart */}
-                <div
-                    className="
-                        p-6 bg-gray-100 border rounded-lg shadow dark:bg-gray-800 dark:border-gray-700
-                        col-span-1 
-                        md:col-span-4
-                        lg:col-span-1
-                        lg:h-[500px]
-                        2xl:col-span-1
-                        2xl:h-[500px]
-                        
-                    "
-                >
-                    <p className="2xl:text-2xl lg:text-lg md:text-2xl font-bold text-gray-600 dark:text-gray-100">Participación del Consumo</p>
-                    <PieChart />
-                </div>
+                {/* Gráfico de Líneas */}
+                <Card className="col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-3 xl:col-span-3 2xl:col-span-3 h-[300px] sm:h-[400px] md:h-[500px] lg:h-[500px] xl:h-[500px] 2xl:h-[500px] border-none bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg shadow-xl">
+                    <CardBody className="p-3 sm:p-4 md:p-6 h-full">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 sm:p-2 rounded-lg sm:rounded-xl flex-shrink-0">
+                                <HiChartBar className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white truncate">
+                                    Tendencias de Consumo
+                                </h3>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
+                                    Análisis temporal del consumo de agua
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex-1 flex items-center justify-center overflow-hidden">
+                            <LineChart />
+                        </div>
+                    </CardBody>
+                </Card>
 
-
-
-
+                {/* Gráfico Circular */}
+                <Card className="col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-1 xl:col-span-1 2xl:col-span-1 h-[300px] sm:h-[400px] md:h-[500px] lg:h-[500px] xl:h-[500px] 2xl:h-[500px] border-none bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg shadow-xl">
+                    <CardBody className="p-3 sm:p-4 md:p-6 h-full">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 sm:p-2 rounded-lg sm:rounded-xl flex-shrink-0">
+                                <HiChartBar className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 dark:text-white truncate">
+                                    Participación del Consumo
+                                </h3>
+                                <p className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                                    Distribución por sectores
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex-1 flex items-center justify-center overflow-hidden">
+                            <PieChart />
+                        </div>
+                    </CardBody>
+                </Card>
 
             </div>
         </div>
-
     );
 };
 

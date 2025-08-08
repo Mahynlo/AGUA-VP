@@ -10,6 +10,7 @@ import {
 } from "react-leaflet";
 import { LatLng, Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
+import './MapaMedidores.css';
 import markerIcon from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 
 function getClosestPoint(punto, ruta) {
@@ -98,12 +99,14 @@ export default function MapaRutas({
 
 
   return (
-    <MapContainer
-      center={[29.1180777, -109.9669819]}
-      zoom={15}
-       scrollWheelZoom={true} 
-       style={{ height: "100%", width: "100%" }}
-    >
+    <div className="w-full h-full rounded-lg overflow-hidden shadow-lg border border-gray-200">
+      <MapContainer
+        center={[29.1180777, -109.9669819]}
+        zoom={15}
+        scrollWheelZoom={true} 
+        style={{ height: "100%", width: "100%", borderRadius: "0.5rem" }}
+        className="leaflet-container"
+      >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       {dibujar && rutaCalculada?.ruta?.length >= 2 && (
@@ -187,6 +190,7 @@ export default function MapaRutas({
         </CircleMarker>
       ))}
     </MapContainer>
+    </div>
   );
 }
 

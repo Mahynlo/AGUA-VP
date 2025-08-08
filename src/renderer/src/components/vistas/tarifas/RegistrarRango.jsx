@@ -1,6 +1,7 @@
 import {
-    Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure
+    Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Card, CardBody
 } from "@nextui-org/react";
+import { HiCurrencyDollar, HiPlus, HiDocumentText } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import { useTarifas } from "../../../context/TarifasContext";
 
@@ -13,7 +14,10 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
     const { setSuccess, setError } = useFeedback();
     const [isSaving, setIsSaving] = useState(false);
 
-    const { actualizarTarifas } = useTarifas();
+    const { actualizarTarifas, tarifas } = useTarifas();
+
+    // Obtener la tarifa seleccionada basada en el ID
+    const tarifaSeleccionada = tarifas.find(tarifa => tarifa.id === tarifaId);
 
 
     const handleChange = (index, field, value) => {
@@ -160,105 +164,135 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
                 Nuevo Rango
             </Button>
 
-            <Modal
-                isOpen={isOpen}
-                onOpenChange={onOpenChange}
-                size="2xl"
+            <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={onClose} 
+                size="3xl"
                 scrollBehavior="inside"
                 isDismissable={false}
                 isKeyboardDismissDisabled={true}
+                backdrop="transparent"
+                placement="center"
                 classNames={{
-                    header: "dark:border-b border-b border-gray-400 dark:border-[#6879bd]",
-                    footer: "dark:border-t border-t border-gray-400 dark:border-[#6879bd]",
                     closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
-                backdrop="transparent"
-            //boton de cerrar modal estilo
             >
                 <ModalContent>
                     {(onClose) => (
                         <>
-                            <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
-                                Registrar Rango
+                            <ModalHeader className="flex items-center gap-2 text-xl font-bold">
+                                <HiDocumentText className="w-6 h-6 text-green-600" />
+                                Registrar Rangos - {tarifaSeleccionada?.nombre_tarifa || 'Tarifa'}
                             </ModalHeader>
-                            <ModalBody className="bg-gray-200 dark:bg-gray-800">
+                            <ModalBody className="space-y-4">
 
 
-                                <form id="form-registrar-rango" onSubmit={handleSubmit} className="space-y-6 mt-20 dark:text-white dark:bg-gray-800">
-                                    <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
-                                        <thead>
-                                            <tr>
-                                                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Consumo mínimo (m³)</th>
-                                                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Consumo máximo (m³)</th>
-                                                <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Precio unitario ($/m³)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                            {rangos.map((rango, index) => (
-                                                <tr key={index}>
-                                                    <td className="px-4 py-2">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
-                                                            className="input-style w-full dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                            value={rango.consumo_min}
-                                                            onChange={(e) => handleChange(index, "consumo_min", e.target.value)}
-                                                            required
-                                                        />
-                                                    </td>
-                                                    <td className="px-4 py-2">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
-                                                            className="input-style w-full dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                            value={rango.consumo_max}
-                                                            onChange={(e) => handleChange(index, "consumo_max", e.target.value)}
-                                                            required
-                                                        />
-                                                    </td>
-                                                    <td className="px-4 py-2">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
-                                                            className="input-style w-full dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                            value={rango.precio_por_m3}
-                                                            onChange={(e) => handleChange(index, "precio_por_m3", e.target.value)}
-                                                            required
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                <Card className="border border-green-200 dark:border-green-800">
+                                    <CardBody className="space-y-4">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                            <HiCurrencyDollar className="w-5 h-5 text-green-600" />
+                                            Configuración de Rangos
+                                        </h3>
+                                        
+                                        <form className="space-y-4"
+                                            onSubmit={handleSubmit}
+                                            id="form-registrar-rango"
+                                        >
+                                            <table className="min-w-full border-separate border-spacing-y-2">
+                                                <thead>
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Consumo mínimo
+                                                        </th>
+                                                        <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Consumo máximo
+                                                        </th>
+                                                        <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Precio ($/m³)
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-sm">
+                                                    {rangos.map((rango, index) => (
+                                                        <tr key={index} className="bg-gray-50 dark:bg-neutral-800">
+                                                            <td className="px-4 py-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <label className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                        {index + 1}:
+                                                                    </label>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        step="0.01"
+                                                                        placeholder="Mín"
+                                                                        value={rango.consumo_min}
+                                                                        onChange={(e) => handleChange(index, "consumo_min", e.target.value)}
+                                                                        className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-neutral-700 dark:text-white"
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-2">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    placeholder="Máx"
+                                                                    value={rango.consumo_max}
+                                                                    onChange={(e) => handleChange(index, "consumo_max", e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-neutral-700 dark:text-white"
+                                                                    required
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-2">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    placeholder="$/m³"
+                                                                    value={rango.precio_por_m3}
+                                                                    onChange={(e) => handleChange(index, "precio_por_m3", e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-neutral-700 dark:text-white"
+                                                                    required
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
 
-                                    <Button color="primary" type="button" onClick={agregarRango} className="text-white bg-green-600">
-                                        + Agregar Rango
-                                    </Button>
-                                </form>
+                                            <div className="flex justify-center pt-4">
+                                                <Button
+                                                    type="button"
+                                                    onClick={agregarRango}
+                                                    color="success"
+                                                    variant="flat"
+                                                    startContent={<HiPlus className="h-4 w-4" />}
+                                                    className="bg-green-50 dark:bg-green-950/50 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50"
+                                                >
+                                                    Agregar Rango
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </CardBody>
+                                </Card>
                             </ModalBody>
 
 
-                            <ModalFooter className="bg-gray-300 dark:bg-gray-700">
-                                <Button
-                                    color="primary"
-                                    type="submit"
-                                    form="form-registrar-rango"
-                                    onClick={handleSubmit}
-                                    isDisabled={isSaving}
-                                    className="bg-blue-700 text-white"
-                                >
-                                    {isSaving ? "Registrando..." : "Registrar Rangos"}
-                                </Button>
+                            <ModalFooter>
                                 <Button
                                     color="danger"
                                     variant="light"
                                     onPress={onClose}
-                                    className="bg-red-700 text-white"
                                 >
                                     Cancelar
+                                </Button>
+                                <Button
+                                    color="primary"
+                                    type="submit"
+                                    form="form-registrar-rango"
+                                    isDisabled={isSaving}
+                                    isLoading={isSaving}
+                                >
+                                    {isSaving ? "Registrando..." : "Registrar Rangos"}
                                 </Button>
                             </ModalFooter>
                         </>

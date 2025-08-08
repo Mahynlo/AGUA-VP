@@ -3,9 +3,10 @@ const { ipcMain } = require("electron");
 import { GenerarRutaLectura } from "../../generador_rutas/generar_ruta.js";
 import {registrarRutas} from "../../register/rutas.js"; // Asegúrate de que esta ruta sea correcta
 import {fetchRutas} from "../../fetch/rutas.js"; // Asegúrate de que esta ruta sea correcta
-
+import {fetchRutasInfoMedidores} from "../../fetch/infoRutas.js"; // Asegúrate de que esta ruta sea correcta
 export default function IpcHandlersRutas() {
 
+  
   ipcMain.handle("calcular-ruta", async (event, puntos_gps) => {
     try {
       console.log("📌 Puntos GPS recibidos:", puntos_gps); // debe ser array directamente
@@ -64,6 +65,23 @@ export default function IpcHandlersRutas() {
 
     } catch (error) {
       console.error("❌ Error al listar rutas:", error.message);
+      return [];
+    }
+  });
+
+  ipcMain.handle("listar-rutas-info-medidores", async (event, token_session, id_ruta) => {
+    try {
+      console.log("📌 Listando información de medidores para la ruta con ID:", id_ruta);
+
+      if (!token_session) {
+        throw new Error("Token de sesión no proporcionado");
+      }
+
+      const medidores = await fetchRutasInfoMedidores(token_session, id_ruta);
+      return medidores;
+
+    } catch (error) {
+      console.error("❌ Error al listar información de medidores:", error.message);
       return [];
     }
   });

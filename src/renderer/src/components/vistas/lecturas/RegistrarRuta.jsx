@@ -8,7 +8,12 @@ import {
   ModalFooter,
   Button,
   useDisclosure,
+  Input,
+  Card,
+  CardBody,
+  Chip
 } from "@nextui-org/react";
+import { HiPlus, HiMap, HiLocationMarker, HiPencil } from "react-icons/hi";
 
 import MapaRutas from "../../mapa/MapaRutas";
 import { useMedidores } from "../../../context/MedidoresContext";
@@ -139,29 +144,36 @@ export default function ModalRegistrarRuta() {
 
   return (
     <>
-      <Button color="primary" onPress={onOpen}>
-        Añadir Ruta
+      <Button 
+        color="primary" 
+        onPress={onOpen}
+        startContent={<HiPlus className="w-4 h-4" />}
+        variant="solid"
+      >
+        Nueva Ruta
       </Button>
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl" backdrop="transparent"
-
+      <Modal 
+        isOpen={isOpen} 
+        onOpenChange={onOpenChange} 
+        size="5xl" 
+        backdrop="transparent"
         scrollBehavior="inside"
         isDismissable={false}
         isKeyboardDismissDisabled={true}
-
+        placement="center"
         classNames={{
-          header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
-          footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
-          closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
-          content: "bg-gray-200 dark:bg-gray-800",
-        }}
+                    closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
+                }}
       >
-        <ModalContent className="bg-gray-200 dark:bg-gray-800 ">
+        <ModalContent>
           <>
-            <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
-              Registro de Ruta
+            <ModalHeader className="flex items-center gap-2 text-xl font-bold">
+              <HiMap className="w-6 h-6 text-blue-600" />
+              Crear Nueva Ruta de Lectura
             </ModalHeader>
-            <ModalBody className="bg-gray-100 dark:bg-gray-800 px-6 py-4">
+            
+            <ModalBody className="space-y-4">
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2 dark:text-white">
                 <div className="space-y-4">
@@ -231,7 +243,7 @@ export default function ModalRegistrarRuta() {
                 </div>
               </div>
             </ModalBody>
-            <ModalFooter className="bg-gray-300 dark:bg-gray-700">
+            <ModalFooter>
 
               <Button
                 color="success"

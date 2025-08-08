@@ -17,7 +17,12 @@ import {
     SelectItem,
     Tooltip,
     Checkbox,
+    Card,
+    CardBody,
+    Input,
+    Textarea
 } from "@nextui-org/react";
+import { HiUser, HiLocationMarker, HiPhone, HiMail, HiCog, HiTrash } from "react-icons/hi";
 
 import { useFeedback } from "../../../context/FeedbackContext";
 
@@ -52,7 +57,26 @@ export default function EditarClientes({ id }) {
     const [medidoresLiberados, setMedidoresLiberados] = useState(new Set()); // Usar un Set para evitar duplicados
     const [fechaRegistroCliente, setFechaRegistroCliente] = useState("");
     const [erroresCampos, setErroresCampos] = useState({});
-     const { setSuccess, setError } = useFeedback();
+    const [mostrarErrores, setMostrarErrores] = useState(false); // Para controlar cuándo mostrar errores
+    const { setSuccess, setError } = useFeedback();
+
+    // Función para limpiar errores cuando el usuario empiece a escribir
+    const limpiarError = (campo) => {
+        if (erroresCampos[campo]) {
+            setErroresCampos(prev => ({
+                ...prev,
+                [campo]: false
+            }));
+        }
+    };
+
+    // Función para manejar el cierre del modal y resetear estados
+    const handleCloseModal = () => {
+        setErroresCampos({});
+        setMostrarErrores(false);
+        setIsUpdating(false);
+        onClose();
+    };
     
     
 
@@ -84,6 +108,7 @@ export default function EditarClientes({ id }) {
         setError("");
         setSuccess("");
         setIsUpdating(true); // activar loading
+        setMostrarErrores(true); // Activar la visualización de errores
 
     
         const nuevosErrores = {};
@@ -107,7 +132,7 @@ export default function EditarClientes({ id }) {
                 default: return campo;
                 }
             });
-            setError(`Los siguientes campos son obligatorios: ${camposFaltantes.join(", ")}`, "Registro de Clientes");
+            setError(`Los siguientes campos son obligatorios: ${camposFaltantes.join(", ")}`, "Actualización de Cliente");
             setIsUpdating(false);
             return;
         }
@@ -143,6 +168,8 @@ export default function EditarClientes({ id }) {
             if (response.success) {
                 setSuccess(id ? "Cliente actualizado correctamente." : "Cliente registrado exitosamente.");
                 setTimeout(() => {
+                    setErroresCampos({}); // Limpiar errores
+                    setMostrarErrores(false); // Resetear visualización de errores
                     onClose();
                     actualizarClientes(); // Actualizar clientes si es necesario
                     actualizarMedidores(); // Actualizar medidores si es necesario
@@ -183,160 +210,261 @@ export default function EditarClientes({ id }) {
 
 
 
-            <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="4xl" backdrop="transparent"
+            <Modal
+                isOpen={isOpen}
+                onOpenChange={onOpenChange}
+                size="4xl"
+                backdrop="transparent"
                 scrollBehavior="inside"
                 isDismissable={false}
                 isKeyboardDismissDisabled={true}
+                placement="center"
                 classNames={{
-                    header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
-                    footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
                     closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
             >
                 <ModalContent>
                     {(onClose) => (
                         <>
-                            <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
+                            <ModalHeader className="flex items-center gap-2 text-xl font-bold">
+                                <HiUser className="w-6 h-6 text-blue-600" />
                                 {id ? "Editar Cliente" : "Registrar Cliente"}
                             </ModalHeader>
-                            <ModalBody className="bg-gray-200 dark:bg-gray-800">
-
+                            
+                            <ModalBody className="space-y-6">
                                 <form id="form-editar-cliente" onSubmit={(e) => { e.preventDefault(); handleActualizarCliente(); }}>
-                                    <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
-                                        Información del Cliente
-                                    </div>
-                                    <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nombres</label>
-                                            <input
-                                                type="text"
-                                                className="bg-gray-50 border dark:border-gray-500 text-gray-900 text-sm rounded-xl block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                placeholder="John"
-                                                value={nombre}
-                                                onChange={(e) => setNombre(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Dirección</label>
-                                            <input
-                                                type="text"
-                                                className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm  block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                placeholder="Dirección"
+                                    
+                                    {/* Información Personal */}
+                                    <Card className="border border-blue-200 dark:border-blue-800">
+                                        <CardBody className="space-y-4">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                                <HiUser className="w-5 h-5 text-blue-600" />
+                                                Información Personal
+                                            </h3>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {/* Nombre Completo */}
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Nombre Completo*
+                                                    </label>
+                                                    <div className="relative w-full flex">
+                                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600  py-2">
+                                                            <HiUser className="inline-block mr-1 h-5 w-5 text-blue-600" />
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Ingresa el nombre completo"
+                                                            value={nombre}
+                                                            onChange={(e) => {
+                                                                setNombre(e.target.value);
+                                                                limpiarError('nombre');
+                                                            }}
+                                                            required
+                                                            className={`border ${mostrarErrores && erroresCampos.nombre ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-600 focus:border-blue-500'} text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white`}
+                                                        />
+                                                    </div>
+                                                    {mostrarErrores && erroresCampos.nombre && (
+                                                        <p className="text-sm text-red-500 mt-1">El nombre es requerido</p>
+                                                    )}
+                                                </div>
+
+                                                {/* Correo Electrónico */}
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Correo Electrónico*
+                                                    </label>
+                                                    <div className="relative w-full flex">
+                                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600  py-2">
+                                                            <HiMail className="inline-block mr-1 h-5 w-5 text-blue-600" />
+                                                        </span>
+                                                        <input
+                                                            type="email"
+                                                            placeholder="ejemplo@correo.com"
+                                                            value={correo}
+                                                            onChange={(e) => {
+                                                                setCorreo(e.target.value);
+                                                                limpiarError('correo');
+                                                            }}
+                                                            required
+                                                            className={`border ${mostrarErrores && erroresCampos.correo ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-600 focus:border-blue-500'} text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white`}
+                                                        />
+                                                    </div>
+                                                    {mostrarErrores && erroresCampos.correo && (
+                                                        <p className="text-sm text-red-500 mt-1">El correo electrónico es requerido</p>
+                                                    )}
+                                                </div>
+
+                                                {/* Teléfono */}
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Teléfono*
+                                                    </label>
+                                                    <div className="relative w-full flex">
+                                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600  py-2">
+                                                            <HiPhone className="inline-block mr-1 h-5 w-5 text-blue-600" />
+                                                        </span>
+                                                        <input
+                                                            type="tel"
+                                                            placeholder="(662) 1456-7890"
+                                                            value={telefono}
+                                                            onChange={(e) => {
+                                                                setTelefono(e.target.value);
+                                                                limpiarError('telefono');
+                                                            }}
+                                                            required
+                                                            className={`border ${mostrarErrores && erroresCampos.telefono ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-600 focus:border-blue-500'} text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white`}
+                                                        />
+                                                    </div>
+                                                    {mostrarErrores && erroresCampos.telefono && (
+                                                        <p className="text-sm text-red-500 mt-1">El teléfono es requerido</p>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Pueblo*
+                                                    </label>
+                                                    <Select
+                                                        aria-label="Ciudad"
+                                                        placeholder="Selecciona un pueblo"
+                                                        value={ciudad}
+                                                        defaultSelectedKeys={[ciudad]}
+                                                        onChange={(e) => {
+                                                            setCiudad(e.target.value);
+                                                            limpiarError('ciudad');
+                                                        }}
+                                                        color="primary"
+                                                        variant="bordered"
+                                                        size="md"
+                                                        isRequired
+                                                        className="w-full"
+                                                        startContent={<HiLocationMarker className="text-gray-400 text-lg" />}
+                                                        isInvalid={mostrarErrores && erroresCampos.ciudad}
+                                                        errorMessage={mostrarErrores && erroresCampos.ciudad && "La ciudad es requerida"}
+                                                    >
+                                                        {pueblos.map((pueblo) => (
+                                                            <SelectItem key={pueblo.key}>{pueblo.label}</SelectItem>
+                                                        ))}
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                            {/* Información de registro */}
+                                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                                <p className="text-sm text-blue-600 dark:text-blue-400">
+                                                    📅 Cliente registrado por: <span className="font-semibold">{user && user.nombre}</span>
+                                                    {fechaRegistroCliente && (
+                                                        <span className="ml-2">• Fecha: {formatUTCtoHermosillo(fechaRegistroCliente)}</span>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </CardBody>
+                                    </Card>
+
+                                    {/* Información de Dirección */}
+                                    <Card className="border border-green-200 dark:border-green-800 mt-2">
+                                        <CardBody className="space-y-4">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                                <HiLocationMarker className="w-5 h-5 text-green-600" />
+                                                Dirección de Residencia
+                                            </h3>
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Ingresa la dirección completa del cliente, incluyendo calle, número, colonia, referencias, etc.
+                                            </label>
+                                            
+                                            <textarea
+                                                label="Dirección Completa"
+                                                placeholder="Ingresa la dirección completa del cliente..."
                                                 value={direccion}
-                                                onChange={(e) => setDireccion(e.target.value)}
+                                                onChange={(e) => {
+                                                    setDireccion(e.target.value);
+                                                    limpiarError('direccion');
+                                                }}
                                                 required
+                                                rows="3"
+                                                className={`border ${mostrarErrores && erroresCampos.direccion ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-600 focus:border-blue-500'} text-gray-600 rounded-xl pl-4 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none`}
                                             />
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Pueblo</label>
-                                            <Select
-                                                className="border rounded-xl dark:border-gray-500 border-gray-600"
-                                                aria-label="Pueblo"
-                                                value={ciudad}
-                                                defaultSelectedKeys={[ciudad]}
-                                                onChange={(e) => setCiudad(e.target.value)}
-                                                color="default"
-                                            >
-                                                {pueblos.map((pueblo) => (
-                                                    <SelectItem key={pueblo.key}>{pueblo.label}</SelectItem>
-                                                ))}
-                                            </Select>
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Teléfono</label>
-                                            <input
-                                                type="tel"
-                                                className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm  block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                placeholder="123-456-7890"
-                                                value={telefono}
-                                                onChange={(e) => setTelefono(e.target.value)}
-                                                required
+                                            {mostrarErrores && erroresCampos.direccion && (
+                                                <p className="text-sm text-red-500 mt-1">La dirección es requerida</p>
+                                            )}
+                                            
+                                            
+                                        </CardBody>
+                                    </Card>
+
+                                    {/* Asignar Medidor */}
+                                    <Card className="border border-orange-200 dark:border-orange-800 mt-2 h-[600px]">
+                                        <CardBody className="space-y-4">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                                <HiCog className="w-5 h-5 text-orange-600" />
+                                                Gestión de Medidor
+                                            </h3>
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Asigna o modifica el medidor asociado a este cliente.
+                                            </label>
+                                            
+                                            <BuscarMedidor
+                                                clienteId={id}
+                                                medidorAsignado={medidorAsignado}
+                                                onLiberarMedidor={handleLiberarMedidores}
+                                                onMedidorSeleccionado={(medidorId) => {
+                                                    setMedidorAsignado(medidorId);
+                                                }}
                                             />
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Correo Electrónico</label>
-                                            <input
-                                                type="email"
-                                                className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm  block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                placeholder="email@example.com"
-                                                value={correo}
-                                                onChange={(e) => setCorreo(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                                    Este Cliente fue registrado por: <span className="font-semibold">{user && user.nombre}</span>
-                                    {fechaRegistroCliente && (
-                                        <span className="ml-2">Fecha de registro: {formatUTCtoHermosillo(fechaRegistroCliente)}</span>
-                                    )}
-                                </p>
-                                    <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
-                                        Asignar medidor
-                                    </div>
-                                    <BuscarMedidor
-                                        clienteId={id}
-                                        medidorAsignado={medidorAsignado} // si lo soporta
-                                        onLiberarMedidor={handleLiberarMedidores}
-                                        onMedidorSeleccionado={(medidorId) => {
-                                            setMedidorAsignado(medidorId); // puede ser null si lo desasigna
-                                        }}
-                                    />
+                                        </CardBody>
+                                    </Card>
 
-
-
-                                    <div className="text-2xl font-bold text-gray-900 dark:text-white  dark:bg-gray-800">
-                                        Eliminar Cliente
-                                    </div>
-                                    <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
-
-
-                                        <Checkbox defaultSelected={false}>Estas Segro que deseas borrar el cliente?</Checkbox>
-                                        <div>
-                                            <Tooltip color="danger" content="Eliminar" delay={3000}>
-                                                <Button aria-label="Eliminar" color="danger" variant="faded">
-                                                    <EliminarClienteIcon /> Eliminar
-                                                </Button>
-                                            </Tooltip>
-                                            <p className="mt-3">Se elminiara al usuario y su informacion de registro existente en la base de datos.</p>
-                                        </div>
-
-                                    </div>
-
-
+                                    {/* Eliminar Cliente */}
+                                    <Card className="border border-red-200 dark:border-red-800 mt-2">
+                                        <CardBody className="space-y-4">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                                <HiTrash className="w-5 h-5 text-red-600" />
+                                                Zona de Peligro
+                                            </h3>
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Esta acción eliminará permanentemente el cliente y toda su información asociada.
+                                            </label>
+                                            
+                                            <div className="flex items-center gap-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                                <Checkbox defaultSelected={false} color="danger">
+                                                    Confirmo que deseo eliminar este cliente
+                                                </Checkbox>
+                                                <Tooltip color="danger" content="Eliminar Cliente" delay={1000}>
+                                                    <Button 
+                                                        color="danger" 
+                                                        variant="bordered"
+                                                        startContent={<HiTrash className="w-4 h-4" />}
+                                                    >
+                                                        Eliminar Cliente
+                                                    </Button>
+                                                </Tooltip>
+                                            </div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                ⚠️ Esta acción es irreversible. Se eliminará el cliente y toda su información de registro.
+                                            </p>
+                                        </CardBody>
+                                    </Card>
+                                    
                                 </form>
-
-
-
-
                             </ModalBody>
-                            <ModalFooter className="bg-gray-300 dark:bg-gray-700">
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    form="form-editar-cliente"
-                                    variant="light"
-                                    isDisabled={isUpdating} // desactiva mientras actualiza
-                                    className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5"
-                                >
-                                    {isUpdating ? (
-                                        <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                            Procesando...
-                                        </span>
-                                    ) : (
-                                        id ? "Actualizar" : "Registrar"
-                                    )}
-                                </Button>
-
+                            
+                            <ModalFooter>
                                 <Button
                                     color="danger"
-                                    className="text-white bg-red-700 hover:bg-red-800 font-medium rounded-xl text-sm px-5 py-2.5"
                                     variant="light"
-                                    onPress={onClose}
+                                    onPress={handleCloseModal}
                                 >
                                     Cancelar
+                                </Button>
+                                <Button
+                                    color="primary"
+                                    onClick={handleActualizarCliente}
+                                    type="submit"
+                                    form="form-editar-cliente"
+                                    isDisabled={isUpdating}
+                                    isLoading={isUpdating}
+                                >
+                                    {isUpdating ? "Actualizando..." : (id ? "Actualizar Cliente" : "Registrar Cliente")}
                                 </Button>
                             </ModalFooter>
                         </>

@@ -8,12 +8,14 @@ import {
     useDisclosure,
     Select,
     SelectItem,
-
+    Input,
+    Card,
+    CardBody
 } from "@nextui-org/react";
 import { Datepicker } from "flowbite-react";
+import { HiPlus, HiLocationMarker, HiCog } from "react-icons/hi";
 
 import { useState } from "react";
-import { AgregarClienteIcon } from "../../../IconsApp/IconsClientes";
 import { RegistrarMedidorIcon } from "../../../IconsApp/IconsMedior";
 import { useClientes } from "../../../context/ClientesContext";
 import { useMedidores } from "../../../context/MedidoresContext";
@@ -138,10 +140,11 @@ export default function RegistrarMedidor() {
             <Button
                 aria-label="Registrar Medidor"
                 color="primary"
-                className="ml-2 min-w-[50px] px-8 py-2"
+                variant="solid"
+                startContent={<HiPlus className="w-4 h-4" />}
+                className="font-medium"
                 onPress={onOpen}
             >
-                <RegistrarMedidorIcon />
                 Nuevo Medidor
             </Button>
 
@@ -153,134 +156,167 @@ export default function RegistrarMedidor() {
                 scrollBehavior="inside"
                 isDismissable={false}
                 isKeyboardDismissDisabled={true}
+                placement="center"
                 classNames={{
-                    header: "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
-                    footer: "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
                     closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
             >
                 <ModalContent>
                     {(onClose) => (
                         <>
-                            <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
-                                Registrar Medidor
+                            <ModalHeader className="flex items-center gap-2 text-xl font-bold">
+                                <HiCog className="w-6 h-6 text-blue-600" />
+                                Registrar Nuevo Medidor
                             </ModalHeader>
-                            <ModalBody className="bg-gray-200 dark:bg-gray-800">
-
+                            
+                            <ModalBody className="space-y-6">
                                 <form id="form-registro-medidor" onSubmit={(e) => { e.preventDefault(); handleRegistroMedidor(); }}>
-                                    <div className="grid gap-6 mb-6 md:grid-cols-2 mt-2">
-                                        <div>
-                                            <BuscarCliente onClienteSeleccionado={handleClienteSeleccionado} />
-                                            {clienteId && <p>ID del cliente para registrar medidor: {clienteId}</p>}
+                                    
+                                    
 
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                                Número de Serie
-                                            </label>
-                                            <div className="flex gap-2">
-                                                <Select
-                                                    className="border rounded-xl dark:border-gray-500 border-gray-600 w-1/2"
-                                                    aria-label="Pueblo"
-                                                    placeholder="Pueblo"
-                                                    value={ciudad}
-                                                    defaultSelectedKeys={[ciudad]}
-                                                    onChange={(e) => setCiudad(e.target.value)}
-                                                    color="default"
-                                                >
-                                                    {pueblos.map((pueblo) => (
-                                                        <SelectItem key={pueblo.key}>{pueblo.label}</SelectItem>
-                                                    ))}
-                                                </Select>
-                                                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                                    _
+                                    {/* Información del Medidor */}
+                                    <Card className="border border-gray-200 dark:border-gray-700 mt-2">
+                                        <CardBody className="space-y-4">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                                <HiCog className="w-5 h-5 text-blue-600" />
+                                                Datos del Medidor
+                                            </h3>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="space-y-2 mt-2">
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Número de Serie
+                                                    </label>
+                                                    <div className="flex gap-2 items-center">
+                                                        <Select
+                                                            className="flex-shrink-0 w-24"
+                                                            aria-label="Pueblo"
+                                                            placeholder="Código"
+                                                            value={ciudad}
+                                                            defaultSelectedKeys={[ciudad]}
+                                                            onChange={(e) => setCiudad(e.target.value)}
+                                                            color="primary"
+                                                            variant="bordered"
+                                                            size="sm"
+                                                        >
+                                                            {pueblos.map((pueblo) => (
+                                                                <SelectItem key={pueblo.key}>{pueblo.label}</SelectItem>
+                                                            ))}
+                                                        </Select>
+                                                        <span className="text-gray-500">-</span>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Número de serie"
+                                                            value={numeroSerie}
+                                                            onChange={(e) => setNumeroSerie(e.target.value)}
+                                                            variant="bordered"
+                                                            size="sm"
+                                                            required
+                                                            className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                        Serie completa: <strong>{numeroSerieCompleto}</strong>
+                                                    </p>
+                                                </div>
+
+                                                <div className="space-y-2 mt-2">
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Fecha de Instalación
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        value={fechaInstalacion}
+                                                        onChange={(e) => setFechaInstalacion(e.target.value)}
+                                                        variant="bordered"
+                                                        size="sm"
+                                                        className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2 mt-2">
+                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    Comentarios de Ubicación
                                                 </label>
-                                                <input
+                                                <textarea
                                                     type="text"
-                                                    className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                    placeholder="Número de Serie"
-                                                    value={numeroSerie}
-                                                    onChange={(e) => setNumeroSerie(e.target.value)}
+                                                    placeholder="ej. Frente a la casa, junto al poste..."
+                                                    value={ubicacion}
+                                                    onChange={(e) => setUbicacion(e.target.value)}
+                                                    variant="bordered"
+                                                    size="sm"
+                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
                                                     required
                                                 />
-
                                             </div>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                Número de serie completo: <strong>{numeroSerieCompleto}</strong>
-                                            </p>
+                                        </CardBody>
+                                    </Card>
 
-
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                                Comentarios de Ubicación de Medidor
+                                    {/* Información del Cliente */}
+                                    <Card className="border border-blue-200 dark:border-blue-800 h-64 mt-2">
+                                        <CardBody className="space-y-4">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                                <HiLocationMarker className="w-5 h-5 text-blue-600" />
+                                                Asignación de Cliente
+                                            </h3>
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Busca un cliente para asignar el medidor y
+                                                selecciona un cliente al que asignar el medidor. No es obligatorio, pero recomendado.
                                             </label>
-                                            <textarea
-                                                type="text"
-                                                className="bg-gray-50 border h-32 rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
+                                            <BuscarCliente onClienteSeleccionado={handleClienteSeleccionado} />
+                                            {clienteIdBusqueda && (
+                                                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                                                    <p className="text-sm text-green-600 dark:text-green-400">
+                                                        ✓ Cliente seleccionado con ID: {clienteIdBusqueda}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </CardBody>
+                                    </Card>
 
-                                                placeholder="ej. Frente a la casa"
-                                                value={ubicacion}
-                                                onChange={(e) => setUbicacion(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                                Fecha de Instalación
+                                    {/* Coordenadas */}
+                                    <Card className="border border-orange-200 dark:border-orange-800 mt-2">
+                                        <CardBody className="space-y-4">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                                <HiLocationMarker className="w-5 h-5 text-orange-600" />
+                                                Ubicación Geográfica
+                                            </h3>
+                                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Selecciona las coordenadas del medidor al hacer clic en el mapa o ingresa manualmente las coordenadas.
                                             </label>
-                                            <input
-                                                type="date"
-                                                className="bg-gray-50 border rounded-xl dark:border-gray-500 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
-                                                value={fechaInstalacion}
-                                                onChange={(e) => setFechaInstalacion(e.target.value)}
-                                                required
+                                            <SelectorCoordenadas
+                                                valorInicial={{ lat: parseFloat(latitud) || 29.1180777, lng: parseFloat(longitud) || -109.9669819 }}
+                                                onChange={({ lat, lng }) => {
+                                                    setLatitud(lat.toFixed(6));
+                                                    setLongitud(lng.toFixed(6));
+                                                }}
                                             />
+                                        </CardBody>
+                                    </Card>
 
-                                        </div>
-                                    </div>
-                                    <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                                        Ubicación del Medidor (Latitud y Longitud)
-                                    </label>
-                                    <SelectorCoordenadas
-                                        valorInicial={{ lat: parseFloat(latitud) || 29.1180777, lng: parseFloat(longitud) || -109.9669819 }}
-                                        onChange={({ lat, lng }) => {
-                                            setLatitud(lat.toFixed(6));
-                                            setLongitud(lng.toFixed(6));
-                                        }}
-                                    />
-
-
+                                    
                                 </form>
                             </ModalBody>
-                            <ModalFooter className="bg-gray-300 dark:bg-gray-700">
+                            
+                            <ModalFooter>
+                                <Button
+                                    color="danger"
+                                    variant="light"
+                                    onPress={onClose}
+                                >
+                                    Cancelar
+                                </Button>
                                 <Button
                                     color="primary"
                                     onClick={handleRegistroMedidor}
                                     type="submit"
                                     form="form-registro-medidor"
                                     isDisabled={isUpdating}
-                                    variant="light"
-                                    className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none font-medium rounded-xl text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700"
+                                    isLoading={isUpdating}
                                 >
-                                    {isUpdating ? (
-                                        <span className="flex items-center gap-2">
-                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                                            Procesando...
-                                        </span>
-                                    ) : (
-                                        "Registrar Medidor"
-                                    )}
-                                </Button>
-
-                                <Button
-                                    color="danger"
-                                    className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 font-medium rounded-xl text-sm px-5 py-2.5"
-                                    variant="light"
-                                    onPress={onClose}
-
-                                >
-                                    Cancelar
+                                    {isUpdating ? "Registrando..." : "Registrar Medidor"}
                                 </Button>
                             </ModalFooter>
                         </>

@@ -7,8 +7,11 @@ import {
   Button,
   useDisclosure,
   Tabs,
-  Tab
+  Tab,
+  Card,
+  CardBody
 } from "@nextui-org/react";
+import { HiCurrencyDollar, HiCalendar, HiDocumentText, HiPencil, HiTrash, HiPlus } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useTarifas } from "../../../context/TarifasContext";
@@ -36,10 +39,29 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
   // Estados para mensajes de feedback
   const { setSuccess, setError } = useFeedback();
 
-
   const [isSaving, setIsSaving] = useState(false);
+  const [erroresCampos, setErroresCampos] = useState({});
+  const [mostrarErrores, setMostrarErrores] = useState(false);
 
   const id_usuario = user?.id || null;
+
+  // Función para limpiar errores cuando el usuario empiece a escribir
+  const limpiarError = (campo) => {
+    if (erroresCampos[campo]) {
+      setErroresCampos(prev => ({
+        ...prev,
+        [campo]: false
+      }));
+    }
+  };
+
+  // Función para manejar el cierre del modal y resetear estados
+  const handleCloseModal = () => {
+    setErroresCampos({});
+    setMostrarErrores(false);
+    setIsSaving(false);
+    onClose();
+  };
 
 
   //useEffect para inicializar los rangos del componente
@@ -60,9 +82,26 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
     setIsSaving(true);
     setError("");
     setSuccess("");
+    setMostrarErrores(true);
 
-    if (!nombre || !fechaInicio) {
-      setError("El nombre y la fecha de inicio son obligatorios.(Advertencia-FNED)", "Edición de Tarifa");
+    // Validaciones de campos específicas
+    const nuevosErrores = {};
+    if (!nombre) nuevosErrores.nombre = true;
+    if (!descripcion) nuevosErrores.descripcion = true;
+    if (!fechaInicio) nuevosErrores.fechaInicio = true;
+
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErroresCampos(nuevosErrores);
+      const camposFaltantes = Object.keys(nuevosErrores)
+        .map((campo) => {
+          switch (campo) {
+            case "nombre": return "Nombre";
+            case "descripcion": return "Descripción";
+            case "fechaInicio": return "Fecha de Inicio";
+            default: return campo;
+          }
+        });
+      setError(`Los siguientes campos son obligatorios: ${camposFaltantes.join(", ")}`, "Edición de Tarifa");
       setIsSaving(false);
       return;
     }
@@ -82,12 +121,12 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
       });
 
       if (!response.success) throw new Error(response.message);
-      setSuccess("Tarifa actualizada correctamente.(Sheck-FNED)", "Edición de Tarifa");
-      onClose();
+      setSuccess("Tarifa actualizada correctamente.", "Edición de Tarifa");
+      handleCloseModal();
       setIsSaving(false);
       actualizarTarifas();
     } catch (err) {
-      setError("Error al actualizar tarifa.(Error-FNED)", "Edición de Tarifa");
+      setError("Error al actualizar tarifa.", "Edición de Tarifa");
       setIsSaving(false);
     }
   };
@@ -188,16 +227,16 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
 
     if (!response.success) throw new Error(response.message);
 
-    setSuccess("Rangos actualizados correctamente.(Sheck-FNED)", "Edición de Rangos");
+    setSuccess("Rangos actualizados correctamente.", "Edición de Rangos");
     setTimeout(() => {
-      onClose();
+      handleCloseModal();
       actualizarTarifas();
       setIsSaving(false);
     }, 1000);
 
   } catch (err) {
     console.error(err);
-    setError("Error al guardar los rangos.(Error-FNED de BK)", "Edición de Rangos");
+    setError("Error al guardar los rangos.", "Edición de Rangos");
     setIsSaving(false);
   }
 };
@@ -249,26 +288,26 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
         Editar
       </Button>
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} scrollBehavior="inside"
-        size="2xl"
-
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={handleCloseModal} 
+        size="3xl"
+        scrollBehavior="inside"
         isDismissable={false}
         isKeyboardDismissDisabled={true}
+        backdrop="transparent"
+        placement="center"
         classNames={{
-          header: "dark:border-b border-b border-gray-400 dark:border-[#6879bd]",
-          footer: "dark:border-t border-t border-gray-400 dark:border-[#6879bd]",
           closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
         }}
-        backdrop="transparent"
       >
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
+              <ModalHeader className="flex items-center gap-2 text-xl font-bold">
+                <HiPencil className="w-6 h-6 text-green-600" />
                 Editar Tarifa y Rangos
               </ModalHeader>
 
-              <ModalBody className="bg-gray-200 dark:bg-gray-800">
+              <ModalBody className="space-y-4">
 
                 <Tabs
                   selectedKey={tab}
@@ -278,77 +317,140 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
                 >
 
                   <Tab key="tarifa" title="Tarifa">
-                    <form className="grid gap-4"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleGuardarTarifa();
-                      }}
-                      id="form-editar-tarifa"
-                    >
-                      <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                          Nombre de la Tarifa
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Nombre"
-                          value={nombre}
-                          onChange={(e) => setNombre(e.target.value)}
-                          className="bg-gray-50 border rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
-                          required
-                        />
-                      </div>
+                    <Card className="border border-green-200 dark:border-green-800">
+                      <CardBody className="space-y-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                          <HiDocumentText className="w-5 h-5 text-green-600" />
+                          Información de la Tarifa
+                        </h3>
+                        
+                        <form className="space-y-4"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            handleGuardarTarifa();
+                          }}
+                          id="form-editar-tarifa"
+                        >
+                          {/* Nombre de la Tarifa con estilo personalizado */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Nombre de la Tarifa*
+                            </label>
+                            <div className="relative w-full flex">
+                              <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2">
+                                <HiCurrencyDollar className="inline-block mr-1 h-5 w-5 text-green-600" />
+                              </span>
+                              <input
+                                type="text"
+                                placeholder="ej. Tarifa Residencial 2024"
+                                value={nombre}
+                                onChange={(e) => {
+                                  setNombre(e.target.value);
+                                  limpiarError('nombre');
+                                }}
+                                required
+                                className={`border ${mostrarErrores && erroresCampos.nombre ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-green-600 focus:border-green-500'} text-gray-600 rounded-xl pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all duration-200`}
+                              />
+                            </div>
+                            {mostrarErrores && erroresCampos.nombre && (
+                              <p className="text-sm text-red-500 mt-1">El nombre de la tarifa es requerido</p>
+                            )}
+                          </div>
 
-                      <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                          Descripción
-                        </label>
-                        <textarea
-                          placeholder="Descripción"
-                          value={descripcion}
-                          onChange={(e) => setDescripcion(e.target.value)}
-                          className="bg-gray-50 border h-32 rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
-                          required
-                        />
-                      </div>
+                          {/* Descripción con estilo personalizado */}
+                          <div>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Descripción*
+                            </label>
+                            <textarea
+                              placeholder="Describe el propósito y características de esta tarifa..."
+                              value={descripcion}
+                              onChange={(e) => {
+                                setDescripcion(e.target.value);
+                                limpiarError('descripcion');
+                              }}
+                              required
+                              rows={3}
+                              className={`border ${mostrarErrores && erroresCampos.descripcion ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-green-600 focus:border-green-500'} text-gray-600 rounded-xl pl-4 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none transition-all duration-200`}
+                            />
+                            {mostrarErrores && erroresCampos.descripcion && (
+                              <p className="text-sm text-red-500 mt-1">La descripción es requerida</p>
+                            )}
+                          </div>
 
-                      <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                          Fecha de Inicio
-                        </label>
-                        <input
-                          type="date"
-                          value={fechaInicio}
-                          onChange={(e) => setFechaInicio(e.target.value)}
-                          className="bg-gray-50 border rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
-                          required
-                        />
-                      </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Fecha de Inicio con estilo personalizado */}
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Fecha de Inicio*
+                              </label>
+                              <div className="relative w-full flex">
+                                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2">
+                                  <HiCalendar className="inline-block mr-1 h-5 w-5 text-green-600" />
+                                </span>
+                                <input
+                                  type="date"
+                                  value={fechaInicio}
+                                  onChange={(e) => {
+                                    setFechaInicio(e.target.value);
+                                    limpiarError('fechaInicio');
+                                  }}
+                                  required
+                                  className={`border ${mostrarErrores && erroresCampos.fechaInicio ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-green-600 focus:border-green-500'} text-gray-600 rounded-xl pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all duration-200`}
+                                />
+                              </div>
+                              {mostrarErrores && erroresCampos.fechaInicio && (
+                                <p className="text-sm text-red-500 mt-1">La fecha de inicio es requerida</p>
+                              )}
+                            </div>
 
-                      <div>
-                        <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                          Fecha de Fin
-                        </label>
-                        <input
-                          type="date"
-                          value={fechaFin}
-                          onChange={(e) => setFechaFin(e.target.value)}
-                          className="bg-gray-50 border rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
-                        />
-                      </div>
-                    </form>
+                            {/* Fecha de Fin con estilo personalizado */}
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Fecha de Fin (opcional)
+                              </label>
+                              <div className="relative w-full flex">
+                                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2">
+                                  <HiCalendar className="inline-block mr-1 h-5 w-5 text-green-600" />
+                                </span>
+                                <input
+                                  type="date"
+                                  value={fechaFin}
+                                  onChange={(e) => setFechaFin(e.target.value)}
+                                  className="border border-gray-300 focus:ring-green-600 focus:border-green-500 text-gray-600 rounded-xl pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all duration-200"
+                                />
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Dejar vacío para tarifa indefinida</p>
+                            </div>
+                          </div>
+
+                          {fechaFin && fechaInicio && (
+                            <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                              <p className="text-sm text-green-600 dark:text-green-400">
+                                ℹ️ Duración: {Math.ceil((new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60 * 24))} días
+                              </p>
+                            </div>
+                          )}
+                        </form>
+                      </CardBody>
+                    </Card>
                   </Tab>
 
                   <Tab key="rangos" title="Rangos">
+                    <Card className="border border-blue-200 dark:border-blue-800">
+                      <CardBody className="space-y-4">
+                        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                          <HiCurrencyDollar className="w-5 h-5 text-blue-600" />
+                          Rangos de Consumo
+                        </h3>
 
-                    <form className="overflow-x-auto"
-
-                      id="form-editar-rangos"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleGuardarRangos();
-                      }}
-                    >
+                        <form className="overflow-x-auto"
+                          id="form-editar-rangos"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            handleGuardarRangos();
+                          }}
+                        >
                       <table className="min-w-full border-separate border-spacing-y-2">
                         <thead>
                           <tr>
@@ -410,28 +512,31 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
                         </Button>
                       </div>
 
-                    </form>
-
+                        </form>
+                      </CardBody>
+                    </Card>
                   </Tab>
                 </Tabs>
 
 
               </ModalBody>
-
-              <ModalFooter className="bg-gray-300 dark:bg-gray-700">
+              
+              <ModalFooter>
                 <Button
+                  color="danger"
+                  variant="light"
+                  onPress={handleCloseModal}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  color="primary"
                   type="submit"
                   form={tab === "tarifa" ? "form-editar-tarifa" : "form-editar-rangos"}
                   isDisabled={isSaving}
-                  className="bg-blue-700 hover:bg-blue-800 text-white"
+                  isLoading={isSaving}
                 >
                   {isSaving ? "Guardando..." : "Guardar Cambios"}
-                </Button>
-
-                <Button color="danger" variant="light" onPress={onClose}
-                  className="bg-red-700 hover:bg-red-800 text-white font-medium rounded-xl text-sm px-5 py-2.5"
-                >
-                  Cancelar
                 </Button>
               </ModalFooter>
             </>

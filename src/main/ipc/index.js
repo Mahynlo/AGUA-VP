@@ -6,6 +6,8 @@ import IpcHandlersMedidores from './ipcHandlersMedidores.js'
 import IpcHandlersAuthApp from './ipcHandlersAuthApp.js'
 import IpcHandlersTarifas from './ipcHandlersTarifas.js'
 import IpcHandlersRutas from './ipcHandlersGRutas.js'
+import IpcHandlerFacturas from './ipcHandlersFacturas.js'
+import IpcHandlerLecturas from './ipcHandlersLecturas.js'
 
 export  function AllIpcHandlers() {
     IpcHandlers(); // Importa y ejecuta el archivo ipcHandlers.js
@@ -15,4 +17,6 @@ export  function AllIpcHandlers() {
     IpcHandlersAuthApp(); // Importa y ejecuta el archivo ipcHandlersAuthApp.js
     IpcHandlersTarifas(); // Importa y ejecuta el archivo ipcHandlersTarifas.js
     IpcHandlersRutas(); // Importa y ejecuta el archivo ipcHandlersRutas.js
+    IpcHandlerFacturas(); // Importa y ejecuta el archivo ipcHandlersFacturas.js
+    IpcHandlerLecturas(); // Importa y ejecuta el archivo ipcHandlersLecturas.js
 } 

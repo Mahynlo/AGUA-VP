@@ -35,6 +35,41 @@ const api = {
   listarRutas: async (token_session, periodo) => {
     return await ipcRenderer.invoke("listar-rutas", token_session, periodo);
   },
+  listarRutasInfoMedidores: async (token_session, id_ruta) => {
+    return await ipcRenderer.invoke("listar-rutas-info-medidores", token_session, id_ruta);
+  },
+
+  // Fetch de lecturas
+  listarLecturas:async (token_session) => {
+    return await ipcRenderer.invoke("listar-lecturas", token_session);
+  },
+
+  // Registro de lecturas
+  registerLectura: async (lectura, token_session) => {
+    return await ipcRenderer.invoke("register-lectura", lectura, token_session);
+  },
+
+  // Fetch de pagos
+  fetchPagos: async (token_session) => {
+    return await ipcRenderer.invoke("fetch-pagos", token_session);
+  },
+
+  // Registro de pagos
+  registerPago: async (pago, token_session) => {
+    return await ipcRenderer.invoke("register-pago", pago, token_session);
+  },
+
+  // Fetch de facturas
+  fetchFacturas: async (token_session) => {
+    return await ipcRenderer.invoke("fetch-facturas", token_session);
+  },
+
+  // Registro de facturas
+  registerFactura: async (factura, token_session) => {
+    return await ipcRenderer.invoke("register-factura", factura, token_session);
+  },
+
+
 
 
  //impresion
@@ -60,6 +95,7 @@ const api = {
     let response = await ipcRenderer.invoke('previewRecibohtml', data);
     return response;  // Regresa la respuesta (en este caso, solo un mensaje de éxito)
   },
+
 
 
 }

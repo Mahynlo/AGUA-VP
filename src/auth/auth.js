@@ -31,23 +31,32 @@ const loginUser = async (correo, contrasena) => {
     });
 
     const data = await response.json();
-    //console.log("Respuesta del servidor:", data); // Para depuración, puedes eliminarlo después
+    console.log("Respuesta del servidor:", data); // Para depuración
 
     if (!response.ok) {
       return { success: false, message: data.error || "Error al iniciar sesión" };
     }
 
-    // Podrías guardarlo en almacenamiento local si es necesario
-    // localStorage.setItem("token", token); // si estás en un entorno que lo soporta
+    // Validar que la respuesta tenga la estructura esperada
+    if (!data.user) {
+      console.error("Error: La respuesta no contiene el objeto 'user':", data);
+      return { success: false, message: "Estructura de respuesta inválida del servidor" };
+    }
+
+    // Validar campos específicos del usuario
+    if (!data.user.username || !data.user.nombre || !data.user.rol || !data.user.id) {
+      console.error("Error: Faltan campos en el objeto user:", data.user);
+      return { success: false, message: "Datos de usuario incompletos en la respuesta" };
+    }
 
     //retornar como string
     return {
       success: true,
       token: data.token,
-      username: data.usuario.username,
-      nombre:data.usuario.nombre,
-      rol: data.usuario.rol,
-      id: data.usuario.id
+      username: data.user.username,
+      nombre: data.user.nombre,
+      rol: data.user.rol,
+      id: data.user.id
     };
 
   } catch (error) {
@@ -119,7 +128,7 @@ const obtenerSesionesActivas = async (usuario_id) => {
     if (!token) {
       return { success: false, message: "Token de la app no disponible" };
     }
-    const response = await fetch(`http://localhost:3000/api/auth/sesionesActivas/${usuario_id}`, {
+    const response = await fetch(`http://localhost:3000/api/v1/auth/sesionesActivas/${usuario_id}`, {
       method: "GET",
       headers: {
         "x-app-key": `AppKey ${token}`,
