@@ -7,7 +7,7 @@ const URL_PAGOS = import.meta.env.VITE_API_FETCH_PAGOS; // URL del endpoint de p
  * 
  * ************************************************************************************************************* */
 
-export const fetchPagos = async (token_session) => {
+export const fetchPagos = async (token_session, periodo = null) => {
     try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
@@ -19,7 +19,13 @@ export const fetchPagos = async (token_session) => {
         return [];
     }
 
-    const response = await fetch(URL_PAGOS, {
+    // Construir URL con parámetro de período si se proporciona
+    let url = URL_PAGOS;
+    if (periodo) {
+        url += `?periodo=${periodo}`;
+    }
+
+    const response = await fetch(url, {
         method: "GET",
         headers: {
         "x-app-key": `AppKey ${token_app}`,

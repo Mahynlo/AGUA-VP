@@ -12,6 +12,7 @@ export const AuthAppProvider = ({ children }) => {
         const res = await window.authApp.leerToken();
         if (res?.token) { // Si el token es válido, lo guardamos en el estado
             setToken(res.token);
+            console.log("Token de sesión encontrado:", res.token);
             setModalAbierto(false);
             
         } else { // Si no hay token o es inválido, mostramos el modal de registro

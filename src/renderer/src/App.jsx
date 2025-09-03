@@ -30,6 +30,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { AuthAppProvider } from "./context/appAuthContext";
 import { TarifasProvider } from "./context/TarifasContext";
 import { RutasProvider } from "./context/RutasContext";
+import { FacturasProvider } from "./context/FacturasContext";
+import { PagosProvider } from "./context/PagosContext";
 
 // Rutas protegidas
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoute";
@@ -60,15 +62,18 @@ function App() {
             <MedidoresProvider>
               <TarifasProvider>
                 <RutasProvider>
+                  <FacturasProvider>
+                    <PagosProvider>
 
+                      <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
 
-                  <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
+                      <MainApp /> {/* Aqui se cargan las rutas de al apalicacion*/}
+                      {/* Componente global de mensajes */}
+                      <FeedbackMessages position="bottom-right" />
 
-                  <MainApp /> {/* Aqui se cargan las rutas de al apalicacion*/}
-                  {/* Componente global de mensajes */}
-                  <FeedbackMessages position="bottom-right" />
-
-                  <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
+                      <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
+                    </PagosProvider>
+                  </FacturasProvider>
                 </RutasProvider>
               </TarifasProvider>
             </MedidoresProvider>

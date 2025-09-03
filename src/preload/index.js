@@ -50,8 +50,8 @@ const api = {
   },
 
   // Fetch de pagos
-  fetchPagos: async (token_session) => {
-    return await ipcRenderer.invoke("fetch-pagos", token_session);
+  fetchPagos: async (token_session, periodo) => {
+    return await ipcRenderer.invoke("fetch-pagos", token_session, periodo);
   },
 
   // Registro de pagos
@@ -60,8 +60,8 @@ const api = {
   },
 
   // Fetch de facturas
-  fetchFacturas: async (token_session) => {
-    return await ipcRenderer.invoke("fetch-facturas", token_session);
+  fetchFacturas: async (token_session, periodo) => {
+    return await ipcRenderer.invoke("fetch-facturas", token_session, periodo);
   },
 
   // Registro de facturas

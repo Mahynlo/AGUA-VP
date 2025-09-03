@@ -9,8 +9,14 @@ export default function IpcHandlerFacturas () {
      */
 
     // Evento para obtener facturas desde la base de datos
-    ipcMain.handle("fetch-facturas", async (event, token_session) => {
-        return await fetchFacturas(token_session); // Pasar el token recibido como argumento
+    ipcMain.handle("fetch-facturas", async (event, token_session, periodo) => {
+        if (!periodo) {
+            return { success: false, message: "El periodo es obligatorio.(ipcmain-fetch-facturas)" };
+        }
+        if (!token_session) {
+            return { success: false, message: "El token de sesión es obligatorio.(ipcmain-fetch-facturas)" };
+        }
+        return await fetchFacturas(token_session, periodo); // Pasar el token recibido como argumento
     });
 
     // 📌 Manejar el registro de una factura

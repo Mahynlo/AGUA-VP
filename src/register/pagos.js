@@ -41,3 +41,5 @@ const registerPagos = async (pago, token_session) => {
         return { success: false, message: "Hubo un error al registrar el pago(ipcmain)." };
     }
 }
+
+export { registerPagos };

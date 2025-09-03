@@ -26,7 +26,7 @@ export default function IpcHandlerClientes () {
       const { cliente, token_session } = data;
 
       // Validación de campos obligatorios (en el lado de Electron)
-      if (!cliente.nombre || !cliente.direccion || !cliente.telefono || !cliente.ciudad || !cliente.correo) {
+      if (!cliente.nombre || !cliente.direccion || !cliente.telefono || !cliente.ciudad || !cliente.correo || !cliente.tarifa_id) {
         return { success: false, message: "Todos los campos son obligatorios." };
       }
 

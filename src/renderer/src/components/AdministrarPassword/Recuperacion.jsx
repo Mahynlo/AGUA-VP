@@ -67,6 +67,59 @@ export default function RecuperarPassword() {
         </Link>
 
       </div>
+
+      <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              Ayuda
+            </div>
+      
+            <Link to="/pantallaCarga">
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Pantalla de Carga
+              </button>
+            </Link>
+      
+            <button
+              onClick={handleVistaPreviaReporte}
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4"
+            >
+              Vista Previa de Reporte
+            </button>
+      
+            <div>
+              <button onClick={handleRegistrar}>Registrar App</button>
+              {respuesta && (
+                <pre>{JSON.stringify(respuesta, null, 2)}</pre>
+              )}
+            </div>
+            <div className="mt-4">
+              <button onClick={handleBorrarToken}>Borrar Token</button>
+              {token && (
+                <div className="mt-4 p-2 bg-gray-100 rounded">
+                  <strong>Token guardado:</strong> {token}
+                </div>
+                
+              )}
+              {id && (
+                <div className="mt-4 p-2 bg-gray-100 rounded">
+                  <strong>ID guardado:</strong> {id}
+                </div>
+              )}
+      
+              {
+                tokensession && (
+                  <div className="mt-4 p-2 bg-gray-100 rounded">
+                  <strong>Token de sesión:</strong> {tokensession}
+                </div>  
+                )
+      
+              }
+            </div>
+           
+      
+      
+      
+          </div>
       
 
     </div>

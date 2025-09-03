@@ -4,7 +4,7 @@ const URL_FACTURAS = import.meta.env.VITE_API_FETCH_FACTURAS; // URL del endpoin
 /**************************************************************************************************************
  * |      Funcion Fetch facturas
  * ************************************************************************************************************* */
-export const fetchFacturas = async (token_session) => {
+export const fetchFacturas = async (token_session, periodo) => {
     try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
@@ -16,7 +16,7 @@ export const fetchFacturas = async (token_session) => {
         return [];
     }
 
-    const response = await fetch(URL_FACTURAS, {
+    const response = await fetch(`${URL_FACTURAS}?periodo=${periodo}`, {
         method: "GET",
         headers: {
         "x-app-key": `AppKey ${token_app}`,

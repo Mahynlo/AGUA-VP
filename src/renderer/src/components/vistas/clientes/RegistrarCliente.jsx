@@ -13,12 +13,13 @@ import {
     CardBody,
     Textarea
 } from "@nextui-org/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AgregarClienteIcon } from "../../../IconsApp/IconsClientes";
 import { useAuth } from "../../../context/AuthContext";
 import { useClientes } from "../../../context/ClientesContext";
+import { useTarifas } from "../../../context/TarifasContext";
 import { useFeedback } from "../../../context/FeedbackContext";
-import { HiUser, HiLocationMarker, HiPhone, HiMail, HiPlus } from "react-icons/hi";
+import { HiUser, HiLocationMarker, HiPhone, HiMail, HiPlus, HiCurrencyDollar } from "react-icons/hi";
 
 export default function RegistrarClientes({ onSuccess, onError }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
@@ -29,12 +30,14 @@ export default function RegistrarClientes({ onSuccess, onError }) {
     ];
     const { user } = useAuth();
     const { actualizarClientes } = useClientes();
+    const { tarifas, loading } = useTarifas();
 
     const [nombre, setNombre] = useState("");
     const [direccion, setDireccion] = useState("");
     const [telefono, setTelefono] = useState("");
     const [ciudad, setCiudad] = useState("");
     const [correo, setCorreo] = useState("");
+    const [tarifaSeleccionada, setTarifaSeleccionada] = useState("");
     const [estadoCliente, setEstadoCliente] = useState("");
     const { setSuccess, setError } = useFeedback();
     const [isUpdating, setIsUpdating] = useState(false);
@@ -58,6 +61,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
         setTelefono("");
         setCiudad("");
         setCorreo("");
+        setTarifaSeleccionada("");
         setErroresCampos({});
         setMostrarErrores(false);
         setIsUpdating(false);
@@ -81,6 +85,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
         if (!telefono) nuevosErrores.telefono = true;
         if (!ciudad) nuevosErrores.ciudad = true;
         if (!correo) nuevosErrores.correo = true;
+        if (!tarifaSeleccionada) nuevosErrores.tarifa = true;
 
         if (Object.keys(nuevosErrores).length > 0) {
             setErroresCampos(nuevosErrores);
@@ -92,6 +97,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                         case "telefono": return "Teléfono";
                         case "ciudad": return "Ciudad";
                         case "correo": return "Correo Electrónico";
+                        case "tarifa": return "Tarifa";
                         default: return campo;
                     }
                 });
@@ -115,6 +121,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                     telefono,
                     ciudad,
                     correo,
+                    tarifa_id: tarifaSeleccionada,
                     estado_cliente: "Activo",
                     modificado_por: user.id,
                 },
@@ -132,6 +139,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                     setTelefono("");
                     setCiudad("");
                     setCorreo("");
+                    setTarifaSeleccionada("");
                     setErroresCampos({}); // Limpiar errores
                     setMostrarErrores(false); // Resetear visualización de errores
                     onClose(); // Cierra el modal automáticamente
@@ -194,7 +202,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                                 Información Personal
                                             </h3>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                                                 {/* Nombre Completo */}
                                                 <div>
                                                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -280,9 +288,10 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                                     <Select
                                                         aria-label="Ciudad"
                                                         placeholder="Selecciona un pueblo"
-                                                        value={ciudad}
-                                                        onChange={(e) => {
-                                                            setCiudad(e.target.value);
+                                                        selectedKeys={ciudad ? [ciudad] : []}
+                                                        onSelectionChange={(keys) => {
+                                                            const selectedKey = Array.from(keys)[0];
+                                                            setCiudad(selectedKey || "");
                                                             limpiarError('ciudad');
                                                         }}
                                                         color="primary"
@@ -297,6 +306,58 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                                         {pueblos.map((pueblo) => (
                                                             <SelectItem key={pueblo.key}>{pueblo.label}</SelectItem>
                                                         ))}
+                                                    </Select>
+                                                </div>
+
+                                                {/* Tarifa */}
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Tarifa*
+                                                    </label>
+                                                    <Select
+                                                        aria-label="Tarifa"
+                                                        placeholder={loading ? "Cargando tarifas..." : "Selecciona una tarifa"}
+                                                        selectedKeys={tarifaSeleccionada ? [tarifaSeleccionada] : []}
+                                                        onSelectionChange={(keys) => {
+                                                            const selectedKey = Array.from(keys)[0];
+                                                            setTarifaSeleccionada(selectedKey || "");
+                                                            limpiarError('tarifa');
+                                                        }}
+                                                        color="primary"
+                                                        variant="bordered"
+                                                        size="md"
+                                                        isRequired
+                                                        isLoading={loading}
+                                                        isDisabled={loading || !tarifas || tarifas.length === 0}
+                                                        className="w-full"
+                                                        startContent={<HiCurrencyDollar className="text-gray-400 text-lg" />}
+                                                        isInvalid={mostrarErrores && erroresCampos.tarifa}
+                                                        errorMessage={mostrarErrores && erroresCampos.tarifa && "La tarifa es requerida"}
+                                                    >
+                                                        {!loading && tarifas && Array.isArray(tarifas) && tarifas.length > 0 ? (
+                                                            tarifas.map((tarifa) => {
+                                                                const tarifaId = tarifa.id?.toString();
+                                                                const nombreTarifa = tarifa.nombre;
+                                                                const descripcion = tarifa.descripcion;
+                                                                
+                                                                return (
+                                                                    <SelectItem 
+                                                                        key={tarifaId} 
+                                                                        textValue={`${nombreTarifa} - ${descripcion}`}
+                                                                    >
+                                                                        {nombreTarifa} - {descripcion}
+                                                                    </SelectItem>
+                                                                );
+                                                            })
+                                                        ) : loading ? (
+                                                            <SelectItem key="loading" isDisabled>
+                                                                Cargando tarifas...
+                                                            </SelectItem>
+                                                        ) : (
+                                                            <SelectItem key="no-tarifas" isDisabled>
+                                                                No hay tarifas disponibles
+                                                            </SelectItem>
+                                                        )}
                                                     </Select>
                                                 </div>
                                             </div>
