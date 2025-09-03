@@ -8,31 +8,85 @@ const Impresion = () => {
   const [isPreview, setIsPreview] = useState(false);
   const fechaHora = new Date().toLocaleString();
 
+  // Función de prueba para verificar URLs
+  const testUrls = () => {
+    const baseUrl = getBaseUrl();
+    console.log('=== URL TEST ===');
+    console.log('Base URL:', baseUrl);
+    console.log('Recibo URL:', `${baseUrl}#/recibo?print=true`);
+    console.log('Reporte URL:', `${baseUrl}#/reporteLecturas?print=true`);
+    console.log('Environment:', window.location.protocol === 'file:' ? 'Production (Packaged)' : 'Development');
+    console.log('===============');
+  };
+
+  // Ejecutar test al cargar el componente
+  React.useEffect(() => {
+    testUrls();
+  }, []);
+
+  // Función para obtener la URL base correcta
+  const getBaseUrl = () => {
+    const currentUrl = window.location.href;
+    const currentOrigin = window.location.origin;
+    
+    console.log('Current URL:', currentUrl);
+    console.log('Current Origin:', currentOrigin);
+    console.log('Protocol:', window.location.protocol);
+    
+    // En desarrollo (http://localhost:5173)
+    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+      return currentOrigin;
+    }
+    
+    // En producción empaquetada (file:// protocol)
+    if (window.location.protocol === 'file:') {
+      // Obtener la base sin el hash
+      const basePath = currentUrl.split('#')[0];
+      return basePath;
+    }
+    
+    // Fallback
+    return currentOrigin;
+  };
 
   const handleImprimirRecibo = () => {
-    window.api.printComponent('http://localhost:5173/#/recibo', (response) => {
+    // Usar la URL actual de la aplicación en lugar de localhost hardcodeado
+    const baseUrl = getBaseUrl();
+    const printUrl = `${baseUrl}#/recibo?print=true`;
+    console.log('Printing URL:', printUrl);
+    window.api.printComponent(printUrl, (response) => {
       console.log(response);
     });
   };
 
   const handleVistaPreviaRecibo = () => {
-    window.api.previewComponent('http://localhost:5173/#/recibo', (response) => {
+    // Usar la URL actual de la aplicación en lugar de localhost hardcodeado
+    const baseUrl = getBaseUrl();
+    const previewUrl = `${baseUrl}#/recibo?print=true`;
+    console.log('Preview URL:', previewUrl);
+    window.api.previewComponent(previewUrl, (response) => {
       console.log(response);
     });
   };
 
-
   const handleImprimirReporte = () => {
-    window.api.printReport('http://localhost:5173/#/reporteLecturas', (response) => {
+    // Usar la URL actual de la aplicación en lugar de localhost hardcodeado
+    const baseUrl = getBaseUrl();
+    const printUrl = `${baseUrl}#/reporteLecturas?print=true`;
+    console.log('Printing report URL:', printUrl);
+    window.api.printReport(printUrl, (response) => {
       console.log(response);
     });
   };
 
   const handleVistaPreviaReporte = () => {
-    window.api.previewReport('http://localhost:5173/#/reporteLecturas', (response) => {
+    // Usar la URL actual de la aplicación en lugar de localhost hardcodeado
+    const baseUrl = getBaseUrl();
+    const previewUrl = `${baseUrl}#/reporteLecturas?print=true`;
+    console.log('Preview report URL:', previewUrl);
+    window.api.previewReport(previewUrl, (response) => {
       console.log(response);
-    }
-    );
+    });
   };
 
   return (
@@ -53,6 +107,10 @@ const Impresion = () => {
 
           <Button onClick={handleVistaPreviaReporte} color="blue">Vista Previa Reporte</Button>
           <Button onClick={handleImprimirReporte}>Imprimir Reporte</Button>
+          
+          <Button onClick={testUrls} color="gray" className="col-span-full">
+            🔍 Test URLs (Ver Consola)
+          </Button>
         </div>
 
 

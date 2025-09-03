@@ -90,11 +90,9 @@ const api = {
     let response = await ipcRenderer.invoke('previewReport', url);
     callback(response);  // Aquí pasas el resultado de la operación al callback
   },
-  previewRecibohtml: async (data) => {
-    // Invoca la llamada al main process
-    let response = await ipcRenderer.invoke('previewRecibohtml', data);
-    return response;  // Regresa la respuesta (en este caso, solo un mensaje de éxito)
-  },
+
+  // NOTA: previewRecibohtml eliminado - no se usaba
+  // El sistema ahora usa solo componentes React para consistencia
 
 
 

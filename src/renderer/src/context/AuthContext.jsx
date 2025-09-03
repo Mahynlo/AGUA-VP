@@ -27,6 +27,34 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
+        // Verificar si estamos en modo impresión
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPrintMode = urlParams.get('print') === 'true';
+        
+        if (isPrintMode) {
+            // SEGURIDAD: En modo impresión, verificar si hay token válido
+            const storedToken = localStorage.getItem("token");
+            if (storedToken) {
+                try {
+                    const decoded = JSON.parse(atob(storedToken.split(".")[1]));
+                    if (decoded?.id && decoded?.correo && decoded?.rol) {
+                        // Token válido - permitir modo impresión optimizado
+                        console.log('Modo impresión autorizado para usuario autenticado');
+                        setUser({ id: decoded.id,nombre:decoded.nombre,username:decoded.username, correo: decoded.correo, rol: decoded.rol, fecha_creacion: decoded.fecha_creacion });
+                        setLoading(false);
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Token inválido en modo impresión:', error);
+                }
+            }
+            
+            // No hay token válido - tratar como usuario no autenticado
+            console.warn('Modo impresión bloqueado: usuario no autenticado');
+            setLoading(false);
+            return;
+        }
+
         const storedToken = localStorage.getItem("token");
         if (storedToken) {
             try {

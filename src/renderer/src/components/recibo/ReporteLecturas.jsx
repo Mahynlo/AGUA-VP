@@ -1,6 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 const ReporteLecturas = () => {
+    // Detección de modo impresión para debugging
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPrintMode = urlParams.get('print') === 'true';
+        
+        if (isPrintMode) {
+            console.log('=== REPORTE LECTURAS - MODO IMPRESIÓN ===');
+            console.log('URL actual:', window.location.href);
+            console.log('Parámetros URL:', Object.fromEntries(urlParams));
+            console.log('========================================');
+        }
+    }, []);
     const data = [
         { rpu: "1001", medidor: "M123", usuario: "Juan Pérez Del Monte", direccion: "Calle Falsa 123" },
         { rpu: "1002", medidor: "M124", usuario: "Ana Gómez de La Loma", direccion: "Av. Siempre Viva 742" },

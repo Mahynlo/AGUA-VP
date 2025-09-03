@@ -93,20 +93,23 @@ function MainApp() {
 
   const { loading } = useAuth();
 
+  // Verificar si estamos en modo impresión
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPrintMode = urlParams.get('print') === 'true';
 
-  // Si está cargando, no mostrar el Sidebar ni el Navbar
-  if (loading) {
+  // Si está cargando y NO estamos en modo impresión, mostrar pantalla de carga
+  if (loading && !isPrintMode) {
     return <PantallaCarga tiempo={4000} />; // Aquí puedes colocar un componente de carga mientras esperas
   }
 
   return (
     <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>
 
-      {/* Navbar solo si no está en rutas ocultas */}
-      {!hideNavbarRoutes.includes(location.pathname) && <NavbarApp />}
+      {/* Navbar solo si no está en rutas ocultas Y no está en modo impresión */}
+      {!hideNavbarRoutes.includes(location.pathname) && !isPrintMode && <NavbarApp />}
 
-      {/* Sidebar solo si no está en rutas ocultas */}
-      {!hideSidebarRoutes.includes(location.pathname) && <SidebarApp />}
+      {/* Sidebar solo si no está en rutas ocultas Y no está en modo impresión */}
+      {!hideSidebarRoutes.includes(location.pathname) && !isPrintMode && <SidebarApp />}
 
       <Routes>
         <Route element={<ProtectedRoute />}>
