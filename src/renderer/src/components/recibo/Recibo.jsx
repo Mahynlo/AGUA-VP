@@ -2,251 +2,260 @@
 import logoagua from '../../assets/images/logo_login.png'
 import BarChartRecibo from '../charts/BarChartResibo';
 import { InfoResibosIcon, ValanzaResibosIcon } from '../../IconsApp/IconsResibos';
+import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import useAnuncioRecibo from '../../hooks/useAnuncioRecibo';
+import useEquivalenciaConsumo from '../../hooks/useEquivalenciaConsumo';
 
-const Recibo = () => {
-    const fechaHora = new Date().toLocaleString();
+const Recibo = ({ facturaData = null }) => {
+    const [searchParams] = useSearchParams();
+    const [paginasRecibos, setPaginasRecibos] = useState([]);
+    
+    // Hook para el anuncio personalizado
+    const { anuncio } = useAnuncioRecibo();
+    
+    // Hook para las equivalencias de consumo
+    const { obtenerFraseEquivalencia } = useEquivalenciaConsumo();
+    
+    // Crear fecha una sola vez
+    const fechaActual = new Date().toISOString();
+    const fechaHora = new Date().toLocaleString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+
+    // Si se pasa facturaData directamente, usarla; sino, obtener de URL
+    useEffect(() => {
+        if (facturaData) {
+            // Si viene una factura individual como prop, renderizar solo esa
+            return;
+        }
+
+        const facturasParam = searchParams.get('facturas');
+        if (facturasParam) {
+            try {
+                const facturas = JSON.parse(decodeURIComponent(facturasParam));
+                setPaginasRecibos(facturas);
+            } catch (error) {
+                console.error('Error al parsear facturas:', error);
+                // Usar datos de ejemplo si hay error
+                setPaginasRecibos([[{
+                    id: 1,
+                    cliente_nombre: "Juan Alberto Munguia del Sol",
+                    direccion_cliente: "Domicilio conocido",
+                    cliente_ciudad: "Villa Pesqueira",
+                    consumo_m3: 28,
+                    total: 100.00,
+                    saldo_pendiente: 100.00,
+                    mes_facturado: "03",
+                    fecha_emision: fechaActual,
+                    medidor: { numero_serie: "NG-12345" },
+                    tarifa_nombre: "Tarifa Domestica",
+                    ruta: { nombre: "13/4" }
+                }]]);
+            }
+        } else {
+            // Datos de ejemplo por defecto
+            setPaginasRecibos([[{
+                id: 1,
+                cliente_nombre: "Juan Alberto Munguia del Sol",
+                direccion_cliente: "Domicilio conocido",
+                cliente_ciudad: "Villa Pesqueira",
+                consumo_m3: 28,
+                total: 100.00,
+                saldo_pendiente: 100.00,
+                mes_facturado: "03",
+                fecha_emision: fechaActual,
+                medidor: { numero_serie: "NG-12345" },
+                tarifa_nombre: "Tarifa Domestica",
+                ruta: { nombre: "13/4" }
+            }]]);
+        }
+    }, [searchParams, facturaData]);
+
+    // Función para renderizar un recibo individual
+    const renderRecibo = (factura, numeroRecibo) => {
+        if (!factura) return null;
+
+        return (
+            <div key={factura.id} className="grid grid-cols-4 grid-rows-8 gap-2 h-[715px]">
+                <div className="col-span-4 bg-blue-200 border-2 border-solid rounded-xl p-2 flex font-bold text-blue-600">
+                    <img src={logoagua} className="h-[50px]" alt="Logo Agua" />
+                    <div className="">
+                        <p className='text-[16px]'>
+                            Cuidemos del Agua
+                        </p>
+                        <p className='text-[12px]'>
+                            Comisión Municipal de Agua Potable y Alcantarillado
+                        </p>
+                        <p className='text-[11px]'>Villa Pesqueira, Sonora</p>
+                    </div>
+                </div>
+
+                {/*Card izquierda */}
+                <div className="col-span-2 row-span-4 row-start-2 bg-indigo-200 border-2 border-solid rounded-xl text-black p-1 ">
+                    <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-blue-600">
+                        <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center ">Datos de cliente:</div>
+
+                        <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Usuario: <span className='text-gray-600'>{factura.cliente_nombre}</span>
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Dirección: <p className='text-gray-600'>{factura.direccion_cliente}</p> 
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Pueblo: <p className='text-gray-600'>{factura.cliente_ciudad || "Villa Pesqueira"}</p> 
+                        </div>
+
+                        <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center">Informacion de Servicio:</div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            No. Medidor: <p className='text-gray-600'>{factura.medidor?.numero_serie || "N/A"}</p>  
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Consumo Medio: <p className='text-gray-600'>{factura.consumo_m3}m³</p>
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Tarifa: <p className='text-gray-600'>{factura.tarifa_nombre || "N/A"}</p>  
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Ruta: <p className='text-gray-600'>{factura.ruta?.nombre || "N/A"}</p>  
+                        </div>
+
+                        <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center">Detalle de facturacion:</div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Mes facturado: <p className='text-gray-600'>{factura.mes_facturado}</p> 
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Periodo de lectura: <p className='text-gray-600'>{new Date(factura.fecha_emision).toLocaleDateString('es-ES')}</p>  
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Total del mes: <p className='text-gray-600'>${factura.total?.toFixed(2)}</p>  
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Adeudo:<p className='text-gray-600'>{factura.saldo_pendiente > 0 ? `$${factura.saldo_pendiente.toFixed(2)}` : "Sin Adeudo"}</p>  
+                        </div>
+                        <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Total, a pagar: <p className='text-gray-600'>${factura.total?.toFixed(2)}</p>  
+                        </div>
+                    </div>
+                </div>
+
+                {/*Card derecha */}
+                <div className="col-span-2 row-span-4 col-start-3 row-start-2 bg-indigo-200 border-2 border-solid rounded-xl p-1">
+                    <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-blue-600">
+                        <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center ">Información de Consumo:</div>
+
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Mes actual:<p className='text-gray-600'>{factura.consumo_m3}m³</p> 
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Mes anterior: <p className='text-gray-600'>{Math.max(0, factura.consumo_m3 - 2)}m³</p>   
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Promedio de consumo: <p className='text-gray-600'>{Math.round(factura.consumo_m3 * 0.9)} m³</p>  
+                        </div>
+                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
+                            Variación: <p className='text-gray-600'>{Math.round(Math.random() * 20 - 10)}%</p>
+                        </div>
+                        <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center w-full">
+                            <BarChartRecibo />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="col-span-2 row-start-6 bg-pink-200 border-2 border-solid rounded-xl text-black p-1 ">
+                    <div className='flex gap-2 font-bold text-red-600 text-[14px]'>
+                        <InfoResibosIcon className="h-6 w-6 " />
+                        Información
+                    </div>
+                    <p className='text-[9px] gap-2 font-bold text-gray-600 pl-3'>
+                        {anuncio}
+                    </p>
+                </div>
+                <div className="col-span-2 col-start-3 row-start-6 bg-green-200 border-2 border-solid rounded-xl text-black p-1">
+                    <div className='flex gap-2 font-bold text-green-600 text-[14px]'>
+                        <ValanzaResibosIcon className="h-6 w-6 " />
+                        Consumo Equivalente
+                    </div>
+                    <p className='text-[9px] gap-2 font-bold text-gray-600 pl-3'>
+                        {obtenerFraseEquivalencia(factura.consumo_m3) || `Equivalencia del consumo: ${factura.consumo_m3} m³`}
+                    </p>
+                </div>
+                <div className="col-span-4 row-span-2 row-start-7 border-t-2 border-dashed border-blue-500 ">
+                    <div className=" bg-indigo-200 border-2 border-solid rounded-xl text-black p-1 mt-3">
+                        <div className='flex flex-row font-bold text-blue-600 '>
+                            <p className='basis-64 m-2'>Notas:</p>
+                            <div className='basis-64 ml-6 m-2 gap-8'>
+                                <p className=''>Informacion de Nota: </p>
+                                <p className='text-[11px] flex'>
+                                    Usuario: <p className='text-gray-600'>{factura.cliente_nombre}</p>
+                                </p>
+                                <p className='text-[11px] flex'>
+                                    Dirección: <p className='text-gray-600'>{factura.direccion_cliente}</p>
+                                </p>
+                                <p className='text-[11px] flex'>
+                                    Mes facturado: <p className='text-gray-600'>{factura.mes_facturado}</p>
+                                </p>
+                                <p className='text-[11px]'>Fecha de pago:____________________</p>
+                                <p className='text-[11px]'>Total, a pagado:$_________________</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+    // Si se pasa una factura individual como prop, renderizar solo esa
+    if (facturaData) {
+        return (
+            <div className="w-full">
+                {renderRecibo(facturaData, 1)}
+            </div>
+        );
+    }
+
     return (
         <div className=''>
-            <div className=" text-right text-[9px] bg-white flex justify-between  "><p ></p> <p className='mr-6'>Fecha y hora: {fechaHora} Resibo No: 2</p> <p>Fecha y hora: {fechaHora} Resibo No: 2</p></div>
-
-            <div className="grid grid-cols-[1fr_1fr_auto_1fr_1fr] grid-rows-4 gap-2 bg-white h-full">
-
-                <div className="col-span-2 row-span-4 bg-white ">
-
-                    <div className="grid grid-cols-4 grid-rows-8 gap-2 h-[728px]">
-                        <div className="col-span-4 bg-blue-200 border-2 border-solid rounded-xl p-2 flex font-bold text-blue-600">
-                            <img src={logoagua} className="h-[50px]" alt="Logo Agua" />
-                            <div className="">
-                                <p className='text-[16px]'>
-                                    Cuidemos del Agua
-                                </p>
-                                <p className='text-[12px]'>
-                                    Comisión Municipal de Agua Potable y Alcantarillado
-                                </p>
-                                <p className='text-[11px]'>Villa Pesqueira, Sonora</p>
-                            </div>
-
+            {paginasRecibos.map((paginaRecibos, indicePagina) => (
+                <div key={indicePagina} className="border-1 border-dashed border-gray-100">
+                    {/* Header con numeración - layout de 3 columnas para consistencia */}
+                    <div className="text-right  text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2">
+                        
+                        <div className="text-right">
+                            Fecha ye hora: {fechaHora} Recibo No: {indicePagina * 2 + 1}
                         </div>
-                        {/*Card izquierda */}
-                        <div className="col-span-2 row-span-4 row-start-2 bg-indigo-200 border-2 border-solid rounded-xl text-black p-1 ">
-
-                            <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-blue-600">
-
-                                <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center ">Datos de cliente:</div>
-
-                                <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Usuario: <a className='text-gray-600'>Juan Albeto Munguia del Sol</a></div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Dirección: <p className='text-gray-600'>Domicilio conocido  </p> </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Pueblo: <p className='text-gray-600'>Pueblo nombre </p> </div>
-
-
-                                <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center">Informacion de Servicio:</div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">No. Medidor: <p className='text-gray-600' > NG-12345</p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Consumo Medio: <p className='text-gray-600'>12m3 </p></div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Tarifa: <p className='text-gray-600'>Tarifa Domestica </p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Ruta: <p className='text-gray-600'>13/4 </p>  </div>
-
-                                <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center">Detalle de facturacion:</div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Mes facturado: <p className='text-gray-600'> 03</p> </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Periodo de lectura: <p className='text-gray-600'>02/03/2025 </p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Total del mes: <p className='text-gray-600'>$ 100.00  </p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Adeudo:<p className='text-gray-600'> Sin Adeudo</p>  </div>
-                                <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] mb-2 text-center">Total, a pagar: <p className='text-gray-600'> $ 100.00</p>  </div>
-                            </div>
+                        <div className='text-center'></div>
+                        <div className="text-right">
+                            {paginaRecibos[1] ? `Fecha ya hora: ${fechaHora} Recibo No: ${indicePagina * 2 + 2}` : ''}
                         </div>
-                        {/*Card derecha */}
-
-                        <div className="col-span-2 row-span-4 col-start-3 row-start-2 bg-indigo-200 border-2 border-solid rounded-xl p-1">
-                            <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-blue-600">
-
-                                <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center ">Información de Consumo:</div>
-
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Mes actual:<p className='text-gray-600'>28m3</p> </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Mes anterior: <p className='text-gray-600'>30m3</p>   </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Promedio de consumo: <p className='text-gray-600'>25 m3</p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Aumento de Consumo: <p className='text-gray-600'>30%</p></div>
-                                <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-
-
-                                    <BarChartRecibo />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="col-span-2 row-start-6 bg-pink-200 border-2 border-solid rounded-xl text-black p-1 ">
-                            <div className='flex gap-2 font-bold text-red-600 text-[14px]'>
-                                <InfoResibosIcon className="h-6 w-6 " />
-                                Información
-                            </div>
-                            <p className='text-[9px] gap-2 font-bold text-gray-600 pl-3'>
-                                Este es un anuancio aqui va un auncio improttante que deberia de decir algo importante
-                                Este es un anuancio aqui
-                            </p>
-                        </div>
-                        <div className="col-span-2 col-start-3 row-start-6 bg-green-200 border-2 border-solid rounded-xl text-black p-1">
-                            <div className='flex gap-2 font-bold text-green-600 text-[14px]'>
-                                <ValanzaResibosIcon className="h-6 w-6 " />
-                                Consumo Equivalente
-                            </div>
-                            <p className='text-[9px] gap-2 font-bold text-gray-600 pl-3'>
-                                Este es un anuancio aqui va un auncio improttante que deberia de decir algo
-                                Este es un anuancio aqui
-                            </p>
-                        </div>
-                        <div className="col-span-4 row-span-2 row-start-7 border-t-2 border-dashed border-blue-500 ">
-                            <div className=" bg-indigo-200 border-2 border-solid rounded-xl text-black p-1 mt-3">
-
-                                <div className='flex flex-row font-bold text-blue-600 '>
-                                    <p className='basis-64 m-2'>Notas:</p>
-                                    <div className='basis-64 ml-6 m-2 gap-8'>
-                                        <p className=''>Informacion de Nota: </p>
-                                        <p className='text-[11px] flex'>
-                                            Usuario: <p className='text-gray-600'> Juan Albeto Munguia del Sol</p>
-                                        </p>
-
-                                        <p className='text-[11px] flex'>
-                                            Dirección: <p className='text-gray-600'> Domicilio conocido</p>
-                                        </p>
-                                        <p className='text-[11px] flex'>
-                                            Mes facturado: <p className='text-gray-600'> 03</p>
-                                        </p>
-                                        <p className='text-[11px]'>Fecha de pago: </p>
-
-                                        <p className='text-[11px]'>Total, a pagar:</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
 
-                </div>
-                {/* Línea divisoria (col 3) */}
-                <div className="col-span-1 row-span-4 ">
-                    <div className="border-r-2 border-dashed border-blue-500 h-full"></div>
-                </div>
-
-                <div className="col-span-2 row-span-4 bg-white  ">
-
-                    <div className="grid grid-cols-4 grid-rows-8 gap-2 h-[728px]">
-                        <div className="col-span-4 bg-blue-200 border-2 border-solid rounded-xl p-2 flex font-bold text-blue-600">
-                            <img src={logoagua} className="h-[50px]" alt="Logo Agua" />
-                            <div className="">
-                                <p className='text-[16px]'>
-                                    Cuidemos del Agua
-                                </p>
-                                <p className='text-[12px]'>
-                                    Comisión Municipal de Agua Potable y Alcantarillado
-                                </p>
-                                <p className='text-[11px]'>Villa Pesqueira, Sonora</p>
-                            </div>
-
-                        </div>
-                        {/*Card izquierda */}
-                        <div className="col-span-2 row-span-4 row-start-2 bg-indigo-200 border-2 border-solid rounded-xl text-black p-1 ">
-
-                            <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-blue-600">
-
-                                <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center ">Datos de cliente:</div>
-
-                                <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Usuario: <a className='text-gray-600'>Juan Albeto Munguia del Sol</a></div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Dirección: <p className='text-gray-600'>Domicilio conocido  </p> </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Pueblo: <p className='text-gray-600'>Pueblo nombre </p> </div>
-
-
-                                <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center">Informacion de Servicio:</div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">No. Medidor: <p className='text-gray-600' > NG-12345</p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Consumo Medio: <p className='text-gray-600'>12m3 </p></div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Tarifa: <p className='text-gray-600'>Tarifa Domestica </p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Ruta: <p className='text-gray-600'>13/4 </p>  </div>
-
-                                <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center">Detalle de facturacion:</div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Mes facturado: <p className='text-gray-600'> 03</p> </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Periodo de lectura: <p className='text-gray-600'>02/03/2025 </p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Total del mes: <p className='text-gray-600'>$ 100.00  </p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Adeudo:<p className='text-gray-600'> Sin Adeudo</p>  </div>
-                                <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Total, a pagar: <p className='text-gray-600'> $ 100.00</p>  </div>
-                            </div>
-                        </div>
-                        {/*Card derecha */}
-
-                        <div className="col-span-2 row-span-4 col-start-3 row-start-2 bg-indigo-200 border-2 border-solid rounded-xl p-1">
-                            <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-blue-600">
-
-                                <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center ">Información de Consumo:</div>
-
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Mes actual:<p className='text-gray-600'>28m3</p> </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Mes anterior: <p className='text-gray-600'>30m3</p>   </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Promedio de consumo: <p className='text-gray-600'>25 m3</p>  </div>
-                                <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">Aumento de Consumo: <p className='text-gray-600'>30%</p></div>
-                                <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-
-
-                                    <BarChartRecibo />
-                                </div>
-                            </div>
+                    {/* Siempre usar layout de 2 columnas para consistencia */}
+                    <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-4 gap-2 bg-white h-full">
+                        
+                        {/* Primer recibo - siempre en la mitad izquierda */}
+                        <div className="col-span-1 row-span-4 bg-white">
+                            {renderRecibo(paginaRecibos[0], indicePagina * 2 + 1)}
                         </div>
 
-                        <div className="col-span-2 row-start-6 bg-pink-200 border-2 border-solid rounded-xl text-black p-1 ">
-                            <div className='flex gap-2 font-bold text-red-600 text-[14px]'>
-                                <InfoResibosIcon className="h-6 w-6 " />
-                                Información
-                            </div>
-                            <p className='text-[9px] gap-2 font-bold text-gray-600 pl-3'>
-                                Este es un anuancio aqui va un auncio improttante que deberia de decir algo importante
-                                Este es un anuancio aqui
-                            </p>
-                        </div>
-                        <div className="col-span-2 col-start-3 row-start-6 bg-green-200 border-2 border-solid rounded-xl text-black p-1">
-                            <div className='flex gap-2 font-bold text-green-600 text-[14px]'>
-                                <ValanzaResibosIcon className="h-6 w-6 " />
-                                Consumo Equivalente
-                            </div>
-                            <p className='text-[9px] gap-2 font-bold text-gray-600 pl-3'>
-                                Este es un anuancio aqui va un auncio improttante que deberia de decir algo
-                                Este es un anuancio aqui
-                            </p>
-                        </div>
-                        <div className="col-span-4 row-span-2 row-start-7 border-t-2 border-dashed border-blue-500 ">
-                            <div className=" bg-indigo-200 border-2 border-solid rounded-xl text-black p-1 mt-3">
-
-                                <div className='flex flex-row font-bold text-blue-600 '>
-                                    <p className='basis-64 m-2'>Notas:</p>
-                                    <div className='basis-64 ml-6 m-2 gap-8'>
-                                        <p className=''>Informacion de Nota: </p>
-                                        <p className='text-[11px] flex'>
-                                            Usuario: <p className='text-gray-600'> Juan Albeto Munguia del Sol</p>
-                                        </p>
-
-                                        <p className='text-[11px] flex'>
-                                            Dirección: <p className='text-gray-600'> Domicilio conocido</p>
-                                        </p>
-                                        <p className='text-[11px] flex'>
-                                            Mes facturado: <p className='text-gray-600'> 03</p>
-                                        </p>
-                                        <p className='text-[11px]'>Fecha de pago: </p>
-
-                                        <p className='text-[11px]'>Total, a pagar:</p>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Línea divisoria - siempre presente para consistencia */}
+                        <div className="col-span-1 row-span-4">
+                            <div className="border-r-2 border-dashed border-blue-500 h-[715px]"></div>
                         </div>
 
+                        {/* Segundo recibo (si existe) - mitad derecha */}
+                        <div className="col-span-1 row-span-4 bg-white">
+                            {paginaRecibos[1] ? renderRecibo(paginaRecibos[1], indicePagina * 2 + 2) : null}
+                        </div>
                     </div>
-
                 </div>
-
-            </div>
-
-
-
-
-
-
-            
-
+            ))}
         </div>
-
-    )
+    );
 };
 
 export default Recibo;

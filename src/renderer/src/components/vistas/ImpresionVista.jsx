@@ -1,132 +1,161 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "flowbite-react";
-import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
-import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button, Card, CardBody, Chip, Tabs, Tab, Skeleton } from "@nextui-org/react";
+import { HiArrowLeft, HiPrinter, HiUsers, HiDocumentText, HiCog, HiCurrencyDollar, HiOutlinePresentationChartLine, HiOutlinePresentationChartBar  } from "react-icons/hi";
+import React, { useMemo } from "react";
+import { useFacturas } from "../../context/FacturasContext";
+import TabImpresion from "./impresion/TabImpresion";
+import TabConfiguracion from "./impresion/TabConfiguracion";
 
 const Impresion = () => {
   const navigate = useNavigate(); // Hook de navegación
-  const [isPreview, setIsPreview] = useState(false);
-  const fechaHora = new Date().toLocaleString();
+  
+  // Contexto de facturas
+  const { 
+    facturas, 
+    loading
+  } = useFacturas();
 
-  // Función de prueba para verificar URLs
-  const testUrls = () => {
-    const baseUrl = getBaseUrl();
-    console.log('=== URL TEST ===');
-    console.log('Base URL:', baseUrl);
-    console.log('Recibo URL:', `${baseUrl}#/recibo?print=true`);
-    console.log('Reporte URL:', `${baseUrl}#/reporteLecturas?print=true`);
-    console.log('Environment:', window.location.protocol === 'file:' ? 'Production (Packaged)' : 'Development');
-    console.log('===============');
-  };
+  // Filtrar facturas que tengan lecturas (saldo_pendiente !== null y total > 0)
+  const clientesConFacturasYLecturas = useMemo(() => {
+    return facturas.filter(factura => 
+      factura.saldo_pendiente !== null && 
+      factura.total > 0 &&
+      factura.consumo_m3 > 0 // Asegurar que tenga consumo (lectura)
+    );
+  }, [facturas]);
 
-  // Ejecutar test al cargar el componente
-  React.useEffect(() => {
-    testUrls();
-  }, []);
-
-  // Función para obtener la URL base correcta
-  const getBaseUrl = () => {
-    const currentUrl = window.location.href;
-    const currentOrigin = window.location.origin;
+  // Calcular estadísticas
+  const estadisticas = useMemo(() => {
+    const totalFacturas = clientesConFacturasYLecturas.length;
+    const totalMonto = clientesConFacturasYLecturas.reduce((sum, factura) => sum + (factura.total || 0), 0);
+    const consumoTotal = clientesConFacturasYLecturas.reduce((sum, factura) => sum + (factura.consumo_m3 || 0), 0);
     
-    console.log('Current URL:', currentUrl);
-    console.log('Current Origin:', currentOrigin);
-    console.log('Protocol:', window.location.protocol);
-    
-    // En desarrollo (http://localhost:5173)
-    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-      return currentOrigin;
-    }
-    
-    // En producción empaquetada (file:// protocol)
-    if (window.location.protocol === 'file:') {
-      // Obtener la base sin el hash
-      const basePath = currentUrl.split('#')[0];
-      return basePath;
-    }
-    
-    // Fallback
-    return currentOrigin;
-  };
-
-  const handleImprimirRecibo = () => {
-    // Usar la URL actual de la aplicación en lugar de localhost hardcodeado
-    const baseUrl = getBaseUrl();
-    const printUrl = `${baseUrl}#/recibo?print=true`;
-    console.log('Printing URL:', printUrl);
-    window.api.printComponent(printUrl, (response) => {
-      console.log(response);
-    });
-  };
-
-  const handleVistaPreviaRecibo = () => {
-    // Usar la URL actual de la aplicación en lugar de localhost hardcodeado
-    const baseUrl = getBaseUrl();
-    const previewUrl = `${baseUrl}#/recibo?print=true`;
-    console.log('Preview URL:', previewUrl);
-    window.api.previewComponent(previewUrl, (response) => {
-      console.log(response);
-    });
-  };
-
-  const handleImprimirReporte = () => {
-    // Usar la URL actual de la aplicación en lugar de localhost hardcodeado
-    const baseUrl = getBaseUrl();
-    const printUrl = `${baseUrl}#/reporteLecturas?print=true`;
-    console.log('Printing report URL:', printUrl);
-    window.api.printReport(printUrl, (response) => {
-      console.log(response);
-    });
-  };
-
-  const handleVistaPreviaReporte = () => {
-    // Usar la URL actual de la aplicación en lugar de localhost hardcodeado
-    const baseUrl = getBaseUrl();
-    const previewUrl = `${baseUrl}#/reporteLecturas?print=true`;
-    console.log('Preview report URL:', previewUrl);
-    window.api.previewReport(previewUrl, (response) => {
-      console.log(response);
-    });
-  };
+    return {
+      totalFacturas,
+      totalMonto,
+      consumoTotal,
+      promedioConsumo: totalFacturas > 0 ? (consumoTotal / totalFacturas).toFixed(1) : 0
+    };
+  }, [clientesConFacturasYLecturas]);
 
   return (
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div className="w-full h-full bg-white overflow-x-hidden gap-4 p-4 rounded-lg shadow-md dark:bg-gray-800">
-        <div className="text-2xl font-bold text-gray-900 dark:text-white">
-        <Button color="gray" className="mb-4" onClick={() => navigate(-1)}>
-          <FlechaReturnIcon className="w-6 h-6" />
-          <span className="mr-2">Volver</span>
-        </Button>
-        Impresion
-      </div>
-      <div>
-        <h1>Impresión y Vista Previa</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-          <Button onClick={handleVistaPreviaRecibo} color="blue">Vista Previa Recibo</Button>
-          <Button onClick={handleImprimirRecibo}>Imprimir Recibo</Button>
-
-          <Button onClick={handleVistaPreviaReporte} color="blue">Vista Previa Reporte</Button>
-          <Button onClick={handleImprimirReporte}>Imprimir Reporte</Button>
-          
-          <Button onClick={testUrls} color="gray" className="col-span-full">
-            🔍 Test URLs (Ver Consola)
-          </Button>
+      <div className="w-full h-full bg-white overflow-x-hidden p-6 rounded-lg shadow-md dark:bg-gray-800">
+        
+        {/* Header con título y estadísticas */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                  <HiPrinter className="bg-blue-600 text-white rounded-full p-2 h-12 w-12" />
+                  Impresión de Recibos
+                </h1>
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 ml-12">
+                Configure y genere recibos de agua para sus clientes
+              </p>
+            </div>
+            
+            {/* Estadísticas rápidas */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white min-w-[120px]">
+                <CardBody className="text-center p-4">
+                  <HiUsers className="w-8 h-8 mx-auto mb-2" />
+                  {loading ? (
+                    <Skeleton className="h-8 w-12 mx-auto mb-1 bg-white/20" />
+                  ) : (
+                    <p className="text-2xl font-bold">{estadisticas.totalFacturas}</p>
+                  )}
+                  <p className="text-xs opacity-90">Resibos</p>
+                </CardBody>
+              </Card>
+              
+              <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white min-w-[120px]">
+                <CardBody className="text-center p-4">
+                  <HiCurrencyDollar className="w-8 h-8 mx-auto mb-2" />
+                  {loading ? (
+                    <Skeleton className="h-8 w-12 mx-auto mb-1 bg-white/20" />
+                  ) : (
+                    <p className="text-2xl font-bold">${estadisticas.totalMonto.toFixed(0)}</p>
+                  )}
+                  <p className="text-xs opacity-90">Total</p>
+                </CardBody>
+              </Card>
+              
+              <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white min-w-[120px]">
+                <CardBody className="text-center p-4">
+                  <HiOutlinePresentationChartBar className="w-8 h-8 mx-auto mb-2" />
+                  {loading ? (
+                    <Skeleton className="h-8 w-12 mx-auto mb-1 bg-white/20" />
+                  ) : (
+                    <p className="text-2xl font-bold">{estadisticas.consumoTotal}</p>
+                  )}
+                  <p className="text-xs opacity-90">m³ Total</p>
+                </CardBody>
+              </Card>
+              
+              <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white min-w-[120px]">
+                <CardBody className="text-center p-4">
+                  <HiOutlinePresentationChartLine className="w-8 h-8 mx-auto mb-2" />
+                  {loading ? (
+                    <Skeleton className="h-8 w-12 mx-auto mb-1 bg-white/20" />
+                  ) : (
+                    <p className="text-2xl font-bold">{estadisticas.promedioConsumo}</p>
+                  )}
+                  <p className="text-xs opacity-90">Promedio m³</p>
+                </CardBody>
+              </Card>
+            </div>
+          </div>
         </div>
 
-
-        <Link to="/recibo" className="block mt-2 text-blue-500 hover:underline">
-          Ir a la página de recibo
-        </Link>
-
-        <Link to="/reporteLecturas" className="block mt-2 text-blue-500 hover:underline">
-          Ir a la página de reporte de lecturas
-        </Link>
-
+        {/* Tabs Content */}
+        <div className="flex w-full flex-col">
+          <Tabs
+            aria-label="Opciones de Impresión"
+            classNames={{
+              tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider bg-white dark:bg-gray-800",
+              cursor: "w-full bg-gradient-to-r from-blue-500 to-blue-600",
+              tab: "max-w-fit px-0 h-12",
+              tabContent: "group-data-[selected=true]:text-blue-600 font-semibold",
+            }}
+            color="primary"
+            variant="underlined"
+          >
+            <Tab 
+              key="impresion"
+              title={
+                <div className="flex items-center gap-3">
+                  <HiPrinter className="w-6 h-6" />
+                  <span>Impresión</span>
+                  <Chip size="sm" variant="flat" color="primary">
+                    {estadisticas.totalFacturas}
+                  </Chip>
+                </div>
+              }
+            >
+              <TabImpresion />
+            </Tab>
+            
+            <Tab 
+              key="configuracion"
+              title={
+                <div className="flex items-center gap-3">
+                  <HiCog className="w-6 h-6" />
+                  <span>Configurar Anuncios</span>
+                  <Chip size="sm" variant="flat" color="secondary">
+                    Config
+                  </Chip>
+                </div>
+              }
+            >
+              <TabConfiguracion />
+            </Tab>
+          </Tabs>
+        </div>
       </div>
-      </div>
-      
-
-      
     </div>
   );
 };

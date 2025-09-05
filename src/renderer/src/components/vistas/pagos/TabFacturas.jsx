@@ -15,15 +15,9 @@ import {
   Select, 
   SelectItem, 
   Input, 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter,
   User,
   Pagination,
-  Skeleton,
-  Textarea
+  Skeleton
 } from "@nextui-org/react";
 import { FlechaReturnIcon } from "../../../IconsApp/IconsAppSystem";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
@@ -31,6 +25,8 @@ import { HiEye, HiCreditCard, HiCalendar, HiCurrencyDollar } from "react-icons/h
 import { useNavigate } from "react-router-dom";
 import { useFacturas } from "../../../context/FacturasContext";
 import { usePagos } from "../../../context/PagosContext";
+import ModalDetalleFactura from "./ModalDetalleFactura";
+import ModalPago from "./ModalPago";
 
 const TabFacturas = () => {
   const navigate = useNavigate();
@@ -58,9 +54,7 @@ const TabFacturas = () => {
   const [modalDetalle, setModalDetalle] = useState(false);
   const [modalPago, setModalPago] = useState(false);
   const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
-  const [procesandoPago, setProcesandoPago] = useState(false);
 
-  // LoadingSkeleton component
   const LoadingSkeleton = () => (
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
@@ -97,14 +91,6 @@ const TabFacturas = () => {
     </div>
   );
   
-  const [formPago, setFormPago] = useState({
-    monto: "",
-    cantidad_entregada: "",
-    metodo_pago: "",
-    comentario: "",
-    fecha_pago: new Date().toISOString().split('T')[0] // Fecha actual por defecto
-  });
-
   // Filtrado de datos
   const filteredData = facturas.filter(factura => {
     const matchesSearch = search === "" || 
@@ -191,84 +177,51 @@ const TabFacturas = () => {
 
   const handlePagar = (factura) => {
     setFacturaSeleccionada(factura);
-    setFormPago({
-      monto: factura.saldo_pendiente?.toString() || "",
-      cantidad_entregada: factura.saldo_pendiente?.toString() || "",
-      metodo_pago: "Efectivo",
-      comentario: "",
-      fecha_pago: new Date().toISOString().split('T')[0]
-    });
     setModalPago(true);
   };
 
-  const handleConfirmarPago = async () => {
-    if (!facturaSeleccionada) return;
+  const handleConfirmarPago = async (datoPago) => {
+    if (!facturaSeleccionada) {
+      throw new Error("No hay factura seleccionada");
+    }
 
-    try {
-      setProcesandoPago(true);
-      
-      // Obtener usuario actual del localStorage
-      const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-      
-      // Preparar datos del pago según el formato requerido
-      const pagoData = {
-        factura_id: facturaSeleccionada.id,
-        fecha_pago: formPago.fecha_pago,
-        monto: parseFloat(formPago.monto),
-        cantidad_entregada: parseFloat(formPago.cantidad_entregada),
-        metodo_pago: formPago.metodo_pago,
-        comentario: formPago.comentario || "Pago realizado",
-        modificado_por: usuario.id || 1 // ID del usuario que realiza el pago
-      };
+    // Obtener usuario actual del localStorage
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    
+    // Preparar datos del pago según el formato requerido
+    const pagoData = {
+      factura_id: facturaSeleccionada.id,
+      fecha_pago: datoPago.fecha_pago,
+      monto: parseFloat(datoPago.monto),
+      cantidad_entregada: parseFloat(datoPago.cantidad_entregada),
+      metodo_pago: datoPago.metodo_pago,
+      comentario: datoPago.comentario || "Pago realizado",
+      modificado_por: usuario.id || 1 // ID del usuario que realiza el pago
+    };
 
-      // Validar datos
-      if (!pagoData.monto || pagoData.monto <= 0) {
-        alert("Por favor ingrese un monto válido");
-        return;
-      }
+    // Validar datos
+    if (!pagoData.monto || pagoData.monto <= 0) {
+      throw new Error("Por favor ingrese un monto válido");
+    }
 
-      if (!pagoData.cantidad_entregada || pagoData.cantidad_entregada <= 0) {
-        alert("Por favor ingrese una cantidad entregada válida");
-        return;
-      }
+    if (!pagoData.cantidad_entregada || pagoData.cantidad_entregada <= 0) {
+      throw new Error("Por favor ingrese una cantidad entregada válida");
+    }
 
-      if (pagoData.cantidad_entregada > facturaSeleccionada.saldo_pendiente) {
-        // Solo mostrar advertencia, no bloquear el pago
-        const confirmar = confirm(`La cantidad entregada ($${pagoData.cantidad_entregada.toLocaleString()}) es mayor al saldo pendiente ($${facturaSeleccionada.saldo_pendiente.toLocaleString()}). ¿Desea continuar?`);
-        if (!confirmar) {
-          return;
-        }
-      }
+    if (!pagoData.metodo_pago) {
+      throw new Error("Debe seleccionar un método de pago");
+    }
 
-      if (!pagoData.metodo_pago) {
-        alert("Debe seleccionar un método de pago");
-        return;
-      }
-
-      // Registrar el pago
-      const resultado = await registrarPago(pagoData);
-      
-      if (resultado.success) {
-        alert("Pago registrado exitosamente");
-        // Actualizar facturas para reflejar el nuevo estado
-        await actualizarFacturas();
-        // Cerrar modal y limpiar
-        setModalPago(false);
-        setFacturaSeleccionada(null);
-        setFormPago({
-          cantidad_entregada: "",
-          metodo_pago: "",
-          comentario: "",
-          fecha_pago: new Date().toISOString().split('T')[0]
-        });
-      } else {
-        alert(`Error al registrar pago: ${resultado.message}`);
-      }
-    } catch (error) {
-      console.error("Error al procesar pago:", error);
-      alert("Error al procesar el pago. Intente nuevamente.");
-    } finally {
-      setProcesandoPago(false);
+    // Registrar el pago
+    const resultado = await registrarPago(pagoData);
+    
+    if (resultado.success) {
+      // Actualizar facturas para reflejar el nuevo estado
+      await actualizarFacturas();
+      // El modal se cierra desde el componente ModalPago cuando el usuario presiona "Cerrar"
+      return resultado;
+    } else {
+      throw new Error(resultado.message || "Error al registrar el pago");
     }
   };
 
@@ -551,200 +504,22 @@ const TabFacturas = () => {
         </div>
       )}
 
-      {/* Modal de detalle de factura */}
-      <Modal isOpen={modalDetalle} onClose={() => setModalDetalle(false)} size="lg">
-        <ModalContent>
-          <ModalHeader>
-            <h3>Detalle de Factura #{facturaSeleccionada?.id}</h3>
-          </ModalHeader>
-          <ModalBody>
-            {facturaSeleccionada && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="font-semibold">Cliente:</span>
-                    <p>{facturaSeleccionada.cliente_nombre}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Estado:</span>
-                    <Badge color={getEstadoColor(facturaSeleccionada.estado)}>
-                      {facturaSeleccionada.estado}
-                    </Badge>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Fecha de emisión:</span>
-                    <p>{new Date(facturaSeleccionada.fecha_emision).toLocaleDateString('es-ES')}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Fecha de vencimiento:</span>
-                    <p>{new Date(facturaSeleccionada.fecha_vencimiento).toLocaleDateString('es-ES')}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Consumo:</span>
-                    <p>{facturaSeleccionada.consumo_m3} m³</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Total a pagar:</span>
-                    <p>${facturaSeleccionada.total.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Saldo pendiente:</span>
-                    <p className="text-red-600 font-bold">${facturaSeleccionada.saldo_pendiente.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Dirección:</span>
-                    <p>{facturaSeleccionada.direccion_cliente}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Teléfono:</span>
-                    <p>{facturaSeleccionada.telefono_cliente}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Tarifa:</span>
-                    <p>{facturaSeleccionada.tarifa_nombre}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Ruta:</span>
-                    <p>{facturaSeleccionada.ruta?.nombre}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Medidor:</span>
-                    <p>{facturaSeleccionada.medidor?.numero_serie}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold">Periodo:</span>
-                    <p>{facturaSeleccionada.mes_facturado}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button onClick={() => setModalDetalle(false)}>
-              Cerrar
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* Modales */}
+      <ModalDetalleFactura 
+        isOpen={modalDetalle}
+        onClose={() => setModalDetalle(false)}
+        factura={facturaSeleccionada}
+      />
 
-      {/* Modal de pago */}
-      <Modal isOpen={modalPago} onClose={() => setModalPago(false)} size="lg">
-        <ModalContent>
-          <ModalHeader>
-            <div>
-              <h3>Realizar Pago - Factura #{facturaSeleccionada?.id}</h3>
-              <p className="text-sm text-default-500 font-normal mt-1">
-                Fecha de pago: {new Date().toLocaleDateString('es-MX', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
-            </div>
-          </ModalHeader>
-          <ModalBody>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="font-semibold">Cliente:</span>
-                  <p>{facturaSeleccionada?.cliente_nombre}</p>
-                </div>
-                <div>
-                  <span className="font-semibold">Saldo pendiente:</span>
-                  <p className="text-red-600 font-bold">${facturaSeleccionada?.saldo_pendiente?.toLocaleString()}</p>
-                </div>
-              </div>
-              
-              <Input
-                label="Monto a aplicar (Saldo pendiente)"
-                type="number"
-                value={formPago.monto}
-                startContent="$"
-                isReadOnly
-                description="Este es el saldo pendiente de la factura"
-                className="bg-default-50"
-              />
-              
-              <Input
-                label="Cantidad entregada por el cliente"
-                type="number"
-                value={formPago.cantidad_entregada}
-                onChange={(e) => setFormPago({...formPago, cantidad_entregada: e.target.value})}
-                startContent="$"
-                min="0"
-                step="0.01"
-                isRequired
-                description="Puede ser mayor al saldo pendiente (dar cambio)"
-              />
-              
-              <Select
-                label="Método de pago"
-                placeholder="Seleccionar método"
-                selectedKeys={formPago.metodo_pago ? [formPago.metodo_pago] : []}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0];
-                  setFormPago({...formPago, metodo_pago: value});
-                }}
-                isRequired
-              >
-                <SelectItem key="Efectivo" value="Efectivo">Efectivo</SelectItem>
-                <SelectItem key="Transferencia" value="Transferencia">Transferencia</SelectItem>
-                <SelectItem key="Tarjeta" value="Tarjeta">Tarjeta</SelectItem>
-                <SelectItem key="Cheque" value="Cheque">Cheque</SelectItem>
-              </Select>
-              
-              <Textarea
-                label="Comentarios"
-                value={formPago.comentario}
-                onChange={(e) => setFormPago({...formPago, comentario: e.target.value})}
-                placeholder="Notas adicionales sobre el pago (opcional)"
-                maxRows={3}
-              />
-              
-              {/* Indicador de cambio */}
-              {formPago.cantidad_entregada && facturaSeleccionada && 
-               parseFloat(formPago.cantidad_entregada) > facturaSeleccionada.saldo_pendiente && (
-                <div className="bg-warning-50 border border-warning-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <HiCurrencyDollar className="w-5 h-5 text-warning-600" />
-                    <div>
-                      <p className="text-sm font-semibold text-warning-700">
-                        Cambio a entregar al cliente:
-                      </p>
-                      <p className="text-lg font-bold text-warning-600">
-                        ${(parseFloat(formPago.cantidad_entregada) - facturaSeleccionada.saldo_pendiente).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {procesandoPago && (
-                <div className="flex items-center justify-center gap-2 text-blue-600">
-                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span>Procesando pago...</span>
-                </div>
-              )}
-            </div>
-          </ModalBody>
-          <ModalFooter>
-            <Button 
-              onClick={() => setModalPago(false)}
-              isDisabled={procesandoPago}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              color="primary" 
-              onClick={handleConfirmarPago}
-              isLoading={procesandoPago}
-              isDisabled={!formPago.cantidad_entregada || !formPago.metodo_pago || !formPago.comentario}
-            >
-              {procesandoPago ? "Procesando..." : "Confirmar Pago"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ModalPago 
+        isOpen={modalPago}
+        onClose={() => {
+          setModalPago(false);
+          setFacturaSeleccionada(null);
+        }}
+        factura={facturaSeleccionada}
+        onConfirmarPago={handleConfirmarPago}
+      />
     </div>
   );
 };

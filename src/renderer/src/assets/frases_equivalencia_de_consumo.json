@@ -1,0 +1,239 @@
+{
+  "consumo_agua_frases": [
+    {
+      "m3": 5,
+      "frases": [
+        "Equivale a unas 50 duchas de 10 minutos con regadera convencional",
+        "Es lo mismo que llenar 5 tinas grandes de 1,000 L cada una",
+        "Sería como usar agua para lavar un coche 15 veces",
+        "Equivale al agua que bebe una persona en más de 2 años",
+        "Lo mismo que llenar 2 jacuzzis medianos",
+        "Equivale al agua necesaria para producir 1 kg de carne de res"
+      ]
+    },
+    {
+      "m3": 10,
+      "frases": [
+        "Lo mismo que llenar completamente 65 tinas de baño estándar",
+        "El agua suficiente para 140 lavadas de ropa en lavadora",
+        "Equivale a 10,000 botellas de 1 L de agua",
+        "Es el agua que consumiría una familia pequeña en 10 días",
+        "Suficiente para llenar un tinaco de 1,100 L unas 9 veces",
+        "Es la cantidad usada para refinar 15 litros de gasolina",
+        "Equivale al agua para producir 2 kg de chocolate"
+      ]
+    },
+    {
+      "m3": 15,
+      "frases": [
+        "El agua necesaria para producir la carne de unas 30 hamburguesas",
+        "Equivale a 150 tandas de lavado de platos",
+        "Es como 3 semanas de consumo de una persona promedio",
+        "Equivale al agua que bebe una vaca durante un mes",
+        "Suficiente para regar 150 m² de césped por un mes",
+        "Suficiente para producir 6 kg de pollo",
+        "Es el agua que consumiría un árbol adulto en 3 meses",
+        "Equivale al agua necesaria para 300 huevos"
+      ]
+    },
+    {
+      "m3": 20,
+      "frases": [
+        "El consumo de una familia pequeña durante un mes en un país con alto consumo",
+        "Suficiente para llenar 25 tinacos de 800 L",
+        "Lo mismo que 200 duchas rápidas de 5 minutos",
+        "Equivale al agua usada para fabricar 50 kg de papel",
+        "Es lo que bebería una persona en casi 60 años",
+        "Es la cantidad necesaria para producir 200 panes",
+        "Equivale al agua para 20 pares de jeans de mezclilla"
+      ]
+    },
+    {
+      "m3": 25,
+      "frases": [
+        "Es lo que se necesita para producir 125 camisetas de algodón",
+        "Lo mismo que 12,500 botellas de agua de 2 L",
+        "Equivale al consumo de una familia promedio en 3 semanas",
+        "Es suficiente para llenar medio autobús cisterna",
+        "Equivale al agua usada para 2,500 tazas de café",
+        "Equivale al agua necesaria para producir 10 kg de arroz",
+        "Equivale al agua usada para 5,000 tazas de té"
+      ]
+    },
+    {
+      "m3": 30,
+      "frases": [
+        "El agua que se usaría en 500 lavados de ropa en lavadora",
+        "Lo mismo que llenar una alberca inflable mediana 15 veces",
+        "Equivale al agua para producir 1,200 panes",
+        "Sería como dejar una llave abierta durante 40 horas seguidas",
+        "Es lo mismo que 30,000 botellas de agua de 1 L",
+        "Es el agua suficiente para fabricar 3 laptops",
+        "Equivale a producir 30 kg de carne de cerdo",
+        "Es como 1 mes de riego de un campo de fútbol"
+      ]
+    },
+    {
+      "m3": 35,
+      "frases": [
+        "Es el consumo aproximado de una familia de 3 personas en 2 meses",
+        "Equivale a 17,500 botellas de agua de 2 L",
+        "Lo mismo que llenar 30 jacuzzis medianos",
+        "Es la cantidad de agua para fabricar 70 kg de arroz",
+        "Equivale a llenar un tráiler cisterna mediano",
+        "Es lo que se usa para fabricar 40 pares de zapatos de cuero",
+        "Equivale al agua necesaria para producir 100 litros de vino",
+        "Es como el consumo de una familia en India por 1 año"
+      ]
+    },
+    {
+      "m3": 40,
+      "frases": [
+        "Equivale al consumo de una persona promedio en el mundo en todo un año",
+        "Suficiente para regar un campo de fútbol por un mes",
+        "Es el agua necesaria para producir 2,000 huevos",
+        "Equivale a 400 duchas largas de 15 minutos",
+        "Lo mismo que 40,000 botellas de 1 L de agua"
+      ]
+    },
+    {
+      "m3": 45,
+      "frases": [
+        "Es como llenar 40 tinacos de 1,100 L cada uno",
+        "Equivale a 450 duchas largas de 15 minutos",
+        "Es el agua usada para producir 30 pares de jeans",
+        "Equivale al consumo de 5 personas durante medio año",
+        "Lo mismo que llenar 3 piscinas inflables grandes"
+      ]
+    },
+    {
+      "m3": 50,
+      "frases": [
+        "Con eso podrías llenar un tinaco de 1,100 L unas 45 veces",
+        "Es lo mismo que 25,000 botellas de agua de 2 L",
+        "Equivale al agua de 500 cargas de lavadora",
+        "Es la cantidad que consume una familia de 4 personas en 6 meses",
+        "Suficiente para llenar medio vagón cisterna de tren",
+        "Es suficiente para producir 2 smartphones",
+        "Equivale al agua de 10 toneladas de acero",
+        "Es lo que se usa para producir 12 kg de chocolate"
+      ]
+    },
+    {
+      "m3": 55,
+      "frases": [
+        "El agua suficiente para 275 cargas completas de lavadora",
+        "Equivale al consumo de 2 familias en un mes en México",
+        "Es lo mismo que llenar 55,000 botellas de 1 L",
+        "Sería como regar 1,500 m² de césped por un mes",
+        "Lo mismo que 550 duchas de 10 minutos",
+        "Es como producir 600 litros de cerveza"
+      ]
+    },
+    {
+      "m3": 60,
+      "frases": [
+        "Lo mismo que lavar 300 automóviles con manguera",
+        "Equivale al agua de 30,000 botellas de 2 L",
+        "Es la cantidad necesaria para producir 90 kg de pollo",
+        "Equivale al agua de una escuela pequeña en un mes",
+        "Es como 400 baños de tina"
+      ]
+    },
+    {
+      "m3": 65,
+      "frases": [
+        "Es el consumo de una familia de 4 personas en unos 6 meses",
+        "Equivale a 3 camiones cisterna pequeños",
+        "Es como llenar 65 tinas de 1,000 L cada una",
+        "Equivale al agua usada para 6,500 vasos de café",
+        "Lo mismo que el consumo de una persona en 4 años"
+      ]
+    },
+    {
+      "m3": 70,
+      "frases": [
+        "El agua que se necesita para producir 200 kg de arroz",
+        "Equivale a 3 meses de consumo de una familia promedio en México",
+        "Es lo mismo que llenar 70 jacuzzis grandes",
+        "Equivale al agua para 7,000 duchas rápidas",
+        "Suficiente para llenar un autobús cisterna",
+        "Es lo que se requiere para fabricar 70 camisetas de algodón",
+        "Equivale a 7 meses de agua potable para una persona en África",
+        "Es suficiente para 7,000 vasos de refresco"
+      ]
+    },
+    {
+      "m3": 75,
+      "frases": [
+        "Equivale a llenar 75,000 botellas de agua de 1 L",
+        "Es como 750 duchas de 10 minutos",
+        "Lo mismo que 7 meses de consumo de una persona promedio",
+        "Equivale al agua de 15 piscinas inflables grandes",
+        "Es la cantidad para producir 75 pares de zapatos de cuero"
+      ]
+    },
+    {
+      "m3": 80,
+      "frases": [
+        "Equivale al agua que beberían 3 personas en toda su vida",
+        "Es suficiente para llenar un camión cisterna grande",
+        "Equivale al agua de 800 tandas de lavadora",
+        "Es lo mismo que 160 baños en tina",
+        "Equivale al consumo de una familia de 4 personas en 9 meses",
+        "Equivale al agua para producir 8 bicicletas",
+        "Es lo mismo que fabricar 80 kg de arroz",
+        "Es como 8 meses de consumo de una familia pequeña en México"
+      ]
+    },
+    {
+      "m3": 85,
+      "frases": [
+        "Es el equivalente a 425 tandas de lavadora",
+        "Equivale a 42,500 botellas de 2 L",
+        "Lo mismo que 850 duchas rápidas de 5 minutos",
+        "Es el agua necesaria para producir 85 pares de jeans",
+        "Equivale al agua de 8 camiones de bomberos llenos"
+      ]
+    },
+    {
+      "m3": 90,
+      "frases": [
+        "Con eso podrías dar de beber a 120 vacas por un mes",
+        "Lo mismo que 900 tandas de lavado de platos",
+        "Equivale al agua que consume un departamento pequeño en 1 año",
+        "Es lo mismo que llenar 90 tinas de 1,000 L",
+        "Suficiente para llenar un vagón de tren cisterna completo",
+        "Es suficiente para producir 900 barras de pan",
+        "Equivale al agua de un coche completo en su fabricación",
+        "Es como regar 1 hectárea de cultivo por 2 semanas"
+      ]
+    },
+    {
+      "m3": 95,
+      "frases": [
+        "Equivale a 95,000 botellas de agua de 1 L",
+        "Es como llenar 85 tinacos de 1,100 L",
+        "Lo mismo que 950 duchas largas de 15 minutos",
+        "Es la cantidad de agua para 950 litros de jugo de naranja",
+        "Equivale al agua que usarían 10 familias en un mes"
+      ]
+    },
+    {
+      "m3": 100,
+      "frases": [
+        "Es el mismo consumo que una familia de 4 personas en un año en un país desarrollado",
+        "Equivale a 100,000 botellas de 1 L de agua",
+        "Es lo mismo que llenar una piscina mediana",
+        "Equivale a 1 año de consumo de una persona en Estados Unidos",
+        "Suficiente para llenar 4 tráileres cisterna grandes",
+        "Es lo que se necesita para producir 15 kg de café tostado",
+        "Equivale a 2 años de consumo de agua para una persona en Europa",
+        "Es como el agua para 20,000 tazas de té"
+      ]
+    }
+  ]
+}
+
+
+

@@ -1,3 +1,34 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Estilos para impresión de recibos */
+@media print {
+  .page-break {
+    break-after: page;
+  }
+  
+  .page-break:last-child {
+    break-after: auto;
+  }
+  
+  /* Ocultar elementos no necesarios en impresión */
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Estilos para vista previa de impresión */
+.page-break {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+}
+
+@media screen {
+  .page-break {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+  }
+}
