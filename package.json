@@ -37,9 +37,12 @@
     "react-apexcharts": "^1.7.0",
     "react-chartjs-2": "^5.2.0",
     "react-leaflet": "^4.2.1",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.1.1",
     "react-to-print": "^3.0.6",
     "recharts": "^2.15.3",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "ruta-craft-osm": "file:../OSM_VP/Rutas_Auto_Generadas_OSM/ruta-craft-osm/ruta-craft-osm-0.0.7.tgz"
   },
   "devDependencies": {

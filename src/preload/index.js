@@ -115,6 +115,12 @@ const tarifasApp = {
   updateRangosTarifa: (data) => ipcRenderer.invoke('update-rangos-tarifa', data),
 };
 
+// objeto para manejar la documentación de ayuda
+const docsApp = {
+  loadDocumentationFile: (section, fileName) => ipcRenderer.invoke('load-documentation-file', section, fileName),
+  listDocumentationFiles: (section = null) => ipcRenderer.invoke('list-documentation-files', section),
+};
+
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
@@ -124,7 +130,8 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', electronAPI);
     contextBridge.exposeInMainWorld('api', api);
     contextBridge.exposeInMainWorld('authApp', authApp);
-    contextBridge.exposeInMainWorld('tarifasApp', tarifasApp)
+    contextBridge.exposeInMainWorld('tarifasApp', tarifasApp);
+    contextBridge.exposeInMainWorld('docsApp', docsApp);
 
   } catch (error) {
     console.error(error)
@@ -134,7 +141,7 @@ if (process.contextIsolated) {
   window.api = api
   window.authApp = authApp;
   window.tarifasApp = tarifasApp;
-
+  window.docsApp = docsApp;
 }
 
 // context para botones de la ventana
