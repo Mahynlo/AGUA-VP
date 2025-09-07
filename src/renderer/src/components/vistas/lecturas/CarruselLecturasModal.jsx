@@ -17,7 +17,7 @@ import {
   Spinner,
   Skeleton,
 } from "@nextui-org/react";
-import { HiLocationMarker, HiUser, HiCalendar, HiHashtag, HiMap, HiPhone } from "react-icons/hi";
+import { HiLocationMarker, HiUser, HiCalendar, HiHashtag, HiMap, HiPhone, HiCalculator } from "react-icons/hi";
 import MapaLecturas from "../../mapa/MapaLecturas"; // Componente del mapa desde la carpeta correcta
 import { useRutas } from "../../../context/RutasContext";
 import { useFeedback } from "../../../context/FeedbackContext";
@@ -27,33 +27,39 @@ const LecturaInput = React.memo(React.forwardRef(({ value, onChange, clienteId, 
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Lectura Actual (m³)
+        Lectura Actual (m³)*
       </label>
-      <Input
-        ref={ref}
-        type="number"
-        value={value}
-        onChange={onChange}
-        placeholder="Ingrese la lectura"
-        variant="bordered"
-        color={error ? "danger" : "primary"}
-        size="lg"
-        isDisabled={isLoading}
-        autoFocus={autoFocus}
-        startContent={
-          <div className="pointer-events-none flex items-center">
-            <span className="text-default-400 text-small">m³</span>
+      <div className="relative w-full flex">
+        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2">
+          <HiCalculator className="inline-block mr-1 h-5 w-5 text-blue-600" />
+        </span>
+        <input
+          ref={ref}
+          type="number"
+          min="0"
+          step="0.01"
+          value={value}
+          onChange={onChange}
+          placeholder="Ingrese la lectura en m³"
+          disabled={isLoading}
+          autoFocus={autoFocus}
+          onKeyDown={(e) => {
+            // Prevenir la entrada de signos negativos y otros caracteres no deseados
+            if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+              e.preventDefault();
+            }
+          }}
+          className={`border ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-600 focus:border-blue-500'} text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white text-lg font-semibold ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+        />
+        {isLoading && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <Spinner size="sm" />
           </div>
-        }
-        endContent={
-          isLoading && <Spinner size="sm" />
-        }
-        classNames={{
-          input: "text-lg font-semibold",
-          inputWrapper: `border-2 ${error ? 'border-red-300 dark:border-red-800' : 'border-blue-200 dark:border-blue-800'} bg-white/80 dark:bg-gray-800/80`,
-        }}
-        errorMessage={error}
-      />
+        )}
+      </div>
+      {error && (
+        <p className="text-sm text-red-500 mt-1">{error}</p>
+      )}
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-500 dark:text-gray-400 italic">
           * La lectura se guarda al presionar "Guardar Lectura"
@@ -65,6 +71,7 @@ const LecturaInput = React.memo(React.forwardRef(({ value, onChange, clienteId, 
           onPress={onSave}
           isLoading={isLoading}
           isDisabled={!value || value.trim() === ""}
+          className="bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
         >
           Guardar Lectura
         </Button>
@@ -198,10 +205,21 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     if (!puntoActual) return;
     
     const medidorId = puntoActual.medidor_id;
+    let value = e.target.value;
+    
+    // Filtrar valores negativos y caracteres no deseados
+    if (value !== '' && (parseFloat(value) < 0 || value.includes('-'))) {
+      value = value.replace('-', ''); // Remover signos negativos
+      if (parseFloat(value) < 0) {
+        value = '0';
+      }
+    }
+    
     setLecturas(prev => ({
       ...prev,
-      [medidorId]: e.target.value,
+      [medidorId]: value,
     }));
+    
     // Limpiar error cuando el usuario empiece a escribir
     if (erroresLectura[medidorId]) {
       setErroresLectura(prev => ({

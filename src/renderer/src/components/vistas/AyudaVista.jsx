@@ -32,6 +32,9 @@ import {
 } from "react-icons/hi";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css'; // Estilos CSS para renderizar fórmulas matemáticas
 
 const AyudaVista = () => {
   // Estados principales
@@ -66,7 +69,8 @@ const AyudaVista = () => {
     pagos: { icon: <HiCurrencyDollar className="w-5 h-5" />, color: "primary", title: "Pagos" },
     impresion: { icon: <HiPrinter className="w-5 h-5" />, color: "secondary", title: "Impresión" },
     configuracion: { icon: <HiCog className="w-5 h-5" />, color: "default", title: "Configuración" },
-    faq: { icon: <HiQuestionMarkCircle className="w-5 h-5" />, color: "warning", title: "FAQ" }
+    faq: { icon: <HiQuestionMarkCircle className="w-5 h-5" />, color: "warning", title: "FAQ" },
+    tarifas: { icon: <HiCurrencyDollar className="w-5 h-5" />, color: "secondary", title: "Tarifas" }
   };
 
   // Cargar estructura de documentación al montar
@@ -243,7 +247,8 @@ const AyudaVista = () => {
     return (
       <ReactMarkdown 
         components={customComponents}
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
       >
         {content}
       </ReactMarkdown>

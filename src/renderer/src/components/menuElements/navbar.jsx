@@ -1,5 +1,5 @@
 import logoagua from '../../assets/images/logo_login.png'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Config } from '../Configuracion/Config';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar, Tooltip } from "@nextui-org/react";
 import AvatarPerfil from '../../assets/images/Avatar.png'
@@ -12,8 +12,32 @@ import { CerrarSeccionIcon } from '../../IconsApp/IconsSidebar';
 
 function NavbarApp() {
   const location = useLocation(); // Hook para obtener la ruta actual
+  const navigate = useNavigate(); // Hook para navegación programática
   const [openModal, setOpenModal] = useState(false);
-  const { logout,user } = useAuth();
+  const { logout, user } = useAuth();
+
+  // Función mejorada de navegación
+  const handleNavigation = (path, sectionName) => {
+    try {
+      console.log(`🧭 Navegando a ${sectionName}: ${path}`);
+      navigate(path);
+    } catch (error) {
+      console.error(`❌ Error navegando a ${sectionName}:`, error);
+    }
+  };
+
+  // Función mejorada de logout
+  const handleLogout = async () => {
+    try {
+      console.log("🚪 Iniciando proceso de logout...");
+      await logout();
+      console.log("✅ Logout completado exitosamente");
+    } catch (error) {
+      console.error("❌ Error durante logout:", error);
+      // Aún así, intentar navegar al login por seguridad
+      navigate('/');
+    }
+  };
 
   const handleMinimize = () => {
     window.electronAPI.minimize();
@@ -68,21 +92,56 @@ function NavbarApp() {
                             src={AvatarPerfil}
                           />
                         </DropdownTrigger>
-                        <DropdownMenu aria-label="Profile Actions" variant="flat" >
-                          <DropdownItem key="profile" className="h-14 gap-2" textValue="Perfil" color="default" as={Link} to="/perfil">
-                            <p className="font-semibold"></p>
-                            <p className="font-semibold" ><span> {user && user.nombre}</span> </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{user && user.correo}</p>
-                          
+                        <DropdownMenu aria-label="Profile Actions" variant="flat">
+                          <DropdownItem 
+                            key="profile" 
+                            className="h-14 gap-2" 
+                            textValue="Perfil" 
+                            color="default" 
+                            onPress={() => handleNavigation("/perfil", "Perfil")}
+                          >
+                            <p className="font-semibold">{user && user.nombre}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {user && user.correo}
+                            </p>
                           </DropdownItem>
-                          <DropdownItem key="settings" color="primary" as={Link} to="/perfil">Mi Perfil</DropdownItem>
-                          {user?.rol === 'superadmin' && // Si el usuario es superadmin muestra el botón de configuraciones
-                            <DropdownItem key="configurations" color="primary" as={Link} to="/administrador">Permisos de administrador</DropdownItem>
-                          }
                           
-                          <DropdownItem key="help_and_feedback" color="primary" as={Link} to="/ayuda" >Ayuda</DropdownItem>
-                          <DropdownItem key="logout" color="danger" onPress={logout} >
-                            Cerrar Sesion 
+                          <DropdownItem 
+                            key="settings" 
+                            color="primary" 
+                            onPress={() => handleNavigation("/perfil", "Mi Perfil")}
+                            textValue="Mi Perfil"
+                          >
+                            Mi Perfil
+                          </DropdownItem>
+                          
+                          {user?.rol === 'superadmin' && (
+                            <DropdownItem 
+                              key="configurations" 
+                              color="primary" 
+                              onPress={() => handleNavigation("/administrador", "Administrador")}
+                              textValue="Permisos de administrador"
+                            >
+                              Permisos de administrador
+                            </DropdownItem>
+                          )}
+                          
+                          <DropdownItem 
+                            key="help_and_feedback" 
+                            color="primary" 
+                            onPress={() => handleNavigation("/ayuda", "Centro de Ayuda")}
+                            textValue="Centro de Ayuda"
+                          >
+                            Centro de Ayuda
+                          </DropdownItem>
+                          
+                          <DropdownItem 
+                            key="logout" 
+                            color="danger" 
+                            onPress={handleLogout}
+                            textValue="Cerrar Sesión"
+                          >
+                            Cerrar Sesión
                           </DropdownItem>
                         </DropdownMenu>
                       </Dropdown>

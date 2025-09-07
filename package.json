@@ -42,7 +42,9 @@
     "react-to-print": "^3.0.6",
     "recharts": "^2.15.3",
     "rehype-highlight": "^7.0.2",
+    "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "ruta-craft-osm": "file:../OSM_VP/Rutas_Auto_Generadas_OSM/ruta-craft-osm/ruta-craft-osm-0.0.7.tgz"
   },
   "devDependencies": {

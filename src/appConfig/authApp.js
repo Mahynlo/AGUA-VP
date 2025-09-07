@@ -9,7 +9,6 @@ const appId = path.join(app.getPath("userData"), "Id_App.enc"); // Ruta para gua
 const APP_KEY_INICIAL = import.meta.env.VITE_APPKEY_INICIAL; // Clave inicial de la app
 const API_URL = import.meta.env.VITE_API_REGISTRAR_APP; // URL de registro de la app
 
-
 // 🔐 Función para guardar token encriptado
 function guardarToken(token) {
   const encrypted = safeStorage.encryptString(token);

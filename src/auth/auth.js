@@ -5,7 +5,33 @@ import {leerToken} from '../appConfig/authApp.js'
 const URL_LOGIN = import.meta.env.VITE_API_LOGIN; // URL del endpoint de login
 const os = require('os');
 const nombreDispositivo = `${os.hostname()}`;
+const URL_BASE_API_AGUAVP = import.meta.env.VITE_URL_BASE_API_AGUAVP; // URL base de la API
 
+// 📌 Función para obtener la IP local del equipo
+const obtenerIPLocal = () => {
+  try {
+    const interfaces = os.networkInterfaces();
+    
+    // Buscar la primera interfaz de red que no sea loopback y que esté activa
+    for (const nombre of Object.keys(interfaces)) {
+      const interfaz = interfaces[nombre];
+      
+      for (const config of interfaz) {
+        // Filtrar solo IPv4, no loopback, y que esté activo
+        if (config.family === 'IPv4' && !config.internal && config.address) {
+          return config.address;
+        }
+      }
+    }
+    
+    // Si no encuentra ninguna IP externa, usar localhost como fallback
+    console.log("⚠️ No se pudo detectar IP externa, usando localhost");
+    return '127.0.0.1';
+  } catch (error) {
+    console.error("❌ Error al obtener IP local:", error);
+    return '127.0.0.1'; // Fallback
+  }
+};
 /**************************************************************************************************************
  * Login de usuario
  * ************************************************************************************************************
@@ -16,10 +42,13 @@ const loginUser = async (correo, contrasena) => {
 
     // 1. Leer token de la app
     const token = leerToken();
-    console.log("Token de la app:", token); // Para depuración, puedes eliminarlo después
     if (!token) {
       return { success: false, message: "Token de la app no disponible" };
     }
+
+    // 2. Obtener IP local del equipo
+    const direccionIP = obtenerIPLocal();
+    console.log("🌐 Login desde IP:", direccionIP, "Dispositivo:", nombreDispositivo);
 
     const response = await fetch(URL_LOGIN, {
       method: "POST",
@@ -27,7 +56,12 @@ const loginUser = async (correo, contrasena) => {
         "x-app-key": `AppKey ${token}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ correo, contraseña: contrasena,dispositivo: nombreDispositivo }) // Ojo con "contraseña" vs "contrasena"
+      body: JSON.stringify({ 
+        correo, 
+        contraseña: contrasena,
+        dispositivo: nombreDispositivo,
+        ip: direccionIP
+      })
     });
 
     const data = await response.json();
@@ -85,12 +119,16 @@ const verifyToken = (token) => {
  */
 const cerrarSesion = async (token_session) => {
   try {
+    console.log("🔄 Iniciando proceso de logout en backend para token:", token_session);
+    
     const token = leerToken();
     if (!token) {
+      console.log("❌ Token de la app no disponible");
       return { success: false, message: "Token de la app no disponible" };
     }
-    console.log("Token de la app:", token_session); // Para depuración, puedes eliminarlo después
-    const response = await fetch('http://localhost:3000/api/auth/logout', {
+    
+    console.log("🔑 Token de la app obtenido:", token);
+    const response = await fetch(`${URL_BASE_API_AGUAVP}/api/v2/auth/logout`, {
       method: "POST",
       headers: {
         "x-app-key": `AppKey ${token}`,
@@ -99,17 +137,18 @@ const cerrarSesion = async (token_session) => {
       body: JSON.stringify({ token: token_session }) // Enviar el token de sesión para cerrar sesión
     });
 
-
     const data = await response.json();
-    console.log("Respuesta del servidor al cerrar sesión:", data); // Para depuración, puedes eliminarlo después
+    console.log("📤 Respuesta del servidor al cerrar sesión:", data);
 
     if (!response.ok) {
+      console.log("❌ Error en respuesta del servidor:", data.error);
       return { success: false, message: data.error || "Error al cerrar sesión" };
     }
 
+    console.log("✅ Logout exitoso en backend");
     return { success: true, message: data.mensaje };
   } catch (error) {
-    console.error("Error al cerrar sesión:", error);
+    console.error("💥 Error al cerrar sesión:", error);
     return { success: false, message: "Error de red" };
   }
 };
@@ -128,7 +167,7 @@ const obtenerSesionesActivas = async (usuario_id) => {
     if (!token) {
       return { success: false, message: "Token de la app no disponible" };
     }
-    const response = await fetch(`http://localhost:3000/api/v1/auth/sesionesActivas/${usuario_id}`, {
+    const response = await fetch(`${URL_BASE_API_AGUAVP}/api/v2/auth/sesionesActivas/${usuario_id}`, {
       method: "GET",
       headers: {
         "x-app-key": `AppKey ${token}`,
@@ -138,15 +177,14 @@ const obtenerSesionesActivas = async (usuario_id) => {
 
     const data = await response.json();
 
-    console.log("Respuesta del servidor al obtener sesiones:", data); // Para depuración, puedes eliminarlo después
-
     if (!response.ok) {
       return { success: false, message: data.error || "Error al obtener sesiones" };
     }
 
+    // El servidor devuelve un objeto con la propiedad 'sesiones_activas'
     return {
       success: true,
-      sesiones: data
+      sesiones: Array.isArray(data.sesiones_activas) ? data.sesiones_activas : []
     };
   } catch (error) {
     console.error("Error al obtener sesiones activas:", error);

@@ -220,7 +220,7 @@ export default function PerfilPage() {
                   </div>
                 </CardHeader>
                 <CardBody className="pt-0">
-                  {sesiones.length > 0 ? (
+                  {sesiones && Array.isArray(sesiones) && sesiones.length > 0 ? (
                     <div className="space-y-4">
                       {sesiones.map((sesion, i) => (
                         <Card key={i} className="bg-gray-50 dark:bg-gray-700/50 border-0 shadow-sm">

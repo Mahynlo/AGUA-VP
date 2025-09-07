@@ -21,7 +21,10 @@ export default function IpcHandlerUsuario () {
     
     // 📌 cerrar session 
     ipcMain.handle("logout", async (event, token) => {
-        return await cerrarSesion(token);
+        console.log("🔄 IPC Handler logout recibido para token:", token);
+        const result = await cerrarSesion(token);
+        console.log("📤 IPC Handler logout resultado:", result);
+        return result;
     });
 
 

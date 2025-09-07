@@ -16,13 +16,16 @@ export const AuthProvider = ({ children }) => {
     const obtenerSesionesActivas = async (usuarioId) => {
         try {
             const response = await window.api.getSession(usuarioId)
+            
             if (response.success) {
-                setSesiones(response.sesiones);
+                setSesiones(response.sesiones || []);
             } else {
-                console.error("No se pudieron obtener las sesiones activas:", response.error);
+                console.error("❌ No se pudieron obtener las sesiones activas:", response.message || response.error);
+                setSesiones([]);
             }
         } catch (error) {
-            console.error("Error al obtener sesiones activas:", error);
+            console.error("💥 Error al obtener sesiones activas:", error);
+            setSesiones([]);
         }
     };
 
@@ -105,9 +108,11 @@ export const AuthProvider = ({ children }) => {
 
         if (token) { // Si hay un token, intentamos cerrar sesión en el backend 
             try {
-                await window.electron.ipcRenderer.invoke("logout", token);
+                console.log("🔄 Enviando logout al backend...");
+                const response = await window.api.logout(token);
+                console.log("📤 Respuesta del logout:", response);
             } catch (error) {
-                console.error("Error al cerrar sesión:", error);
+                console.error("❌ Error al cerrar sesión en el backend:", error);
             }
         }
 
