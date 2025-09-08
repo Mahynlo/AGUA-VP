@@ -83,7 +83,7 @@ const Recibo = ({ facturaData = null }) => {
 
         return (
             <div key={factura.id} className="grid grid-cols-4 grid-rows-8 gap-2 h-[715px]">
-                <div className="col-span-4 bg-blue-200 border-2 border-solid rounded-xl p-2 flex font-bold text-blue-600">
+                <div className="col-span-4 border-2 border-solid rounded-xl p-2 flex font-bold text-white" style={{backgroundColor: '#af272f'}}>
                     <img src={logoagua} className="h-[50px]" alt="Logo Agua" />
                     <div className="">
                         <p className='text-[16px]'>
@@ -97,108 +97,133 @@ const Recibo = ({ facturaData = null }) => {
                 </div>
 
                 {/*Card izquierda */}
-                <div className="col-span-2 row-span-4 row-start-2 bg-indigo-200 border-2 border-solid rounded-xl text-black p-1 ">
-                    <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-blue-600">
-                        <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center ">Datos de cliente:</div>
+                <div className="col-span-2 row-span-4 row-start-2 border-2 border-solid rounded-xl text-black p-1" style={{backgroundColor: '#af6327'}}>
+                    <div className="grid grid-cols-2 grid-rows-1 gap-2 font-bold text-white">
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[11px] text-center " style={{backgroundColor: '#af272f'}}>Datos de cliente:</div>
 
-                        <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Usuario: <span className='text-gray-600'>{factura.cliente_nombre}</span>
-                        </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Dirección: <p className='text-gray-600'>{factura.direccion_cliente}</p> 
-                        </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Pueblo: <p className='text-gray-600'>{factura.cliente_ciudad || "Villa Pesqueira"}</p> 
-                        </div>
-
-                        <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center">Informacion de Servicio:</div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            No. Medidor: <p className='text-gray-600'>{factura.medidor?.numero_serie || "N/A"}</p>  
-                        </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Consumo Medio: <p className='text-gray-600'>{factura.consumo_m3}m³</p>
-                        </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Tarifa: <p className='text-gray-600'>{factura.tarifa_nombre || "N/A"}</p>  
-                        </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Ruta: <p className='text-gray-600'>{factura.ruta?.nombre || "N/A"}</p>  
+                        <div className="col-span-2 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px]">
+                            <div className='flex flex-col gap-1'>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-12'>Usuario:</span>
+                                    <span className='text-gray-800'>{factura.cliente_nombre}</span>
+                                </div>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-12'>Direccion:</span>
+                                    <span className='text-gray-800'>{factura.direccion_cliente || "N/A"}</span>
+                                </div>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-12'>Pueblo:</span>
+                                    <span className='text-gray-800'>{factura.cliente_ciudad || "Villa Pesqueira"}</span>
+                                </div>
+                            </div> 
                         </div>
 
-                        <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center">Detalle de facturacion:</div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Mes facturado: <p className='text-gray-600'>{factura.mes_facturado}</p> 
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[11px] text-center" style={{backgroundColor: '#af272f'}}>Informacion de Servicio:</div>
+                        <div className="col-span-2 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px]">
+                            <div className='flex flex-col gap-1'>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-20'>No. Medidor:</span>
+                                    <span className='text-gray-800'>{factura.medidor?.numero_serie || "N/A"}</span>
+                                </div>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-20'>Consumo:</span>
+                                    <span className='text-gray-800'>{factura.consumo_m3} m³</span>
+                                </div>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-20'>Tarifa:</span>
+                                    <span className='text-gray-800'>{factura.tarifa_nombre || "N/A"}</span>
+                                </div>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-20'>Ruta:</span>
+                                    <span className='text-gray-800'>{factura.ruta?.nombre || "N/A"}</span>
+                                </div>
+                            </div>  
                         </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Periodo de lectura: <p className='text-gray-600'>{new Date(factura.fecha_emision).toLocaleDateString('es-ES')}</p>  
+                       
+
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[11px] text-center" style={{backgroundColor: '#af272f'}}>Detalle de facturacion:</div>
+                        <div className="col-span-2 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] ">
+                            <div className='flex flex-col gap-1'>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-20'>Mes facturado:</span>
+                                    <span className='text-gray-800'>{factura.mes_facturado}</span>
+                                </div>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-20'>Fecha lectura:</span>
+                                    <span className='text-gray-800'>{new Date(factura.fecha_emision).toLocaleDateString('es-ES')}</span>
+                                </div>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-20'>Total del mes:</span>
+                                    <span className='text-gray-800'>${factura.total?.toFixed(2)}</span>
+                                </div>
+                                <div className='flex'>
+                                    <span className='font-bold text-gray-700 w-20'>Adeudo:</span>
+                                    <span className='text-gray-800'>{factura.saldo_pendiente > 0 ? `$${factura.saldo_pendiente.toFixed(2)}` : "Sin Adeudo"}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Total del mes: <p className='text-gray-600'>${factura.total?.toFixed(2)}</p>  
-                        </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Adeudo:<p className='text-gray-600'>{factura.saldo_pendiente > 0 ? `$${factura.saldo_pendiente.toFixed(2)}` : "Sin Adeudo"}</p>  
-                        </div>
-                        <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Total, a pagar: <p className='text-gray-600'>${factura.total?.toFixed(2)}</p>  
+                        
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[9px] text-center" style={{backgroundColor: '#27afa7'}}>
+                            <p className='text-white text-[13px]'>Total, a pagar: ${factura.total?.toFixed(2)}</p>  
                         </div>
                     </div>
                 </div>
 
                 {/*Card derecha */}
-                <div className="col-span-2 row-span-4 col-start-3 row-start-2 bg-indigo-200 border-2 border-solid rounded-xl p-1">
-                    <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-blue-600">
-                        <div className="col-span-2 row-span-1 bg-blue-200 border-2 border-solid rounded-xl text-[12px] text-center ">Información de Consumo:</div>
+                <div className="col-span-2 row-span-4 col-start-3 row-start-2 border-2 border-solid rounded-xl p-1" style={{backgroundColor: '#af6327'}}>
+                    <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold text-white">
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[12px] text-center" style={{backgroundColor: '#af272f'}}>Información de Consumo:</div>
 
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Mes actual:<p className='text-gray-600'>{factura.consumo_m3}m³</p> 
+                        <div className="col-span-1 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center">
+                            Mes actual:<p className='text-gray-800'>{factura.consumo_m3}m³</p> 
                         </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Mes anterior: <p className='text-gray-600'>{Math.max(0, factura.consumo_m3 - 2)}m³</p>   
+                        <div className="col-span-1 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center">
+                            Mes anterior: <p className='text-gray-800'>{Math.max(0, factura.consumo_m3 - 2)}m³</p>   
                         </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Promedio de consumo: <p className='text-gray-600'>{Math.round(factura.consumo_m3 * 0.9)} m³</p>  
+                        <div className="col-span-1 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center">
+                            Promedio de consumo: <p className='text-gray-800'>{Math.round(factura.consumo_m3 * 0.9)} m³</p>  
                         </div>
-                        <div className="col-span-1 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center">
-                            Variación: <p className='text-gray-600'>{Math.round(Math.random() * 20 - 10)}%</p>
+                        <div className="col-span-1 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center">
+                            Variación: <p className='text-gray-800'>{Math.round(Math.random() * 20 - 10)}%</p>
                         </div>
-                        <div className="col-span-2 row-span-1 bg-blue-100 border-2 border-solid rounded-xl text-[9px] text-center w-full">
+                        <div className="col-span-2 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center w-full">
                             <BarChartRecibo />
                         </div>
                     </div>
                 </div>
 
-                <div className="col-span-2 row-start-6 bg-pink-200 border-2 border-solid rounded-xl text-black p-1 ">
-                    <div className='flex gap-2 font-bold text-red-600 text-[14px]'>
-                        <InfoResibosIcon className="h-6 w-6 " />
+                <div className="col-span-2 row-start-6 border-2 border-solid rounded-xl text-black p-1" style={{backgroundColor: '#af2773'}}>
+                    <div className='flex gap-2 font-bold text-white text-[14px]'>
+                        <InfoResibosIcon className="h-5 w-5 " />
                         Información
                     </div>
-                    <p className='text-[9px] gap-2 font-bold text-gray-600 pl-3'>
+                    <p className='text-[9px] gap-2 font-bold text-gray-200 pl-3'>
                         {anuncio}
                     </p>
                 </div>
-                <div className="col-span-2 col-start-3 row-start-6 bg-green-200 border-2 border-solid rounded-xl text-black p-1">
-                    <div className='flex gap-2 font-bold text-green-600 text-[14px]'>
-                        <ValanzaResibosIcon className="h-6 w-6 " />
+                <div className="col-span-2 col-start-3 row-start-6 border-2 border-solid rounded-xl text-black p-1" style={{backgroundColor: '#27af63'}}>
+                    <div className='flex gap-2 font-bold text-white text-[14px]'>
+                        <ValanzaResibosIcon className="h-5 w-5 " />
                         Consumo Equivalente
                     </div>
-                    <p className='text-[9px] gap-2 font-bold text-gray-600 pl-3'>
+                    <p className='text-[9px] gap-2 font-bold text-gray-200 pl-3'>
                         {obtenerFraseEquivalencia(factura.consumo_m3) || `Equivalencia del consumo: ${factura.consumo_m3} m³`}
                     </p>
                 </div>
-                <div className="col-span-4 row-span-2 row-start-7 border-t-2 border-dashed border-blue-500 ">
-                    <div className=" bg-indigo-200 border-2 border-solid rounded-xl text-black p-1 mt-3">
-                        <div className='flex flex-row font-bold text-blue-600 '>
+                <div className="col-span-4 row-span-2 row-start-7 border-t-2 border-dashed" style={{borderColor: '#af272f'}}>
+                    <div className="border-2 border-solid rounded-xl text-black p-1 mt-3" style={{backgroundColor: '#af6327'}}>
+                        <div className='flex flex-row font-bold' style={{color: '#ffffff'}}>
                             <p className='basis-64 m-2'>Notas:</p>
-                            <div className='basis-64 ml-6 m-2 gap-8'>
-                                <p className=''>Informacion de Nota: </p>
+                            <div className='basis-64 ml-5 m-2 gap-8'>
+                                <p className=''>Información de Nota: </p>
                                 <p className='text-[11px] flex'>
-                                    Usuario: <p className='text-gray-600'>{factura.cliente_nombre}</p>
+                                    Usuario: <p style={{color: '#27afa7'}}>{factura.cliente_nombre}</p>
                                 </p>
                                 <p className='text-[11px] flex'>
-                                    Dirección: <p className='text-gray-600'>{factura.direccion_cliente}</p>
+                                    Dirección: <p style={{color: '#27afa7'}}>{factura.direccion_cliente}</p>
                                 </p>
                                 <p className='text-[11px] flex'>
-                                    Mes facturado: <p className='text-gray-600'>{factura.mes_facturado}</p>
+                                    Mes facturado: <p style={{color: '#27afa7'}}>{factura.mes_facturado}</p>
                                 </p>
                                 <p className='text-[11px]'>Fecha de pago:____________________</p>
                                 <p className='text-[11px]'>Total, a pagado:$_________________</p>
@@ -244,7 +269,7 @@ const Recibo = ({ facturaData = null }) => {
 
                         {/* Línea divisoria - siempre presente para consistencia */}
                         <div className="col-span-1 row-span-4">
-                            <div className="border-r-2 border-dashed border-blue-500 h-[715px]"></div>
+                            <div className="border-r-2 border-dashed h-[715px]" style={{borderColor: '#af272f'}}></div>
                         </div>
 
                         {/* Segundo recibo (si existe) - mitad derecha */}

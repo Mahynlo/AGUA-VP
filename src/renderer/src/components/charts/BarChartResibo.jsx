@@ -55,7 +55,7 @@ const BarChartRecibo = ({ consumoData = consumoMensual }) => {
           style: {
             fontSize: "6px", // Muy pequeño para que quepan los 12 meses
             fontWeight: 500,
-            colors: "#374151",
+            colors: "#af272f", // Color rojo del recibo
           },
           rotate: -45, // Rotar para mejor ajuste
           maxHeight: 30,
@@ -71,7 +71,7 @@ const BarChartRecibo = ({ consumoData = consumoMensual }) => {
         labels: {
           style: {
             fontSize: "6px", // Pequeño para ahorrar espacio
-            colors: "#374151",
+            colors: "#af272f", // Color rojo del recibo
           },
           formatter: function (val) {
             return Math.round(val);
@@ -81,12 +81,12 @@ const BarChartRecibo = ({ consumoData = consumoMensual }) => {
           text: "m³",
           style: {
             fontSize: "7px",
-            color: "#374151",
+            color: "#af272f", // Color rojo del recibo
             fontWeight: 600,
           },
         },
       },
-      colors: ["#3B82F6"], // Azul para mantener consistencia con el recibo
+      colors: ["#27afa7"], // Color naranja del recibo para las barras
       plotOptions: {
         bar: {
           borderRadius: 2,
@@ -108,7 +108,7 @@ const BarChartRecibo = ({ consumoData = consumoMensual }) => {
       },
       grid: {
         show: true,
-        borderColor: "#E5E7EB",
+        borderColor: "#af272f", // Color rojo del recibo para la cuadrícula
         strokeDashArray: 1,
         padding: {
           top: 0,

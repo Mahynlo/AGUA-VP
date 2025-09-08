@@ -342,19 +342,36 @@ export default function IpcHandlers () {
       console.log(`📚 Handler documentación - Listando archivos de sección: ${section || 'todas'}`);
       
       try {
-        const isDev = !app.isPackaged; // Usar app.isPackaged para determinar entorno
+        const isDev = !app.isPackaged;
         let ayudaPath;
         
         if (isDev) {
+          // En desarrollo: buscar en el directorio de trabajo
           ayudaPath = path.join(process.cwd(), 'ayuda');
         } else {
+          // En producción: buscar en el directorio de la aplicación desempaquetada
+          // Como está en asarUnpack, estará disponible en process.resourcesPath
           ayudaPath = path.join(process.resourcesPath, 'ayuda');
+          
+          // Verificar si existe, si no, intentar buscar en app.getAppPath()
+          if (!fs.existsSync(ayudaPath)) {
+            console.log('📁 Intentando ruta alternativa en app.getAppPath()');
+            ayudaPath = path.join(app.getAppPath(), 'ayuda');
+          }
         }
         
-        console.log(`📁 Buscando en directorio: ${ayudaPath}`);
+        console.log(`📁 Buscando en directorio: ${ayudaPath} (isDev: ${isDev})`);
         
         if (!fs.existsSync(ayudaPath)) {
           console.warn(`⚠️ Directorio de ayuda no encontrado: ${ayudaPath}`);
+          // Intentar listar contenido del directorio padre para debug
+          try {
+            const parentDir = path.dirname(ayudaPath);
+            const parentContents = fs.readdirSync(parentDir);
+            console.log(`📁 Contenido del directorio padre (${parentDir}):`, parentContents);
+          } catch (debugError) {
+            console.log('❌ No se pudo listar directorio padre:', debugError.message);
+          }
           return { success: false, error: 'Directorio de ayuda no encontrado', sections: {} };
         }
         
@@ -433,19 +450,40 @@ export default function IpcHandlers () {
       console.log(`📄 Handler documentación - Solicitando archivo: ${section}/${fileName}`);
       
       try {
-        const isDev = !app.isPackaged; // Usar app.isPackaged para determinar entorno
+        const isDev = !app.isPackaged;
         let ayudaPath;
         
         if (isDev) {
+          // En desarrollo: buscar en el directorio de trabajo
           ayudaPath = path.join(process.cwd(), 'ayuda');
         } else {
+          // En producción: buscar en el directorio de la aplicación desempaquetada
           ayudaPath = path.join(process.resourcesPath, 'ayuda');
+          
+          // Verificar si existe, si no, intentar buscar en app.getAppPath()
+          if (!fs.existsSync(ayudaPath)) {
+            console.log('📁 Intentando ruta alternativa en app.getAppPath()');
+            ayudaPath = path.join(app.getAppPath(), 'ayuda');
+          }
         }
         
         const filePath = path.join(ayudaPath, section, fileName);
-        console.log(`📁 Buscando archivo en: ${filePath}`);
+        console.log(`📁 Buscando archivo en: ${filePath} (isDev: ${isDev})`);
         
         if (!fs.existsSync(filePath)) {
+          console.warn(`⚠️ Archivo no encontrado: ${filePath}`);
+          // Debug: listar contenido del directorio de la sección
+          try {
+            const sectionPath = path.join(ayudaPath, section);
+            if (fs.existsSync(sectionPath)) {
+              const sectionContents = fs.readdirSync(sectionPath);
+              console.log(`📁 Contenido de la sección (${sectionPath}):`, sectionContents);
+            } else {
+              console.log(`❌ Directorio de sección no existe: ${sectionPath}`);
+            }
+          } catch (debugError) {
+            console.log('❌ Error en debug:', debugError.message);
+          }
           return { success: false, error: 'Archivo no encontrado', content: '', metadata: {} };
         }
         
