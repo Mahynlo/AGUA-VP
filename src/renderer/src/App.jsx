@@ -40,6 +40,7 @@ import RecuperarPassword from "./components/AdministrarPassword/Recuperacion";
 //Impresion de recibos
 import Recibo from "./components/recibo/Recibo";
 import ReporteLecturas from "./components/recibo/ReporteLecturas";
+import ReporteClientesCompleto from "./components/recibo/ReporteClientes"
 
 // Pantalla de carga de la aplicación
 import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
@@ -88,8 +89,8 @@ function App() {
 
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas']; // Rutas donde no se muestra el sidebar 
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas']; // Rutas donde no se muestra el navbar
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteClientes']; // Rutas donde no se muestra el sidebar 
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteClientes']; // Rutas donde no se muestra el navbar
 
   const { loading } = useAuth();
 
@@ -101,6 +102,16 @@ function MainApp() {
   if (loading && !isPrintMode) {
     return <PantallaCarga tiempo={4000} />; // Aquí puedes colocar un componente de carga mientras esperas
   }
+
+  // PERSISTENCIA DE RUTA: Guardar la última ruta visitada
+  React.useEffect(() => {
+    // Lista de rutas que NO queremos guardar (login, rutas ocultas, etc.)
+    const ignoredRoutes = ['/', '/login', '/recuperarPassword', ...hideSidebarRoutes];
+
+    if (!ignoredRoutes.includes(location.pathname) && !isPrintMode) {
+      localStorage.setItem('app_last_route', location.pathname);
+    }
+  }, [location, hideSidebarRoutes, isPrintMode]);
 
   return (
     <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>
@@ -129,6 +140,7 @@ function MainApp() {
         </Route>
         <Route path="/recibo" element={<Recibo />} /> {/* protegida pero sin nav ni sidebar */}
         <Route path="/reporteLecturas" element={<ReporteLecturas />} /> {/* protegida pero sin nav ni sidebar */}
+        <Route path="/reporteClientes" element={<ReporteClientesCompleto />} /> {/*proetegida sin navy sidebar*/}
         {/* Rutas públicas */}
         <Route path='/' element={<LoginApp />} />
         <Route path='/recuperarPassword' element={<RecuperarPassword />} />

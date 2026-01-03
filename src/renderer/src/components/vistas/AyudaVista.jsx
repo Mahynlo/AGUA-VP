@@ -1,145 +1,231 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { 
   Card, 
   CardBody, 
-  CardHeader, 
-  Button,
-  Input,
-  Spinner,
-  Divider,
-  Chip,
-  Breadcrumbs,
-  BreadcrumbItem
+  Button, 
+  Spinner, 
+  Chip, 
+  useDisclosure 
 } from "@nextui-org/react";
 import { 
   HiBookOpen, 
-  HiUsers, 
-  HiCog, 
-  HiChartBar, 
-  HiCurrencyDollar, 
-  HiPrinter,
-  HiQuestionMarkCircle,
-  HiLightningBolt,
-  HiSearch,
-  HiX,
-  HiChevronLeft,
-  HiChevronRight,
-  HiMenu,
-  HiOutlineX,
-  HiHome,
-  HiFolder,
-  HiDocument
+  HiSearch, 
+  HiMenu, 
+  HiFolder, 
+  HiDocument, 
+  HiLightningBolt 
 } from "react-icons/hi";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css'; // Estilos CSS para renderizar fórmulas matemáticas
+import 'katex/dist/katex.min.css';
+
+// Componentes internos
+import SearchModal from "./ayuda/SearchModal";
+import DocsSidebar from "./ayuda/DocsSidebar";
+import DocumentViewer from "./ayuda/DocumentViewer";
+import WelcomeView from "./ayuda/WelcomeView";
+import { sectionIcons } from "./ayuda/sectionConfig.jsx";
 
 const AyudaVista = () => {
-  // Estados principales
-  const [searchTerm, setSearchTerm] = useState("");
+  // ==========================================
+  // 1. ESTADOS
+  // ==========================================
+  // Datos y contenido
+  const [sections, setSections] = useState({});
+  const [fileContents, setFileContents] = useState({});
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [currentContent, setCurrentContent] = useState("");
   const [currentMetadata, setCurrentMetadata] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [sections, setSections] = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  
+  // UI y Carga
+  const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
+  
+  // Búsqueda
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [modalSearchTerm, setModalSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
 
-  // Ajustar sidebar según tamaño de pantalla
+  // ==========================================
+  // 2. EFECTOS DE INICIALIZACIÓN
+  // ==========================================
+  
+  // Ajuste responsivo del sidebar
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setSidebarOpen(true);
-      }
+      if (window.innerWidth >= 1024) setSidebarOpen(true);
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Configuración de iconos para cada sección
-  const sectionIcons = {
-    clientes: { icon: <HiUsers className="w-5 h-5" />, color: "success", title: "Clientes" },
-    medidores: { icon: <HiCog className="w-5 h-5" />, color: "warning", title: "Medidores" },
-    lecturas: { icon: <HiChartBar className="w-5 h-5" />, color: "secondary", title: "Lecturas" },
-    facturas: { icon: <HiCurrencyDollar className="w-5 h-5" />, color: "danger", title: "Facturas" },
-    pagos: { icon: <HiCurrencyDollar className="w-5 h-5" />, color: "primary", title: "Pagos" },
-    impresion: { icon: <HiPrinter className="w-5 h-5" />, color: "secondary", title: "Impresión" },
-    configuracion: { icon: <HiCog className="w-5 h-5" />, color: "default", title: "Configuración" },
-    faq: { icon: <HiQuestionMarkCircle className="w-5 h-5" />, color: "warning", title: "FAQ" },
-    tarifas: { icon: <HiCurrencyDollar className="w-5 h-5" />, color: "secondary", title: "Tarifas" }
-  };
+  // Atajo de teclado (Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k' && !isOpen) {
+        e.preventDefault();
+        onOpen();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onOpen]);
 
-  // Cargar estructura de documentación al montar
+  // Carga inicial de datos
   useEffect(() => {
     const cargarEstructura = async () => {
       setLoading(true);
       try {
-        console.log("🔄 Cargando estructura de documentación...");
-        
-        if (!window.docsApp || typeof window.docsApp.listDocumentationFiles !== 'function') {
-          throw new Error('API de documentación no disponible');
-        }
+        if (!window.docsApp?.listDocumentationFiles) throw new Error('API no disponible');
 
         const resultado = await window.docsApp.listDocumentationFiles();
         
         if (resultado.success) {
           setSections(resultado.sections);
-          console.log("✅ Estructura cargada:", resultado.sections);
-          // Debug: Mostrar el orden de los archivos de clientes
-          if (resultado.sections.clientes) {
-            console.log("🔍 Orden de archivos en clientes:", 
-              resultado.sections.clientes.map(f => ({
-                fileName: f.fileName,
-                titulo: f.metadata?.titulo,
-                orden: f.metadata?.orden
-              }))
-            );
-          }
+          // Iniciar precarga de contenidos en segundo plano
+          precargarContenidos(resultado.sections);
         } else {
-          throw new Error(resultado.error || 'Error desconocido al cargar documentación');
+          throw new Error(resultado.error);
         }
       } catch (error) {
-        console.error("❌ Error cargando documentación:", error);
+        console.error("Error cargando documentación:", error);
         setSections({});
       } finally {
         setLoading(false);
       }
     };
-
     cargarEstructura();
   }, []);
 
-  // Función para cargar el contenido de un archivo
-  const cargarArchivo = async (section, fileName) => {
-    try {
-      console.log(`🔄 Cargando archivo: ${section}/${fileName}`);
-      
-      if (!window.docsApp || typeof window.docsApp.loadDocumentationFile !== 'function') {
-        throw new Error('API de documentación no disponible');
-      }
+  // ==========================================
+  // 3. LÓGICA DE DATOS (Precarga y Búsqueda)
+  // ==========================================
 
+  const precargarContenidos = async (sectionsData) => {
+    const contenidos = {};
+    for (const [sectionKey, files] of Object.entries(sectionsData)) {
+      for (const file of files) {
+        try {
+          const res = await window.docsApp.loadDocumentationFile(sectionKey, file.fileName);
+          if (res.success) contenidos[`${sectionKey}/${file.fileName}`] = res.content;
+        } catch (e) { console.warn(e); }
+      }
+    }
+    setFileContents(contenidos);
+  };
+
+  const extraerContexto = (content, term, contextLength = 80) => {
+    const contextos = [];
+    const lines = content.split('\n');
+    const regex = new RegExp(term, 'gi');
+    
+    lines.forEach((line) => {
+      if (regex.test(line)) {
+        let cleanLine = line.replace(/[*#`]/g, '').trim(); // Limpieza básica
+        const matchIndex = cleanLine.toLowerCase().indexOf(term.toLowerCase());
+        
+        if (matchIndex !== -1) {
+          const start = Math.max(0, matchIndex - contextLength / 2);
+          const end = Math.min(cleanLine.length, matchIndex + term.length + contextLength / 2);
+          let extracto = cleanLine.substring(start, end);
+          if (start > 0) extracto = '...' + extracto;
+          if (end < cleanLine.length) extracto = extracto + '...';
+          contextos.push(extracto);
+        }
+      }
+    });
+    return contextos.slice(0, 3);
+  };
+
+  const buscarEnContenido = useCallback((term) => {
+    if (!term || term.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    setSearching(true);
+    const termLower = term.toLowerCase();
+    const resultados = [];
+
+    Object.entries(sections).forEach(([sectionKey, files]) => {
+      files.forEach(file => {
+        const content = fileContents[`${sectionKey}/${file.fileName}`] || '';
+        const metadata = file.metadata || {};
+        let score = 0;
+        const matches = [];
+
+        // Scoring
+        if (metadata.titulo?.toLowerCase().includes(termLower)) {
+          score += 10;
+          matches.push({ type: 'titulo', text: metadata.titulo });
+        }
+        if (metadata.descripcion?.toLowerCase().includes(termLower)) {
+          score += 5;
+          matches.push({ type: 'descripcion', text: metadata.descripcion });
+        }
+        
+        const tags = metadata.tags?.filter(t => t.toLowerCase().includes(termLower)) || [];
+        if (tags.length > 0) {
+          score += tags.length * 3;
+          matches.push({ type: 'tags', text: tags.join(', ') });
+        }
+
+        const contentMatches = extraerContexto(content, termLower);
+        if (contentMatches.length > 0) {
+          score += Math.min(contentMatches.length, 20);
+          matches.push(...contentMatches.map(ctx => ({ type: 'contenido', text: ctx })));
+        }
+
+        if (score > 0) {
+          resultados.push({
+            sectionKey,
+            fileName: file.fileName,
+            metadata,
+            score,
+            matches: matches.slice(0, 5)
+          });
+        }
+      });
+    });
+
+    resultados.sort((a, b) => b.score - a.score);
+    setSearchResults(resultados);
+    setSearching(false);
+  }, [sections, fileContents]);
+
+  // Debounce para búsqueda
+  useEffect(() => {
+    if (!modalSearchTerm) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    const timeoutId = setTimeout(() => buscarEnContenido(modalSearchTerm), 300);
+    return () => clearTimeout(timeoutId);
+  }, [modalSearchTerm, buscarEnContenido]);
+
+  // ==========================================
+  // 4. NAVEGACIÓN Y CARGA DE ARCHIVOS
+  // ==========================================
+
+  const cargarArchivo = useCallback(async (section, fileName) => {
+    try {
       const resultado = await window.docsApp.loadDocumentationFile(section, fileName);
-      
       if (resultado.success) {
         setCurrentContent(resultado.content);
         setCurrentMetadata(resultado.metadata);
-        console.log("✅ Archivo cargado:", resultado.metadata);
       } else {
-        throw new Error(resultado.error || 'Error desconocido al cargar archivo');
+        throw new Error(resultado.error);
       }
     } catch (error) {
-      console.error("❌ Error cargando archivo:", error);
-      setCurrentContent("# Error\n\nNo se pudo cargar el contenido del documento.");
-      setCurrentMetadata({});
+      console.error("Error cargando archivo:", error);
+      setCurrentContent("# Error\nNo se pudo cargar el documento.");
     }
-  };
+  }, []);
 
-  // Navegación entre archivos
-  const navegarA = async (section, fileName) => {
+  const navegarA = useCallback(async (section, fileName) => {
     if (sections[section]) {
       const files = sections[section];
       const fileIndex = files.findIndex(f => f.fileName === fileName);
@@ -150,453 +236,160 @@ const AyudaVista = () => {
       
       await cargarArchivo(section, fileName);
       
-      // Cerrar sidebar en móvil después de seleccionar
-      if (window.innerWidth < 1024) {
-        setSidebarOpen(false);
-      }
+      if (window.innerWidth < 1024) setSidebarOpen(false);
     }
-  };
+  }, [sections, cargarArchivo]);
 
-  const navegarAnterior = () => {
+  const handleSelectResult = useCallback((sectionKey, fileName) => {
+    navegarA(sectionKey, fileName);
+    onOpenChange(false);
+    setModalSearchTerm("");
+  }, [navegarA, onOpenChange]);
+
+  // Helpers de navegación relativa (Next/Prev)
+  const getCurrentFiles = useCallback(() => sections[selectedSection] || [], [selectedSection, sections]);
+  const getCurrentSectionConfig = useCallback(() => selectedSection ? sectionIcons[selectedSection] : null, [selectedSection]);
+
+  const navegarRelativo = useCallback((direction) => {
     const files = getCurrentFiles();
-    if (files.length > 1) {
-      const newIndex = currentFileIndex > 0 ? currentFileIndex - 1 : files.length - 1;
-      navegarA(selectedSection, files[newIndex].fileName);
+    if (files.length <= 1) return;
+    
+    let newIndex;
+    if (direction === 'prev') {
+        newIndex = currentFileIndex > 0 ? currentFileIndex - 1 : files.length - 1;
+    } else {
+        newIndex = currentFileIndex < files.length - 1 ? currentFileIndex + 1 : 0;
     }
-  };
+    
+    navegarA(selectedSection, files[newIndex].fileName);
+  }, [currentFileIndex, selectedSection, navegarA, getCurrentFiles]);
 
-  const navegarSiguiente = () => {
-    const files = getCurrentFiles();
-    if (files.length > 1) {
-      const newIndex = currentFileIndex < files.length - 1 ? currentFileIndex + 1 : 0;
-      navegarA(selectedSection, files[newIndex].fileName);
-    }
-  };
-
-  // Filtrar secciones según búsqueda
-  const filteredSections = Object.entries(sections).reduce((acc, [sectionKey, files]) => {
-    if (!searchTerm) {
-      acc[sectionKey] = files;
+  // Filtrado para el sidebar (ordenamiento)
+  const filteredSections = useMemo(() => {
+    return Object.entries(sections).reduce((acc, [key, files]) => {
+      acc[key] = [...files].sort((a, b) => (a.metadata?.orden || 999) - (b.metadata?.orden || 999));
       return acc;
-    }
+    }, {});
+  }, [sections]);
 
-    const filteredFiles = files.filter(file => 
-      file.metadata?.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      file.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      file.metadata?.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      file.metadata?.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    // Mantener el orden original después del filtrado
-    .sort((a, b) => (a.metadata?.orden || 999) - (b.metadata?.orden || 999));
+  // ==========================================
+  // 5. RENDERIZADO
+  // ==========================================
 
-    if (filteredFiles.length > 0) {
-      acc[sectionKey] = filteredFiles;
-    }
-
-    return acc;
-  }, {});
-
-  // Estado de carga
   if (loading) {
     return (
-      <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <Spinner size="lg" />
-            <p className="mt-4 text-gray-600">Cargando documentación...</p>
-          </div>
+      <div className="mt-16 h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:ml-24">
+        <div className="text-center">
+          <Spinner size="lg" />
+          <p className="mt-4 text-gray-500">Cargando base de conocimiento...</p>
         </div>
       </div>
     );
   }
 
-  const getCurrentFiles = () => {
-    return selectedSection && sections[selectedSection] ? sections[selectedSection] : [];
-  };
-
-  const getCurrentSectionConfig = () => {
-    return selectedSection ? sectionIcons[selectedSection] : null;
-  };
-
-  // Componente para renderizar Markdown
-  const MarkdownRenderer = ({ content }) => {
-    const customComponents = {
-      h1: ({ children }) => <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-8 mb-6 first:mt-0">{children}</h1>,
-      h2: ({ children }) => <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">{children}</h2>,
-      h3: ({ children }) => <h3 className="text-xl font-semibold text-gray-800 dark:text-white mt-6 mb-3">{children}</h3>,
-      h4: ({ children }) => <h4 className="text-lg font-semibold text-gray-800 dark:text-white mt-4 mb-2">{children}</h4>,
-      p: ({ children }) => <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">{children}</p>,
-      strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-white">{children}</strong>,
-      ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2 ml-4">{children}</ul>,
-      ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2 ml-4">{children}</ol>,
-      li: ({ children }) => <li className="text-gray-700 dark:text-gray-300">{children}</li>,
-      code: ({ children, inline }) => 
-        inline ? 
-          <code className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-1 py-0.5 rounded text-sm">{children}</code> :
-          <code className="block bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-4 rounded-lg overflow-x-auto text-sm">{children}</code>,
-      pre: ({ children }) => <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
-      a: ({ children, href }) => <a href={href} className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
-      hr: () => <hr className="my-8 border-gray-300 dark:border-gray-600" />,
-      blockquote: ({ children }) => <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 dark:text-gray-400 my-4 bg-blue-50 dark:bg-blue-900/20 py-2 rounded">{children}</blockquote>,
-      table: ({ children }) => <div className="overflow-x-auto my-4"><table className="min-w-full border border-gray-300 dark:border-gray-600">{children}</table></div>,
-      thead: ({ children }) => <thead className="bg-gray-100 dark:bg-gray-800">{children}</thead>,
-      th: ({ children }) => <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left font-semibold">{children}</th>,
-      td: ({ children }) => <td className="border border-gray-300 dark:border-gray-600 px-4 py-2">{children}</td>,
-    };
-
-    return (
-      <ReactMarkdown 
-        components={customComponents}
-        remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
-      >
-        {content}
-      </ReactMarkdown>
-    );
-  };
-
-  // Componente Sidebar
-  const Sidebar = () => (
-    <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} fixed lg:relative inset-y-0 left-0 z-30 w-80 transform transition-transform duration-300 ease-in-out lg:transform-none bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-full`}>
-      <div className="flex flex-col h-full">
-        {/* Header del sidebar */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <HiBookOpen className="w-6 h-6 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Documentación
-              </h2>
-            </div>
-            <Button
-              isIconOnly
-              size="sm"
-              variant="light"
-              onPress={() => setSidebarOpen(false)}
-              className="lg:hidden"
-            >
-              <HiOutlineX className="w-4 h-4" />
-            </Button>
-          </div>
-          
-          {/* Buscador */}
-          <Input
-            placeholder="Buscar en la ayuda..."
-            value={searchTerm}
-            onValueChange={setSearchTerm}
-            startContent={<HiSearch className="text-gray-400" />}
-            endContent={
-              searchTerm && (
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  onPress={() => setSearchTerm("")}
-                >
-                  <HiX className="w-3 h-3" />
-                </Button>
-              )
-            }
-            size="sm"
-            variant="bordered"
-          />
-        </div>
-
-        {/* Navegación */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {Object.keys(filteredSections).length === 0 ? (
-            <div className="text-center py-8">
-              <HiSearch className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No se encontraron resultados</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(filteredSections).map(([sectionKey, files]) => {
-                const sectionConfig = sectionIcons[sectionKey];
-                if (!sectionConfig) return null;
-                
-                return (
-                  <div key={sectionKey}>
-                    {/* Header de sección */}
-                    <div className="flex items-center justify-between mb-2 px-2">
-                      <div className="flex items-center gap-2">
-                        {sectionConfig.icon}
-                        <span className="font-medium text-gray-900 dark:text-white capitalize">
-                          {sectionConfig.title}
-                        </span>
-                        <Chip size="sm" variant="flat" color={sectionConfig.color}>
-                          {files.length}
-                        </Chip>
-                      </div>
-                    </div>
-                    
-                    {/* Lista de archivos */}
-                    <div className="ml-4 space-y-1">
-                      {files.map((file) => (
-                        <Button
-                          key={file.fileName}
-                          variant={selectedSection === sectionKey && selectedFile === file.fileName ? "flat" : "light"}
-                          color={selectedSection === sectionKey && selectedFile === file.fileName ? sectionConfig.color : "default"}
-                          size="sm"
-                          className="w-full justify-start text-left"
-                          onPress={() => navegarA(sectionKey, file.fileName)}
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <HiDocument className="w-4 h-4 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="truncate text-sm">
-                                {file.metadata?.titulo || file.fileName.replace('.md', '')}
-                              </p>
-                              {file.metadata?.descripcion && (
-                                <p className="text-xs opacity-70 truncate">
-                                  {file.metadata.descripcion}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  const totalDocs = Object.values(sections).reduce((acc, f) => acc + f.length, 0);
 
   return (
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div className="w-full h-full bg-white overflow-x-hidden p-6 rounded-lg shadow-md dark:bg-gray-800">
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-hidden p-4 sm:ml-24">
+      
+      <SearchModal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        modalSearchTerm={modalSearchTerm}
+        setModalSearchTerm={setModalSearchTerm}
+        searching={searching}
+        searchResults={searchResults}
+        sectionIcons={sectionIcons}
+        handleSelectResult={handleSelectResult}
+      />
+      
+      {/* Contenedor Principal (Flexible y Moderno) */}
+      <div className="w-full h-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
         
-        {/* Header principal */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
+        {/* Header Compacto */}
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 bg-white dark:bg-gray-800 z-10">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <HiBookOpen className="bg-blue-600 text-white rounded-full p-2 h-12 w-12" />
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <HiBookOpen className="text-blue-600 h-8 w-8" />
                 Centro de Ayuda
               </h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-2">
-                Documentación completa y guías del sistema
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {totalDocs} documentos disponibles en {Object.keys(sections).length} secciones
               </p>
             </div>
-            
-            {/* Estadísticas rápidas */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiDocument className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{Object.values(sections).reduce((acc, files) => acc + files.length, 0)}</p>
-                  <p className="text-xs opacity-90">Documentos</p>
-                </CardBody>
-              </Card>
-              
-              <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiFolder className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{Object.keys(sections).length}</p>
-                  <p className="text-xs opacity-90">Secciones</p>
-                </CardBody>
-              </Card>
-              
-              {selectedSection && (
-                <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white min-w-[120px]">
-                  <CardBody className="text-center p-4">
-                    <HiLightningBolt className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-2xl font-bold">{currentFileIndex + 1}</p>
-                    <p className="text-xs opacity-90">Actual</p>
-                  </CardBody>
-                </Card>
-              )}
+
+            <div className="flex gap-3 w-full lg:w-auto">
+                <Button 
+                    className="flex-1 lg:flex-none bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-200"
+                    startContent={<HiSearch />}
+                    onPress={onOpen}
+                >
+                    Buscar <Chip size="sm" className="ml-2 h-5 bg-white dark:bg-black/20">Ctrl K</Chip>
+                </Button>
             </div>
           </div>
         </div>
 
-        {/* Layout principal */}
-        <div className="flex h-[calc(100%-150px)] gap-6 relative">
+        {/* Layout Cuerpo */}
+        <div className="flex flex-1 overflow-hidden relative">
           
-          {/* Botón toggle para sidebar */}
+          {/* Botón Móvil Sidebar */}
           {!sidebarOpen && (
-            <Button
-              isIconOnly
-              className="absolute top-4 left-4 z-40 lg:hidden"
-              color="primary"
-              variant="flat"
-              onPress={() => setSidebarOpen(true)}
-            >
-              <HiMenu className="w-5 h-5" />
+            <Button isIconOnly className="absolute top-4 left-4 z-50 lg:hidden shadow-md" onPress={() => setSidebarOpen(true)}>
+              <HiMenu />
             </Button>
           )}
 
           {/* Sidebar */}
-          <div className={`${sidebarOpen ? 'w-80' : 'w-0 lg:w-80'} transition-all duration-300 flex-shrink-0 relative`}>
-            <Sidebar />
+          <div className={`
+            absolute lg:relative z-40 h-full bg-gray-50 dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-700
+            transition-all duration-300 ease-in-out
+            ${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full lg:w-0 lg:translate-x-0 lg:hidden'}
+          `}>
+            <DocsSidebar
+              // Aquí pasamos filteredSections para que funcione el ordenamiento
+              filteredSections={filteredSections} 
+              sectionIcons={sectionIcons}
+              selectedSection={selectedSection}
+              selectedFile={selectedFile}
+              navegarA={navegarA}
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+              onOpenSearch={onOpen}
+            />
           </div>
 
-          {/* Overlay para móvil */}
+          {/* Overlay Móvil */}
           {sidebarOpen && (
-            <div 
-              className="absolute inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
+            <div className="absolute inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
           )}
 
-          {/* Contenido principal */}
-          <div className="flex-1 min-w-0 p-4 h-full w-[700px] overflow-y-auto">
-            {selectedSection && selectedFile ? (
-              <div className="max-w-4xl mx-auto space-y-6">
-                {/* Header con breadcrumbs y navegación */}
-                <Card className="shadow-lg">
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
-                      
-                      {/* Breadcrumbs */}
-                      <div className="flex items-center gap-2 flex-1">
-                        <Breadcrumbs>
-                          <BreadcrumbItem>
-                            <div className="flex items-center gap-1">
-                              <HiHome className="w-4 h-4" />
-                              Ayuda
-                            </div>
-                          </BreadcrumbItem>
-                          <BreadcrumbItem>
-                            <div className="flex items-center gap-1">
-                              {getCurrentSectionConfig()?.icon}
-                              {getCurrentSectionConfig()?.title || selectedSection}
-                            </div>
-                          </BreadcrumbItem>
-                          <BreadcrumbItem>
-                            <div className="flex items-center gap-1">
-                              <HiDocument className="w-4 h-4" />
-                              {currentMetadata.titulo || selectedFile.replace('.md', '')}
-                            </div>
-                          </BreadcrumbItem>
-                        </Breadcrumbs>
-                      </div>
-
-                      {/* Navegación anterior/siguiente */}
-                      <div className="flex items-center gap-2">
-                        <Chip size="sm" variant="flat" color="primary">
-                          {currentFileIndex + 1} de {getCurrentFiles().length}
-                        </Chip>
-                        <div className="flex gap-1">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="flat"
-                            onPress={navegarAnterior}
-                            isDisabled={getCurrentFiles().length <= 1}
-                          >
-                            <HiChevronLeft className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="flat"
-                            onPress={navegarSiguiente}
-                            isDisabled={getCurrentFiles().length <= 1}
-                          >
-                            <HiChevronRight className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Información del documento */}
-                    {currentMetadata.descripcion && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {currentMetadata.descripcion}
-                        </p>
-                      </div>
-                    )}
-                  </CardHeader>
-                </Card>
-
-                {/* Contenido del documento */}
-                <Card className="shadow-lg">
-                  <CardBody className="p-8">
-                    <div className="prose prose-lg max-w-none">
-                      <MarkdownRenderer content={currentContent} />
-                    </div>
-                  </CardBody>
-                </Card>
-
-                {/* Footer con navegación */}
-                <Card className="shadow-lg">
-                  <CardBody className="p-4">
-                    <div className="flex justify-between items-center">
-                      <Button
-                        variant="flat"
-                        startContent={<HiChevronLeft className="w-4 h-4" />}
-                        onPress={navegarAnterior}
-                        isDisabled={getCurrentFiles().length <= 1}
-                      >
-                        Anterior
-                      </Button>
-                      
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {getCurrentSectionConfig()?.title} - {currentFileIndex + 1} de {getCurrentFiles().length}
-                        </p>
-                      </div>
-                      
-                      <Button
-                        variant="flat"
-                        endContent={<HiChevronRight className="w-4 h-4" />}
-                        onPress={navegarSiguiente}
-                        isDisabled={getCurrentFiles().length <= 1}
-                      >
-                        Siguiente
-                      </Button>
-                    </div>
-                  </CardBody>
-                </Card>
-              </div>
-            ) : (
-              /* Vista inicial cuando no hay selección */
-              <div className="max-w-4xl mx-auto">
-                <Card className="shadow-lg">
-                  <CardBody className="text-center py-12">
-                    <HiBookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Bienvenido al Centro de Ayuda
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
-                      Selecciona una sección en el menú lateral para comenzar a explorar la documentación.
-                    </p>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 max-w-lg mx-auto">
-                      {Object.entries(sections).map(([sectionKey, files]) => {
-                        const sectionConfig = sectionIcons[sectionKey];
-                        return (
-                          <Button
-                            key={sectionKey}
-                            variant="flat"
-                            color={sectionConfig.color}
-                            className="flex flex-col items-center p-4 h-auto"
-                            onPress={() => {
-                              if (files.length > 0) {
-                                navegarA(sectionKey, files[0].fileName);
-                              }
-                            }}
-                          >
-                            {sectionConfig.icon}
-                            <span className="mt-2 text-sm">{sectionConfig.title}</span>
-                            <Chip size="sm" variant="flat" color={sectionConfig.color} className="mt-1">
-                              {files.length}
-                            </Chip>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </CardBody>
-                </Card>
-              </div>
-            )}
+          {/* Área de Contenido (Fluido y Centrado) */}
+          <div className="flex-1 overflow-y-auto scroll-smooth w-full relative bg-white dark:bg-gray-800">
+            <div className="max-w-4xl mx-auto p-6 lg:p-10 min-h-full">
+              {selectedSection && selectedFile ? (
+                <DocumentViewer
+                  currentContent={currentContent}
+                  currentMetadata={currentMetadata}
+                  selectedSection={selectedSection}
+                  selectedFile={selectedFile}
+                  currentFileIndex={currentFileIndex}
+                  getCurrentFiles={getCurrentFiles}
+                  getCurrentSectionConfig={getCurrentSectionConfig}
+                  navegarAnterior={() => navegarRelativo('prev')}
+                  navegarSiguiente={() => navegarRelativo('next')}
+                />
+              ) : (
+                <WelcomeView 
+                    sections={filteredSections} // Usar secciones filtradas/ordenadas
+                    sectionIcons={sectionIcons}
+                    navegarA={navegarA}
+                />
+              )}
+            </div>
           </div>
+
         </div>
       </div>
     </div>

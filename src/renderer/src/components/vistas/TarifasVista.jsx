@@ -6,6 +6,7 @@ import { useTarifas } from "../../context/TarifasContext";
 import RegistrarTarifa from "./tarifas/RegistrarTarifa";
 import TarifaCard from "./tarifas/TarifaCard";
 import { TarifaIcon } from "../../IconsApp/IconsResibos";
+
 export default function Tarifas() {
   const navigate = useNavigate();
   const { tarifas, loading, actualizarTarifas } = useTarifas();
@@ -73,7 +74,7 @@ export default function Tarifas() {
 
   if (loading) {
     return (
-      <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
+      <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
         <div className="flex justify-center items-center h-full">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -101,14 +102,12 @@ export default function Tarifas() {
     paginaActual * tarifasPorPagina
   );
 
-
-
   return (
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div className="w-full h-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 flex flex-col gap-6">
-
-
-
+    // CONTENEDOR PRINCIPAL: Mantiene el scroll general
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
+      
+      {/* CAMBIO 1: 'min-h-full' en lugar de 'h-full' para que crezca si hay contenido */}
+      <div className="w-full min-h-full bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 flex flex-col gap-6">
 
         {/* Header con título y estadísticas */}
         <div className="mb-6">
@@ -165,41 +164,37 @@ export default function Tarifas() {
           <CardBody>
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
               <div className="flex-1 max-w-md">
-               
                 <div className="relative w-full flex">
-                                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                                  <HiSearch className="inline-block mr-2" />
-                                </span>
-                                <input
-                                  placeholder="Buscar rutas..."
-                                  value={search}
-                                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPaginaActual(1);
-                  }}
-                
-                                  className="border  border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                />
-                                {/* Botón para limpiar */}
-                                {search && (
-                                  <button
-                                    onClick={() => setSearch("")}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
-                                  >
-                                    ✕
-                                  </button>
-                                )}
-                              </div>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                    <HiSearch className="inline-block mr-2" />
+                  </span>
+                  <input
+                    placeholder="Buscar rutas..."
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPaginaActual(1);
+                    }}
+                    className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
               <RegistrarTarifa />
             </div>
           </CardBody>
         </Card>
 
-
-
         {/* Grid de tarifas */}
-        <div className="flex-1 overflow-y-auto">
+        {/* CAMBIO 2: Eliminado 'flex-1 overflow-y-auto' para quitar el scroll interno */}
+        <div>
           {tarifasPaginadas.length > 0 ? (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">

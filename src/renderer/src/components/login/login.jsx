@@ -1,16 +1,17 @@
-import logoagua from '../../assets/images/logo_login.png';
+import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
 import imagenLogin from '../../assets/images/LoginPrueba.jpg';
 import imagenLogin2 from '../../assets/images/LoginPrueba2.jpg';
 import imagenLogin3 from '../../assets/images/LoginPrueba3.jpg';
-import { Avatar, Button, FloatingLabel, Carousel} from "flowbite-react";
+import { Avatar, Button, FloatingLabel, Carousel, Spinner } from "flowbite-react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-org/react';
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 function LoginApp() {
     const [correo, setCorreo] = useState("");
     const [contrasena, setContrasena] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false); // Estado para controlar la carga
     const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar la contraseña
     const [correosGuardados, setCorreosGuardados] = useState([]);
     const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -24,9 +25,10 @@ function LoginApp() {
         setCorreosGuardados(correos);
     }, []);
 
-    // Si el usuario ya está autenticado, lo redirigimos a /home
+    // Si el usuario ya está autenticado, lo redirigimos a la última ruta visitada o /home
     if (isAuthenticated()) {
-        return <Navigate to="/home" />;
+        const lastRoute = localStorage.getItem('app_last_route');
+        return <Navigate to={lastRoute || "/home"} />;
     }
     // Validación de correo electrónico
     const validateEmail = (email) => {
@@ -34,46 +36,55 @@ function LoginApp() {
         return emailPattern.test(email);
     };
 
-    const handleLogin = async () => {
+    const handleLogin = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        if (loading) return;
+
         setError(""); // Limpiar errores previos
 
         // Validaciones
-        if (!correo || !contrasena) {
+        const correoVal = correo.trim();
+        const passVal = contrasena.trim();
+
+        if (!correoVal || !passVal) {
             setError("Por favor, completa todos los campos.");
             return;
         }
 
-        if (!validateEmail(correo)) {
+        if (!validateEmail(correoVal)) {
             setError("Por favor, ingresa un correo electrónico válido.");
             return;
         }
 
-        if (contrasena.length < 6) {
-            setError("La contrasena debe tener al menos 6 caracteres.");
+        if (passVal.length < 6) {
+            setError("La contraseña debe tener al menos 6 caracteres.");
             return;
         }
         //console.log("Datos enviados al proceso principal:", { correo, contrasena });
         try {
-            const response = await window.api.login({ correo, contrasena });
+            setLoading(true);
+            const response = await window.api.login({ correo: correo.trim(), contrasena: contrasena.trim() });
             console.log("Respuesta del servidor:", response);
 
             if (response.success) {
                 const actual = [...correosGuardados];
-                if (!actual.includes(correo)) {
-                    actual.push(correo);
+                if (!actual.includes(correo.trim())) {
+                    actual.push(correo.trim());
                     localStorage.setItem("correos_anteriores", JSON.stringify(actual));
                     setCorreosGuardados(actual);
                 }
-                
-                //localStorage.setItem("token", response.token);
-                login(response.token,response.usuario);
-                navigate(response.rol === "administrador" ? "/home" : "/ayuda");// Redirigir a home si es administrador o a ayuda si es usuario normal 
+
+                // Login con accessToken, refreshToken y tiempo de expiración
+                login(response.accessToken, response.refreshToken, response.expiresIn);
+                navigate(response.rol === "administrador" ? "/home" : "/ayuda");
             } else {
                 setError(response.message || "Error en la autenticación.");
             }
         } catch (err) {
-            setError("Ocurrió un error en la autenticación.");
-            //console.error(err);
+            setError("Ocurrió un error en la autenticación. Verifique su conexión.");
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -88,20 +99,20 @@ function LoginApp() {
                     <img src={imagenLogin3} alt="Imagen 3" className="w-full h-full object-cover" />
                 </Carousel>
             </div>
-         
+
 
             {/* Formulario de inicio de sesión */}
             <div className="bg-white dark:bg-gray-800 w-full md:max-w-md lg:max-w-full md:mx-auto md:w-1/2 xl:w-1/3 h-screen px-6 lg:px-16 xl:px-12 flex items-center justify-center">
                 <div className="w-full">
                     <div className="flex justify-center">
-                        <Avatar img={logoagua} size="xl" />
+                        <Avatar img={logoagua} size='xl' />
                     </div>
 
                     <h1 className="text-xl md:text-2xl font-bold leading-tight mt-6 text-black dark:text-white text-center">
                         Iniciar Sesión
                     </h1>
 
-                    
+
                     {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
                     <form className="mt-6">
@@ -114,17 +125,17 @@ function LoginApp() {
                                 onChange={(e) => setCorreo(e.target.value)}
                                 list='correosGuardados'
                                 autoComplete="on"
-                                
-                                
+
+
                             />
-                          
+
                             <datalist id='correosGuardados'>
                                 {correosGuardados.map((correoGuardado, index) => (
                                     <option key={index} value={correoGuardado} />
                                 ))}
                             </datalist>
 
-                            
+
                         </div>
 
 
@@ -154,8 +165,20 @@ function LoginApp() {
                             </Link>
                         </div>
 
-                        <Button color="blue" className="w-full py-3 mt-6" onClick={handleLogin}>
-                            Iniciar Sesión
+                        <Button
+                            color="blue"
+                            className="w-full py-3 mt-6"
+                            onClick={handleLogin}
+                            disabled={loading}
+                            isProcessing={loading}
+                        >
+                            {loading ? (
+                                <div className="flex items-center gap-2">
+                                    <span>Validando...</span>
+                                </div>
+                            ) : (
+                                "Iniciar Sesión"
+                            )}
                         </Button>
 
                     </form>

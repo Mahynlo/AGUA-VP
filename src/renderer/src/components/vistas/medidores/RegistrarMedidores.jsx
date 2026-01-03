@@ -152,12 +152,13 @@ export default function RegistrarMedidor() {
                 isOpen={isOpen}
                 onOpenChange={onOpenChange}
                 size="4xl"
-                backdrop="transparent"
+                backdrop="blur"
                 scrollBehavior="inside"
                 isDismissable={false}
                 isKeyboardDismissDisabled={true}
                 placement="center"
                 classNames={{
+                    backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20 ",
                     closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
             >

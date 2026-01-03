@@ -169,9 +169,10 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
                 scrollBehavior="inside"
                 isDismissable={false}
                 isKeyboardDismissDisabled={true}
-                backdrop="transparent"
+                backdrop="blur"
                 placement="center"
                 classNames={{
+                    backdrop: "bg-gradient-to-t mt-18 ml-24 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
                     closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
                 }}
             >

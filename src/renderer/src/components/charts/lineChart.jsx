@@ -1,7 +1,7 @@
 import Chart from "react-apexcharts";
 import { useEffect, useState } from "react";
 
-const LineChart = () => {
+const LineChart = ({ data }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains("dark")
   );
@@ -21,20 +21,35 @@ const LineChart = () => {
     return () => observer.disconnect();
   }, []);
 
-  const series = [
-    {
-      name: "Consumo Nacori Grande",
-      data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240],
-    },
-    {
-      name: "Consumo Matape",
-      data: [110, 140, 90, 180, 230, 590, 600, 180, 210, 260, 240, 220],
-    },
-    {
-      name: "Consumo Adivino",
-      data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720],
-    },
-  ];
+  // Procesar datos dinámicos o usar defaults
+  const isDynamic = data && data.length > 0;
+
+  const series = isDynamic
+    ? [{
+      name: "Consumo Total",
+      data: data.map(item => item.total)
+    }]
+    : [
+      {
+        name: "Consumo Nacori Grande",
+        data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240],
+      },
+      {
+        name: "Consumo Matape",
+        data: [110, 140, 90, 180, 230, 590, 600, 180, 210, 260, 240, 220],
+      },
+      {
+        name: "Consumo Adivino",
+        data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720],
+      },
+    ];
+
+  const categories = isDynamic
+    ? data.map(item => item.mes)
+    : [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+    ];
 
   const options = {
     chart: {
@@ -42,77 +57,102 @@ const LineChart = () => {
       height: "100%",
       toolbar: { show: true },
       zoom: { enabled: true },
-      background: isDarkMode ? "#1f2937" : "#ffffff",
+      background: "transparent",
+      foreColor: isDarkMode ? "#cbd5e1" : "#374151",
     },
     theme: {
       mode: isDarkMode ? "dark" : "light",
+      palette: 'palette1',
     },
     title: {
-      text: "Consumo del Municipio",
+      text: "Consumo Mensual",
       align: "center",
       style: {
         fontSize: "20px",
         fontWeight: "bold",
-        color: isDarkMode ? "#5eead4" : "rgba(75, 192, 192, 1)",
-        fontFamily: "Arial",
+        color: isDarkMode ? "#e2e8f0" : "#1e293b",
+        fontFamily: "Inter, sans-serif",
       },
     },
-    colors: isDarkMode
-      ? ["#5eead4", "#22d3ee", "#4ade80"]
-      : ["rgba(75, 192, 192, 1)", "rgba(54, 162, 235, 1)", "rgb(54, 235, 117)"],
+    colors: isDarkMode ? ["#60a5fa"] : ["#0284c7"],
     dataLabels: { enabled: false },
-    stroke: { curve: "smooth", width: 2 },
+    stroke: {
+      curve: "smooth",
+      width: 4,
+    },
+    grid: {
+      borderColor: isDarkMode ? "#374151" : "#cbd5e1",
+      strokeDashArray: 4,
+      xaxis: {
+        lines: { show: true }
+      }
+    },
     xaxis: {
-      categories: [
-        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-      ],
-      title: {
-        text: "Meses",
-        style: {
-          fontSize: "16px",
-          fontWeight: "bold",
-          color: isDarkMode ? "#5eead4" : "rgba(75, 192, 192, 1)",
-          fontFamily: "Arial",
-        },
-      },
+      categories: categories,
       labels: {
         style: {
-          colors: isDarkMode ? "#cbd5e1" : "#374151",
+          colors: isDarkMode ? "#94a3b8" : "#374151",
+          fontSize: "12px",
+          fontWeight: 600,
+          fontFamily: "Inter, sans-serif",
         },
       },
       axisBorder: {
-        show: true,
-        color: isDarkMode ? "#475569" : "#94a3b8",
+        show: false,
       },
       axisTicks: {
-        show: true,
-        color: isDarkMode ? "#475569" : "#94a3b8",
+        show: false,
+      },
+      tooltip: {
+        enabled: false,
       },
     },
     yaxis: {
       title: {
-        text: "Consumo (metros cúbicos)",
+        text: "Metros Cúbicos (m³)",
         style: {
-          fontSize: "16px",
-          fontWeight: "bold",
-          color: isDarkMode ? "#5eead4" : "rgba(75, 192, 192, 1)",
-          fontFamily: "Arial",
+          fontSize: "14px",
+          fontWeight: "600",
+          color: isDarkMode ? "#94a3b8" : "#64748b",
+          fontFamily: "Inter, sans-serif",
         },
       },
       labels: {
         style: {
-          colors: isDarkMode ? "#cbd5e1" : "#374151",
+          colors: isDarkMode ? "#94a3b8" : "#64748b",
+          fontSize: "12px",
+          fontFamily: "Inter, sans-serif",
         },
       },
-      min: 0,
     },
     legend: {
       position: "top",
-      horizontalAlign: "center",
+      horizontalAlign: "right",
+      fontSize: "14px",
+      fontFamily: "Inter, sans-serif",
       labels: {
-        colors: isDarkMode ? "#cbd5e1" : "#374151",
+        colors: isDarkMode ? "#e2e8f0" : "#1e293b",
       },
+      markers: {
+        width: 10,
+        height: 10,
+        radius: 10,
+      }
+    },
+    tooltip: {
+      theme: isDarkMode ? "dark" : "light",
+      y: {
+        formatter: (val) => `${val} m³`
+      }
+    },
+    markers: {
+      size: 4,
+      colors: isDarkMode ? ["#60a5fa"] : ["#2563eb"],
+      strokeColors: isDarkMode ? "#1e293b" : "#ffffff",
+      strokeWidth: 2,
+      hover: {
+        size: 6,
+      }
     },
     responsive: [
       {

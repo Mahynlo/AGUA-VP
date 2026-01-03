@@ -1,5 +1,5 @@
 // context/FeedbackContext.jsx
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 const FeedbackContext = createContext();
 
@@ -19,17 +19,17 @@ export const FeedbackProvider = ({ children }) => {
     }
   }, [message]);
 
-  const setSuccess = (text, source = null) => {
+  const setSuccess = useCallback((text, source = null) => {
     setMessage({ text, type: "success", source });
-  };
+  }, []);
 
-  const setError = (text, source = null) => {
+  const setError = useCallback((text, source = null) => {
     setMessage({ text, type: "error", source });
-  };
+  }, []);
 
-  const clearMessage = () => {
+  const clearMessage = useCallback(() => {
     setMessage({ text: null, type: null, source: null });
-  };
+  }, []);
 
   return (
     <FeedbackContext.Provider

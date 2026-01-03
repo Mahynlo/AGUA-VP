@@ -41,16 +41,28 @@ export function MedidoresProvider({ children }) {
     fetchMedidores();
   }, [fetchMedidores]);
 
+  // Actualizar cuando se restaura la conexión
+  useEffect(() => {
+    const handleConnectionRestored = () => {
+      console.log("🔄 Reconexión detectada en MedidoresContext, actualizando...");
+      fetchMedidores();
+    };
+
+    window.addEventListener('connection-restored', handleConnectionRestored);
+    return () => window.removeEventListener('connection-restored', handleConnectionRestored);
+  }, [fetchMedidores]);
+
   // Función para actualizar los medidores (después de agregar o editar uno)
   const actualizarMedidores = useCallback(async () => {
     await fetchMedidores();
+    window.dispatchEvent(new CustomEvent('dashboard-update'));
   }, [fetchMedidores]);
 
   // Derivados: medidores asignados / no asignados - memoizados
-  const medidoresAsignados = useMemo(() => 
+  const medidoresAsignados = useMemo(() =>
     medidores.filter(m => m.cliente_id !== null), [medidores]
   );
-  const medidoresNoAsignados = useMemo(() => 
+  const medidoresNoAsignados = useMemo(() =>
     medidores.filter(m => m.cliente_id === null), [medidores]
   );
 

@@ -1,6 +1,7 @@
 import { ipcMain} from 'electron';
 import { registerMedidor  } from '../../register/medidor.js'; // Importa la función registerMedidor
-import { fetchMedidores } from '../../fetch/medidores.js' // Importa la función fetchMedidores
+import { fetchMedidores } from '../../fetch/medidores.js';
+import { updateMedidor } from '../../update/medidores.js';
 
 export default function IpcHandlersMedidores () {
   ipcMain.handle("register-medidor", async (event, data) => {
@@ -35,5 +36,10 @@ export default function IpcHandlersMedidores () {
 
    ipcMain.handle("fetch-medidores", async (event, token_session) => {  // Usa ipcMain.handle en lugar de ipcMain.on para manejar promesas
       return await fetchMedidores(token_session);
+    });
+
+    ipcMain.handle("update-medidor", async (event, data) => {
+        const { id, medidor, token_session } = data;
+        return await updateMedidor(id, medidor, token_session);
     });
 }

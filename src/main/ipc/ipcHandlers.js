@@ -1,7 +1,8 @@
 
-import { ipcMain, BrowserWindow, app } from 'electron';
+import { ipcMain, BrowserWindow, app, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import { pathToFileURL } from 'url';
 
 
 export default function IpcHandlers () {
@@ -28,122 +29,223 @@ export default function IpcHandlers () {
     
      
     //handle print - Con verificación de seguridad
-    ipcMain.handle('printComponent', (event, url) => {
+    ipcMain.handle('printComponent', (event, url, options = {}) => {
       //console.log('=== PRINT DEBUG ===');
       //console.log('Printing from URL:', url);
-      //console.log('App packaged:', app.isPackaged);
-      //console.log('Process platform:', process.platform);
+      const printOptions = {
+        silent: false,
+        printBackground: true,
+        color: true,
+        margin: { marginType: 'printableArea' },
+        landscape: true,
+        pagesPerSheet: 1,
+        collate: false,
+        copies: 1,
+        header: 'Page header',
+        footer: 'Page footer',
+        pageSize: 'letter',
+        ...options 
+      };
       
-      // SEGURIDAD: Verificar que la URL contenga el parámetro print=true
-      if (!url.includes('print=true')) {
-        //console.error('Intento de impresión sin parámetro de seguridad');
-        return 'Error: Modo impresión no autorizado';
-      }
-      
-      let win = new BrowserWindow({ 
-        show: false,
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true,
-          // Deshabilitar cache para evitar problemas de carga
-          cache: false,
-          // Solo deshabilitar webSecurity en desarrollo para localhost
-          webSecurity: app.isPackaged || !url.includes('localhost'),
-          // No permitir contenido inseguro en producción
-          allowRunningInsecureContent: !app.isPackaged && url.includes('localhost')
+      return new Promise((resolve, reject) => {
+        // SEGURIDAD: Verificar que la URL contenga el parámetro print=true
+        if (!url.includes('print=true')) {
+          //console.error('Intento de impresión sin parámetro de seguridad');
+          resolve('Error: Modo impresión no autorizado'); // Resolvemos para no romper el flujo, pero con error
+          return;
         }
-      });
-     
-      win.loadURL(url);
-     
-      win.webContents.on('did-finish-load', () => {
-        console.log('Print window loaded successfully');
-        // Pequeño delay para asegurar que la página esté completamente renderizada
-        setTimeout(() => {
-          win.webContents.print(printOptions, (success, failureReason) => {
-            console.log('Print Initiated in Main...');
-            if (!success) {
-              console.error('Print failed:', failureReason);
-            } else {
-              console.log('Print successful');
+        
+        let win = new BrowserWindow({ 
+          show: false,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            cache: false,
+            webSecurity: app.isPackaged || !url.includes('localhost'),
+            allowRunningInsecureContent: !app.isPackaged && url.includes('localhost')
+          }
+        });
+      
+        win.loadURL(url);
+      
+        win.webContents.on('did-finish-load', () => {
+          console.log('Print window loaded successfully');
+          // Pequeño delay para asegurar que la página esté completamente renderizada
+          setTimeout(() => {
+            // Si options.silent es true, aseguramos que se envíe así
+            if (options.silent) {
+                printOptions.silent = true;
             }
-          });
-        }, 1000); // 1 segundo de delay
-      });
 
-      win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-        console.error('Failed to load URL for printing:', errorCode, errorDescription, validatedURL);
-      });
+            // Normalizar pageSize (Electron requiere Capitalized)
+            if (printOptions.pageSize) {
+                const size = printOptions.pageSize.toLowerCase();
+                if (size === 'letter') printOptions.pageSize = 'Letter';
+                else if (size === 'legal') printOptions.pageSize = 'Legal';
+                else if (size === 'a4') printOptions.pageSize = 'A4';
+            }
 
-      // Filtrar algunos logs de console para reducir ruido
-      win.webContents.on('console-message', (event, level, message) => {
-        if (!message.includes('React DevTools') && 
-            !message.includes('Electron Security Warning') &&
-            !message.includes('[vite]')) {
-          console.log('Print window console:', level, message);
-        }
-      });
+            win.webContents.print(printOptions, (success, failureReason) => {
+              console.log('Print Initiated in Main...');
+              if (!success) {
+                console.error('Print failed:', failureReason);
+                reject('Print failed: ' + failureReason);
+              } else {
+                console.log('Print successful');
+                resolve('shown print dialog'); 
+              }
+              // Cerrar ventana oculta tras imprimir (opcional, pero buena práctica si es silent)
+              if (printOptions.silent) {
+                   win.close();
+              }
+            });
+          }, 1000); // 1 segundo de delay
+        });
 
-      return 'shown print dialog';
+        win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+          console.error('Failed to load URL for printing:', errorCode, errorDescription, validatedURL);
+          reject(`Failed to load: ${errorDescription}`);
+        });
+
+        // Filtrar algunos logs de console para reducir ruido
+        win.webContents.on('console-message', (event, level, message) => {
+          if (!message.includes('React DevTools') && 
+              !message.includes('Electron Security Warning') &&
+              !message.includes('[vite]')) {
+            console.log('Print window console:', level, message);
+          }
+        });
+      });
     });
      
+     // === GESTIÓN DE DATOS TEMPORALES (FileSystem) ===
+     // Solución para grandes volúmenes de datos que exceden localStorage
+     
+     ipcMain.handle('savePrintData', async (event, dataStr) => {
+        try {
+            const id = require('crypto').randomUUID();
+            const tempPath = path.join(app.getPath('temp'), `print_data_${id}.json`);
+            
+            // Escribir archivo temporalmente
+            await fs.promises.writeFile(tempPath, dataStr, 'utf-8');
+            
+            // Limpieza automática después de 10 minutos
+            setTimeout(() => {
+                fs.unlink(tempPath, (err) => {
+                    if (!err) console.log('Archivo temporal borrado:', tempPath);
+                });
+            }, 10 * 60 * 1000);
+            
+            return id;
+        } catch (error) {
+            console.error('Error saving temp print data:', error);
+            throw error;
+        }
+     });
+
+     ipcMain.handle('getPrintData', async (event, id) => {
+        try {
+            const tempPath = path.join(app.getPath('temp'), `print_data_${id}.json`);
+            
+            if (fs.existsSync(tempPath)) {
+                const data = await fs.promises.readFile(tempPath, 'utf-8');
+                // Intentar borrar inmediatamente después de leer para ahorrar espacio
+                // (Opcional: se puede dejar que el timeout lo borre si se necesita recargar)
+                return data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error reading temp print data:', error);
+            return null; // Retornar null en lugar de lanzar error para manejarlo suavemente
+        }
+     });
+
      //handle preview
     ipcMain.handle('previewComponent', (event, url) => {
       console.log('Preview from URL:', url);
-      let win = new BrowserWindow({ 
-        title: 'Preview', 
-        show: false, 
-        autoHideMenuBar: true,
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true,
-          // Deshabilitar cache para evitar problemas de carga
-          cache: false,
-          // Solo deshabilitar webSecurity en desarrollo para localhost
-          webSecurity: app.isPackaged || !url.includes('localhost'),
-          // No permitir contenido inseguro en producción
-          allowRunningInsecureContent: !app.isPackaged && url.includes('localhost')
-        }
-      });
-    
-      // Usar directamente la URL de la aplicación React en lugar del archivo HTML estático
-      win.loadURL(url);
+      
+      return new Promise((resolve, reject) => {
+        let win = new BrowserWindow({ 
+          title: 'Preview', 
+          show: false, 
+          autoHideMenuBar: true,
+          webPreferences: {
+            sandbox: false,
+            nodeIntegration: false,
+            contextIsolation: true,
+            cache: false,
+            plugins: true, // NECESARIO para que el visor de PDF funcione en Production
+            webSecurity: false, // NECESARIO para cargar file:/// desde una ventana creada
+            allowRunningInsecureContent: true,
+            preload: path.join(__dirname, '../preload/index.js')
+          }
+        });
+      
+        // Usar directamente la URL de la aplicación React en lugar del archivo HTML estático
+        win.loadURL(url);
 
-      win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-        console.error('Failed to load URL for preview:', errorCode, errorDescription, validatedURL);
-      });
+        win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+          console.error('Failed to load URL for preview:', errorCode, errorDescription, validatedURL);
+          reject(`Failed to load: ${errorDescription}`);
+        });
 
-      // Filtrar algunos logs de console para reducir ruido
-      win.webContents.on('console-message', (event, level, message) => {
-        if (!message.includes('React DevTools') && 
-            !message.includes('Electron Security Warning') &&
-            !message.includes('[vite]')) {
-          console.log('Preview window console:', level, message);
+        // Filtrar algunos logs de console para reducir ruido
+        win.webContents.on('console-message', (event, level, message) => {
+          if (!message.includes('React DevTools') && 
+              !message.includes('Electron Security Warning') &&
+              !message.includes('[vite]')) {
+            console.log('Preview window console:', level, message);
+          }
+        });
+      
+        win.webContents.once('did-finish-load', () => {
+          // Si es la carga inicial de React, generar PDF
+          // Pequeño delay asegurando renderizado completo
+          setTimeout(() => {
+            win.webContents.printToPDF(printOptions).then(async (data) => {
+              try {
+                  // GUARDAR PDF EN DISCO (Evita error ERR_INVALID_URL por longitud de Data URI)
+                  const pdfPath = path.join(app.getPath('temp'), `preview_recibos_${Date.now()}.pdf`);
+                  console.log('PDF generado en:', pdfPath);
+                  
+                  // OPTIMIZACIÓN DE MEMORIA (Modo Efímero):
+                  // 1. Guardar PDF
+                  await fs.promises.writeFile(pdfPath, data);
+                  
+                  // 2. Destruir la ventana de generación inmediatamente
+                  win.close();
+
+                  // 3. Retornar la ruta del archivo para que el render (Modal) lo muestre
+                  resolve({ success: true, path: pathToFileURL(pdfPath).href });
+
+              } catch (err) {
+                  console.error('Error guardando PDF temporal:', err);
+                  // Solo mostrar ventana si falló la apertura externa (fallback)
+                  win.show();
+              }
+             })
+
+
+             .catch((error) => {
+              console.error('Error generating PDF:', error);
+              // Si falla el PDF, mostrar lo que haya (fallback)
+              win.show();
+              reject(error);
+             });
+          }, 2500); // 2.5s delay para asegurar que las gráficas carguen
+        });
+
+      });
+    });
+
+    // Obtener lista de impresoras
+    ipcMain.handle('getPrinters', async () => {
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) {
+             const printers = await win.webContents.getPrintersAsync();
+             return printers;
         }
-      });
-     
-      win.webContents.once('did-finish-load', () => {
-        // Pequeño delay para asegurar que la página esté completamente renderizada
-        setTimeout(() => {
-          win.webContents.printToPDF(printOptions).then((data) => {
-            let buf = Buffer.from(data);
-            var data = buf.toString('base64');
-            let url = 'data:application/pdf;base64,' + data;
-        
-            win.webContents.on('ready-to-show', () => {
-             win.show();
-             win.setTitle('Preview');
-            });
-          
-            win.webContents.on('closed', () => win = null);
-            win.loadURL(url);
-           })
-           .catch((error) => {
-            console.error('Error generating PDF:', error);
-           });
-        }, 1000); // 1 segundo de delay
-      });
-      return 'shown preview window';
+        return [];
     });
     
     

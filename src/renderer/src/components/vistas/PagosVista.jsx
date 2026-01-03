@@ -4,8 +4,15 @@ import { Tabs, Tab, Card, CardBody, Chip } from "@nextui-org/react";
 import TabFacturas from "./pagos/TabFacturas";
 import TabPagos from "./pagos/TabPagos";
 import TabEstadisticas from "./pagos/TabEstadisticas";
+import TabDeudores from "./pagos/TabDeudores";
+
 
 const Pagos = () => {
+  // Estado para la pestaña activa, recuperado de localStorage o por defecto 'facturas'
+  const [selectedTab, setSelectedTab] = useState(() => {
+    return localStorage.getItem("pagos_activeTab") || "facturas";
+  });
+
   const [estadisticas, setEstadisticas] = useState({
     totalFacturas: 0,
     pagosPendientes: 0,
@@ -13,9 +20,14 @@ const Pagos = () => {
     montoTotal: 0
   });
 
-  // Simulando datos de estadísticas - aquí deberías usar tu contexto real
+  // Manejar cambio de pestaña y persistencia
+  const handleTabChange = (key) => {
+    setSelectedTab(key);
+    localStorage.setItem("pagos_activeTab", key);
+  };
+
+  // Simulando datos de estadísticas
   useEffect(() => {
-    // Aquí deberías obtener las estadísticas reales de tu contexto o API
     setEstadisticas({
       totalFacturas: 245,
       pagosPendientes: 18,
@@ -25,9 +37,12 @@ const Pagos = () => {
   }, []);
 
   return (
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div className="w-full h-full bg-white overflow-x-hidden p-6 rounded-lg shadow-md dark:bg-gray-800">
-        
+    // CONTENEDOR PRINCIPAL: Maneja el scroll general
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
+
+      {/* CAMBIO: Usamos 'min-h-full' en lugar de 'h-full' y quitamos 'overflow-x-hidden' */}
+      <div className="w-full min-h-full bg-white p-6 rounded-lg shadow-md dark:bg-gray-800">
+
         {/* Header con título y estadísticas */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
@@ -40,7 +55,7 @@ const Pagos = () => {
                 Administra facturas, pagos y estadísticas financieras del sistema
               </p>
             </div>
-            
+
             {/* Estadísticas rápidas */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white min-w-[120px]">
@@ -50,7 +65,7 @@ const Pagos = () => {
                   <p className="text-xs opacity-90">Total Facturas</p>
                 </CardBody>
               </Card>
-              
+
               <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white min-w-[120px]">
                 <CardBody className="text-center p-4">
                   <HiCreditCard className="w-8 h-8 mx-auto mb-2" />
@@ -58,7 +73,7 @@ const Pagos = () => {
                   <p className="text-xs opacity-90">Pendientes</p>
                 </CardBody>
               </Card>
-              
+
               <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white min-w-[120px]">
                 <CardBody className="text-center p-4">
                   <HiCreditCard className="w-8 h-8 mx-auto mb-2" />
@@ -66,7 +81,7 @@ const Pagos = () => {
                   <p className="text-xs opacity-90">Completados</p>
                 </CardBody>
               </Card>
-              
+
               <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white min-w-[120px]">
                 <CardBody className="text-center p-4">
                   <HiTrendingUp className="w-8 h-8 mx-auto mb-2" />
@@ -77,10 +92,13 @@ const Pagos = () => {
             </div>
           </div>
         </div>
+
         {/* Tabs Content */}
         <div className="flex w-full flex-col">
           <Tabs
             aria-label="Opciones de Pagos"
+            selectedKey={selectedTab}
+            onSelectionChange={handleTabChange}
             classNames={{
               tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider bg-white dark:bg-gray-800",
               cursor: "w-full bg-gradient-to-r from-green-500 to-green-600",
@@ -104,7 +122,7 @@ const Pagos = () => {
             >
               <TabFacturas />
             </Tab>
-            
+
             <Tab
               key="pagos"
               title={
@@ -119,7 +137,22 @@ const Pagos = () => {
             >
               <TabPagos />
             </Tab>
-            
+
+            <Tab
+              key="deudores"
+              title={
+                <div className="flex items-center gap-3">
+                  <HiCreditCard className="w-6 h-6" />
+                  <span>Deudores</span>
+                  <Chip size="sm" variant="flat" color="success">
+                    {estadisticas.pagosCompletados}
+                  </Chip>
+                </div>
+              }
+            >
+              <TabDeudores />
+            </Tab>
+
             <Tab
               key="estadisticas"
               title={

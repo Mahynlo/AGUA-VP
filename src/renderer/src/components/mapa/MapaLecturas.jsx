@@ -281,7 +281,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div className="h-full w-full">
       {/* Loading overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg">

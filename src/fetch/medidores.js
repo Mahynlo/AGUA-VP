@@ -1,7 +1,9 @@
 import { leerToken } from '../appConfig/authApp';
 const URL_MEDIDORES = import.meta.env.VITE_API_FETCH_MEDIDORES; // URL del endpoint de medidores
+// Asumiendo que VITE_API_FETCH_MEDIDORES apunta a /api/v2/medidores
+ 
 
-export const fetchMedidores = async (token_session) => {
+export const fetchMedidores = async (token_session, isRetry = false) => {
   try {
     const token_app = leerToken();
     if (!token_app) {
@@ -14,8 +16,8 @@ export const fetchMedidores = async (token_session) => {
       return [];
     }
 
-    console.log("Token de la app (medidores):", token_app);
-    console.log("Token de sesión (medidores):", token_session);
+    // console.log("Token de la app (medidores):", token_app);
+    // console.log("Token de sesión (medidores):", token_session);
 
     const response = await fetch(URL_MEDIDORES, {
       method: "GET",
@@ -28,11 +30,24 @@ export const fetchMedidores = async (token_session) => {
 
     if (!response.ok) {
       const errorBody = await response.text();
+      
+      // Si es error 403 y no es reintento, intentar renovar token
+      if (response.status === 403 && !isRetry) {
+        console.log("🔄 Token expirado en fetchMedidores, solicitando renovación...");
+        window.dispatchEvent(new CustomEvent('token-expired'));
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const newToken = localStorage.getItem('token');
+        if (newToken && newToken !== token_session) {
+          console.log("✅ Token renovado, reintentando fetchMedidores...");
+          return fetchMedidores(newToken, true);
+        }
+      }
+      
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
     }
 
     const data = await response.json();
-    console.log("Datos obtenidos de medidores:", data);
+    // console.log("Datos obtenidos de medidores:", data);
     return data;
 
   } catch (error) {

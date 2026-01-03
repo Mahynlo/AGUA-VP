@@ -23,7 +23,8 @@ function createWindow() {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false // Deshabilitar el aislamiento del contexto
+      sandbox: false, // Deshabilitar el aislamiento del contexto
+      webSecurity: !is.dev // Permitir carga de archivos locales en iframe durante desarrollo
     }
   })
 

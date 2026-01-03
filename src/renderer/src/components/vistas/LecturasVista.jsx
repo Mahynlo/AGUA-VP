@@ -6,13 +6,25 @@ import { useState, useMemo } from "react";
 
 
 import TabRutas from "./lecturas/TabRutas";
+import TabMetricas from "./lecturas/TabMetricas";
 import { useRutas } from "../../context/RutasContext";
 
 import { LecturasIcon, RutaLecturaIcon, MetricasLecturaIcon } from "../../IconsApp/IconsResibos";
+
 const Lecturas = () => {
   const navigate = useNavigate(); // Hook de navegación
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { rutas, initialLoading } = useRutas();
+
+  // Estado para la pestaña activa, recuperado de localStorage
+  const [selectedTab, setSelectedTab] = useState(() => {
+    return localStorage.getItem("lecturas_activeTab") || "lecturas";
+  });
+
+  const handleTabChange = (key) => {
+    setSelectedTab(key);
+    localStorage.setItem("lecturas_activeTab", key);
+  };
 
   // Calcular estadísticas reales basadas en los datos
   const estadisticas = useMemo(() => {
@@ -40,9 +52,11 @@ const Lecturas = () => {
   }, [rutas, initialLoading]);
 
   return (
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div className="w-full h-full bg-white overflow-x-hidden p-6 rounded-lg shadow-md dark:bg-gray-800">
+    // CONTENEDOR PRINCIPAL: Maneja el scroll general
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
 
+      {/* CAMBIO 1: 'min-h-full' y quitamos 'overflow-x-hidden' */}
+      <div className="w-full min-h-full bg-white p-6 rounded-lg shadow-md dark:bg-gray-800">
 
         {/* Header con título y estadísticas */}
         <div className="mb-6">
@@ -111,9 +125,12 @@ const Lecturas = () => {
         </div>
 
         {/* Tabs principales */}
-        <div className="flex w-full flex-col h-[calc(100%-150px)]">
+        {/* CAMBIO 2: Eliminamos la altura fija (h-[calc...]) para que crezca libremente */}
+        <div className="flex w-full flex-col">
           <Tabs
             aria-label="Opciones de Lecturas"
+            selectedKey={selectedTab}
+            onSelectionChange={handleTabChange}
             classNames={{
               tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
               cursor: "w-full bg-blue-600",
@@ -124,20 +141,6 @@ const Lecturas = () => {
             variant="underlined"
           >
             <Tab
-              key="rutas"
-              title={
-                <div className="flex items-center gap-2">
-                  <HiMap className="w-5 h-5" />
-                  <span>Rutas de Lectura</span>
-                </div>
-              }
-            >
-              <div className="h-full pt-4">
-                <TabRutas />
-              </div>
-            </Tab>
-
-            <Tab
               key="lecturas"
               title={
                 <div className="flex items-center gap-2">
@@ -146,33 +149,12 @@ const Lecturas = () => {
                 </div>
               }
             >
-              <Card className="h-full mt-4">
-                <CardHeader>
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <HiDocumentText className="w-6 h-6 text-blue-600" />
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                        Registro de Lecturas
-                      </h2>
-                    </div>
-                    <Chip color="primary" variant="flat">
-                      En desarrollo
-                    </Chip>
-                  </div>
-                </CardHeader>
-                <CardBody>
-                  <div className="text-center py-12">
-                    <HiDocumentText className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Módulo de Lecturas
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-                      Aquí podrás registrar y gestionar las lecturas de los medidores de agua de cada ruta asignada.
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
+              <div className="h-full pt-4">
+                <TabRutas />
+              </div>
             </Tab>
+
+
 
             <Tab
               key="metricas"
@@ -183,101 +165,12 @@ const Lecturas = () => {
                 </div>
               }
             >
-              <Card className="h-full mt-4">
-                <CardHeader>
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <HiChartBar className="w-6 h-6 text-orange-600" />
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                        Métricas y Análisis
-                      </h2>
-                    </div>
-                    <Chip color="warning" variant="flat">
-                      Próximamente
-                    </Chip>
-                  </div>
-                </CardHeader>
-                <CardBody>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                    {/* Tarjeta de métricas de rendimiento */}
-                    <Card className="border border-blue-200 dark:border-blue-800">
-                      <CardBody className="text-center p-6">
-                        <HiChartBar className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                          Rendimiento por Ruta
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Análisis de eficiencia y tiempo promedio por ruta de lectura
-                        </p>
-                      </CardBody>
-                    </Card>
-
-                    {/* Tarjeta de consumo */}
-                    <Card className="border border-green-200 dark:border-green-800">
-                      <CardBody className="text-center p-6">
-                        <HiDocumentText className="w-12 h-12 mx-auto mb-3 text-green-600" />
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                          Análisis de Consumo
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Patrones de consumo y comparativas mensuales por sector
-                        </p>
-                      </CardBody>
-                    </Card>
-
-                    {/* Tarjeta de alertas */}
-                    <Card className="border border-orange-200 dark:border-orange-800">
-                      <CardBody className="text-center p-6">
-                        <HiCheckCircle className="w-12 h-12 mx-auto mb-3 text-orange-600" />
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                          Alertas y Anomalías
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          Detección de consumos anómalos y medidores con problemas
-                        </p>
-                      </CardBody>
-                    </Card>
-
-                    {/* Progreso actual */}
-                    <div className="md:col-span-2 lg:col-span-3">
-                      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-                        <CardBody className="p-6">
-                          <div className="text-center">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                              Resumen del Sistema de Lecturas
-                            </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              <div>
-                                <p className="text-2xl font-bold text-blue-600">{estadisticas.rutasActivas}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">Rutas Configuradas</p>
-                              </div>
-                              <div>
-                                <p className="text-2xl font-bold text-green-600">{estadisticas.lecturasHoy}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">Lecturas Hoy</p>
-                              </div>
-                              <div>
-                                <p className="text-2xl font-bold text-purple-600">{estadisticas.lecturasCompletadas.toLocaleString()}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">Total Histórico</p>
-                              </div>
-                              <div>
-                                <p className="text-2xl font-bold text-orange-600">{estadisticas.eficiencia}%</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">Eficiencia General</p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardBody>
-                      </Card>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
+              <div className="h-full pt-4">
+                <TabMetricas />
+              </div>
             </Tab>
           </Tabs>
         </div>
-
-
-
 
       </div>
     </div>

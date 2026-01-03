@@ -7,7 +7,7 @@ const URL_PAGOS = import.meta.env.VITE_API_FETCH_PAGOS; // URL del endpoint de p
  * 
  * ************************************************************************************************************* */
 
-export const fetchPagos = async (token_session, periodo = null) => {
+export const fetchPagos = async (token_session, periodo = null, isRetry = false) => {
     try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
@@ -34,14 +34,26 @@ export const fetchPagos = async (token_session, periodo = null) => {
         }
     });
 
-        if (!response.ok) {
+    if (!response.ok) {
         // Podrías leer el mensaje del backend si viene uno
         const errorBody = await response.text();
+        
+        // Si es error 403 y no es reintento, intentar renovar token
+        if (response.status === 403 && !isRetry) {
+            console.log("🔄 Token expirado en fetchPagos, solicitando renovación...");
+            // Emitir evento para que AuthContext renueve el token
+            window.dispatchEvent(new CustomEvent('token-expired'));
+            // Esperar un momento para que se renueve el token
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Obtener el token renovado del localStorage
+            const newToken = localStorage.getItem('token');
+            if (newToken && newToken !== token_session) {
+                console.log("✅ Token renovado, reintentando fetchPagos...");
+                return fetchPagos(newToken, periodo, true); // Reintentar con el nuevo token
+            }
+        }
+        
         throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
-    }
-
-    if (!response.ok) {
-        throw new Error("Error al obtener pagos(ipcmain-fetch-pagos)");
     }
 
     const data = await response.json();

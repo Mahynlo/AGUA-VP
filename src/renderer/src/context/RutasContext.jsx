@@ -34,7 +34,7 @@ export function RutasProvider({ children }) {
             const data = await window.api.listarRutas(token_session, periodo);
             setRutas(Array.isArray(data.rutas) ? data.rutas : []);
             setPeriodoActual(periodo);
-            
+
         } catch (error) {
             console.error("❌ Error al obtener rutas:", error);
             setRutas([]);
@@ -51,6 +51,17 @@ export function RutasProvider({ children }) {
         fetchRutas(); // sin parámetro → usará el mes actual
     }, [fetchRutas]);
 
+    // Actualizar cuando se restaura la conexión
+    useEffect(() => {
+        const handleConnectionRestored = () => {
+            console.log("🔄 Reconexión detectada en RutasContext, actualizando...");
+            fetchRutas();
+        };
+
+        window.addEventListener('connection-restored', handleConnectionRestored);
+        return () => window.removeEventListener('connection-restored', handleConnectionRestored);
+    }, [fetchRutas]);
+
     // Función externa para actualizar rutas con período opcional
     const actualizarRutas = useCallback(async (periodo = obtenerPeriodoActual()) => {
         await fetchRutas(periodo);
@@ -64,7 +75,7 @@ export function RutasProvider({ children }) {
             if (!token_session) {
                 throw new Error("No se encontró token de sesión");
             }
-            
+
             const data = await window.api.listarRutasInfoMedidores(token_session, rutaId);
             //console.log("Información de la ruta obtenida context:", data.ruta);
             return data.ruta;
@@ -75,14 +86,28 @@ export function RutasProvider({ children }) {
         // NO modificar loading state global aquí
     }, []);
 
+    // Función para actualización optimista del progreso
+    const actualizarProgresoRuta = useCallback((rutaId, nuevoTotal = null) => {
+        setRutas(prevRutas => prevRutas.map(r => {
+            if (r.id === rutaId) {
+                return {
+                    ...r,
+                    completadas: nuevoTotal !== null ? nuevoTotal : (r.completadas || 0) + 1
+                };
+            }
+            return r;
+        }));
+    }, []);
+
     return (
-        <RutasContext.Provider value={{ 
-            rutas, 
-            loading, 
+        <RutasContext.Provider value={{
+            rutas,
+            loading,
             initialLoading,
-            actualizarRutas, 
+            actualizarRutas,
+            actualizarProgresoRuta,
             obtenerInfoRuta,
-            periodoActual 
+            periodoActual
         }}>
             {children}
         </RutasContext.Provider>

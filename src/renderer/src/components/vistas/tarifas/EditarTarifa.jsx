@@ -101,8 +101,9 @@ export default function EditarTarifa({ tarifa, onTarifaEditada }) {
         scrollBehavior="inside"
         isDismissable={false}
         isKeyboardDismissDisabled={true}
-        backdrop="transparent"
+        backdrop="blur"
         classNames={{
+          backdrop: "bg-gradient-to-t mt-18 ml-24 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
           header: "dark:border-b border-b border-gray-400 dark:border-[#6879bd]",
           footer: "dark:border-t border-t border-gray-400 dark:border-[#6879bd]",
         }}

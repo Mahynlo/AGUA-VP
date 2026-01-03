@@ -1,7 +1,7 @@
 // src/components/PantallaCarga.jsx
 import React, { useEffect, useState } from "react";
 import logo from "../../assets/images/logo_login.png"; // Asegúrate de que la ruta sea correcta
-
+import NavbarApp from '../menuElements/navbar';
 const PantallaCarga = ({ tiempo = 5000, onFinalizado }) => {
   const [visible, setVisible] = useState(true);
 
@@ -17,13 +17,17 @@ const PantallaCarga = ({ tiempo = 5000, onFinalizado }) => {
   if (!visible) return null;
 
   return (
-    <div style={estilos.fondo} className="bg-gradient-to-r from-blue-500 to-blue-300">
+    <>
+      <NavbarApp /> {/* Mostrar la barra de navegación en la pantalla de carga */}
+      <div style={estilos.fondo} className="bg-gradient-to-r from-blue-500 to-blue-300">
       <div style={estilos.caja} >
         <img src={logo} alt="Logo" className="w-32 h-32 mb-4" />
         <h1 className="text-[30px] text-gray-700 font-bold">AGUA-VP</h1>
         <div style={estilos.spinner}></div>
       </div>
     </div>
+    </>
+    
   );
 };
 

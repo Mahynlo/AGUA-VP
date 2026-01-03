@@ -3,7 +3,7 @@
 import { ipcMain} from 'electron';
 
 
-import { loginUser,verifyToken,cerrarSesion,obtenerSesionesActivas} from '../../auth/auth.js'; // Importa la función loginUser
+import { loginUser,verifyToken,cerrarSesion,obtenerSesionesActivas,renovarToken,cerrarSesionEspecifica} from '../../auth/auth.js'; // Importa la función loginUser
 import { registerUser } from '../../register/usuario.js'; // Importa la función registerUser
 
 export default function IpcHandlerUsuario () {
@@ -38,6 +38,22 @@ export default function IpcHandlerUsuario () {
     // 📌 Sessiones activas de usuario
     ipcMain.handle("active-sessions-user", async (event,usuario_id ) => {
         return obtenerSesionesActivas(usuario_id);
+    });
+
+    // 📌 Renovar access token
+    ipcMain.handle("refresh-token", async (event, refreshToken) => {
+        console.log("🔄 IPC Handler refresh-token recibido");
+        const result = await renovarToken(refreshToken);
+        console.log("📤 IPC Handler refresh-token resultado:", result);
+        return result;
+    });
+
+    // 📌 Cerrar sesión específica por ID
+    ipcMain.handle("close-specific-session", async (event, sesionId, token) => {
+        console.log("🔄 IPC Handler close-specific-session recibido para sesión:", sesionId);
+        const result = await cerrarSesionEspecifica(sesionId, token);
+        console.log("📤 IPC Handler close-specific-session resultado:", result);
+        return result;
     });
 
 }

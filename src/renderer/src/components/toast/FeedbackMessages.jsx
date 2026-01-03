@@ -32,7 +32,7 @@ const FeedbackMessages = ({
   const ErrorIcon = IconErrorSuccess || DefaultErrorSuccessIcon;
   const CloseIcon = IconCloseSuccess || DefaultCloseSuccessIcon;
 
-  const baseClasses = "absolute z-50";
+  const baseClasses = "absolute z-80";
   const positionClass = positionStyles[position] || positionStyles["top-center"];
 
   if (!text) return null;

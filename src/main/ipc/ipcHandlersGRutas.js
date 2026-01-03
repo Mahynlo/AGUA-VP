@@ -86,6 +86,34 @@ export default function IpcHandlersRutas() {
     }
   });
 
+  ipcMain.handle("modificar-ruta", async (event, token_session, id_ruta, datosActualizados) => {
+    try {
+      console.log("📌 Modificando ruta con ID:", id_ruta);
+      console.log("📌 Datos actualizados:", datosActualizados);
+
+      if (!token_session) {
+        throw new Error("Token de sesión no proporcionado");
+      }
+
+      if (!id_ruta) {
+        throw new Error("ID de ruta no proporcionado");
+      }
+
+      if (!datosActualizados) {
+        throw new Error("Datos actualizados no proporcionados");
+      }
+
+      // Importar dinámicamente la función de actualización
+      const { actualizarRuta } = await import("../../fetch/rutas.js");
+      
+      const result = await actualizarRuta(token_session, id_ruta, datosActualizados);
+      return result;
+
+    } catch (error) {
+      console.error("❌ Error al modificar ruta:", error.message);
+      return { success: false, message: error.message };
+    }
+  });
 
 
 }

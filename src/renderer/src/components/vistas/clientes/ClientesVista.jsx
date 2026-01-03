@@ -9,6 +9,16 @@ import { useClientes } from "../../../context/ClientesContext";
 const Clientes = () => {
   const { clientes, loading, initialLoading } = useClientes();
 
+  // Estado para la pestaña activa, recuperado de localStorage
+  const [selectedTab, setSelectedTab] = useState(() => {
+    return localStorage.getItem("clientes_activeTab") || "Clientes";
+  });
+
+  const handleTabChange = (key) => {
+    setSelectedTab(key);
+    localStorage.setItem("clientes_activeTab", key);
+  };
+
   // Calcular estadísticas reales basadas en los datos
   const estadisticas = useMemo(() => {
     // Si estamos en loading inicial, mostrar valores de 0 temporalmente
@@ -24,7 +34,7 @@ const Clientes = () => {
     if (clientes && clientes.length > 0) {
       const hoy = new Date();
       const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-      
+
       const nuevosEsteMes = clientes.filter(cliente => {
         if (cliente.fechaRegistro) {
           const fechaRegistro = new Date(cliente.fechaRegistro);
@@ -52,9 +62,12 @@ const Clientes = () => {
   }, [clientes, initialLoading]);
 
   return (
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
-      <div className="w-full h-full bg-white overflow-x-hidden p-6 rounded-lg shadow-md dark:bg-gray-800">
-        
+    // CONTENEDOR PRINCIPAL: Maneja el scroll general
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
+
+      {/* CAMBIO: Usamos 'min-h-full' y quitamos 'overflow-x-hidden' para permitir que el contenido crezca */}
+      <div className="w-full min-h-full bg-white p-6 rounded-lg shadow-md dark:bg-gray-800">
+
         {/* Header con título y estadísticas */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
@@ -67,7 +80,7 @@ const Clientes = () => {
                 Administra la información de todos los clientes del sistema
               </p>
             </div>
-            
+
             {/* Estadísticas rápidas */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white min-w-[120px]">
@@ -81,7 +94,7 @@ const Clientes = () => {
                   <p className="text-xs opacity-90">Total Clientes</p>
                 </CardBody>
               </Card>
-              
+
               <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white min-w-[120px]">
                 <CardBody className="text-center p-4">
                   <HiUserCircle className="w-8 h-8 mx-auto mb-2" />
@@ -93,7 +106,7 @@ const Clientes = () => {
                   <p className="text-xs opacity-90">Activos</p>
                 </CardBody>
               </Card>
-              
+
               <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white min-w-[120px]">
                 <CardBody className="text-center p-4">
                   <HiUserAdd className="w-8 h-8 mx-auto mb-2" />
@@ -105,7 +118,7 @@ const Clientes = () => {
                   <p className="text-xs opacity-90">Nuevos (mes)</p>
                 </CardBody>
               </Card>
-              
+
               <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white min-w-[120px]">
                 <CardBody className="text-center p-4">
                   <HiTrendingUp className="w-8 h-8 mx-auto mb-2" />
@@ -125,6 +138,8 @@ const Clientes = () => {
         <div className="flex w-full flex-col">
           <Tabs
             aria-label="Opciones de Clientes"
+            selectedKey={selectedTab}
+            onSelectionChange={handleTabChange}
             classNames={{
               tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider bg-white dark:bg-gray-800",
               cursor: "w-full bg-gradient-to-r from-blue-500 to-blue-600",
@@ -134,7 +149,7 @@ const Clientes = () => {
             color="primary"
             variant="underlined"
           >
-            <Tab 
+            <Tab
               key="Clientes"
               title={
                 <div className="flex items-center gap-3">
@@ -148,8 +163,8 @@ const Clientes = () => {
             >
               <TabClientes />
             </Tab>
-            
-            <Tab 
+
+            <Tab
               key="Metricas"
               title={
                 <div className="flex items-center gap-3">

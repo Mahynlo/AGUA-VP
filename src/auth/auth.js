@@ -83,14 +83,24 @@ const loginUser = async (correo, contrasena) => {
       return { success: false, message: "Datos de usuario incompletos en la respuesta" };
     }
 
+    // Validar que existan los tokens
+    if (!data.accessToken || !data.refreshToken) {
+      console.error("Error: La respuesta no contiene accessToken o refreshToken:", data);
+      return { success: false, message: "Tokens no proporcionados por el servidor" };
+    }
+
     //retornar como string
     return {
       success: true,
-      token: data.token,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      expiresIn: data.expiresIn,
+      refreshExpiresIn: data.refreshExpiresIn,
       username: data.user.username,
       nombre: data.user.nombre,
       rol: data.user.rol,
-      id: data.user.id
+      id: data.user.id,
+      email: data.user.email
     };
 
   } catch (error) {
@@ -132,9 +142,10 @@ const cerrarSesion = async (token_session) => {
       method: "POST",
       headers: {
         "x-app-key": `AppKey ${token}`,
+        "Authorization": `Bearer ${token_session}`, // Token de sesión en el header
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ token: token_session }) // Enviar el token de sesión para cerrar sesión
+      body: JSON.stringify({ token: token_session }) // Enviar el token de sesión también en el body
     });
 
     const data = await response.json();
@@ -154,6 +165,101 @@ const cerrarSesion = async (token_session) => {
 };
 
 
+
+/**************************************************************************************************************
+ * Cerrar sesión específica por ID
+ * ************************************************************************************************************
+ */
+const cerrarSesionEspecifica = async (sesionId, token_session) => {
+  try {
+    console.log("🔄 Cerrando sesión específica ID:", sesionId);
+    
+    const token = leerToken();
+    if (!token) {
+      console.log("❌ Token de la app no disponible");
+      return { success: false, message: "Token de la app no disponible" };
+    }
+    
+    const response = await fetch(`${URL_BASE_API_AGUAVP}/api/v2/auth/sesiones/${sesionId}`, {
+      method: "DELETE",
+      headers: {
+        "x-app-key": `AppKey ${token}`,
+        "Authorization": `Bearer ${token_session}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const data = await response.json();
+    console.log("📤 Respuesta al cerrar sesión específica:", data);
+
+    if (!response.ok) {
+      console.log("❌ Error al cerrar sesión específica:", data.error);
+      return { success: false, message: data.error || "Error al cerrar sesión" };
+    }
+
+    console.log("✅ Sesión específica cerrada exitosamente");
+    return { success: true, message: data.mensaje || "Sesión cerrada exitosamente" };
+  } catch (error) {
+    console.error("💥 Error al cerrar sesión específica:", error);
+    return { success: false, message: "Error de red" };
+  }
+};
+
+/**************************************************************************************************************
+ * Renovar access token usando refresh token
+ * ************************************************************************************************************
+ */
+const renovarToken = async (refreshToken) => {
+  try {
+    console.log("🔄 Renovando access token...");
+    console.log("📤 RefreshToken enviado:", refreshToken ? refreshToken.substring(0, 50) + "..." : "undefined");
+    
+    const token = leerToken();
+    if (!token) {
+      console.log("❌ Token de la app no disponible");
+      return { success: false, message: "Token de la app no disponible" };
+    }
+    
+    const url = `${URL_BASE_API_AGUAVP}/api/v2/auth/refresh`;
+    console.log("📍 URL de renovación:", url);
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "x-app-key": `AppKey ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ refreshToken })
+    });
+
+    console.log("📊 Status de respuesta:", response.status, response.statusText);
+    
+    const data = await response.json();
+    console.log("📤 Respuesta de renovación de token:", data);
+
+    if (!response.ok) {
+      console.log("❌ Error al renovar token. Status:", response.status);
+      console.log("❌ Error del servidor:", data.error || data.message || data);
+      return { success: false, message: data.error || data.message || "Error al renovar token" };
+    }
+
+    // Validar que la respuesta tenga el nuevo accessToken
+    if (!data.accessToken) {
+      console.error("Error: La respuesta no contiene accessToken:", data);
+      return { success: false, message: "Access token no proporcionado" };
+    }
+
+    console.log("✅ Token renovado exitosamente");
+    return {
+      success: true,
+      accessToken: data.accessToken,
+      expiresIn: data.expiresIn
+    };
+  } catch (error) {
+    console.error("💥 Error al renovar token:", error);
+    return { success: false, message: "Error de red" };
+  }
+};
 
 /**************************************************************************************************************
  * Obtener sesiones activas del usuario
@@ -199,7 +305,7 @@ const obtenerSesionesActivas = async (usuario_id) => {
 
 
 // Exportar la función para poder importarla en otros archivos
-export { loginUser, verifyToken, cerrarSesion, obtenerSesionesActivas };
+export { loginUser, verifyToken, cerrarSesion, obtenerSesionesActivas, renovarToken, cerrarSesionEspecifica };
 
 
 

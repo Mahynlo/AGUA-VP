@@ -4,7 +4,6 @@ import {
     Chip,
     Select,
     SelectItem,
-    Input,
     Pagination,
     Button,
     Card,
@@ -16,127 +15,54 @@ import {
     TableBody,
     TableRow,
     TableCell,
-    User,
-    Dropdown,
-    DropdownTrigger,
-    DropdownMenu,
-    DropdownItem,
-    Spinner,
-    Skeleton
+    User
 } from "@nextui-org/react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
-import { HiDotsVertical, HiEye, HiPencil, HiTrash, HiLocationMarker, HiPhone, HiMail, HiUsers } from "react-icons/hi";
-import { useClientes } from "../../../context/ClientesContext";
+import { HiEye, HiTrash, HiPhone, HiMail, HiLocationMarker } from "react-icons/hi";
 import RegistrarClientes from "./RegistrarCliente";
 import EditarClientes from "./EditarCliente";
+import ModalDetalleCliente from "./ModalDetalleCliente";
+import LoadingSkeleton from "./components/LoadingSkeleton";
+import { useTabClientes } from "../../../hooks/useTabClientes";
 
 export function TabClientes() {
-    const { clientes, loading, initialLoading } = useClientes();
+    const {
+        clientes,
+        filteredData,
+        paginatedData,
+        initialLoading,
+        loading,
+        search,
+        cityFilter,
+        statusFilter,
+        ciudades,
+        estados,
+        currentPage,
+        rowsPerPage,
+        totalPages,
+        handleSearch,
+        handleCityFilterChange,
+        handleStatusFilterChange,
+        handleRowsPerPageChange,
+        setCurrentPage,
+        getStatusColor
+    } = useTabClientes();
 
-    const [search, setSearch] = useState("");
-    const [cityFilter, setCityFilter] = useState("All");
-    const [statusFilter, setStatusFilter] = useState("All");
-    const [currentPage, setCurrentPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-
-    // Componente de loading elegante para la tabla
-    const LoadingSkeleton = () => (
-        <div className="space-y-6 p-4">
-            {/* Header skeleton */}
-            <Card>
-                <CardHeader>
-                    <Skeleton className="w-48 h-6 rounded-lg" />
-                </CardHeader>
-                <CardBody>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                        <div className="lg:col-span-2">
-                            <Skeleton className="w-full h-10 rounded-lg" />
-                        </div>
-                        <Skeleton className="w-full h-10 rounded-lg" />
-                        <Skeleton className="w-full h-10 rounded-lg" />
-                        <Skeleton className="w-full h-10 rounded-lg" />
-                    </div>
-                    <div className="flex justify-between items-center mt-4">
-                        <Skeleton className="w-64 h-4 rounded-lg" />
-                        <Skeleton className="w-32 h-8 rounded-lg" />
-                    </div>
-                </CardBody>
-            </Card>
-
-            {/* Table skeleton */}
-            <Card>
-                <CardBody className="p-0">
-                    <div className="space-y-3 p-4">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
-                                <Skeleton className="w-10 h-10 rounded-full" />
-                                <div className="flex-1 space-y-2">
-                                    <Skeleton className="w-3/4 h-4 rounded-lg" />
-                                    <Skeleton className="w-1/2 h-3 rounded-lg" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Skeleton className="w-16 h-6 rounded-lg" />
-                                    <Skeleton className="w-12 h-4 rounded-lg" />
-                                </div>
-                                <Skeleton className="w-8 h-8 rounded-lg" />
-                            </div>
-                        ))}
-                    </div>
-                </CardBody>
-            </Card>
-        </div>
-    );
+    const [selectedCliente, setSelectedCliente] = React.useState(null);
+    const [isDetailOpen, setIsDetailOpen] = React.useState(false);
 
     // Solo mostrar skeleton en la carga inicial para evitar parpadeos
     if (initialLoading) {
-        return <LoadingSkeleton />;
+        return <LoadingSkeleton tipo="tabla" />;
     }
 
-    // Filtrar datos por búsqueda, ciudad y estado
-    const filteredData = clientes.filter((item) => {
-        const matchesSearch = item.nombre.toLowerCase().includes(search.toLowerCase()) ||
-            (item.direccion && item.direccion.toLowerCase().includes(search.toLowerCase()));
-        const matchesCity = cityFilter === "All" || item.ciudad === cityFilter;
-        const matchesStatus = statusFilter === "All" || item.estado_cliente === statusFilter;
-
-        return matchesSearch && matchesCity && matchesStatus;
-    });
-
-    // Obtener ciudades únicas
-    const ciudades = [...new Set(clientes.map(cliente => cliente.ciudad))].filter(Boolean);
-    const estados = [...new Set(clientes.map(cliente => cliente.estado_cliente))].filter(Boolean);
-
-    // Manejar búsqueda
-    const handleSearch = (value) => {
-        setSearch(value);
-        setCurrentPage(1);
-    };
-
-    // Paginación
-    const paginatedData = filteredData.slice(
-        (currentPage - 1) * rowsPerPage,
-        currentPage * rowsPerPage
-    );
-
-    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case "Activo": return "success";
-            case "Inactivo": return "danger";
-            case "Suspendido": return "warning";
-            default: return "default";
-        }
-    };
-
+    // Manejar acciones
     const handleAction = (action, cliente) => {
         switch (action) {
             case "view":
-                console.log("Ver cliente:", cliente);
-                break;
-            case "edit":
-                console.log("Editar cliente:", cliente);
+                setSelectedCliente(cliente);
+                setIsDetailOpen(true);
                 break;
             case "delete":
                 if (confirm(`¿Está seguro de eliminar a ${cliente.nombre}?`)) {
@@ -176,22 +102,18 @@ export function TabClientes() {
                                     value={search}
                                     onChange={(e) => handleSearch(e.target.value)}
                                     onClear={() => handleSearch("")}
-                                     className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                    className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 />
                                 {/* Botón para limpiar */}
                                 {search && (
                                     <button
-                                        onClick={() => setSearch("")}
+                                        onClick={() => handleSearch("")}
                                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
                                     >
                                         ✕
                                     </button>
                                 )}
                             </div>
-
-
-
-
 
 
                         </div>
@@ -203,8 +125,7 @@ export function TabClientes() {
                             selectedKeys={cityFilter !== "All" ? [cityFilter] : []}
                             onSelectionChange={(keys) => {
                                 const value = Array.from(keys)[0] || "All";
-                                setCityFilter(value);
-                                setCurrentPage(1);
+                                handleCityFilterChange(value);
                             }}
                         >
                             <SelectItem key="All" value="All">Todas las ciudades</SelectItem>
@@ -220,8 +141,7 @@ export function TabClientes() {
                             selectedKeys={statusFilter !== "All" ? [statusFilter] : []}
                             onSelectionChange={(keys) => {
                                 const value = Array.from(keys)[0] || "All";
-                                setStatusFilter(value);
-                                setCurrentPage(1);
+                                handleStatusFilterChange(value);
                             }}
                         >
                             <SelectItem key="All" value="All">Todos los estados</SelectItem>
@@ -249,8 +169,7 @@ export function TabClientes() {
                             className="w-32"
                             selectedKeys={[rowsPerPage.toString()]}
                             onSelectionChange={(keys) => {
-                                setRowsPerPage(Number(Array.from(keys)[0]));
-                                setCurrentPage(1);
+                                handleRowsPerPageChange(Array.from(keys)[0]);
                             }}
                         >
                             <SelectItem key="5" value="5">5</SelectItem>
@@ -382,6 +301,12 @@ export function TabClientes() {
                     />
                 </div>
             )}
+            {/* Modal de Detalle */}
+            <ModalDetalleCliente
+                isOpen={isDetailOpen}
+                onClose={() => setIsDetailOpen(false)}
+                cliente={selectedCliente}
+            />
         </div>
     );
 }

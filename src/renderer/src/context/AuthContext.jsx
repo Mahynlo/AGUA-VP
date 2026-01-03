@@ -1,141 +1,298 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useFeedback } from "./FeedbackContext";
 
-
-
+// =====================================================
+// Context
+// =====================================================
 const AuthContext = createContext();
 
+// =====================================================
+// Helper: decodificar JWT de forma segura
+// =====================================================
+const decodeToken = (token) => {
+    try {
+        return JSON.parse(atob(token.split(".")[1]));
+    } catch {
+        return null;
+    }
+};
+
+// =====================================================
+// Provider
+// =====================================================
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null); // Inicializamos en `null` para indicar que no hay un usuario.
-    const navigate = useNavigate(); // Hook para redirigir a una ruta
+    const navigate = useNavigate();
+    const { setSuccess, setError } = useFeedback();
+
+    // --------------------
+    // State
+    // --------------------
+    const [user, setUser] = useState(null);
     const [sesiones, setSesiones] = useState([]);
-    const [loading, setLoading] = useState(true); // Estado para manejar la carga
-    
+    const [loading, setLoading] = useState(true);
 
+    // --------------------
+    // Refs
+    // --------------------
+    const renovacionTimerRef = useRef(null);
 
+    // =====================================================
+    // Servidor
+    // =====================================================
+    const verificarEstadoServidor = async () => {
+        try {
+            const response = await window.api.checkServerStatus();
+            return response?.status === "OK";
+        } catch (error) {
+            console.error("❌ Error al verificar servidor:", error);
+            return false;
+        }
+    };
+
+    // =====================================================
+    // Token: programación y renovación
+    // =====================================================
+    const programarRenovacion = (expiresIn = "15m") => {
+        if (renovacionTimerRef.current) {
+            clearTimeout(renovacionTimerRef.current);
+        }
+
+        const duracionMs = expiresIn.includes("m")
+            ? parseInt(expiresIn) * 60 * 1000
+            : parseInt(expiresIn) * 1000;
+
+        const renovarEn = duracionMs - 2 * 60 * 1000;
+
+        renovacionTimerRef.current = setTimeout(async () => {
+            console.log("🔄 Renovación automática del token");
+            await renovarAccessToken();
+        }, renovarEn);
+    };
+
+    const renovarAccessToken = async () => {
+        const refreshToken = localStorage.getItem("refreshToken");
+
+        if (!refreshToken) {
+            logout();
+            return null;
+        }
+
+        try {
+            const response = await window.api.refreshToken(refreshToken);
+
+            if (response?.success && response.accessToken) {
+                localStorage.setItem("token", response.accessToken);
+                programarRenovacion(response.expiresIn || "15m");
+                return response.accessToken;
+            }
+
+            const servidorActivo = await verificarEstadoServidor();
+            if (!servidorActivo) {
+                setTimeout(() => renovarAccessToken(), 60000);
+                return null;
+            }
+
+            logout();
+            return null;
+        } catch (error) {
+            const servidorActivo = await verificarEstadoServidor();
+            if (!servidorActivo) {
+                setTimeout(() => renovarAccessToken(), 60000);
+                return null;
+            }
+
+            logout();
+            return null;
+        }
+    };
+
+    // =====================================================
+    // Sesiones
+    // =====================================================
     const obtenerSesionesActivas = async (usuarioId) => {
         try {
-            const response = await window.api.getSession(usuarioId)
-            
-            if (response.success) {
-                setSesiones(response.sesiones || []);
-            } else {
-                console.error("❌ No se pudieron obtener las sesiones activas:", response.message || response.error);
-                setSesiones([]);
-            }
+            const response = await window.api.getSession(usuarioId);
+            setSesiones(response?.success ? response.sesiones || [] : []);
         } catch (error) {
-            console.error("💥 Error al obtener sesiones activas:", error);
+            console.error("💥 Error al obtener sesiones:", error);
             setSesiones([]);
         }
     };
 
+    // =====================================================
+    // Bootstrap inicial (incluye modo impresión)
+    // =====================================================
     useEffect(() => {
-        // Verificar si estamos en modo impresión
         const urlParams = new URLSearchParams(window.location.search);
-        const isPrintMode = urlParams.get('print') === 'true';
-        
-        if (isPrintMode) {
-            // SEGURIDAD: En modo impresión, verificar si hay token válido
-            const storedToken = localStorage.getItem("token");
-            if (storedToken) {
-                try {
-                    const decoded = JSON.parse(atob(storedToken.split(".")[1]));
-                    if (decoded?.id && decoded?.correo && decoded?.rol) {
-                        // Token válido - permitir modo impresión optimizado
-                        console.log('Modo impresión autorizado para usuario autenticado');
-                        setUser({ id: decoded.id,nombre:decoded.nombre,username:decoded.username, correo: decoded.correo, rol: decoded.rol, fecha_creacion: decoded.fecha_creacion });
-                        setLoading(false);
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Token inválido en modo impresión:', error);
-                }
-            }
-            
-            // No hay token válido - tratar como usuario no autenticado
-            console.warn('Modo impresión bloqueado: usuario no autenticado');
+        const isPrintMode = urlParams.get("print") === "true";
+
+        const storedToken = localStorage.getItem("token");
+        if (!storedToken) {
             setLoading(false);
             return;
         }
 
-        const storedToken = localStorage.getItem("token");
-        if (storedToken) {
-            try {
-                const decoded = JSON.parse(atob(storedToken.split(".")[1]));
-                if (decoded?.id && decoded?.correo && decoded?.rol) {
-                    setUser({ id: decoded.id,nombre:decoded.nombre,username:decoded.username, correo: decoded.correo, rol: decoded.rol, fecha_creacion: decoded.fecha_creacion });
-                    console.log("Usuario autenticado:", decoded);
-                    obtenerSesionesActivas(decoded.id).finally(() => setLoading(false));
-                } else {
-                    logout();
-                    setLoading(false);
-                }
-            } catch (error) {
-                console.error("Error al decodificar el token", error);
-                logout();
-                setLoading(false);
-            }
-        } else {
+        const decoded = decodeToken(storedToken);
+        if (!decoded?.id || !decoded?.correo || !decoded?.rol) {
+            logout();
             setLoading(false);
+            return;
         }
+
+        setUser({
+            id: decoded.id,
+            nombre: decoded.nombre,
+            username: decoded.username,
+            correo: decoded.correo,
+            rol: decoded.rol,
+            fecha_creacion: decoded.fecha_creacion
+        });
+
+        if (!isPrintMode) {
+            obtenerSesionesActivas(decoded.id);
+        }
+
+        setLoading(false);
     }, []);
 
-    const login = (token) => {
+    // =====================================================
+    // Verificación del token activo
+    // =====================================================
+    useEffect(() => {
+        if (!user) return;
+
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const decoded = decodeToken(token);
+        if (!decoded?.exp) return;
+
+        const now = Math.floor(Date.now() / 1000);
+        const restante = decoded.exp - now;
+
+        if (restante <= 120) {
+            renovarAccessToken();
+        } else {
+            programarRenovacion(`${Math.ceil(restante / 60)}m`);
+        }
+
+        return () => {
+            if (renovacionTimerRef.current) clearTimeout(renovacionTimerRef.current);
+        };
+    }, [user]);
+
+    // =====================================================
+    // Conectividad y eventos globales
+    // =====================================================
+    useEffect(() => {
+        if (!user) return;
+
+        const handleOnline = async () => {
+            if (await verificarEstadoServidor()) {
+                await renovarAccessToken();
+                window.dispatchEvent(new CustomEvent("connection-restored"));
+                setSuccess("Conexión restaurada. Actualizando datos...", "Sistema");
+            }
+        };
+
+        const handleOffline = () => {
+            setError("Conexión a internet perdida", "Sistema");
+        };
+
+        const handleTokenExpired = async () => {
+            await renovarAccessToken();
+        };
+
+        window.addEventListener("online", handleOnline);
+        window.addEventListener("offline", handleOffline);
+        window.addEventListener("token-expired", handleTokenExpired);
+
+        return () => {
+            window.removeEventListener("online", handleOnline);
+            window.removeEventListener("offline", handleOffline);
+            window.removeEventListener("token-expired", handleTokenExpired);
+        };
+    }, [user]);
+
+    // =====================================================
+    // Login / Logout
+    // =====================================================
+    const login = (token, refreshToken, expiresIn = "15m") => {
         try {
-            localStorage.setItem("token", token); // Guardamos el token
+            localStorage.setItem("token", token);
+            if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
-            const decoded = JSON.parse(atob(token.split(".")[1])); // Decodificar token
-            // Validamos si el token es válido
-            if (decoded?.id && decoded?.correo && decoded?.rol) {
-                setUser({ id: decoded.id,nombre:decoded.nombre,username:decoded.username, correo: decoded.correo, rol: decoded.rol,fecha_creacion: decoded.fecha_creacion });
-                obtenerSesionesActivas(decoded.id); // Obtenemos las sesiones activas del usuario
-                // Redirigimos dependiendo del rol
-                navigate(decoded.rol === "administrador" ? "/home" : "/ayuda");
-
-            } else {
+            const decoded = decodeToken(token);
+            if (!decoded?.id || !decoded?.correo || !decoded?.rol) {
                 throw new Error("Token inválido");
             }
+
+            setUser({
+                id: decoded.id,
+                nombre: decoded.nombre,
+                username: decoded.username,
+                correo: decoded.correo,
+                rol: decoded.rol,
+                fecha_creacion: decoded.fecha_creacion
+            });
+
+            obtenerSesionesActivas(decoded.id);
+            programarRenovacion(expiresIn);
+
+            navigate(decoded.rol === "administrador" ? "/home" : "/ayuda");
         } catch (error) {
-            console.error("Error al procesar el token", error);
+            console.error("Error en login:", error);
             logout();
         }
     };
 
-
-
-    const logout = async () => { // Limpiar el token y el estado del usuario 
+    const logout = async () => {
         const token = localStorage.getItem("token");
 
-        if (token) { // Si hay un token, intentamos cerrar sesión en el backend 
+        if (token) {
             try {
-                console.log("🔄 Enviando logout al backend...");
-                const response = await window.api.logout(token);
-                console.log("📤 Respuesta del logout:", response);
+                await window.api.logout(token);
             } catch (error) {
-                console.error("❌ Error al cerrar sesión en el backend:", error);
+                console.error("❌ Error en logout backend:", error);
             }
         }
 
-        localStorage.removeItem("token"); // Eliminar token del almacenamiento local
-        localStorage.removeItem("datosInicializados"); // 👈 limpia el flag de datos iniciales
-        setUser(null); // Limpiar el estado del usuario
-        setSesiones([]); // Limpiar sesiones activas
-        navigate("/"); // Redirigir al login
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("datosInicializados");
+
+        setUser(null);
+        setSesiones([]);
+        navigate("/");
     };
 
-    // Función para saber si hay un usuario autenticado
-    const isAuthenticated = () => {
-        return user !== null; // Si `user` es distinto de `null`, el usuario está autenticado
-    };
+    // =====================================================
+    // API pública del contexto
+    // =====================================================
+    const isAuthenticated = () => user !== null;
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated, sesiones, loading}}>
+        <AuthContext.Provider
+            value={{
+                user,
+                sesiones,
+                loading,
+                login,
+                logout,
+                renovarAccessToken,
+                isAuthenticated
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
 };
 
-// Hook personalizado para usar el contexto
+// =====================================================
+// Hook
+// =====================================================
 export const useAuth = () => useContext(AuthContext);
+
 
 

@@ -81,6 +81,9 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
       placement="center"
       isDismissable={!isLoading}
       hideCloseButton={isLoading}
+      className={{
+        backdrop: "bg-gradient-to-t mt-18 ml-24 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
+      }}
     >
       <ModalContent>
         {(onClose) => (

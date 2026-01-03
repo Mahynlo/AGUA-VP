@@ -1,336 +1,265 @@
-import { Select, SelectItem, Card, CardBody, CardHeader, Chip, Skeleton } from "@nextui-org/react";
-import React, { useEffect, useState, useMemo } from "react";
-import { HiUsers, HiTrendingUp, HiLocationMarker, HiCalendar } from "react-icons/hi";
-import ClientesRegistradosChart from "../../charts/ClientesRegistrados";
+import React, { useMemo } from "react";
+import { Select, SelectItem, Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
+import { HiUsers, HiTrendingUp, HiLocationMarker, HiCalendar, HiCheckCircle, HiXCircle } from "react-icons/hi";
+import { MdSpeed } from "react-icons/md";
 import ClientesPorMesChart from "../../charts/ChartClientesPorMes";
+import LoadingSkeleton from "./components/LoadingSkeleton";
+import { useMetricasClientes } from "../../../hooks/useMetricasClientes";
 import { useClientes } from "../../../context/ClientesContext";
 
-export const TabMetricas = () => {
-  const { clientes, loading, initialLoading } = useClientes();
-  const [periodoSeleccionado, setPeriodoSeleccionado] = useState("6meses");
+// --- Sub-componente MetricCard (Sin cambios, ya funcionaba bien) ---
+const MetricCard = ({ icon: Icon, title, value, subTitle, color, chipValue }) => {
+  const colorMap = {
+    blue: "from-blue-50 to-blue-100 text-blue-600 dark:from-blue-900/20 dark:to-blue-800/20",
+    green: "from-green-50 to-green-100 text-green-600 dark:from-green-900/20 dark:to-green-800/20",
+    purple: "from-purple-50 to-purple-100 text-purple-600 dark:from-purple-900/20 dark:to-purple-800/20",
+    red: "from-red-50 to-red-100 text-red-600 dark:from-red-900/20 dark:to-red-800/20",
+    cyan: "from-cyan-50 to-cyan-100 text-cyan-600 dark:from-cyan-900/20 dark:to-cyan-800/20",
+    amber: "from-amber-50 to-amber-100 text-amber-600 dark:from-amber-900/20 dark:to-amber-800/20",
+    teal: "from-teal-50 to-teal-100 text-teal-600 dark:from-teal-900/20 dark:to-teal-800/20",
+  };
 
-  // Componente de loading elegante para métricas
-  const LoadingSkeleton = () => (
-    <div className="space-y-6 p-4">
-      {/* Header skeleton */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="space-y-2">
-          <Skeleton className="w-48 h-8 rounded-lg" />
-          <Skeleton className="w-64 h-4 rounded-lg" />
-        </div>
-        <Skeleton className="w-32 h-10 rounded-lg" />
-      </div>
-
-      {/* Estadísticas skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i}>
-            <CardBody className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <Skeleton className="w-24 h-4 rounded-lg" />
-                  <Skeleton className="w-16 h-8 rounded-lg" />
-                </div>
-                <Skeleton className="w-12 h-12 rounded-full" />
-              </div>
-            </CardBody>
-          </Card>
-        ))}
-      </div>
-
-      {/* Charts skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="w-48 h-6 rounded-lg" />
-          </CardHeader>
-          <CardBody>
-            <Skeleton className="w-full h-64 rounded-lg" />
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader>
-            <Skeleton className="w-48 h-6 rounded-lg" />
-          </CardHeader>
-          <CardBody>
-            <Skeleton className="w-full h-64 rounded-lg" />
-          </CardBody>
-        </Card>
-      </div>
-    </div>
-  );
-
-  // Solo mostrar skeleton en la carga inicial para evitar parpadeos
-  if (initialLoading) {
-    return <LoadingSkeleton />;
-  }
-
-  // Calcular estadísticas
-  const estadisticas = useMemo(() => {
-    if (!clientes || clientes.length === 0) {
-      return {
-        totalClientes: 0,
-        clientesActivos: 0,
-        clientesNuevos: 0,
-        ciudades: [],
-        crecimientoMensual: 0,
-        porcentajeActivos: 0
-      };
-    }
-
-    const hoy = new Date();
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    const mesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
-    const finMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
-
-    // Clientes nuevos este mes
-    const clientesNuevos = clientes.filter(cliente => {
-      if (cliente.fechaRegistro) {
-        const fechaRegistro = new Date(cliente.fechaRegistro);
-        return fechaRegistro >= inicioMes;
-      }
-      return false;
-    }).length;
-
-    // Clientes del mes anterior
-    const clientesMesAnterior = clientes.filter(cliente => {
-      if (cliente.fechaRegistro) {
-        const fechaRegistro = new Date(cliente.fechaRegistro);
-        return fechaRegistro >= mesAnterior && fechaRegistro <= finMesAnterior;
-      }
-      return false;
-    }).length;
-
-    // Calcular crecimiento mensual
-    const crecimientoMensual = clientesMesAnterior > 0 
-      ? ((clientesNuevos - clientesMesAnterior) / clientesMesAnterior * 100)
-      : clientesNuevos > 0 ? 100 : 0;
-
-    const clientesActivos = clientes.filter(cliente => 
-      cliente.estado_cliente === "Activo" || !cliente.estado_cliente
-    ).length;
-
-    const ciudades = [...new Set(clientes.map(cliente => cliente.ciudad))].filter(Boolean);
-    const porcentajeActivos = (clientesActivos / clientes.length * 100);
-
-    return {
-      totalClientes: clientes.length,
-      clientesActivos,
-      clientesNuevos,
-      ciudades,
-      crecimientoMensual,
-      porcentajeActivos
-    };
-  }, [clientes]);
-
-  // Estadísticas por ciudad
-  const estadisticasPorCiudad = useMemo(() => {
-    if (!clientes || clientes.length === 0) return [];
-
-    const ciudadStats = {};
-    
-    clientes.forEach(cliente => {
-      const ciudad = cliente.ciudad || "Sin ciudad";
-      if (!ciudadStats[ciudad]) {
-        ciudadStats[ciudad] = {
-          nombre: ciudad,
-          total: 0,
-          activos: 0,
-          inactivos: 0,
-          porcentaje: 0
-        };
-      }
-      
-      ciudadStats[ciudad].total++;
-      if (cliente.estado_cliente === "Activo" || !cliente.estado_cliente) {
-        ciudadStats[ciudad].activos++;
-      } else {
-        ciudadStats[ciudad].inactivos++;
-      }
-    });
-
-    // Calcular porcentajes
-    Object.values(ciudadStats).forEach(ciudad => {
-      ciudad.porcentaje = (ciudad.total / clientes.length * 100);
-    });
-
-    return Object.values(ciudadStats).sort((a, b) => b.total - a.total);
-  }, [clientes]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Cargando métricas...</p>
-        </div>
-      </div>
-    );
-  }
+  const colorClass = colorMap[color] || colorMap.blue;
+  const textColor = colorClass.split(" ")[2]; 
 
   return (
-    <div className="space-y-6 p-4">
-      
-      {/* Métricas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20">
-          <CardBody className="text-center p-6">
-            <HiUsers className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-            <p className="text-3xl font-bold text-blue-600">{estadisticas.totalClientes}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-300">Total de Clientes</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
-          <CardBody className="text-center p-6">
-            <HiUsers className="w-12 h-12 mx-auto mb-3 text-green-600" />
-            <p className="text-3xl font-bold text-green-600">{estadisticas.clientesActivos}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-300">Clientes Activos</p>
-            <Chip size="sm" color="success" variant="flat" className="mt-2">
-              {estadisticas.porcentajeActivos.toFixed(1)}%
-            </Chip>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20">
-          <CardBody className="text-center p-6">
-            <HiCalendar className="w-12 h-12 mx-auto mb-3 text-purple-600" />
-            <p className="text-3xl font-bold text-purple-600">{estadisticas.clientesNuevos}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-300">Nuevos este Mes</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20">
-          <CardBody className="text-center p-6">
-            <HiTrendingUp className="w-12 h-12 mx-auto mb-3 text-orange-600" />
-            <p className={`text-3xl font-bold ${estadisticas.crecimientoMensual >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {estadisticas.crecimientoMensual > 0 ? '+' : ''}{estadisticas.crecimientoMensual.toFixed(1)}%
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-300">Crecimiento Mensual</p>
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* Estadísticas por ciudad */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <HiLocationMarker className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold">Distribución por Ciudad</h3>
-            {loading && !initialLoading && (
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            )}
-          </div>
-        </CardHeader>
-        <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {estadisticasPorCiudad.map((ciudad, index) => (
-              <Card key={index} className="border border-gray-200 dark:border-gray-700">
-                <CardBody className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{ciudad.nombre}</h4>
-                    <Chip size="sm" color="primary" variant="flat">
-                      {ciudad.porcentaje.toFixed(1)}%
-                    </Chip>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-300">Total:</span>
-                      <span className="font-medium">{ciudad.total}</span>
-                    </div>
-                    
-                    <div className="flex justify-between text-sm">
-                      <span className="text-green-600">Activos:</span>
-                      <span className="font-medium text-green-600">{ciudad.activos}</span>
-                    </div>
-                    
-                    {ciudad.inactivos > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-red-600">Inactivos:</span>
-                        <span className="font-medium text-red-600">{ciudad.inactivos}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Barra de progreso */}
-                  <div className="mt-3">
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${ciudad.porcentaje}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center w-full">
-              <h3 className="text-lg font-semibold">Clientes Registrados</h3>
-              <Select
-                size="sm"
-                className="w-32"
-                selectedKeys={[periodoSeleccionado]}
-                onSelectionChange={(keys) => setPeriodoSeleccionado(Array.from(keys)[0])}
-              >
-                <SelectItem key="3meses" value="3meses">3 meses</SelectItem>
-                <SelectItem key="6meses" value="6meses">6 meses</SelectItem>
-                <SelectItem key="12meses" value="12meses">12 meses</SelectItem>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardBody>
-            <ClientesRegistradosChart clientes={clientes} periodo={periodoSeleccionado} />
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-semibold">Tendencia Mensual</h3>
-          </CardHeader>
-          <CardBody>
-            <ClientesPorMesChart clientes={clientes} />
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* Resumen ejecutivo */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold">Resumen Ejecutivo</h3>
-        </CardHeader>
-        <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{estadisticas.ciudades.length}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Ciudades Atendidas</p>
-            </div>
-            
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">
-                {estadisticas.totalClientes > 0 ? (estadisticas.totalClientes / estadisticas.ciudades.length).toFixed(1) : 0}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Promedio por Ciudad</p>
-            </div>
-            
-            <div className="text-center">
-              <p className="text-2xl font-bold text-purple-600">
-                {estadisticas.porcentajeActivos.toFixed(1)}%
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Tasa de Actividad</p>
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-    </div>
+    <Card className={`bg-gradient-to-br ${colorClass} border-none shadow-sm`}>
+      <CardBody className="text-center p-6">
+        <Icon className={`w-12 h-12 mx-auto mb-3 ${textColor}`} />
+        <p className={`text-3xl font-bold ${textColor}`}>{value}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{title}</p>
+        {subTitle && <p className="text-xs text-gray-500 mt-1">{subTitle}</p>}
+        {chipValue && (
+          <Chip size="sm" className={`mt-2 bg-white/50 dark:bg-black/20 border border-${color}-200 dark:border-${color}-800`} variant="flat">
+            {chipValue}
+          </Chip>
+        )}
+      </CardBody>
+    </Card>
   );
 };
 
+export const TabMetricas = () => {
+  const { clientes, estadisticasServidor } = useClientes();
+  const {
+    estadisticas: estadisticasHook,
+    estadisticasPorCiudad,
+    initialLoading,
+    loading,
+    tipoGrafica,
+    handleCambioTipoGrafica
+  } = useMetricasClientes();
+
+  // --- Normalización de Datos ---
+  const data = useMemo(() => {
+    const resumen = estadisticasServidor?.resumen || {};
+    const medidores = estadisticasServidor?.medidores || {};
+    
+    const total = resumen.total_clientes ?? estadisticasHook.total ?? 0;
+    const activos = resumen.clientes_activos ?? estadisticasHook.activos ?? 0;
+    const nuevos = resumen.clientes_ultimo_mes ?? estadisticasHook.nuevosEsteMes ?? 0;
+    const inactivos = resumen.clientes_inactivos ?? 0;
+    const porcActivos = total > 0 ? ((activos / total) * 100).toFixed(1) : "0.0";
+    
+    return {
+      total, activos, nuevos, inactivos, porcActivos, medidores,
+      ciudades: estadisticasServidor?.distribucion?.por_ciudad || estadisticasPorCiudad || [],
+      tarifas: estadisticasServidor?.distribucion?.por_tarifa || [],
+      estados: estadisticasServidor?.distribucion?.por_estado || [],
+      fechaActualizacion: estadisticasServidor?.fecha_generacion 
+        ? new Date(estadisticasServidor.fecha_generacion).toLocaleString('es-MX') 
+        : null
+    };
+  }, [estadisticasServidor, estadisticasHook, estadisticasPorCiudad]);
+
+  // --- Lógica de Gráficas ---
+  const renderChart = () => {
+    switch (tipoGrafica) {
+      case "registros_mes":
+        return estadisticasServidor?.tendencias?.registros_ano_actual ? (
+          <ClientesPorMesChart data={estadisticasServidor.tendencias.registros_ano_actual} esDataServidor={true} titulo="Registros este Año" />
+        ) : null;
+      case "tendencia":
+        return estadisticasServidor?.tendencias?.registros_por_mes ? (
+          <ClientesPorMesChart data={estadisticasServidor.tendencias.registros_por_mes} esDataServidor={true} mostrarMesCompleto={true} titulo="Tendencia Histórica" />
+        ) : null;
+      case "ciudades":
+        return <ClientesPorMesChart data={data.ciudades.map(c => ({ mes: c.ciudad || c.nombre, cantidad: c.cantidad || c.total }))} esDataServidor={true} titulo="Distribución por Ciudad" colorPersonalizado="#8B5CF6" />;
+      case "tarifas":
+        return <ClientesPorMesChart data={data.tarifas.map(t => ({ mes: t.tarifa_nombre, cantidad: t.cantidad_clientes }))} esDataServidor={true} titulo="Distribución por Tarifa" colorPersonalizado="#F59E0B" />;
+      default:
+        return !estadisticasServidor ? <ClientesPorMesChart clientes={clientes} /> : null;
+    }
+  };
+
+  if (initialLoading) return <LoadingSkeleton tipo="metricas" />;
+
+  return (
+    <div className="space-y-6 p-4 animate-fade-in">
+      
+      {/* 1. KPIs Principales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard icon={HiUsers} title="Total Clientes" value={data.total} color="blue" />
+        <MetricCard icon={HiCheckCircle} title="Clientes Activos" value={data.activos} color="green" chipValue={`${data.porcActivos}% Activos`} />
+        <MetricCard icon={HiCalendar} title="Nuevos este Mes" value={data.nuevos} color="purple" />
+        <MetricCard icon={HiXCircle} title="Clientes Inactivos" value={data.inactivos} color="red" />
+      </div>
+
+      {/* 2. KPIs Medidores */}
+      {data.medidores.clientes_con_medidores !== undefined && (
+        <>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mt-4">Estado de Medición</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MetricCard icon={MdSpeed} title="Con Medidor" value={data.medidores.clientes_con_medidores} color="cyan" chipValue={`${data.medidores.porcentaje_con_medidores}%`} />
+            <MetricCard icon={MdSpeed} title="Sin Medidor" value={data.medidores.clientes_sin_medidores} color="amber" />
+            <MetricCard icon={MdSpeed} title="Medidores Asignados" value={data.medidores.total_medidores_asignados} color="teal" />
+          </div>
+        </>
+      )}
+
+      {/* 3. Distribuciones (Grid Complejo) */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        {/* === MEJORA AQUÍ: Columna Izquierda: Ciudades con Dark Mode Optimizado === */}
+        <Card className="xl:col-span-2 bg-white dark:bg-gray-800 border-none shadow-md">
+          <CardHeader className="flex justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                 <HiLocationMarker className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-white">Por Ciudad</h3>
+            </div>
+            {loading && !initialLoading && <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
+          </CardHeader>
+          <CardBody>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data.ciudades.map((ciudad, index) => {
+                const nombre = ciudad.ciudad || ciudad.nombre;
+                const total = ciudad.cantidad || ciudad.total;
+                const porcentaje = (total / (data.total || 1)) * 100;
+                
+                return (
+                  <div 
+                    key={index} 
+                    className="
+                      p-3 rounded-xl border transition-all duration-200
+                      bg-white border-gray-200 hover:bg-gray-50 hover:shadow-sm
+                      dark:bg-gray-800/50 dark:border-gray-700 dark:hover:bg-gray-700/50
+                    "
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-bold text-gray-700 dark:text-gray-200 text-sm truncate pr-2">
+                        {nombre}
+                      </span>
+                      {/* Chip de Porcentaje Optimizado para Dark Mode */}
+                      <span className="
+                        text-xs font-mono font-bold px-2 py-1 rounded-md
+                        bg-blue-50 text-blue-700
+                        dark:bg-blue-500/10 dark:text-blue-300
+                      ">
+                        {porcentaje.toFixed(1)}%
+                      </span>
+                    </div>
+                    
+                    {/* Barra de Progreso Optimizada */}
+                    <div className="w-full h-2 rounded-full mb-2 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                      <div 
+                        className="h-full rounded-full bg-blue-500 dark:bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                        style={{ width: `${porcentaje}%` }}
+                      ></div>
+                    </div>
+
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>Total: <strong className="text-gray-700 dark:text-gray-300">{total}</strong></span>
+                      {ciudad.activos > 0 && (
+                        <span className="flex items-center gap-1">
+                           <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                           <span className="text-green-600 dark:text-green-400 font-medium">Activos: {ciudad.activos}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Columna Derecha: Estados y Tarifas */}
+        <div className="space-y-6">
+          {/* Estados */}
+          {data.estados.length > 0 && (
+            <Card className="dark:bg-gray-800 border-none shadow-md">
+              <CardHeader className="font-semibold gap-2 border-b border-gray-100 dark:border-gray-700">
+                <HiCheckCircle className="text-green-600 dark:text-green-400"/> 
+                <span className="dark:text-white">Estado de Cuenta</span>
+              </CardHeader>
+              <CardBody className="flex flex-wrap gap-2">
+                {data.estados.map((est, i) => (
+                  <Chip 
+                    key={i} 
+                    color={est.estado === "Activo" ? "success" : "danger"} 
+                    variant="flat" 
+                    className="capitalize border dark:border-transparent"
+                  >
+                    {est.estado}: {est.cantidad}
+                  </Chip>
+                ))}
+              </CardBody>
+            </Card>
+          )}
+
+          {/* Tarifas */}
+          {data.tarifas.length > 0 && (
+            <Card className="flex-1 dark:bg-gray-800 border-none shadow-md">
+              <CardHeader className="font-semibold gap-2 border-b border-gray-100 dark:border-gray-700">
+                <HiTrendingUp className="text-purple-600 dark:text-purple-400"/> 
+                <span className="dark:text-white">Tarifas</span>
+              </CardHeader>
+              <CardBody className="space-y-3">
+                {data.tarifas.map((t, i) => (
+                  <div key={i} className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0 last:pb-0">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{t.tarifa_nombre}</p>
+                      <p className="text-[10px] text-gray-400">{t.tarifa_descripcion}</p>
+                    </div>
+                    <span className="font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded text-xs">
+                        {t.cantidad_clientes}
+                    </span>
+                  </div>
+                ))}
+              </CardBody>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* 4. Gráfica Principal */}
+      <Card className="overflow-visible dark:bg-gray-800 border-none shadow-md">
+        <CardHeader className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 pt-6">
+          <h3 className="text-lg font-semibold dark:text-white">Análisis Gráfico</h3>
+          <Select 
+            size="sm" 
+            label="Visualizar" 
+            className="w-full sm:w-48" 
+            selectedKeys={[tipoGrafica]} 
+            onChange={(e) => handleCambioTipoGrafica(e.target.value)}
+          >
+            <SelectItem key="registros_mes">Registros Anuales</SelectItem>
+            <SelectItem key="tendencia">Tendencia Histórica</SelectItem>
+            <SelectItem key="ciudades">Por Ciudad</SelectItem>
+            <SelectItem key="tarifas">Por Tarifa</SelectItem>
+          </Select>
+        </CardHeader>
+        <CardBody className="px-6 pb-6">
+          {renderChart()}
+        </CardBody>
+      </Card>
+
+      {/* 5. Footer */}
+      <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
+        {data.fechaActualizacion && `Última actualización de métricas: ${data.fechaActualizacion}`}
+      </div>
+    </div>
+  );
+};

@@ -1,43 +1,58 @@
 import React, { useState } from "react";
-import { Card, CardBody, Chip, Progress } from "@nextui-org/react";
+import { Card, CardBody, Chip, Progress, Skeleton } from "@nextui-org/react";
 import PieChart from "../charts/piechart";
 import LineChart from "../charts/lineChart";
-import CalendarInicio from "../calendario/CalendarioInicio";
 import CalendarComponent from "../calendario/Calendario";
 import { ConsumoIcon, ClientesHomeIcon, MedidioresIcon } from "../../IconsApp/IconsHome";
-import { HiCurrencyDollar, HiTrendingUp, HiTrendingDown, HiUsers, HiChartBar, HiCalendar,HiChartPie } from "react-icons/hi";
-import { useMedidores } from "../../../src/context/MedidoresContext";
-import { useClientes } from "../../../src/context/ClientesContext";
+import { HiCurrencyDollar, HiTrendingUp, HiTrendingDown, HiUsers, HiChartBar, HiChartPie } from "react-icons/hi";
+import { useDashboard } from "../../context/DashboardContext";
 import { parseDate } from "@internationalized/date";
 
-
 const InicioVista = () => {
-    const { medidores } = useMedidores();
-    const { clientes } = useClientes();
-    const [openModal, setOpenModal] = useState(true);
-    let [value, setValue] = useState(parseDate("2024-04-07"));
+    const { dashboardData, loading } = useDashboard();
 
-    // Cálculos para las métricas del dashboard
-    const totalPagos = 1250; // Ejemplo - deberías obtener esto de tu contexto
-    const consumoTotal = 600;
-    const crecimientoClientes = 8.5; // Porcentaje de crecimiento
+    // Extraer datos o usar valores por defecto/seguros
+    const stats = dashboardData?.tarjetas || {};
+    const consumo = stats.consumo || { actual: 0, variacion: 0 };
+    const clientes = stats.clientes || { total: 0, nuevos: 0, crecimiento: 0 };
+    const medidores = stats.medidores || { total: 0, nuevos_este_mes: 0, crecimiento_nuevos: 0 };
+    const recaudo = stats.pagos || { actual: 0, variacion: 0 }; // API devuelve 'pagos', lo mapeamos a 'recaudo'
+
+    // Datos para gráficos
+    const graficosAPI = dashboardData?.graficos || {};
+    const graficos = {
+        consumo_mensual: graficosAPI.linea_historico?.map(h => ({ mes: h.mes, total: h.consumo })) || [],
+        estado_clientes: graficosAPI.pie_distribucion?.map(p => ({ estado: p.nombre, cantidad: p.valor })) || []
+    };
+
+    if (loading && !dashboardData) {
+        return (
+            <div className="mt-16 h-[calc(100vh-4rem)] p-6 sm:ml-24">
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+                    {[...Array(4)].map((_, i) => (
+                        <Skeleton key={i} className="rounded-lg h-40" />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-3 sm:p-4 md:p-6 sm:ml-64 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-3 sm:p-4 md:p-6 sm:ml-24 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             {/* Header del Dashboard */}
             <div className="mb-4 sm:mb-6 md:mb-8">
-               
+
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                                <HiChartPie className="bg-blue-500 text-white rounded-full p-2 h-12 w-12" />
-                                 Dashboard General
-                              </h1>
+                    <HiChartPie className="bg-blue-500 text-white rounded-full p-2 h-12 w-12" />
+                    Panel de Infromacion General
+                </h1>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-                    Resumen general del sistema de agua Villa Pesqueira
+                    Resumen general del sistema de agua Villa Pesqueira - {dashboardData?.meta?.mes_actual || 'Cargando...'}
                 </p>
             </div>
 
             <div className="grid gap-3 sm:gap-4 md:gap-6 auto-rows-max h-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4">
-                
+
                 {/* Tarjeta de Consumo */}
                 <Card className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-1 border-none bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/50 dark:to-red-900/50 shadow-lg hover:shadow-xl transition-all duration-300">
                     <CardBody className="p-3 sm:p-4 md:p-6">
@@ -48,18 +63,23 @@ const InicioVista = () => {
                                     <p className="text-sm sm:text-base md:text-lg font-semibold text-red-700 dark:text-red-400 truncate">Consumo</p>
                                 </div>
                                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-red-600 dark:text-red-400 mb-2 truncate">
-                                    {consumoTotal} m³
+                                    {consumo.actual} m³
                                 </h3>
                                 <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                                    <Chip size="sm" color="danger" variant="flat" startContent={<HiTrendingUp className="w-3 h-3" />}>
-                                        +5.2%
+                                    <Chip
+                                        size="sm"
+                                        color={consumo.variacion >= 0 ? "danger" : "default"}
+                                        variant="flat"
+                                        startContent={consumo.variacion >= 0 ? <HiTrendingUp className="w-3 h-3" /> : <HiTrendingDown className="w-3 h-3" />}
+                                    >
+                                        {consumo.variacion > 0 ? '+' : ''}{consumo.variacion}%
                                     </Chip>
                                     <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">vs mes anterior</span>
                                 </div>
-                                <Progress 
-                                    value={75} 
-                                    color="danger" 
-                                    size="sm" 
+                                <Progress
+                                    value={75}
+                                    color="danger"
+                                    size="sm"
                                     className="mt-auto"
                                     label="Capacidad utilizada"
                                     showValueLabel={false}
@@ -82,20 +102,20 @@ const InicioVista = () => {
                                     <p className="text-sm sm:text-base md:text-lg font-semibold text-green-700 dark:text-green-400 truncate">Clientes</p>
                                 </div>
                                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400 mb-2 truncate">
-                                    {clientes.length}
+                                    {clientes.total}
                                 </h3>
                                 <div className="flex items-center gap-2 mb-2 sm:mb-3">
                                     <Chip size="sm" color="success" variant="flat" startContent={<HiTrendingUp className="w-3 h-3" />}>
-                                        +{crecimientoClientes}%
+                                        +{clientes.nuevos} nuevos
                                     </Chip>
-                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">crecimiento mensual</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">este mes</span>
                                 </div>
-                                <Progress 
-                                    value={85} 
-                                    color="success" 
-                                    size="sm" 
+                                <Progress
+                                    value={clientes.activos ? (clientes.activos / clientes.total) * 100 : 0}
+                                    color="success"
+                                    size="sm"
                                     className="mt-auto"
-                                    label="Meta mensual"
+                                    label="Activos"
                                     showValueLabel={false}
                                 />
                             </div>
@@ -116,20 +136,21 @@ const InicioVista = () => {
                                     <p className="text-sm sm:text-base md:text-lg font-semibold text-blue-700 dark:text-blue-400 truncate">Medidores</p>
                                 </div>
                                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2 truncate">
-                                    {medidores.length}
+                                    {medidores.total}
                                 </h3>
                                 <div className="flex items-center gap-2 mb-2 sm:mb-3">
                                     <Chip size="sm" color="primary" variant="flat" startContent={<HiChartBar className="w-3 h-3" />}>
-                                        {Math.round((medidores.length / (clientes.length || 1)) * 100)}% activos
+                                        +{medidores.nuevos_este_mes} nuevos
                                     </Chip>
-                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">cobertura</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">este mes</span>
                                 </div>
-                                <Progress 
-                                    value={(medidores.length / (clientes.length || 1)) * 100} 
-                                    color="primary" 
-                                    size="sm" 
+                                <Progress
+                                    value={medidores.crecimiento_nuevos || 0}
+                                    color="primary"
+                                    maxValue={100}
+                                    size="sm"
                                     className="mt-auto"
-                                    label="Cobertura de medidores"
+                                    label="Crecimiento"
                                     showValueLabel={false}
                                 />
                             </div>
@@ -140,28 +161,28 @@ const InicioVista = () => {
                     </CardBody>
                 </Card>
 
-                {/* Tarjeta de Pagos */}
+                {/* Tarjeta de Pagos (Recaudo) */}
                 <Card className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 xl:col-span-1 border-none bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50 shadow-lg hover:shadow-xl transition-all duration-300">
                     <CardBody className="p-3 sm:p-4 md:p-6">
                         <div className="flex justify-between items-start">
                             <div className="flex flex-col flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-2">
                                     <HiCurrencyDollar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-                                    <p className="text-sm sm:text-base md:text-lg font-semibold text-purple-700 dark:text-purple-400 truncate">Pagos</p>
+                                    <p className="text-sm sm:text-base md:text-lg font-semibold text-purple-700 dark:text-purple-400 truncate">Recaudo</p>
                                 </div>
                                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2 truncate">
-                                    ${totalPagos.toLocaleString()}
+                                    ${(recaudo.actual || 0).toLocaleString()}
                                 </h3>
                                 <div className="flex items-center gap-2 mb-2 sm:mb-3">
                                     <Chip size="sm" color="secondary" variant="flat" startContent={<HiTrendingUp className="w-3 h-3" />}>
-                                        +12.3%
+                                        {recaudo.variacion > 0 ? '+' : ''}{recaudo.variacion}%
                                     </Chip>
-                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">ingresos mensuales</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">vs mes anterior</span>
                                 </div>
-                                <Progress 
-                                    value={92} 
-                                    color="secondary" 
-                                    size="sm" 
+                                <Progress
+                                    value={92}
+                                    color="secondary"
+                                    size="sm"
                                     className="mt-auto"
                                     label="Tasa de cobro"
                                     showValueLabel={false}
@@ -177,9 +198,9 @@ const InicioVista = () => {
                 {/* Calendario */}
                 <Card className="col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-4 xl:col-span-4 2xl:col-span-4 border-none bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg shadow-xl max max-h-[900px]">
                     <CardBody className="p-3 sm:p-4 md:p-6">
-                        
+
                         <div className="min-h-[300px] sm:min-h-[400px] md:min-h-[851px] overflow-hidden">
-                            <CalendarComponent/>
+                            <CalendarComponent />
                         </div>
                     </CardBody>
                 </Card>
@@ -201,7 +222,7 @@ const InicioVista = () => {
                             </div>
                         </div>
                         <div className="flex-1 flex items-center justify-center overflow-hidden">
-                            <LineChart />
+                            <LineChart data={graficos.consumo_mensual} />
                         </div>
                     </CardBody>
                 </Card>
@@ -218,12 +239,12 @@ const InicioVista = () => {
                                     Participación del Consumo
                                 </h3>
                                 <p className="text-xs text-gray-600 dark:text-gray-300 truncate">
-                                    Distribución por sectores
+                                    Por Ruta
                                 </p>
                             </div>
                         </div>
                         <div className="flex-1 flex items-center justify-center overflow-hidden">
-                            <PieChart />
+                            <PieChart data={graficos.estado_clientes} unit="m³" />
                         </div>
                     </CardBody>
                 </Card>
@@ -232,5 +253,4 @@ const InicioVista = () => {
         </div>
     );
 };
-
 export default InicioVista;

@@ -4,7 +4,7 @@ const URL_LECTURAS = import.meta.env.VITE_API_FETCH_LECTURAS; // URL del endpoin
 /**************************************************************************************************************
 |      Funcion Fetch lecturas
 ************************************************************************************************************* */
-export const fetchLecturas = async (token_session) => {
+export const fetchLecturas = async (token_session, isRetry = false) => {
   try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
@@ -25,14 +25,23 @@ export const fetchLecturas = async (token_session) => {
       }
     });
 
-     if (!response.ok) {
+    if (!response.ok) {
       // Podrías leer el mensaje del backend si viene uno
       const errorBody = await response.text();
+      
+      // Si es error 403 y no es reintento, intentar renovar token
+      if (response.status === 403 && !isRetry) {
+        console.log("🔄 Token expirado en fetchLecturas, solicitando renovación...");
+        window.dispatchEvent(new CustomEvent('token-expired'));
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const newToken = localStorage.getItem('token');
+        if (newToken && newToken !== token_session) {
+          console.log("✅ Token renovado, reintentando fetchLecturas...");
+          return fetchLecturas(newToken, true);
+        }
+      }
+      
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
-    }
-
-    if (!response.ok) {
-      throw new Error("Error al obtener lecturas(ipcmain-fetch-lecturas)");
     }
 
     const data = await response.json();

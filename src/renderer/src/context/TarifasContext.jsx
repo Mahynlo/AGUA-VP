@@ -28,6 +28,17 @@ export function TarifasProvider({ children }) {
     fetchTarifas();
   }, []);
 
+  // Actualizar cuando se restaura la conexión
+  useEffect(() => {
+    const handleConnectionRestored = () => {
+      console.log("🔄 Reconexión detectada en TarifasContext, actualizando...");
+      fetchTarifas();
+    };
+
+    window.addEventListener('connection-restored', handleConnectionRestored);
+    return () => window.removeEventListener('connection-restored', handleConnectionRestored);
+  }, []);
+
   // Función para actualizar las tarifas (después de agregar o editar una)
   async function actualizarTarifas() {
     setLoading(true);

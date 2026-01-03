@@ -91,6 +91,17 @@ export function FacturasProvider({ children }) {
     }
   }, []); // Solo se ejecuta una vez al montar el componente
 
+  // Actualizar cuando se restaura la conexión
+  useEffect(() => {
+    const handleConnectionRestored = () => {
+      console.log("🔄 Reconexión detectada en FacturasContext, actualizando...");
+      fetchFacturas({ ...filtros, force: true });
+    };
+
+    window.addEventListener('connection-restored', handleConnectionRestored);
+    return () => window.removeEventListener('connection-restored', handleConnectionRestored);
+  }, [filtros, fetchFacturas]);
+
   // Función para actualizar filtros y recargar datos
   const aplicarFiltros = useCallback(async (nuevosFiltros) => {
     const filtrosActualizados = { ...filtros, ...nuevosFiltros };
