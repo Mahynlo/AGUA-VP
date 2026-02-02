@@ -230,7 +230,7 @@ const Recibo = ({ facturaData = null }) => {
                     {/* Gráfica centrada correctamente */}
                     <div className="col-span-2 flex-grow bg-white border border-gray-200 rounded-lg relative overflow-hidden flex items-center justify-center p-1">
                         <div className="w-full h-full">
-                            <BarChartRecibo />
+                            <BarChartRecibo consumoData={factura.historicoConsumo} />
                         </div>
                     </div>
                 </div>

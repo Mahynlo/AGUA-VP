@@ -6,6 +6,10 @@ import ClientesPorMesChart from "../../charts/ChartClientesPorMes";
 import LoadingSkeleton from "./components/LoadingSkeleton";
 import { useMetricasClientes } from "../../../hooks/useMetricasClientes";
 import { useClientes } from "../../../context/ClientesContext";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
+import { HiDownload } from "react-icons/hi";
+import { exportData } from "../../../utils/exportUtils";
+import { useFeedback } from "../../../context/FeedbackContext";
 
 // --- Sub-componente MetricCard (Sin cambios, ya funcionaba bien) ---
 const MetricCard = ({ icon: Icon, title, value, subTitle, color, chipValue }) => {
@@ -20,7 +24,7 @@ const MetricCard = ({ icon: Icon, title, value, subTitle, color, chipValue }) =>
   };
 
   const colorClass = colorMap[color] || colorMap.blue;
-  const textColor = colorClass.split(" ")[2]; 
+  const textColor = colorClass.split(" ")[2];
 
   return (
     <Card className={`bg-gradient-to-br ${colorClass} border-none shadow-sm`}>
@@ -48,26 +52,29 @@ export const TabMetricas = () => {
     loading,
     tipoGrafica,
     handleCambioTipoGrafica
+
   } = useMetricasClientes();
+
+  const { setSuccess } = useFeedback();
 
   // --- Normalización de Datos ---
   const data = useMemo(() => {
     const resumen = estadisticasServidor?.resumen || {};
     const medidores = estadisticasServidor?.medidores || {};
-    
+
     const total = resumen.total_clientes ?? estadisticasHook.total ?? 0;
     const activos = resumen.clientes_activos ?? estadisticasHook.activos ?? 0;
     const nuevos = resumen.clientes_ultimo_mes ?? estadisticasHook.nuevosEsteMes ?? 0;
     const inactivos = resumen.clientes_inactivos ?? 0;
     const porcActivos = total > 0 ? ((activos / total) * 100).toFixed(1) : "0.0";
-    
+
     return {
       total, activos, nuevos, inactivos, porcActivos, medidores,
       ciudades: estadisticasServidor?.distribucion?.por_ciudad || estadisticasPorCiudad || [],
       tarifas: estadisticasServidor?.distribucion?.por_tarifa || [],
       estados: estadisticasServidor?.distribucion?.por_estado || [],
-      fechaActualizacion: estadisticasServidor?.fecha_generacion 
-        ? new Date(estadisticasServidor.fecha_generacion).toLocaleString('es-MX') 
+      fechaActualizacion: estadisticasServidor?.fecha_generacion
+        ? new Date(estadisticasServidor.fecha_generacion).toLocaleString('es-MX')
         : null
     };
   }, [estadisticasServidor, estadisticasHook, estadisticasPorCiudad]);
@@ -96,7 +103,69 @@ export const TabMetricas = () => {
 
   return (
     <div className="space-y-6 p-4 animate-fade-in">
-      
+
+      {/* 0. Header con Exportación */}
+      <div className="flex justify-end mb-2">
+        <Dropdown>
+          <DropdownTrigger>
+            <Button
+              color="success"
+              className="text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md"
+              startContent={<HiDownload className="text-lg" />}
+            >
+              Exportar Reporte
+            </Button>
+          </DropdownTrigger>
+          <DropdownMenu aria-label="Opciones de exportación de métricas">
+            <DropdownItem
+              key="csv"
+              startContent={<span className="text-xl">📄</span>}
+              onPress={async () => {
+                // Preparar datos para reporte
+                const reportData = {
+                  "Resumen": [{
+                    Total: data.total,
+                    Activos: data.activos,
+                    Inactivos: data.inactivos,
+                    Nuevos_Mes: data.nuevos,
+                    Porcentaje_Activos: `${data.porcActivos}%`
+                  }],
+                  "Ciudades": data.ciudades,
+                  "Tarifas": data.tarifas,
+                  "Estados": data.estados
+                };
+                const success = await exportData(reportData, `Reporte_Metricas_Clientes_${new Date().toISOString().split('T')[0]}`, 'csv');
+                if (success) setSuccess("Reporte CSV generado exitosamente");
+              }}
+            >
+              Exportar CSV (Resumen)
+            </DropdownItem>
+            <DropdownItem
+              key="excel"
+              startContent={<span className="text-xl">📊</span>}
+              onPress={async () => {
+                const reportData = {
+                  "Resumen": [{
+                    Total: data.total,
+                    Activos: data.activos,
+                    Inactivos: data.inactivos,
+                    Nuevos_Mes: data.nuevos,
+                    Porcentaje_Activos: `${data.porcActivos}%`
+                  }],
+                  "Ciudades": data.ciudades,
+                  "Tarifas": data.tarifas,
+                  "Estados": data.estados
+                };
+                const success = await exportData(reportData, `Reporte_Metricas_Clientes_${new Date().toISOString().split('T')[0]}`, 'xlsx');
+                if (success) setSuccess("Reporte Excel generado con múltiples hojas");
+              }}
+            >
+              Exportar Excel Completo (.xlsx)
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+      </div>
+
       {/* 1. KPIs Principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard icon={HiUsers} title="Total Clientes" value={data.total} color="blue" />
@@ -119,13 +188,13 @@ export const TabMetricas = () => {
 
       {/* 3. Distribuciones (Grid Complejo) */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
+
         {/* === MEJORA AQUÍ: Columna Izquierda: Ciudades con Dark Mode Optimizado === */}
         <Card className="xl:col-span-2 bg-white dark:bg-gray-800 border-none shadow-md">
           <CardHeader className="flex justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                 <HiLocationMarker className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <HiLocationMarker className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-lg font-bold text-gray-800 dark:text-white">Por Ciudad</h3>
             </div>
@@ -137,10 +206,10 @@ export const TabMetricas = () => {
                 const nombre = ciudad.ciudad || ciudad.nombre;
                 const total = ciudad.cantidad || ciudad.total;
                 const porcentaje = (total / (data.total || 1)) * 100;
-                
+
                 return (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="
                       p-3 rounded-xl border transition-all duration-200
                       bg-white border-gray-200 hover:bg-gray-50 hover:shadow-sm
@@ -160,11 +229,11 @@ export const TabMetricas = () => {
                         {porcentaje.toFixed(1)}%
                       </span>
                     </div>
-                    
+
                     {/* Barra de Progreso Optimizada */}
                     <div className="w-full h-2 rounded-full mb-2 bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                      <div 
-                        className="h-full rounded-full bg-blue-500 dark:bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                      <div
+                        className="h-full rounded-full bg-blue-500 dark:bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
                         style={{ width: `${porcentaje}%` }}
                       ></div>
                     </div>
@@ -173,8 +242,8 @@ export const TabMetricas = () => {
                       <span>Total: <strong className="text-gray-700 dark:text-gray-300">{total}</strong></span>
                       {ciudad.activos > 0 && (
                         <span className="flex items-center gap-1">
-                           <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                           <span className="text-green-600 dark:text-green-400 font-medium">Activos: {ciudad.activos}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                          <span className="text-green-600 dark:text-green-400 font-medium">Activos: {ciudad.activos}</span>
                         </span>
                       )}
                     </div>
@@ -191,15 +260,15 @@ export const TabMetricas = () => {
           {data.estados.length > 0 && (
             <Card className="dark:bg-gray-800 border-none shadow-md">
               <CardHeader className="font-semibold gap-2 border-b border-gray-100 dark:border-gray-700">
-                <HiCheckCircle className="text-green-600 dark:text-green-400"/> 
+                <HiCheckCircle className="text-green-600 dark:text-green-400" />
                 <span className="dark:text-white">Estado de Cuenta</span>
               </CardHeader>
               <CardBody className="flex flex-wrap gap-2">
                 {data.estados.map((est, i) => (
-                  <Chip 
-                    key={i} 
-                    color={est.estado === "Activo" ? "success" : "danger"} 
-                    variant="flat" 
+                  <Chip
+                    key={i}
+                    color={est.estado === "Activo" ? "success" : "danger"}
+                    variant="flat"
                     className="capitalize border dark:border-transparent"
                   >
                     {est.estado}: {est.cantidad}
@@ -213,7 +282,7 @@ export const TabMetricas = () => {
           {data.tarifas.length > 0 && (
             <Card className="flex-1 dark:bg-gray-800 border-none shadow-md">
               <CardHeader className="font-semibold gap-2 border-b border-gray-100 dark:border-gray-700">
-                <HiTrendingUp className="text-purple-600 dark:text-purple-400"/> 
+                <HiTrendingUp className="text-purple-600 dark:text-purple-400" />
                 <span className="dark:text-white">Tarifas</span>
               </CardHeader>
               <CardBody className="space-y-3">
@@ -224,7 +293,7 @@ export const TabMetricas = () => {
                       <p className="text-[10px] text-gray-400">{t.tarifa_descripcion}</p>
                     </div>
                     <span className="font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded text-xs">
-                        {t.cantidad_clientes}
+                      {t.cantidad_clientes}
                     </span>
                   </div>
                 ))}
@@ -238,11 +307,11 @@ export const TabMetricas = () => {
       <Card className="overflow-visible dark:bg-gray-800 border-none shadow-md">
         <CardHeader className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 pt-6">
           <h3 className="text-lg font-semibold dark:text-white">Análisis Gráfico</h3>
-          <Select 
-            size="sm" 
-            label="Visualizar" 
-            className="w-full sm:w-48" 
-            selectedKeys={[tipoGrafica]} 
+          <Select
+            size="sm"
+            label="Visualizar"
+            className="w-full sm:w-48"
+            selectedKeys={[tipoGrafica]}
             onChange={(e) => handleCambioTipoGrafica(e.target.value)}
           >
             <SelectItem key="registros_mes">Registros Anuales</SelectItem>

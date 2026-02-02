@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { calcularEstadisticasRutas, generarOpcionesPeriodo } from "../utils/rutaUtils";
+import { useRutas } from "../context/RutasContext";
 
 /**
  * Hook personalizado para manejar la lógica de TabRutas
@@ -12,70 +13,51 @@ import { calcularEstadisticasRutas, generarOpcionesPeriodo } from "../utils/ruta
  * @returns {Object} - Estados y funciones para TabRutas
  */
 export function useTabRutas(rutas, actualizarRutas, periodoActual) {
+  const { pagination, loading, initialLoading, fetchRutas } = useRutas(); // Usar fetchRutas del context
+
   // Estados de UI
   const [search, setSearch] = useState("");
-  const [filtro, setFiltro] = useState("todos");
+  // Nota: Filtros de estado y pueblo requieren backend más complejo. 
+  // Por ahora mantenemos paginación server-side simple con búsqueda.
+  const [filtro, setFiltro] = useState("todos"); 
   const [filtroPueblo, setPueblo] = useState("todos");
+  
   const [paginaActual, setPagina] = useState(1);
-  const [rutasPorPagina, setPorPag] = useState(4);
+  const [rutasPorPagina, setPorPag] = useState(10); // Default solicitado 10
   const [periodoSel, setPeriodoSel] = useState(null);
+
+  // Debounce search
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+     const timer = setTimeout(() => setDebouncedSearch(search), 500);
+     return () => clearTimeout(timer);
+  }, [search]);
 
   // Opciones de periodo (12 últimos meses)
   const opcionesPeriodo = useMemo(() => generarOpcionesPeriodo(12), []);
-
-  // Actualizar rutas cuando cambia el periodo
+  
+  // Effect: Actualizar datos al cambiar filtros o página
   useEffect(() => {
-    if (periodoSel && periodoSel !== periodoActual) {
-      actualizarRutas(periodoSel);
-    }
-  }, [periodoSel, periodoActual, actualizarRutas]);
+    // Si viene del props (legacy) ignoramos, usamos el del context
+    // Llamar al fetch con params
+    fetchRutas({
+        page: paginaActual,
+        limit: rutasPorPagina,
+        search: debouncedSearch,
+        periodo: periodoSel || periodoActual
+    });
+  }, [paginaActual, rutasPorPagina, debouncedSearch, periodoSel, periodoActual /*, filtro, filtroPueblo*/]);
 
-  // Calcular tarjetas por responsive
-  useEffect(() => {
-    const calcularPorPagina = () => {
-      const w = window.innerWidth;
-      setPorPag(w < 640 ? 2 : w < 1024 ? 4 : w < 1280 ? 6 : 8);
-    };
-    
-    calcularPorPagina();
-    window.addEventListener("resize", calcularPorPagina);
-    return () => window.removeEventListener("resize", calcularPorPagina);
-  }, []);
-
-  // Calcular estadísticas
+  // Calcular estadísticas (Nota: con paginación server-side, esto solo calcula sobre la página visible
+  // Si se requieren estadísticas globales, se debería usar otro endpoint o el objeto pagination)
   const estadisticas = useMemo(() => {
     return calcularEstadisticasRutas(rutas);
   }, [rutas]);
 
-  // Aplicar filtros
-  const rutasFiltradas = useMemo(() => {
-    return rutas
-      .filter(r => r.nombre.toLowerCase().includes(search.toLowerCase()))
-      .filter(r => {
-        if (filtro === "completas") return r.completadas >= r.total_puntos;
-        if (filtro === "incompletas") return r.completadas < r.total_puntos;
-        return true;
-      })
-      .filter(r => {
-        if (filtroPueblo === "todos") return true;
-        // Determinar prefijo dominante
-        const freq = {};
-        r.numeros_serie?.forEach(s => {
-          const p = s.slice(0, 2).toLowerCase();
-          freq[p] = (freq[p] || 0) + 1;
-        });
-        const dominante = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
-        return dominante === filtroPueblo;
-      });
-  }, [rutas, search, filtro, filtroPueblo]);
-
-  // Calcular paginación
-  const totalPaginas = Math.ceil(rutasFiltradas.length / rutasPorPagina);
-  const rutasPaginadas = useMemo(() => {
-    const inicio = (paginaActual - 1) * rutasPorPagina;
-    const fin = inicio + rutasPorPagina;
-    return rutasFiltradas.slice(inicio, fin);
-  }, [rutasFiltradas, paginaActual, rutasPorPagina]);
+  // Rutas ya vienen paginadas del server
+  const rutasPaginadas = rutas; 
+  const totalPaginas = pagination ? pagination.totalPages : 1;
+  const totalItems = pagination ? pagination.total : 0;
 
   // Funciones para actualizar filtros y resetear página
   const actualizarSearch = (valor) => {
@@ -86,11 +68,13 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
   const actualizarFiltro = (valor) => {
     setFiltro(valor);
     setPagina(1);
+    // TODO: Implementar filtro server-side
   };
 
   const actualizarPueblo = (valor) => {
     setPueblo(valor);
     setPagina(1);
+    // TODO: Implementar filtro server-side
   };
 
   const actualizarPeriodo = (valor) => {
@@ -103,6 +87,7 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
     setFiltro("todos");
     setPueblo("todos");
     setPagina(1);
+    setPeriodoSel(null);
   };
 
   return {
@@ -121,9 +106,10 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
     setPagina,
     rutasPorPagina,
     totalPaginas,
+    totalItems,
     
     // Datos
-    rutasFiltradas,
+    rutasFiltradas: rutasPaginadas, // Compatibilidad
     rutasPaginadas,
     estadisticas,
     opcionesPeriodo,

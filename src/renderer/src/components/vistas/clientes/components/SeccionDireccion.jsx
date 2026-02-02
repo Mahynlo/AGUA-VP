@@ -5,6 +5,7 @@
 import React from "react";
 import { Card, CardBody, Select, SelectItem } from "@nextui-org/react";
 import { HiLocationMarker } from "react-icons/hi";
+import { CustomTextarea } from "../../../ui/FormComponents";
 
 const pueblos = [
   { key: "Nacori Grande", label: "Nacori Grande" },
@@ -12,12 +13,12 @@ const pueblos = [
   { key: "Adivino", label: "Adivino" },
 ];
 
-export const SeccionDireccion = ({ 
-  formData, 
-  erroresCampos, 
-  mostrarErrores, 
-  onChange, 
-  limpiarError 
+export const SeccionDireccion = ({
+  formData,
+  erroresCampos,
+  mostrarErrores,
+  onChange,
+  limpiarError
 }) => {
   return (
     <Card className="border border-green-200 dark:border-green-800 mt-2">
@@ -57,30 +58,19 @@ export const SeccionDireccion = ({
         </div>
 
         {/* Dirección Completa */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Ingresa la dirección completa del cliente, incluyendo calle, número, colonia, referencias, etc.
-          </label>
-          <textarea
-            label="Dirección Completa"
-            placeholder="Ingresa la dirección completa del cliente..."
-            value={formData.direccion}
-            onChange={(e) => {
-              onChange('direccion', e.target.value);
-              limpiarError('direccion');
-            }}
-            required
-            rows="3"
-            className={`border ${
-              mostrarErrores && erroresCampos.direccion 
-                ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-                : 'border-gray-300 focus:ring-blue-600 focus:border-blue-500'
-            } text-gray-600 rounded-xl pl-4 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none`}
-          />
-          {mostrarErrores && erroresCampos.direccion && (
-            <p className="text-sm text-red-500 mt-1">La dirección es requerida</p>
-          )}
-        </div>
+        <CustomTextarea
+          label="Dirección Completa"
+          placeholder="Ingresa la dirección completa del cliente..."
+          value={formData.direccion}
+          onChange={(e) => {
+            onChange('direccion', e.target.value);
+            limpiarError('direccion');
+          }}
+          required
+          minRows={3}
+          isInvalid={mostrarErrores && !!erroresCampos.direccion}
+          errorMessage="La dirección es requerida"
+        />
       </CardBody>
     </Card>
   );

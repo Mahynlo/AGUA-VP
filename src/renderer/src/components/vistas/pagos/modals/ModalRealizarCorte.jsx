@@ -1,7 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Textarea, Select, SelectItem } from "@nextui-org/react";
 import { HiBan, HiExclamation, HiChat } from "react-icons/hi";
 import { useAuth } from "../../../../context/AuthContext";
+
+// Componente de Textarea Personalizado (FUERA del componente principal)
+const CustomTextarea = ({ label, value, onChange, icon }) => (
+    <div>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+            {label}
+        </label>
+        <div className="relative w-full flex">
+            <span className="absolute left-2 top-3 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 pr-2 h-6">
+                {icon}
+            </span>
+            <textarea
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                rows={3}
+                className="border border-gray-300 focus:ring-red-600 focus:border-red-500 text-gray-600 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all resize-none"
+                placeholder="Detalles adicionales sobre la acción..."
+            />
+        </div>
+    </div>
+);
 
 const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
     // const { token } = useAuth();
@@ -10,46 +31,52 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
     const [observaciones, setObservaciones] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // Reset form cuando se abre el modal
+    useEffect(() => {
+        if (isOpen && selectedDeudor) {
+            setMotivo("Falta de pago");
+            setObservaciones("");
+            setLoading(false);
+        }
+    }, [isOpen, selectedDeudor]);
+
     if (!selectedDeudor) return null;
 
     const handleConfirm = async () => {
+        // Validación previa
+        if (!selectedDeudor.medidor?.id) {
+            console.error("Error: medidor.id no está disponible", selectedDeudor);
+            alert("Error: No se pudo obtener el ID del medidor");
+            return;
+        }
+
+        if (!motivo) {
+            alert("Por favor seleccione un motivo");
+            return;
+        }
+
         setLoading(true);
+
+        const payload = {
+            medidor_id: selectedDeudor.medidor.id,
+            motivo,
+            observaciones
+        };
+
+        console.log("Enviando corte con payload:", payload);
+
         try {
-            await window.api.deudores.ejecutarCorte(token, {
-                medidor_id: selectedDeudor.medidor.id, // Asumiendo estructura de respuesta
-                motivo,
-                observaciones
-            });
+            const result = await window.api.deudores.ejecutarCorte(token, payload);
+            console.log("Corte ejecutado exitosamente:", result);
             onSuccess(); // Recargar lista
             onClose();
         } catch (error) {
             console.error("Error ejecutando corte:", error);
-            // Toast error
+            alert(`Error al ejecutar el corte: ${error.message || 'Error desconocido'}`);
         } finally {
             setLoading(false);
         }
     };
-
-    // Estilo personalizado para Textarea
-    const CustomTextarea = ({ label, value, onChange, icon }) => (
-        <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                {label}
-            </label>
-            <div className="relative w-full flex">
-                <span className="absolute left-2 top-3 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 pr-2 h-6">
-                    {icon}
-                </span>
-                <textarea
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    rows={3}
-                    className="border border-gray-300 focus:ring-red-600 focus:border-red-500 text-gray-600 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all resize-none"
-                    placeholder="Detalles adicionales sobre la acción..."
-                />
-            </div>
-        </div>
-    );
 
     return (
         <Modal

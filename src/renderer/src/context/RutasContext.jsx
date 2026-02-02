@@ -14,16 +14,17 @@ function obtenerPeriodoActual() {
 // Proveedor de rutas
 export function RutasProvider({ children }) {
     const [rutas, setRutas] = useState([]);
+    const [pagination, setPagination] = useState(null); // Nuevo estado
     const [loading, setLoading] = useState(true);
     const [initialLoading, setInitialLoading] = useState(true);
     const [periodoActual, setPeriodoActual] = useState(obtenerPeriodoActual());
     const [error, setError] = useState(null);
 
 
-    // Función para obtener rutas desde el backend (puede recibir un período)
-    const fetchRutas = useCallback(async (periodo = periodoActual) => {
+    // Función para obtener rutas desde el backend (puede recibir un período o params)
+    const fetchRutas = useCallback(async (paramsOrPeriodo = periodoActual) => {
         try {
-            // Solo mostrar loading completo en updates, no en carga inicial
+            // Solo mostrar loading completo en updates, no en carga inicial si ya cargó
             if (!initialLoading) {
                 setLoading(true);
             }
@@ -31,14 +32,39 @@ export function RutasProvider({ children }) {
             if (!token_session) {
                 throw new Error("No se encontró token de sesión");
             }
-            const data = await window.api.listarRutas(token_session, periodo);
-            setRutas(Array.isArray(data.rutas) ? data.rutas : []);
-            setPeriodoActual(periodo);
+
+            // Determinar params
+            let params = {};
+            if (typeof paramsOrPeriodo === 'string') {
+                params = { periodo: paramsOrPeriodo, limit: 10, page: 1 }; // Default legacy
+            } else {
+                params = {
+                    periodo: periodoActual,
+                    limit: 10, // Default limit per requirement
+                    ...paramsOrPeriodo
+                };
+            }
+
+            const data = await window.api.listarRutas(token_session, params);
+
+            if (data.rutas) {
+                setRutas(Array.isArray(data.rutas) ? data.rutas : []);
+                setPagination(data.pagination || null); // Guardar estado paginación
+                if (data.periodo) setPeriodoActual(data.periodo);
+            } else if (Array.isArray(data)) {
+                // Fallback legacy
+                setRutas(data);
+                setPagination(null);
+            } else {
+                setRutas([]);
+                setPagination(null);
+            }
 
         } catch (error) {
             console.error("❌ Error al obtener rutas:", error);
             setRutas([]);
             setError(error);
+            setPagination(null);
         } finally {
             setLoading(false);
             setInitialLoading(false);
@@ -107,7 +133,9 @@ export function RutasProvider({ children }) {
             actualizarRutas,
             actualizarProgresoRuta,
             obtenerInfoRuta,
-            periodoActual
+            periodoActual,
+            pagination, // Exportar paginación
+            fetchRutas // Exponer fetch manual
         }}>
             {children}
         </RutasContext.Provider>

@@ -44,7 +44,7 @@ const ReporteClientesCompleto = () => {
         const total = clientes.length;
         const activos = clientes.filter(c => c.estado_cliente === "Activo").length;
         const inactivos = total - activos;
-        
+
         // Agrupación por Ciudad
         const porCiudad = clientes.reduce((acc, curr) => {
             const ciudad = curr.ciudad || "SIN CIUDAD";
@@ -58,7 +58,7 @@ const ReporteClientesCompleto = () => {
             nombre: ciudad,
             cantidad: porCiudad[ciudad].length,
             porcentaje: (porCiudad[ciudad].length / total) * 100
-        })).sort((a,b) => b.cantidad - a.cantidad);
+        })).sort((a, b) => b.cantidad - a.cantidad);
 
         // Estadísticas por Tarifa
         const tarifas = clientes.reduce((acc, curr) => {
@@ -66,7 +66,7 @@ const ReporteClientesCompleto = () => {
             acc[t] = (acc[t] || 0) + 1;
             return acc;
         }, {});
-        
+
         const statsTarifa = Object.keys(tarifas).map(k => ({
             nombre: k,
             cantidad: tarifas[k],
@@ -86,7 +86,31 @@ const ReporteClientesCompleto = () => {
                 {`
                     @media print {
                         @page { size: letter; margin: 1cm; }
-                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        
+                        /* RESET COMPLETO DE ESTILOS DE IMPRESIÓN */
+                        *, *::before, *::after {
+                            background-color: transparent !important;
+                            color: black !important;
+                            box-shadow: none !important;
+                            text-shadow: none !important;
+                        }
+
+                        /* FONDO BLANCO ABSOLUTO */
+                        html, body, #root, .min-h-screen { 
+                            background-color: white !important; 
+                            -webkit-print-color-adjust: exact !important; 
+                            print-color-adjust: exact !important;
+                        }
+
+                        /* RESTAURAR COLORES NECESARIOS */
+                        .bg-blue-50 { background-color: #eff6ff !important; }
+                        .bg-green-50 { background-color: #f0fdf4 !important; }
+                        .bg-red-50 { background-color: #fef2f2 !important; }
+                        .bg-gray-100 { background-color: #f3f4f6 !important; }
+                        .bg-blue-600 { background-color: #2563eb !important; color: white !important; }
+                        .bg-purple-600 { background-color: #9333ea !important; color: white !important; }
+                        
+                        /* UTILIDADES DE PAGINACIÓN */
                         .no-break { break-inside: avoid; page-break-inside: avoid; }
                         .salto-pagina { break-before: page; }
                     }
@@ -94,7 +118,7 @@ const ReporteClientesCompleto = () => {
             </style>
 
             <div className="min-h-screen bg-white p-8 font-sans text-gray-800">
-                
+
                 {/* === HEADER === */}
                 <div className="flex justify-between items-end border-b-4 border-blue-900 pb-4 mb-6">
                     <div>
@@ -128,7 +152,7 @@ const ReporteClientesCompleto = () => {
 
                 {/* === SECCIÓN 2: GRÁFICAS DE DISTRIBUCIÓN (CSS PRINT-SAFE) === */}
                 <div className="grid grid-cols-2 gap-8 mb-8 no-break">
-                    
+
                     {/* Gráfica por Ciudad */}
                     <div className="border border-gray-200 rounded-xl p-5">
                         <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 flex items-center gap-2 border-b pb-2">
@@ -142,8 +166,8 @@ const ReporteClientesCompleto = () => {
                                         <span>{ciudad.cantidad} ({ciudad.porcentaje.toFixed(1)}%)</span>
                                     </div>
                                     <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                                        <div 
-                                            className="bg-blue-600 h-full rounded-full print:bg-blue-600" 
+                                        <div
+                                            className="bg-blue-600 h-full rounded-full print:bg-blue-600"
                                             style={{ width: `${ciudad.porcentaje}%` }}
                                         ></div>
                                     </div>
@@ -162,7 +186,7 @@ const ReporteClientesCompleto = () => {
                                 <div key={idx} className="flex items-center gap-3">
                                     <div className="w-24 text-xs font-bold text-gray-600 text-right">{t.nombre}</div>
                                     <div className="flex-1 bg-gray-100 h-6 rounded overflow-hidden relative">
-                                        <div 
+                                        <div
                                             className="bg-purple-600 h-full flex items-center px-2 text-[10px] text-white font-bold whitespace-nowrap"
                                             style={{ width: `${Math.max(t.porcentaje, 10)}%` }} // Min width para texto
                                         >
@@ -215,12 +239,11 @@ const ReporteClientesCompleto = () => {
                                             <td className="p-2 text-gray-600">{cliente.tarifa}</td>
                                             <td className="p-2 text-center font-mono text-gray-500">{cliente.telefono || "-"}</td>
                                             <td className="p-2 text-center">
-                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                                                    cliente.estado_cliente === 'Activo' 
-                                                    ? 'text-green-700 bg-green-50' 
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${cliente.estado_cliente === 'Activo'
+                                                    ? 'text-green-700 bg-green-50'
                                                     : 'text-red-700 bg-red-50'
-                                                }`}>
-                                                    {cliente.estado_cliente?.toUpperCase().substring(0,1)}
+                                                    }`}>
+                                                    {cliente.estado_cliente?.toUpperCase().substring(0, 1)}
                                                 </span>
                                             </td>
                                         </tr>

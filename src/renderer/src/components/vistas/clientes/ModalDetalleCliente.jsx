@@ -185,11 +185,21 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                                                 <Card key={medidor.id} className="border border-blue-200 dark:border-blue-800 shadow-none bg-white dark:bg-neutral-800">
                                                     <CardBody className="p-3">
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                            <div>
-                                                                <span className="text-[10px] text-gray-500 block uppercase tracking-wide">Número de Serie</span>
-                                                                <span className="text-sm font-bold text-blue-700 dark:text-blue-300 font-mono">
-                                                                    {medidor.numero_serie}
-                                                                </span>
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <span className="text-[10px] text-gray-500 block uppercase tracking-wide">Número de Serie</span>
+                                                                    <span className="text-sm font-bold text-blue-700 dark:text-blue-300 font-mono">
+                                                                        {medidor.numero_serie}
+                                                                    </span>
+                                                                </div>
+                                                                <Chip
+                                                                    size="sm"
+                                                                    className="h-5 text-[10px]"
+                                                                    color={medidor.estado_servicio === 'Cortado' ? 'danger' : (medidor.estado_medidor === 'Activo' ? 'success' : 'default')}
+                                                                    variant="flat"
+                                                                >
+                                                                    {medidor.estado_servicio === 'Cortado' ? 'Cortado' : medidor.estado_medidor}
+                                                                </Chip>
                                                             </div>
                                                             <div>
                                                                 <span className="text-[10px] text-gray-500 block uppercase tracking-wide">Modelo / Marca</span>

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Tabs, Tab } from "@nextui-org/react";
-import { 
-  DashboardIcon, 
-  GestionClientesIcon, 
-  GestionMedidoresIcon, 
+import {
+  DashboardIcon,
+  GestionClientesIcon,
+  GestionMedidoresIcon,
   LecturasAdminIcon,
   FacturacionAdminIcon,
   PagosAdminIcon,
@@ -21,7 +21,7 @@ import GestionUsuarios from "./GestionUsuarios";
 
 export default function Administrador() {
   return (
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-64">
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-3 sm:p-4 md:p-6 sm:ml-24">
       <div className="w-full h-full bg-white overflow-x-hidden gap-4 p-2 rounded-lg shadow-md dark:bg-gray-800">
         <div className="flex w-full flex-col">
           <Tabs
@@ -47,7 +47,7 @@ export default function Administrador() {
             >
               <DashboardAdmin />
             </Tab>
-            
+
             <Tab
               key="clientes"
               title={
@@ -59,7 +59,7 @@ export default function Administrador() {
             >
               <GestionClientes />
             </Tab>
-            
+
             <Tab
               key="medidores"
               title={
@@ -71,7 +71,7 @@ export default function Administrador() {
             >
               <GestionMedidores />
             </Tab>
-            
+
             <Tab
               key="lecturas"
               title={
@@ -86,7 +86,7 @@ export default function Administrador() {
                 <p>Componente en desarrollo...</p>
               </div>
             </Tab>
-            
+
             <Tab
               key="facturacion"
               title={
@@ -101,7 +101,7 @@ export default function Administrador() {
                 <p>Componente en desarrollo...</p>
               </div>
             </Tab>
-            
+
             <Tab
               key="pagos"
               title={
@@ -116,7 +116,7 @@ export default function Administrador() {
                 <p>Componente en desarrollo...</p>
               </div>
             </Tab>
-            
+
             <Tab
               key="tarifas"
               title={
@@ -131,7 +131,7 @@ export default function Administrador() {
                 <p>Componente en desarrollo...</p>
               </div>
             </Tab>
-            
+
             <Tab
               key="mantenimiento"
               title={
@@ -146,7 +146,7 @@ export default function Administrador() {
                 <p>Componente en desarrollo...</p>
               </div>
             </Tab>
-            
+
             <Tab
               key="configuracion"
               title={
@@ -161,7 +161,7 @@ export default function Administrador() {
                 <p>Componente en desarrollo...</p>
               </div>
             </Tab>
-            
+
             <Tab
               key="usuarios"
               title={

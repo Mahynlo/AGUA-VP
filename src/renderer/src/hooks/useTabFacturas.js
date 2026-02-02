@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
-import { useClientes } from "../context/ClientesContext";
+import { useFacturas } from "../context/FacturasContext";
 
-export const useTabClientes = () => {
-  const { clientes, pagination, loading, initialLoading, fetchClientes, estadisticas } = useClientes();
+export const useTabFacturas = () =>{
+  const { facturas, pagination, loading, initialLoading, fetchFacturas, estadisticas, actualizarFacturas } = useFacturas();
 
   // Estados de filtros y búsqueda
   const [search, setSearch] = useState("");
-  const [cityFilter, setCityFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [filtroEstado, setFiltroEstado] = useState("All");
+  const [filtroPeriodo, setFiltroPeriodo] = useState("2025-12");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   
@@ -27,26 +27,19 @@ export const useTabClientes = () => {
 
   // Effect: Buscar datos cuando cambian los filtros o la página API requerida
   useEffect(() => {
-      fetchClientes({
+      fetchFacturas({
+          periodo: filtroPeriodo,
           page: apiPage,
           limit: FETCH_LIMIT,
           search: debouncedSearch,
-          ciudad: cityFilter === "All" ? "" : cityFilter,
-          estado: statusFilter === "All" ? "" : statusFilter
+          estado: filtroEstado === "All" ? "" : filtroEstado
       });
-  }, [debouncedSearch, cityFilter, statusFilter, apiPage, fetchClientes]); // rowsPerPage no está porque solo afecta apiPage
+  }, [debouncedSearch, filtroEstado, filtroPeriodo, apiPage, fetchFacturas]);
 
-  // Obtener listas únicas para filtros
-  const ciudades = useMemo(() => {
-    if (estadisticas?.distribucion?.por_ciudad) {
-        return estadisticas.distribucion.por_ciudad.map(c => c.ciudad);
-    }
-    return [];
-  }, [estadisticas]);
+  // Estados fijos para filtro
+  const estados = ["Pendiente", "Pagado", "Vencido", "En Convenio"];
 
-  const estados = ["Activo", "Inactivo", "Suspendido"];
-
-  // Paginación: Cortar los datos del buffer (clientes) para mostrar solo la página actual
+  // Paginación: Cortar los datos del buffer (facturas) para mostrar solo la página actual
   const paginatedData = useMemo(() => {
     // Verificar si el buffer actual corresponde a la página que queremos
     if (pagination && pagination.page !== apiPage) {
@@ -58,8 +51,8 @@ export const useTabClientes = () => {
     const startIndex = ((currentPage - 1) * rowsPerPage) % FETCH_LIMIT;
     const endIndex = startIndex + rowsPerPage;
     
-    return clientes.slice(startIndex, endIndex);
-  }, [clientes, currentPage, rowsPerPage, pagination, apiPage]);
+    return facturas.slice(startIndex, endIndex);
+  }, [facturas, currentPage, rowsPerPage, pagination, apiPage]);
 
   // Total de páginas REAL (basado en el total de la BD)
   const totalItems = pagination ? pagination.total : 0;
@@ -71,13 +64,13 @@ export const useTabClientes = () => {
     setCurrentPage(1);
   };
 
-  const handleCityFilterChange = (value) => {
-    setCityFilter(value);
+  const handleEstadoFilterChange = (value) => {
+    setFiltroEstado(value);
     setCurrentPage(1);
   };
 
-  const handleStatusFilterChange = (value) => {
-    setStatusFilter(value);
+  const handlePeriodoChange = (value) => {
+    setFiltroPeriodo(value);
     setCurrentPage(1);
   };
 
@@ -87,34 +80,36 @@ export const useTabClientes = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "Activo": return "success";
-      case "Inactivo": return "danger";
-      case "Suspendido": return "warning";
+    switch (status?.toLowerCase()) {
+      case "pagado": return "success";
+      case "pendiente": return "warning";
+      case "vencido": return "danger";
+      case "en convenio": return "primary";
       default: return "default";
     }
   };
 
   return {
-    clientes, 
-    filteredData: clientes, 
+    facturas, 
+    filteredData: facturas,
     paginatedData,
     loading,
     initialLoading,
     search,
-    cityFilter,
-    statusFilter,
-    ciudades,
+    filtroEstado,
+    filtroPeriodo,
     estados,
     currentPage,
     rowsPerPage,
     totalPages,
     totalItems,
+    estadisticas,
     handleSearch,
-    handleCityFilterChange,
-    handleStatusFilterChange,
+    handleEstadoFilterChange,
+    handlePeriodoChange,
     handleRowsPerPageChange,
     setCurrentPage,
-    getStatusColor
+    getStatusColor,
+    actualizarFacturas
   };
 };

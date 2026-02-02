@@ -6,11 +6,19 @@ import {
   ModalFooter,
   Button,
   useDisclosure,
+  Select,
+  SelectItem
 } from "@nextui-org/react";
 import { useState } from "react";
+import { HiUser, HiMail, HiLockClosed, HiShieldCheck, HiBadgeCheck } from "react-icons/hi";
 import FeedbackMessages from "../toast/FeedbackMessages";
+import { CustomInput } from "../ui/FormComponents";
 
-export default function ModalRegistrarUsuario() {
+// Changed Import: Use UsuariosContext instead of AuthContext
+import { useUsuarios } from "../../context/UsuariosContext";
+
+export default function ModalRegistrarUsuario({ onUserRegistered }) {
+  const { createUser } = useUsuarios();
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
   // ─── State ──────────────────────────────────────────────────────────
@@ -20,49 +28,79 @@ export default function ModalRegistrarUsuario() {
   const [contrasena, setContrasena] = useState("");
   const [confirmarContrasena, setConfirmarContrasena] = useState("");
   const [rol, setRol] = useState("operador"); // valor por defecto
-  const [error, setError] = useState("");
+
+  // Validation state
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [generalError, setGeneralError] = useState("");
   const [success, setSuccess] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
   // ─── Registro real ─────────────────────────────────────────────────
   const handleRegistro = async () => {
-    setError("");
+    setGeneralError("");
     setSuccess("");
+    setFieldErrors({});
+
+    const newErrors = {};
 
     // Validaciones
-    if (!username || !correo || !contrasena || !confirmarContrasena) {
-      setError("Todos los campos son obligatorios.");
-      return;
+    if (!nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
+    if (!correo.trim()) newErrors.correo = "El correo es obligatorio";
+
+    if (!username.trim()) {
+      newErrors.username = "El usuario es obligatorio";
+    } else if (username.includes(" ") || username.length < 4) {
+      newErrors.username = "Mínimo 4 caracteres y sin espacios";
     }
-    if (username.includes(" ") || username.length < 4) {
-      setError("El nombre de usuario debe tener al menos 4 caracteres y no contener espacios.");
-      return;
+
+    if (!contrasena) {
+      newErrors.contrasena = "La contraseña es obligatoria";
+    } else {
+      if (contrasena.length < 8) {
+        newErrors.contrasena = "Mínimo 8 caracteres";
+      } else if (!/[A-Z]/.test(contrasena)) {
+        newErrors.contrasena = "Requiere al menos una mayúscula";
+      } else if (!/[0-9]/.test(contrasena)) {
+        newErrors.contrasena = "Requiere al menos un número";
+      } else if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(contrasena)) {
+        newErrors.contrasena = "Requiere un carácter especial (@, #, $, etc.)";
+      }
     }
-    if (contrasena.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
+
     if (contrasena !== confirmarContrasena) {
-      setError("Las contraseñas no coinciden.");
+      newErrors.confirmarContrasena = "Las contraseñas no coinciden";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      // setGeneralError("Por favor corrige los errores antes de continuar.");
       return;
     }
 
     // Llamada API
     try {
       setIsUpdating(true);
-      const response = await window.api.register({ correo,nombre, contrasena, username, rol });
 
-      if (response.success) {
-        setSuccess("Registro exitoso.");
-        setTimeout(() => {
-          limpiarCampos();
-          onClose();
-        }, 1500);
-      } else {
-        setError(response.message || "No se pudo registrar.");
-      }
+      // Usamos createUser del contexto (ya maneja token internamente)
+      await createUser({
+        correo,
+        nombre,
+        contrasena,
+        username,
+        rol,
+        confirmarContrasena
+      });
+
+      setSuccess("Usuario registrado exitosamente.");
+      setTimeout(() => {
+        limpiarCampos();
+        onClose();
+        if (onUserRegistered) onUserRegistered(); // Refrescar lista si se pasa prop
+      }, 1500);
+
     } catch (err) {
-      setError("Ocurrió un error en el registro. Intenta nuevamente.");
+      // El error ya se muestra en toast por el context, pero también lo mostramos local
+      setGeneralError(err.message || "Ocurrió un error en el registro.");
     } finally {
       setIsUpdating(false);
     }
@@ -75,46 +113,65 @@ export default function ModalRegistrarUsuario() {
     setContrasena("");
     setConfirmarContrasena("");
     setRol("operador");
-    setError("");
+    setGeneralError("");
+    setFieldErrors({});
     setSuccess("");
   };
+
+  const handleClose = () => {
+    limpiarCampos();
+    onClose();
+  }
 
   // ─── Render ────────────────────────────────────────────────────────
   return (
     <>
-      <Button color="primary" onPress={onOpen}>
+      <Button
+        color="primary"
+        onPress={onOpen}
+        startContent={<HiUser className="w-5 h-5" />}
+      >
         Nuevo Usuario
       </Button>
 
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        size="lg"
-        backdrop="transparent"
+        size="2xl"
+        backdrop="blur"
         scrollBehavior="inside"
         isDismissable={!isUpdating}
         isKeyboardDismissDisabled={isUpdating}
         classNames={{
-          header:
-            "dark:border-b-[1px] dark:border-[#6879bd] border-b-[1px] border-gray-400",
-          footer:
-            "dark:border-t-[1px] dark:border-[#6879bd] border-t-[1px] border-gray-400",
-          closeButton:
-            "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
+          backdrop: "bg-gradient-to-t mt-18 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
+          closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white"
         }}
+        onClose={handleClose}
       >
         <ModalContent>
-          {(onCloseModal) => (
+          {(onClose) => (
             <>
-              <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
-                Registrar Usuario
+              <ModalHeader className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full">
+                    <HiUser className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold text-gray-800 dark:text-white">
+                      Registrar Usuario
+                    </span>
+                    <span className="text-sm font-normal text-gray-500">
+                      Crear un nuevo acceso al sistema
+                    </span>
+                  </div>
+                </div>
               </ModalHeader>
 
-              <ModalBody className="bg-gray-100 dark:bg-gray-800">
+              <ModalBody className="py-6 space-y-4">
                 <FeedbackMessages
-                  error={error}
+                  error={generalError}
                   success={success}
-                  setError={setError}
+                  setError={setGeneralError}
                   setSuccess={setSuccess}
                 />
 
@@ -124,87 +181,118 @@ export default function ModalRegistrarUsuario() {
                     e.preventDefault();
                     handleRegistro();
                   }}
-                  className="grid gap-4"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
                 >
-                  <div>
-                    <label className="text-sm font-medium dark:text-white">Nombre</label>
-                    <input
-                      type="text"
-                      value={nombre}
-                      onChange={(e) => setNombre(e.target.value)}
-                      placeholder="Nombre del usuario"
-                      className="mt-1 w-full p-2 rounded border border-gray-300 dark:bg-neutral-800 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium dark:text-white">Username</label>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="mt-1 w-full p-2 rounded border border-gray-300 dark:bg-neutral-800 dark:text-white"
-                    />
-                  </div>
+                  <CustomInput
+                    label="Nombre Completo"
+                    placeholder="Nombre del personal"
+                    value={nombre}
+                    onChange={(e) => {
+                      setNombre(e.target.value);
+                      if (fieldErrors.nombre) setFieldErrors({ ...fieldErrors, nombre: null });
+                    }}
+                    icon={<HiBadgeCheck className="w-5 h-5 text-gray-400" />}
+                    isInvalid={!!fieldErrors.nombre}
+                    errorMessage={fieldErrors.nombre}
+                    required
+                    className="md:col-span-2"
+                  />
 
-                  <div>
-                    <label className="text-sm font-medium dark:text-white">Correo</label>
-                    <input
-                      type="email"
-                      value={correo}
-                      onChange={(e) => setCorreo(e.target.value)}
-                      className="mt-1 w-full p-2 rounded border border-gray-300 dark:bg-neutral-800 dark:text-white"
-                    />
-                  </div>
+                  <CustomInput
+                    label="Usuario (Login)"
+                    placeholder="Ej. juan.perez"
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      if (fieldErrors.username) setFieldErrors({ ...fieldErrors, username: null });
+                    }}
+                    icon={<HiUser className="w-5 h-5 text-gray-400" />}
+                    isInvalid={!!fieldErrors.username}
+                    errorMessage={fieldErrors.username}
+                    required
+                  />
 
-                  <div>
-                    <label className="text-sm font-medium dark:text-white">Contraseña</label>
-                    <input
-                      type="password"
-                      value={contrasena}
-                      onChange={(e) => setContrasena(e.target.value)}
-                      className="mt-1 w-full p-2 rounded border border-gray-300 dark:bg-neutral-800 dark:text-white"
-                    />
-                  </div>
+                  <CustomInput
+                    label="Correo Electrónico"
+                    type="email"
+                    placeholder="contacto@ejemplo.com"
+                    value={correo}
+                    onChange={(e) => {
+                      setCorreo(e.target.value);
+                      if (fieldErrors.correo) setFieldErrors({ ...fieldErrors, correo: null });
+                    }}
+                    icon={<HiMail className="w-5 h-5 text-gray-400" />}
+                    isInvalid={!!fieldErrors.correo}
+                    errorMessage={fieldErrors.correo}
+                    required
+                  />
 
-                  <div>
-                    <label className="text-sm font-medium dark:text-white">Confirmar contraseña</label>
-                    <input
-                      type="password"
-                      value={confirmarContrasena}
-                      onChange={(e) => setConfirmarContrasena(e.target.value)}
-                      className="mt-1 w-full p-2 rounded border border-gray-300 dark:bg-neutral-800 dark:text-white"
-                    />
-                  </div>
+                  <CustomInput
+                    label="Contraseña"
+                    type="password"
+                    placeholder="Mín. 8 chars, 1 Mayús, 1 Num, 1 Símbolo"
+                    value={contrasena}
+                    onChange={(e) => {
+                      setContrasena(e.target.value);
+                      if (fieldErrors.contrasena) setFieldErrors({ ...fieldErrors, contrasena: null });
+                    }}
+                    icon={<HiLockClosed className="w-5 h-5 text-gray-400" />}
+                    isInvalid={!!fieldErrors.contrasena}
+                    errorMessage={fieldErrors.contrasena}
+                    required
+                  />
 
-                  <div>
-                    <label className="text-sm font-medium dark:text-white">Rol</label>
-                    <select
-                      value={rol}
+                  <CustomInput
+                    label="Confirmar Contraseña"
+                    type="password"
+                    placeholder="••••••"
+                    value={confirmarContrasena}
+                    onChange={(e) => {
+                      setConfirmarContrasena(e.target.value);
+                      if (fieldErrors.confirmarContrasena) setFieldErrors({ ...fieldErrors, confirmarContrasena: null });
+                    }}
+                    icon={<HiLockClosed className="w-5 h-5 text-gray-400" />}
+                    isInvalid={!!fieldErrors.confirmarContrasena}
+                    errorMessage={fieldErrors.confirmarContrasena}
+                    required
+                  />
+
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                      Rol / Permisos <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      selectedKeys={[rol]}
                       onChange={(e) => setRol(e.target.value)}
-                      className="mt-1 w-full p-2 rounded border border-gray-300 dark:bg-neutral-800 dark:text-white"
+                      placeholder="Selecciona el rol"
+                      startContent={<HiShieldCheck className="text-gray-400 text-lg" />}
+                      className="w-full"
                     >
-                      <option value="operador">Operador</option>
-                      <option value="administrador">Administrador</option>
-                      <option value="superadmin">Superadmin</option>
-                    </select>
+                      <SelectItem key="operador" value="operador">Operador (Básico)</SelectItem>
+                      <SelectItem key="administrador" value="administrador">Administrador (Gestión)</SelectItem>
+                      <SelectItem key="superadmin" value="superadmin">Superadmin (Acceso Total)</SelectItem>
+                    </Select>
+                    <p className="text-xs text-gray-400 mt-1">Define el nivel de acceso al sistema.</p>
                   </div>
+
                 </form>
               </ModalBody>
 
-              <ModalFooter className="bg-gray-300 dark:bg-gray-700">
-                <Button
-                  color="primary"
-                  onClick={handleRegistro}
-                  isDisabled={isUpdating}
-                >
-                  {isUpdating ? "Procesando..." : "Registrar"}
-                </Button>
+              <ModalFooter className="border-t border-gray-200 dark:border-zinc-800">
                 <Button
                   color="danger"
-                  onPress={onCloseModal}
+                  variant="light"
+                  onPress={handleClose}
                   isDisabled={isUpdating}
                 >
                   Cancelar
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={handleRegistro}
+                  isLoading={isUpdating}
+                >
+                  {isUpdating ? "Registrando..." : "Confirmar Registro"}
                 </Button>
               </ModalFooter>
             </>

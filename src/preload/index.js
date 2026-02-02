@@ -4,8 +4,8 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   //clintes
-  fetchClientes: async (token_session) => {
-    return await ipcRenderer.invoke("fetch-clientes", token_session);
+  fetchClientes: async (token_session, params) => {
+    return await ipcRenderer.invoke("fetch-clientes", token_session, params);
   },
   fetchClientesEstadisticas: async (token_session) => {
     return await ipcRenderer.invoke("fetch-clientes-estadisticas", token_session);
@@ -15,8 +15,8 @@ const api = {
   asignarTarifaCliente: (data) => ipcRenderer.invoke("asignar-tarifa-cliente", data),
 
   //medidores
-  fetchMedidores: async (token_session) => {
-    return await ipcRenderer.invoke("fetch-medidores",token_session);
+  fetchMedidores: async (token_session, params) => {
+    return await ipcRenderer.invoke("fetch-medidores", token_session, params);
   },
   registerMeter: (data) => ipcRenderer.invoke("register-medidor", data),
   updateMedidor: (data) => ipcRenderer.invoke("update-medidor", data),
@@ -26,13 +26,22 @@ const api = {
   login: (data) => ipcRenderer.invoke("login", data),
   register: (data) => ipcRenderer.invoke("register", data),
 
+  // Gestión de Usuarios (Admin V2)
+  fetchUsuarios: async (token, params) => ipcRenderer.invoke("fetch-usuarios", token, params),
+  createUser: (data, token) => ipcRenderer.invoke("create-user", data, token),
+  updateUser: (data, token) => ipcRenderer.invoke("update-user", data, token),
+  deleteUser: (data, token) => ipcRenderer.invoke("delete-user", data, token),
+  reactivateUser: (id, token) => ipcRenderer.invoke("reactivate-user", id, token),
+
   //sesiones (cerrar sesión, verificar sesión, obtener sesiones activas, renovar token)
   verifySession: (token) => ipcRenderer.invoke("verify-session", token),
   logout: (token) => ipcRenderer.invoke("logout", token),
-  getSession: (usuario_id) => ipcRenderer.invoke("active-sessions-user", usuario_id),
+  getSession: (usuario_id, token) => ipcRenderer.invoke("active-sessions-user", usuario_id, token),
   refreshToken: (refreshToken) => ipcRenderer.invoke("refresh-token", refreshToken),
   closeSpecificSession: (sesionId, token) => ipcRenderer.invoke("close-specific-session", sesionId, token),
+  closeAllUserSessions: (usuarioId, token) => ipcRenderer.invoke("close-all-user-sessions", usuarioId, token),
   checkServerStatus: () => ipcRenderer.invoke("check-server-status"),
+  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   
 
   // Rutas
@@ -43,8 +52,8 @@ const api = {
   modificarRuta: async (token_session, id_ruta, datosActualizados) => {
     return await ipcRenderer.invoke("modificar-ruta", token_session, id_ruta, datosActualizados);
   },
-  listarRutas: async (token_session, periodo) => {
-    return await ipcRenderer.invoke("listar-rutas", token_session, periodo);
+  listarRutas: async (token_session, params) => {
+    return await ipcRenderer.invoke("listar-rutas", token_session, params);
   },
   listarRutasInfoMedidores: async (token_session, id_ruta) => {
     return await ipcRenderer.invoke("listar-rutas-info-medidores", token_session, id_ruta);
@@ -62,8 +71,8 @@ const api = {
 
 
   // Fetch de pagos
-  fetchPagos: async (token_session, periodo) => {
-    return await ipcRenderer.invoke("fetch-pagos", token_session, periodo);
+  fetchPagos: async (token_session, params) => {
+    return await ipcRenderer.invoke("fetch-pagos", token_session, params);
   },
 
   // Registro de pagos
@@ -72,8 +81,8 @@ const api = {
   },
 
   // Fetch de facturas
-  fetchFacturas: async (token_session, periodo) => {
-    return await ipcRenderer.invoke("fetch-facturas", token_session, periodo);
+  fetchFacturas: async (token_session, params) => {
+    return await ipcRenderer.invoke("fetch-facturas", { token_session, params });
   },
 
   // Registro de facturas
@@ -102,6 +111,8 @@ const api = {
     ejecutarCorte: async (token, data) => ipcRenderer.invoke('ejecutar-corte', token, data),
     registrarReconexion: async (token, data) => ipcRenderer.invoke('registrar-reconexion', token, data),
     crearConvenio: async (token, data) => ipcRenderer.invoke('crear-convenio', token, data),
+    obtenerConvenio: async (token, convenioId) => ipcRenderer.invoke('obtener-convenio', token, convenioId),
+    pagarParcialidad: async (token, data) => ipcRenderer.invoke('pagar-parcialidad', token, data)
   },
 
 
@@ -131,6 +142,16 @@ const api = {
   // Transferencia de datos segura (FileSystem)
   savePrintData: (data) => ipcRenderer.invoke('savePrintData', data),
   getPrintData: (id) => ipcRenderer.invoke('getPrintData', id),
+  
+  // Zoom Controls
+  zoomIn: () => ipcRenderer.invoke('zoom-in'),
+  zoomOut: () => ipcRenderer.invoke('zoom-out'),
+  zoomReset: () => ipcRenderer.invoke('zoom-reset'),
+  getZoomLevel: () => ipcRenderer.invoke('get-zoom-level'),
+  onZoomLevelChanged: (callback) => ipcRenderer.on('zoom-changed', (event, level) => callback(level)),
+
+  // Exportar archivos nativamente
+  saveFile: (data) => ipcRenderer.invoke('save-file-dialog', data),
 }
 
 // objecto para manejar la autenticación de la aplicación
@@ -145,7 +166,7 @@ const authApp = {
 const tarifasApp = {
   registerTarifa: (data) => ipcRenderer.invoke('register-tarifa', data),
   registrarRangosTarifa: (data) => ipcRenderer.invoke('registrar-rangos-tarifa', data),
-  fetchTarifas: (data) => ipcRenderer.invoke('fetch-tarifas', data),
+  fetchTarifas: (data) => ipcRenderer.invoke('fetch-tarifas', data), // data = { token_session, params }
   updateTarifa: (data) => ipcRenderer.invoke('update-tarifa', data),
   updateRangosTarifa: (data) => ipcRenderer.invoke('update-rangos-tarifa', data),
 };

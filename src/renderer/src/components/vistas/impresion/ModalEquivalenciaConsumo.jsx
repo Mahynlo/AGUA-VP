@@ -8,16 +8,43 @@ import {
   Card,
   CardBody,
   CardHeader,
-  Input,
   Chip,
   Tabs,
   Tab,
-  Divider,
   Spinner
 } from "@nextui-org/react";
 import { useState } from "react";
 import { HiScale, HiBeaker, HiCollection, HiX } from "react-icons/hi";
 import useEquivalenciaConsumo from "../../../hooks/useEquivalenciaConsumo";
+
+// Componente de Input Personalizado (Estandarizado)
+const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, min, max, placeholder, suffix }) => (
+  <div>
+    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+      {label}
+    </label>
+    <div className="relative w-full flex">
+      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2 pr-2">
+        {icon}
+      </span>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        min={min}
+        max={max}
+        className={`border border-gray-300 focus:ring-${color}-600 focus:border-${color}-500 text-gray-600 rounded-xl pl-12 ${suffix ? 'pr-10' : 'pr-4'} py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all`}
+      />
+      {suffix && (
+        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium text-sm pointer-events-none">
+          {suffix}
+        </span>
+      )}
+    </div>
+    {description && <p className="text-xs text-gray-400 mt-1">{description}</p>}
+  </div>
+);
 
 const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
   const { obtenerTodasLasFrases, probarEquivalencia, loading, error } = useEquivalenciaConsumo();
@@ -74,15 +101,16 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
   }
 
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       onOpenChange={onClose}
       size="4xl"
       backdrop="blur"
       placement="center"
       scrollBehavior="inside"
-      className={{
-        backdrop: "bg-gradient-to-t mt-18 ml-24 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
+      classNames={{
+        backdrop: "bg-gradient-to-t mt-18 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
+        closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white"
       }}
     >
       <ModalContent>
@@ -90,23 +118,25 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
           <>
             <ModalHeader className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <HiScale className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div className="p-2 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full">
+                  <HiScale className="w-6 h-6" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold">Equivalencias de Consumo de Agua</h3>
-                  <p className="text-sm text-gray-500 font-normal">
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold text-gray-800 dark:text-white">
+                    Equivalencias de Consumo
+                  </span>
+                  <span className="text-sm font-normal text-gray-500">
                     Configure las frases automáticas que aparecen en los recibos
-                  </p>
+                  </span>
                 </div>
               </div>
             </ModalHeader>
-            
-            <ModalBody>
+
+            <ModalBody className="py-6">
               <Tabs aria-label="Opciones de equivalencias" color="primary" variant="underlined">
                 {/* Tab de Prueba */}
-                <Tab 
-                  key="prueba" 
+                <Tab
+                  key="prueba"
                   title={
                     <div className="flex items-center gap-2">
                       <HiBeaker />
@@ -114,55 +144,52 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
                     </div>
                   }
                 >
-                  <div className="space-y-4">
-                    <Card>
-                      <CardHeader>
-                        <h4 className="text-lg font-semibold">Probar Equivalencia</h4>
+                  <div className="space-y-6 pt-2">
+                    <Card className="shadow-sm border border-gray-100 dark:border-gray-800">
+                      <CardHeader className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300">Simulador de Consumo</h4>
                       </CardHeader>
-                      <CardBody className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <Input
+                      <CardBody className="space-y-6 p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                          <CustomInput
+                            label="Consumo a probar"
                             type="number"
-                            label="Consumo a probar (m³)"
                             placeholder="Ej: 25"
-                            value={consumoPrueba.toString()}
-                            onValueChange={(value) => setConsumoPrueba(Number(value))}
+                            value={consumoPrueba}
+                            onChange={(e) => setConsumoPrueba(parseInt(e.target.value) || 0)}
+                            icon={<HiBeaker className="w-5 h-5 text-blue-500" />}
+                            suffix="m³"
+                            color="blue"
                             min={0}
                             max={1000}
-                            startContent={
-                              <div className="pointer-events-none flex items-center">
-                                <span className="text-default-400 text-small">m³</span>
-                              </div>
-                            }
+                            description="Ingrese un valor en metros cúbicos para ver el mensaje resultante."
                           />
-                          <Button 
-                            color="primary" 
+
+                          <Button
+                            color="primary"
                             onPress={handlePrueba}
                             startContent={<HiBeaker />}
-                            className="h-14"
+                            className="h-11 shadow-lg shadow-blue-500/30 w-full md:w-auto"
+                            radius="lg"
                           >
                             Generar Equivalencia
                           </Button>
                         </div>
-                        
+
                         {frasePrueba && (
-                          <Card>
-                            <CardBody className="bg-success-50 dark:bg-success-900/30">
-                              <div className="flex items-start gap-3">
-                                <div className="p-2 bg-success-200 dark:bg-success-800 rounded-lg">
-                                  <HiScale className="w-5 h-5 text-success-600 dark:text-success-400" />
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-success-800 dark:text-success-200 mb-1">
-                                    Equivalencia generada:
-                                  </p>
-                                  <p className="text-success-700 dark:text-success-300 italic">
-                                    "{frasePrueba}"
-                                  </p>
-                                </div>
-                              </div>
-                            </CardBody>
-                          </Card>
+                          <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800/30 flex items-start gap-4">
+                            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full shrink-0">
+                              <HiScale className="w-5 h-5 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm font-bold text-green-800 dark:text-green-300">
+                                Resultado:
+                              </p>
+                              <p className="text-base text-green-700 dark:text-green-400 italic leading-relaxed">
+                                "{frasePrueba}"
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </CardBody>
                     </Card>
@@ -170,8 +197,8 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
                 </Tab>
 
                 {/* Tab de Frases Disponibles */}
-                <Tab 
-                  key="frases" 
+                <Tab
+                  key="frases"
                   title={
                     <div className="flex items-center gap-2">
                       <HiCollection />
@@ -182,41 +209,27 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
                     </div>
                   }
                 >
-                  <div className="space-y-4">
-                    <Card>
-                      <CardHeader>
-                        <h4 className="text-lg font-semibold">Todas las Frases de Equivalencia</h4>
-                      </CardHeader>
-                      <CardBody>
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                  <div className="space-y-4 pt-2">
+                    <Card className="shadow-none border border-gray-200 dark:border-gray-700 bg-transparent">
+                      <CardBody className="p-0">
+                        <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                           {frasesDisponibles.map((item, index) => (
-                            <Card key={index} className="border border-gray-200 dark:border-gray-700">
-                              <CardBody className="py-3">
-                                <div className="flex justify-between items-start gap-4">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Chip 
-                                        size="sm" 
-                                        color="primary" 
-                                        variant="flat"
-                                      >
-                                        {item.rango_min}-{item.rango_max} m³
-                                      </Chip>
-                                      <Chip 
-                                        size="sm" 
-                                        color="secondary" 
-                                        variant="flat"
-                                      >
-                                        {item.categoria}
-                                      </Chip>
-                                    </div>
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                                      {item.frase}
-                                    </p>
+                            <div key={index} className="group p-4 bg-white dark:bg-zinc-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-all shadow-sm hover:shadow-md">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 dark:bg-blue-900/40 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                    <span>Rango:</span>
+                                    <span className="text-blue-900 dark:text-blue-100">{item.rango_min}-{item.rango_max} m³</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-100 dark:bg-purple-900/40 rounded-lg text-xs font-semibold text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                    {item.categoria}
                                   </div>
                                 </div>
-                              </CardBody>
-                            </Card>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed pl-1 py-1">
+                                  {item.frase}
+                                </p>
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </CardBody>
@@ -225,12 +238,14 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
                 </Tab>
               </Tabs>
             </ModalBody>
-            
-            <ModalFooter>
-              <Button 
-                variant="light" 
+
+            <ModalFooter className="border-t border-gray-100 dark:border-gray-800 pt-4">
+              <Button
+                variant="light"
+                color="danger"
                 onPress={onClose}
                 startContent={<HiX />}
+                radius="lg"
               >
                 Cerrar
               </Button>

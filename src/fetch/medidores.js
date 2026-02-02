@@ -3,7 +3,7 @@ const URL_MEDIDORES = import.meta.env.VITE_API_FETCH_MEDIDORES; // URL del endpo
 // Asumiendo que VITE_API_FETCH_MEDIDORES apunta a /api/v2/medidores
  
 
-export const fetchMedidores = async (token_session, isRetry = false) => {
+export const fetchMedidores = async (token_session, params = {}, isRetry = false) => {
   try {
     const token_app = leerToken();
     if (!token_app) {
@@ -16,10 +16,15 @@ export const fetchMedidores = async (token_session, isRetry = false) => {
       return [];
     }
 
-    // console.log("Token de la app (medidores):", token_app);
-    // console.log("Token de sesión (medidores):", token_session);
+    // Construir URL con parámetros
+    const url = new URL(URL_MEDIDORES);
+    Object.keys(params).forEach(key => {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+            url.searchParams.append(key, params[key]);
+        }
+    });
 
-    const response = await fetch(URL_MEDIDORES, {
+    const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
         "x-app-key": `AppKey ${token_app}`,
@@ -39,7 +44,7 @@ export const fetchMedidores = async (token_session, isRetry = false) => {
         const newToken = localStorage.getItem('token');
         if (newToken && newToken !== token_session) {
           console.log("✅ Token renovado, reintentando fetchMedidores...");
-          return fetchMedidores(newToken, true);
+          return fetchMedidores(newToken, params, true);
         }
       }
       
@@ -47,7 +52,6 @@ export const fetchMedidores = async (token_session, isRetry = false) => {
     }
 
     const data = await response.json();
-    // console.log("Datos obtenidos de medidores:", data);
     return data;
 
   } catch (error) {

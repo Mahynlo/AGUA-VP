@@ -10,13 +10,13 @@ import useEquivalenciaConsumo from '../../hooks/useEquivalenciaConsumo';
 const Recibo = ({ facturaData = null }) => {
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
-    
+
     // Hook para el anuncio personalizado
     const { anuncio } = useAnuncioRecibo();
-    
+
     // Hook para las equivalencias de consumo
     const { obtenerFraseEquivalencia } = useEquivalenciaConsumo();
-    
+
     // Crear fecha una sola vez
     const fechaActual = new Date().toISOString();
     const fechaHora = new Date().toLocaleString('es-ES', {
@@ -83,7 +83,7 @@ const Recibo = ({ facturaData = null }) => {
 
         return (
             <div key={factura.id} className="grid grid-cols-4 grid-rows-8 gap-2 h-[715px] dark:bg-white">
-                <div className="col-span-4 border-2 border-solid rounded-xl p-2 flex font-bold text-white" style={{backgroundColor: '#af272f'}}>
+                <div className="col-span-4 border-2 border-solid rounded-xl p-2 flex font-bold text-white" style={{ backgroundColor: '#af272f' }}>
                     <img src={logoagua} className="h-[50px]" alt="Logo Agua" />
                     <div className="">
                         <p className='text-[16px]'>
@@ -97,14 +97,14 @@ const Recibo = ({ facturaData = null }) => {
                 </div>
 
                 {/*Card izquierda */}
-                <div className="col-span-2 row-span-4 row-start-2 border-2 border-solid rounded-xl text-black p-1 " style={{backgroundColor: '#af6327'}}>
+                <div className="col-span-2 row-span-4 row-start-2 border-2 border-solid rounded-xl text-black p-1 " style={{ backgroundColor: '#af6327' }}>
                     <div className="grid grid-cols-2 grid-rows-1 gap-2 font-bold text-white">
-                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[10px] text-center " style={{backgroundColor: '#af272f'}}>Datos de cliente:</div>
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[10px] text-center " style={{ backgroundColor: '#af272f' }}>Datos de cliente:</div>
 
                         <div className="col-span-2 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px]">
                             <div className='flex flex-col gap-1'>
                                 <div className='flex'>
-                                    
+
                                     <span className='text-gray-800 text-[10px] px-2'>{factura.cliente_nombre}</span>
                                 </div>
                                 <div className='flex'>
@@ -115,10 +115,10 @@ const Recibo = ({ facturaData = null }) => {
 
                                     <span className='text-gray-800 text-[10px] px-2'>{factura.cliente_ciudad || "Villa Pesqueira,Son"}</span>
                                 </div>
-                            </div> 
+                            </div>
                         </div>
 
-                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[10px] text-center" style={{backgroundColor: '#af272f'}}>Informacion de Servicio:</div>
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[10px] text-center" style={{ backgroundColor: '#af272f' }}>Informacion de Servicio:</div>
                         <div className="col-span-2 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px]">
                             <div className='flex flex-col gap-1'>
                                 <div className='flex'>
@@ -137,11 +137,11 @@ const Recibo = ({ facturaData = null }) => {
                                     <span className='font-bold text-gray-700 w-20 px-2'>Ruta:</span>
                                     <span className='text-gray-800'>{factura.ruta?.nombre || "N/A"}</span>
                                 </div>
-                            </div>  
+                            </div>
                         </div>
-                       
 
-                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[10px] text-center" style={{backgroundColor: '#af272f'}}>Detalle de facturacion:</div>
+
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[10px] text-center" style={{ backgroundColor: '#af272f' }}>Detalle de facturacion:</div>
                         <div className="col-span-2 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] ">
                             <div className='flex flex-col gap-1'>
                                 <div className='flex'>
@@ -162,26 +162,26 @@ const Recibo = ({ facturaData = null }) => {
                                 </div>
                             </div>
                         </div>
-                        
-                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[9px] text-center" style={{backgroundColor: '#ffffffff'}}>
-                            <p className='text-black text-[15px]'>Total, a pagar: ${factura.total?.toFixed(2)}</p>  
+
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[9px] text-center" style={{ backgroundColor: '#ffffffff' }}>
+                            <p className='text-black text-[15px]'>Total, a pagar: ${factura.total?.toFixed(2)}</p>
                         </div>
                     </div>
                 </div>
 
                 {/*Card derecha */}
-                <div className="col-span-2 row-span-4 col-start-3 row-start-2 border-2 border-solid rounded-xl p-1" style={{backgroundColor: '#af6327'}}>
+                <div className="col-span-2 row-span-4 col-start-3 row-start-2 border-2 border-solid rounded-xl p-1" style={{ backgroundColor: '#af6327' }}>
                     <div className="grid grid-cols-2 grid-rows-2 gap-2 font-bold">
-                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[10px] text-center text-white" style={{backgroundColor: '#af272f'}}>Información de Consumo:</div>
+                        <div className="col-span-2 row-span-1 border-2 border-solid rounded-xl text-[10px] text-center text-white" style={{ backgroundColor: '#af272f' }}>Información de Consumo:</div>
 
                         <div className="col-span-1 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center text-black  ">
-                            Mes actual:<p className='text-gray-800'>{factura.consumo_m3}m³</p> 
+                            Mes actual:<p className='text-gray-800'>{factura.consumo_m3}m³</p>
                         </div>
                         <div className="col-span-1 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center text-black ">
-                            Mes anterior: <p className='text-gray-800'>{Math.max(0, factura.consumo_m3 - 2)}m³</p>   
+                            Mes anterior: <p className='text-gray-800'>{Math.max(0, factura.consumo_m3 - 2)}m³</p>
                         </div>
                         <div className="col-span-1 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center text-black ">
-                            Promedio de consumo: <p className='text-gray-800'>{Math.round(factura.consumo_m3 * 0.9)} m³</p>  
+                            Promedio de consumo: <p className='text-gray-800'>{Math.round(factura.consumo_m3 * 0.9)} m³</p>
                         </div>
                         <div className="col-span-1 row-span-1 bg-white border-2 border-solid rounded-xl text-[9px] text-center text-black ">
                             Variación: <p className='text-gray-800'>{Math.round(Math.random() * 20 - 10)}%</p>
@@ -192,7 +192,7 @@ const Recibo = ({ facturaData = null }) => {
                     </div>
                 </div>
 
-                <div className="col-span-2 row-start-6 border-2 border-solid rounded-xl text-black p-1" style={{backgroundColor: '#af2773'}}>
+                <div className="col-span-2 row-start-6 border-2 border-solid rounded-xl text-black p-1" style={{ backgroundColor: '#af2773' }}>
                     <div className='flex gap-2 font-bold text-white text-[14px]'>
                         <InfoResibosIcon className="h-5 w-5 " />
                         Información
@@ -201,7 +201,7 @@ const Recibo = ({ facturaData = null }) => {
                         {anuncio}
                     </p>
                 </div>
-                <div className="col-span-2 col-start-3 row-start-6 border-2 border-solid rounded-xl text-black p-1" style={{backgroundColor: '#27af63'}}>
+                <div className="col-span-2 col-start-3 row-start-6 border-2 border-solid rounded-xl text-black p-1" style={{ backgroundColor: '#27af63' }}>
                     <div className='flex gap-2 font-bold text-white text-[14px]'>
                         <ValanzaResibosIcon className="h-5 w-5 " />
                         Consumo Equivalente
@@ -210,9 +210,9 @@ const Recibo = ({ facturaData = null }) => {
                         {obtenerFraseEquivalencia(factura.consumo_m3) || `Equivalencia del consumo: ${factura.consumo_m3} m³`}
                     </p>
                 </div>
-                <div className="col-span-4 row-span-2 row-start-7 border-t-2 border-dashed" style={{borderColor: '#af272f'}}>
+                <div className="col-span-4 row-span-2 row-start-7 border-t-2 border-dashed" style={{ borderColor: '#af272f' }}>
                     <div className="border-2 border-solid rounded-xl text-black p-1 mt-3 border-[#af6327] border-4">
-                        <div className='flex flex-row font-bold' style={{color: '#070707ff'}}>
+                        <div className='flex flex-row font-bold' style={{ color: '#070707ff' }}>
                             <p className='basis-64 m-2'>Notas:</p>
                             <div className='basis-64 ml-5 m-2 gap-8'>
                                 <p className=''>Información de Nota: </p>
@@ -249,7 +249,7 @@ const Recibo = ({ facturaData = null }) => {
                 <div key={indicePagina} className="border-1 border-dashed border-gray-100">
                     {/* Header con numeración - layout de 3 columnas para consistencia */}
                     <div className="text-right  text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2">
-                        
+
                         <div className="text-right">
                             Fecha y hora: {fechaHora} Recibo No: {indicePagina * 2 + 1}
                         </div>
@@ -261,7 +261,7 @@ const Recibo = ({ facturaData = null }) => {
 
                     {/* Siempre usar layout de 2 columnas para consistencia */}
                     <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-4 gap-2 bg-white h-full">
-                        
+
                         {/* Primer recibo - siempre en la mitad izquierda */}
                         <div className="col-span-1 row-span-4 bg-white">
                             {renderRecibo(paginaRecibos[0], indicePagina * 2 + 1)}
@@ -269,7 +269,7 @@ const Recibo = ({ facturaData = null }) => {
 
                         {/* Línea divisoria - siempre presente para consistencia */}
                         <div className="col-span-1 row-span-4">
-                            <div className="border-r-2 border-dashed h-[715px]" style={{borderColor: '#af272f'}}></div>
+                            <div className="border-r-2 border-dashed h-[715px]" style={{ borderColor: '#af272f' }}></div>
                         </div>
 
                         {/* Segundo recibo (si existe) - mitad derecha */}

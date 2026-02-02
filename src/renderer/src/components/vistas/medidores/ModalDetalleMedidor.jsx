@@ -6,12 +6,14 @@ import {
     ModalBody,
     ModalFooter,
     Button,
+    Card,
+    CardBody,
     Divider,
     Chip
 } from "@nextui-org/react";
 import { useClientes } from "../../../context/ClientesContext";
 import { useTarifas } from "../../../context/TarifasContext";
-import { HiCog, HiLocationMarker, HiCalendar, HiUser, HiMap } from "react-icons/hi";
+import { HiCog, HiLocationMarker, HiCalendar, HiUser, HiMap, HiFingerPrint } from "react-icons/hi";
 
 const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
     const { clientes } = useClientes();
@@ -37,155 +39,165 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
             backdrop="blur"
             isOpen={isOpen}
             onClose={onClose}
-            size="2xl"
+            size="3xl"
             classNames={{
                 backdrop: "bg-gradient-to-t mt-18 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
                 closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
             }}
-
         >
             <ModalContent>
-                {(onClose) => (
-                    <>
-                        <ModalHeader className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                                <div className="p-2 bg-blue-100 text-blue-600 rounded-full">
-                                    <HiCog className="w-6 h-6" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xl font-bold text-gray-800 dark:text-white">
-                                        Detalles del Medidor
+                <ModalHeader className="flex flex-col gap-1">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full">
+                            <HiCog className="w-6 h-6" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-xl font-bold text-gray-800 dark:text-white">
+                                Detalle del Medidor
+                            </span>
+                            <span className="text-sm font-normal text-gray-500">
+                                Información técnica y estado de asignación
+                            </span>
+                        </div>
+                    </div>
+                </ModalHeader>
+                <Divider />
+                <ModalBody className="py-6 space-y-5">
+
+                    {/* 1. Información Técnica Principal */}
+                    <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-900/10">
+                        <CardBody className="p-5">
+                            <h4 className="text-sm font-bold text-blue-700 dark:text-blue-500 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                <HiFingerPrint className="w-5 h-5" /> Especificaciones Técnicas
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                                <div>
+                                    <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Número de Serie</span>
+                                    <span className="text-xl font-mono font-bold text-blue-800 dark:text-blue-300">
+                                        {medidor.numero_serie}
                                     </span>
-                                    <span className="text-sm font-normal text-gray-500">
-                                        Serie: {medidor.numero_serie}
+                                </div>
+
+                                <div>
+                                    <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Estado Actual</span>
+                                    <Chip
+                                        color={medidor.estado_servicio === 'Cortado' ? "danger" : (medidor.estado_medidor === "Activo" ? "success" : "danger")}
+                                        variant="flat"
+                                        size="sm"
+                                        className="capitalize"
+                                    >
+                                        {medidor.estado_servicio === 'Cortado' ? 'Cortado' : medidor.estado_medidor}
+                                    </Chip>
+                                </div>
+
+                                <div>
+                                    <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Marca / Fabricante</span>
+                                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                        {medidor.marca}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Modelo</span>
+                                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                        {medidor.modelo}
                                     </span>
                                 </div>
                             </div>
-                        </ModalHeader>
-                        <Divider />
-                        <ModalBody>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                        </CardBody>
+                    </Card>
 
-                                {/* Información General */}
-                                <div>
-                                    <h4 className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">
-                                        Información Técnica
-                                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* 2. Ubicación e Instalación */}
+                        <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <CardBody className="p-4">
+                                <h4 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                                    <HiLocationMarker className="w-4 h-4" /> Ubicación y Registro
+                                </h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <span className="text-[10px] text-gray-400 block uppercase">Dirección / Pueblo</span>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-snug">
+                                            {medidor.ubicacion}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between">
+                                        <div>
+                                            <span className="text-[10px] text-gray-400 block uppercase">Coordenadas</span>
+                                            <div className="flex items-center gap-1">
+                                                <HiMap className="w-3.5 h-3.5 text-gray-400" />
+                                                <span className="text-xs text-gray-600 dark:text-gray-400 font-mono">
+                                                    {medidor.latitud || "--"}, {medidor.longitud || "--"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] text-gray-400 block uppercase">Fecha Instalación</span>
+                                            <div className="flex items-center justify-end gap-1">
+                                                <HiCalendar className="w-3.5 h-3.5 text-gray-400" />
+                                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                                    {medidor.fecha_instalacion
+                                                        ? new Date(medidor.fecha_instalacion).toLocaleDateString()
+                                                        : "No registrada"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardBody>
+                        </Card>
+
+                        {/* 3. Cliente Asignado */}
+                        <Card className={`border shadow-sm ${clienteAsignado
+                            ? "border-green-200 dark:border-green-800 bg-green-50/20 dark:bg-green-900/10"
+                            : "border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-zinc-800/50"
+                            }`}>
+                            <CardBody className="p-4">
+                                <h4 className={`text-xs font-bold mb-3 uppercase tracking-wider flex items-center gap-2 ${clienteAsignado ? "text-green-600" : "text-gray-400"}`}>
+                                    <HiUser className="w-4 h-4" /> Asignación
+                                </h4>
+
+                                {clienteAsignado ? (
                                     <div className="space-y-3">
                                         <div>
-                                            <span className="text-xs text-gray-400 block">Marca</span>
-                                            <span className="text-sm font-medium">{medidor.marca}</span>
+                                            <span className="text-[10px] text-gray-400 block uppercase">Cliente Titular</span>
+                                            <p className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">
+                                                {clienteAsignado.nombre}
+                                            </p>
                                         </div>
-                                        <div>
-                                            <span className="text-xs text-gray-400 block">Modelo</span>
-                                            <span className="text-sm font-medium">{medidor.modelo}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-xs text-gray-400 block">Estado</span>
-                                            <Chip
-                                                className="mt-1"
-                                                color={medidor.estado_medidor === "Activo" ? "success" : "danger"}
-                                                size="sm"
-                                                variant="flat"
-                                            >
-                                                {medidor.estado_medidor}
+
+                                        <div className="flex justify-between items-center pt-2 border-t border-green-100 dark:border-green-800/30">
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 block uppercase">Tarifa</span>
+                                                <span className="text-xs font-medium text-green-700 dark:text-green-400">
+                                                    {tarifaCliente?.nombre || "No asignada"}
+                                                </span>
+                                            </div>
+                                            <Chip size="sm" color="success" variant="flat" className="h-6">
+                                                ID: {clienteAsignado.id}
                                             </Chip>
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* Ubicación */}
-                                <div>
-                                    <h4 className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">
-                                        Ubicación y Fechas
-                                    </h4>
-                                    <div className="space-y-3">
-                                        <div className="flex items-start gap-2">
-                                            <HiLocationMarker className="w-5 h-5 text-gray-400 mt-0.5" />
-                                            <div>
-                                                <span className="text-xs text-gray-400 block">Dirección / Pueblo</span>
-                                                <span className="text-sm font-medium">{medidor.ubicacion}</span>
-                                            </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center py-4">
+                                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mb-2">
+                                            <HiCog className="text-gray-400 text-lg" />
                                         </div>
-                                        <div className="flex items-start gap-2">
-                                            <HiMap className="w-5 h-5 text-gray-400 mt-0.5" />
-                                            <div>
-                                                <span className="text-xs text-gray-400 block">Coordenadas</span>
-                                                <span className="text-sm font-medium text-gray-600">
-                                                    {medidor.latitud}, {medidor.longitud}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                            <HiCalendar className="w-5 h-5 text-gray-400 mt-0.5" />
-                                            <div>
-                                                <span className="text-xs text-gray-400 block">Fecha Instalación</span>
-                                                <span className="text-sm font-medium">
-                                                    {new Date(medidor.fecha_instalacion).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                        </div>
+                                        <p className="text-sm font-medium text-gray-500">Sin Asignar</p>
+                                        <p className="text-xs text-gray-400">Este medidor está libre</p>
                                     </div>
-                                </div>
+                                )}
+                            </CardBody>
+                        </Card>
+                    </div>
 
-                                {/* Asignación (Full width) */}
-                                <div className="md:col-span-2 mt-2 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-lg">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded-full">
-                                            <HiUser className="w-4 h-4 text-blue-600 dark:text-blue-300" />
-                                        </div>
-                                        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                                            Cliente Asignado
-                                        </h4>
-                                    </div>
-
-                                    {clienteAsignado ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <span className="text-xs text-gray-500 block mb-0.5">Nombre del Cliente</span>
-                                                <p className="text-base font-semibold text-gray-900 dark:text-white">
-                                                    {clienteAsignado.nombre}
-                                                </p>
-                                                <Chip size="sm" color="primary" variant="flat" className="mt-1 text-xs">
-                                                    ID: #{clienteAsignado.id}
-                                                </Chip>
-                                            </div>
-
-                                            <div>
-                                                <span className="text-xs text-gray-500 block mb-0.5">Tarifa Aplicada</span>
-                                                {tarifaCliente ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                                            {tarifaCliente.nombre}
-                                                        </span>
-                                                        <span className="text-xs text-gray-500">
-                                                            {tarifaCliente.descripcion}
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-sm text-gray-400 italic">No especificada</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="pl-2">
-                                            <p className="text-sm text-gray-500 italic flex items-center gap-2">
-                                                <span className="w-2 h-2 rounded-full bg-gray-300"></span>
-                                                Este medidor se encuentra libre (Sin asignar).
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-
-                            </div>
-                        </ModalBody>
-                        <ModalFooter>
-                            <Button color="primary" onPress={onClose}>
-                                Cerrar
-                            </Button>
-                        </ModalFooter>
-                    </>
-                )}
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="primary" onPress={onClose}>
+                        Cerrar
+                    </Button>
+                </ModalFooter>
             </ModalContent>
         </Modal>
     );

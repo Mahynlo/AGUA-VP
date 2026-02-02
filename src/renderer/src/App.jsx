@@ -32,9 +32,12 @@ import { TarifasProvider } from "./context/TarifasContext";
 import { RutasProvider } from "./context/RutasContext";
 import { FacturasProvider } from "./context/FacturasContext";
 import { PagosProvider } from "./context/PagosContext";
+import { DeudoresProvider } from "./context/DeudoresContext";
+import { UsuariosProvider } from "./context/UsuariosContext";
 
 // Rutas protegidas
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoute";
+
 import RecuperarPassword from "./components/AdministrarPassword/Recuperacion";
 
 //Impresion de recibos
@@ -65,15 +68,21 @@ function App() {
                 <RutasProvider>
                   <FacturasProvider>
                     <PagosProvider>
+                      <UsuariosProvider>
+                        <DeudoresProvider>
 
-                      <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
+                          <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
 
-                      <MainApp /> {/* Aqui se cargan las rutas de al apalicacion*/}
-                      {/* Componente global de mensajes */}
-                      <FeedbackMessages position="bottom-right" />
 
-                      <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
+                          <MainApp /> {/* Aqui se cargan las rutas de al apalicacion*/}
+                          {/* Componente global de mensajes */}
+                          <FeedbackMessages position="bottom-right" />
+
+                          <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
+                        </DeudoresProvider>
+                      </UsuariosProvider>
                     </PagosProvider>
+
                   </FacturasProvider>
                 </RutasProvider>
               </TarifasProvider>
@@ -98,10 +107,7 @@ function MainApp() {
   const urlParams = new URLSearchParams(window.location.search);
   const isPrintMode = urlParams.get('print') === 'true';
 
-  // Si está cargando y NO estamos en modo impresión, mostrar pantalla de carga
-  if (loading && !isPrintMode) {
-    return <PantallaCarga tiempo={4000} />; // Aquí puedes colocar un componente de carga mientras esperas
-  }
+
 
   // PERSISTENCIA DE RUTA: Guardar la última ruta visitada
   React.useEffect(() => {
@@ -112,6 +118,33 @@ function MainApp() {
       localStorage.setItem('app_last_route', location.pathname);
     }
   }, [location, hideSidebarRoutes, isPrintMode]);
+
+  // CONTROL DE ZOOM MANUAL (DPI AWARENESS)
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Detectar Ctrl (Windows) o Command (Mac)
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === '=' || e.key === '+') {
+          e.preventDefault();
+          window.api.zoomIn();
+        } else if (e.key === '-') {
+          e.preventDefault();
+          window.api.zoomOut();
+        } else if (e.key === '0') {
+          e.preventDefault();
+          window.api.zoomReset();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Si está cargando y NO estamos en modo impresión, mostrar pantalla de carga
+  if (loading && !isPrintMode) {
+    return <PantallaCarga tiempo={4000} />; // Aquí puedes colocar un componente de carga mientras esperas
+  }
 
   return (
     <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>

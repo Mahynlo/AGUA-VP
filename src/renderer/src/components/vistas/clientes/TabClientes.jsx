@@ -15,7 +15,8 @@ import {
     TableBody,
     TableRow,
     TableCell,
-    User
+    User,
+    Spinner
 } from "@nextui-org/react";
 import React from "react";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
@@ -23,8 +24,12 @@ import { HiEye, HiTrash, HiPhone, HiMail, HiLocationMarker } from "react-icons/h
 import RegistrarClientes from "./RegistrarCliente";
 import EditarClientes from "./EditarCliente";
 import ModalDetalleCliente from "./ModalDetalleCliente";
-import LoadingSkeleton from "./components/LoadingSkeleton";
 import { useTabClientes } from "../../../hooks/useTabClientes";
+import { HiDownload } from "react-icons/hi";
+import { exportData } from "../../../utils/exportUtils";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
+import { useFeedback } from "../../../context/FeedbackContext";
+import LoadingSkeleton from "./components/LoadingSkeleton";
 
 export function TabClientes() {
     const {
@@ -41,6 +46,7 @@ export function TabClientes() {
         currentPage,
         rowsPerPage,
         totalPages,
+        totalItems,
         handleSearch,
         handleCityFilterChange,
         handleStatusFilterChange,
@@ -48,6 +54,8 @@ export function TabClientes() {
         setCurrentPage,
         getStatusColor
     } = useTabClientes();
+
+    const { setSuccess, setError } = useFeedback();
 
     const [selectedCliente, setSelectedCliente] = React.useState(null);
     const [isDetailOpen, setIsDetailOpen] = React.useState(false);
@@ -101,7 +109,6 @@ export function TabClientes() {
                                     placeholder="Buscar por nombre o dirección..."
                                     value={search}
                                     onChange={(e) => handleSearch(e.target.value)}
-                                    onClear={() => handleSearch("")}
                                     className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 />
                                 {/* Botón para limpiar */}
@@ -151,16 +158,50 @@ export function TabClientes() {
                         </Select>
 
                         {/* Botón Agregar Cliente */}
-                        <div className="flex items-end">
+                        <div className="flex items-end gap-2">
+                            <Dropdown>
+                                <DropdownTrigger>
+                                    <Button
+                                        color="success"
+                                        className="text-white"
+                                        startContent={<HiDownload className="text-lg" />}
+                                    >
+                                        Exportar
+                                    </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu aria-label="Opciones de exportación">
+                                    <DropdownItem
+                                        key="csv"
+                                        startContent={<span className="text-xl">📄</span>}
+                                        onPress={async () => {
+                                            const success = await exportData(filteredData, `Clientes_${new Date().toISOString().split('T')[0]}`, 'csv');
+                                            if (success) setSuccess("Archivo CSV generado exitosamente");
+                                        }}
+                                    >
+                                        Exportar CSV
+                                    </DropdownItem>
+                                    <DropdownItem
+                                        key="excel"
+                                        startContent={<span className="text-xl">📊</span>}
+                                        onPress={async () => {
+                                            const success = await exportData(filteredData, `Clientes_${new Date().toISOString().split('T')[0]}`, 'xlsx');
+                                            if (success) setSuccess("Archivo Excel generado exitosamente");
+                                        }}
+                                    >
+                                        Exportar Excel (.xlsx)
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+
                             <RegistrarClientes />
                         </div>
                     </div>
 
                     {/* Información de resultados */}
+                    {/* Información de resultados */}
                     <div className="flex justify-between items-center mt-4 text-sm text-gray-600 dark:text-gray-400">
                         <span>
-                            Mostrando {paginatedData.length} de {filteredData.length} clientes
-                            {filteredData.length !== clientes.length && ` (filtrado de ${clientes.length} total)`}
+                            Mostrando {paginatedData.length} de {totalItems} clientes
                         </span>
 
                         <Select
@@ -197,7 +238,16 @@ export function TabClientes() {
                             <TableColumn>ESTADO</TableColumn>
                             <TableColumn align="center">ACCIONES</TableColumn>
                         </TableHeader>
-                        <TableBody emptyContent="No se encontraron clientes">
+                        <TableBody
+                            emptyContent={
+                                loading ? (
+                                    <div className="flex flex-col items-center justify-center gap-2 p-4">
+                                        <Spinner size="lg" color="primary" />
+                                        <span className="text-gray-500">Cargando clientes...</span>
+                                    </div>
+                                ) : "No se encontraron clientes"
+                            }
+                        >
                             {paginatedData.map((cliente) => (
                                 <TableRow key={cliente.id}>
                                     <TableCell>
@@ -289,24 +339,26 @@ export function TabClientes() {
             </Card>
 
             {/* Paginación */}
-            {totalPages > 1 && (
-                <div className="flex justify-center">
-                    <Pagination
-                        total={totalPages}
-                        page={currentPage}
-                        onChange={setCurrentPage}
-                        showControls
-                        showShadow
-                        color="primary"
-                    />
-                </div>
-            )}
+            {
+                totalPages > 1 && (
+                    <div className="flex justify-center">
+                        <Pagination
+                            total={totalPages}
+                            page={currentPage}
+                            onChange={setCurrentPage}
+                            showControls
+                            showShadow
+                            color="primary"
+                        />
+                    </div>
+                )
+            }
             {/* Modal de Detalle */}
             <ModalDetalleCliente
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 cliente={selectedCliente}
             />
-        </div>
+        </div >
     );
 }

@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar } from "@nextui-org/avatar";
 import { Chip } from "@nextui-org/chip";
 import { Card, CardBody, CardHeader, Button, Badge, Spinner } from "@nextui-org/react";
-import { 
-  HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer, 
-  HiClock, HiCheckCircle, HiExclamationCircle 
+import {
+  HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer,
+  HiClock, HiCheckCircle, HiExclamationCircle
 } from "react-icons/hi";
 import AvatarPerfil from "../../assets/images/Avatar.png";
 import { useAuth } from "../../context/AuthContext";
@@ -28,8 +28,8 @@ const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placehol
         placeholder={placeholder}
         className={`
           w-full pl-12 pr-4 py-2.5 rounded-xl border text-sm transition-all duration-200
-          ${readOnly 
-            ? 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-400 cursor-default' 
+          ${readOnly
+            ? 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-400 cursor-default'
             : 'bg-white text-gray-700 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:focus:border-blue-400 dark:focus:ring-blue-900/30'
           }
         `}
@@ -39,9 +39,17 @@ const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placehol
 );
 
 export default function PerfilPage() {
-  const { user, sesiones } = useAuth();
+  const { user, sesiones, obtenerSesionesActivas } = useAuth();
   const [closingSession, setClosingSession] = useState(null);
-  
+
+  // Cargar sesiones al entrar al perfil
+  // import { useEffect } from "react"; (Asegurar importación arriba si falta, pero ya está en linea 1)
+  useEffect(() => {
+    if (user?.id) {
+      obtenerSesionesActivas(user.id);
+    }
+  }, [user]);
+
   // Estados para cambio de contraseña
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
   const [passLoading, setPassLoading] = useState(false);
@@ -59,7 +67,8 @@ export default function PerfilPage() {
     }
   };
 
-  const otherSessions = sesiones?.filter(s => s.jti !== getCurrentSessionId()) || [];
+  // Mostrar todas las sesiones (incluida la actual)
+  const displaySessions = sesiones || [];
 
   // Manejar inputs de contraseña
   const handlePassChange = (e, field) => {
@@ -83,7 +92,7 @@ export default function PerfilPage() {
       // Simulación de llamada a API
       // const res = await window.api.changePassword(user.id, passwords.current, passwords.new);
       await new Promise(resolve => setTimeout(resolve, 1500)); // Demo delay
-      
+
       setPassMessage({ type: "success", text: "Contraseña actualizada correctamente" });
       setPasswords({ current: "", new: "", confirm: "" });
     } catch (error) {
@@ -100,9 +109,9 @@ export default function PerfilPage() {
       if (!token) return;
 
       const response = await window.api.closeSpecificSession(sesionId, token);
-      
+
       if (response.success) {
-        window.location.reload(); 
+        window.location.reload();
       } else {
         alert("Error: " + response.message);
       }
@@ -206,27 +215,27 @@ export default function PerfilPage() {
                   </div>
                 </CardHeader>
                 <CardBody className="px-6 pb-8 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <IconInput 
-                    label="Nombre Completo" 
-                    icon={HiUser} 
-                    value={user.nombre} 
-                    readOnly 
+                  <IconInput
+                    label="Nombre Completo"
+                    icon={HiUser}
+                    value={user.nombre}
+                    readOnly
                   />
-                  <IconInput 
-                    label="Nombre de Usuario" 
-                    icon={HiShieldCheck} 
-                    value={user.username} 
-                    readOnly 
+                  <IconInput
+                    label="Nombre de Usuario"
+                    icon={HiShieldCheck}
+                    value={user.username}
+                    readOnly
                   />
                   <div className="md:col-span-2">
-                    <IconInput 
-                      label="Correo Electrónico" 
-                      icon={HiMail} 
-                      value={user.correo} 
-                      readOnly 
+                    <IconInput
+                      label="Correo Electrónico"
+                      icon={HiMail}
+                      value={user.correo}
+                      readOnly
                     />
                   </div>
-                  
+
                   {/* Chip de Rol destacado */}
                   <div className="md:col-span-2 mt-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Rol de Usuario</label>
@@ -256,29 +265,29 @@ export default function PerfilPage() {
                 <CardBody className="px-6 pb-8 pt-4 space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="md:col-span-2">
-                      <IconInput 
+                      <IconInput
                         type="password"
-                        label="Contraseña Actual" 
-                        icon={HiKey} 
+                        label="Contraseña Actual"
+                        icon={HiKey}
                         iconColor="text-orange-500"
                         placeholder="••••••••"
                         value={passwords.current}
                         onChange={(e) => handlePassChange(e, 'current')}
                       />
                     </div>
-                    <IconInput 
+                    <IconInput
                       type="password"
-                      label="Nueva Contraseña" 
-                      icon={HiKey} 
+                      label="Nueva Contraseña"
+                      icon={HiKey}
                       iconColor="text-gray-400"
                       placeholder="••••••••"
                       value={passwords.new}
                       onChange={(e) => handlePassChange(e, 'new')}
                     />
-                    <IconInput 
+                    <IconInput
                       type="password"
-                      label="Confirmar Contraseña" 
-                      icon={HiKey} 
+                      label="Confirmar Contraseña"
+                      icon={HiKey}
                       iconColor="text-gray-400"
                       placeholder="••••••••"
                       value={passwords.confirm}
@@ -288,11 +297,10 @@ export default function PerfilPage() {
 
                   {/* Mensajes de Error/Éxito */}
                   {passMessage.text && (
-                    <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
-                      passMessage.type === 'error' 
-                        ? 'bg-red-50 text-red-600 border border-red-100 dark:bg-red-900/20 dark:border-red-800' 
-                        : 'bg-green-50 text-green-600 border border-green-100 dark:bg-green-900/20 dark:border-green-800'
-                    }`}>
+                    <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${passMessage.type === 'error'
+                      ? 'bg-red-50 text-red-600 border border-red-100 dark:bg-red-900/20 dark:border-red-800'
+                      : 'bg-green-50 text-green-600 border border-green-100 dark:bg-green-900/20 dark:border-green-800'
+                      }`}>
                       {passMessage.type === 'error' ? <HiExclamationCircle /> : <HiCheckCircle />}
                       {passMessage.text}
                     </div>
@@ -326,32 +334,52 @@ export default function PerfilPage() {
                   </div>
                 </CardHeader>
                 <CardBody className="px-6 pb-8 pt-4">
-                  {otherSessions.length > 0 ? (
+                  {displaySessions.length > 0 ? (
                     <div className="space-y-3">
-                      {otherSessions.map((sesion, i) => (
-                        <div key={i} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 transition-colors gap-4">
+                      {displaySessions.map((sesion, i) => (
+                        <div
+                          key={i}
+                          className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-xl border transition-colors gap-4
+                            ${sesion.actual
+                              ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
+                              : 'bg-gray-50 dark:bg-gray-700/30 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800'
+                            }`}
+                        >
                           <div className="flex items-center gap-4">
-                            <div className="p-3 bg-white dark:bg-gray-800 rounded-full shadow-sm">
-                              <HiDesktopComputer className="text-gray-600 dark:text-gray-300 text-lg" />
+                            <div className={`p-3 rounded-full shadow-sm ${sesion.actual ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}>
+                              <HiDesktopComputer className={`${sesion.actual ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'} text-lg`} />
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-900 dark:text-white">{sesion.dispositivo}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-gray-900 dark:text-white">{sesion.dispositivo}</p>
+                                {sesion.actual && (
+                                  <Chip size="sm" color="primary" variant="flat" className="h-5 text-[10px] px-1">Actual</Chip>
+                                )}
+                              </div>
                               <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
                                 <HiClock />
                                 <span>Iniciado: {formatUTCtoHermosilloHora(sesion.fecha_inicio)}</span>
                               </div>
                             </div>
                           </div>
-                          <Button
-                            size="sm"
-                            color="danger"
-                            variant="flat"
-                            className="font-medium"
-                            onPress={() => handleCloseSession(sesion.id)}
-                            isLoading={closingSession === sesion.id}
-                          >
-                            Cerrar Sesión
-                          </Button>
+
+                          {/* Botón de cerrar sesión solo si NO es la actual */}
+                          {!sesion.actual ? (
+                            <Button
+                              size="sm"
+                              color="danger"
+                              variant="flat"
+                              className="font-medium"
+                              onPress={() => handleCloseSession(sesion.id)}
+                              isLoading={closingSession === sesion.id}
+                            >
+                              Cerrar Sesión
+                            </Button>
+                          ) : (
+                            <div className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg">
+                              Sesión en uso
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

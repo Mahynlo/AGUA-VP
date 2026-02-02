@@ -1,5 +1,5 @@
 // src/context/TarifasContext.jsx
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
 
 // Crear el contexto
 const TarifasContext = createContext();
@@ -7,26 +7,52 @@ const TarifasContext = createContext();
 // Proveedor de tarifas
 export function TarifasProvider({ children }) {
   const [tarifas, setTarifas] = useState([]);
+  const [pagination, setPagination] = useState(null); // Nuevo estado
   const [loading, setLoading] = useState(true);
 
-  // Función para obtener todas las tarifas
-  async function fetchTarifas() {
+  // Función para obtener tarifas (con parametros opcionales)
+  const fetchTarifas = useCallback(async (params = {}) => {
     try {
+      setLoading(true);
       const token_session = localStorage.getItem("token");
-      const data = await window.tarifasApp.fetchTarifas({token_session}); // Asegúrate de exponer esta función en preload
-      setTarifas(data); // Actualiza el estado con las tarifas obtenidas
+
+      // Default params
+      const queryParams = {
+        page: params.page || 1,
+        limit: params.limit || 10,
+        search: params.search || '',
+        ...params
+      };
+
+      const data = await window.tarifasApp.fetchTarifas({
+        token_session,
+        params: queryParams
+      });
+
+      if (data.tarifas) {
+        setTarifas(data.tarifas);
+        setPagination(data.pagination);
+      } else if (Array.isArray(data)) {
+        // Fallback legacy
+        setTarifas(data);
+        setPagination(null);
+      } else {
+        setTarifas([]);
+        setPagination(null);
+      }
+
     } catch (error) {
       console.error("Error al obtener tarifas(contx):", error);
-
+      setTarifas([]);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   // Cargar tarifas al iniciar
   useEffect(() => {
     fetchTarifas();
-  }, []);
+  }, [fetchTarifas]);
 
   // Actualizar cuando se restaura la conexión
   useEffect(() => {
@@ -37,29 +63,20 @@ export function TarifasProvider({ children }) {
 
     window.addEventListener('connection-restored', handleConnectionRestored);
     return () => window.removeEventListener('connection-restored', handleConnectionRestored);
-  }, []);
+  }, [fetchTarifas]);
 
   // Función para actualizar las tarifas (después de agregar o editar una)
-  async function actualizarTarifas() {
-    setLoading(true);
+  const actualizarTarifas = useCallback(async () => {
     await fetchTarifas();
-  }
-
-  // Función para filtrar por descripción o nombre
-function filtrarTarifas({ descripcion = "", nombre = "" }) {
-  return tarifas.filter(t =>
-    (descripcion ? t.descripcion?.toLowerCase().includes(descripcion.toLowerCase()) : true) &&
-    (nombre ? t.nombre?.toLowerCase().includes(nombre.toLowerCase()) : true)
-  );
-}
-
+  }, [fetchTarifas]);
 
   return (
     <TarifasContext.Provider value={{
       tarifas,
+      pagination,
       loading,
-      actualizarTarifas,
-      filtrarTarifas
+      fetchTarifas,
+      actualizarTarifas
     }}>
       {children}
     </TarifasContext.Provider>

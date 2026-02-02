@@ -6,16 +6,18 @@ import {
   ModalFooter,
   Button,
   Card,
-  CardHeader,
   CardBody,
-  Chip
+  Chip,
+  Divider
 } from "@nextui-org/react";
 import {
   HiCurrencyDollar,
   HiCash,
   HiCreditCard,
   HiCalendar,
-  HiUser
+  HiUser,
+  HiCog,
+  HiLocationMarker
 } from "react-icons/hi";
 
 const ModalDetallePago = ({
@@ -30,6 +32,7 @@ const ModalDetallePago = ({
   // Funciones de formato
   const formatFecha = (fecha) => {
     return new Date(fecha).toLocaleDateString("es-MX", {
+      weekday: "short",
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -48,233 +51,239 @@ const ModalDetallePago = ({
 
   return (
     <Modal
+      backdrop="blur"
       isOpen={isOpen}
       onClose={onClose}
-      size="4xl"
-      backdrop="blur"
-      scrollBehavior="inside" // El scroll lo maneja el ModalBody
+      size="3xl"
+      scrollBehavior="inside"
       classNames={{
-        backdrop: "bg-black/60 backdrop-blur-sm",
-        modal: "bg-white dark:bg-zinc-900",
+        backdrop: "bg-gradient-to-t mt-18 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
         closeButton:
-          "text-gray-600 dark:text-gray-300 hover:bg-red-600 hover:text-white",
+          "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
       }}
     >
       <ModalContent>
-        <ModalHeader className="flex gap-3 items-center text-gray-900 dark:text-gray-100">
-          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-            <HiCurrencyDollar className="w-6 h-6 text-green-600 dark:text-green-400" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold">Detalle del Pago #{pago.id}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Información completa del registro de pago
-            </p>
+        <ModalHeader className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 rounded-full">
+              <HiCurrencyDollar className="w-6 h-6" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-gray-800 dark:text-white">
+                Detalle del Pago #{pago.id}
+              </span>
+              <span className="text-sm font-normal text-gray-500">
+                Información del registro de pago
+              </span>
+            </div>
           </div>
         </ModalHeader>
+        <Divider />
+        <ModalBody className="py-6 space-y-5">
 
-        {/* Agregamos padding-bottom extra para que el último card no quede pegado */}
-        <ModalBody className="space-y-6 pb-6">
-          
-          {/* INFORMACIÓN DEL PAGO */}
-          {/* 'overflow-visible' evita que el Card genere su propio scroll */}
-          <Card className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 overflow-visible shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border-b border-gray-200 dark:border-zinc-700">
-              <h4 className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100">
-                <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg">
-                  <HiCurrencyDollar className="text-white" />
-                </div>
-                Información del Pago
+          {/* 1. Información Principal del Pago */}
+          <Card className="border border-green-200 dark:border-green-800 bg-green-50/40 dark:bg-green-900/10">
+            <CardBody className="p-5">
+              <h4 className="text-sm font-bold text-green-700 dark:text-green-500 mb-4 uppercase tracking-wider flex items-center gap-2">
+                <HiCash className="w-5 h-5" /> Resumen del Pago
               </h4>
-            </CardHeader>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Monto Aplicado</span>
+                  <span className="text-2xl font-bold text-green-700 dark:text-green-400">
+                    ${pago.monto?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
 
-            {/* 'overflow-visible' aquí es clave para que el contenido empuje hacia abajo */}
-            <CardBody className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-visible">
-              <Info label="Fecha de Pago">
-                {formatFecha(pago.fecha_pago)}
-              </Info>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Fecha de Pago</span>
+                  <div className="flex items-center gap-2">
+                    <HiCalendar className="text-green-600/70" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      {formatFechaHora(pago.fecha_pago)}
+                    </span>
+                  </div>
+                </div>
 
-              <Info label="Método">
-                <Chip
-                  color={getMetodoColor(pago.metodo_pago)}
-                  variant="flat"
-                  size="sm"
-                >
-                  {pago.metodo_pago}
-                </Chip>
-              </Info>
+                <div>
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Método de Pago</span>
+                  <Chip
+                    color={getMetodoColor(pago.metodo_pago)}
+                    variant="flat"
+                    size="sm"
+                    className="capitalize"
+                  >
+                    {pago.metodo_pago}
+                  </Chip>
+                </div>
 
-              <Info label="Monto Aplicado">
-                <span className="text-green-600 dark:text-green-400 font-bold text-lg">
-                  ${pago.monto?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                </span>
-              </Info>
-
-              <Info label="Cantidad Entregada">
-                <span className="font-semibold">
-                  ${pago.cantidad_entregada?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                </span>
-              </Info>
-
-              <Info label="Cambio">
-                <span
-                  className={`font-bold ${
-                    pago.cambio > 0
-                      ? "text-orange-600 dark:text-orange-400"
-                      : "text-gray-500 dark:text-gray-400"
-                  }`}
-                >
-                  ${pago.cambio?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                </span>
-              </Info>
+                <div>
+                  <div className="flex gap-4">
+                    <div>
+                      <span className="text-[10px] text-gray-400 uppercase block">Entregado</span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        ${pago.cantidad_entregada?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-400 uppercase block">Cambio</span>
+                      <span className={`text-sm font-bold ${pago.cambio > 0 ? "text-orange-500" : "text-gray-500"}`}>
+                        ${pago.cambio?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {pago.comentario && (
-                <Info label="Comentario" colSpan>
-                  <span className="italic text-gray-600 dark:text-gray-300">
+                <div className="mt-4 pt-3 border-t border-green-100 dark:border-green-800/30">
+                  <span className="text-xs text-green-700/70 block mb-1 font-medium">Comentario / Nota:</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300 italic block bg-white dark:bg-black/20 p-2 rounded">
                     "{pago.comentario}"
                   </span>
-                </Info>
+                </div>
               )}
             </CardBody>
           </Card>
 
-          {/* INFORMACIÓN DE LA FACTURA ASOCIADA */}
-          <Card className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 overflow-visible shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-b border-gray-200 dark:border-zinc-700">
-              <h4 className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100">
-                <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-                  <HiCreditCard className="text-white" />
-                </div>
-                Información de la Factura (#{pago.factura_id})
-              </h4>
-            </CardHeader>
-            <CardBody className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-visible">
-              <Info label="Estado Factura">
+          {/* 2. Factura Asociada y Historial */}
+          <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
+            <CardBody className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                  <HiCreditCard className="w-4 h-4" /> Factura Asociada (#{pago.factura_id})
+                </h4>
                 <Chip
                   color={pago.estado_factura === "Pagado" ? "success" : "warning"}
-                  variant="flat"
-                  size="md"
+                  variant="dot"
+                  size="sm"
+                  className="border-none"
                 >
                   {pago.estado_factura}
                 </Chip>
-              </Info>
-              <Info label="Periodo">
-                {pago.periodo_facturado}
-              </Info>
-              <Info label="Fecha Emisión">
-                {formatFecha(pago.fecha_emision_factura)}
-              </Info>
-              <Info label="Total Factura">
-                ${pago.total_factura?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-              </Info>
-              <Info label="Saldo Pendiente">
-                 <span
-                  className={`font-bold ${
-                    pago.saldo_pendiente_factura > 0
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-green-600 dark:text-green-400"
-                  }`}
-                >
-                  ${pago.saldo_pendiente_factura?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                </span>
-              </Info>
-            </CardBody>
-          </Card>
+              </div>
 
-           {/* PAGOS MÚLTIPLES (CONDICIONAL) */}
-           {(() => {
-              const infoPagosFactura = obtenerInfoPagosPorFactura(pago.factura_id);
-              if (infoPagosFactura && infoPagosFactura.total > 1) {
-                return (
-                  <Card className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 overflow-visible shadow-sm">
-                    <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 border-b border-gray-200 dark:border-zinc-700">
-                      <h4 className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100">
-                        <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
-                          <HiCash className="text-white" />
-                        </div>
-                        Historial de Pagos ({infoPagosFactura.total})
-                      </h4>
-                    </CardHeader>
-                    <CardBody className="space-y-3 overflow-visible">
-                      {infoPagosFactura.pagosOrdenados.map((pagoItem, index) => (
-                         <div
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="p-3 bg-gray-50 dark:bg-zinc-800 rounded-lg">
+                  <span className="text-[10px] text-gray-400 uppercase block mb-1">Periodo</span>
+                  <span className="text-sm font-semibold">{pago.periodo_facturado}</span>
+                </div>
+                <div className="p-3 bg-gray-50 dark:bg-zinc-800 rounded-lg">
+                  <span className="text-[10px] text-gray-400 uppercase block mb-1">Total Factura</span>
+                  <span className="text-sm font-semibold">${pago.total_factura?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="p-3 bg-gray-50 dark:bg-zinc-800 rounded-lg">
+                  <span className="text-[10px] text-gray-400 uppercase block mb-1">Saldo Restante</span>
+                  <span className={`text-sm font-bold ${pago.saldo_pendiente_factura > 0 ? "text-red-500" : "text-green-500"}`}>
+                    ${pago.saldo_pendiente_factura?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
+              {/* PAGOS MÚLTIPLES (CONDICIONAL) */}
+              {(() => {
+                const infoPagosFactura = obtenerInfoPagosPorFactura(pago.factura_id);
+                if (infoPagosFactura && infoPagosFactura.total > 1) {
+                  return (
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <span className="text-xs font-bold text-gray-400 block mb-3 uppercase">Historial de Pagos para esta Factura</span>
+                      <div className="space-y-2">
+                        {infoPagosFactura.pagosOrdenados.map((pagoItem, index) => (
+                          <div
                             key={pagoItem.id}
-                            className={`p-3 rounded-lg border flex flex-col md:flex-row justify-between items-center gap-4 ${
-                                pagoItem.id === pago.id
-                                ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-                                : "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
-                            }`}
-                         >
-                            <div className="flex items-center gap-4">
-                                <span className="text-xs font-bold text-gray-400">#{index + 1}</span>
-                                <div>
-                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Pago #{pagoItem.id}</p>
-                                    <p className="text-xs text-gray-500">{formatFecha(pagoItem.fecha_pago)}</p>
-                                </div>
+                            className={`flex items-center justify-between p-2 rounded text-xs ${pagoItem.id === pago.id
+                                ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                                : "bg-gray-50 dark:bg-zinc-800"
+                              }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-gray-400">#{index + 1}</span>
+                              <span className="font-medium">Pago #{pagoItem.id}</span>
+                              <span className="text-gray-400">({formatFecha(pagoItem.fecha_pago)})</span>
                             </div>
-                            
-                            <Chip size="sm" variant="flat" color={getMetodoColor(pagoItem.metodo_pago)}>
-                                {pagoItem.metodo_pago}
-                            </Chip>
-
-                            <div className="text-right">
-                                <p className="text-sm font-bold text-green-600 dark:text-green-400">
-                                    ${pagoItem.monto?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                                </p>
+                            <div className="flex items-center gap-3">
+                              <span className="text-gray-500">{pagoItem.metodo_pago}</span>
+                              <span className="font-bold text-gray-700 dark:text-gray-300">
+                                ${pagoItem.monto?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                              </span>
                             </div>
-                         </div>
-                      ))}
-                      <div className="mt-2 pt-2 border-t border-gray-100 dark:border-zinc-700 flex justify-end">
-                          <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                              Total Pagado: <span className="text-green-600 dark:text-green-400 ml-1">${infoPagosFactura.montoTotal.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
-                          </p>
+                          </div>
+                        ))}
                       </div>
-                    </CardBody>
-                  </Card>
-                );
-              }
-              return null;
-            })()}
-
-
-          {/* CLIENTE */}
-          <Card className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 overflow-visible shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 border-b border-gray-200 dark:border-zinc-700">
-              <h4 className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100">
-                <div className="p-2 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-lg">
-                  <HiUser className="text-white" />
-                </div>
-                Información del Cliente
-              </h4>
-            </CardHeader>
-            <CardBody className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-visible">
-              <Info label="Nombre">{pago.cliente_nombre}</Info>
-              <Info label="Dirección">{pago.direccion_cliente}</Info>
-              <Info label="Medidor">{pago.medidor_numero_serie}</Info>
-              <Info label="Consumo Facturado">
-                <span className="text-cyan-600 dark:text-cyan-400 font-bold">
-                  {pago.consumo_m3} m³
-                </span>
-              </Info>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </CardBody>
           </Card>
 
-          {/* REGISTRO */}
-          <Card className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 overflow-visible shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/30 dark:to-cyan-900/30 border-b border-gray-200 dark:border-zinc-700">
-              <h4 className="flex items-center gap-2 font-semibold text-gray-800 dark:text-gray-100">
-                <div className="p-2 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg">
-                  <HiCalendar className="text-white" />
+          {/* 3. Cliente y Auditoría */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Información del Cliente */}
+            <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
+              <CardBody className="p-4">
+                <h4 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                  <HiUser className="w-4 h-4" /> Datos del Cliente
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] text-gray-400 block uppercase">Nombre</span>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                      {pago.cliente_nombre}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-400 block uppercase">Dirección</span>
+                    <div className="flex items-start gap-1">
+                      <HiLocationMarker className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <span className="text-xs text-gray-600 dark:text-gray-400 leading-snug">
+                        {pago.direccion_cliente}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 mt-1 border-t border-gray-100 dark:border-gray-800">
+                    <div>
+                      <span className="text-[10px] text-gray-400 block uppercase">Medidor</span>
+                      <span className="text-xs font-mono font-medium">{pago.medidor_numero_serie}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-gray-400 block uppercase">Lectura</span>
+                      <span className="text-xs font-medium">{formatFecha(pago.fecha_lectura)}</span>
+                    </div>
+                  </div>
                 </div>
-                Auditoría del Registro
-              </h4>
-            </CardHeader>
-            <CardBody className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-visible">
-              <Info label="Registrado Por">{pago.modificado_por_nombre}</Info>
-              <Info label="Fecha Registro">{formatFechaHora(pago.fecha_creacion)}</Info>
-              <Info label="Fecha Lectura">{formatFecha(pago.fecha_lectura)}</Info>
-            </CardBody>
-          </Card>
+              </CardBody>
+            </Card>
+
+            {/* Auditoría */}
+            <Card className="border border-gray-200 dark:border-gray-700 shadow-sm bg-gray-50/50 dark:bg-zinc-900/50">
+              <CardBody className="p-4">
+                <h4 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                  <HiCog className="w-4 h-4" /> Auditoría del Registro
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] text-gray-400 block uppercase">Registrado Por</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                        {pago.modificado_por_nombre ? pago.modificado_por_nombre.charAt(0) : "S"}
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {pago.modificado_por_nombre || "Sistema"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-400 block uppercase">Fecha de Registro</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 font-mono">
+                      {formatFechaHora(pago.fecha_creacion)}
+                    </span>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
 
         </ModalBody>
 
@@ -287,17 +296,5 @@ const ModalDetallePago = ({
     </Modal>
   );
 };
-
-// Componente reutilizable INFO
-const Info = ({ label, children, colSpan }) => (
-  <div className={`space-y-1 ${colSpan ? "md:col-span-2" : ""}`}>
-    <p className="text-xs uppercase text-gray-500 dark:text-gray-400">
-      {label}
-    </p>
-    <div className="bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg p-3 text-gray-800 dark:text-gray-100">
-      {children}
-    </div>
-  </div>
-);
 
 export default ModalDetallePago;

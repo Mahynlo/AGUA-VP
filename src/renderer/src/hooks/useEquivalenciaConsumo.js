@@ -85,7 +85,36 @@ const useEquivalenciaConsumo = () => {
 
   // Función para obtener todas las frases disponibles (para el modal)
   const obtenerTodasLasFrases = () => {
-    return frasesDisponibles;
+    const frasesAplanadas = [];
+    
+    // Si no hay datos, retornar vacío
+    if (!frasesDisponibles || frasesDisponibles.length === 0) {
+      return [];
+    }
+
+    // Ordenar por m3 para asegurar rangos correctos
+    const sortedData = [...frasesDisponibles].sort((a, b) => a.m3 - b.m3);
+
+    sortedData.forEach((item, index) => {
+      // Determinar el rango anterior
+      const rangoMin = index === 0 ? 0 : sortedData[index - 1].m3;
+      const rangoMax = item.m3;
+      
+      // Agregar cada frase de este nivel
+      if (item.frases && Array.isArray(item.frases)) {
+        item.frases.forEach(frase => {
+          frasesAplanadas.push({
+            rango_min: rangoMin,
+            rango_max: rangoMax,
+            categoria: "Consumo de Agua", 
+            frase: frase,
+            m3: item.m3 // Mantener la referencia original por si acaso
+          });
+        });
+      }
+    });
+
+    return frasesAplanadas;
   };
 
   // Función para probar diferentes consumos (con loading state para el modal)

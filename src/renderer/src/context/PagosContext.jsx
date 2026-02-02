@@ -13,8 +13,19 @@ export function PagosProvider({ children }) {
   const [error, setError] = useState(null);
   const { renovarAccessToken } = useAuth();
 
+  // Agregar estado persistente de filtros
+  const [filtros, setFiltros] = useState({
+    periodo: new Date().toISOString().slice(0, 7), // "YYYY-MM"
+    search: "",
+    metodo_pago: "",
+    page: 1,
+    limit: 60
+  });
+
+  const [pagination, setPagination] = useState(null);
+
   // Función para obtener los pagos
-  const fetchPagos = useCallback(async (periodo = null, retryCount = 0) => {
+  const fetchPagos = useCallback(async (params = {}) => {
     try {
       if (!initialLoading) {
         setLoading(true);
@@ -24,24 +35,48 @@ export function PagosProvider({ children }) {
         throw new Error("No se encontró token de sesión");
       }
 
-      // Si no se proporciona período, usar el mes actual
-      const periodoActual = periodo || new Date().toISOString().slice(0, 7);
+      // Manejo robusto de parámetros: fusionar con filtros y sobreescribir con nuevos
+      let finalParams = { ...filtros }; // Empezar con lo que ya teniamos
 
-      const data = await window.api.fetchPagos(token_session, periodoActual);
+      if (typeof params === 'string') {
+        // Soporte legado
+        finalParams.periodo = params;
+      } else if (params) {
+        // Actualizar solo lo que viene nuevo
+        finalParams = { ...finalParams, ...params };
+      }
+
+      // Actualizar el estado global de filtros con la nueva combinación
+      // IMPORTANTE: Esto asegura persistencia para la próxima vez
+      setFiltros(prev => ({ ...prev, ...finalParams }));
+
+      // Construir query params finales para el fetch
+      const queryParams = {
+        periodo: finalParams.periodo,
+        page: finalParams.page,
+        limit: finalParams.limit,
+        search: finalParams.search,
+        metodo_pago: finalParams.metodo_pago
+      };
+
+      const data = await window.api.fetchPagos(token_session, queryParams);
 
       console.log("📊 Datos recibidos del fetch de pagos:", data);
 
-      // Manejar la estructura de respuesta que incluye pagos y resumen
+      // Manejar la estructura de respuesta que incluye pagos, paginación y resumen
       if (data && typeof data === 'object') {
         if (data.pagos && Array.isArray(data.pagos)) {
           console.log("✅ Configurando pagos desde data.pagos:", data.pagos.length);
           setPagos(data.pagos);
+          setPagination(data.pagination || null);
         } else if (Array.isArray(data)) {
           console.log("✅ Configurando pagos desde array directo:", data.length);
           setPagos(data);
+          setPagination(null);
         } else {
           console.log("⚠️ No se encontraron pagos en la respuesta");
           setPagos([]);
+          setPagination(null);
         }
 
         // Guardar resumen si existe
@@ -54,29 +89,22 @@ export function PagosProvider({ children }) {
       } else {
         console.log("❌ Datos no válidos recibidos:", data);
         setPagos([]);
+        setPagination(null);
         setResumen(null);
       }
 
       setError(null);
     } catch (error) {
-      // Plan B: Si es error 403 y no hemos reintentado, renovar token y reintentar
-      if (error.message && error.message.includes("403") && retryCount === 0) {
-        console.log("⚠️ Error 403 en pagos, renovando token como fallback...");
-        await renovarAccessToken();
-        // Esperar 500ms para asegurar que el nuevo token esté listo
-        await new Promise(resolve => setTimeout(resolve, 500));
-        console.log("✅ Reintentando obtener pagos con nuevo token...");
-        return await fetchPagos(periodo, 1);
-      }
       console.error("❌ Error al obtener pagos:", error);
       setPagos([]);
+      setPagination(null);
       setResumen(null);
       setError(error.message || error);
     } finally {
       setLoading(false);
       setInitialLoading(false);
     }
-  }, [initialLoading, renovarAccessToken]);
+  }, [initialLoading]);
 
   // Cargar pagos al iniciar
   useEffect(() => {
@@ -149,7 +177,10 @@ export function PagosProvider({ children }) {
   return (
     <PagosContext.Provider value={{
       pagos,
+      pagination,
       resumen,
+      filtros, // Exponer filtros
+      setFiltros,
       loading,
       initialLoading,
       error,

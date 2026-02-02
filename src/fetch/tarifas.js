@@ -9,26 +9,35 @@ const getHeaders = (token_app, token_session) => ({
 });
 
 /**
- * Obtiene la lista de tarifas desde el backend
- * @param {string} token_session - Token de sesión del usuario
- * @param {boolean} isRetry - Indica si es un reintento después de renovar token
- * @returns {Promise<Array>} Lista de tarifas o arreglo vacío en caso de error
+ * Obtiene la lista de tarifas desde el backend con paginación
+ * @param {string} token_session - Token de sesión
+ * @param {Object} params - Parámetros { page, limit, search }
+ * @param {boolean} isRetry - Si es reintento
  */
-export const fetchTarifas = async (token_session, isRetry = false) => {
+export const fetchTarifas = async (token_session, params = {}, isRetry = false) => {
   try {
-    const token_app = leerToken(); // usa `await leerToken()` si es necesario
+    const token_app = leerToken(); 
 
     if (!token_app) {
       console.error("Token app no disponible");
       return [];
     }
-
     if (!token_session) {
       console.error("Token de sesión no disponible");
       return [];
     }
 
-    const response = await fetch(URL_TARIFAS, {
+    // Construir query string
+    let query = "";
+    if (params) {
+        const urlParams = new URLSearchParams();
+        if (params.page) urlParams.append("page", params.page);
+        if (params.limit) urlParams.append("limit", params.limit);
+        if (params.search) urlParams.append("search", params.search);
+        query = "?" + urlParams.toString();
+    }
+
+    const response = await fetch(`${URL_TARIFAS}${query}`, {
       method: "GET",
       headers: getHeaders(token_app, token_session)
     });

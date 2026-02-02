@@ -8,11 +8,11 @@ export default function IpcHandlerPagos () {
      */
 
     // Evento para obtener pagos desde la base de datos
-    ipcMain.handle("fetch-pagos", async (event, token_session, periodo = null) => {
+    ipcMain.handle("fetch-pagos", async (event, token_session, params) => {
         if (!token_session) {
             return { success: false, message: "El token de sesión es obligatorio.(ipcmain-fetch-pagos)" };
         }
-        return await fetchPagos(token_session, periodo); // Pasar el token y período como argumentos
+        return await fetchPagos(token_session, params); // Pasar el token y parámetros como argumentos
     });
 
     // 📌 Manejar el registro de un pago

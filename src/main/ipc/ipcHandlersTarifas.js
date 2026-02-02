@@ -39,15 +39,15 @@ export default function IpcHandlersTarifas () {
         }
     });
 
-    // Obtiene todas las tarifas
+    // Obtiene todas las tarifas (paginadas)
     ipcMain.handle("fetch-tarifas", async (event, data) => {
-        const { token_session } = data;
+        const { token_session, params } = data; // params ahora viene en data
         // Validación de token de sesión
         if (!token_session) {
             return { success: false, message: "Token de sesión es obligatorio." };
         }
 
-        return await fetchTarifas(token_session);
+        return await fetchTarifas(token_session, params);
     });
 
     // Actualiza una tarifa existente

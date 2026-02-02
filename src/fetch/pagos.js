@@ -7,7 +7,7 @@ const URL_PAGOS = import.meta.env.VITE_API_FETCH_PAGOS; // URL del endpoint de p
  * 
  * ************************************************************************************************************* */
 
-export const fetchPagos = async (token_session, periodo = null, isRetry = false) => {
+export const fetchPagos = async (token_session, params = {}, isRetry = false) => {
     try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
@@ -19,11 +19,23 @@ export const fetchPagos = async (token_session, periodo = null, isRetry = false)
         return [];
     }
 
-    // Construir URL con parámetro de período si se proporciona
-    let url = URL_PAGOS;
-    if (periodo) {
-        url += `?periodo=${periodo}`;
+    // Construir URL query string
+    const urlParams = new URLSearchParams();
+    
+    // Si params es un string (compatibilidad hacia atrás), tratarlo como periodo
+    if (typeof params === 'string') {
+        urlParams.append('periodo', params);
+    } else {
+        // Si es objeto, agregar todos los parámetros
+        if (params.periodo) urlParams.append('periodo', params.periodo);
+        if (params.page) urlParams.append('page', params.page);
+        if (params.limit) urlParams.append('limit', params.limit);
+        if (params.search) urlParams.append('search', params.search);
+        if (params.metodo_pago) urlParams.append('metodo_pago', params.metodo_pago);
     }
+
+    const query = urlParams.toString();
+    const url = `${URL_PAGOS}?${query}`;
 
     const response = await fetch(url, {
         method: "GET",

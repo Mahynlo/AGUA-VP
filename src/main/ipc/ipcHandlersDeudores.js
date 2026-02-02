@@ -5,7 +5,9 @@ import {
     fetchCandidatosCorte,
     ejecutarCorte,
     registrarReconexion,
-    crearConvenio
+    crearConvenio,
+    obtenerConvenio,
+    pagarParcialidad
 } from '../../fetch/deudores.js';
 
 export default function IpcHandlerDeudores() {
@@ -32,5 +34,14 @@ export default function IpcHandlerDeudores() {
 
     ipcMain.handle('crear-convenio', async (event, token, data) => {
         return await crearConvenio(token, data);
+    });
+
+    // Nuevos handlers para Fase 2
+    ipcMain.handle('obtener-convenio', async (event, token, convenioId) => {
+        return await obtenerConvenio(token, convenioId);
+    });
+
+    ipcMain.handle('pagar-parcialidad', async (event, token, data) => {
+        return await pagarParcialidad(token, data);
     });
 }

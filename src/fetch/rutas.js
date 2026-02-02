@@ -12,8 +12,24 @@ export const fetchRutas = async (token_session, periodo, isRetry = false) => {
       return [];
     }
 
-    // Construir la URL con el período
-    const url = `${import.meta.env.VITE_API_FETCH_RUTAS}?periodo=${periodo}`;
+    // Preparar parámetros
+    let queryParams = "";
+    
+    if (typeof periodo === 'object') {
+      const params = new URLSearchParams();
+      Object.keys(periodo).forEach(key => {
+        if (periodo[key] !== null && periodo[key] !== undefined && periodo[key] !== '') {
+          params.append(key, periodo[key]);
+        }
+      });
+      queryParams = params.toString();
+    } else if (periodo) {
+       // Legacy string support
+       queryParams = `periodo=${periodo}`;
+    }
+
+    // Construir la URL con parámetros
+    const url = `${import.meta.env.VITE_API_FETCH_RUTAS}?${queryParams}`;
 
     const response = await fetch(url, {
       method: "GET",

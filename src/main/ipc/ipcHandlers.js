@@ -1,5 +1,5 @@
 
-import { ipcMain, BrowserWindow, app, shell } from 'electron';
+import { ipcMain, BrowserWindow, app, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
@@ -26,6 +26,50 @@ export default function IpcHandlers () {
       footer: 'Page footer', // Pie de página
       pageSize: 'letter', // Tamaño carta (A4 sería 'A4')
     };
+
+    // === ZOOM HANDLERS ===
+    ipcMain.handle('zoom-in', (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win) {
+            const current = win.webContents.getZoomFactor();
+            const newFactor = Math.min(current + 0.1, 3.0);
+            win.webContents.setZoomFactor(newFactor);
+            win.webContents.send('zoom-changed', newFactor); // Notificar cambio
+            return newFactor;
+        }
+        return 1;
+    });
+
+    ipcMain.handle('zoom-out', (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win) {
+            const current = win.webContents.getZoomFactor();
+            const newFactor = Math.max(current - 0.1, 0.5);
+            win.webContents.setZoomFactor(newFactor);
+            win.webContents.send('zoom-changed', newFactor); // Notificar cambio
+            return newFactor;
+        }
+        return 1;
+    });
+
+    ipcMain.handle('zoom-reset', (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win) {
+            win.webContents.setZoomFactor(1.0);
+            win.webContents.send('zoom-changed', 1.0); // Notificar cambio
+            return 1.0;
+        }
+        return 1;
+    });
+
+    ipcMain.handle('get-zoom-level', (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        return win ? win.webContents.getZoomFactor() : 1;
+    });
+
+    ipcMain.handle('get-app-version', () => {
+        return app.getVersion();
+    });
     
      
     //handle print - Con verificación de seguridad
@@ -57,6 +101,7 @@ export default function IpcHandlers () {
         
         let win = new BrowserWindow({ 
           show: false,
+          backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
           webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -68,8 +113,17 @@ export default function IpcHandlers () {
       
         win.loadURL(url);
       
-        win.webContents.on('did-finish-load', () => {
+        win.webContents.on('did-finish-load', async () => {
           console.log('Print window loaded successfully');
+          
+          // FORZAR MODO CLARO (Hack para evitar borde negro en preview)
+          try {
+             await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+          } catch (e) {
+             console.error('Error forcing light mode:', e);
+          }
+
           // Pequeño delay para asegurar que la página esté completamente renderizada
           setTimeout(() => {
             // Si options.silent es true, aseguramos que se envíe así
@@ -168,6 +222,7 @@ export default function IpcHandlers () {
         let win = new BrowserWindow({ 
           title: 'Preview', 
           show: false, 
+          backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
           autoHideMenuBar: true,
           webPreferences: {
             sandbox: false,
@@ -198,7 +253,13 @@ export default function IpcHandlers () {
           }
         });
       
-        win.webContents.once('did-finish-load', () => {
+        win.webContents.once('did-finish-load', async () => {
+          // FORZAR MODO CLARO PARA PDF
+          try {
+             await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+          } catch(e) {}
+
           // Si es la carga inicial de React, generar PDF
           // Pequeño delay asegurando renderizado completo
           setTimeout(() => {
@@ -276,6 +337,7 @@ export default function IpcHandlers () {
       
       let win = new BrowserWindow({ 
         show: false,
+        backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
@@ -290,8 +352,17 @@ export default function IpcHandlers () {
      
       win.loadURL(url);
      
-      win.webContents.on('did-finish-load', () => {
+      win.webContents.on('did-finish-load', async () => {
         console.log('Print report window loaded successfully');
+        
+        // FORZAR MODO CLARO (Hack para evitar borde negro en preview)
+        try {
+           await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+           await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+        } catch (e) {
+           console.error('Error forcing light mode in report:', e);
+        }
+
         // Pequeño delay para asegurar que la página esté completamente renderizada
         setTimeout(() => {
           win.webContents.print(printOptionsReporte, (success, failureReason) => {
@@ -330,6 +401,7 @@ export default function IpcHandlers () {
       let win = new BrowserWindow({ 
         title: 'Preview Report', 
         show: false, 
+        backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
         autoHideMenuBar: true,
         webPreferences: {
           nodeIntegration: false,
@@ -344,6 +416,14 @@ export default function IpcHandlers () {
       });
       
       win.loadURL(url);
+      
+      win.webContents.on('did-finish-load', async () => {
+          // FORZAR MODO CLARO
+          try {
+             await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+          } catch(e) {}
+      });
 
       win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
         console.error('Failed to load URL for report preview:', errorCode, errorDescription, validatedURL);
@@ -621,6 +701,46 @@ export default function IpcHandlers () {
       }
     });
     
+
+    
+    // === HANDLER DE GUARDADO DE ARCHIVOS ===
+    ipcMain.handle('save-file-dialog', async (event, { data, fileName, format }) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        
+        const options = {
+            title: 'Guardar Archivo',
+            defaultPath: path.join(app.getPath('downloads'), `${fileName}.${format === 'csv' ? 'csv' : 'xlsx'}`),
+            filters: [
+                { name: format === 'csv' ? 'Archivos CSV' : 'Archivos Excel', extensions: [format === 'csv' ? 'csv' : 'xlsx'] }
+            ]
+        };
+
+        const { canceled, filePath } = await dialog.showSaveDialog(win, options);
+
+        if (canceled || !filePath) {
+            return { success: false, canceled: true };
+        }
+
+        try {
+            // data viene como Buffer o string base64 dependiendo del formato
+            let buffer;
+            if (format === 'xlsx') {
+                 // Si viene en base64 (XLSX)
+                 buffer = Buffer.from(data, 'base64');
+            } else {
+                 // Si viene en string (CSV)
+                 // Agregar BOM para soporte UTF-8 en Excel
+                 buffer = Buffer.concat([Buffer.from('\uFEFF'), Buffer.from(data, 'utf-8')]);
+            }
+            
+            await fs.promises.writeFile(filePath, buffer);
+            return { success: true, filePath };
+        } catch (error) {
+            console.error('Error guardando archivo:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     console.log("✅ Handlers de documentación registrados");
     
 }

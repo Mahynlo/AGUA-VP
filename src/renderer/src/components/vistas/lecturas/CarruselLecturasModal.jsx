@@ -148,21 +148,20 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
   const lecturaInputRef = React.useRef(null);
 
+  // Ref para controlar si ya se inicializó la ruta actual
+  const initializedRutaId = React.useRef(null);
+
   useEffect(() => {
-    if (rutaId) {
+    // Si cambiamos de ruta, reseteamos todo
+    if (rutaId && initializedRutaId.current !== rutaId) {
+      initializedRutaId.current = rutaId;
+      setCurrentIndex(0);
+      setLecturas({});
+      setErroresLectura({});
+      // Fetch inicial
       obtenerInfoRuta(rutaId)
         .then((rutaData) => {
           setRuta(rutaData);
-          setCurrentIndex(0);
-          setLecturas({});
-          setErroresLectura({});
-
-          const rutaEnContexto = rutas.find(r => r.id === rutaId);
-          if (rutaEnContexto && rutaEnContexto.medidores_completados) {
-            setLecturasGuardadas(new Set(rutaEnContexto.medidores_completados));
-          } else {
-            setLecturasGuardadas(new Set());
-          }
         })
         .catch((error) => {
           console.error("Error al obtener la ruta:", error);
@@ -170,7 +169,16 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
           setError("Error al cargar la información de la ruta", "Toma de Lecturas");
         });
     }
-  }, [rutaId, obtenerInfoRuta, rutas, setError]);
+
+    // Efecto separado para actualizar SOLO el estado de completados cuando cambia el contexto
+    // sin resetear el índice ni las lecturas locales
+    if (rutaId && rutas.length > 0) {
+      const rutaEnContexto = rutas.find(r => r.id === rutaId);
+      if (rutaEnContexto && rutaEnContexto.medidores_completados) {
+        setLecturasGuardadas(new Set(rutaEnContexto.medidores_completados));
+      }
+    }
+  }, [rutaId, rutas, obtenerInfoRuta, setError]);
 
 
 

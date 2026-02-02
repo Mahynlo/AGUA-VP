@@ -14,6 +14,7 @@ export function ClientesProvider({ children }) {
   // State
   // --------------------
   const [clientes, setClientes] = useState([]);
+  const [pagination, setPagination] = useState(null); // Nuevo estado para paginación
   const [estadisticas, setEstadisticas] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -28,7 +29,7 @@ export function ClientesProvider({ children }) {
   // =====================================================
   // Fetchers
   // =====================================================
-  const fetchClientes = useCallback(async () => {
+  const fetchClientes = useCallback(async (params = {}) => {
     try {
       if (!initialLoading) setLoading(true);
 
@@ -37,8 +38,28 @@ export function ClientesProvider({ children }) {
         throw new Error("No se encontró token de sesión");
       }
 
-      const data = await window.api.fetchClientes(token);
-      setClientes(Array.isArray(data) ? data : []);
+      // Parámetros por defecto si no se envían
+      const queryParams = {
+        page: params.page || 1,
+        limit: params.limit || 50,
+        search: params.search || '',
+        ...params
+      };
+
+      const response = await window.api.fetchClientes(token, queryParams);
+
+      // Manejar respuesta dual (Array antiguo o {data, pagination} nuevo)
+      if (Array.isArray(response)) {
+        setClientes(response);
+        setPagination(null);
+      } else if (response && response.data && Array.isArray(response.data)) {
+        setClientes(response.data);
+        setPagination(response.pagination);
+      } else {
+        setClientes([]);
+        setPagination(null);
+      }
+
       setError(null);
     } catch (err) {
       console.error("❌ Error al obtener clientes:", err);
@@ -99,12 +120,14 @@ export function ClientesProvider({ children }) {
     <ClientesContext.Provider
       value={{
         clientes,
+        pagination, // Exportar paginación
         estadisticas,
         estadisticasServidor: estadisticas, // Alias para compatibilidad con TabMetricas
         loading,
         initialLoading,
         error,
-        actualizarClientes
+        actualizarClientes,
+        fetchClientes // Expose direct fetcher for pagination
       }}
     >
       {children}

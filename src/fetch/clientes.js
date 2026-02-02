@@ -6,7 +6,7 @@ const URL_CLIENTES = import.meta.env.VITE_API_FETCH_CLIENTES; // URL del endpoin
 |      Funcion Fetch clientes
 ************************************************************************************************************* */
 
-export const fetchClientes = async (token_session, isRetry = false) => {
+export const fetchClientes = async (token_session, params = {}, isRetry = false) => {
   try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
@@ -18,7 +18,17 @@ export const fetchClientes = async (token_session, isRetry = false) => {
       return [];
     }
 
-    const response = await fetch(URL_CLIENTES, {
+    // Construir URL con parámetros
+    const url = new URL(URL_CLIENTES);
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+            url.searchParams.append(key, params[key]);
+        }
+      });
+    }
+
+    const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
         "x-app-key": `AppKey ${token_app}`,
@@ -39,7 +49,7 @@ export const fetchClientes = async (token_session, isRetry = false) => {
         const newToken = localStorage.getItem('token');
         if (newToken && newToken !== token_session) {
           console.log("✅ Token renovado, reintentando fetchClientes...");
-          return fetchClientes(newToken, true);
+          return fetchClientes(newToken, params, true);
         }
       }
       
@@ -47,7 +57,7 @@ export const fetchClientes = async (token_session, isRetry = false) => {
     }
 
     const data = await response.json();
-    return data; // Esto debe ser un array de clientes
+    return data; // Puede ser array o objeto {data, pagination}
   } catch (error) {
     console.error("Error al obtener clientes:", error);
     return [];

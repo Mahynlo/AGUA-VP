@@ -153,7 +153,30 @@ const ReporteLecturas = () => {
                 {`
                     @media print {
                         @page { size: letter; margin: 0.8cm; }
-                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        
+                        /* RESET TOTAL DE COLORES */
+                        *, *::before, *::after {
+                            background-color: transparent !important;
+                            color: black !important;
+                            box-shadow: none !important;
+                            text-shadow: none !important;
+                        }
+
+                        /* FONDO BLANCO SOLIDO */
+                        html, body, #root, .min-h-screen {
+                            background-color: white !important;
+                            -webkit-print-color-adjust: exact !important; 
+                            print-color-adjust: exact !important; 
+                        }
+
+                        /* RESTAURAR COLORES ESPECIFICOS QUE SÍ QUEREMOS (Encabezados, tablas) */
+                        .bg-blue-800 { background-color: #1e40af !important; color: white !important; }
+                        .text-white { color: white !important; }
+                        .bg-gray-100 { background-color: #f3f4f6 !important; }
+                        .bg-gray-50 { background-color: #f9fafb !important; }
+                        .border-blue-800 { border-color: #1e40af !important; }
+                        
+                        /* EVITAR SALTOS */
                         .break-inside-avoid { break-inside: avoid; }
                     }
                 `}

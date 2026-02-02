@@ -5,7 +5,7 @@ import { useFeedback } from "./FeedbackContext";
 // =====================================================
 // Context
 // =====================================================
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 // =====================================================
 // Helper: decodificar JWT de forma segura
@@ -110,10 +110,24 @@ export const AuthProvider = ({ children }) => {
     // =====================================================
     // Sesiones
     // =====================================================
+    // =====================================================
+    // Sesiones
+    // =====================================================
     const obtenerSesionesActivas = async (usuarioId) => {
         try {
-            const response = await window.api.getSession(usuarioId);
-            setSesiones(response?.success ? response.sesiones || [] : []);
+            // Obtener token (puede ser del state o localStorage para asegurar)
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            const response = await window.api.getSession(usuarioId, token);
+            console.log("🔍 Respuesta obtenerSesionesActivas:", response); // Debug Log
+
+            // Fix: Permitir si success es true O si contiene el array directamente (fallback)
+            if (response?.success || Array.isArray(response?.sesiones_activas)) {
+                setSesiones(response.sesiones_activas || []);
+            } else {
+                setSesiones([]);
+            }
         } catch (error) {
             console.error("💥 Error al obtener sesiones:", error);
             setSesiones([]);
@@ -281,6 +295,7 @@ export const AuthProvider = ({ children }) => {
                 login,
                 logout,
                 renovarAccessToken,
+                obtenerSesionesActivas, // Exponer para recargar manualmente
                 isAuthenticated
             }}
         >

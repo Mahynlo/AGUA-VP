@@ -1,16 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { useClientes } from "../../../context/ClientesContext";
 import {
-    Input,
     Card,
     CardBody,
-    User,
     Chip,
     Spinner,
     Button,
     Avatar
 } from "@nextui-org/react";
 import { HiSearch, HiUsers, HiX, HiLocationMarker } from "react-icons/hi";
+
+// Componente de Input Personalizado (Estandarizado)
+const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, placeholder, autoFocus }) => (
+    <div>
+        {label && (
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                {label}
+            </label>
+        )}
+        <div className="relative w-full flex">
+            <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2 pr-2">
+                {icon}
+            </span>
+            <input
+                type={type}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                autoFocus={autoFocus}
+                className={`border border-gray-300 focus:ring-${color}-600 focus:border-${color}-500 text-gray-600 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all shadow-sm`}
+            />
+        </div>
+        {description && <p className="text-xs text-gray-400 mt-1">{description}</p>}
+    </div>
+);
 
 /**
  * Componente que permite buscar un cliente por nombre o RPE
@@ -33,7 +56,7 @@ const BuscarCliente = ({ onClienteSeleccionado }) => {
         }
 
         setIsSearching(true);
-        
+
         // Simular un pequeño delay para mostrar el loading
         const timeoutId = setTimeout(() => {
             const filtrados = clientes.filter((cliente) =>
@@ -67,158 +90,127 @@ const BuscarCliente = ({ onClienteSeleccionado }) => {
         <div className="space-y-4">
             {/* Cliente Seleccionado */}
             {clienteSeleccionado && (
-                <Card className="border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
-                    <CardBody className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Avatar
-                                    icon={<HiUsers className="text-lg" />}
-                                    color="success"
-                                    size="sm"
-                                />
-                                <div>
-                                    <h4 className="text-sm font-semibold text-green-800 dark:text-green-200">
-                                        {clienteSeleccionado.nombre}
-                                    </h4>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <HiLocationMarker className="text-xs text-green-600" />
-                                        <span className="text-xs text-green-600 dark:text-green-400">
-                                            {clienteSeleccionado.ciudad}
-                                        </span>
-                                        <Chip 
-                                            size="sm" 
-                                            color="success" 
-                                            variant="flat"
-                                            className="text-xs"
-                                        >
-                                            ID: {clienteSeleccionado.id}
-                                        </Chip>
-                                    </div>
-                                </div>
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800/50 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Avatar
+                            icon={<HiUsers className="text-lg" />}
+                            classNames={{
+                                base: "bg-green-200 dark:bg-green-800",
+                                icon: "text-green-600 dark:text-green-400"
+                            }}
+                            size="sm"
+                        />
+                        <div>
+                            <h4 className="text-sm font-bold text-green-800 dark:text-green-200">
+                                {clienteSeleccionado.nombre}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <HiLocationMarker className="text-xs text-green-600" />
+                                <span className="text-xs text-green-700 dark:text-green-400">
+                                    {clienteSeleccionado.ciudad}
+                                </span>
+                                <span className="text-xs px-1.5 py-0.5 bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300 rounded text-[10px] font-semibold">
+                                    ID: {clienteSeleccionado.id}
+                                </span>
                             </div>
-                            <Button
-                                isIconOnly
-                                size="sm"
-                                color="danger"
-                                variant="light"
-                                onPress={limpiarSeleccion}
-                                className="min-w-unit-8 w-8 h-8"
-                            >
-                                <HiX className="text-sm" />
-                            </Button>
                         </div>
-                        {clienteSeleccionado.dirección && (
-                            <div className="mt-2 text-xs text-green-600 dark:text-green-400">
-                                📍 {clienteSeleccionado.dirección}
-                            </div>
-                        )}
-                    </CardBody>
-                </Card>
+                    </div>
+                    <Button
+                        isIconOnly
+                        size="sm"
+                        color="danger"
+                        variant="light"
+                        onPress={limpiarSeleccion}
+                        className="min-w-8 w-8 h-8 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30"
+                    >
+                        <HiX className="text-sm" />
+                    </Button>
+                </div>
             )}
 
             {/* Campo de Búsqueda */}
             {!clienteSeleccionado && (
                 <div className="relative">
-                    <Input
-                        type="text"
+                    <CustomInput
                         placeholder="Buscar cliente por nombre o ciudad..."
                         value={busqueda}
-                        onValueChange={setBusqueda}
-                        startContent={
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        icon={
                             isSearching ? (
-                                <Spinner size="sm" color="primary" />
+                                <Spinner size="sm" color="warning" />
                             ) : (
-                                <HiSearch className="text-gray-400 text-lg" />
+                                <HiSearch className="text-blue-500 w-5 h-5" />
                             )
                         }
-                        variant="bordered"
-                        color="primary"
-                        size="md"
-                        className="w-full"
-                        classNames={{
-                            input: "text-sm",
-                            inputWrapper: "group-data-[focus=true]:border-blue-500"
-                        }}
+                        color="blue"
+                        description="Escriba para buscar en la base de datos de clientes"
                     />
 
                     {/* Resultados de Búsqueda */}
                     {resultados.length > 0 && (
-                        <Card className="absolute z-50 w-full mt-2 max-h-64 overflow-hidden border shadow-lg">
-                            <CardBody className="p-0">
-                                <div className="max-h-64 overflow-y-auto">
-                                    {resultados.map((cliente, index) => (
-                                        <div
-                                            key={cliente.id}
-                                            className={`p-3 cursor-pointer transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                                                index !== resultados.length - 1 ? 'border-b border-gray-200 dark:border-gray-700' : ''
+                        <div className="absolute z-50 w-full mt-2 max-h-64 overflow-hidden border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl bg-white dark:bg-zinc-800">
+                            <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                {resultados.map((cliente, index) => (
+                                    <div
+                                        key={cliente.id}
+                                        className={`p-3 cursor-pointer transition-colors duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 group ${index !== resultados.length - 1 ? 'border-b border-gray-100 dark:border-gray-800' : ''
                                             }`}
-                                            onClick={() => seleccionarCliente(cliente)}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <Avatar
-                                                    icon={<HiUsers className="text-lg" />}
-                                                    color="primary"
-                                                    size="sm"
-                                                    className="flex-shrink-0"
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                                            {cliente.nombre}
-                                                        </h4>
-                                                        <Chip 
-                                                            size="sm" 
-                                                            color="primary" 
-                                                            variant="flat"
-                                                            className="text-xs flex-shrink-0"
-                                                        >
-                                                            {cliente.id}
-                                                        </Chip>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <HiLocationMarker className="text-xs text-gray-500 flex-shrink-0" />
-                                                        <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                        onClick={() => seleccionarCliente(cliente)}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors">
+                                                <HiUsers className="text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                                        {cliente.nombre}
+                                                    </h4>
+                                                    <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded font-medium">
+                                                        #{cliente.id}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-1 min-w-0">
+                                                        <HiLocationMarker className="text-xs text-gray-400 flex-shrink-0" />
+                                                        <span className="text-xs text-gray-500 truncate">
                                                             {cliente.ciudad}
                                                         </span>
                                                     </div>
                                                     {cliente.dirección && (
-                                                        <div className="text-xs text-gray-500 dark:text-gray-500 mt-1 truncate">
-                                                            📍 {cliente.dirección}
-                                                        </div>
+                                                        <>
+                                                            <span className="text-gray-300 text-xs">•</span>
+                                                            <span className="text-xs text-gray-500 truncate max-w-[150px]">
+                                                                {cliente.dirección}
+                                                            </span>
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </CardBody>
-                        </Card>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     )}
 
                     {/* Mensaje cuando no hay resultados */}
                     {busqueda.trim() && !isSearching && resultados.length === 0 && (
-                        <Card className="absolute z-50 w-full mt-2 border shadow-lg">
-                            <CardBody className="p-4 text-center">
-                                <div className="text-gray-500 dark:text-gray-400">
-                                    <HiUsers className="text-2xl mx-auto mb-2 opacity-50" />
-                                    <p className="text-sm">No se encontraron clientes</p>
-                                    <p className="text-xs mt-1">Intenta con otro término de búsqueda</p>
-                                </div>
-                            </CardBody>
-                        </Card>
+                        <div className="absolute z-50 w-full mt-2 border border-gray-200 dark:border-gray-700 shadow-lg rounded-xl bg-white dark:bg-zinc-900 p-6 text-center">
+                            <div className="bg-gray-50 dark:bg-gray-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <HiUsers className="text-xl text-gray-400" />
+                            </div>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No se encontraron clientes</p>
+                            <p className="text-xs text-gray-500 mt-1">Intenta con otro término de búsqueda</p>
+                        </div>
                     )}
 
                     {/* Indicador de total de resultados */}
                     {busqueda.trim() && !isSearching && resultados.length > 0 && (
-                        <div className="mt-2">
-                            <Chip 
-                                size="sm" 
-                                color="primary" 
-                                variant="flat"
-                                className="text-xs"
-                            >
-                                {resultados.length} cliente{resultados.length !== 1 ? 's' : ''} encontrado{resultados.length !== 1 ? 's' : ''}
-                            </Chip>
+                        <div className="mt-2 flex justify-end">
+                            <span className="text-[10px] px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg font-medium border border-blue-100 dark:border-blue-800">
+                                {resultados.length} coincidencias
+                            </span>
                         </div>
                     )}
                 </div>

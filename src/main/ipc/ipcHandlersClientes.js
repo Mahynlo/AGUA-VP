@@ -12,8 +12,8 @@ export default function IpcHandlerClientes () {
      * ************************************************************************************************************
      */
     // Evento para obtener clientes desde la base de datos
-    ipcMain.handle("fetch-clientes", async (event, token_session) => {
-      return await fetchClientes(token_session); // Pasar el token recibido como argumento
+    ipcMain.handle("fetch-clientes", async (event, token_session, params) => {
+      return await fetchClientes(token_session, params); // Pasar el token recibido como argumento
     });
 
     // Evento para obtener estadísticas de clientes

@@ -20,13 +20,26 @@ const FeedbackMessages = ({
   IconErrorSuccess,
   IconCloseSuccess,
   position = "top-center",
+  // Props opcionales para uso local (sin contexto)
+  error,
+  success,
+  setError,
+  setSuccess
 }) => {
-  const {
-    text,
-    type,
-    source,
-    clearMessage,
-  } = useFeedback();
+  const context = useFeedback();
+
+  // Determinar si usamos props locales o el contexto global
+  // Si nos pasan 'error' o 'success', priorizamos eso.
+  const hasLocalState = (error || success) !== undefined;
+
+  const text = hasLocalState ? (error || success) : context.text;
+  const type = hasLocalState ? (error ? "error" : "success") : context.type;
+  const source = hasLocalState ? null : context.source; // Local no suele tener source, o podríamos añadir prop
+
+  const clearMessage = hasLocalState ? () => {
+    if (setError) setError("");
+    if (setSuccess) setSuccess("");
+  } : context.clearMessage;
 
   const CheckIcon = IconChecksuccess || DefaultChecksuccessIcon;
   const ErrorIcon = IconErrorSuccess || DefaultErrorSuccessIcon;
@@ -44,7 +57,7 @@ const FeedbackMessages = ({
     <div className={`${baseClasses} ${positionClass}`}>
       <div className={`relative max-w-md px-6 py-4 text-base rounded-lg shadow-lg animate-fade-in flex items-start gap-4
         ${isSuccess ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" :
-                      "bg-red-200 text-red-700 dark:bg-red-900 dark:text-red-300"}
+          "bg-red-200 text-red-700 dark:bg-red-900 dark:text-red-300"}
       `}>
         {isSuccess && <CheckIcon className="w-8 h-8" />}
         {isError && <ErrorIcon className="w-8 h-8" />}
@@ -56,9 +69,7 @@ const FeedbackMessages = ({
             </div>
           )}
           <div>{text}</div>
-          <div className="text-xs mt-1 opacity-70 italic capitalize">
-            {type}
-          </div>
+          {/* Opcional: mostrar tipo si se desea */}
         </div>
 
         <button

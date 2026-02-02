@@ -291,7 +291,7 @@ const TabEstadisticas = () => {
                   {formatearMoneda(
                     estadisticas.clientesConPagos
                       ? estadisticas.totalRecaudado /
-                          estadisticas.clientesConPagos
+                      estadisticas.clientesConPagos
                       : 0
                   )}
                 </span>

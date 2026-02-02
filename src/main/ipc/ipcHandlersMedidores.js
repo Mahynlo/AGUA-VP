@@ -34,8 +34,8 @@ export default function IpcHandlersMedidores () {
     }
   });
 
-   ipcMain.handle("fetch-medidores", async (event, token_session) => {  // Usa ipcMain.handle en lugar de ipcMain.on para manejar promesas
-      return await fetchMedidores(token_session);
+   ipcMain.handle("fetch-medidores", async (event, token_session, params) => {
+      return await fetchMedidores(token_session, params);
     });
 
     ipcMain.handle("update-medidor", async (event, data) => {

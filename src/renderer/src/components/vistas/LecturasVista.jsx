@@ -14,7 +14,7 @@ import { LecturasIcon, RutaLecturaIcon, MetricasLecturaIcon } from "../../IconsA
 const Lecturas = () => {
   const navigate = useNavigate(); // Hook de navegación
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { rutas, initialLoading } = useRutas();
+  const { rutas, initialLoading, pagination } = useRutas();
 
   // Estado para la pestaña activa, recuperado de localStorage
   const [selectedTab, setSelectedTab] = useState(() => {
@@ -38,14 +38,16 @@ const Lecturas = () => {
       };
     }
 
-    const totalRutas = rutas.length;
+    // Si hay paginación, usar el total global.
+    const totalRutas = pagination ? pagination.total : rutas.length;
+
     const lecturasCompletadas = rutas.reduce((acc, r) => acc + (r.completadas || 0), 0);
     const totalLecturas = rutas.reduce((acc, r) => acc + (r.total_puntos || 0), 0);
     const eficiencia = totalLecturas > 0 ? Math.round((lecturasCompletadas / totalLecturas) * 100) : 0;
 
     return {
       rutasActivas: totalRutas,
-      lecturasHoy: lecturasCompletadas, // Usando completadas como lecturas del día
+      lecturasHoy: lecturasCompletadas,
       lecturasCompletadas: lecturasCompletadas,
       eficiencia: eficiencia
     };

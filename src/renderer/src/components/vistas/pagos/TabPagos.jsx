@@ -1,101 +1,107 @@
 import { useState, useEffect } from "react";
-import { 
-  Card, 
-  CardBody, 
+import {
+  Card,
+  CardBody,
   CardHeader,
-  Button, 
+  Button,
   Chip,
-  Badge,
-  Table, 
-  TableHeader, 
-  TableColumn, 
-  TableBody, 
-  TableRow, 
-  TableCell, 
-  Select, 
-  SelectItem, 
-  Input, 
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Select,
+  SelectItem,
   Pagination,
   Skeleton,
-  Divider
 } from "@nextui-org/react";
 import { FlechaReturnIcon } from "../../../IconsApp/IconsAppSystem";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
-import { HiEye, HiCreditCard, HiCalendar, HiCurrencyDollar, HiCash, HiRefresh } from "react-icons/hi";
+import { HiEye, HiCurrencyDollar, HiCash, HiCalendar, HiDownload } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
-import { usePagos } from "../../../context/PagosContext";
+import { useTabPagos } from "../../../hooks/useTabPagos";
 import ModalDetallePago from "./ModalDetallePago";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
+import { exportData } from "../../../utils/exportUtils";
+import { useFeedback } from "../../../context/FeedbackContext";
+
+// Componente LoadingSkeleton en línea (mismo patrón que Clientes/Facturas)
+const LoadingSkeleton = () => (
+  <div className="space-y-4 p-4">
+    <Skeleton className="rounded-lg">
+      <div className="h-24 rounded-lg bg-default-300"></div>
+    </Skeleton>
+    <div className="space-y-3">
+      <Skeleton className="w-3/5 rounded-lg">
+        <div className="h-3 w-3/5 rounded-lg bg-default-200"></div>
+      </Skeleton>
+      <Skeleton className="w-4/5 rounded-lg">
+        <div className="h-3 w-4/5 rounded-lg bg-default-200"></div>
+      </Skeleton>
+      <Skeleton className="w-2/5 rounded-lg">
+        <div className="h-3 w-2/5 rounded-lg bg-default-300"></div>
+      </Skeleton>
+    </div>
+  </div>
+);
 
 const TabPagos = () => {
   const navigate = useNavigate();
-  const { 
-    pagos, 
-    resumen,
-    loading, 
+
+  // Usar el hook personalizado (patrón consistente)
+  const {
+    pagos,
+    paginatedData,
+    loading,
     initialLoading,
-    error,
-    fetchPagos
-  } = usePagos();
-  
-  // Estados locales para filtros y paginación
-  const [filtroTexto, setFiltroTexto] = useState("");
-  const [filtroMetodo, setFiltroMetodo] = useState("all");
-  const [filtroPeriodo, setFiltroPeriodo] = useState("2025-08"); // Período actual por defecto
-  const [pagina, setPagina] = useState(1);
-  const [itemsPorPagina, setItemsPorPagina] = useState(10);
-  
+    search,
+    filtroMetodo,
+    filtroPeriodo,
+    currentPage,
+    rowsPerPage,
+    totalPages,
+    totalItems,
+    resumen,
+    handleSearch,
+    handleMetodoFilterChange,
+    handlePeriodoChange,
+    handleRowsPerPageChange,
+    setCurrentPage,
+    getMetodoColor,
+    actualizarPagos
+  } = useTabPagos();
+
+  const { setSuccess } = useFeedback();
+
   // Estados para modales
   const [modalDetalle, setModalDetalle] = useState(false);
   const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
 
-  // Cargar pagos al montar el componente
-  useEffect(() => {
-    console.log("🔄 TabPagos montado, iniciando fetch de pagos para período:", filtroPeriodo);
-    fetchPagos(filtroPeriodo);
-  }, []);
-
-  // Log de cambios en los datos
-  useEffect(() => {
-    console.log("📊 Datos de pagos actualizados:", {
-      pagosLength: pagos?.length || 0,
-      resumen: resumen,
-      loading: loading,
-      initialLoading: initialLoading,
-      error: error,
-      periodoActual: filtroPeriodo
-    });
-  }, [pagos, resumen, loading, initialLoading, error, filtroPeriodo]);
-
-  // Generar opciones de períodos (últimos 12 meses como en TabFacturas)
+  // Generar opciones de períodos (últimos 12 meses)
   const generarOpcionesPeriodos = () => {
     const opciones = [];
     const fechaActual = new Date();
-    
+
     for (let i = 0; i < 12; i++) {
       const fecha = new Date(fechaActual.getFullYear(), fechaActual.getMonth() - i, 1);
       const año = fecha.getFullYear();
       const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
       const periodo = `${año}-${mes}`;
-      
+
       const nombreMes = fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
       opciones.push({
         value: periodo,
         label: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)
       });
     }
-    
     return opciones;
   };
 
   const opcionesPeriodos = generarOpcionesPeriodos();
 
-  // Función para cambiar período y hacer fetch
-  const handleCambioPeriodo = async (nuevoPeriodo) => {
-    console.log("�️ Cambiando período a:", nuevoPeriodo);
-    setFiltroPeriodo(nuevoPeriodo);
-    setPagina(1);
-    await fetchPagos(nuevoPeriodo);
-  };
+  // Obtener etiqueta del período seleccionado
+  const periodoLabel = opcionesPeriodos.find(p => p.value === filtroPeriodo)?.label || filtroPeriodo;
 
   // Función para detectar múltiples pagos por factura
   const obtenerInfoPagosPorFactura = (facturaId) => {
@@ -107,49 +113,6 @@ const TabPagos = () => {
     };
   };
 
-  // Filtrar pagos (sin filtro de período porque ya se hace en el fetch)
-  const pagosFiltrados = pagos?.filter(pago => {
-    const matchTexto = !filtroTexto || 
-      pago.id.toString().includes(filtroTexto) ||
-      pago.factura_id.toString().includes(filtroTexto) ||
-      pago.metodo_pago.toLowerCase().includes(filtroTexto.toLowerCase()) ||
-      pago.comentario?.toLowerCase().includes(filtroTexto.toLowerCase()) ||
-      pago.cliente_nombre?.toLowerCase().includes(filtroTexto.toLowerCase()) ||
-      pago.medidor_numero_serie?.toLowerCase().includes(filtroTexto.toLowerCase());
-    
-    const matchMetodo = filtroMetodo === "all" || pago.metodo_pago === filtroMetodo;
-    
-    return matchTexto && matchMetodo;
-  }) || [];
-
-  // Debug: Log para verificar filtros (simplificado)
-  useEffect(() => {
-    console.log("🔍 Estado de filtros:", {
-      filtroTexto,
-      filtroMetodo,
-      filtroPeriodo,
-      totalPagos: pagos?.length || 0,
-      pagosFiltrados: pagosFiltrados.length
-    });
-  }, [filtroTexto, filtroMetodo, filtroPeriodo, pagos, pagosFiltrados]);
-
-  // Paginación
-  const totalPaginas = Math.ceil(pagosFiltrados.length / itemsPorPagina);
-  const indiceInicio = (pagina - 1) * itemsPorPagina;
-  const indiceFin = indiceInicio + itemsPorPagina;
-  const pagosPaginados = pagosFiltrados.slice(indiceInicio, indiceFin);
-
-  // Función para obtener el color del chip según el método de pago
-  const getMetodoColor = (metodo) => {
-    const colors = {
-      'Efectivo': 'success',
-      'Transferencia': 'primary',
-      'Tarjeta': 'secondary',
-      'Cheque': 'warning'
-    };
-    return colors[metodo] || 'default';
-  };
-
   // Función para formatear fecha
   const formatFecha = (fecha) => {
     return new Date(fecha).toLocaleDateString('es-MX', {
@@ -159,60 +122,66 @@ const TabPagos = () => {
     });
   };
 
-  // Función para formatear fecha y hora
-  const formatFechaHora = (fecha) => {
-    return new Date(fecha).toLocaleString('es-MX', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   // Función para ver detalles del pago
   const verDetalle = (pago) => {
     setPagoSeleccionado(pago);
     setModalDetalle(true);
   };
 
-  // Función para actualizar datos
-  const handleActualizar = async () => {
-    await fetchPagos();
-  };
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardBody className="text-center p-8">
-            <p className="text-danger text-lg mb-4">
-              Error al cargar los pagos: {error.message || error}
-            </p>
-            <Button 
-              color="primary" 
-              onClick={handleActualizar}
-              className="mt-4"
-            >
-              Reintentar
-            </Button>
-          </CardBody>
-        </Card>
-      </div>
-    );
+  if (initialLoading) {
+    return <LoadingSkeleton />;
   }
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-          Historial de Pagos
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+            Pagos
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Periodo: <span className="font-semibold text-primary">{periodoLabel}</span>
+          </p>
+        </div>
         <div className="flex gap-2">
+          <Dropdown>
+            <DropdownTrigger>
+              <Button
+                color="success"
+                className="text-white"
+                startContent={<HiDownload className="text-lg" />}
+              >
+                Exportar
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Opciones de exportación">
+              <DropdownItem
+                key="csv"
+                startContent={<span className="text-xl">📄</span>}
+                onPress={async () => {
+                  const success = await exportData(paginatedData, `Pagos_${new Date().toISOString().split('T')[0]}`, 'csv');
+                  if (success) setSuccess("Archivo CSV generado exitosamente");
+                }}
+              >
+                Exportar CSV
+              </DropdownItem>
+              <DropdownItem
+                key="excel"
+                startContent={<span className="text-xl">📊</span>}
+                onPress={async () => {
+                  const success = await exportData(paginatedData, `Pagos_${new Date().toISOString().split('T')[0]}`, 'xlsx');
+                  if (success) setSuccess("Archivo Excel generado exitosamente");
+                }}
+              >
+                Exportar Excel (.xlsx)
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+
           <Button
             color="primary"
-            onClick={handleActualizar}
+            onClick={() => actualizarPagos()}
             isLoading={loading}
           >
             {loading ? "Cargando..." : "Recargar Datos"}
@@ -224,38 +193,7 @@ const TabPagos = () => {
         </div>
       </div>
 
-      {/* Estadísticas rápidas */}
-      {resumen && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-            <CardBody className="text-center p-6">
-              <div className="flex items-center justify-center mb-2">
-                <HiCurrencyDollar className="w-6 h-6 mr-2" />
-                <p className="text-2xl font-bold">${(resumen.total_pagado || 0).toLocaleString()}</p>
-              </div>
-              <p className="text-sm opacity-90">Total Pagado</p>
-            </CardBody>
-          </Card>
-          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-            <CardBody className="text-center p-6">
-              <div className="flex items-center justify-center mb-2">
-                <HiCash className="w-6 h-6 mr-2" />
-                <p className="text-2xl font-bold">{resumen.cantidad_pagos || 0}</p>
-              </div>
-              <p className="text-sm opacity-90">Total Pagos</p>
-            </CardBody>
-          </Card>
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-            <CardBody className="text-center p-6">
-              <div className="flex items-center justify-center mb-2">
-                <HiCalendar className="w-6 h-6 mr-2" />
-                <p className="text-2xl font-bold">${(resumen.promedio_pago || 0).toLocaleString()}</p>
-              </div>
-              <p className="text-sm opacity-90">Promedio por Pago</p>
-            </CardBody>
-          </Card>
-        </div>
-      )}
+      {/* Filtros y controles - KPIs movidos a PagosVista */}
 
       {/* Filtros y controles */}
       <Card>
@@ -278,13 +216,13 @@ const TabPagos = () => {
                 <input
                   type="text"
                   placeholder="Buscar por ID, factura, cliente, medidor..."
-                  value={filtroTexto}
-                  onChange={(e) => setFiltroTexto(e.target.value)}
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
                   className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 />
-                {filtroTexto && (
+                {search && (
                   <button
-                    onClick={() => setFiltroTexto("")}
+                    onClick={() => handleSearch("")}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
                   >
                     ✕
@@ -298,19 +236,14 @@ const TabPagos = () => {
               label="Período"
               placeholder="Seleccionar período"
               selectedKeys={filtroPeriodo ? [filtroPeriodo] : []}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0];
-                if (value) {
-                  handleCambioPeriodo(value);
-                }
-              }}
+              onChange={handlePeriodoChange}
               className="w-full"
               variant="bordered"
               startContent={<HiCalendar className="w-4 h-4 text-gray-500" />}
             >
               {opcionesPeriodos.map((opcion) => (
-                <SelectItem 
-                  key={opcion.value} 
+                <SelectItem
+                  key={opcion.value}
                   value={opcion.value}
                   textValue={opcion.label}
                 >
@@ -323,48 +256,40 @@ const TabPagos = () => {
             <Select
               label="Método de pago"
               placeholder="Todos los métodos"
-              selectedKeys={filtroMetodo !== "all" ? [filtroMetodo] : []}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0];
-                setFiltroMetodo(value || "all");
-                setPagina(1);
-              }}
+              selectedKeys={filtroMetodo !== "All" ? [filtroMetodo] : ["All"]}
+              onSelectionChange={handleMetodoFilterChange}
             >
-              <SelectItem key="all">Todos los métodos</SelectItem>
+              <SelectItem key="All">Todos los métodos</SelectItem>
               <SelectItem key="Efectivo">Efectivo</SelectItem>
               <SelectItem key="Transferencia">Transferencia</SelectItem>
               <SelectItem key="Tarjeta">Tarjeta</SelectItem>
               <SelectItem key="Cheque">Cheque</SelectItem>
             </Select>
-            
+
             {/* Selector de filas por página */}
             <Select
               label="Por página"
-              selectedKeys={[itemsPorPagina.toString()]}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0];
-                setItemsPorPagina(parseInt(value));
-                setPagina(1);
-              }}
+              selectedKeys={[rowsPerPage.toString()]}
+              onChange={handleRowsPerPageChange}
             >
               <SelectItem key="5" value="5">5</SelectItem>
               <SelectItem key="10" value="10">10</SelectItem>
               <SelectItem key="15" value="15">15</SelectItem>
               <SelectItem key="20" value="20">20</SelectItem>
+              <SelectItem key="50" value="50">50</SelectItem>
             </Select>
           </div>
-          
+
           {/* Información de resultados */}
           <div className="flex justify-between items-center mt-4 text-sm text-gray-600 dark:text-gray-400">
             <span>
-              Mostrando {pagosPaginados.length} de {pagosFiltrados.length} pagos
-              {pagosFiltrados.length !== (pagos?.length || 0) && ` (filtrado de ${pagos?.length || 0} total)`}
+              Mostrando {paginatedData.length} resultados de {totalItems} encontrados
             </span>
           </div>
         </CardBody>
       </Card>
 
-      {/* Tabla de Pagos con estilo exacto de TabFacturas */}
+      {/* Tabla de Pagos */}
       <Card>
         <CardBody className="p-0">
           <Table
@@ -386,23 +311,23 @@ const TabPagos = () => {
               <TableColumn>MÉTODO</TableColumn>
               <TableColumn align="center">ACCIONES</TableColumn>
             </TableHeader>
-            
+
             <TableBody emptyContent={
               <div className="text-center py-8">
                 <p className="text-gray-500 dark:text-gray-400">
-                  {pagos?.length === 0 ? (
-                    <>No hay pagos para el período {opcionesPeriodos.find(o => o.value === filtroPeriodo)?.label || filtroPeriodo}</>
-                  ) : (
+                  {paginatedData.length === 0 && !loading ? (
                     <>No hay pagos que coincidan con los filtros seleccionados</>
+                  ) : (
+                    <>Cargando datos...</>
                   )}
                 </p>
               </div>
             }>
-              {pagosPaginados.map((pago) => {
+              {paginatedData.map((pago) => {
                 const infoPagosFactura = obtenerInfoPagosPorFactura(pago.factura_id);
                 const esPagoMultiple = infoPagosFactura.total > 1;
                 const indicePago = infoPagosFactura.pagosOrdenados.findIndex(p => p.id === pago.id) + 1;
-                
+
                 return (
                   <TableRow key={pago.id}>
                     <TableCell>
@@ -515,13 +440,13 @@ const TabPagos = () => {
         </CardBody>
       </Card>
 
-      {/* Paginación - solo si hay más de una página */}
-      {totalPaginas > 1 && (
-        <div className="flex justify-center">
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex justify-center py-4">
           <Pagination
-            total={totalPaginas}
-            page={pagina}
-            onChange={setPagina}
+            total={totalPages}
+            page={currentPage}
+            onChange={setCurrentPage}
             showControls
             showShadow
             color="primary"

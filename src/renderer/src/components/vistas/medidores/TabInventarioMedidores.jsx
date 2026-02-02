@@ -13,26 +13,47 @@ import {
     CardBody,
     CardHeader,
     Select,
-    SelectItem
+    SelectItem,
+    Dropdown,
+    DropdownTrigger,
+    DropdownMenu,
+    DropdownItem,
+    Spinner
 } from "@nextui-org/react";
-import { HiSearch, HiPencilAlt, HiEye, HiTrash, HiLocationMarker, HiUser, HiCog } from "react-icons/hi";
+import { HiSearch, HiPencilAlt, HiEye, HiTrash, HiLocationMarker, HiUser, HiCog, HiDownload } from "react-icons/hi";
 import { useMedidores } from "../../../context/MedidoresContext";
+import { useTabMedidores } from "../../../hooks/useTabMedidores";
 import RegistrarMedidor from "./RegistrarMedidores";
 import ModalDetalleMedidor from "./ModalDetalleMedidor";
 import ModalEditarMedidor from "./ModalEditarMedidor";
+import { exportData } from "../../../utils/exportUtils";
+import { useFeedback } from "../../../context/FeedbackContext";
 
 const TabInventarioMedidores = () => {
-    const { medidores, loading, initialLoading } = useMedidores();
+    // Usar el hook unificado que maneja paginación, buffer y filtros
+    const {
+        medidores, // Buffer completo (60 items)
+        paginatedData, // Data visual actual (10 items)
+        loading,
+        initialLoading,
+        search,
+        handleSearch,
+        statusFilter,
+        handleStatusFilterChange,
+        locationFilter,
+        setLocationFilter,
+        currentPage,
+        setCurrentPage,
+        rowsPerPage,
+        handleRowsPerPageChange,
+        totalPages,
+        totalItems,
+        getStatusColor
+    } = useTabMedidores();
 
-    // Estados de filtros y paginación
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("All");
-    const [assignmentFilter, setAssignmentFilter] = useState("All");
-    const [page, setPage] = useState(1);
+    const { setSuccess, setError } = useFeedback();
 
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-
-    // Estados para modales
+    // Estados para modales (se mantienen locales)
     const [selectedMedidor, setSelectedMedidor] = useState(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -48,48 +69,6 @@ const TabInventarioMedidores = () => {
         setSelectedMedidor(medidor);
         setIsEditOpen(true);
     };
-
-    // --- Lógica de filtrado ---
-    const filteredItems = useMemo(() => {
-        let items = [...medidores];
-
-        // Filtro de Búsqueda
-        if (search) {
-            const lowerSearch = search.toLowerCase();
-            items = items.filter((medidor) =>
-                medidor.numero_serie?.toLowerCase().includes(lowerSearch) ||
-                medidor.ubicacion?.toLowerCase().includes(lowerSearch) ||
-                medidor.marca?.toLowerCase().includes(lowerSearch) ||
-                medidor.modelo?.toLowerCase().includes(lowerSearch)
-            );
-        }
-
-        // Filtro de Estado
-        if (statusFilter !== "All") {
-            items = items.filter((medidor) => medidor.estado_medidor === statusFilter);
-        }
-
-        // Filtro de Asignación
-        if (assignmentFilter !== "All") {
-            if (assignmentFilter === "Asignado") {
-                items = items.filter((medidor) => medidor.cliente_id);
-            } else if (assignmentFilter === "No Asignado") {
-                items = items.filter((medidor) => !medidor.cliente_id);
-            }
-        }
-
-        return items;
-    }, [medidores, search, statusFilter, assignmentFilter]);
-
-    // --- Lógica de paginación ---
-    const totalPages = Math.ceil(filteredItems.length / rowsPerPage);
-
-    const items = useMemo(() => {
-        const start = (page - 1) * rowsPerPage;
-        const end = start + rowsPerPage;
-        return filteredItems.slice(start, end);
-    }, [page, filteredItems, rowsPerPage]);
-
 
     // --- Renderizado de celdas ---
     const renderCell = React.useCallback((medidor, columnKey) => {
@@ -129,14 +108,18 @@ const TabInventarioMedidores = () => {
                     </div>
                 );
             case "estado":
+                // Prioridad visual: Si está cortado, mostramos "Cortado" (estado_servicio).
+                // Si está activo el servicio, mostramos el estado físico del medidor (estado_medidor).
+                const estadoVisual = medidor.estado_servicio === 'Cortado' ? 'Cortado' : medidor.estado_medidor;
+
                 return (
                     <Chip
                         className="capitalize"
-                        color={medidor.estado_medidor === "Activo" ? "success" : "danger"}
+                        color={getStatusColor(estadoVisual)}
                         size="sm"
                         variant="flat"
                     >
-                        {medidor.estado_medidor}
+                        {estadoVisual}
                     </Chip>
                 );
             case "cliente":
@@ -186,7 +169,7 @@ const TabInventarioMedidores = () => {
             default:
                 return cellValue;
         }
-    }, []);
+    }, [getStatusColor]);
 
     // Columnas
     const columns = [
@@ -197,6 +180,14 @@ const TabInventarioMedidores = () => {
         { name: "ACCIONES", uid: "acciones" },
     ];
 
+    if (initialLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 h-64">
+                <Spinner size="lg" color="primary" label="Cargando medidores..." />
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
 
@@ -205,9 +196,6 @@ const TabInventarioMedidores = () => {
                 <CardHeader>
                     <div className="flex items-center gap-3">
                         <h3 className="text-lg font-semibold">Filtros y Búsqueda</h3>
-                        {loading && !initialLoading && (
-                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        )}
                     </div>
                 </CardHeader>
                 <CardBody>
@@ -220,17 +208,14 @@ const TabInventarioMedidores = () => {
                                     <HiSearch className="inline-block mr-2" />
                                 </span>
                                 <input
-                                    placeholder="Buscar por serie, marca o ubicación..."
+                                    placeholder="Buscar por serie, marca..."
                                     value={search}
-                                    onChange={(e) => {
-                                        setSearch(e.target.value);
-                                        setPage(1);
-                                    }}
+                                    onChange={(e) => handleSearch(e.target.value)}
                                     className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                 />
                                 {search && (
                                     <button
-                                        onClick={() => setSearch("")}
+                                        onClick={() => handleSearch("")}
                                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
                                     >
                                         ✕
@@ -244,37 +229,63 @@ const TabInventarioMedidores = () => {
                             label="Estado"
                             placeholder="Todos"
                             selectedKeys={[statusFilter]}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value || "All");
-                                setPage(1);
-                            }}
+                            onChange={(e) => handleStatusFilterChange(e.target.value)}
                             size="sm"
                         >
                             <SelectItem key="All" value="All">Todos</SelectItem>
                             <SelectItem key="Activo" value="Activo">Activo</SelectItem>
                             <SelectItem key="Inactivo" value="Inactivo">Inactivo</SelectItem>
                             <SelectItem key="Mantenimiento" value="Mantenimiento">Mantenimiento</SelectItem>
+                            <SelectItem key="Cortado" value="Cortado">Cortado</SelectItem>
                         </Select>
 
-                        {/* Filtro de Asignación */}
-                        <Select
-                            label="Asignación"
-                            placeholder="Todos"
-                            selectedKeys={[assignmentFilter]}
-                            onChange={(e) => {
-                                setAssignmentFilter(e.target.value || "All");
-                                setPage(1);
-                            }}
-                            size="sm"
-                        >
-                            <SelectItem key="All" value="All">Todos</SelectItem>
-                            <SelectItem key="Asignado" value="Asignado">Asignados</SelectItem>
-                            <SelectItem key="No Asignado" value="No Asignado">No Asignados</SelectItem>
-                        </Select>
+                        {/* Filtro de Ubicación (Texto libre ya que medidores no tienen FK a ciudad estricta a veces) */}
+                        <div className="lg:col-span-1">
+                            <input
+                                placeholder="Filtrar ubicación..."
+                                value={locationFilter}
+                                onChange={(e) => setLocationFilter(e.target.value)}
+                                className="border border-gray-300 text-gray-600 rounded-xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            />
+                        </div>
 
 
-                        {/* Botón de Agregar */}
-                        <div className="flex items-end justify-end">
+                        {/* Botón de Agregar y Exportar */}
+                        <div className="flex items-end justify-end gap-2">
+                            <Dropdown>
+                                <DropdownTrigger>
+                                    <Button
+                                        color="success"
+                                        className="text-white"
+                                        startContent={<HiDownload className="text-lg" />}
+                                    >
+                                        Exportar
+                                    </Button>
+                                </DropdownTrigger>
+                                <DropdownMenu aria-label="Opciones de exportación">
+                                    <DropdownItem
+                                        key="csv"
+                                        startContent={<span className="text-xl">📄</span>}
+                                        onPress={async () => {
+                                            const success = await exportData(paginatedData, `Inventario_Medidores_${new Date().toISOString().split('T')[0]}`, 'csv');
+                                            if (success) setSuccess("Archivo CSV generado exitosamente");
+                                        }}
+                                    >
+                                        Exportar CSV (Página actual)
+                                    </DropdownItem>
+                                    <DropdownItem
+                                        key="excel"
+                                        startContent={<span className="text-xl">📊</span>}
+                                        onPress={async () => {
+                                            const success = await exportData(paginatedData, `Inventario_Medidores_${new Date().toISOString().split('T')[0]}`, 'xlsx');
+                                            if (success) setSuccess("Archivo Excel generado exitosamente");
+                                        }}
+                                    >
+                                        Exportar Excel (Página actual)
+                                    </DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+
                             <RegistrarMedidor />
                         </div>
 
@@ -283,8 +294,7 @@ const TabInventarioMedidores = () => {
                     {/* Resumen y Selector de Filas */}
                     <div className="flex justify-between items-center mt-4 text-sm text-gray-600 dark:text-gray-400">
                         <span>
-                            Mostrando {items.length} de {filteredItems.length} medidores
-                            {filteredItems.length !== medidores.length && ` (filtrado de ${medidores.length} total)`}
+                            Mostrando {paginatedData.length} de {totalItems} medidores
                         </span>
 
                         <Select
@@ -292,16 +302,14 @@ const TabInventarioMedidores = () => {
                             size="sm"
                             className="w-32"
                             selectedKeys={[rowsPerPage.toString()]}
-                            onChange={(e) => {
-                                setRowsPerPage(Number(e.target.value));
-                                setPage(1);
+                            onSelectionChange={(keys) => {
+                                handleRowsPerPageChange(Array.from(keys)[0]);
                             }}
                         >
                             <SelectItem key="5" value="5">5</SelectItem>
                             <SelectItem key="10" value="10">10</SelectItem>
                             <SelectItem key="15" value="15">15</SelectItem>
                             <SelectItem key="20" value="20">20</SelectItem>
-                            <SelectItem key="50" value="50">50</SelectItem>
                         </Select>
                     </div>
                 </CardBody>
@@ -323,12 +331,21 @@ const TabInventarioMedidores = () => {
                                 </TableColumn>
                             )}
                         </TableHeader>
-                        <TableBody emptyContent={"No se encontraron medidores"} items={items} isLoading={loading}>
-                            {(item) => (
+                        <TableBody
+                            emptyContent={
+                                loading ? (
+                                    <div className="flex flex-col items-center justify-center gap-2 p-4">
+                                        <Spinner size="lg" color="primary" />
+                                        <span className="text-gray-500">Cargando medidores...</span>
+                                    </div>
+                                ) : "No se encontraron medidores"
+                            }
+                        >
+                            {paginatedData.map((item) => (
                                 <TableRow key={item.id}>
                                     {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                                 </TableRow>
-                            )}
+                            ))}
                         </TableBody>
                     </Table>
                 </CardBody>
@@ -339,8 +356,8 @@ const TabInventarioMedidores = () => {
                 <div className="flex justify-center pb-4">
                     <Pagination
                         total={totalPages}
-                        page={page}
-                        onChange={setPage}
+                        page={currentPage}
+                        onChange={setCurrentPage}
                         showControls
                         showShadow
                         color="primary"

@@ -143,12 +143,58 @@ async function crearConvenio(token, data) {
         });
 
         if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}`);
         }
 
         return await response.json();
     } catch (error) {
         console.error('Error en crearConvenio:', error);
+        throw error;
+    }
+}
+
+/**
+ * Obtiene un convenio con sus parcialidades
+ */
+async function obtenerConvenio(token, convenioId) {
+    try {
+        const response = await fetch(`${API_URL}/api/v2/deudores/convenios/${convenioId}`, {
+            method: 'GET',
+            headers: getHeaders(token)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error en obtenerConvenio:', error);
+        throw error;
+    }
+}
+
+/**
+ * Paga una parcialidad de convenio
+ */
+async function pagarParcialidad(token, data) {
+    try {
+        const response = await fetch(`${API_URL}/api/v2/deudores/convenios/pagar-parcialidad`, {
+            method: 'POST',
+            headers: getHeaders(token),
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error en pagarParcialidad:', error);
         throw error;
     }
 }
@@ -159,5 +205,7 @@ export {
     fetchCandidatosCorte,
     ejecutarCorte,
     registrarReconexion,
-    crearConvenio
+    crearConvenio,
+    obtenerConvenio,
+    pagarParcialidad
 };

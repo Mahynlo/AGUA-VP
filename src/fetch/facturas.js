@@ -4,7 +4,7 @@ const URL_FACTURAS = import.meta.env.VITE_API_FETCH_FACTURAS; // URL del endpoin
 /**************************************************************************************************************
  * |      Funcion Fetch facturas
  * ************************************************************************************************************* */
-export const fetchFacturas = async (token_session, periodo, isRetry = false) => {
+export const fetchFacturas = async (token_session, params, isRetry = false) => {
     try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
@@ -16,7 +16,17 @@ export const fetchFacturas = async (token_session, periodo, isRetry = false) => 
         return [];
     }
 
-    const response = await fetch(`${URL_FACTURAS}?periodo=${periodo}`, {
+    // Construir query string con parámetros dinámicos
+    const urlParams = new URLSearchParams();
+    if (params.periodo) urlParams.append("periodo", params.periodo);
+    if (params.page) urlParams.append("page", params.page);
+    if (params.limit) urlParams.append("limit", params.limit);
+    if (params.search) urlParams.append("search", params.search);
+    if (params.estado) urlParams.append("estado", params.estado);
+    
+    const query = "?" + urlParams.toString();
+
+    const response = await fetch(`${URL_FACTURAS}${query}`, {
         method: "GET",
         headers: {
         "x-app-key": `AppKey ${token_app}`,
@@ -37,7 +47,7 @@ export const fetchFacturas = async (token_session, periodo, isRetry = false) => 
             const newToken = localStorage.getItem('token');
             if (newToken && newToken !== token_session) {
                 console.log("✅ Token renovado, reintentando fetchFacturas...");
-                return fetchFacturas(newToken, periodo, true);
+                return fetchFacturas(newToken, params, true);
             }
         }
         

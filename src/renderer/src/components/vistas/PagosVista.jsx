@@ -1,49 +1,162 @@
 import React, { useState, useEffect } from "react";
-import { HiCreditCard, HiDocumentText, HiChartBar, HiTrendingUp } from "react-icons/hi";
+import { HiCreditCard, HiDocumentText, HiChartBar, HiTrendingUp, HiUserGroup, HiCash, HiExclamation, HiCurrencyDollar, HiHand } from "react-icons/hi";
 import { Tabs, Tab, Card, CardBody, Chip } from "@nextui-org/react";
 import TabFacturas from "./pagos/TabFacturas";
 import TabPagos from "./pagos/TabPagos";
 import TabEstadisticas from "./pagos/TabEstadisticas";
 import TabDeudores from "./pagos/TabDeudores";
+import { useFacturas } from "../../context/FacturasContext";
+import { usePagos } from "../../context/PagosContext";
+import { useDeudores } from "../../context/DeudoresContext";
 
-
-const Pagos = () => {
-  // Estado para la pestaña activa, recuperado de localStorage o por defecto 'facturas'
+const PagosVista = () => {
+  // Estado para la pestaña activa
   const [selectedTab, setSelectedTab] = useState(() => {
     return localStorage.getItem("pagos_activeTab") || "facturas";
   });
 
-  const [estadisticas, setEstadisticas] = useState({
-    totalFacturas: 0,
-    pagosPendientes: 0,
-    pagosCompletados: 0,
-    montoTotal: 0
+  // Consumir contextos
+  const { estadisticas: statsFacturas } = useFacturas();
+  const { resumen: statsPagos } = usePagos();
+  const { estadisticas: statsDeudores } = useDeudores();
+
+  // Estado local para KPIs visuales
+  const [kpis, setKpis] = useState({
+    card1: { icon: HiDocumentText, value: "$0", label: "Total", color: "blue" },
+    card2: { icon: HiExclamation, value: "0", label: "Pendientes", color: "orange" },
+    card3: { icon: HiCreditCard, value: "0", label: "Pagadas", color: "green" },
+    card4: { icon: HiTrendingUp, value: "0", label: "Vencidas", color: "red" }
   });
 
-  // Manejar cambio de pestaña y persistencia
+  // Efecto para actualizar KPIs basado en tab seleccionado
+  useEffect(() => {
+    switch (selectedTab) {
+      case "facturas":
+        setKpis({
+          card1: {
+            icon: HiCurrencyDollar,
+            value: `$${(statsFacturas?.monto_total || 0).toLocaleString()}`,
+            label: "Total Facturado",
+            color: "blue"
+          },
+          card2: {
+            icon: HiExclamation,
+            value: statsFacturas?.cantidad_pendientes || 0,
+            label: "Pendientes",
+            color: "orange"
+          },
+          card3: {
+            icon: HiCreditCard,
+            value: statsFacturas?.cantidad_pagadas || 0, // Asumiendo que existe o se calcula
+            label: "Pagadas",
+            color: "green"
+          },
+          card4: {
+            icon: HiExclamation,
+            value: statsFacturas?.cantidad_vencidas || 0, // Asumiendo
+            label: "Vencidas",
+            color: "red"
+          }
+        });
+        break;
+
+      case "pagos":
+        setKpis({
+          card1: {
+            icon: HiCurrencyDollar,
+            value: `$${(statsPagos?.total_pagado || 0).toLocaleString()}`,
+            label: "Recaudado",
+            color: "green"
+          },
+          card2: {
+            icon: HiCash,
+            value: statsPagos?.cantidad_pagos || 0,
+            label: "Transacciones",
+            color: "blue"
+          },
+          card3: {
+            icon: HiChartBar,
+            value: `$${(statsPagos?.promedio_pago || 0).toLocaleString()}`,
+            label: "Ticket Promedio",
+            color: "purple"
+          },
+          card4: {
+            icon: HiTrendingUp,
+            value: "100%", // Placeholder o calculado
+            label: "Efectividad",
+            color: "teal"
+          }
+        });
+        break;
+
+      case "deudores":
+        setKpis({
+          card1: {
+            icon: HiCurrencyDollar,
+            value: `$${(statsDeudores?.totalDeuda || 0).toLocaleString()}`,
+            label: "Deuda Visible",
+            color: "red"
+          },
+          card2: {
+            icon: HiUserGroup,
+            value: statsDeudores?.criticos || 0,
+            label: "Usuarios Críticos",
+            color: "orange"
+          },
+          card3: {
+            icon: HiDocumentText,
+            value: statsDeudores?.casosActivos || 0,
+            label: "Casos Activos",
+            color: "yellow"
+          },
+          card4: {
+            icon: HiHand,
+            value: statsDeudores?.convenios || 0,
+            label: "Convenios",
+            color: "blue"
+          }
+        });
+        break;
+
+      default:
+        break;
+    }
+  }, [selectedTab, statsFacturas, statsPagos, statsDeudores]);
+
   const handleTabChange = (key) => {
     setSelectedTab(key);
     localStorage.setItem("pagos_activeTab", key);
   };
 
-  // Simulando datos de estadísticas
-  useEffect(() => {
-    setEstadisticas({
-      totalFacturas: 245,
-      pagosPendientes: 18,
-      pagosCompletados: 227,
-      montoTotal: 125000
-    });
-  }, []);
+  // Helper para renderizar card
+  const KpiCard = ({ data }) => {
+    const Icon = data.icon;
+    const colorClasses = {
+      blue: "from-blue-500 to-blue-600",
+      green: "from-green-500 to-green-600",
+      orange: "from-orange-500 to-orange-600",
+      red: "from-red-500 to-red-600",
+      purple: "from-purple-500 to-purple-600",
+      teal: "from-teal-500 to-teal-600",
+      yellow: "from-yellow-500 to-yellow-600"
+    };
+
+    return (
+      <Card className={`bg-gradient-to-r ${colorClasses[data.color] || colorClasses.blue} text-white min-w-[120px]`}>
+        <CardBody className="text-center p-4">
+          <Icon className="w-8 h-8 mx-auto mb-2" />
+          <p className="text-2xl font-bold">{data.value}</p>
+          <p className="text-sm opacity-90 font-medium">{data.label}</p>
+        </CardBody>
+      </Card>
+    );
+  };
 
   return (
-    // CONTENEDOR PRINCIPAL: Maneja el scroll general
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
-
-      {/* CAMBIO: Usamos 'min-h-full' en lugar de 'h-full' y quitamos 'overflow-x-hidden' */}
       <div className="w-full min-h-full bg-white p-6 rounded-lg shadow-md dark:bg-gray-800">
 
-        {/* Header con título y estadísticas */}
+        {/* Header con título y estadísticas dinámicas */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -52,43 +165,16 @@ const Pagos = () => {
                 Gestión de Pagos
               </h1>
               <p className="text-gray-600 dark:text-gray-300 mt-2">
-                Administra facturas, pagos y estadísticas financieras del sistema
+                Administra facturas, pagos y estadísticas financieras
               </p>
             </div>
 
-            {/* Estadísticas rápidas */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiDocumentText className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{estadisticas.totalFacturas}</p>
-                  <p className="text-xs opacity-90">Total Facturas</p>
-                </CardBody>
-              </Card>
-
-              <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiCreditCard className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{estadisticas.pagosPendientes}</p>
-                  <p className="text-xs opacity-90">Pendientes</p>
-                </CardBody>
-              </Card>
-
-              <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiCreditCard className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{estadisticas.pagosCompletados}</p>
-                  <p className="text-xs opacity-90">Completados</p>
-                </CardBody>
-              </Card>
-
-              <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiTrendingUp className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">${estadisticas.montoTotal.toLocaleString()}</p>
-                  <p className="text-xs opacity-90">Monto Total</p>
-                </CardBody>
-              </Card>
+            {/* Estadísticas rápidas Dinámicas */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 min-w-[600px]">
+              <KpiCard data={kpis.card1} />
+              <KpiCard data={kpis.card2} />
+              <KpiCard data={kpis.card3} />
+              <KpiCard data={kpis.card4} />
             </div>
           </div>
         </div>
@@ -114,9 +200,6 @@ const Pagos = () => {
                 <div className="flex items-center gap-3">
                   <HiDocumentText className="w-6 h-6" />
                   <span>Facturas</span>
-                  <Chip size="sm" variant="flat" color="primary">
-                    {estadisticas.totalFacturas}
-                  </Chip>
                 </div>
               }
             >
@@ -129,9 +212,6 @@ const Pagos = () => {
                 <div className="flex items-center gap-3">
                   <HiCreditCard className="w-6 h-6" />
                   <span>Pagos</span>
-                  <Chip size="sm" variant="flat" color="success">
-                    {estadisticas.pagosCompletados}
-                  </Chip>
                 </div>
               }
             >
@@ -142,11 +222,8 @@ const Pagos = () => {
               key="deudores"
               title={
                 <div className="flex items-center gap-3">
-                  <HiCreditCard className="w-6 h-6" />
+                  <HiUserGroup className="w-6 h-6" />
                   <span>Deudores</span>
-                  <Chip size="sm" variant="flat" color="success">
-                    {estadisticas.pagosCompletados}
-                  </Chip>
                 </div>
               }
             >
@@ -159,9 +236,6 @@ const Pagos = () => {
                 <div className="flex items-center gap-3">
                   <HiChartBar className="w-6 h-6" />
                   <span>Estadísticas</span>
-                  <Chip size="sm" variant="flat" color="secondary">
-                    Gráficos
-                  </Chip>
                 </div>
               }
             >
@@ -174,4 +248,4 @@ const Pagos = () => {
   );
 };
 
-export default Pagos;
+export default PagosVista;

@@ -1,7 +1,34 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Select, SelectItem } from "@nextui-org/react";
 import { HiClipboardCheck, HiCalculator, HiCurrencyDollar, HiViewGrid, HiCalendar, HiExclamationCircle } from "react-icons/hi";
 import { useAuth } from "../../../../context/AuthContext";
+
+// Componente de Input Personalizado (FUERA del componente principal para evitar recreación)
+const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", prefix }) => (
+    <div>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+            {label}
+        </label>
+        <div className="relative w-full flex">
+            <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2 pr-2">
+                {icon}
+            </span>
+            {prefix && (
+                <span className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold text-sm pointer-events-none">
+                    {prefix}
+                </span>
+            )}
+            <input
+                type={type}
+                value={value}
+                onChange={onChange}
+                placeholder="0"
+                min={0}
+                className={`border border-gray-300 focus:ring-${color}-600 focus:border-${color}-500 text-gray-600 rounded-xl ${prefix ? 'pl-14' : 'pl-12'} pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all`}
+            />
+        </div>
+    </div>
+);
 
 const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
     // const { token } = useAuth();
@@ -11,9 +38,8 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
     const [periodicidad, setPeriodicidad] = useState("mensual");
     const [loading, setLoading] = useState(false);
 
-    if (!selectedDeudor) return null;
-
-    const deudaTotal = selectedDeudor.deuda ? selectedDeudor.deuda.total : selectedDeudor.saldo_pendiente;
+    // Calcular deuda total (con fallback seguro)
+    const deudaTotal = selectedDeudor?.deuda?.total || selectedDeudor?.saldo_pendiente || 0;
 
     // Calcular proyección
     const proyeccion = useMemo(() => {
@@ -27,53 +53,56 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
         };
     }, [deudaTotal, pagoInicial, parcialidades]);
 
+    // Reset form cuando se abre el modal
+    useEffect(() => {
+        if (isOpen && selectedDeudor) {
+            setPagoInicial("");
+            setParcialidades(6);
+            setPeriodicidad("mensual");
+            setLoading(false);
+        }
+    }, [isOpen, selectedDeudor]);
+
+    // Early return DESPUÉS de todos los hooks
+    if (!selectedDeudor) return null;
+
     const handleConfirm = async () => {
-        if (!pagoInicial || Number(pagoInicial) <= 0) return;
+        // Validación previa
+        if (!pagoInicial || Number(pagoInicial) <= 0) {
+            alert("Por favor ingrese un pago inicial válido");
+            return;
+        }
+
+        if (!selectedDeudor.medidor?.id) {
+            console.error("Error: medidor.id no está disponible", selectedDeudor);
+            alert("Error: No se pudo obtener el ID del medidor");
+            return;
+        }
 
         setLoading(true);
+
+        const payload = {
+            medidor_id: selectedDeudor.medidor.id,
+            monto_inicial: Number(pagoInicial),
+            numero_parcialidades: Number(parcialidades),
+            periodicidad,
+            observaciones: "Convenio generado desde módulo Deudores"
+        };
+
+        console.log("Enviando convenio con payload:", payload);
+
         try {
-            await window.api.deudores.crearConvenio(token, {
-                medidor_id: selectedDeudor.medidor.id,
-                monto_inicial: Number(pagoInicial),
-                numero_parcialidades: Number(parcialidades),
-                periodicidad,
-                observaciones: "Convenio generado desde módulo Deudores"
-            });
+            const result = await window.api.deudores.crearConvenio(token, payload);
+            console.log("Convenio creado exitosamente:", result);
             onSuccess();
             onClose();
         } catch (error) {
             console.error("Error creando convenio:", error);
+            alert(`Error al crear el convenio: ${error.message || 'Error desconocido'}`);
         } finally {
             setLoading(false);
         }
     };
-
-    // Componente de Input Personalizado (Estilo RegistrCliente)
-    const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", prefix }) => (
-        <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                {label}
-            </label>
-            <div className="relative w-full flex">
-                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2 pr-2">
-                    {icon}
-                </span>
-                {prefix && (
-                    <span className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold text-sm pointer-events-none">
-                        {prefix}
-                    </span>
-                )}
-                <input
-                    type={type}
-                    value={value}
-                    onChange={onChange}
-                    placeholder="0"
-                    min={0}
-                    className={`border border-gray-300 focus:ring-${color}-600 focus:border-${color}-500 text-gray-600 rounded-xl ${prefix ? 'pl-14' : 'pl-12'} pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all`}
-                />
-            </div>
-        </div>
-    );
 
     return (
         <Modal

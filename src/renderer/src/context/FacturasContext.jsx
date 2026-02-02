@@ -6,19 +6,19 @@ const FacturasContext = createContext();
 // Proveedor de facturas
 export function FacturasProvider({ children }) {
   const [facturas, setFacturas] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
   const [estadisticas, setEstadisticas] = useState({});
   const [metadata, setMetadata] = useState({});
-  const [lastFetchParams, setLastFetchParams] = useState(null); // Cache para evitar peticiones duplicadas
-  
+
   // Estados para filtros
   const [filtros, setFiltros] = useState({
     cliente_nombre: "",
     estado: "", // "Pendiente", "Pagado", "Vencido"
     ciudad: "", // Para filtrar por pueblo
-    periodo: "2025-08", // Período por defecto
+    periodo: "2025-12", // Período por defecto
     mes_facturado: "", // "Agosto 2025", etc.
     fecha_inicio: "",
     fecha_fin: "",
@@ -27,51 +27,46 @@ export function FacturasProvider({ children }) {
   });
 
   // Función para obtener las facturas
-  const fetchFacturas = useCallback(async (filtrosAplicados = {}) => {
+  const fetchFacturas = useCallback(async (params = {}) => {
     try {
+      if (!initialLoading) setLoading(true);
+
       const token_session = localStorage.getItem("token");
       if (!token_session) {
         throw new Error("No se encontró token de sesión");
       }
-      
-      const periodo = filtrosAplicados.periodo || filtros.periodo || "2025-08";
-      
-      // Verificar si ya tenemos datos para estos parámetros (cache simple)
-      const currentParams = JSON.stringify({ token_session, periodo });
-      if (lastFetchParams === currentParams && facturas.length > 0 && !filtrosAplicados.force) {
-        return; // No hacer petición si ya tenemos los datos
-      }
-      
-      if (!initialLoading) {
-        setLoading(true);
-      }
-      
+
+      // Parámetros por defecto si no se envían
+      const queryParams = {
+        periodo: params.periodo || filtros.periodo || "2025-12",
+        page: params.page || 1,
+        limit: params.limit || 60,
+        search: params.search || '',
+        estado: params.estado || '',
+        ...params
+      };
+
       const response = await window.api.fetchFacturas(
         token_session,
-        periodo
+        queryParams
       );
-      
-      // Verificar si la respuesta tiene la estructura esperada o es un array directo
-      let facturasData = [];
-      let estadisticasData = {};
-      let metadataData = {};
-      
+
+      // Manejar respuesta dual (Array antiguo o {facturas, pagination} nuevo)
       if (Array.isArray(response)) {
-        // Si response es directamente un array de facturas
-        facturasData = response;
-      } else if (response && typeof response === 'object') {
-        // Si response es un objeto con la estructura {facturas: [], estadisticas: {}, metadata: {}}
-        facturasData = Array.isArray(response.facturas) ? response.facturas : [];
-        estadisticasData = response.estadisticas || {};
-        metadataData = response.metadata || {};
+        setFacturas(response);
+        setPagination(null);
+      } else if (response && response.facturas && Array.isArray(response.facturas)) {
+        setFacturas(response.facturas);
+        setPagination(response.pagination);
+        setEstadisticas(response.estadisticas || {});
+        setMetadata(response.metadata || {});
+      } else {
+        setFacturas([]);
+        setPagination(null);
       }
-      
-      setFacturas(facturasData);
-      setEstadisticas(estadisticasData);
-      setMetadata(metadataData);
-      setLastFetchParams(currentParams);
+
       setError(null);
-      
+
     } catch (error) {
       console.error("Error al obtener facturas:", error);
       setFacturas([]);
@@ -82,7 +77,7 @@ export function FacturasProvider({ children }) {
       setLoading(false);
       setInitialLoading(false);
     }
-  }, []);
+  }, [initialLoading, filtros.periodo]);
 
   // Cargar facturas al iniciar
   useEffect(() => {
@@ -156,43 +151,43 @@ export function FacturasProvider({ children }) {
   const facturasComputadas = useMemo(() => {
     return {
       // Facturas que adeudan (saldo pendiente > 0)
-      facturasPendientes: facturas.filter(f => 
+      facturasPendientes: facturas.filter(f =>
         f.saldo_pendiente > 0 && f.estado !== "Pagado"
       ),
-      
+
       // Facturas pagadas
-      facturasPagadas: facturas.filter(f => 
+      facturasPagadas: facturas.filter(f =>
         f.estado === "Pagado" || f.saldo_pendiente === 0
       ),
-      
+
       // Facturas vencidas (fecha_vencimiento < hoy y saldo > 0)
       facturasVencidas: facturas.filter(f => {
         const hoy = new Date();
         const fechaVencimiento = new Date(f.fecha_vencimiento);
         return fechaVencimiento < hoy && f.saldo_pendiente > 0;
       }),
-      
+
       // Facturas por pueblo
       facturasPorPueblo: facturas.reduce((acc, factura) => {
         const ciudad = factura.cliente_nombre; // Necesitaríamos el campo ciudad del cliente
         acc[ciudad] = (acc[ciudad] || 0) + 1;
         return acc;
       }, {}),
-      
+
       // Facturas por periodo
       facturasPorPeriodo: facturas.reduce((acc, factura) => {
         const periodo = factura.periodo;
         acc[periodo] = (acc[periodo] || 0) + 1;
         return acc;
       }, {}),
-      
+
       // Resumen de montos
       resumen: {
         totalFacturado: facturas.reduce((sum, f) => sum + (f.total || 0), 0),
         totalPendiente: facturas.reduce((sum, f) => sum + (f.saldo_pendiente || 0), 0),
         totalPagado: facturas.reduce((sum, f) => sum + ((f.total || 0) - (f.saldo_pendiente || 0)), 0),
-        promedioConsumo: facturas.length > 0 
-          ? facturas.reduce((sum, f) => sum + (f.consumo_m3 || 0), 0) / facturas.length 
+        promedioConsumo: facturas.length > 0
+          ? facturas.reduce((sum, f) => sum + (f.consumo_m3 || 0), 0) / facturas.length
           : 0
       }
     };
@@ -216,30 +211,31 @@ export function FacturasProvider({ children }) {
   const contextValue = {
     // Datos principales
     facturas,
+    pagination,
     loading,
     initialLoading,
     error,
     estadisticas,
     metadata,
-    
+
     // Filtros
     filtros,
     setFiltros,
     aplicarFiltros,
     limpiarFiltros,
-    
+
     // Funciones de filtrado específicas
     filtrarPorCliente,
     filtrarPorEstado,
     filtrarPorPueblo,
     filtrarPorPeriodo,
     filtrarPorFechas,
-    
+
     // Datos computados
     facturasComputadas,
     buscarFacturasCliente,
     obtenerEstadisticas,
-    
+
     // Funciones de actualización
     actualizarFacturas,
     fetchFacturas

@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -8,14 +8,70 @@ import { checkForUpdates } from '../updatesApp/checkUpdates.js'
 import { console } from 'inspector'
 
 import {AllIpcHandlers} from './ipc/index.js' // se exportan los IpcMain de la app
+import { setupWindowState } from './windowState.js'
+import contextMenu from 'electron-context-menu';
+
+// Configurar menú contextual en Español
+contextMenu({
+    showLookUpSelection: false,
+    showSearchWithGoogle: false,
+    showCopyImage: false,
+    showInspectElement: is.dev, // Solo en desarrollo
+    labels: {
+        cut: 'Cortar',
+        copy: 'Copiar',
+        paste: 'Pegar',
+        saveImageAs: 'Guardar imagen como...',
+        copyLink: 'Copiar enlace',
+        inspect: 'Inspeccionar elemento',
+        lookUpSelection: 'Buscar "{selection}"',
+        searchWithGoogle: 'Buscar en Google',
+        selectAll: 'Seleccionar todo'
+    }
+});
+
+const createMenu = () => {
+  const template = [
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { type: 'separator' },
+        { role: 'resetZoom', accelerator: 'CommandOrControl+0' },
+        { role: 'zoomIn', accelerator: 'CommandOrControl+Plus' }, // Algunos teclados requieren Shift
+        { label: 'Zoom In (Alt)', accelerator: 'CommandOrControl+=', role: 'zoomIn' }, // Alternativa sin Shift
+        { role: 'zoomOut', accelerator: 'CommandOrControl+-' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'close' }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
 
 function createWindow() {
+  createMenu();
   
+  // Setup Window Persistence
+  const windowState = setupWindowState();
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1200, // Ancho inicial 
-    height: 750, // Altura Inicial
-    minWidth: 1000, // Ancho mínimo
+    width: windowState.width, 
+    height: windowState.height,
+    x: windowState.x,
+    y: windowState.y,
+    minWidth: 800, // Ancho mínimo
     minHeight: 750, // Altura mínima
     show: false, // Ocultar la ventana hasta que esté lista
     autoHideMenuBar: true, // Ocultar la barra de menú
@@ -24,9 +80,17 @@ function createWindow() {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false, // Deshabilitar el aislamiento del contexto
-      webSecurity: !is.dev // Permitir carga de archivos locales en iframe durante desarrollo
+      webSecurity: !is.dev, // Permitir carga de archivos locales en iframe durante desarrollo
+      spellcheck: true
     }
+
   })
+
+  // Track window state events
+  windowState.track(mainWindow);
+
+  // Configurar autocorrector en Español
+  mainWindow.webContents.session.setSpellCheckerLanguages(['es']);
 
 
   mainWindow.on('ready-to-show', () => { // Mostrar la ventana cuando esté lista 

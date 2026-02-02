@@ -55,12 +55,9 @@ export default function IpcHandlersRutas() {
         throw new Error("Token de sesión no proporcionado");
       }
 
-      //si periodo tine el formato correcto en string YYYY-MM
-      if (!periodo || !/^\d{4}-\d{2}$/.test(periodo)) {
-        throw new Error("Periodo debe estar en formato YYYY-MM");
-      }
-
-      const rutas = await fetchRutas(token_session,periodo);
+      // Validar si es params object o periodo string (legacy)
+      // fetchRutas manejará ambos casos, solo pasamos el argumento
+      const rutas = await fetchRutas(token_session, periodo); // 'periodo' aquí es el 2do argumento del invoke, puede ser params
       return rutas;
 
     } catch (error) {

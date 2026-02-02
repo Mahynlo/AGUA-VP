@@ -172,7 +172,18 @@ export const adaptarReciboAPI = (reciboAPI) => {
             anterior: reciboAPI.informacion_consumo?.consumo_anterior,
             promedio: reciboAPI.informacion_consumo?.consumo_actual, // Usar actual como proxy si promedio no viene
             variacion: reciboAPI.informacion_consumo?.variacion_porcentaje
-        }
+        },
+        // Historial de Consumo (Formateado para Gráfica)
+        historicoConsumo: (reciboAPI.informacion_consumo?.historial_ano_actual || []).map(h => {
+             // Convertir YYYY-MM a "Ene", "Feb"...
+             const [y, m] = h.mes.split('-');
+             const date = new Date(parseInt(y), parseInt(m) - 1, 1);
+             const mesNombre = date.toLocaleDateString('es-ES', { month: 'short' });
+             return {
+                 mes: mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1),
+                 consumo: h.consumo
+             };
+        })
     };
 };
 

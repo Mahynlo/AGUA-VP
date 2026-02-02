@@ -7,7 +7,7 @@ const URL_REGISTRO_USUARIO = import.meta.env.VITE_API_REGISTRAR_USUARIO; // URL 
  * ************************************************************************************************************
  */
 // Función para registrar usuarios
-const registerUser = async (correo,nombre, contrasena, username, rol) => {
+const registerUser = async (correo, nombre, contrasena, username, rol, confirmar_contrasena) => {
     
     try {
       // 1. Leer token de la app
@@ -23,7 +23,15 @@ const registerUser = async (correo,nombre, contrasena, username, rol) => {
         "x-app-key": `AppKey ${token}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ correo,nombre, contrasena, username, rol }),
+      // Aseguramos que se envía confirmar_contrasena para que Zod no falle
+      body: JSON.stringify({ 
+          correo, 
+          nombre, 
+          contrasena, 
+          username, 
+          rol,
+          confirmar_contrasena: confirmar_contrasena || contrasena // Fallback si no viene
+      }),
     });
 
     const data = await response.json();
@@ -35,7 +43,11 @@ const registerUser = async (correo,nombre, contrasena, username, rol) => {
   
       return { success: true, message: "Usuario registrado con éxito" };
     } catch (error) {
-      return { success: false, message: "El usuario ya existe o hubo un error" };
+      console.error("Error en registerUser:", error);
+      return { 
+        success: false, 
+        message: error.message || "Error de conexión o servidor no disponible" 
+      };
     }
 };
 
