@@ -4,7 +4,7 @@
 
 import React from "react";
 import { Card, CardBody } from "@nextui-org/react";
-import { HiUser, HiMail, HiPhone } from "react-icons/hi";
+import { HiUser, HiMail, HiPhone, HiHashtag } from "react-icons/hi";
 import { CustomInput } from "../../../ui/FormComponents";
 
 export const SeccionPersonal = ({
@@ -23,6 +23,20 @@ export const SeccionPersonal = ({
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+          {/* Número de Predio */}
+          <div className="md:col-span-2">
+            <CustomInput
+              label="Número de Predio"
+              placeholder="Ej. A-01, 123, MZ-5-LT-2"
+              value={formData.numero_predio}
+              onChange={(e) => {
+                onChange('numero_predio', e.target.value);
+                limpiarError('numero_predio');
+              }}
+              icon={<HiHashtag className="w-5 h-5 text-blue-600" />}
+            />
+          </div>
+
           {/* Nombre Completo */}
           <CustomInput
             label="Nombre Completo"

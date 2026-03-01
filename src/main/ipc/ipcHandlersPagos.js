@@ -17,11 +17,11 @@ export default function IpcHandlerPagos () {
 
     // 📌 Manejar el registro de un pago
     ipcMain.handle("register-pago", async (event, pago, token_session) => {
-        const { factura_id,fecha_pago,cantidad_entregada,metodo_pago,comentario,modificado_por } = pago;
+        const { factura_id, fecha_pago, cantidad_entregada, metodo_pago, modificado_por } = pago;
 
-        // Validación de campos obligatorios (en el lado de Electron)
-        if (!factura_id || !fecha_pago || !cantidad_entregada || !metodo_pago || !comentario || !modificado_por) {
-            return { success: false, message: "Todos los campos son obligatorios.(ipcmain-register-pago)" };
+        // Validar solo los campos realmente obligatorios (comentario es opcional)
+        if (!factura_id || !fecha_pago || !cantidad_entregada || !metodo_pago || !modificado_por) {
+            return { success: false, message: "Faltan campos obligatorios.(ipcmain-register-pago)" };
         }
         return await registerPagos(pago, token_session);
     });

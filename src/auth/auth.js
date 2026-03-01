@@ -48,7 +48,25 @@ const loginUser = async (correo, contrasena) => {
 
     // 2. Obtener IP local del equipo
     const direccionIP = obtenerIPLocal();
-    console.log("🌐 Login desde IP:", direccionIP, "Dispositivo:", nombreDispositivo);
+
+    // 3. Recopilar información completa del dispositivo
+    const dispositivoInfo = {
+      hostname:         nombreDispositivo,
+      nombre:           nombreDispositivo,
+      os:               os.platform(),                                          // win32 | linux | darwin
+      os_version:       os.release(),                                           // e.g. 10.0.22631
+      arch:             os.arch(),                                              // x64 | arm64 | ia32
+      plataforma:       'electron',
+      electron_version: (typeof process !== 'undefined' && process.versions?.electron) || '',
+      app_version:      import.meta.env.VITE_APP_VERSION || '',
+      pantalla:         (typeof screen !== 'undefined')
+                          ? `${screen.width}x${screen.height}`
+                          : '',
+      memoria_gb:       Math.round(os.totalmem() / (1024 ** 3)),
+      cpus:             os.cpus().length
+    };
+
+    console.log("🌐 Login desde IP:", direccionIP, "|", dispositivoInfo.os, dispositivoInfo.os_version, dispositivoInfo.arch);
 
     const response = await fetch(URL_LOGIN, {
       method: "POST",
@@ -60,6 +78,7 @@ const loginUser = async (correo, contrasena) => {
         correo, 
         contraseña: contrasena,
         dispositivo: nombreDispositivo,
+        dispositivo_info: dispositivoInfo,
         ip: direccionIP
       })
     });
@@ -253,6 +272,8 @@ const renovarToken = async (refreshToken) => {
     return {
       success: true,
       accessToken: data.accessToken,
+      // Rotación: el servidor devuelve nuevo refreshToken — guardarlo
+      refreshToken: data.refreshToken || null,
       expiresIn: data.expiresIn
     };
   } catch (error) {
@@ -304,8 +325,46 @@ const obtenerSesionesActivas = async (usuario_id) => {
 
 
 
+/**************************************************************************************************************
+ * Cambiar contraseña del usuario autenticado
+ * ************************************************************************************************************
+ */
+const cambiarContraseña = async (contraseñaActual, contraseñaNueva, confirmarContraseñaNueva, token_session) => {
+  try {
+    const token = leerToken();
+    if (!token) {
+      return { success: false, message: "Token de la app no disponible" };
+    }
+
+    const response = await fetch(`${URL_BASE_API_AGUAVP}/api/v2/auth/cambiar-contrasena`, {
+      method: "PUT",
+      headers: {
+        "x-app-key": `AppKey ${token}`,
+        "Authorization": `Bearer ${token_session}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contraseña_actual: contraseñaActual,
+        contraseña_nueva: contraseñaNueva,
+        confirmar_contraseña_nueva: confirmarContraseñaNueva
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { success: false, message: data.error || data.mensaje || "Error al cambiar contraseña" };
+    }
+
+    return { success: true, message: data.mensaje, requiere_relogin: data.requiere_relogin };
+  } catch (error) {
+    console.error("💥 Error al cambiar contraseña:", error);
+    return { success: false, message: "Error de red" };
+  }
+};
+
 // Exportar la función para poder importarla en otros archivos
-export { loginUser, verifyToken, cerrarSesion, obtenerSesionesActivas, renovarToken, cerrarSesionEspecifica };
+export { loginUser, verifyToken, cerrarSesion, obtenerSesionesActivas, renovarToken, cerrarSesionEspecifica, cambiarContraseña };
 
 
 

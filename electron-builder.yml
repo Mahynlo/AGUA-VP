@@ -14,6 +14,8 @@ extraResources: # Recursos externos que se copiarán al directorio de recursos
 asarUnpack: # archivos que no se empaquetarán en el archivo asar
   - resources/**
   - grafos/**
+  - node_modules/better-sqlite3/**
+  - node_modules/@aguavp/api-server/src/database/migrations/**
 win:
   executableName: Agua-vp
 nsis:

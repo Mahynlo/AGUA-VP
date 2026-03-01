@@ -83,6 +83,10 @@ export const AuthProvider = ({ children }) => {
 
             if (response?.success && response.accessToken) {
                 localStorage.setItem("token", response.accessToken);
+                // Rotación: guardar el nuevo refreshToken si se devolvió
+                if (response.refreshToken) {
+                    localStorage.setItem("refreshToken", response.refreshToken);
+                }
                 programarRenovacion(response.expiresIn || "15m");
                 return response.accessToken;
             }

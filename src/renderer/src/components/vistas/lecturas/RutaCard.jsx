@@ -11,23 +11,58 @@ import {
   CardFooter,
   Chip,
   Progress,
-  Button
+  Button,
+  Spinner
 } from "@nextui-org/react";
-import { HiDotsVertical, HiEye, HiPencil, HiMap, HiCalendar, HiCheckCircle, HiExclamation } from "react-icons/hi";
+import { HiDotsVertical, HiEye, HiPencil, HiMap, HiCalendar, HiCheckCircle, HiExclamation, HiCurrencyDollar } from "react-icons/hi";
 import CarruselLecturasModal from "./CarruselLecturasModal";
 import ModalEditarRuta from "./ModalEditarRuta";
 import ModalDetalleRuta from "./ModalDetalleRuta";
 import { useRutas } from "../../../context/RutasContext";
+import { useFeedback } from "../../../context/FeedbackContext";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function RutaCard({ ruta }) {
   const { obtenerInfoRuta } = useRutas();
+  const { setError, setSuccess } = useFeedback();
+  const { user } = useAuth();
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [missingMetersCount, setMissingMetersCount] = useState(0);
+  const [isGenerando, setIsGenerando] = useState(false);
+  const [facturasGeneradas, setFacturasGeneradas] = useState(false);
 
   const porcentajeCompletado = ruta.total_puntos > 0
     ? (ruta.completadas / ruta.total_puntos) * 100
     : 0;
+
+  const handleGenerarFacturas = async () => {
+    if (isGenerando) return;
+    setIsGenerando(true);
+    try {
+      const token = localStorage.getItem('token');
+      const hoy = new Date().toISOString().split('T')[0];
+      const result = await window.api.generarFacturasRuta(
+        { ruta_id: ruta.id, periodo: ruta.periodo_mostrado, fecha_emision: hoy },
+        token
+      );
+      if (result.success) {
+        const n = result.data?.facturas_generadas ?? 0;
+        if (n === 0) {
+          setSuccess('Todas las lecturas de esta ruta ya estaban facturadas.', 'Facturación');
+        } else {
+          setSuccess(`${n} factura${n !== 1 ? 's' : ''} generada${n !== 1 ? 's' : ''} correctamente.`, 'Facturación');
+          setFacturasGeneradas(true);
+        }
+      } else {
+        setError(result.message || 'Error al generar facturas', 'Facturación');
+      }
+    } catch (err) {
+      setError('Error inesperado al generar facturas', 'Facturación');
+    } finally {
+      setIsGenerando(false);
+    }
+  };
 
   // Check for integrity (unassigned meters) on mount
   useEffect(() => {
@@ -192,8 +227,26 @@ export default function RutaCard({ ruta }) {
       </CardBody>
 
       {/* Footer con acciones */}
-      <CardFooter className="px-4 pt-0 pb-4">
+      <CardFooter className="px-4 pt-0 pb-4 flex flex-col gap-2">
         <CarruselLecturasModal rutaId={ruta.id} periodoMostrado={ruta.periodo_mostrado} />
+
+        {/* Botón Generar Facturas: activo solo cuando la ruta está completa */}
+        <Button
+          color={porcentajeCompletado === 100 ? (facturasGeneradas ? "default" : "success") : "default"}
+          variant={porcentajeCompletado === 100 && !facturasGeneradas ? "solid" : "flat"}
+          isDisabled={porcentajeCompletado < 100 || isGenerando || facturasGeneradas}
+          isLoading={isGenerando}
+          className="w-full font-semibold"
+          startContent={!isGenerando && (facturasGeneradas ? <HiCheckCircle className="text-lg" /> : <HiCurrencyDollar className="text-lg" />)}
+          onPress={handleGenerarFacturas}
+        >
+          {facturasGeneradas
+            ? 'Facturas generadas ✓'
+            : porcentajeCompletado < 100
+              ? `Generar Facturas (${ruta.total_puntos - ruta.completadas} pendientes)`
+              : 'Generar Facturas de Ruta'
+          }
+        </Button>
       </CardFooter>
 
       {/* Modal de edición */}

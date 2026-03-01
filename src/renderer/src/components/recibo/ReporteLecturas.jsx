@@ -1,251 +1,318 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
 
-// --- ICONOS ---
-const MapIcon = () => (
-    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const fmtFecha = (iso) => {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleDateString('es-MX', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
+    catch { return iso; }
+};
+
+const getFechaHoy = () => new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+const getMesLabel = (mes) => {
+    if (!mes) return '';
+    try {
+        const [y, m] = mes.split('-');
+        return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+    } catch { return mes; }
+};
+
+// ─── Subcomponentes ───────────────────────────────────────────────────────────
+
+const PageHeader = ({ mes, totalRegistros }) => (
+    <div style={{ marginBottom: '18px' }}>
+        {/* Franja principal */}
+        <div style={{
+            background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%)',
+            color: '#fff',
+            padding: '14px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            borderRadius: '8px 8px 0 0',
+        }}>
+            <img src={logoagua} alt="Escudo" style={{ height: '56px', width: '56px', objectFit: 'contain', flexShrink: 0, filter: 'brightness(0) invert(1)' }} />
+            <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: '17px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    COMISARÍA DE AGUA POTABLE
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.85, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                    Villa Pesqueira, Sonora — Reporte Operativo de Campo
+                </div>
+            </div>
+            <div style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: '1px solid rgba(255,255,255,0.35)',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                textAlign: 'center',
+                flexShrink: 0,
+            }}>
+                <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8 }}>Período</div>
+                <div style={{ fontWeight: 700, fontSize: '14px', marginTop: '2px', textTransform: 'capitalize' }}>
+                    {getMesLabel(mes) || 'General'}
+                </div>
+            </div>
+        </div>
+        {/* Barra de título */}
+        <div style={{
+            background: '#f0f9ff',
+            borderLeft: '4px solid #1e40af',
+            borderRight: '1px solid #bfdbfe',
+            borderBottom: '1px solid #bfdbfe',
+            padding: '8px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderRadius: '0 0 6px 6px',
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontWeight: 800, fontSize: '15px', color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    TOMA DE LECTURAS
+                </span>
+                <span style={{
+                    background: '#1e40af', color: '#fff',
+                    fontSize: '10px', fontWeight: 700,
+                    padding: '2px 10px', borderRadius: '999px',
+                }}>
+                    {totalRegistros} tomas
+                </span>
+            </div>
+            <div style={{ textAlign: 'right', fontSize: '10px', color: '#6b7280' }}>
+                <div style={{ fontWeight: 600, color: '#374151' }}>Fecha de emisión</div>
+                <div style={{ textTransform: 'capitalize' }}>{getFechaHoy()}</div>
+            </div>
+        </div>
+    </div>
 );
 
-// --- DEFINICIÓN DE ANCHOS DE COLUMNA ---
-// Ajustados para que quepan 6 columnas perfectamente
-const COLS = {
-    idx: "w-8",
-    info: "flex-1",
-    medidor: "w-24", // Reducido un poco para dar espacio
-    anterior: "w-16",
-    actual: "w-24",
-    diferencia: "w-20" // Nueva columna
-};
+// ─── Tabla real con <thead> para que el encabezado se repita en cada hoja ────────────
+
+const TH = ({ children, align = 'left', last = false }) => (
+    <th style={{
+        padding: '7px 9px',
+        background: '#1e3a8a',
+        color: '#fff',
+        fontSize: '9px',
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: '0.07em',
+        textAlign: align,
+        borderRight: last ? 'none' : '1px solid rgba(255,255,255,0.18)',
+        whiteSpace: 'nowrap',
+    }}>
+        {children}
+    </th>
+);
+
+const DataTable = ({ items, offset = 0 }) => (
+    <table style={{
+        width: '100%',
+        borderCollapse: 'collapse',
+        tableLayout: 'fixed',
+        fontSize: '10px',
+    }}>
+        <colgroup>
+            <col style={{ width: '30px' }} />
+            <col />
+            <col style={{ width: '105px' }} />
+            <col style={{ width: '72px' }} />
+            <col style={{ width: '80px' }} />
+            <col style={{ width: '80px' }} />
+        </colgroup>
+        <thead>
+            <tr>
+                <TH align="center">#</TH>
+                <TH>Cliente / Dirección</TH>
+                <TH>N° Medidor</TH>
+                <TH align="center">Lect. Ant.</TH>
+                <TH align="center">Diferencia</TH>
+                <TH align="center" last>Lect. Actual</TH>
+            </tr>
+        </thead>
+        <tbody>
+            {items.map((item, idx) => {
+                const nombre     = item.nombre || item.cliente || 'Sin Nombre';
+                const medidorObj = typeof item.medidor === 'object' ? item.medidor : null;
+                const serie      = medidorObj ? (medidorObj.serie || medidorObj.numero_serie || 'S/N') : (item.medidor || 'S/N');
+                const direccion  = medidorObj?.ubicacion || item.direccion || '';
+                const lectAntObj = typeof item.lectura_anterior === 'object' ? item.lectura_anterior : null;
+                const consumoAnt = lectAntObj?.consumo_registrado ?? (typeof item.lectura_anterior === 'number' ? item.lectura_anterior : '');
+                const isEven     = idx % 2 === 0;
+                const bg         = isEven ? '#ffffff' : '#f5f8ff';
+                const td         = { padding: '5px 8px', borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', color: '#111827', background: bg };
+                return (
+                    <tr key={idx} style={{ pageBreakInside: 'avoid' }}>
+                        {/* # */}
+                        <td style={{ ...td, textAlign: 'center', color: '#9ca3af', fontWeight: 700, background: '#f9fafb', fontSize: '9px' }}>
+                            {offset + idx + 1}
+                        </td>
+                        {/* Cliente */}
+                        <td style={{ ...td, overflow: 'hidden', maxWidth: 0 }}>
+                            <div style={{ fontWeight: 700, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {nombre}
+                            </div>
+                            {direccion && (
+                                <div style={{ fontSize: '8px', color: '#6b7280', textTransform: 'uppercase', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    📍 {direccion}
+                                </div>
+                            )}
+                        </td>
+                        {/* Medidor */}
+                        <td style={{ ...td, background: isEven ? '#f0f4ff' : '#e8eeff' }}>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{serie}</span>
+                        </td>
+                        {/* Lect. Anterior */}
+                        <td style={{ ...td, textAlign: 'center', background: '#eff6ff' }}>
+                            {consumoAnt !== '' ? (
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1e40af', fontSize: '11px' }}>
+                                    {consumoAnt}<span style={{ fontSize: '7px', marginLeft: '1px', opacity: 0.65 }}>m³</span>
+                                </span>
+                            ) : <span style={{ color: '#d1d5db' }}>—</span>}
+                        </td>
+                        {/* Diferencia — espacio de escritura */}
+                        <td style={{ ...td, background: '#fafafa', position: 'relative', borderRight: '1px solid #e5e7eb' }}>
+                            <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#d1d5db' }}>m³</span>
+                        </td>
+                        {/* Lect. Actual — espacio de escritura */}
+                        <td style={{ ...td, background: '#fafafa', borderRight: 'none', position: 'relative' }}>
+                            <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#d1d5db' }}>m³</span>
+                        </td>
+                    </tr>
+                );
+            })}
+        </tbody>
+    </table>
+);
+
+const GrupoSection = ({ grupo, offset = 0 }) => (
+    <div style={{ marginBottom: '22px' }}>
+        {/* Etiqueta del grupo */}
+        <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: '#e0e7ff', border: '1px solid #c7d2fe',
+            borderRadius: '4px', padding: '5px 12px', marginBottom: '2px',
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1e40af' }} />
+                <span style={{ fontWeight: 800, fontSize: '11px', color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {grupo.localidad || grupo.ruta || 'Localidad'}
+                </span>
+            </div>
+            <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace' }}>
+                {grupo.clientes?.length || 0} registros
+            </span>
+        </div>
+        <DataTable items={grupo.clientes || []} offset={offset} />
+        <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
+    </div>
+);
+
+// ─── Componente principal ─────────────────────────────────────────────────────
 
 const ReporteLecturas = () => {
     const [searchParams] = useSearchParams();
-    const [data, setData] = useState([]);
+    const [data, setData]     = useState([]);
+    const [mes, setMes]       = useState('');
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
         const cargarDatos = async () => {
+            setMes(searchParams.get('mes') || '');
+            const dataKey   = searchParams.get('dataKey');
             const dataParam = searchParams.get('data');
-            const dataKey = searchParams.get('dataKey'); // Nuevo método IPC
-            const useStorage = searchParams.get('useStorage'); // Legacy
+            const useStorage = searchParams.get('useStorage');
 
             if (dataKey) {
                 try {
-                    // Cargar datos desde el Main Process (FileSystem/Memoria)
-                    const datos = await window.api.getPrintData(dataKey);
-                    if (datos) {
-                        // Si recibimos un string JSON, lo parseamos
-                        const parsed = typeof datos === 'string' ? JSON.parse(datos) : datos;
-                        setData(parsed);
-                    }
-                } catch (error) {
-                    console.error("Error cargando datos por IPC:", error);
-                }
+                    const raw = await window.api.getPrintData(dataKey);
+                    if (raw) setData(typeof raw === 'string' ? JSON.parse(raw) : raw);
+                } catch (e) { console.error('Error IPC:', e); }
             } else if (dataParam) {
-                try {
-                    setData(JSON.parse(decodeURIComponent(dataParam)));
-                } catch (error) { console.error(error); }
+                try { setData(JSON.parse(decodeURIComponent(dataParam))); } catch (e) { console.error(e); }
             } else if (useStorage) {
                 try {
                     const stored = localStorage.getItem('reporte_lecturas_data');
                     if (stored) setData(JSON.parse(stored));
-                } catch (error) { console.error(error); }
+                } catch (e) { console.error(e); }
             } else {
-                // Mock Data
-                const mock = Array(10).fill(null).map((_, i) => ({
-                    id: 1000 + i,
-                    nombre: `CLIENTE DE PRUEBA ${i + 1}`,
-                    direccion: `CALLE CONOCIDA #${i + 10}, COLONIA CENTRO`,
-                    medidor: { numero_serie: `M-${5000 + i}`, ubicacion: "FACHADA" },
-                    lectura_anterior: 1200 + (i * 10)
-                }));
-                setData(mock);
+                // Demo
+                setData(Array.from({ length: 8 }, (_, i) => ({
+                    id: 1000 + i, nombre: `CLIENTE DEMO ${i + 1}`,
+                    direccion: `CALLE ${i + 1}, COLONIA CENTRO`,
+                    medidor: { numero_serie: `M-${5000 + i}`, ubicacion: `CALLE ${i + 1}` },
+                    lectura_anterior: { consumo_registrado: 1200 + i * 15 },
+                })));
             }
             setIsReady(true);
         };
-
         cargarDatos();
     }, [searchParams]);
 
-    const getFecha = () => new Date().toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" });
+    if (!isReady) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#6b7280' }}>
+            Cargando reporte…
+        </div>
+    );
 
-    const isGrouped = data.length > 0 && data[0].clientes;
+    const isGrouped   = data.length > 0 && data[0]?.clientes;
     const totalRegistros = isGrouped
         ? data.reduce((acc, g) => acc + (g.clientes?.length || 0), 0)
         : data.length;
 
-    if (!isReady) return <div>Cargando...</div>;
-
-    // --- COMPONENTE HEADER DE TABLA ---
-    const TableHeader = () => (
-        <div className="flex items-center bg-blue-800 text-white text-[9px] uppercase font-bold py-1.5 px-0 rounded-t-sm border border-blue-900 mb-0 print:bg-blue-800 print:text-white">
-            <div className={`${COLS.idx} text-center border-r border-blue-700`}>#</div>
-            <div className={`${COLS.info} px-2 border-r border-blue-700`}>Cliente / Dirección</div>
-            <div className={`${COLS.medidor} px-2 border-r border-blue-700`}>Medidor</div>
-            <div className={`${COLS.anterior} text-center border-r border-blue-700`}>Lec. Ant.</div>
-            <div className={`${COLS.diferencia} text-center border-r border-blue-700`}>Diferencia</div>
-            <div className={`${COLS.actual} text-center border-r border-blue-700`}>Lec. Actual</div>
-        </div>
-    );
-
-    // --- COMPONENTE FILA (ROW) ---
-    const RowItem = ({ item, idx }) => {
-        const nombre = item.nombre || item.cliente || "Sin Nombre";
-        const medidorObj = typeof item.medidor === 'object' ? item.medidor : null;
-        const serie = medidorObj ? (medidorObj.serie || medidorObj.numero_serie) : (item.medidor || "S/N");
-        const ubicacion = medidorObj?.ubicacion || item.direccion || "Sin ubicación";
-
-        const lectAntObj = typeof item.lectura_anterior === 'object' ? item.lectura_anterior : null;
-        const consumoAnt = lectAntObj?.consumo_registrado;
-
-        return (
-            <div className="flex items-stretch border-b border-x border-gray-300 bg-white text-black text-[9px] hover:bg-gray-50 break-inside-avoid">
-
-                {/* 1. ÍNDICE */}
-                <div className={`${COLS.idx} flex justify-center items-center border-r border-gray-100 bg-gray-50 text-gray-500 font-bold`}>
-                    {idx + 1}
-                </div>
-
-                {/* 2. USUARIO */}
-                <div className={`${COLS.info} px-2 py-1.5 flex flex-col justify-center border-r border-gray-400 overflow-hidden`}>
-                    <span className="font-extrabold text-gray-900 uppercase truncate leading-tight text-[10px]">
-                        {nombre}
-                    </span>
-                    <div className="flex items-center gap-1 text-[8px] text-gray-500 mt-0.5 truncate">
-                        <MapIcon />
-                        <span className="uppercase">{ubicacion}</span>
-                    </div>
-                </div>
-
-                {/* 3. MEDIDOR */}
-                <div className={`${COLS.medidor} px-2 py-1 border-r border-gray-400 flex flex-col justify-center bg-gray-50/30`}>
-                    <div className="flex justify-between items-center">
-                        <span className="text-gray-400 uppercase text-[7px]">Serie:</span>
-                        <span className="font-mono font-bold text-black truncate ml-1">{serie}</span>
-                    </div>
-                </div>
-
-                {/* 4. ANTERIOR */}
-                <div className={`${COLS.anterior} flex flex-col justify-center items-center border-r border-gray-400 bg-blue-50/20`}>
-                    <span className="font-mono text-[10px] font-bold text-blue-900">
-                        {consumoAnt === null ? "" : consumoAnt}
-                        <span className="text-[6px] text-blue-800/60 leading-none">m³</span>
-                    </span>
-
-                </div>
-
-                {/* 6. DIFERENCIA (Espacio escritura/cálculo) */}
-                <div className={`${COLS.diferencia} border-r border-gray-400 relative bg-blue-50/20`}>
-                    {/* Espacio en blanco para que escriban la resta */}
-                </div>
-
-                {/* 5. ACTUAL (Espacio escritura) */}
-                <div className={`${COLS.actual} border-r border-gray-400 relative bg-blue-50/20`}>
-                    <div className="absolute bottom-0.5 right-1 text-[7px] text-gray-700 select-none">m³</div>
-                </div>
-
-            </div>
-        );
-    }
-
     return (
         <>
-            <style>
-                {`
-                    @media print {
-                        @page { size: letter; margin: 0.8cm; }
-                        
-                        /* RESET TOTAL DE COLORES */
-                        *, *::before, *::after {
-                            background-color: transparent !important;
-                            color: black !important;
-                            box-shadow: none !important;
-                            text-shadow: none !important;
-                        }
+            <style>{`
+                @media print {
+                    @page { size: letter portrait; margin: 10mm; }
+                    body { margin: 0; padding: 0; }
+                    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    thead { display: table-header-group; }
+                    tr    { page-break-inside: avoid; }
+                }
+            `}</style>
 
-                        /* FONDO BLANCO SOLIDO */
-                        html, body, #root, .min-h-screen {
-                            background-color: white !important;
-                            -webkit-print-color-adjust: exact !important; 
-                            print-color-adjust: exact !important; 
-                        }
+            <div style={{
+                background: '#fff',
+                minHeight: '100vh',
+                padding: '24px',
+                fontFamily: "'Segoe UI', Arial, sans-serif",
+                color: '#111827',
+            }}>
+                <PageHeader mes={mes} totalRegistros={totalRegistros} />
 
-                        /* RESTAURAR COLORES ESPECIFICOS QUE SÍ QUEREMOS (Encabezados, tablas) */
-                        .bg-blue-800 { background-color: #1e40af !important; color: white !important; }
-                        .text-white { color: white !important; }
-                        .bg-gray-100 { background-color: #f3f4f6 !important; }
-                        .bg-gray-50 { background-color: #f9fafb !important; }
-                        .border-blue-800 { border-color: #1e40af !important; }
-                        
-                        /* EVITAR SALTOS */
-                        .break-inside-avoid { break-inside: avoid; }
-                    }
-                `}
-            </style>
-
-            <div className="min-h-screen bg-white p-6 print:p-0 font-sans text-black">
-
-                {/* --- HEADER GENERAL --- */}
-                <div className="flex justify-between items-end border-b-2 border-blue-800 pb-2 mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-blue-800 text-white font-bold p-2.5 rounded text-xl leading-none">VP</div>
-                        <div>
-                            <h1 className="text-2xl font-black text-gray-800 uppercase leading-none">Toma de Lecturas</h1>
-                            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] mt-1">Reporte Operativo de Campo</p>
-                        </div>
+                {/* Tablas */}
+                {isGrouped ? (
+                    (() => {
+                        let offset = 0;
+                        return data.map((grupo, gIdx) => {
+                            const el = <GrupoSection key={gIdx} grupo={grupo} offset={offset} />;
+                            offset += grupo.clientes?.length || 0;
+                            return el;
+                        });
+                    })()
+                ) : (
+                    <div style={{ marginBottom: '20px' }}>
+                        <DataTable items={data} offset={0} />
+                        <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
                     </div>
-                    <div className="text-right">
-                        <p className="text-[9px] text-gray-400 uppercase mb-0.5">Emisión</p>
-                        <p className="font-bold text-sm leading-none">{getFecha()}</p>
-                    </div>
-                </div>
+                )}
 
-                {/* --- CONTENIDO TABULAR --- */}
-                <div className="flex flex-col gap-6">
-                    {isGrouped ? (
-                        data.map((grupo, gIdx) => (
-                            <div key={gIdx} className="break-inside-avoid">
-                                {/* Header del Grupo (Localidad) */}
-                                <div className="flex justify-between items-end mb-1 px-1">
-                                    <h3 className="font-bold text-blue-900 uppercase text-sm tracking-wide flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full inline-block"></span>
-                                        {grupo.localidad}
-                                    </h3>
-                                    <span className="text-[9px] text-gray-500 font-mono">
-                                        {grupo.clientes?.length || 0} Registros
-                                    </span>
-                                </div>
-
-                                {/* TABLA COMPLETA */}
-                                <div className="shadow-sm">
-                                    <TableHeader />
-                                    <div className="border-b border-gray-200">
-                                        {grupo.clientes.map((cliente, cIdx) => (
-                                            <RowItem key={cIdx} item={cliente} idx={cIdx} />
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        // MODO PLANO
-                        <div className="shadow-sm">
-                            <TableHeader />
-                            <div className="border-b border-gray-200">
-                                {data.map((cliente, idx) => (
-                                    <RowItem key={idx} item={cliente} idx={idx} />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* --- FOOTER --- */}
-                <div className="mt-8 text-center pt-4 border-t border-dashed border-gray-300">
-                    <div className="flex justify-between text-[8px] text-gray-400 uppercase">
-                        <span>Sistema Agua VP v2.0</span>
-                        <span>{totalRegistros} Tomas listadas</span>
-                        <span>Página generada automáticamente</span>
-                    </div>
+                {/* Footer */}
+                <div style={{
+                    marginTop: '16px',
+                    paddingTop: '10px',
+                    borderTop: '1px dashed #d1d5db',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '9px',
+                    color: '#9ca3af',
+                }}>
+                    <span>Sistema AguaVP — Comisaría de Agua Potable Villa Pesqueira</span>
+                    <span style={{ fontWeight: 600, color: '#374151' }}>{totalRegistros} tomas de lectura listadas</span>
+                    <span>Documento generado automáticamente — no requiere firma</span>
                 </div>
             </div>
         </>

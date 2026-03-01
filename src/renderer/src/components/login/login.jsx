@@ -74,9 +74,12 @@ function LoginApp() {
                     setCorreosGuardados(actual);
                 }
 
-                // Login con accessToken, refreshToken y tiempo de expiración
+                // AuthContext.login() ya hace el navigate al destino correcto.
+                // Solo sobreescribimos la ruta si el usuario debe cambiar contraseña.
                 login(response.accessToken, response.refreshToken, response.expiresIn);
-                navigate(response.rol === "administrador" ? "/home" : "/ayuda");
+                if (response.requiere_cambio_password) {
+                    navigate("/perfil");
+                }
             } else {
                 setError(response.message || "Error en la autenticación.");
             }

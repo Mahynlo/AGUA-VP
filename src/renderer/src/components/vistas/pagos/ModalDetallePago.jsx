@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Modal,
   ModalContent,
@@ -17,8 +18,10 @@ import {
   HiCalendar,
   HiUser,
   HiCog,
-  HiLocationMarker
+  HiLocationMarker,
+  HiDocumentText
 } from "react-icons/hi";
+import ModalVistaPrevia from "../impresion/components/ModalVistaPrevia";
 
 const ModalDetallePago = ({
   isOpen,
@@ -27,6 +30,68 @@ const ModalDetallePago = ({
   obtenerInfoPagosPorFactura,
   getMetodoColor
 }) => {
+  const [comprobanteUrl, setComprobanteUrl]         = useState(null);
+  const [comprobantePrintUrl, setComprobantePrintUrl] = useState(null);
+  const [generandoComprobante, setGenerandoComprobante] = useState(false);
+
+  const handleImprimirComprobante = async () => {
+    if (!pago || generandoComprobante) return;
+    setGenerandoComprobante(true);
+    try {
+      const operador = pago.modificado_por_nombre || localStorage.getItem('username') || 'Sistema';
+      const saldoRestante = pago.saldo_pendiente_factura ?? 0;
+      const esPagoParcial = saldoRestante > 0;
+
+      const datos = {
+        folio_pago: pago.id,
+        factura: {
+          id:               pago.factura_id,
+          cliente_nombre:   pago.cliente_nombre,
+          direccion_cliente: pago.direccion_cliente || '',
+          cliente_ciudad:   'Villa Pesqueira',
+          periodo:          pago.periodo_facturado || '—',
+          tarifa_nombre:    pago.tarifa_nombre || '—',
+          medidor_serie:    pago.medidor_numero_serie || '—',
+          consumo_m3:       pago.consumo_m3 ?? '—',
+          total:            pago.total_factura,
+          saldo_restante:   saldoRestante,
+        },
+        pago: {
+          monto:              pago.monto,
+          cantidad_entregada: pago.cantidad_entregada,
+          metodo_pago:        pago.metodo_pago,
+          comentario:         pago.comentario || '',
+          fecha_pago:         pago.fecha_pago,
+        },
+        cambio:          pago.cambio || 0,
+        es_pago_parcial: esPagoParcial,
+        operador,
+        fecha_hora_emision: pago.fecha_creacion || pago.fecha_pago,
+        // Incluir historial completo de pagos de la factura
+        historial_pagos: obtenerInfoPagosPorFactura
+          ? (obtenerInfoPagosPorFactura(pago.factura_id)?.pagosOrdenados || [])
+          : [],
+      };
+
+      const dataKey = await window.api.savePrintData(JSON.stringify(datos));
+      const { protocol, origin, href } = window.location;
+      const printUrl = protocol === 'file:'
+        ? `${href.split('#')[0]}#/comprobante-pago?print=true&dataKey=${dataKey}`
+        : `${origin}/#/comprobante-pago?print=true&dataKey=${dataKey}`;
+
+      const response = await window.api.previewComponent(printUrl);
+      if (response?.success && response?.path) {
+        setComprobantePrintUrl(printUrl);
+        setComprobanteUrl(response.path);
+      }
+    } catch (err) {
+      console.error('Error generando comprobante:', err);
+      alert('Error al generar el comprobante: ' + err);
+    } finally {
+      setGenerandoComprobante(false);
+    }
+  };
+
   if (!pago) return null;
 
   // Funciones de formato
@@ -50,6 +115,7 @@ const ModalDetallePago = ({
   };
 
   return (
+    <>
     <Modal
       backdrop="blur"
       isOpen={isOpen}
@@ -288,12 +354,31 @@ const ModalDetallePago = ({
         </ModalBody>
 
         <ModalFooter>
+          <Button
+            color="default"
+            variant="flat"
+            startContent={generandoComprobante ? null : <HiDocumentText className="w-4 h-4" />}
+            isLoading={generandoComprobante}
+            onPress={handleImprimirComprobante}
+          >
+            {generandoComprobante ? 'Generando…' : 'Imprimir Comprobante'}
+          </Button>
           <Button color="primary" onPress={onClose}>
             Cerrar
           </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
+
+    {/* Modal de vista previa / impresión del comprobante */}
+    {comprobanteUrl && (
+      <ModalVistaPrevia
+        pdfUrl={comprobanteUrl}
+        printUrl={comprobantePrintUrl}
+        onClose={() => { setComprobanteUrl(null); setComprobantePrintUrl(null); }}
+      />
+    )}
+  </>
   );
 };
 

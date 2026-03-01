@@ -44,6 +44,7 @@ import RecuperarPassword from "./components/AdministrarPassword/Recuperacion";
 import Recibo from "./components/recibo/Recibo";
 import ReporteLecturas from "./components/recibo/ReporteLecturas";
 import ReporteClientesCompleto from "./components/recibo/ReporteClientes"
+import ComprobantePago from "./components/recibo/ComprobantePago";
 
 // Pantalla de carga de la aplicación
 import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
@@ -98,8 +99,8 @@ function App() {
 
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteClientes']; // Rutas donde no se muestra el sidebar 
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteClientes']; // Rutas donde no se muestra el navbar
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteClientes', '/comprobante-pago'];
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteClientes', '/comprobante-pago'];
 
   const { loading } = useAuth();
 
@@ -171,9 +172,10 @@ function MainApp() {
           <Route path="/administrador" element={<Administrador />} />
 
         </Route>
-        <Route path="/recibo" element={<Recibo />} /> {/* protegida pero sin nav ni sidebar */}
-        <Route path="/reporteLecturas" element={<ReporteLecturas />} /> {/* protegida pero sin nav ni sidebar */}
-        <Route path="/reporteClientes" element={<ReporteClientesCompleto />} /> {/*proetegida sin navy sidebar*/}
+        <Route path="/recibo" element={<Recibo />} />
+        <Route path="/reporteLecturas" element={<ReporteLecturas />} />
+        <Route path="/reporteClientes" element={<ReporteClientesCompleto />} />
+        <Route path="/comprobante-pago" element={<ComprobantePago />} />
         {/* Rutas públicas */}
         <Route path='/' element={<LoginApp />} />
         <Route path='/recuperarPassword' element={<RecuperarPassword />} />

@@ -61,33 +61,23 @@ export function PagosProvider({ children }) {
 
       const data = await window.api.fetchPagos(token_session, queryParams);
 
-      console.log("📊 Datos recibidos del fetch de pagos:", data);
-
       // Manejar la estructura de respuesta que incluye pagos, paginación y resumen
       if (data && typeof data === 'object') {
         if (data.pagos && Array.isArray(data.pagos)) {
-          console.log("✅ Configurando pagos desde data.pagos:", data.pagos.length);
           setPagos(data.pagos);
           setPagination(data.pagination || null);
         } else if (Array.isArray(data)) {
-          console.log("✅ Configurando pagos desde array directo:", data.length);
           setPagos(data);
           setPagination(null);
         } else {
-          console.log("⚠️ No se encontraron pagos en la respuesta");
           setPagos([]);
           setPagination(null);
         }
 
-        // Guardar resumen si existe
         if (data.resumen) {
-          console.log("✅ Configurando resumen:", data.resumen);
           setResumen(data.resumen);
-        } else {
-          console.log("⚠️ No se encontró resumen en la respuesta");
         }
       } else {
-        console.log("❌ Datos no válidos recibidos:", data);
         setPagos([]);
         setPagination(null);
         setResumen(null);
@@ -136,8 +126,8 @@ export function PagosProvider({ children }) {
         throw new Error("No se encontró token de sesión");
       }
 
-      // Validar datos requeridos del lado del cliente
-      const requiredFields = ['factura_id', 'fecha_pago', 'cantidad_entregada', 'metodo_pago', 'comentario', 'modificado_por'];
+      // Validar datos requeridos del lado del cliente (comentario es opcional)
+      const requiredFields = ['factura_id', 'fecha_pago', 'cantidad_entregada', 'metodo_pago', 'modificado_por'];
       const missingFields = requiredFields.filter(field => !pagoData[field] && pagoData[field] !== 0);
 
       if (missingFields.length > 0) {
@@ -160,10 +150,7 @@ export function PagosProvider({ children }) {
     } catch (error) {
       console.error("❌ Error al registrar pago:", error);
       setError(error);
-      return {
-        success: false,
-        message: error.message || "Error al registrar el pago"
-      };
+      throw error; // Re-lanzar para que el modal muestre el estado de error
     } finally {
       setLoading(false);
     }

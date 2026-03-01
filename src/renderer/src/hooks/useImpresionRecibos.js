@@ -16,7 +16,8 @@ const useImpresionRecibos = () => {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState("");
   const [clientesSeleccionados, setClientesSeleccionados] = useState(new Set());
   const [procesandoAccion, setProcesandoAccion] = useState(null);
-  const [pdfUrl, setPdfUrl] = useState(null); // Estado para el Modal de PDF
+  const [pdfUrl, setPdfUrl] = useState(null);   // Ruta file:// del PDF temporal (para el iframe)
+  const [printUrl, setPrintUrl] = useState(null); // URL React original (para impresión silenciosa)
   
   // Consumir contexto de reportes
   const { recibos, loading, cargarRecibos } = useReportes();
@@ -83,7 +84,8 @@ const useImpresionRecibos = () => {
 
 
 
-  // Imprimir recibos
+  // Imprimir recibos → genera el PDF y abre el modal con panel de opciones
+  // El usuario elige impresora, orientación y copias antes de imprimir (sin diálogo del OS)
   const handleImprimirRecibos = async () => {
     if (procesandoAccion) return;
     if (facturasParaImprimir.length === 0) {
@@ -93,22 +95,22 @@ const useImpresionRecibos = () => {
 
     setProcesandoAccion('imprimir');
     try {
-        const printUrl = await construirURLImpresion(facturasParaImprimir, false);
-        
-        console.log('Imprimiendo recibos para:', facturasParaImprimir.length, 'clientes');
-        console.log('Páginas a imprimir:', estadisticas.paginasEstimadas);
-        
-        window.api.printComponent(printUrl, (response) => {
-          console.log(response);
-          setProcesandoAccion(null);
-        });
-    } catch (err) {
-        console.error("Error printing:", err);
+        // Construir URL para impresión silenciosa
+        const batchPrintUrl = await construirURLImpresion(facturasParaImprimir, false);
+        // Generar PDF de vista previa
+        const response = await window.api.previewComponent(batchPrintUrl);
+
+        if (response && response.success && response.path) {
+          setPrintUrl(batchPrintUrl);
+          setPdfUrl(response.path);
+        }
         setProcesandoAccion(null);
-        alert("Hubo un error al iniciar la impresión: " + err);
+    } catch (err) {
+        console.error("Error preparing print:", err);
+        setProcesandoAccion(null);
+        alert("Hubo un error al preparar la impresión: " + err);
     }
 
-    // Safety timeout (extended)
     setTimeout(() => setProcesandoAccion(null), 15000);
   };
 
@@ -133,7 +135,7 @@ const useImpresionRecibos = () => {
         console.log('Preview response:', response);
 
         if (response && response.success && response.path) {
-          // Abrir el Modal con el PDF
+          setPrintUrl(previewUrl); // Guardar URL para impresión silenciosa desde el modal
           setPdfUrl(response.path);
         } else {
           // Fallback legacy (si devolviera solo string)
@@ -179,7 +181,8 @@ const useImpresionRecibos = () => {
     clientesSeleccionados,
     loading,
     procesandoAccion,
-    pdfUrl, // Exportar estado del PDF
+    pdfUrl,
+    printUrl,
     
     // Datos computados
     clientesConFacturasYLecturas: recibos,
@@ -194,7 +197,8 @@ const useImpresionRecibos = () => {
     handleVistaPreviaRecibos,
     handlePruebaConDatosMock,
     handleTestUrls,
-    setPdfUrl // Exportar setter para cerrar el modal
+    setPdfUrl,
+    setPrintUrl
   };
 };
 

@@ -34,10 +34,10 @@ export const registerLectura = async (lectura, token_session) => {
         const data = await response.json();
     
         if (!response.ok) {
-          return { success: false, message: data.error || "Error al registrar lectura(ipcmain)" };
+          return { success: false, message: data.error || data.message || 'Error al registrar lectura' };
         }
 
-        return { success: true, message: data.mensaje, lecturaID: data.id };
+        return { success: true, message: data.message, lecturaID: data.data?.lectura_id };
     } catch (error) {
         console.error("Error al registrar lectura(ipcmain):", error);
         return { success: false, message: "Hubo un error al registrar la lectura(ipcmain)." };

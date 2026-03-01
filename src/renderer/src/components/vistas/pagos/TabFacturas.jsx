@@ -133,47 +133,21 @@ const TabFacturas = () => {
       throw new Error("No hay factura seleccionada");
     }
 
-    // Obtener usuario actual del localStorage
     const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
-    // Preparar datos del pago según el formato requerido
     const pagoData = {
       factura_id: facturaSeleccionada.id,
       fecha_pago: datoPago.fecha_pago,
-      monto: parseFloat(datoPago.monto),
       cantidad_entregada: parseFloat(datoPago.cantidad_entregada),
       metodo_pago: datoPago.metodo_pago,
-      referencia: datoPago.referencia || null,
-      comentario: datoPago.comentario || "Pago realizado",
-      modificado_por: usuario.id || 1 // ID del usuario que realiza el pago
+      comentario: datoPago.comentario || null,
+      modificado_por: usuario.id || 1
     };
 
-    // Validar datos
-    if (!pagoData.monto || pagoData.monto <= 0) {
-      throw new Error("Por favor ingrese un monto válido");
-    }
-
-    if (!pagoData.cantidad_entregada || pagoData.cantidad_entregada <= 0) {
-      throw new Error("Por favor ingrese una cantidad entregada válida");
-    }
-
-    if (!pagoData.metodo_pago) {
-      throw new Error("Debe seleccionar un método de pago");
-    }
-
-    try {
-      await registrarPago(pagoData);
-
-      // Actualizar la lista de facturas
-      await actualizarFacturas();
-
-      setModalPago(false);
-      setFacturaSeleccionada(null);
-      setSuccess("Pago registrado exitosamente");
-    } catch (error) {
-      console.error("Error al registrar pago:", error);
-      setError(error.message || "Error al registrar el pago");
-    }
+    // Los errores se propagan al catch de ModalPago que muestra el estado de error
+    await registrarPago(pagoData);
+    await actualizarFacturas();
+    // El modal maneja su propio cierre desde el estado 'exito'
   };
 
   // Mostrar loading skeleton si es la carga inicial

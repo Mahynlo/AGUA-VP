@@ -70,6 +70,10 @@ const TabInventarioMedidores = () => {
         setIsEditOpen(true);
     };
 
+    const handleDelete = () => {
+        setError("La eliminación de medidores no está disponible actualmente. Para retirar un medidor, cambia su estado a 'Retirado'.", "Eliminar Medidor");
+    };
+
     // --- Renderizado de celdas ---
     const renderCell = React.useCallback((medidor, columnKey) => {
         const cellValue = medidor[columnKey];
@@ -161,6 +165,7 @@ const TabInventarioMedidores = () => {
                             size="sm"
                             variant="light"
                             color="danger"
+                            onPress={handleDelete}
                         >
                             <HiTrash className="w-4 h-4" />
                         </Button>

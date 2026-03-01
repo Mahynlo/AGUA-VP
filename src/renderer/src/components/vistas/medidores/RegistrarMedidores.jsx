@@ -44,6 +44,8 @@ export default function RegistrarMedidor() {
 
     const [clienteId, setClienteId] = useState("");
     const [numeroSerie, setNumeroSerie] = useState("");
+    const [marca, setMarca] = useState("");
+    const [modelo, setModelo] = useState("");
     const [ubicacion, setUbicacion] = useState("");
     const [fechaInstalacion, setFechaInstalacion] = useState("");
     const [latitud, setLatitud] = useState("");
@@ -99,6 +101,8 @@ export default function RegistrarMedidor() {
                 medidor: {
                     cliente_id: clienteIdBusqueda || null, // Si no hay cliente seleccionado, se envía null
                     numero_serie: numeroSerieCompleto,
+                    marca: marca.trim() || null,
+                    modelo: modelo.trim() || null,
                     ubicacion,
                     fecha_instalacion: fechaInstalacion,
                     latitud,
@@ -117,6 +121,8 @@ export default function RegistrarMedidor() {
                     setClienteIdBusqueda(null); // Resetea el cliente seleccionado
                     setCiudad("");
                     setNumeroSerie("");
+                    setMarca("");
+                    setModelo("");
                     setUbicacion("");
                     setFechaInstalacion("");
                     setLatitud("");
@@ -233,6 +239,35 @@ export default function RegistrarMedidor() {
                                                         size="sm"
                                                         className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
                                                         required
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                                {/* Marca */}
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Marca
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Ej. AquaTech"
+                                                        value={marca}
+                                                        onChange={(e) => setMarca(e.target.value)}
+                                                        className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+                                                    />
+                                                </div>
+                                                {/* Modelo */}
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Modelo
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Ej. AT-150"
+                                                        value={modelo}
+                                                        onChange={(e) => setModelo(e.target.value)}
+                                                        className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
                                                     />
                                                 </div>
                                             </div>

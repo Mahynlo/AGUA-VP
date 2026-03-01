@@ -55,6 +55,7 @@ export const obtenerCamposFaltantes = (errores) => {
  */
 export const limpiarDatosCliente = (datos) => {
   return {
+    numero_predio: datos.numero_predio?.trim().toUpperCase() || null,
     nombre: datos.nombre?.trim() || "",
     direccion: datos.direccion?.trim() || "",
     telefono: datos.telefono?.trim() || "",

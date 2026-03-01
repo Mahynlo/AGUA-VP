@@ -741,6 +741,66 @@ export default function IpcHandlers () {
         }
     });
 
+    // ============================================================
+    // IMPRESIÓN SILENCIOSA — sin diálogo del OS
+    // El usuario elige la impresora y opciones desde la UI React
+    // ============================================================
+    ipcMain.handle('print-silent', (event, url, config = {}) => {
+      const { printer = '', landscape = true, copies = 1, pageSize = 'Letter' } = config;
+
+      return new Promise((resolve, reject) => {
+        let win = new BrowserWindow({
+          show: false,
+          backgroundColor: '#ffffff',
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            cache: false,
+            webSecurity: app.isPackaged || !url.includes('localhost'),
+            allowRunningInsecureContent: !app.isPackaged && url.includes('localhost')
+          }
+        });
+
+        win.loadURL(url);
+
+        win.webContents.once('did-finish-load', async () => {
+          try {
+            await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+            await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+          } catch (e) {}
+
+          const sizeMap = { letter: 'Letter', legal: 'Legal', a4: 'A4' };
+          const normalizedSize = sizeMap[(pageSize || 'Letter').toLowerCase()] || 'Letter';
+
+          setTimeout(() => {
+            win.webContents.print({
+              silent: true,
+              printBackground: true,
+              color: true,
+              deviceName: printer,
+              landscape: !!landscape,
+              copies: Math.max(1, parseInt(copies) || 1),
+              pageSize: normalizedSize,
+              margins: { marginType: 'printableArea' }
+            }, (success, failureReason) => {
+              try { win.close(); } catch (e) {}
+              if (success) resolve({ success: true });
+              else {
+                console.error('Silent print failed:', failureReason);
+                reject(failureReason || 'Print failed');
+              }
+            });
+          }, 1000);
+        });
+
+        win.webContents.on('did-fail-load', (e, code, desc) => {
+          console.error('Failed to load for silent print:', desc);
+          try { win.close(); } catch (e) {}
+          reject(`Failed to load: ${desc}`);
+        });
+      });
+    });
+
     console.log("✅ Handlers de documentación registrados");
     
 }

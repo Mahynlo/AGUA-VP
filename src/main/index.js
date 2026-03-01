@@ -7,7 +7,8 @@ import icon from '../../resources/icon.png?asset'
 import { checkForUpdates } from '../updatesApp/checkUpdates.js'
 import { console } from 'inspector'
 
-import {AllIpcHandlers} from './ipc/index.js' // se exportan los IpcMain de la app
+import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
+import { startApiServer, stopApiServer } from './managers/apiManager.js'
 import { setupWindowState } from './windowState.js'
 import contextMenu from 'electron-context-menu';
 
@@ -125,7 +126,7 @@ function createWindow() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -137,9 +138,15 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong')) 
+  ipcMain.on('ping', () => console.log('pong'))
 
-  
+  // Iniciar servidor API embebido (aplica migraciones y crea backup automáticamente)
+  try {
+    await startApiServer();
+  } catch (err) {
+    console.error('❌ Error al iniciar el servidor API:', err);
+    // La app continúa — el renderer mostrará error de conexión
+  }
 
   createWindow() // crea la ventana
 
@@ -153,7 +160,8 @@ app.whenReady().then(() => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => { 
+app.on('window-all-closed', async () => {
+  await stopApiServer();
   if (process.platform !== 'darwin') {
     app.quit()
   }

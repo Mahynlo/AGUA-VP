@@ -40,6 +40,7 @@ const api = {
   refreshToken: (refreshToken) => ipcRenderer.invoke("refresh-token", refreshToken),
   closeSpecificSession: (sesionId, token) => ipcRenderer.invoke("close-specific-session", sesionId, token),
   closeAllUserSessions: (usuarioId, token) => ipcRenderer.invoke("close-all-user-sessions", usuarioId, token),
+  changePassword: (passwords, token) => ipcRenderer.invoke("change-password", passwords, token),
   checkServerStatus: () => ipcRenderer.invoke("check-server-status"),
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   
@@ -67,6 +68,11 @@ const api = {
   // Registro de lecturas
   registerLectura: async (lectura, token_session) => {
     return await ipcRenderer.invoke("register-lectura", lectura, token_session);
+  },
+
+  // Generar facturas para todas las lecturas pendientes de una ruta
+  generarFacturasRuta: async (params, token_session) => {
+    return await ipcRenderer.invoke("generar-facturas-ruta", params, token_session);
   },
 
 
@@ -152,6 +158,15 @@ const api = {
 
   // Exportar archivos nativamente
   saveFile: (data) => ipcRenderer.invoke('save-file-dialog', data),
+
+  // Impresión avanzada (diálogo personalizado en la UI)
+  getPrinters: () => ipcRenderer.invoke('getPrinters'),
+  printSilent: (url, config) => ipcRenderer.invoke('print-silent', url, config),
+
+  // Servidor embebido (estado, backup manual)
+  serverStatus: () => ipcRenderer.invoke('server:status'),
+  serverBackup: () => ipcRenderer.invoke('server:backup'),
+  serverListBackups: () => ipcRenderer.invoke('server:list-backups'),
 }
 
 // objecto para manejar la autenticación de la aplicación

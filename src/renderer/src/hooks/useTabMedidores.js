@@ -2,9 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useMedidores } from "../context/MedidoresContext";
 
 export const useTabMedidores = () => {
-  const { medidores, loading, initialLoading, fetchMedidores, pagination, ciudades, estados } = useMedidores();
-  // Nota: ciudades y estados no están en useMedidores, pero los necesitamos? 
-  // En medidores usamos ubicación (string libre).
+  const { medidores, loading, initialLoading, fetchMedidores, pagination } = useMedidores();
 
   // Estados locales para filtros y paginación UI
   const [search, setSearch] = useState("");

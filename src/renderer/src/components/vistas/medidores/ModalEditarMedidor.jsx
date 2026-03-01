@@ -37,6 +37,8 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
         if (!medidor) return {
             ciudad: "",
             numeroSerie: "",
+            marca: "",
+            modelo: "",
             ubicacion: "",
             fechaInstalacion: "",
             latitud: "",
@@ -57,6 +59,8 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
         return {
             ciudad: prefix,
             numeroSerie: serie,
+            marca: medidor.marca || "",
+            modelo: medidor.modelo || "",
             ubicacion: medidor.ubicacion || "",
             fechaInstalacion: medidor.fecha_instalacion ? medidor.fecha_instalacion.split('T')[0] : "",
             latitud: medidor.latitud !== null && medidor.latitud !== undefined ? medidor.latitud.toString() : "",
@@ -71,6 +75,8 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     // Estados del formulario
     const [ciudad, setCiudad] = useState(initialState.ciudad);
     const [numeroSerie, setNumeroSerie] = useState(initialState.numeroSerie);
+    const [marca, setMarca] = useState(initialState.marca);
+    const [modelo, setModelo] = useState(initialState.modelo);
     const [ubicacion, setUbicacion] = useState(initialState.ubicacion);
     const [fechaInstalacion, setFechaInstalacion] = useState(initialState.fechaInstalacion);
     const [latitud, setLatitud] = useState(initialState.latitud);
@@ -89,6 +95,8 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             const newData = parseInitialState();
             setCiudad(newData.ciudad);
             setNumeroSerie(newData.numeroSerie);
+            setMarca(newData.marca);
+            setModelo(newData.modelo);
             setUbicacion(newData.ubicacion);
             setFechaInstalacion(newData.fechaInstalacion);
             setLatitud(newData.latitud); // This is key for the map
@@ -115,6 +123,16 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
         // 2. Ubicacion
         if (ubicacion !== medidor.ubicacion) {
             changes.ubicacion = ubicacion;
+        }
+
+        // 2a. Marca
+        if (marca !== (medidor.marca || "")) {
+            changes.marca = marca.trim() || null;
+        }
+
+        // 2b. Modelo
+        if (modelo !== (medidor.modelo || "")) {
+            changes.modelo = modelo.trim() || null;
         }
 
         // 3. Fecha
@@ -300,6 +318,30 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                     className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
                                                     value={fechaInstalacion}
                                                     onChange={(e) => setFechaInstalacion(e.target.value)}
+                                                />
+                                            </div>
+
+                                            {/* Marca */}
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Marca</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
+                                                    value={marca}
+                                                    onChange={(e) => setMarca(e.target.value)}
+                                                    placeholder="Ej. AquaTech"
+                                                />
+                                            </div>
+
+                                            {/* Modelo */}
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-medium">Modelo</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
+                                                    value={modelo}
+                                                    onChange={(e) => setModelo(e.target.value)}
+                                                    placeholder="Ej. AT-150"
                                                 />
                                             </div>
 

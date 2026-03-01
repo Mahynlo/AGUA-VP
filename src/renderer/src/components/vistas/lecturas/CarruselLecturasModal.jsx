@@ -15,17 +15,17 @@ import {
   Divider,
   Spinner,
 } from "@nextui-org/react";
-import {
-  HiLocationMarker,
-  HiUser,
-  HiCalendar,
-  HiHashtag,
-  HiMap,
-  HiPhone,
-  HiCalculator,
-  HiArrowLeft,
-  HiArrowRight,
-  HiCheck
+import { 
+  HiLocationMarker, 
+  HiUser, 
+  HiCalendar, 
+  HiHashtag, 
+  HiMap, 
+  HiPhone, 
+  HiCalculator, 
+  HiArrowLeft, 
+  HiArrowRight, 
+  HiCheck 
 } from "react-icons/hi";
 import MapaLecturas from "../../mapa/MapaLecturas";
 import { useRutas } from "../../../context/RutasContext";
@@ -37,7 +37,10 @@ const LecturaInput = React.memo(React.forwardRef(({ value, onChange, clienteId, 
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Lectura Actual (m³)*
+        Consumo del Período (m³)*
+        <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">
+          Ingresa el consumo del mes, no la lectura acumulada del medidor
+        </span>
       </label>
       <div className="relative w-full flex">
         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-lg">
@@ -96,17 +99,17 @@ const MapaContainer = React.memo(({ lat, lng, cliente, ciudad }) => {
     <Card className="h-full border border-gray-200 dark:border-zinc-700 shadow-sm">
       <CardHeader className="pb-0 pt-4 px-4 flex-col items-start">
         <div className="flex items-center gap-2 mb-2">
-          <div className="p-1.5 bg-teal-100 dark:bg-teal-900/30 rounded-lg text-teal-600 dark:text-teal-400">
-            <HiMap className="text-lg" />
-          </div>
-          <h4 className="font-bold text-large text-gray-800 dark:text-white">Mapa de Ubicación</h4>
+            <div className="p-1.5 bg-teal-100 dark:bg-teal-900/30 rounded-lg text-teal-600 dark:text-teal-400">
+                <HiMap className="text-lg" />
+            </div>
+            <h4 className="font-bold text-large text-gray-800 dark:text-white">Mapa de Ubicación</h4>
         </div>
       </CardHeader>
       <CardBody className="overflow-hidden py-2">
         <div className="h-[400px] w-full rounded-xl overflow-hidden border border-gray-100 dark:border-zinc-800">
-          <MapaLecturas
-            lat={lat}
-            lng={lng}
+          <MapaLecturas 
+            lat={lat} 
+            lng={lng} 
             cliente={cliente}
           />
         </div>
@@ -135,7 +138,7 @@ const InfoRow = ({ label, value, icon: Icon, colorClass, valueClass = "" }) => (
 );
 
 export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
-  const { obtenerInfoRuta, actualizarRutas, actualizarProgresoRuta, rutas, loading } = useRutas();
+  const { obtenerInfoRuta, actualizarRutas, rutas, loading } = useRutas();
   const { setError, setSuccess } = useFeedback();
   const { user } = useAuth();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -145,23 +148,24 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
   const [lecturasGuardadas, setLecturasGuardadas] = useState(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [erroresLectura, setErroresLectura] = useState({});
-
+  
   const lecturaInputRef = React.useRef(null);
 
-  // Ref para controlar si ya se inicializó la ruta actual
-  const initializedRutaId = React.useRef(null);
-
   useEffect(() => {
-    // Si cambiamos de ruta, reseteamos todo
-    if (rutaId && initializedRutaId.current !== rutaId) {
-      initializedRutaId.current = rutaId;
-      setCurrentIndex(0);
-      setLecturas({});
-      setErroresLectura({});
-      // Fetch inicial
+    if (rutaId) {
       obtenerInfoRuta(rutaId)
         .then((rutaData) => {
           setRuta(rutaData);
+          setCurrentIndex(0);
+          setLecturas({});
+          setErroresLectura({});
+          
+          const rutaEnContexto = rutas.find(r => r.id === rutaId);
+          if (rutaEnContexto && rutaEnContexto.medidores_completados) {
+            setLecturasGuardadas(new Set(rutaEnContexto.medidores_completados));
+          } else {
+            setLecturasGuardadas(new Set());
+          }
         })
         .catch((error) => {
           console.error("Error al obtener la ruta:", error);
@@ -169,18 +173,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
           setError("Error al cargar la información de la ruta", "Toma de Lecturas");
         });
     }
-
-    // Efecto separado para actualizar SOLO el estado de completados cuando cambia el contexto
-    // sin resetear el índice ni las lecturas locales
-    if (rutaId && rutas.length > 0) {
-      const rutaEnContexto = rutas.find(r => r.id === rutaId);
-      if (rutaEnContexto && rutaEnContexto.medidores_completados) {
-        setLecturasGuardadas(new Set(rutaEnContexto.medidores_completados));
-      }
-    }
-  }, [rutaId, rutas, obtenerInfoRuta, setError]);
-
-
+  }, [rutaId, obtenerInfoRuta, rutas, setError]);
 
   const obtenerFechaActual = useCallback(() => {
     const ahora = new Date();
@@ -192,7 +185,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
   const puntoActual = hasValidData ? ruta.puntos[currentIndex] : null;
   const lecturaActual = puntoActual ? (lecturas[puntoActual.medidor_id] || "") : "";
   const errorLecturaActual = puntoActual ? (erroresLectura[puntoActual.medidor_id] || "") : "";
-
+  
   // CORRECCIÓN: Check reactivo para ver si la lectura está completada
   const isLecturaCompletada = useMemo(() => {
     if (!puntoActual) return false;
@@ -219,12 +212,12 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     if (!puntoActual) return;
     const medidorId = puntoActual.medidor_id;
     let value = e.target.value;
-
+    
     if (value !== '' && (parseFloat(value) < 0 || value.includes('-'))) {
       value = value.replace('-', '');
       if (parseFloat(value) < 0) value = '0';
     }
-
+    
     setLecturas(prev => ({ ...prev, [medidorId]: value }));
     if (erroresLectura[medidorId]) {
       setErroresLectura(prev => ({ ...prev, [medidorId]: "" }));
@@ -235,7 +228,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     if (!puntoActual) return;
     const medidorId = puntoActual.medidor_id;
     // Capturar el número de serie AQUÍ para evitar problemas de cierre/cambio
-    const numeroSerieActual = puntoActual.numero_serie;
+    const numeroSerieActual = puntoActual.numero_serie; 
     const lectura = lecturas[medidorId];
 
     if (!lectura || lectura.trim() === "") {
@@ -264,10 +257,12 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
       const response = await window.api.registerLectura(lecturaData, tokensession);
 
       if (response.success) {
-        // BACKEND-FIRST STRATEGY: 
-        // Recargamos el contexto global que contiene los "medidores_completados"
-        await actualizarRutas(periodoMostrado);
-        window.dispatchEvent(new CustomEvent('dashboard-update'));
+        // CORRECCIÓN CLAVE: Usar actualización funcional para el Set
+        setLecturasGuardadas(prevSet => {
+            const newSet = new Set(prevSet);
+            newSet.add(numeroSerieActual);
+            return newSet;
+        });
 
         setSuccess(`Lectura guardada exitosamente`, "Toma de Lecturas");
         setErroresLectura(prev => ({ ...prev, [medidorId]: "" }));
@@ -278,8 +273,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
         } else {
           setTimeout(() => {
             setSuccess(`¡Ruta completada!`, "Toma de Lecturas");
-            // Nota: actualizarRutas ya se llamó arriba, no es necesario llamar de nuevo, 
-            // pero si se quiere asegurar al finalizar, no hace daño.
+            actualizarRutas(periodoMostrado).catch(console.error);
           }, 500);
         }
       } else {
@@ -327,7 +321,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     const handleKeyDown = (e) => {
       // Si el input está enfocado, el Enter lo maneja el onKeyDown del input, 
       // pero si no, o si es navegación, lo manejamos aquí.
-
+      
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
@@ -360,8 +354,8 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
   if (!hasValidData) {
     return (
-      <Button
-        color="primary"
+      <Button 
+        color="primary" 
         onPress={onOpen}
         isDisabled={true}
         className="font-semibold shadow-md"
@@ -374,8 +368,8 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
   return (
     <>
-      <Button
-        color="primary"
+      <Button 
+        color="primary" 
         onPress={onOpen}
         className="font-semibold shadow-md"
         startContent={<HiMap className="text-lg" />}
@@ -410,148 +404,131 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                   <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
                     {ruta.nombre} - {ruta.descripcion}
                   </p>
-
-                  {/* Warning: Missing Meters Logic */}
-                  {(() => {
-                    const rutaSummary = rutas.find(r => r.id === rutaId);
-                    const expectedTotal = rutaSummary ? rutaSummary.total_puntos : 0; // Assuming total_puntos is available in summary
-                    const actualTotal = ruta?.puntos ? ruta.puntos.length : 0;
-                    const missingCount = expectedTotal - actualTotal;
-
-                    if (missingCount > 0) {
-                      return (
-                        <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-medium border border-orange-200 dark:border-orange-800">
-                          <span>⚠ <strong>{missingCount} medidor{missingCount !== 1 ? 'es' : ''}</strong> sin cliente asignado (faltan en esta lista).</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <Chip size="sm" variant="flat" color="warning" className="font-semibold">
-                    {currentIndex + 1} / {total}
-                  </Chip>
-                  <Progress
-                    size="sm"
-                    value={(lecturasGuardadas.size / total) * 100}
-                    color="success"
-                    className="w-24"
-                    aria-label="Progreso"
-                  />
+                    <Chip size="sm" variant="flat" color="warning" className="font-semibold">
+                        {currentIndex + 1} / {total}
+                    </Chip>
+                    <Progress 
+                        size="sm" 
+                        value={(lecturasGuardadas.size / total) * 100} 
+                        color="success" 
+                        className="w-24" 
+                        aria-label="Progreso"
+                    />
                 </div>
               </ModalHeader>
 
               <ModalBody className="py-6 bg-gray-50 dark:bg-black/20">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-
+                  
                   {/* Columna Izquierda: Datos y Formulario */}
                   <div className="space-y-6 flex flex-col h-full">
-
+                    
                     {/* Tarjeta de Información Completa */}
                     <Card className="border border-gray-200 dark:border-zinc-700 shadow-sm">
                       <CardHeader className="pb-0 pt-4 px-4 flex-col items-start">
                         <div className="flex justify-between w-full items-start">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                              <HiUser className="text-lg" />
+                            <div className="flex items-center gap-2 mb-1">
+                                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                                    <HiUser className="text-lg" />
+                                </div>
+                                <h4 className="font-bold text-large text-gray-800 dark:text-white">Información del Cliente</h4>
                             </div>
-                            <h4 className="font-bold text-large text-gray-800 dark:text-white">Información del Cliente</h4>
-                          </div>
-                          {isLecturaCompletada && (
-                            <Chip color="success" variant="flat" size="sm" startContent={<HiCheck />}>
-                              Registrado
-                            </Chip>
-                          )}
+                            {isLecturaCompletada && (
+                                <Chip color="success" variant="flat" size="sm" startContent={<HiCheck />}>
+                                    Registrado
+                                </Chip>
+                            )}
                         </div>
                       </CardHeader>
                       <CardBody className="py-2">
                         <div className="grid grid-cols-1 gap-2">
-                          <InfoRow
-                            label="Cliente"
-                            value={puntoActual?.cliente_nombre}
-                            icon={HiUser}
-                            colorClass="text-blue-600 dark:text-blue-400"
-                          />
-                          <InfoRow
-                            label="Dirección"
-                            value={puntoActual?.cliente_direccion}
-                            icon={HiLocationMarker}
-                            colorClass="text-purple-600 dark:text-purple-400"
-                            valueClass="truncate max-w-[200px]"
-                          />
-                          <InfoRow
-                            label="Teléfono"
-                            value={puntoActual?.cliente_telefono}
-                            icon={HiPhone}
-                            colorClass="text-green-600 dark:text-green-400"
-                          />
-                          <InfoRow
-                            label="Medidor"
-                            value={puntoActual?.numero_serie}
-                            icon={HiHashtag}
-                            colorClass="text-orange-600 dark:text-orange-400"
-                          />
-                          <InfoRow
-                            label="Ubicación Medidor"
-                            value={puntoActual?.ubicacion}
-                            icon={HiLocationMarker}
-                            colorClass="text-indigo-600 dark:text-indigo-400"
-                          />
-                          <InfoRow
-                            label="Fecha"
-                            value={new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
-                            icon={HiCalendar}
-                            colorClass="text-teal-600 dark:text-teal-400"
-                          />
-                          <InfoRow
-                            label="Orden"
-                            value={`${puntoActual?.orden || 0} de ${total}`}
-                            icon={HiUser}
-                            colorClass="text-pink-600 dark:text-pink-400"
-                          />
+                            <InfoRow 
+                                label="Cliente" 
+                                value={puntoActual?.cliente_nombre} 
+                                icon={HiUser} 
+                                colorClass="text-blue-600 dark:text-blue-400"
+                            />
+                            <InfoRow 
+                                label="Dirección" 
+                                value={puntoActual?.cliente_direccion} 
+                                icon={HiLocationMarker} 
+                                colorClass="text-purple-600 dark:text-purple-400"
+                                valueClass="truncate max-w-[200px]"
+                            />
+                            <InfoRow 
+                                label="Teléfono" 
+                                value={puntoActual?.cliente_telefono} 
+                                icon={HiPhone} 
+                                colorClass="text-green-600 dark:text-green-400"
+                            />
+                            <InfoRow 
+                                label="Medidor" 
+                                value={puntoActual?.numero_serie} 
+                                icon={HiHashtag} 
+                                colorClass="text-orange-600 dark:text-orange-400"
+                            />
+                            <InfoRow 
+                                label="Ubicación Medidor" 
+                                value={puntoActual?.ubicacion} 
+                                icon={HiLocationMarker} 
+                                colorClass="text-indigo-600 dark:text-indigo-400"
+                            />
+                            <InfoRow 
+                                label="Fecha" 
+                                value={new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })} 
+                                icon={HiCalendar} 
+                                colorClass="text-teal-600 dark:text-teal-400"
+                            />
+                            <InfoRow 
+                                label="Orden" 
+                                value={`${puntoActual?.orden || 0} de ${total}`} 
+                                icon={HiUser} 
+                                colorClass="text-pink-600 dark:text-pink-400"
+                            />
                         </div>
                       </CardBody>
                     </Card>
 
                     {/* Área de Lectura */}
                     <div className="flex-1 flex flex-col justify-center">
-                      {isLecturaCompletada ? (
-                        <Card className="bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 shadow-none">
-                          <CardBody className="flex flex-col items-center py-8">
-                            <div className="p-3 bg-green-100 dark:bg-green-800 rounded-full mb-3">
-                              <HiCheck className="text-2xl text-green-600 dark:text-green-300" />
-                            </div>
-                            <h4 className="text-lg font-bold text-green-700 dark:text-green-400">Lectura Completada</h4>
-                            <p className="text-sm text-green-600 dark:text-green-300 text-center mt-1">
-                              El consumo para el medidor <strong>{puntoActual?.numero_serie}</strong> ya fue registrado.
-                            </p>
-                          </CardBody>
-                        </Card>
-                      ) : (
-                        <LecturaInput
-                          ref={lecturaInputRef}
-                          value={lecturaActual}
-                          onChange={handleLecturaChange}
-                          clienteId={puntoActual?.medidor_id}
-                          onSave={handleGuardarLectura}
-                          isLoading={isSubmitting}
-                          error={errorLecturaActual}
-                          autoFocus={true}
-                        />
-                      )}
+                        {isLecturaCompletada ? (
+                            <Card className="bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 shadow-none">
+                                <CardBody className="flex flex-col items-center py-8">
+                                    <div className="p-3 bg-green-100 dark:bg-green-800 rounded-full mb-3">
+                                        <HiCheck className="text-2xl text-green-600 dark:text-green-300" />
+                                    </div>
+                                    <h4 className="text-lg font-bold text-green-700 dark:text-green-400">Lectura Completada</h4>
+                                    <p className="text-sm text-green-600 dark:text-green-300 text-center mt-1">
+                                        El consumo para el medidor <strong>{puntoActual?.numero_serie}</strong> ya fue registrado.
+                                    </p>
+                                </CardBody>
+                            </Card>
+                        ) : (
+                            <LecturaInput 
+                                ref={lecturaInputRef}
+                                value={lecturaActual}
+                                onChange={handleLecturaChange}
+                                clienteId={puntoActual?.medidor_id}
+                                onSave={handleGuardarLectura}
+                                isLoading={isSubmitting}
+                                error={errorLecturaActual}
+                                autoFocus={true}
+                            />
+                        )}
                     </div>
                   </div>
 
                   {/* Columna Derecha: Mapa */}
                   <div className="h-full min-h-[400px]">
                     {mapaProps && (
-                      <MapaContainer
-                        lat={mapaProps.lat}
-                        lng={mapaProps.lng}
-                        cliente={mapaProps.cliente}
-                        ciudad={ruta?.nombre || ""}
-                      />
+                        <MapaContainer
+                            lat={mapaProps.lat}
+                            lng={mapaProps.lng}
+                            cliente={mapaProps.cliente}
+                            ciudad={ruta?.nombre || ""}
+                        />
                     )}
                   </div>
                 </div>
@@ -559,57 +536,58 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
               <ModalFooter className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-zinc-900 py-4">
                 <div className="flex w-full justify-between items-center">
-                  <Button
-                    isIconOnly
-                    variant="flat"
-                    isDisabled={currentIndex === 0}
-                    onPress={handlePrev}
-                  >
-                    <HiArrowLeft />
-                  </Button>
+                    <Button 
+                        isIconOnly 
+                        variant="flat" 
+                        isDisabled={currentIndex === 0} 
+                        onPress={handlePrev}
+                    >
+                        <HiArrowLeft />
+                    </Button>
 
-                  <div className="flex gap-2">
-                    <span className="text-sm text-gray-500 font-medium self-center">
-                      Navegar
-                    </span>
-                    {/* Puntos indicadores compactos */}
-                    <div className="flex gap-1 self-center">
-                      {Array.from({ length: Math.min(total, 5) }).map((_, i) => {
-                        // Lógica para mostrar dots cercanos
-                        let idx = i;
-                        if (total > 5 && currentIndex > 2) idx = currentIndex - 2 + i;
-                        if (idx >= total) return null;
-
-                        return (
-                          <div key={idx} className={`w-2 h-2 rounded-full ${idx === currentIndex ? 'bg-blue-600' :
-                            (lecturasGuardadas.has(ruta.puntos[idx]?.numero_serie) ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600')
-                            }`} />
-                        );
-                      })}
+                    <div className="flex gap-2">
+                        <span className="text-sm text-gray-500 font-medium self-center">
+                            Navegar
+                        </span>
+                        {/* Puntos indicadores compactos */}
+                        <div className="flex gap-1 self-center">
+                            {Array.from({ length: Math.min(total, 5) }).map((_, i) => {
+                                // Lógica para mostrar dots cercanos
+                                let idx = i;
+                                if (total > 5 && currentIndex > 2) idx = currentIndex - 2 + i;
+                                if (idx >= total) return null;
+                                
+                                return (
+                                    <div key={idx} className={`w-2 h-2 rounded-full ${
+                                        idx === currentIndex ? 'bg-blue-600' :
+                                        (lecturasGuardadas.has(ruta.puntos[idx]?.numero_serie) ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600')
+                                    }`} />
+                                );
+                            })}
+                        </div>
                     </div>
-                  </div>
 
-                  <div className="flex gap-2">
-                    {currentIndex < total - 1 ? (
-                      <Button
-                        color="primary"
-                        onPress={handleNext}
-                        endContent={<HiArrowRight />}
-                      >
-                        Siguiente
-                      </Button>
-                    ) : (
-                      <Button
-                        color="success"
-                        className="text-white font-bold"
-                        onPress={handleFinalizarRuta}
-                        isDisabled={lecturasGuardadas.size !== total}
-                        endContent={<HiCheck />}
-                      >
-                        Finalizar Ruta
-                      </Button>
-                    )}
-                  </div>
+                    <div className="flex gap-2">
+                        {currentIndex < total - 1 ? (
+                            <Button 
+                                color="primary" 
+                                onPress={handleNext}
+                                endContent={<HiArrowRight />}
+                            >
+                                Siguiente
+                            </Button>
+                        ) : (
+                            <Button 
+                                color="success" 
+                                className="text-white font-bold"
+                                onPress={handleFinalizarRuta}
+                                isDisabled={lecturasGuardadas.size !== total}
+                                endContent={<HiCheck />}
+                            >
+                                Finalizar Ruta
+                            </Button>
+                        )}
+                    </div>
                 </div>
               </ModalFooter>
             </>

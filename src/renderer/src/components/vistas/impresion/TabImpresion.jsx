@@ -35,9 +35,11 @@ const TabImpresion = () => {
     handleVistaPreviaRecibos,
     handlePruebaConDatosMock,
     handleTestUrls,
-    procesandoAccion, // Nuevo: string o null
-    pdfUrl,          // Estado del PDF
-    setPdfUrl        // Setter para cerrar
+    procesandoAccion,
+    pdfUrl,
+    setPdfUrl,
+    printUrl,
+    setPrintUrl
   } = useImpresionRecibos();
 
   return (
@@ -102,12 +104,13 @@ const TabImpresion = () => {
       </div>
 
 
-      {/* MODAL DE VISTA PREVIA PDF */}
+      {/* MODAL DE VISTA PREVIA / IMPRESIÓN */}
       {
         pdfUrl && (
           <ModalVistaPrevia
             pdfUrl={pdfUrl}
-            onClose={() => setPdfUrl(null)}
+            printUrl={printUrl}
+            onClose={() => { setPdfUrl(null); setPrintUrl(null); }}
           />
         )
       }

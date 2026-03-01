@@ -253,7 +253,7 @@ export function TabClientes() {
                                     <TableCell>
                                         <User
                                             name={cliente.nombre}
-                                            description={`ID: ${cliente.id}`}
+                                            description={cliente.numero_predio ? `#${cliente.numero_predio} · ID: ${cliente.id}` : `ID: ${cliente.id}`}
                                             avatarProps={{
                                                 name: cliente.nombre?.charAt(0) || "C",
                                                 size: "sm",

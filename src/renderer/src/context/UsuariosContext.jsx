@@ -31,10 +31,14 @@ export const UsuariosProvider = ({ children }) => {
             const token = getToken();
             if (!token) return;
             const data = await window.api.fetchUsuarios(token, params);
-            setUsuarios(data);
-            return data;
+            // Guardar solo si es un array real — si la API devuelve un objeto de error
+            // (p.ej. { success: false, error: "..." }) evitar romper usuarios.filter()
+            const lista = Array.isArray(data) ? data : [];
+            setUsuarios(lista);
+            return lista;
         } catch (err) {
             console.error("Error fetching usuarios:", err);
+            setUsuarios([]);
             setError(err.message);
             // setFeedbackError("Error al cargar usuarios"); // Optional, maybe too noisy on load
         } finally {

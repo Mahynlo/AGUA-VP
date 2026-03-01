@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@nextui-org/react";
-import { HiCog, HiSave, HiBan, HiExclamation } from "react-icons/hi";
+import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar } from "react-icons/hi";
 
 // Componente de Input Personalizado (FUERA del componente principal para evitar recreación)
 const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description }) => (
@@ -30,7 +30,8 @@ const ModalConfiguracionCortes = ({ isOpen, onClose }) => {
         facturas_para_segundo_aviso: 2,
         facturas_para_tercer_aviso: 3,
         facturas_para_corte: 4,
-        dias_gracia: 0
+        dias_gracia: 0,
+        dias_vencimiento_factura: 30
     });
     const [loading, setLoading] = useState(false);
 
@@ -101,6 +102,16 @@ const ModalConfiguracionCortes = ({ isOpen, onClose }) => {
                             icon={<HiBan className="w-5 h-5 text-red-600" />}
                             color="red"
                             description="Cantidad de facturas vencidas para generar orden de corte"
+                        />
+
+                        <CustomInput
+                            label="Días de Vencimiento de Factura"
+                            type="number"
+                            value={config.dias_vencimiento_factura}
+                            onChange={(e) => setConfig({ ...config, dias_vencimiento_factura: Number(e.target.value) })}
+                            icon={<HiCalendar className="w-5 h-5 text-amber-600" />}
+                            color="amber"
+                            description="Días desde la emisión hasta que una factura se considera vencida (por defecto 30)"
                         />
                     </div>
 

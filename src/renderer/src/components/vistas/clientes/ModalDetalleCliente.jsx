@@ -11,7 +11,7 @@ import {
     Chip,
     Divider
 } from "@nextui-org/react";
-import { HiUser, HiPhone, HiMail, HiLocationMarker, HiMap, HiCurrencyDollar, HiCog } from "react-icons/hi";
+import { HiUser, HiPhone, HiMail, HiLocationMarker, HiMap, HiCurrencyDollar, HiCog, HiHashtag } from "react-icons/hi";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { useTarifas } from "../../../context/TarifasContext";
 
@@ -86,6 +86,16 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                                                     <span className="text-sm font-medium">{cliente.telefono || "No registrado"}</span>
                                                 </div>
                                             </div>
+
+                                            {cliente.numero_predio && (
+                                                <div className="flex items-start gap-2">
+                                                    <HiHashtag className="w-4 h-4 text-gray-400 mt-0.5" />
+                                                    <div>
+                                                        <span className="text-xs text-gray-400 block mb-1">Número de Predio</span>
+                                                        <span className="text-sm font-medium font-mono">{cliente.numero_predio}</span>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </CardBody>
                                 </Card>

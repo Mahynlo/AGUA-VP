@@ -18,6 +18,7 @@ export const useClienteForm = (clienteId = null) => {
 
   // Estados del formulario
   const [formData, setFormData] = useState({
+    numero_predio: "",
     nombre: "",
     direccion: "",
     telefono: "",
@@ -46,6 +47,7 @@ const cliente = clienteId
   useEffect(() => {
     if (clienteId && cliente) {
       setFormData({
+        numero_predio: cliente.numero_predio || "",
         nombre: cliente.nombre || "",
         direccion: cliente.direccion || "",
         telefono: cliente.telefono || "",
@@ -80,6 +82,7 @@ const cliente = clienteId
   // Resetear el formulario
   const resetForm = () => {
     setFormData({
+      numero_predio: "",
       nombre: "",
       direccion: "",
       telefono: "",
@@ -150,6 +153,7 @@ const cliente = clienteId
       } else {
         // Actualizar cliente existente
         const nuevosDatos = {
+          numero_predio: formData.numero_predio?.trim().toUpperCase() || null,
           nombre: formData.nombre,
           direccion: formData.direccion,
           telefono: formData.telefono,

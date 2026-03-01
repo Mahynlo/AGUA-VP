@@ -12,7 +12,7 @@ import {
   Chip
 } from "@nextui-org/react";
 import { useState, useEffect, useMemo } from "react";
-// AGREGADO: HiDocumentText a los imports
+import ModalVistaPrevia from "../impresion/components/ModalVistaPrevia";
 import {
   HiCurrencyDollar,
   HiCreditCard,
@@ -38,6 +38,11 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago }) => {
   const [mostrarErrores, setMostrarErrores] = useState(false);
   const [estadoPago, setEstadoPago] = useState('formulario');
   const [resultadoPago, setResultadoPago] = useState(null);
+
+  // Estado del comprobante de impresión
+  const [comprobanteUrl, setComprobanteUrl] = useState(null);   // file:// PDF temporal
+  const [comprobantePrintUrl, setComprobantePrintUrl] = useState(null); // URL React para imprimir
+  const [generandoComprobante, setGenerandoComprobante] = useState(false);
 
   // Lógica para generar sugerencias de pago basadas en billetes MXN
   const sugerenciasPago = useMemo(() => {
@@ -156,7 +161,80 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago }) => {
     setMostrarErrores(false);
     setEstadoPago('formulario');
     setResultadoPago(null);
+    setComprobanteUrl(null);
+    setComprobantePrintUrl(null);
     onClose();
+  };
+
+  // Genera el PDF del comprobante y abre el modal de impresión
+  const handleImprimirComprobante = async () => {
+    if (generandoComprobante) return;
+    setGenerandoComprobante(true);
+    try {
+      const operador = localStorage.getItem('username') || localStorage.getItem('usuario') || 'Operador';
+
+      // Cálculos correctos para pagos parciales y completos
+      const saldoPendiente     = parseFloat(factura.saldo_pendiente || factura.total || 0);
+      const cantidadEntregada  = parseFloat(formPago.cantidad_entregada || 0);
+      const montoAplicado      = Math.min(cantidadEntregada, saldoPendiente);   // Lo que realmente se abonó
+      const cambioCalculado    = Math.max(0, cantidadEntregada - saldoPendiente); // Cambio solo si pagó de más
+      const esPagoParcial      = cantidadEntregada < saldoPendiente;             // ¿No alcanzó para cubrir todo?
+      const saldoRestante      = Math.max(0, saldoPendiente - cantidadEntregada);// Lo que queda pendiente
+
+      const datos = {
+        folio_pago: resultadoPago?.detalles?.pago_id || resultadoPago?.detalles?.id || '—',
+        factura: {
+          id:               factura.id,
+          cliente_nombre:   factura.cliente_nombre,
+          direccion_cliente: factura.direccion_cliente || '',
+          cliente_ciudad:   factura.cliente_ciudad || 'Villa Pesqueira',
+          periodo:          factura.periodo || factura.mes_facturado || '—',
+          tarifa_nombre:    factura.tarifa_nombre || '—',
+          medidor_serie:    factura.medidor?.numero_serie || factura.medidor_serie || '—',
+          consumo_m3:       factura.consumo_m3 ?? '—',
+          total:            factura.total ?? factura.saldo_pendiente,
+          saldo_restante:   saldoRestante,
+        },
+        pago: {
+          monto:              montoAplicado,
+          cantidad_entregada: cantidadEntregada,
+          metodo_pago:        formPago.metodo_pago,
+          comentario:         formPago.comentario || '',
+          fecha_pago:         formPago.fecha_pago,
+        },
+        cambio:          cambioCalculado,
+        es_pago_parcial: esPagoParcial,
+        operador,
+        fecha_hora_emision: new Date().toISOString(),
+      };
+
+      // Historial parcial: solo el pago actual (no tenemos más info en este punto)
+      datos.historial_pagos = [
+        { id: datos.folio_pago, monto: datos.pago.monto, fecha_pago: datos.pago.fecha_pago, metodo_pago: datos.pago.metodo_pago },
+      ];
+
+      const dataKey = await window.api.savePrintData(JSON.stringify(datos));
+
+      const { protocol, origin, href } = window.location;
+      let printUrl;
+      if (protocol === 'file:') {
+        const base = href.split('#')[0];
+        printUrl = `${base}#/comprobante-pago?print=true&dataKey=${dataKey}`;
+      } else {
+        printUrl = `${origin}/#/comprobante-pago?print=true&dataKey=${dataKey}`;
+      }
+
+      const response = await window.api.previewComponent(printUrl);
+      if (response?.success && response?.path) {
+        setComprobantePrintUrl(printUrl);
+        setComprobanteUrl(response.path);
+      }
+    } catch (err) {
+      console.error('Error generando comprobante:', err);
+      alert('Error al generar el comprobante: ' + err);
+    } finally {
+      setGenerandoComprobante(false);
+    }
   };
 
   if (!factura) return null;
@@ -377,6 +455,18 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago }) => {
                   </div>
                 )}
               </div>
+
+              {/* Botón de comprobante */}
+              <Button
+                color="default"
+                variant="flat"
+                className="w-full font-medium"
+                startContent={generandoComprobante ? null : <HiDocumentText className="w-4 h-4" />}
+                isLoading={generandoComprobante}
+                onPress={handleImprimirComprobante}
+              >
+                {generandoComprobante ? 'Generando comprobante…' : 'Imprimir Comprobante de Pago'}
+              </Button>
             </ModalBody>
             <ModalFooter>
               <Button color="primary" onPress={handleCerrarModal} className="w-full font-bold">
@@ -388,15 +478,25 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago }) => {
 
       case 'error':
         return (
-          <ModalBody className="py-8">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                <HiX className="w-10 h-10 text-red-600" />
+          <>
+            <ModalBody className="py-8">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                  <HiX className="w-10 h-10 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-red-600">Error al Procesar</h3>
+                <p className="text-gray-600 dark:text-gray-300">{resultadoPago?.mensaje}</p>
               </div>
-              <h3 className="text-xl font-bold text-red-600">Error al Procesar</h3>
-              <p className="text-gray-600 dark:text-gray-300">{resultadoPago?.mensaje}</p>
-            </div>
-          </ModalBody>
+            </ModalBody>
+            <ModalFooter>
+              <Button color="default" variant="light" onPress={handleReintentar}>
+                Reintentar
+              </Button>
+              <Button color="danger" onPress={handleCerrarModal}>
+                Cerrar
+              </Button>
+            </ModalFooter>
+          </>
         );
 
       default: // formulario
@@ -563,23 +663,34 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago }) => {
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={estadoPago === 'procesando' ? undefined : handleCerrarModal}
-      size="2xl"
-      backdrop="blur"
-      scrollBehavior="inside"
-      isDismissable={estadoPago !== 'procesando'}
-      classNames={{
-        backdrop: "bg-black/60 backdrop-blur-sm",
-        modal: "bg-white dark:bg-zinc-900 rounded-xl shadow-2xl",
-        closeButton: "hover:bg-red-600 hover:text-white text-gray-600"
-      }}
-    >
-      <ModalContent>
-        {renderContenido()}
-      </ModalContent>
-    </Modal>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={estadoPago === 'procesando' ? undefined : handleCerrarModal}
+        size="2xl"
+        backdrop="blur"
+        scrollBehavior="inside"
+        isDismissable={estadoPago !== 'procesando'}
+        classNames={{
+          backdrop: "bg-black/60 backdrop-blur-sm",
+          modal: "bg-white dark:bg-zinc-900 rounded-xl shadow-2xl",
+          closeButton: "hover:bg-red-600 hover:text-white text-gray-600"
+        }}
+      >
+        <ModalContent>
+          {renderContenido()}
+        </ModalContent>
+      </Modal>
+
+      {/* Modal de vista previa / impresión del comprobante */}
+      {comprobanteUrl && (
+        <ModalVistaPrevia
+          pdfUrl={comprobanteUrl}
+          printUrl={comprobantePrintUrl}
+          onClose={() => { setComprobanteUrl(null); setComprobantePrintUrl(null); }}
+        />
+      )}
+    </>
   );
 };
 

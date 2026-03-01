@@ -19,6 +19,7 @@
     "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
+    "@aguavp/api-server": "file:../api-AguaVP/aguavp-api-server-1.0.0.tgz",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
     "@libsql/client": "^0.14.0",

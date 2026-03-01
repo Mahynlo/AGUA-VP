@@ -1,11 +1,9 @@
 
 
-import { ipcMain} from 'electron';
+import { ipcMain } from 'electron';
+import os from 'os';
+import { app } from 'electron';
 
-
-
-// import { loginUser,verifyToken,cerrarSesion,obtenerSesionesActivas,renovarToken,cerrarSesionEspecifica} from '../../auth/auth.js'; 
-// import { registerUser } from '../../register/usuario.js'; 
 // NOTA: Funciones locales comentadas para usar exclusivamente API V2.
 
 import { leerToken } from '../../appConfig/authApp';
@@ -60,30 +58,48 @@ export default function IpcHandlerUsuario () {
 
     // 📌 Manejar autenticación login (API V2)
     ipcMain.handle("login", async (event, data) => {
+        // Recopilar información completa del dispositivo desde el proceso main
+        const dispositivoInfo = {
+            hostname:         os.hostname(),
+            nombre:           os.hostname(),
+            os:               os.platform(),          // win32 | linux | darwin
+            os_version:       os.release(),           // 10.0.22631
+            arch:             os.arch(),              // x64 | arm64
+            plataforma:       'electron',
+            electron_version: process.versions?.electron || '',
+            app_version:      app.getVersion() || '',
+            pantalla:         '',                     // No accesible desde main sin pantalla
+            memoria_gb:       Math.round(os.totalmem() / (1024 ** 3)),
+            cpus:             os.cpus().length
+        };
+
         // endpoint: POST /api/v2/auth/login
         const result = await apiRequest(`${AUTH_API_URL}/login`, "POST", null, {
             correo: data.correo,
             contraseña: data.contrasena,
-            dispositivo: "Desktop App" 
+            dispositivo: os.hostname(),
+            dispositivo_info: dispositivoInfo
         });
         
         // Adaptar respuesta para el frontend
         if (result.success) {
             return {
                 success: true,
-                accessToken: result.accessToken, // LoginApp espera 'accessToken'
+                accessToken: result.accessToken,
                 refreshToken: result.refreshToken,
-                expiresIn: result.expiresIn,     // LoginApp espera 'expiresIn'
+                expiresIn: result.expiresIn,
                 user: result.user,
-                rol: result.user?.rol,           // LoginApp espera 'rol' en la raíz para redirección
+                rol: result.user?.rol,
+                requiere_cambio_password: !!result.requiere_cambio_password,
                 message: result.mensaje
             };
         }
         
-        // Si falló, asegurar que tenga el formato correcto
         return {
             success: false,
             message: result.message || result.error || "Error desconocido en login",
+            intentos_restantes: result.intentos_restantes,
+            bloqueado_hasta: result.bloqueado_hasta,
             ...result
         };
     });
@@ -162,6 +178,15 @@ export default function IpcHandlerUsuario () {
     ipcMain.handle("close-all-user-sessions", async (event, usuarioId, token) => {
         const result = await apiRequest(`${AUTH_API_URL}/sesiones/usuario/${usuarioId}/todas?excepto_actual=false`, "DELETE", token);
          return { success: result.success, error: result.error };
+    });
+
+    // 📌 Cambiar contraseña del usuario autenticado (API V2)
+    ipcMain.handle("change-password", async (event, { contraseñaActual, contraseñaNueva, confirmarContraseñaNueva }, token) => {
+        return await apiRequest(`${AUTH_API_URL}/cambiar-contrasena`, "PUT", token, {
+            contraseña_actual:            contraseñaActual,
+            contraseña_nueva:             contraseñaNueva,
+            confirmar_contraseña_nueva:   confirmarContraseñaNueva
+        });
     });
 
     // ==========================================

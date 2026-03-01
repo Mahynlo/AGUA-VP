@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Avatar } from "@nextui-org/avatar";
 import { Chip } from "@nextui-org/chip";
-import { Card, CardBody, CardHeader, Button, Badge, Spinner } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Button, Badge, Spinner, Tooltip } from "@nextui-org/react";
 import {
   HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer,
-  HiClock, HiCheckCircle, HiExclamationCircle
+  HiClock, HiCheckCircle, HiExclamationCircle, HiLocationMarker,
+  HiChip, HiGlobeAlt, HiInformationCircle
 } from "react-icons/hi";
 import AvatarPerfil from "../../assets/images/Avatar.png";
 import { useAuth } from "../../context/AuthContext";
@@ -39,7 +40,7 @@ const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placehol
 );
 
 export default function PerfilPage() {
-  const { user, sesiones, obtenerSesionesActivas } = useAuth();
+  const { user, sesiones, obtenerSesionesActivas, logout } = useAuth();
   const [closingSession, setClosingSession] = useState(null);
 
   // Cargar sesiones al entrar al perfil
@@ -76,27 +77,58 @@ export default function PerfilPage() {
     if (passMessage.text) setPassMessage({ type: "", text: "" }); // Limpiar errores al escribir
   };
 
-  // Función simulada para cambiar contraseña (conectar con tu API real)
+  // Función para cambiar contraseña (conectada con la API real)
   const handleChangePassword = async () => {
+    // ── Validación local básica (el backend hará la validación completa) ───
     if (passwords.new !== passwords.confirm) {
-      setPassMessage({ type: "error", text: "Las contraseñas no coinciden" });
+      setPassMessage({ type: "error", text: "Las contraseñas nuevas no coinciden" });
       return;
     }
-    if (passwords.new.length < 6) {
-      setPassMessage({ type: "error", text: "La contraseña debe tener al menos 6 caracteres" });
+    if (passwords.new.length < 8) {
+      setPassMessage({ type: "error", text: "La contraseña debe tener al menos 8 caracteres" });
+      return;
+    }
+    if (passwords.current === passwords.new) {
+      setPassMessage({ type: "error", text: "La nueva contraseña debe ser diferente a la actual" });
       return;
     }
 
     setPassLoading(true);
-    try {
-      // Simulación de llamada a API
-      // const res = await window.api.changePassword(user.id, passwords.current, passwords.new);
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Demo delay
+    setPassMessage({ type: "", text: "" });
 
-      setPassMessage({ type: "success", text: "Contraseña actualizada correctamente" });
-      setPasswords({ current: "", new: "", confirm: "" });
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setPassMessage({ type: "error", text: "Sesión no disponible. Vuelve a iniciar sesión." });
+        return;
+      }
+
+      const res = await window.api.changePassword(
+        {
+          contraseñaActual:          passwords.current,
+          contraseñaNueva:           passwords.new,
+          confirmarContraseñaNueva: passwords.confirm
+        },
+        token
+      );
+
+      if (res?.success) {
+        setPassMessage({
+          type: "success",
+          text: "Contraseña actualizada. Cerrando sesión..."
+        });
+        setPasswords({ current: "", new: "", confirm: "" });
+        // El backend revoca todos los refresh tokens al cambiar la clave.
+        // Hacemos logout para que el usuario se autentique con la nueva contraseña.
+        setTimeout(() => logout(), 2000);
+      } else {
+        // Mostrar el error devuelto por el servidor
+        const msg = res?.error || res?.message || "Error al actualizar la contraseña";
+        setPassMessage({ type: "error", text: msg });
+      }
     } catch (error) {
-      setPassMessage({ type: "error", text: "Error al actualizar la contraseña" });
+      console.error("Error al cambiar contraseña:", error);
+      setPassMessage({ type: "error", text: "Error de conexión. Intenta nuevamente." });
     } finally {
       setPassLoading(false);
     }
@@ -339,47 +371,73 @@ export default function PerfilPage() {
                       {displaySessions.map((sesion, i) => (
                         <div
                           key={i}
-                          className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-xl border transition-colors gap-4
+                          className={`flex flex-col p-4 rounded-xl border transition-colors gap-3
                             ${sesion.actual
                               ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
                               : 'bg-gray-50 dark:bg-gray-700/30 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800'
                             }`}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-full shadow-sm ${sesion.actual ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}>
-                              <HiDesktopComputer className={`${sesion.actual ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'} text-lg`} />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-semibold text-gray-900 dark:text-white">{sesion.dispositivo}</p>
-                                {sesion.actual && (
-                                  <Chip size="sm" color="primary" variant="flat" className="h-5 text-[10px] px-1">Actual</Chip>
-                                )}
+                          {/* Fila superior: ícono + nombre + badge actual */}
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2.5 rounded-full shadow-sm flex-shrink-0 ${sesion.actual ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}>
+                                <HiDesktopComputer className={`${sesion.actual ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'} text-lg`} />
                               </div>
-                              <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
-                                <HiClock />
-                                <span>Iniciado: {formatUTCtoHermosilloHora(sesion.fecha_inicio)}</span>
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{sesion.dispositivo || 'Dispositivo desconocido'}</p>
+                                  {sesion.actual && (
+                                    <Chip size="sm" color="primary" variant="flat" className="h-4 text-[10px] px-1">Sesión actual</Chip>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            {!sesion.actual ? (
+                              <Button
+                                size="sm"
+                                color="danger"
+                                variant="flat"
+                                className="font-medium flex-shrink-0"
+                                onPress={() => handleCloseSession(sesion.id)}
+                                isLoading={closingSession === sesion.id}
+                              >
+                                Cerrar
+                              </Button>
+                            ) : (
+                              <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/20 px-2 py-1 rounded-lg flex-shrink-0">
+                                En uso
+                              </div>
+                            )}
                           </div>
 
-                          {/* Botón de cerrar sesión solo si NO es la actual */}
-                          {!sesion.actual ? (
-                            <Button
-                              size="sm"
-                              color="danger"
-                              variant="flat"
-                              className="font-medium"
-                              onPress={() => handleCloseSession(sesion.id)}
-                              isLoading={closingSession === sesion.id}
-                            >
-                              Cerrar Sesión
-                            </Button>
-                          ) : (
-                            <div className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg">
-                              Sesión en uso
+                          {/* Fila de detalles del dispositivo */}
+                          <div className="grid grid-cols-1 gap-1 text-[11px] text-gray-500 dark:text-gray-400 pl-10">
+                            {sesion.direccion_ip && (
+                              <div className="flex items-center gap-1.5">
+                                <HiGlobeAlt className="flex-shrink-0 text-gray-400" />
+                                <span>IP: <span className="font-medium text-gray-700 dark:text-gray-300">{sesion.direccion_ip}</span></span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                              <HiClock className="flex-shrink-0 text-gray-400" />
+                              <span>Inicio: <span className="font-medium text-gray-700 dark:text-gray-300">{formatUTCtoHermosilloHora(sesion.fecha_inicio)}</span></span>
+                              {sesion.ultimo_uso && (
+                                <span className="ml-2">· Última act: <span className="font-medium text-gray-700 dark:text-gray-300">{formatUTCtoHermosilloHora(sesion.ultimo_uso)}</span></span>
+                              )}
                             </div>
-                          )}
+                            {sesion.user_agent && (
+                              <Tooltip content={sesion.user_agent} placement="bottom" classNames={{ content: "max-w-xs text-xs" }}>
+                                <div className="flex items-center gap-1.5 cursor-help">
+                                  <HiInformationCircle className="flex-shrink-0 text-gray-400" />
+                                  <span className="truncate max-w-[220px]">
+                                    {sesion.user_agent.length > 60
+                                      ? sesion.user_agent.slice(0, 57) + '...'
+                                      : sesion.user_agent}
+                                  </span>
+                                </div>
+                              </Tooltip>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
