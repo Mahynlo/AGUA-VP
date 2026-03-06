@@ -11,7 +11,7 @@ export function PagosProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { renovarAccessToken } = useAuth();
+  const { renovarAccessToken, user } = useAuth();
 
   // Agregar estado persistente de filtros
   const [filtros, setFiltros] = useState({
@@ -96,10 +96,10 @@ export function PagosProvider({ children }) {
     }
   }, [initialLoading]);
 
-  // Cargar pagos al iniciar
+  // Cargar pagos al iniciar — gated on auth user
   useEffect(() => {
-    fetchPagos();
-  }, [fetchPagos]);
+    if (user) fetchPagos();
+  }, [user, fetchPagos]);
 
   // Actualizar cuando se restaura la conexión
   useEffect(() => {

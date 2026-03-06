@@ -75,10 +75,9 @@ export default function RutaCard({ ruta }) {
         if (ruta.total_puntos > 0) {
           const detailedRuta = await obtenerInfoRuta(ruta.id);
           if (isMounted && detailedRuta && detailedRuta.puntos) {
-            const validCount = detailedRuta.puntos.length;
-            const diff = ruta.total_puntos - validCount;
-            if (diff > 0) {
-              setMissingMetersCount(diff);
+            const sinCliente = detailedRuta.puntos.filter(p => !p.cliente_id).length;
+            if (sinCliente > 0) {
+              setMissingMetersCount(sinCliente);
             }
           }
         }

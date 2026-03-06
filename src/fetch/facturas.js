@@ -39,8 +39,8 @@ export const fetchFacturas = async (token_session, params, isRetry = false) => {
         // Podrías leer el mensaje del backend si viene uno
         const errorBody = await response.text();
         
-        // Si es error 403 y no es reintento, intentar renovar token
-        if (response.status === 403 && !isRetry) {
+        // Si es error 401/403 y no es reintento, intentar renovar token
+        if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
             console.log("🔄 Token expirado en fetchFacturas, solicitando renovación...");
             window.dispatchEvent(new CustomEvent('token-expired'));
             await new Promise(resolve => setTimeout(resolve, 1000));

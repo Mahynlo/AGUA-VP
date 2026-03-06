@@ -1,4 +1,5 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
+import { useAuth } from "./AuthContext";
 
 // Crear el contexto
 const RutasContext = createContext();
@@ -13,19 +14,24 @@ function obtenerPeriodoActual() {
 
 // Proveedor de rutas
 export function RutasProvider({ children }) {
+    const { user } = useAuth();
     const [rutas, setRutas] = useState([]);
     const [pagination, setPagination] = useState(null); // Nuevo estado
     const [loading, setLoading] = useState(true);
     const [initialLoading, setInitialLoading] = useState(true);
     const [periodoActual, setPeriodoActual] = useState(obtenerPeriodoActual());
     const [error, setError] = useState(null);
+    // Ref para detectar la carga inicial sin incluirla como dep de fetchRutas
+    // (evita la doble carga que ocurría cuando initialLoading cambiaba de true a false
+    // y regeneraba la referencia de fetchRutas, re-disparando el useEffect de inicio)
+    const isFirstLoadRef = useRef(true);
 
 
     // Función para obtener rutas desde el backend (puede recibir un período o params)
     const fetchRutas = useCallback(async (paramsOrPeriodo = periodoActual) => {
         try {
-            // Solo mostrar loading completo en updates, no en carga inicial si ya cargó
-            if (!initialLoading) {
+            // Solo mostrar loading completo en updates, no en carga inicial
+            if (!isFirstLoadRef.current) {
                 setLoading(true);
             }
             const token_session = localStorage.getItem("token");
@@ -67,15 +73,18 @@ export function RutasProvider({ children }) {
             setPagination(null);
         } finally {
             setLoading(false);
-            setInitialLoading(false);
+            if (isFirstLoadRef.current) {
+                setInitialLoading(false);
+                isFirstLoadRef.current = false;
+            }
         }
-    }, [periodoActual, initialLoading]);
+    }, [periodoActual]); // sin initialLoading como dep: evita regenerar la referencia
 
 
-    // Cargar rutas al iniciar - solo una vez
+    // Cargar rutas al iniciar — gated on auth user
     useEffect(() => {
-        fetchRutas(); // sin parámetro → usará el mes actual
-    }, [fetchRutas]);
+        if (user) fetchRutas();
+    }, [user, fetchRutas]);
 
     // Actualizar cuando se restaura la conexión
     useEffect(() => {
@@ -103,6 +112,9 @@ export function RutasProvider({ children }) {
             }
 
             const data = await window.api.listarRutasInfoMedidores(token_session, rutaId);
+            if (!data || !data.ruta) {
+                throw new Error("La ruta no se encontró o no tiene medidores asignados");
+            }
             //console.log("Información de la ruta obtenida context:", data.ruta);
             return data.ruta;
         } catch (error) {

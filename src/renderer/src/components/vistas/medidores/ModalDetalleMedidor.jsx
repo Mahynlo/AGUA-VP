@@ -16,14 +16,15 @@ import { useTarifas } from "../../../context/TarifasContext";
 import { HiCog, HiLocationMarker, HiCalendar, HiUser, HiMap, HiFingerPrint } from "react-icons/hi";
 
 const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
-    const { clientes } = useClientes();
+    const { allClientes } = useClientes();
     const { tarifas } = useTarifas();
 
     // Encontrar información del cliente asignado si existe
+    // Uses allClientes (full dataset) — NOT the paginated buffer
     const clienteAsignado = React.useMemo(() => {
-        if (!medidor?.cliente_id || !clientes.length) return null;
-        return clientes.find(c => c.id === medidor.cliente_id);
-    }, [medidor, clientes]);
+        if (!medidor?.cliente_id || !allClientes.length) return null;
+        return allClientes.find(c => c.id === medidor.cliente_id);
+    }, [medidor, allClientes]);
 
     // Encontrar tarifa del cliente actual
     const tarifaCliente = React.useMemo(() => {

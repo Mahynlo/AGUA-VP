@@ -34,10 +34,15 @@ export const registerLectura = async (lectura, token_session) => {
         const data = await response.json();
     
         if (!response.ok) {
-          return { success: false, message: data.error || data.message || 'Error al registrar lectura' };
+          // Incluir detalles de validación Zod si existen
+          let msg = data.error || data.message || 'Error al registrar lectura';
+          if (data.detalles?.length) {
+            msg += ' — ' + data.detalles.map(d => `${d.campo}: ${d.mensaje}`).join('; ');
+          }
+          return { success: false, message: msg };
         }
 
-        return { success: true, message: data.message, lecturaID: data.data?.lectura_id };
+        return { success: true, message: data.message, lecturaID: data.data?.lectura_id, detalles: data.data?.detalles ?? null };
     } catch (error) {
         console.error("Error al registrar lectura(ipcmain):", error);
         return { success: false, message: "Hubo un error al registrar la lectura(ipcmain)." };

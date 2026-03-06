@@ -12,7 +12,7 @@ import TabInventarioMedidores from "./TabInventarioMedidores";
 
 const Medidores = () => {
   const {
-    medidores,
+    allMedidores,
     medidoresAsignados,
     medidoresNoAsignados,
     loading,
@@ -29,26 +29,26 @@ const Medidores = () => {
     localStorage.setItem("medidores_activeTab", key);
   };
 
-  // Estadísticas calculadas (Mantenemos estas aquí para el Header global)
+  // Estadísticas calculadas desde allMedidores (dataset completo)
   const estadisticas = useMemo(() => {
     if (initialLoading) {
       return { total: 0, asignados: 0, libres: 0, activos: 0, inactivos: 0, porcentajeAsignados: 0, porcentajeActivos: 0 };
     }
-    if (!medidores || medidores.length === 0) {
+    if (!allMedidores || allMedidores.length === 0) {
       return { total: 0, asignados: 0, libres: 0, activos: 0, inactivos: 0, porcentajeAsignados: 0, porcentajeActivos: 0 };
     }
-    const activos = medidores.filter(m => m.estado_medidor === "Activo").length;
-    const inactivos = medidores.filter(m => m.estado_medidor === "Inactivo").length;
+    const activos = allMedidores.filter(m => m.estado_medidor === "Activo").length;
+    const inactivos = allMedidores.filter(m => m.estado_medidor === "Inactivo").length;
     return {
-      total: medidores.length,
+      total: allMedidores.length,
       asignados: medidoresAsignados.length,
       libres: medidoresNoAsignados.length,
       activos,
       inactivos,
-      porcentajeAsignados: medidores.length > 0 ? (medidoresAsignados.length / medidores.length * 100) : 0,
-      porcentajeActivos: medidores.length > 0 ? (activos / medidores.length * 100) : 0
+      porcentajeAsignados: allMedidores.length > 0 ? (medidoresAsignados.length / allMedidores.length * 100) : 0,
+      porcentajeActivos: allMedidores.length > 0 ? (activos / allMedidores.length * 100) : 0
     };
-  }, [medidores, medidoresAsignados, medidoresNoAsignados, initialLoading]);
+  }, [allMedidores, medidoresAsignados, medidoresNoAsignados, initialLoading]);
 
   // Si está cargando datos iniciales, mostramos el skeleton
   if (initialLoading) {

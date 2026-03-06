@@ -33,8 +33,8 @@ export const fetchDashboardStats = async (token_session, isRetry = false) => {
     if (!response.ok) {
       const errorBody = await response.text();
       
-      // Manejo de expiración de token
-      if (response.status === 403 && !isRetry) {
+      // Manejo de expiración de token (401 = token inválido, 403 = sesión expirada)
+      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
         console.log("🔄 Token expirado en fetchDashboardStats, solicitando renovación...");
         window.dispatchEvent(new CustomEvent('token-expired'));
         await new Promise(resolve => setTimeout(resolve, 1000));

@@ -11,7 +11,7 @@ import {
 } from "../utils/medidorUtils";
 
 export const useBuscarMedidor = (clienteId, onMedidorSeleccionado, onLiberarMedidor) => {
-  const { medidores, actualizarMedidores } = useMedidores();
+  const { allMedidores, actualizarMedidores } = useMedidores();
   
   const [busqueda, setBusqueda] = useState("");
   const [resultados, setResultados] = useState([]);
@@ -21,8 +21,8 @@ export const useBuscarMedidor = (clienteId, onMedidorSeleccionado, onLiberarMedi
 
   // Medidores ya asignados al cliente
   const medidoresAsignadosCliente = useMemo(() => 
-    obtenerMedidoresCliente(medidores, clienteId),
-    [medidores, clienteId]
+    obtenerMedidoresCliente(allMedidores, clienteId),
+    [allMedidores, clienteId]
   );
 
   // Búsqueda con debounce
@@ -35,13 +35,13 @@ export const useBuscarMedidor = (clienteId, onMedidorSeleccionado, onLiberarMedi
 
     setIsSearching(true);
     const timeoutId = setTimeout(() => {
-      const filtrados = buscarMedidores(medidores, busqueda);
+      const filtrados = buscarMedidores(allMedidores, busqueda);
       setResultados(filtrados);
       setIsSearching(false);
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [busqueda, medidores]);
+  }, [busqueda, allMedidores]);
 
   // Seleccionar medidor
   const seleccionarMedidor = useCallback((medidor) => {

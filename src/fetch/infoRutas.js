@@ -14,7 +14,7 @@ export const fetchRutasInfoMedidores = async (token_session, id_ruta) => {
 
 
     // Construir la URL con el período
-    const url = `${import.meta.env.VITE_API_FETCH_RUTAS_INFO_MEDIDORES}/${id_ruta}/medidores `;
+    const url = `${import.meta.env.VITE_API_FETCH_RUTAS_INFO_MEDIDORES}/${id_ruta}/medidores`;
 
     const response = await fetch(url, {
       method: "GET",

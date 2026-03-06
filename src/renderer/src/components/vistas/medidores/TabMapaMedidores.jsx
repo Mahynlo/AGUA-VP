@@ -7,7 +7,7 @@ import LoadingSkeleton from "./components/LoadingSkeleton";
 
 const TabMapaMedidores = () => {
     const {
-        medidores,
+        allMedidores,
         loading,
         initialLoading,
         medidoresAsignados
@@ -27,9 +27,9 @@ const TabMapaMedidores = () => {
 
     // Estadísticas básicas
     const estadisticas = useMemo(() => {
-        if (!medidores) return { total: 0 };
-        return { total: medidores.length };
-    }, [medidores]);
+        if (!allMedidores) return { total: 0 };
+        return { total: allMedidores.length };
+    }, [allMedidores]);
 
     // Helper para normalizar texto (quitar acentos, minúsculas)
     const normalizeText = (text) => {
@@ -39,8 +39,8 @@ const TabMapaMedidores = () => {
 
     // Filtrar medidores (Búsqueda inteligente + Filtros avanzados)
     const medidoresFiltrados = useMemo(() => {
-        if (!medidores) return [];
-        return medidores.filter(medidor => {
+        if (!allMedidores) return [];
+        return allMedidores.filter(medidor => {
             // 1. Búsqueda Texto
             const termino = normalizeText(busqueda);
             const ubicacionNorm = normalizeText(medidor.ubicacion);
@@ -87,7 +87,7 @@ const TabMapaMedidores = () => {
 
             return coincideTexto && coincideEstado && coincideAsignacion && coincidePueblo;
         });
-    }, [medidores, busqueda, filtroEstado, filtroAsignacion, filtroPueblo]);
+    }, [allMedidores, busqueda, filtroEstado, filtroAsignacion, filtroPueblo]);
 
     const handleSelectMedidor = (medidor) => {
         setSelectedMedidor(medidor);

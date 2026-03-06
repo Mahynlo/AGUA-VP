@@ -25,6 +25,14 @@ const registrarRutas = async (ruta, token_session) => {
     const data = await response.json();
 
     if (!response.ok) {
+      if (response.status === 409) {
+        return {
+          success: false,
+          status: 409,
+          message: data?.error || "Medidores ya asignados a otra ruta",
+          medidores_duplicados: data?.medidores_duplicados || []
+        };
+      }
       return { success: false, message: data?.error || "Error al registrar ruta" };
     }
 

@@ -278,7 +278,7 @@ const Recibo = ({ facturaData = null }) => {
                                     Mes facturado: <p className='px-2'>{factura.mes_facturado}</p>
                                 </p>
                                 <p className='text-[11px]'>Fecha de pago:__________________________</p>
-                                <p className='text-[11px]'>Total, a pagado:$_______________________</p>
+                                <p className='text-[11px]'>Total pagado:$_______________________</p>
                             </div>
                         </div>
                     </div>

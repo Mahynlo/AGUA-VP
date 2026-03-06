@@ -23,7 +23,7 @@ import {
  */
 export function useRutaForm({ modoEdicion = false, rutaInicial = null, isOpen = true, onSuccess }) {
   const { user } = useAuth();
-  const { actualizarRutas, obtenerInfoRuta } = useRutas();
+  const { obtenerInfoRuta } = useRutas();
   const { setSuccess, setError } = useFeedback();
 
   // Estados del formulario
@@ -174,7 +174,7 @@ export function useRutaForm({ modoEdicion = false, rutaInicial = null, isOpen = 
       descripcion,
       puntosRuta,
       rutaCalculada
-    });
+    }, { modoEdicion });
 
     if (Object.keys(errores).length > 0) {
       setErroresCampos(errores);
@@ -208,13 +208,22 @@ export function useRutaForm({ modoEdicion = false, rutaInicial = null, isOpen = 
       if (response.success) {
         setSuccess("Ruta registrada exitosamente.", "Registro de Rutas");
         
-        setTimeout(async () => {
+        setTimeout(() => {
           resetearFormulario();
-          await actualizarRutas();
+          window.dispatchEvent(new CustomEvent("rutas-changed"));
           onSuccess?.();
         }, 2000);
         
         return true;
+      } else if (response.status === 409 && response.medidores_duplicados?.length > 0) {
+        const lista = response.medidores_duplicados
+          .map((m) => `medidor #${m.medidor_id}`)
+          .join(", ");
+        setError(
+          `Conflicto: ${lista} ya están asignados a otra ruta. Quítalos de la lista antes de guardar.`,
+          "Registro de Rutas"
+        );
+        return false;
       } else {
         setError(response.message || "No se pudo registrar la ruta.", "Registro de Rutas");
         return false;
@@ -252,7 +261,7 @@ export function useRutaForm({ modoEdicion = false, rutaInicial = null, isOpen = 
         setSuccess("Ruta actualizada exitosamente.", "Editar Ruta");
         
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await actualizarRutas();
+        window.dispatchEvent(new CustomEvent("rutas-changed"));
         
         setTimeout(() => {
           onSuccess?.();
@@ -310,6 +319,7 @@ export function useRutaForm({ modoEdicion = false, rutaInicial = null, isOpen = 
     descripcion,
     setDescripcion,
     puntosRuta,
+    setPuntosRuta,   // expose for PanelGestionRuta
     rutaCalculada,
     dibujar,
     erroresCampos,

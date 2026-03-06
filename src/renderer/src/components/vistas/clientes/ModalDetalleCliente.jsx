@@ -16,13 +16,13 @@ import { useMedidores } from "../../../context/MedidoresContext";
 import { useTarifas } from "../../../context/TarifasContext";
 
 export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
-    const { medidores } = useMedidores();
+    const { allMedidores } = useMedidores();
     const { tarifas } = useTarifas();
 
     if (!cliente) return null;
 
-    // Resolve Relationships
-    const medidoresAsignados = medidores.filter(m => m.cliente_id === cliente.id);
+    // Resolve Relationships — uses allMedidores (full dataset, not paginated buffer)
+    const medidoresAsignados = allMedidores.filter(m => m.cliente_id === cliente.id);
     const tarifaAsignada = tarifas.find(t => t.id === (cliente.id_tarifa || cliente.tarifa_id));
 
     return (

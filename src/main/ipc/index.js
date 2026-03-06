@@ -12,6 +12,7 @@ import IpcHandlerPagos from './ipcHandlersPagos.js'
 import IpcHandlerDashboard from './ipcHandlersDashboard.js'
 import IpcHandlerReports from './ipcHandlersReports.js'
 import IpcHandlerDeudores from './ipcHandlersDeudores.js'
+import IpcHandlersSystem from './ipcHandlersSystem.js'
 
 export  function AllIpcHandlers() {
     IpcHandlers(); // Importa y ejecuta el archivo ipcHandlers.js
@@ -27,4 +28,5 @@ export  function AllIpcHandlers() {
     IpcHandlerDashboard(); // Importa y ejecuta el archivo ipcHandlersDashboard.js
     IpcHandlerReports(); // Importa y ejecuta el archivo ipcHandlersReports.js
     IpcHandlerDeudores();
+    IpcHandlersSystem(); // Consola de administración del sistema
 } 

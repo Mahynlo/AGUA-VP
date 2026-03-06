@@ -5,13 +5,16 @@
  *  1. Generar y persistir secretos JWT/AppKey en first-run (cifrado con safeStorage)
  *  2. Crear backup de la base de datos antes de cada arranque
  *  3. Iniciar / detener AguaVPServer
- *  4. Exponer estado y backup manual para los IPC handlers
+ *  4. Exponer estado, backup, restauración e info de BD para los IPC handlers
+ *  5. Gestionar historial de migraciones
  */
 
 import { app, safeStorage } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import Database from 'better-sqlite3';
+import logManager from './logManager.js';
 // AguaVPServer se carga con dynamic import para evitar que electron-vite
 // transforme el import ESM a require() (que falla con módulos ES puros).
 
@@ -19,8 +22,11 @@ import crypto from 'crypto';
 
 const SECRETS_FILE  = 'api-secrets.enc';   // Almacenado en userData, cifrado
 const DB_FILENAME   = 'agua-vp.db';
-const MAX_BACKUPS   = 5;
 const API_PORT      = 3000;
+
+// ── Configuración mutable ─────────────────────────────────────────────────────
+
+let maxBackups = 5; // Configurable desde la UI
 
 // ── Estado del módulo ─────────────────────────────────────────────────────────
 
@@ -41,7 +47,7 @@ function loadOrCreateSecrets() {
             const json = safeStorage.decryptString(encrypted);
             return JSON.parse(json);
         } catch (err) {
-            console.warn('[apiManager] Secretos corruptos — regenerando:', err.message);
+            logManager.warn(`Secretos corruptos — regenerando: ${err.message}`, 'system');
         }
     }
 
@@ -53,7 +59,7 @@ function loadOrCreateSecrets() {
 
     const encrypted = safeStorage.encryptString(JSON.stringify(secrets));
     fs.writeFileSync(file, encrypted, { mode: 0o600 });
-    console.log('[apiManager] Secretos generados y guardados correctamente.');
+    logManager.info('Secretos generados y guardados correctamente', 'system');
     return secrets;
 }
 
@@ -64,11 +70,11 @@ function loadOrCreateSecrets() {
  * Mantiene solo los MAX_BACKUPS backups más recientes.
  * @returns {string|null} Ruta del backup creado, o null si la BD no existe aún.
  */
-export function createBackup() {
+export function createBackup(reason = 'manual') {
     const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
 
     if (!fs.existsSync(dbPath)) {
-        console.log('[apiManager] No existe BD aún — backup omitido (primera instalación).');
+        logManager.info('No existe BD aún — backup omitido (primera instalación)', 'backup');
         return null;
     }
 
@@ -80,7 +86,7 @@ export function createBackup() {
     const ts   = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const dest = path.join(backupDir, `agua-vp-backup-${ts}.db`);
     fs.copyFileSync(dbPath, dest);
-    console.log(`[apiManager] Backup creado: ${dest}`);
+    logManager.info(`Backup creado (${reason}): ${dest}`, 'backup');
 
     // Limpiar backups viejos
     const all = fs.readdirSync(backupDir)
@@ -88,10 +94,10 @@ export function createBackup() {
         .map(f => ({ name: f, mtimeMs: fs.statSync(path.join(backupDir, f)).mtimeMs }))
         .sort((a, b) => a.mtimeMs - b.mtimeMs);
 
-    while (all.length > MAX_BACKUPS) {
+    while (all.length > maxBackups) {
         const oldest = all.shift();
         fs.unlinkSync(path.join(backupDir, oldest.name));
-        console.log(`[apiManager] Backup antiguo eliminado: ${oldest.name}`);
+        logManager.info(`Backup antiguo eliminado: ${oldest.name}`, 'backup');
     }
 
     return dest;
@@ -131,16 +137,20 @@ export function listBackups() {
  */
 export async function startApiServer() {
     if (apiServer?.isRunning) {
-        console.log('[apiManager] El servidor ya está corriendo.');
+        logManager.warn('El servidor ya está corriendo', 'api');
         return;
     }
+
+    // Inicializar LogManager al arranque
+    logManager.init();
+    logManager.info('Iniciando ciclo de vida del servidor API', 'system');
 
     const userDataPath = app.getPath('userData');
     const dbPath       = path.join(userDataPath, DB_FILENAME);
     const secrets      = loadOrCreateSecrets();
 
     // Backup antes de migraciones
-    createBackup();
+    createBackup('pre-arranque');
 
     const appKeyInicial = import.meta.env.VITE_APPKEY_INICIAL;
     if (!appKeyInicial) {
@@ -160,9 +170,10 @@ export async function startApiServer() {
         autoMigrate:  true
     });
 
-    apiServer.on('log',     msg => console.log(`[API] ${msg}`));
-    apiServer.on('error',   err => console.error(`[API ERROR] ${err}`));
-    apiServer.on('started', info => console.log(`[API] ✅ Servidor listo en http://localhost:${info.port}`));
+    // Redirigir logs del servidor API al LogManager
+    apiServer.on('log',     msg => logManager.info(msg, 'api'));
+    apiServer.on('error',   err => logManager.error(String(err), 'api'));
+    apiServer.on('started', info => logManager.info(`Servidor listo en http://localhost:${info.port}`, 'api'));
 
     await apiServer.start();
 }
@@ -173,7 +184,7 @@ export async function startApiServer() {
 export async function stopApiServer() {
     if (apiServer?.isRunning) {
         await apiServer.stop();
-        console.log('[apiManager] Servidor detenido.');
+        logManager.info('Servidor API detenido', 'system');
     }
 }
 
@@ -183,4 +194,207 @@ export async function stopApiServer() {
 export function getApiServerStatus() {
     if (!apiServer) return { running: false, port: API_PORT };
     return apiServer.getStatus();
+}
+
+// ── Restauración de Backup ─────────────────────────────────────────────────────
+
+/**
+ * Restaura la base de datos desde un archivo de backup.
+ * Proceso: detener server → copiar backup → integrity check → reiniciar server.
+ * Si la integridad falla, revierte al archivo original.
+ * @param {string} backupPath — Ruta absoluta al archivo de backup
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export async function restoreBackup(backupPath) {
+    const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
+
+    if (!fs.existsSync(backupPath)) {
+        return { success: false, message: 'Archivo de backup no encontrado' };
+    }
+
+    logManager.warn(`Iniciando restauración desde: ${path.basename(backupPath)}`, 'backup');
+
+    // 1. Crear backup de seguridad del estado actual antes de restaurar
+    const safetyBackup = createBackup('pre-restore');
+
+    // 2. Detener servidor
+    const wasRunning = apiServer?.isRunning;
+    if (wasRunning) {
+        await stopApiServer();
+    }
+
+    try {
+        // 3. Verificar integridad del backup ANTES de copiar
+        const testDb = new Database(backupPath, { readonly: true });
+        const integrityResult = testDb.pragma('integrity_check');
+        testDb.close();
+
+        if (integrityResult[0]?.integrity_check !== 'ok') {
+            logManager.error('Backup corrupto — restauración abortada', 'backup');
+            // Reiniciar con la DB original
+            if (wasRunning) await startApiServer();
+            return { success: false, message: 'El archivo de backup está corrupto (integrity_check falló)' };
+        }
+
+        // 4. Copiar backup sobre la DB actual
+        fs.copyFileSync(backupPath, dbPath);
+        logManager.info('Archivo de base de datos restaurado', 'backup');
+
+        // 5. Verificar integridad de la DB restaurada
+        const verifyDb = new Database(dbPath, { readonly: true });
+        const verifyResult = verifyDb.pragma('integrity_check');
+        verifyDb.close();
+
+        if (verifyResult[0]?.integrity_check !== 'ok') {
+            // Revertir al backup de seguridad
+            logManager.error('DB restaurada corrupta — revirtiendo', 'backup');
+            if (safetyBackup) {
+                fs.copyFileSync(safetyBackup, dbPath);
+            }
+            if (wasRunning) await startApiServer();
+            return { success: false, message: 'La restauración corrompió la base de datos. Se revirtió al estado anterior.' };
+        }
+
+        // 6. Reiniciar servidor con la BD restaurada
+        if (wasRunning) {
+            await startApiServer();
+        }
+
+        logManager.info(`Restauración completada exitosamente desde: ${path.basename(backupPath)}`, 'backup');
+        return { success: true, message: `Base de datos restaurada exitosamente desde ${path.basename(backupPath)}` };
+
+    } catch (error) {
+        logManager.error(`Error en restauración: ${error.message}`, 'backup');
+        // Intentar reiniciar con lo que haya
+        if (wasRunning) {
+            try { await startApiServer(); } catch { /* silenciar */ }
+        }
+        return { success: false, message: `Error en restauración: ${error.message}` };
+    }
+}
+
+// ── Información de la Base de Datos ────────────────────────────────────────────
+
+/**
+ * Obtiene información detallada de la base de datos.
+ * @returns {{ size, tables, integrityOk, foreignKeyErrors, path, walSize }}
+ */
+export function getDatabaseInfo() {
+    const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
+
+    if (!fs.existsSync(dbPath)) {
+        return { exists: false, path: dbPath };
+    }
+
+    try {
+        const stat = fs.statSync(dbPath);
+        const db = new Database(dbPath, { readonly: true });
+
+        // Tablas y su conteo de filas
+        const tables = db.prepare(
+            `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '__drizzle_%' ORDER BY name`
+        ).all().map(t => {
+            const row = db.prepare(`SELECT COUNT(*) as cnt FROM "${t.name}"`).get();
+            return { name: t.name, count: row.cnt };
+        });
+
+        // Integrity check
+        const integrity = db.pragma('integrity_check');
+        const integrityOk = integrity[0]?.integrity_check === 'ok';
+
+        // Foreign key check
+        const fkErrors = db.pragma('foreign_key_check');
+
+        // WAL file size
+        const walPath = `${dbPath}-wal`;
+        const walSize = fs.existsSync(walPath) ? fs.statSync(walPath).size : 0;
+
+        db.close();
+
+        return {
+            exists: true,
+            path: dbPath,
+            size: stat.size,
+            walSize,
+            tables,
+            totalTables: tables.length,
+            integrityCheck: integrityOk ? 'ok' : 'error',
+            foreignKeyCheck: fkErrors,
+            lastModified: stat.mtime.toISOString()
+        };
+    } catch (error) {
+        logManager.error(`Error obteniendo info de BD: ${error.message}`, 'system');
+        return { exists: true, path: dbPath, error: error.message };
+    }
+}
+
+// ── Historial de Migraciones ───────────────────────────────────────────────────
+
+/**
+ * Lee el historial de migraciones aplicadas desde __drizzle_migrations.
+ * @returns {Array<{id, hash, created_at, tag}>}
+ */
+export function getMigrationHistory() {
+    const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
+
+    if (!fs.existsSync(dbPath)) {
+        return [];
+    }
+
+    try {
+        const db = new Database(dbPath, { readonly: true });
+
+        // Verificar que la tabla existe
+        const tableExists = db.prepare(
+            `SELECT name FROM sqlite_master WHERE type='table' AND name='__drizzle_migrations'`
+        ).get();
+
+        if (!tableExists) {
+            db.close();
+            return [];
+        }
+
+        const migrations = db.prepare(
+            `SELECT id, hash, created_at FROM "__drizzle_migrations" ORDER BY created_at ASC`
+        ).all();
+
+        db.close();
+
+        // Enriquecer con nombres de migración si es posible
+        return migrations.map(m => ({
+            id: m.id,
+            hash: m.hash,
+            created_at: m.created_at,
+            // Convertir timestamp a fecha legible
+            applied_at: new Date(Number(m.created_at)).toISOString()
+        }));
+    } catch (error) {
+        logManager.error(`Error leyendo migraciones: ${error.message}`, 'system');
+        return [];
+    }
+}
+
+// ── Configuración de backups ───────────────────────────────────────────────────
+
+/**
+ * Actualiza la configuración de backups.
+ * @param {{ maxBackups?: number }} config
+ */
+export function updateBackupConfig(config) {
+    if (config.maxBackups && config.maxBackups >= 1 && config.maxBackups <= 50) {
+        maxBackups = config.maxBackups;
+        logManager.info(`Configuración de backups actualizada: maxBackups=${maxBackups}`, 'backup');
+    }
+    return { maxBackups };
+}
+
+/**
+ * Obtiene la configuración actual de backups.
+ */
+export function getBackupConfig() {
+    return {
+        maxBackups,
+        backupDir: path.join(app.getPath('userData'), 'backups'),
+        dbPath: path.join(app.getPath('userData'), DB_FILENAME)
+    };
 }

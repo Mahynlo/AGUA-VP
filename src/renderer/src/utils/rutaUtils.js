@@ -48,9 +48,11 @@ export const generarOpcionesPeriodo = (cantidadMeses = 12) => {
 /**
  * Valida los campos requeridos para crear/editar una ruta
  * @param {Object} datos - Datos de la ruta
+ * @param {Object} opciones
+ * @param {boolean} opciones.modoEdicion - Si es edición, no se exige rutaCalculada (permite guardar sin recalcular)
  * @returns {Object} - Objeto con errores encontrados
  */
-export const validarCamposRuta = (datos) => {
+export const validarCamposRuta = (datos, { modoEdicion = false } = {}) => {
   const errores = {};
   
   if (!datos.nombre?.trim()) {
@@ -65,10 +67,14 @@ export const validarCamposRuta = (datos) => {
     errores.puntos = true;
   }
   
-  if (!datos.rutaCalculada || 
-      !Array.isArray(datos.rutaCalculada.ruta) || 
-      datos.rutaCalculada.ruta.length === 0) {
-    errores.rutaCalculada = true;
+  // En modo creación se exige ruta calculada; en edición el usuario puede
+  // guardar solo nombre/descripcion o reorden sin necesidad de recalcular.
+  if (!modoEdicion) {
+    if (!datos.rutaCalculada || 
+        !Array.isArray(datos.rutaCalculada.ruta) || 
+        datos.rutaCalculada.ruta.length === 0) {
+      errores.rutaCalculada = true;
+    }
   }
   
   return errores;
@@ -138,15 +144,23 @@ export const prepararDatosRuta = ({ nombre, descripcion, puntosRuta, rutaCalcula
  * @returns {Object} - Objeto formateado para actualización
  */
 export const prepararDatosActualizacion = ({ nombre, descripcion, puntosRuta, rutaCalculada }) => {
-  return {
+  const datos = {
     nombre,
     descripcion,
     puntos: puntosRuta.map(p => ({ id: p.id })),
-    ruta_calculada: (rutaCalculada?.ruta || []).map(coord => ({
-      lat: coord[0],
-      lng: coord[1]
-    })),
-    distancia_km: rutaCalculada?.distancia_total_km || 0,
-    instrucciones: rutaCalculada?.instrucciones?.map(inst => inst.accion) || [],
   };
+
+  // Solo incluir datos calculados si hay una ruta calculada válida.
+  // Si rutaCalculada es null (OSRM no disponible), no se sobreescribe la
+  // ruta_json existente en la BD (el servidor ignora campos ausentes).
+  if (rutaCalculada && Array.isArray(rutaCalculada.ruta) && rutaCalculada.ruta.length > 0) {
+    datos.ruta_calculada = rutaCalculada.ruta.map(coord => ({
+      lat: coord[0],
+      lng: coord[1],
+    }));
+    datos.distancia_km = rutaCalculada.distancia_total_km || 0;
+    datos.instrucciones = rutaCalculada.instrucciones?.map(inst => inst.accion) || [];
+  }
+
+  return datos;
 };

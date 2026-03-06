@@ -51,6 +51,8 @@ export default function RegistrarMedidor() {
     const [latitud, setLatitud] = useState("");
     const [longitud, setLongitud] = useState("");
     const [estadoMedidor, setEstadoMedidor] = useState("Activo");
+    const [lecturaBase, setLecturaBase] = useState("");
+    const [capacidadMaxima, setCapacidadMaxima] = useState("99999");
     const { setSuccess, setError } = useFeedback(); // Importa el contexto de feedback
 
     const numeroSerieCompleto = `${ciudad}${numeroSerie}`;
@@ -108,6 +110,8 @@ export default function RegistrarMedidor() {
                     latitud,
                     longitud,
                     estado_medidor: estadoMedidor,
+                    lectura_base: lecturaBase !== "" ? parseFloat(lecturaBase) : null,
+                    capacidad_maxima: capacidadMaxima !== "" ? parseFloat(capacidadMaxima) : null,
                 },
                 token_session: tokensession, // Asegúrate de enviar el token de sesión
             });
@@ -127,6 +131,8 @@ export default function RegistrarMedidor() {
                     setFechaInstalacion("");
                     setLatitud("");
                     setLongitud("");
+                    setLecturaBase("");
+                    setCapacidadMaxima("99999");
                     onClose(); // Cierra el modal automáticamente
                     actualizarMedidores(); // Actualiza la lista de clientes si es necesario
                     setIsUpdating(false); // Indica que la actualización ha finalizado
@@ -269,6 +275,40 @@ export default function RegistrarMedidor() {
                                                         onChange={(e) => setModelo(e.target.value)}
                                                         className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
                                                     />
+                                                </div>
+                                            </div>
+
+                                            {/* Lectura base y capacidad máxima */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Lectura base del medidor (m³) <span className="text-gray-400 font-normal">— Opcional</span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="any"
+                                                        placeholder="Ej. 0 o 1234.56"
+                                                        value={lecturaBase}
+                                                        onChange={(e) => setLecturaBase(e.target.value)}
+                                                        className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+                                                    />
+                                                    <p className="text-xs text-gray-400">Valor del totalizador al instalar el medidor. Se usará como punto de partida para el primer cálculo de consumo.</p>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                        Capacidad máxima del totalizador (m³) <span className="text-gray-400 font-normal">— Opcional</span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        step="1"
+                                                        placeholder="99999"
+                                                        value={capacidadMaxima}
+                                                        onChange={(e) => setCapacidadMaxima(e.target.value)}
+                                                        className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600 dark:text-white"
+                                                    />
+                                                    <p className="text-xs text-gray-400">Límite del dial antes de dar vuelta a cero. El estándar para estos medidores es 99,999.</p>
                                                 </div>
                                             </div>
 

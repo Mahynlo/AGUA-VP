@@ -42,7 +42,7 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blu
  * @param {function} onClienteSeleccionado - Callback que recibe el ID del cliente seleccionado
  */
 const BuscarCliente = ({ onClienteSeleccionado }) => {
-    const { clientes } = useClientes();
+    const { allClientes } = useClientes();
     const [busqueda, setBusqueda] = useState("");
     const [resultados, setResultados] = useState([]);
     const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
@@ -57,12 +57,17 @@ const BuscarCliente = ({ onClienteSeleccionado }) => {
 
         setIsSearching(true);
 
+        // Normaliza texto eliminando acentos para búsqueda parcial sin tildes
+        const normalizar = (str) =>
+            (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        const termino = normalizar(busqueda);
+
         // Simular un pequeño delay para mostrar el loading
         const timeoutId = setTimeout(() => {
-            const filtrados = clientes.filter((cliente) =>
-                `${cliente.nombre} ${cliente.ciudad} ${cliente.dirección}`
-                    .toLowerCase()
-                    .includes(busqueda.toLowerCase())
+            const filtrados = allClientes.filter((cliente) =>
+                normalizar(`${cliente.nombre} ${cliente.ciudad} ${cliente.direccion} ${cliente.numero_predio}`)
+                    .includes(termino)
             );
 
             setResultados(filtrados);
@@ -70,7 +75,7 @@ const BuscarCliente = ({ onClienteSeleccionado }) => {
         }, 300);
 
         return () => clearTimeout(timeoutId);
-    }, [busqueda, clientes]);
+    }, [busqueda, allClientes]);
 
     const seleccionarCliente = (cliente) => {
         setClienteSeleccionado(cliente);
@@ -177,11 +182,11 @@ const BuscarCliente = ({ onClienteSeleccionado }) => {
                                                             {cliente.ciudad}
                                                         </span>
                                                     </div>
-                                                    {cliente.dirección && (
+                                                    {cliente.direccion && (
                                                         <>
                                                             <span className="text-gray-300 text-xs">•</span>
                                                             <span className="text-xs text-gray-500 truncate max-w-[150px]">
-                                                                {cliente.dirección}
+                                                                {cliente.direccion}
                                                             </span>
                                                         </>
                                                     )}

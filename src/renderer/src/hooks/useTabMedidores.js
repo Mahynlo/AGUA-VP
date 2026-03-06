@@ -59,7 +59,7 @@ export const useTabMedidores = () => {
       // (ej. si es la última página y tiene menos items)
       return medidores.slice(startIdx, Math.min(endIdx, medidores.length));
 
-  }, [medidores, currentPage, rowsPerPage]);
+  }, [medidores, currentPage, rowsPerPage, pagination, apiPage]);
 
   // Total de items REAL (basado en el total de la BD)
   const totalItems = pagination ? pagination.total : 0;

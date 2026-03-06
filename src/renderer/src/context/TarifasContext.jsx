@@ -1,11 +1,13 @@
 // src/context/TarifasContext.jsx
 import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { useAuth } from "./AuthContext";
 
 // Crear el contexto
 const TarifasContext = createContext();
 
 // Proveedor de tarifas
 export function TarifasProvider({ children }) {
+  const { user } = useAuth();
   const [tarifas, setTarifas] = useState([]);
   const [pagination, setPagination] = useState(null); // Nuevo estado
   const [loading, setLoading] = useState(true);
@@ -49,10 +51,10 @@ export function TarifasProvider({ children }) {
     }
   }, []);
 
-  // Cargar tarifas al iniciar
+  // Cargar tarifas al iniciar — gated on auth user
   useEffect(() => {
-    fetchTarifas();
-  }, [fetchTarifas]);
+    if (user) fetchTarifas();
+  }, [user, fetchTarifas]);
 
   // Actualizar cuando se restaura la conexión
   useEffect(() => {

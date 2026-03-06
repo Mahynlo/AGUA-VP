@@ -1,4 +1,5 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
+import { useAuth } from "./AuthContext";
 
 // =====================================================
 // Context
@@ -9,17 +10,22 @@ const ClientesContext = createContext();
 // Provider
 // =====================================================
 export function ClientesProvider({ children }) {
+  const { user } = useAuth();
 
   // --------------------
   // State
   // --------------------
-  const [clientes, setClientes] = useState([]);
+  const [clientes, setClientes] = useState([]);        // Buffer paginado (tabla)
+  const [allClientes, setAllClientes] = useState([]);  // Dataset completo (modales + búsquedas)
   const [pagination, setPagination] = useState(null); // Nuevo estado para paginación
   const [estadisticas, setEstadisticas] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Ref para recordar los últimos parámetros de paginación/filtros usados
+  const lastFetchParamsRef = useRef(null);
 
   // =====================================================
   // Helpers
@@ -38,10 +44,15 @@ export function ClientesProvider({ children }) {
         throw new Error("No se encontró token de sesión");
       }
 
-      // Parámetros por defecto si no se envían
+      // Guardar parámetros cuando vienen con datos reales (desde useTabClientes)
+      if (Object.keys(params).length > 0) {
+        lastFetchParamsRef.current = params;
+      }
+
+      // Parámetros por defecto si no se envían (alineado con FETCH_LIMIT=60)
       const queryParams = {
         page: params.page || 1,
-        limit: params.limit || 50,
+        limit: params.limit || 60,
         search: params.search || '',
         ...params
       };
@@ -71,6 +82,27 @@ export function ClientesProvider({ children }) {
     }
   }, [initialLoading]);
 
+  // Obtener TODOS los clientes sin paginación (para modales, búsquedas cruzadas y export)
+  const fetchAllClientes = useCallback(async () => {
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      // Llamar SIN params → API retorna array completo (modo legacy)
+      const response = await window.api.fetchClientes(token);
+
+      if (Array.isArray(response)) {
+        setAllClientes(response);
+      } else if (response && response.data) {
+        setAllClientes(response.data);
+      } else {
+        setAllClientes([]);
+      }
+    } catch (err) {
+      console.error("❌ Error al obtener todos los clientes:", err);
+    }
+  }, []);
+
   const fetchEstadisticas = useCallback(async () => {
     try {
       const token = getToken();
@@ -87,39 +119,48 @@ export function ClientesProvider({ children }) {
   // Effects
   // =====================================================
 
-  // Carga inicial
+  // Carga inicial — gated on auth user to prevent premature fetching with stale token
   useEffect(() => {
-    fetchClientes();
-    fetchEstadisticas();
-  }, [fetchClientes, fetchEstadisticas]);
+    if (user) {
+      fetchClientes();
+      fetchEstadisticas();
+      fetchAllClientes();
+    }
+  }, [user, fetchClientes, fetchEstadisticas, fetchAllClientes]);
 
   // Reconexión global
   useEffect(() => {
     const handleConnectionRestored = () => {
       console.log("🔄 Reconexión detectada en ClientesContext");
-      fetchClientes();
+      fetchClientes(lastFetchParamsRef.current || {});
       fetchEstadisticas();
+      fetchAllClientes();
     };
 
     window.addEventListener("connection-restored", handleConnectionRestored);
     return () => {
       window.removeEventListener("connection-restored", handleConnectionRestored);
     };
-  }, [fetchClientes, fetchEstadisticas]);
+  }, [fetchClientes, fetchEstadisticas, fetchAllClientes]);
 
   // =====================================================
   // API pública
   // =====================================================
   const actualizarClientes = useCallback(async () => {
-    await fetchClientes();
-    await fetchEstadisticas();
+    // Reutilizar los últimos parámetros de paginación/filtros para no perder la página actual
+    await Promise.all([
+      fetchClientes(lastFetchParamsRef.current || {}),
+      fetchEstadisticas(),
+      fetchAllClientes()
+    ]);
     window.dispatchEvent(new CustomEvent('dashboard-update'));
-  }, [fetchClientes, fetchEstadisticas]);
+  }, [fetchClientes, fetchEstadisticas, fetchAllClientes]);
 
   return (
     <ClientesContext.Provider
       value={{
         clientes,
+        allClientes,      // Dataset completo sin paginación
         pagination, // Exportar paginación
         estadisticas,
         estadisticasServidor: estadisticas, // Alias para compatibilidad con TabMetricas

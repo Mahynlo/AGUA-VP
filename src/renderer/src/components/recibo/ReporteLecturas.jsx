@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
 
@@ -19,6 +19,27 @@ const getMesLabel = (mes) => {
     } catch { return mes; }
 };
 
+// ─── Ordenamiento alfanumérico inteligente ────────────────────────────────────
+
+const sortLecturasItems = (items, campo) => {
+    return [...items].sort((a, b) => {
+        if (campo === 'id') {
+            return (a.id || 0) - (b.id || 0);
+        }
+        // numero_predio: natural sort (NG-2 < NG-10)
+        const parse = (val) => {
+            if (!val) return ['', 0];
+            const match = val.match(/^([A-Za-z]*)[-\/]?(\d+)$/);
+            if (match) return [match[1].toUpperCase(), parseInt(match[2], 10)];
+            return [val.toUpperCase(), 0];
+        };
+        const [pA, nA] = parse(a.numero_predio);
+        const [pB, nB] = parse(b.numero_predio);
+        if (pA !== pB) return pA.localeCompare(pB);
+        return nA - nB;
+    });
+};
+
 // ─── Subcomponentes ───────────────────────────────────────────────────────────
 
 const PageHeader = ({ mes, totalRegistros }) => (
@@ -36,10 +57,10 @@ const PageHeader = ({ mes, totalRegistros }) => (
             <img src={logoagua} alt="Escudo" style={{ height: '56px', width: '56px', objectFit: 'contain', flexShrink: 0, filter: 'brightness(0) invert(1)' }} />
             <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 800, fontSize: '17px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    COMISARÍA DE AGUA POTABLE
+                    Comisión Municipal de Agua Potable y Alcantarillado
                 </div>
                 <div style={{ fontSize: '12px', opacity: 0.85, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                    Villa Pesqueira, Sonora — Reporte Operativo de Campo
+                    Villa Pesqueira, Sonora — Reporte de toma de Lectura
                 </div>
             </div>
             <div style={{
@@ -107,7 +128,7 @@ const TH = ({ children, align = 'left', last = false }) => (
     </th>
 );
 
-const DataTable = ({ items, offset = 0 }) => (
+const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
     <table style={{
         width: '100%',
         borderCollapse: 'collapse',
@@ -116,6 +137,7 @@ const DataTable = ({ items, offset = 0 }) => (
     }}>
         <colgroup>
             <col style={{ width: '30px' }} />
+            <col style={{ width: '70px' }} />
             <col />
             <col style={{ width: '105px' }} />
             <col style={{ width: '72px' }} />
@@ -125,6 +147,7 @@ const DataTable = ({ items, offset = 0 }) => (
         <thead>
             <tr>
                 <TH align="center">#</TH>
+                <TH align="center">{ordenarPor === 'numero_predio' ? 'N° Predio' : 'ID'}</TH>
                 <TH>Cliente / Dirección</TH>
                 <TH>N° Medidor</TH>
                 <TH align="center">Lect. Ant.</TH>
@@ -135,19 +158,27 @@ const DataTable = ({ items, offset = 0 }) => (
         <tbody>
             {items.map((item, idx) => {
                 const nombre     = item.nombre || item.cliente || 'Sin Nombre';
+                const sinMedidor = item.sin_medidor || (!item.medidor && item.medidor !== 0);
                 const medidorObj = typeof item.medidor === 'object' ? item.medidor : null;
-                const serie      = medidorObj ? (medidorObj.serie || medidorObj.numero_serie || 'S/N') : (item.medidor || 'S/N');
+                const serie      = sinMedidor ? null : (medidorObj ? (medidorObj.serie || medidorObj.numero_serie || 'S/N') : (item.medidor || 'S/N'));
                 const direccion  = medidorObj?.ubicacion || item.direccion || '';
                 const lectAntObj = typeof item.lectura_anterior === 'object' ? item.lectura_anterior : null;
-                const consumoAnt = lectAntObj?.consumo_registrado ?? (typeof item.lectura_anterior === 'number' ? item.lectura_anterior : '');
+                const consumoAnt = sinMedidor ? '' : (lectAntObj?.consumo_registrado ?? (typeof item.lectura_anterior === 'number' ? item.lectura_anterior : ''));
                 const isEven     = idx % 2 === 0;
-                const bg         = isEven ? '#ffffff' : '#f5f8ff';
-                const td         = { padding: '5px 8px', borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', color: '#111827', background: bg };
+                const bgBase     = sinMedidor ? '#fff7ed' : (isEven ? '#ffffff' : '#f5f8ff');
+                const td         = { padding: '5px 8px', borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', color: '#111827', background: bgBase };
                 return (
                     <tr key={idx} style={{ pageBreakInside: 'avoid' }}>
                         {/* # */}
-                        <td style={{ ...td, textAlign: 'center', color: '#9ca3af', fontWeight: 700, background: '#f9fafb', fontSize: '9px' }}>
+                        <td style={{ ...td, textAlign: 'center', color: '#9ca3af', fontWeight: 700, background: sinMedidor ? '#fff7ed' : '#f9fafb', fontSize: '9px' }}>
                             {offset + idx + 1}
+                        </td>
+                        {/* N° Predio o ID (columna principal de orden) */}
+                        <td style={{ ...td, textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, fontSize: '10px', color: sinMedidor ? '#c2410c' : '#1e3a8a', background: sinMedidor ? '#ffedd5' : (isEven ? '#f0f4ff' : '#e8eeff') }}>
+                            {ordenarPor === 'numero_predio'
+                                ? (item.numero_predio || '—')
+                                : (item.id || '—')
+                            }
                         </td>
                         {/* Cliente */}
                         <td style={{ ...td, overflow: 'hidden', maxWidth: 0 }}>
@@ -161,24 +192,38 @@ const DataTable = ({ items, offset = 0 }) => (
                             )}
                         </td>
                         {/* Medidor */}
-                        <td style={{ ...td, background: isEven ? '#f0f4ff' : '#e8eeff' }}>
-                            <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{serie}</span>
+                        <td style={{ ...td, background: sinMedidor ? '#ffedd5' : (isEven ? '#f0f4ff' : '#e8eeff') }}>
+                            {sinMedidor ? (
+                                <span style={{ fontSize: '8px', fontWeight: 700, color: '#c2410c', textTransform: 'uppercase' }}>Sin medidor</span>
+                            ) : (
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{serie}</span>
+                            )}
                         </td>
                         {/* Lect. Anterior */}
-                        <td style={{ ...td, textAlign: 'center', background: '#eff6ff' }}>
-                            {consumoAnt !== '' ? (
+                        <td style={{ ...td, textAlign: 'center', background: sinMedidor ? '#fff7ed' : '#eff6ff' }}>
+                            {sinMedidor ? (
+                                <span style={{ color: '#d1d5db' }}>—</span>
+                            ) : consumoAnt !== '' ? (
                                 <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1e40af', fontSize: '11px' }}>
                                     {consumoAnt}<span style={{ fontSize: '7px', marginLeft: '1px', opacity: 0.65 }}>m³</span>
                                 </span>
                             ) : <span style={{ color: '#d1d5db' }}>—</span>}
                         </td>
                         {/* Diferencia — espacio de escritura */}
-                        <td style={{ ...td, background: '#fafafa', position: 'relative', borderRight: '1px solid #e5e7eb' }}>
-                            <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#d1d5db' }}>m³</span>
+                        <td style={{ ...td, background: sinMedidor ? '#fff7ed' : '#fafafa', position: 'relative', borderRight: '1px solid #e5e7eb' }}>
+                            {sinMedidor ? (
+                                <span style={{ color: '#d1d5db' }}>—</span>
+                            ) : (
+                                <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#d1d5db' }}>m³</span>
+                            )}
                         </td>
                         {/* Lect. Actual — espacio de escritura */}
-                        <td style={{ ...td, background: '#fafafa', borderRight: 'none', position: 'relative' }}>
-                            <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#d1d5db' }}>m³</span>
+                        <td style={{ ...td, background: sinMedidor ? '#fff7ed' : '#fafafa', borderRight: 'none', position: 'relative' }}>
+                            {sinMedidor ? (
+                                <span style={{ color: '#d1d5db' }}>—</span>
+                            ) : (
+                                <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#d1d5db' }}>m³</span>
+                            )}
                         </td>
                     </tr>
                 );
@@ -187,28 +232,35 @@ const DataTable = ({ items, offset = 0 }) => (
     </table>
 );
 
-const GrupoSection = ({ grupo, offset = 0 }) => (
-    <div style={{ marginBottom: '22px' }}>
-        {/* Etiqueta del grupo */}
-        <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: '#e0e7ff', border: '1px solid #c7d2fe',
-            borderRadius: '4px', padding: '5px 12px', marginBottom: '2px',
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1e40af' }} />
-                <span style={{ fontWeight: 800, fontSize: '11px', color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {grupo.localidad || grupo.ruta || 'Localidad'}
+const GrupoSection = ({ grupo, offset = 0, ordenarPor = 'numero_predio' }) => {
+    // Ordenar clientes dentro del grupo
+    const clientesOrdenados = useMemo(() => {
+        return sortLecturasItems(grupo.clientes || [], ordenarPor);
+    }, [grupo.clientes, ordenarPor]);
+
+    return (
+        <div style={{ marginBottom: '22px' }}>
+            {/* Etiqueta del grupo */}
+            <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: '#e0e7ff', border: '1px solid #c7d2fe',
+                borderRadius: '4px', padding: '5px 12px', marginBottom: '2px',
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1e40af' }} />
+                    <span style={{ fontWeight: 800, fontSize: '11px', color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {grupo.localidad || grupo.ruta || 'Localidad'}
+                    </span>
+                </div>
+                <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace' }}>
+                    {clientesOrdenados.length} registros
                 </span>
             </div>
-            <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace' }}>
-                {grupo.clientes?.length || 0} registros
-            </span>
+            <DataTable items={clientesOrdenados} offset={offset} ordenarPor={ordenarPor} />
+            <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
         </div>
-        <DataTable items={grupo.clientes || []} offset={offset} />
-        <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
-    </div>
-);
+    );
+};
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
@@ -258,6 +310,7 @@ const ReporteLecturas = () => {
     );
 
     const isGrouped   = data.length > 0 && data[0]?.clientes;
+    const ordenarPor   = searchParams.get('ordenarPor') || 'numero_predio';
     const totalRegistros = isGrouped
         ? data.reduce((acc, g) => acc + (g.clientes?.length || 0), 0)
         : data.length;
@@ -288,14 +341,14 @@ const ReporteLecturas = () => {
                     (() => {
                         let offset = 0;
                         return data.map((grupo, gIdx) => {
-                            const el = <GrupoSection key={gIdx} grupo={grupo} offset={offset} />;
+                            const el = <GrupoSection key={gIdx} grupo={grupo} offset={offset} ordenarPor={ordenarPor} />;
                             offset += grupo.clientes?.length || 0;
                             return el;
                         });
                     })()
                 ) : (
                     <div style={{ marginBottom: '20px' }}>
-                        <DataTable items={data} offset={0} />
+                        <DataTable items={sortLecturasItems(data, ordenarPor)} offset={0} ordenarPor={ordenarPor} />
                         <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
                     </div>
                 )}

@@ -43,8 +43,8 @@ export const fetchRutas = async (token_session, periodo, isRetry = false) => {
     if (!response.ok) {
       const errorBody = await response.text();
       
-      // Si es error 403 y no es reintento, intentar renovar token
-      if (response.status === 403 && !isRetry) {
+      // Si es error 401/403 y no es reintento, intentar renovar token
+      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
         console.log("🔄 Token expirado en fetchRutas, solicitando renovación...");
         window.dispatchEvent(new CustomEvent('token-expired'));
         await new Promise(resolve => setTimeout(resolve, 1000));

@@ -70,6 +70,11 @@ const api = {
     return await ipcRenderer.invoke("register-lectura", lectura, token_session);
   },
 
+  // Rectificar / modificar una lectura ya registrada (antes de generar factura)
+  modificarLectura: async (lecturaId, datos, token_session) => {
+    return await ipcRenderer.invoke("modificar-lectura", lecturaId, datos, token_session);
+  },
+
   // Generar facturas para todas las lecturas pendientes de una ruta
   generarFacturasRuta: async (params, token_session) => {
     return await ipcRenderer.invoke("generar-facturas-ruta", params, token_session);
@@ -167,6 +172,44 @@ const api = {
   serverStatus: () => ipcRenderer.invoke('server:status'),
   serverBackup: () => ipcRenderer.invoke('server:backup'),
   serverListBackups: () => ipcRenderer.invoke('server:list-backups'),
+
+  // ── Consola de Administración del Sistema ──────────────────────────────
+  system: {
+    // Logs
+    getLogs: (options) => ipcRenderer.invoke('system:logs', options),
+    getLogStats: () => ipcRenderer.invoke('system:log-stats'),
+    clearLogs: () => ipcRenderer.invoke('system:clear-logs'),
+    readLogFile: (lines) => ipcRenderer.invoke('system:read-log-file', lines),
+    onLogEntry: (callback) => {
+      ipcRenderer.on('system:log-entry', (_event, entry) => callback(entry));
+      // Retornar función de limpieza
+      return () => ipcRenderer.removeAllListeners('system:log-entry');
+    },
+
+    // Backups
+    createBackup: () => ipcRenderer.invoke('system:backup-create'),
+    listBackups: () => ipcRenderer.invoke('system:backup-list'),
+    restoreBackup: (backupPath, userToken) => ipcRenderer.invoke('system:backup-restore', backupPath, userToken),
+    getBackupConfig: () => ipcRenderer.invoke('system:backup-config'),
+    updateBackupConfig: (config) => ipcRenderer.invoke('system:backup-config', config),
+
+    // Base de datos
+    getDatabaseInfo: () => ipcRenderer.invoke('system:db-info'),
+    getMigrations: () => ipcRenderer.invoke('system:migrations'),
+
+    // Estado del servidor
+    getServerStatus: () => ipcRenderer.invoke('system:server-status'),
+
+    // Actualizaciones (conectadas con UpdateManager)
+    checkForUpdates: () => ipcRenderer.invoke('system:update-check'),
+    downloadUpdate: () => ipcRenderer.invoke('system:update-download'),
+    getUpdateStatus: () => ipcRenderer.invoke('system:update-status'),
+    installUpdate: () => ipcRenderer.invoke('system:update-install'),
+    onUpdateProgress: (callback) => {
+      ipcRenderer.on('system:update-progress', (_event, progress) => callback(progress));
+      return () => ipcRenderer.removeAllListeners('system:update-progress');
+    },
+  },
 }
 
 // objecto para manejar la autenticación de la aplicación

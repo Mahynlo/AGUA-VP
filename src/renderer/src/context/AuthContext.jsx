@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
     // Refs
     // --------------------
     const renovacionTimerRef = useRef(null);
+    const refreshPromiseRef = useRef(null);
 
     // =====================================================
     // Servidor
@@ -71,44 +72,57 @@ export const AuthProvider = ({ children }) => {
     };
 
     const renovarAccessToken = async () => {
-        const refreshToken = localStorage.getItem("refreshToken");
-
-        if (!refreshToken) {
-            logout();
-            return null;
+        // Mutex: si ya hay un refresh en curso, esperar su resultado
+        if (refreshPromiseRef.current) {
+            console.log("🔒 Refresh en curso, esperando resultado...");
+            return refreshPromiseRef.current;
         }
 
-        try {
-            const response = await window.api.refreshToken(refreshToken);
+        const refreshPromise = (async () => {
+            const refreshToken = localStorage.getItem("refreshToken");
 
-            if (response?.success && response.accessToken) {
-                localStorage.setItem("token", response.accessToken);
-                // Rotación: guardar el nuevo refreshToken si se devolvió
-                if (response.refreshToken) {
-                    localStorage.setItem("refreshToken", response.refreshToken);
+            if (!refreshToken) {
+                logout();
+                return null;
+            }
+
+            try {
+                const response = await window.api.refreshToken(refreshToken);
+
+                if (response?.success && response.accessToken) {
+                    localStorage.setItem("token", response.accessToken);
+                    // Rotación: guardar el nuevo refreshToken si se devolvió
+                    if (response.refreshToken) {
+                        localStorage.setItem("refreshToken", response.refreshToken);
+                    }
+                    programarRenovacion(response.expiresIn || "15m");
+                    return response.accessToken;
                 }
-                programarRenovacion(response.expiresIn || "15m");
-                return response.accessToken;
-            }
 
-            const servidorActivo = await verificarEstadoServidor();
-            if (!servidorActivo) {
-                setTimeout(() => renovarAccessToken(), 60000);
+                const servidorActivo = await verificarEstadoServidor();
+                if (!servidorActivo) {
+                    setTimeout(() => renovarAccessToken(), 60000);
+                    return null;
+                }
+
+                logout();
                 return null;
-            }
+            } catch (error) {
+                const servidorActivo = await verificarEstadoServidor();
+                if (!servidorActivo) {
+                    setTimeout(() => renovarAccessToken(), 60000);
+                    return null;
+                }
 
-            logout();
-            return null;
-        } catch (error) {
-            const servidorActivo = await verificarEstadoServidor();
-            if (!servidorActivo) {
-                setTimeout(() => renovarAccessToken(), 60000);
+                logout();
                 return null;
+            } finally {
+                refreshPromiseRef.current = null;
             }
+        })();
 
-            logout();
-            return null;
-        }
+        refreshPromiseRef.current = refreshPromise;
+        return refreshPromise;
     };
 
     // =====================================================
@@ -158,47 +172,58 @@ export const AuthProvider = ({ children }) => {
             return;
         }
 
-        setUser({
-            id: decoded.id,
-            nombre: decoded.nombre,
-            username: decoded.username,
-            correo: decoded.correo,
-            rol: decoded.rol,
-            fecha_creacion: decoded.fecha_creacion
-        });
+        // Verificar si el token está expirado o próximo a expirar (< 2 min)
+        const now = Math.floor(Date.now() / 1000);
+        const tokenExpirado = decoded.exp && (decoded.exp - now) <= 120;
 
-        if (!isPrintMode) {
-            obtenerSesionesActivas(decoded.id);
+        const inicializarUsuario = (tokenDecoded) => {
+            setUser({
+                id: tokenDecoded.id,
+                nombre: tokenDecoded.nombre,
+                username: tokenDecoded.username,
+                correo: tokenDecoded.correo,
+                rol: tokenDecoded.rol,
+                fecha_creacion: tokenDecoded.fecha_creacion
+            });
+            if (!isPrintMode) {
+                obtenerSesionesActivas(tokenDecoded.id);
+            }
+            setLoading(false);
+        };
+
+        if (tokenExpirado) {
+            // Token expirado o por expirar: renovar ANTES de exponer al usuario
+            console.log("🔄 Token expirado/próximo a expirar en bootstrap, renovando...");
+            renovarAccessToken().then((newToken) => {
+                if (newToken) {
+                    const newDecoded = decodeToken(newToken);
+                    if (newDecoded?.id) {
+                        inicializarUsuario(newDecoded);
+                        return;
+                    }
+                }
+                // Si la renovación falló, logout
+                logout();
+                setLoading(false);
+            });
+        } else {
+            // Token válido: inicializar normalmente y programar renovación
+            inicializarUsuario(decoded);
+            if (decoded.exp) {
+                const restante = decoded.exp - now;
+                programarRenovacion(`${Math.ceil(restante / 60)}m`);
+            }
         }
-
-        setLoading(false);
     }, []);
 
     // =====================================================
-    // Verificación del token activo
+    // Limpieza del timer de renovación al desmontar
     // =====================================================
     useEffect(() => {
-        if (!user) return;
-
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        const decoded = decodeToken(token);
-        if (!decoded?.exp) return;
-
-        const now = Math.floor(Date.now() / 1000);
-        const restante = decoded.exp - now;
-
-        if (restante <= 120) {
-            renovarAccessToken();
-        } else {
-            programarRenovacion(`${Math.ceil(restante / 60)}m`);
-        }
-
         return () => {
             if (renovacionTimerRef.current) clearTimeout(renovacionTimerRef.current);
         };
-    }, [user]);
+    }, []);
 
     // =====================================================
     // Conectividad y eventos globales

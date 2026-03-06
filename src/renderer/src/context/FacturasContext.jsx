@@ -1,10 +1,12 @@
 import { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react";
+import { useAuth } from "./AuthContext";
 
 // Crear el contexto
 const FacturasContext = createContext();
 
 // Proveedor de facturas
 export function FacturasProvider({ children }) {
+  const { user } = useAuth();
   const [facturas, setFacturas] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -79,12 +81,12 @@ export function FacturasProvider({ children }) {
     }
   }, [initialLoading, filtros.periodo]);
 
-  // Cargar facturas al iniciar
+  // Cargar facturas al iniciar — gated on auth user
   useEffect(() => {
-    if (initialLoading) {
+    if (initialLoading && user) {
       fetchFacturas(filtros);
     }
-  }, []); // Solo se ejecuta una vez al montar el componente
+  }, [user]); // Se ejecuta cuando el usuario está autenticado
 
   // Actualizar cuando se restaura la conexión
   useEffect(() => {

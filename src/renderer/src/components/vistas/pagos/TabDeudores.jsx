@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardBody,
@@ -19,6 +19,7 @@ import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { HiExclamation, HiCurrencyDollar, HiClipboardList, HiBan, HiFilter, HiCog, HiCheckCircle, HiRefresh } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import { useDeudores } from "../../../context/DeudoresContext";
 
 // Modals
 import ModalConfiguracionCortes from "./modals/ModalConfiguracionCortes";
@@ -28,12 +29,10 @@ import ModalParcialidadesConvenio from "./ModalParcialidadesConvenio";
 
 const TabDeudores = () => {
   const navigate = useNavigate();
-  // const { token } = useAuth(); // AuthContext no expone token
   const token = localStorage.getItem('token');
 
-  // Estados de Datos
-  const [candidatos, setCandidatos] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // Datos compartidos desde DeudoresContext (elimina fetch duplicado)
+  const { deudores: candidatos, loading, fetchDeudores } = useDeudores();
   const [error, setError] = useState(null);
 
   // Estados de Modals
@@ -51,35 +50,7 @@ const TabDeudores = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // --- API CALLS ---
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await window.api.deudores.fetchCandidatos(token);
-      // Aseguramos que sea un array
-      const lista = res.candidatos || [];
-
-      // DEBUG: Ver estructura de datos
-      if (lista.length > 0) {
-        console.log("Primer candidato (estructura):", lista[0]);
-        console.log("Medidor del primer candidato:", lista[0]?.medidor);
-      }
-
-      setCandidatos(lista);
-    } catch (err) {
-      console.error("Error fetching deudores:", err);
-      setError("Error cargando lista de deudores");
-      // Fallback a array vacío para no romper la UI
-      setCandidatos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (token) fetchData();
-  }, [token, fetchData]);
+  // --- API CALLS (acciones, no fetch de datos — eso viene del context) ---
 
   const handleReconectar = async (deudor) => {
     if (!confirm(`¿Confirmar reconexión para ${deudor.cliente?.nombre}?`)) return;
@@ -93,7 +64,7 @@ const TabDeudores = () => {
 
       console.log("Reconexión exitosa:", result);
       alert("Servicio reconectado exitosamente");
-      fetchData(); // Recargar
+      fetchDeudores(); // Recargar
     } catch (error) {
       console.error("Error reconectando:", error);
 
@@ -217,7 +188,7 @@ const TabDeudores = () => {
           <Button
             startContent={<HiRefresh className="w-5 h-5" />}
             color="primary"
-            onPress={fetchData}
+            onPress={fetchDeudores}
             isLoading={loading}
           >
             {loading ? "Cargando..." : "Recargar Datos"}
@@ -457,7 +428,21 @@ const TabDeudores = () => {
                             Ver Convenio
                           </Button>
                         </Tooltip>
-                      ) : null}
+                      ) : (
+                        <Tooltip content="Crear Convenio de Pago">
+                          <Button
+                            size="sm"
+                            color="primary"
+                            variant="flat"
+                            onPress={() => {
+                              setSelectedDeudor(item);
+                              setShowConvenioModal(true);
+                            }}
+                          >
+                            Crear Convenio
+                          </Button>
+                        </Tooltip>
+                      )}
 
                       <div className="w-px h-4 bg-gray-300 mx-1"></div>
 
@@ -519,7 +504,7 @@ const TabDeudores = () => {
         isOpen={showCorteModal}
         onClose={() => setShowCorteModal(false)}
         selectedDeudor={selectedDeudor}
-        onSuccess={fetchData}
+        onSuccess={fetchDeudores}
       />
 
       {/* Modal de Convenio */}
@@ -533,7 +518,7 @@ const TabDeudores = () => {
         onSuccess={() => {
           setShowConvenioModal(false);
           setSelectedDeudor(null);
-          fetchData(); // Recargar lista
+          fetchDeudores(); // Recargar lista
         }}
       />
 
@@ -546,7 +531,7 @@ const TabDeudores = () => {
         }}
         convenioId={selectedConvenioId}
         onPagoExitoso={() => {
-          fetchData(); // Recargar lista después de pagar parcialidad
+          fetchDeudores(); // Recargar lista después de pagar parcialidad
         }}
       />
     </div >

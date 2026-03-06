@@ -22,7 +22,7 @@ import SelectorCoordenadas from "../../mapa/SelectorCoordenadas";
 
 export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     const { actualizarMedidores } = useMedidores();
-    const { clientes } = useClientes();
+    const { allClientes } = useClientes();
     const { setSuccess, setError } = useFeedback();
 
     const pueblos = [
@@ -44,7 +44,9 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             latitud: "",
             longitud: "",
             estadoMedidor: "Activo",
-            clienteId: null
+            clienteId: null,
+            lecturaBase: "",
+            capacidadMaxima: "",
         };
 
         let prefix = "";
@@ -66,7 +68,9 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             latitud: medidor.latitud !== null && medidor.latitud !== undefined ? medidor.latitud.toString() : "",
             longitud: medidor.longitud !== null && medidor.longitud !== undefined ? medidor.longitud.toString() : "",
             estadoMedidor: medidor.estado_medidor || "Activo",
-            clienteId: medidor.cliente_id
+            clienteId: medidor.cliente_id,
+            lecturaBase: medidor.lectura_base !== null && medidor.lectura_base !== undefined ? medidor.lectura_base.toString() : "",
+            capacidadMaxima: medidor.capacidad_maxima !== null && medidor.capacidad_maxima !== undefined ? medidor.capacidad_maxima.toString() : "99999",
         };
     };
 
@@ -83,6 +87,8 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     const [longitud, setLongitud] = useState(initialState.longitud);
     const [estadoMedidor, setEstadoMedidor] = useState(initialState.estadoMedidor);
     const [clienteId, setClienteId] = useState(initialState.clienteId);
+    const [lecturaBase, setLecturaBase] = useState(initialState.lecturaBase);
+    const [capacidadMaxima, setCapacidadMaxima] = useState(initialState.capacidadMaxima);
 
     // Fixed reference
     const [clienteActual] = useState(initialState.clienteId);
@@ -103,6 +109,8 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             setLongitud(newData.longitud);
             setEstadoMedidor(newData.estadoMedidor);
             setClienteId(newData.clienteId);
+            setLecturaBase(newData.lecturaBase);
+            setCapacidadMaxima(newData.capacidadMaxima);
         }
     }, [medidor, isOpen]);
 
@@ -163,6 +171,20 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
         // Si el clienteId cambia (comparación flexible para ids numéricos/string)
         if (clienteId != medidor.cliente_id) {
             changes.cliente_id = clienteId === null ? null : clienteId;
+        }
+
+        // 7. Lectura base
+        const newLecturaBase = lecturaBase !== "" ? parseFloat(lecturaBase) : null;
+        const origLecturaBase = medidor.lectura_base !== null && medidor.lectura_base !== undefined ? parseFloat(medidor.lectura_base) : null;
+        if (newLecturaBase !== origLecturaBase) {
+            changes.lectura_base = newLecturaBase;
+        }
+
+        // 8. Capacidad máxima
+        const newCapMaxima = capacidadMaxima !== "" ? parseFloat(capacidadMaxima) : null;
+        const origCapMaxima = medidor.capacidad_maxima !== null && medidor.capacidad_maxima !== undefined ? parseFloat(medidor.capacidad_maxima) : null;
+        if (newCapMaxima !== origCapMaxima) {
+            changes.capacidad_maxima = newCapMaxima;
         }
 
         return changes;
@@ -356,6 +378,36 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                     placeholder="Ej. Frente al poste..."
                                                 />
                                             </div>
+
+                                            {/* Lectura base */}
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium">Lectura base del medidor (m³) <span className="text-gray-400 font-normal">— Opcional</span></label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="any"
+                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
+                                                    value={lecturaBase}
+                                                    onChange={(e) => setLecturaBase(e.target.value)}
+                                                    placeholder="Ej. 0 o 1234.56"
+                                                />
+                                                <p className="text-xs text-gray-400">Punto de partida al instalar el medidor. Modifícalo si se reemplazó el medidor.</p>
+                                            </div>
+
+                                            {/* Capacidad máxima */}
+                                            <div className="space-y-1">
+                                                <label className="text-sm font-medium">Capacidad máxima del totalizador (m³) <span className="text-gray-400 font-normal">— Opcional</span></label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    step="1"
+                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
+                                                    value={capacidadMaxima}
+                                                    onChange={(e) => setCapacidadMaxima(e.target.value)}
+                                                    placeholder="99999"
+                                                />
+                                                <p className="text-xs text-gray-400">Límite del dial antes de dar vuelta a cero. El estándar es 99,999.</p>
+                                            </div>
                                         </div>
                                     </CardBody>
                                 </Card>
@@ -385,7 +437,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                     </p>
                                                     <div className="flex flex-col">
                                                         <span className="text-lg font-bold text-gray-800 dark:text-white">
-                                                            {clientes.find(c => c.id === clienteId)?.nombre || "Cargando nombre..."}
+                                                            {allClientes.find(c => c.id === clienteId)?.nombre || "Cargando nombre..."}
                                                         </span>
                                                         <span className="text-sm text-gray-500 font-mono">
                                                             ID Cliente: {clienteId}

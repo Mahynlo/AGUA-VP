@@ -45,18 +45,15 @@ export const fetchTarifas = async (token_session, params = {}, isRetry = false) 
     if (!response.ok) {
       const errorBody = await response.text();
       
-      // Si es error 403 y no es reintento, intentar renovar token
-      if (response.status === 403 && !isRetry) {
+      // Si es error 401/403 y no es reintento, intentar renovar token
+      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
         console.log("🔄 Token expirado en fetchTarifas, solicitando renovación...");
-        // Emitir evento para que AuthContext renueve el token
         window.dispatchEvent(new CustomEvent('token-expired'));
-        // Esperar un momento para que se renueve el token
         await new Promise(resolve => setTimeout(resolve, 1000));
-        // Obtener el token renovado del localStorage
         const newToken = localStorage.getItem('token');
         if (newToken && newToken !== token_session) {
           console.log("✅ Token renovado, reintentando fetchTarifas...");
-          return fetchTarifas(newToken, true); // Reintentar con el nuevo token
+          return fetchTarifas(newToken, true);
         }
       }
       

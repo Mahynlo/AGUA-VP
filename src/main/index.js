@@ -3,9 +3,8 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
-// Función para verificar actualizaciones
-import { checkForUpdates } from '../updatesApp/checkUpdates.js'
-import { console } from 'inspector'
+// Gestión de actualizaciones
+import initUpdateManager from './managers/updateManager.js'
 
 import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
 import { startApiServer, stopApiServer } from './managers/apiManager.js'
@@ -116,10 +115,8 @@ function createWindow() {
   mainWindow.webContents.openDevTools();
 }
 
-  // Iniciar la búsqueda de actualizaciones después de que la ventana esté lista
-  setTimeout(() => {
-    checkForUpdates(mainWindow)
-  }, 5000)
+  // Inicializar el gestor de actualizaciones
+  initUpdateManager(mainWindow);
 }
 
 

@@ -13,18 +13,26 @@ import { useRutas } from "../context/RutasContext";
  * @returns {Object} - Estados y funciones para TabRutas
  */
 export function useTabRutas(rutas, actualizarRutas, periodoActual) {
-  const { pagination, loading, initialLoading, fetchRutas } = useRutas(); // Usar fetchRutas del context
+  const { pagination, loading, initialLoading, fetchRutas } = useRutas();
 
   // Estados de UI
   const [search, setSearch] = useState("");
-  // Nota: Filtros de estado y pueblo requieren backend más complejo. 
-  // Por ahora mantenemos paginación server-side simple con búsqueda.
   const [filtro, setFiltro] = useState("todos"); 
   const [filtroPueblo, setPueblo] = useState("todos");
   
   const [paginaActual, setPagina] = useState(1);
-  const [rutasPorPagina, setPorPag] = useState(10); // Default solicitado 10
+  const [rutasPorPagina, setPorPag] = useState(10);
   const [periodoSel, setPeriodoSel] = useState(null);
+
+  // Contador que se incrementa cuando una ruta es creada/editada
+  const [refreshToken, setRefreshToken] = useState(0);
+
+  // Escuchar evento global emitido tras guardar/actualizar ruta
+  useEffect(() => {
+    const handler = () => setRefreshToken(t => t + 1);
+    window.addEventListener("rutas-changed", handler);
+    return () => window.removeEventListener("rutas-changed", handler);
+  }, []);
 
   // Debounce search
   const [debouncedSearch, setDebouncedSearch] = useState(search);
@@ -33,26 +41,27 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
      return () => clearTimeout(timer);
   }, [search]);
 
-  // Opciones de periodo (12 últimos meses)
   const opcionesPeriodo = useMemo(() => generarOpcionesPeriodo(12), []);
   
-  // Effect: Actualizar datos al cambiar filtros o página
+  // Effect: Actualizar datos al cambiar filtros, página o refreshToken
   useEffect(() => {
-    // Si viene del props (legacy) ignoramos, usamos el del context
-    // Llamar al fetch con params
     fetchRutas({
         page: paginaActual,
         limit: rutasPorPagina,
         search: debouncedSearch,
         periodo: periodoSel || periodoActual
     });
-  }, [paginaActual, rutasPorPagina, debouncedSearch, periodoSel, periodoActual /*, filtro, filtroPueblo*/]);
+  }, [paginaActual, rutasPorPagina, debouncedSearch, periodoSel, periodoActual, refreshToken]);
 
-  // Calcular estadísticas (Nota: con paginación server-side, esto solo calcula sobre la página visible
-  // Si se requieren estadísticas globales, se debería usar otro endpoint o el objeto pagination)
+  // Estadisticas: totalRutas viene del servidor (pagination.total) para reflejar
+  // el total real de rutas, no solo las de la página actual
   const estadisticas = useMemo(() => {
-    return calcularEstadisticasRutas(rutas);
-  }, [rutas]);
+    const stats = calcularEstadisticasRutas(rutas);
+    return {
+      ...stats,
+      totalRutas: pagination?.total ?? stats.totalRutas
+    };
+  }, [rutas, pagination]);
 
   // Rutas ya vienen paginadas del server
   const rutasPaginadas = rutas; 

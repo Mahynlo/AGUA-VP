@@ -1,5 +1,6 @@
 node_modules
 dist
+dist_test
 out
 .DS_Store
 .vscode

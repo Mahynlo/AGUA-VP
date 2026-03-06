@@ -4,6 +4,7 @@ import { useAuth } from "./AuthContext";
 const DeudoresContext = createContext();
 
 export function DeudoresProvider({ children }) {
+    const { user } = useAuth();
     const [deudores, setDeudores] = useState([]);
     const [estadisticas, setEstadisticas] = useState({
         totalDeuda: 0,
@@ -28,18 +29,17 @@ export function DeudoresProvider({ children }) {
 
             if (window.api && window.api.deudores && window.api.deudores.fetchCandidatos) {
                 const data = await window.api.deudores.fetchCandidatos(token);
-                // data puede venir como array directo o { data: [...] } dependiendo del controller
-                // Asumiremos que es un array o lista
+                // API retorna { candidatos: [...], umbral_corte, dias_gracia, total_candidatos }
                 const deudoresList = Array.isArray(data) ? data : (data.candidatos || []);
 
                 setDeudores(deudoresList);
 
-                // Calcular Estadísticas
-                const totalDeuda = deudoresList.reduce((acc, curr) => acc + (Number(curr.total_adeudo || curr.deuda_total || 0)), 0);
-                const criticos = deudoresList.filter(d => d.meses_adeudo >= 3).length;
+                // Calcular Estadísticas — usar campos reales del API (deuda.total, deuda.facturas_vencidas, etc.)
+                const totalDeuda = deudoresList.reduce((acc, curr) => acc + Number(curr.deuda?.total || curr.saldo_pendiente || 0), 0);
+                const criticos = deudoresList.filter(d => Number(d.deuda?.facturas_vencidas || 0) >= 3).length;
                 const totalDeudores = deudoresList.length;
-                const casosActivos = deudoresList.filter(d => !d.fecha_corte).length;
-                const convenios = deudoresList.filter(d => d.tiene_convenio || d.en_convenio).length;
+                const casosActivos = deudoresList.filter(d => d.medidor?.estado_servicio !== 'Cortado').length;
+                const convenios = deudoresList.filter(d => d.tiene_convenio === true).length;
 
                 setEstadisticas({
                     totalDeuda,
@@ -67,10 +67,10 @@ export function DeudoresProvider({ children }) {
         }
     }, []);
 
-    // Escuchar eventos de recarga si es necesario
+    // Cargar deudores — gated on auth user
     useEffect(() => {
-        fetchDeudores();
-    }, [fetchDeudores]);
+        if (user) fetchDeudores();
+    }, [user, fetchDeudores]);
 
     return (
         <DeudoresContext.Provider value={{ deudores, estadisticas, loading, fetchDeudores }}>

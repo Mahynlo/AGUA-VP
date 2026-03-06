@@ -42,7 +42,7 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blu
 );
 
 const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) => {
-    const { medidores } = useMedidores();
+    const { allMedidores } = useMedidores();
     const [busqueda, setBusqueda] = useState("");
     const [resultados, setResultados] = useState([]);
     const [medidoresSeleccionados, setMedidoresSeleccionados] = useState([]);
@@ -51,8 +51,8 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
 
     // Medidores ya asignados al cliente
     const medidoresAsignadosCliente = useMemo(() =>
-        medidores.filter(medidor => medidor.cliente_id === clienteId),
-        [medidores, clienteId]
+        allMedidores.filter(medidor => medidor.cliente_id === clienteId),
+        [allMedidores, clienteId]
     );
 
     // Búsqueda con debounce
@@ -64,18 +64,20 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
         }
 
         setIsSearching(true);
+        const normalizar = (str) =>
+            (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const termino = normalizar(busqueda);
         const timeoutId = setTimeout(() => {
-            const filtrados = medidores.filter((medidor) =>
-                `${medidor.numero_serie} ${medidor.ubicacion}`
-                    .toLowerCase()
-                    .includes(busqueda.toLowerCase())
+            const filtrados = allMedidores.filter((medidor) =>
+                normalizar(`${medidor.numero_serie} ${medidor.ubicacion}`)
+                    .includes(termino)
             );
             setResultados(filtrados);
             setIsSearching(false);
         }, 300);
 
         return () => clearTimeout(timeoutId);
-    }, [busqueda, medidores]);
+    }, [busqueda, allMedidores]);
 
     // Función optimizada para seleccionar medidor
     const seleccionarMedidor = useCallback((medidor) => {

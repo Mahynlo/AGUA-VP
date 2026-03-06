@@ -18,6 +18,8 @@ import DashboardAdmin from "./DashboardAdmin";
 import GestionClientes from "./GestionClientes";
 import GestionMedidores from "./GestionMedidores";
 import GestionUsuarios from "./GestionUsuarios";
+import ConsolaSistema from "./sistema/ConsolaSistema";
+import PanelConfiguracion from "./PanelConfiguracion";
 
 export default function Administrador() {
   return (
@@ -141,10 +143,7 @@ export default function Administrador() {
                 </div>
               }
             >
-              <div className="p-4">
-                <h2 className="text-2xl font-bold mb-4">Módulo de Mantenimiento</h2>
-                <p>Componente en desarrollo...</p>
-              </div>
+              <ConsolaSistema />
             </Tab>
 
             <Tab
@@ -156,10 +155,7 @@ export default function Administrador() {
                 </div>
               }
             >
-              <div className="p-4">
-                <h2 className="text-2xl font-bold mb-4">Configuración del Sistema</h2>
-                <p>Componente en desarrollo...</p>
-              </div>
+              <PanelConfiguracion />
             </Tab>
 
             <Tab

@@ -42,12 +42,9 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
             obtenerInfoRuta(ruta.id)
                 .then(async (data) => {
                     setDetalleRuta(data);
-                    // Calculate missing meters (Total in summary vs Valid points in detail)
-                    // data.puntos only includes assigned meters usually
-                    const validPoints = data?.puntos?.length || 0;
-                    const totalInSummary = ruta.total_puntos || 0;
-                    const diff = totalInSummary - validPoints;
-                    setMissingCount(diff > 0 ? diff : 0);
+                    // Count meters actually missing a client from the real data
+                    const sinCliente = (data?.puntos || []).filter(p => !p.cliente_id).length;
+                    setMissingCount(sinCliente);
 
                     // 🔹 Calculate Route Geometry (Curved Lines)
                     if (data && data.puntos && data.puntos.length >= 2) {
