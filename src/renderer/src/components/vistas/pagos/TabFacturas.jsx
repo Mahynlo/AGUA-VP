@@ -103,7 +103,7 @@ const TabFacturas = () => {
       const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
       const periodo = `${año}-${mes}`;
 
-      const nombreMes = fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      const nombreMes = fecha.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
       opciones.push({
         value: periodo,
         label: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)
@@ -336,10 +336,10 @@ const TabFacturas = () => {
                     <div className="space-y-1">
                       <div className="font-medium">#{factura.id}</div>
                       <div className="text-xs text-gray-500">
-                        {new Date(factura.fecha_emision).toLocaleDateString('es-ES')}
+                        {new Date(factura.fecha_emision).toLocaleDateString('es-MX')}
                       </div>
                       <div className="text-xs text-gray-400">
-                        Vence: {new Date(factura.fecha_vencimiento).toLocaleDateString('es-ES')}
+                        Vence: {new Date(factura.fecha_vencimiento).toLocaleDateString('es-MX')}
                       </div>
                     </div>
                   </TableCell>

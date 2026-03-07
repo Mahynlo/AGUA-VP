@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardBody, Button, Chip, Badge } from "@nextui-org/react";
 import { FlechaIzquierdaIcon, FlechaDerechaIcon } from "../../IconsApp/IconsAppSystem";
 import { CalendarioHomeIcon } from "../../IconsApp/IconsHome";
 import { HiChevronLeft, HiChevronRight, HiCalendar, HiClock } from "react-icons/hi";
 import { useTarifas } from "../../context/TarifasContext";
-
-// Definición de eventos
+import { obtenerFeriadosMexico } from "../../utils/diasHabiles";
 
 
 const CalendarComponent = () => {
@@ -31,59 +30,62 @@ const CalendarComponent = () => {
     };
 
 
-    const events = {};
+    const events = useMemo(() => {
+        const evts = {};
 
-    tarifas.forEach((tarifa) => {
-        const startDate = parseDate(tarifa.fecha_inicio);
-        const startDateString = startDate.toISOString().split("T")[0];
-        if (!events[startDateString]) events[startDateString] = [];
-        events[startDateString].push({
-            title: `Inicio de tarifa ${tarifa.nombre}`,
-            descripcion: tarifa.descripcion,
-            time: null,
-        });
-
-        if (tarifa.fecha_fin) {
-            const endDate = parseDate(tarifa.fecha_fin);
-            const endDateString = endDate.toISOString().split("T")[0];
-            if (!events[endDateString]) events[endDateString] = [];
-            events[endDateString].push({
-                title: `Fin de tarifa ${tarifa.nombre}`,
+        // Eventos de tarifas
+        tarifas.forEach((tarifa) => {
+            const startDate = parseDate(tarifa.fecha_inicio);
+            const startDateString = formatDateString(startDate);
+            if (!evts[startDateString]) evts[startDateString] = [];
+            evts[startDateString].push({
+                title: `Inicio de tarifa: ${tarifa.nombre}`,
                 descripcion: tarifa.descripcion,
                 time: null,
+                tipo: 'tarifa',
             });
-        }
-    });
 
-    // Ejemplo de agregar eventos adicionales que no son tarifas:
-    events["2025-07-20"] = events["2025-07-20"] || [];
-    events["2025-07-20"].push({
-        title: "Evento especial fuera de tarifas",
-        descripcion: "Descripción adicional",
-        time: "10:00 am",
-    });
-    
-    events["2025-07-20"].push({
-        title: "Evento especial fuera de tarifas 2",
-        descripcion: "Descripción adicional",
-        time: "11:00 am",
-    });
+            if (tarifa.fecha_fin) {
+                const endDate = parseDate(tarifa.fecha_fin);
+                const endDateString = formatDateString(endDate);
+                if (!evts[endDateString]) evts[endDateString] = [];
+                evts[endDateString].push({
+                    title: `Fin de tarifa: ${tarifa.nombre}`,
+                    descripcion: tarifa.descripcion,
+                    time: null,
+                    tipo: 'tarifa',
+                });
+            }
+        });
 
-    events["2025-07-20"].push({
-        title: "Evento especial fuera de tarifas 3",
-        descripcion: "Descripción adicional",
-        time: "12:00 am",
-    });
+        // Feriados mexicanos (año actual y adyacentes)
+        const anio = currentMonth.getFullYear();
+        [anio - 1, anio, anio + 1].forEach(a => {
+            obtenerFeriadosMexico(a).forEach(f => {
+                if (!evts[f.fecha]) evts[f.fecha] = [];
+                evts[f.fecha].push({
+                    title: f.nombre,
+                    descripcion: 'Día feriado oficial — No hábil',
+                    time: null,
+                    tipo: 'feriado',
+                });
+            });
+        });
 
-   
-
-   
-
+        return evts;
+    }, [tarifas, currentMonth]);
 
     // Función auxiliar para parsear fechas yyyy-mm-dd
     function parseDate(str) {
         const [year, month, day] = str.split("-").map(Number);
         return new Date(year, month - 1, day);
+    }
+
+    function formatDateString(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     }
 
 
@@ -128,7 +130,7 @@ const CalendarComponent = () => {
     };
 
     const hasEvent = (date) => {
-        const dateString = date.toISOString().split("T")[0];
+        const dateString = formatDateString(date);
         return !!events[dateString];
     };
 
@@ -208,10 +210,12 @@ const CalendarComponent = () => {
                     {/* Días del mes */}
                     <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1 min-h-0">
                         {daysInMonth.map(({ date, currentMonth }, index) => {
-                            const dateString = date.toISOString().split("T")[0];
+                            const dateString = formatDateString(date);
                             const hasEvents = hasEvent(date);
                             const todayDate = isToday(date);
                             const eventCount = hasEvents ? events[dateString].length : 0;
+                            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                            const hasFeriado = hasEvents && events[dateString].some(e => e.tipo === 'feriado');
 
                             return (
                                 <div
@@ -223,9 +227,13 @@ const CalendarComponent = () => {
                                         ${currentMonth
                                             ? todayDate
                                                 ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-500 shadow-lg"
-                                                : hasEvents
-                                                    ? "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-300 dark:border-green-700"
-                                                    : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+                                                : hasFeriado
+                                                    ? "bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 border-red-300 dark:border-red-700"
+                                                    : hasEvents
+                                                        ? "bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 border-green-300 dark:border-green-700"
+                                                        : isWeekend
+                                                            ? "bg-gray-50 dark:bg-gray-750 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
+                                                            : "bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
                                             : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500"
                                         }
                                     `}
@@ -243,7 +251,7 @@ const CalendarComponent = () => {
                                         <div className="mt-auto">
                                             <Chip
                                                 size="sm"
-                                                color={todayDate ? "default" : "success"}
+                                                color={todayDate ? "default" : hasFeriado ? "danger" : "success"}
                                                 variant="flat"
                                                 className="text-[10px] sm:text-xs h-4 sm:h-5 min-w-[30px] sm:min-w-[40px]"
                                             >
@@ -288,20 +296,21 @@ const CalendarComponent = () => {
                         {selectedDate && events[selectedDate] ? (
                             <div className="space-y-2 sm:space-y-3 overflow-y-auto h-full pr-1 sm:pr-2">
                                 {events[selectedDate].map((event, index) => (
-                                    <Card key={index} className="border-none bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 shadow-sm hover:shadow-md transition-all duration-200">
+                                    <Card key={index} className={`border-none shadow-sm hover:shadow-md transition-all duration-200 ${
+                                        event.tipo === 'feriado'
+                                            ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20'
+                                            : 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20'
+                                    }`}>
                                         <CardBody className="p-2 sm:p-3 md:p-4">
                                             <div className="flex items-start gap-2 sm:gap-3">
-                                                {event.time && (
-                                                    <Chip
-                                                        size="sm"
-                                                        color="primary"
-                                                        variant="flat"
-                                                        startContent={<HiClock className="w-3 h-3" />}
-                                                        className="flex-shrink-0"
-                                                    >
-                                                        {event.time}
-                                                    </Chip>
-                                                )}
+                                                <Chip
+                                                    size="sm"
+                                                    color={event.tipo === 'feriado' ? 'danger' : event.tipo === 'tarifa' ? 'warning' : 'primary'}
+                                                    variant="flat"
+                                                    className="flex-shrink-0 capitalize"
+                                                >
+                                                    {event.tipo || 'evento'}
+                                                </Chip>
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="text-xs sm:text-sm md:text-base font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
                                                         {event.title}
@@ -335,6 +344,5 @@ const CalendarComponent = () => {
 };
 
 export default CalendarComponent;
-
 
 

@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import useAnuncioRecibo from '../../hooks/useAnuncioRecibo';
 import useEquivalenciaConsumo from '../../hooks/useEquivalenciaConsumo';
+import { nowHermosilloDateStr } from '../../utils/diasHabiles';
 
 const Recibo = ({ facturaData = null }) => {
     const [searchParams] = useSearchParams();
@@ -17,15 +18,16 @@ const Recibo = ({ facturaData = null }) => {
     // Hook para las equivalencias de consumo
     const { obtenerFraseEquivalencia } = useEquivalenciaConsumo();
 
-    // Crear fecha una sola vez
-    const fechaActual = new Date().toISOString();
-    const fechaHora = new Date().toLocaleString('es-ES', {
+    // Fecha actual en zona horaria de Hermosillo (YYYY-MM-DD)
+    const fechaActual = nowHermosilloDateStr();
+    const fechaHora = new Date().toLocaleString('es-MX', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit'
+        second: '2-digit',
+        timeZone: 'America/Hermosillo'
     });
 
     // Si se pasa facturaData directamente, usarla; sino, obtener de URL
@@ -150,7 +152,7 @@ const Recibo = ({ facturaData = null }) => {
                                 </div>
                                 <div className='flex'>
                                     <span className='font-bold text-gray-700 w-20 px-2'>Fecha lectura:</span>
-                                    <span className='text-gray-800'>{new Date(factura.fecha_emision).toLocaleDateString('es-ES')}</span>
+                                    <span className='text-gray-800'>{new Date(factura.fecha_emision).toLocaleDateString('es-MX')}</span>
                                 </div>
                                 <div className='flex'>
                                     <span className='font-bold text-gray-700 w-20 px-2'>Total del mes:</span>

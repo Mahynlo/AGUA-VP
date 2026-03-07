@@ -1,22 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { FlechaIzquierdaIcon, FlechaDerechaIcon } from "../../IconsApp/IconsAppSystem";
 import { Chip } from "@nextui-org/chip";
 import { CalendarioHomeIcon } from "../../IconsApp/IconsHome";
-const events = {
-    "2025-03-10": [{ time: "09:30 pm", title: "Products Introduction Meeting" }],
-    "2025-03-12": [
-        { time: "12:30 pm", title: "Client entertaining" },
-        { time: "02:00 pm", title: "Product design discussion" }
-    ],
-    "2025-03-15": [
-        { time: "05:00 pm", title: "Product test and acceptance" },
-        { time: "06:30 pm", title: "Reporting" }
-    ]
-};
+import { obtenerFeriadosMexico, esFeriado } from "../../utils/diasHabiles";
 
 const CalendarInicio = () => {
     const [selectedDate, setSelectedDate] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
+
+    // Generar feriados para el año visible
+    const feriadosMap = useMemo(() => {
+        const anio = currentMonth.getFullYear();
+        const map = {};
+        // Incluir año actual y adyacentes (para días de meses previos/siguientes)
+        [anio - 1, anio, anio + 1].forEach(a => {
+            obtenerFeriadosMexico(a).forEach(f => {
+                map[f.fecha] = f.nombre;
+            });
+        });
+        return map;
+    }, [currentMonth]);
 
     const handleDateChange = (date) => {
         setSelectedDate(date);
@@ -60,8 +63,15 @@ const CalendarInicio = () => {
     };
 
     const hasEvent = (date) => {
-        const dateString = date.toISOString().split("T")[0];
-        return !!events[dateString];
+        const dateString = formatDateString(date);
+        return !!feriadosMap[dateString];
+    };
+
+    const formatDateString = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     };
 
     const isToday = (date) => {
@@ -97,7 +107,7 @@ const CalendarInicio = () => {
                             <FlechaIzquierdaIcon className="w-6 h-6" />
                         </button>
                         <h2 className="text-xl font-bold text-gray-700 dark:text-gray-100">
-                            {currentMonth.toLocaleString("default", { month: "long" })} {currentMonth.getFullYear()}
+                            {currentMonth.toLocaleString("es-MX", { month: "long" })} {currentMonth.getFullYear()}
                         </h2>
                         <button onClick={() => changeMonth(1)} className="p-2 text-gray-700 bg-gray-300 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 rounded-full">
                             <FlechaDerechaIcon className="w-6 h-6" />
@@ -117,25 +127,33 @@ const CalendarInicio = () => {
                     <div className="grid grid-cols-7 gap-1 sm:gap-2  flex-1 overflow-auto">
 
                         {daysInMonth.map(({ date, currentMonth }, index) => {
-                            const dateString = date.toISOString().split("T")[0];
+                            const dateString = formatDateString(date);
+                            const isFeriado = !!feriadosMap[dateString];
+                            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
                             return (
                                 <div
                                     key={index}
-                                    className={`w-full  flex items-center justify-center rounded-lg cursor-pointer transition-all 
+                                    className={`w-full flex flex-col items-center justify-center rounded-lg cursor-pointer transition-all 
                                         ${currentMonth
                                             ? isToday(date)
-                                                ? "bg-green-500 text-white font-bold" // Día actual resaltado
-                                                : hasEvent(date)
-                                                    ? "bg-blue-500 text-white"
-                                                    : "bg-transparent"
-                                            : "text-gray-400 dark:text-gray-500" // Días del mes anterior/siguiente
+                                                ? "bg-green-500 text-white font-bold"
+                                                : isFeriado
+                                                    ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-semibold"
+                                                    : isWeekend
+                                                        ? "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                                                        : "bg-transparent"
+                                            : "text-gray-400 dark:text-gray-500"
                                         }
                                         hover:bg-blue-200 dark:hover:bg-blue-500 
                                     `}
                                     onClick={() => handleDateChange(dateString)}
+                                    title={isFeriado ? feriadosMap[dateString] : isWeekend ? 'Fin de semana' : ''}
                                 >
-                                    {date.getDate()}
+                                    <span className="text-xs sm:text-sm">{date.getDate()}</span>
+                                    {isFeriado && currentMonth && (
+                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-0.5"></span>
+                                    )}
                                 </div>
                             );
                         })}

@@ -14,7 +14,7 @@ export const generarOpcionesPeriodos = (cantidadMeses = 12) => {
   for (let i = 0; i < cantidadMeses; i++) {
     const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
     const periodo = fecha.toISOString().slice(0, 7); // YYYY-MM
-    const nombreMes = fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const nombreMes = fecha.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
     opciones.push({
       value: periodo,
       label: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)
@@ -178,7 +178,7 @@ export const adaptarReciboAPI = (reciboAPI) => {
              // Convertir YYYY-MM a "Ene", "Feb"...
              const [y, m] = h.mes.split('-');
              const date = new Date(parseInt(y), parseInt(m) - 1, 1);
-             const mesNombre = date.toLocaleDateString('es-ES', { month: 'short' });
+             const mesNombre = date.toLocaleDateString('es-MX', { month: 'short' });
              return {
                  mes: mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1),
                  consumo: h.consumo
@@ -200,3 +200,4 @@ export const imprimirDebugInfo = ({ facturas, seleccionados, periodo }) => {
   console.log('Environment:', window.location.protocol === 'file:' ? 'Production (Packaged)' : 'Development');
   console.log('===============');
 };
+

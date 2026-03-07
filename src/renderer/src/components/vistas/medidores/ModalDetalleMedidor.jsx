@@ -139,7 +139,7 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                                                 <HiCalendar className="w-3.5 h-3.5 text-gray-400" />
                                                 <span className="text-xs text-gray-600 dark:text-gray-400">
                                                     {medidor.fecha_instalacion
-                                                        ? new Date(medidor.fecha_instalacion).toLocaleDateString()
+                                                        ? new Date(medidor.fecha_instalacion).toLocaleDateString('es-MX')
                                                         : "No registrada"}
                                                 </span>
                                             </div>

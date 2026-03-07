@@ -269,7 +269,7 @@ const GestionUsuarios = () => {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-gray-500">
-                        {usuario.ultimo_acceso ? new Date(usuario.ultimo_acceso).toLocaleString() : 'Nunca'}
+                        {usuario.ultimo_acceso ? new Date(usuario.ultimo_acceso).toLocaleString('es-MX') : 'Nunca'}
                       </span>
                     </TableCell>
                     <TableCell>
