@@ -53,6 +53,6 @@ publish:
   owner: Mahynlo #nombre del propietario del repositorio
   repo: AGUA-VP # nombre del repositorio
   releaseType: release # tipo de lanzamiento
-  private: true # si es un repositorio privado
+  private: false # repositorio público
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/ # mirror de descarga de electron para la compilación de la aplicación

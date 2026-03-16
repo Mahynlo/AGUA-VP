@@ -2,5 +2,4 @@ provider: github #de provider
 owner: Mahynlo #nombre del propietario del repositorio
 repo: AGUA-VP # nombre del repositorio
 releaseType: release # tipo de lanzamiento
-private: true # si es un repositorio privado
-token: ${{GH_TOKEN}} # token de acceso a github
+private: false # repositorio público

@@ -1,0 +1,189 @@
+name: release-windows
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      api_ref:
+        description: "Branch o tag de Api-AguaVp"
+        required: true
+        default: "pruebas"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    env:
+      API_REPO: Mahynlo/Api-AguaVp
+      API_REF: ${{ github.event.inputs.api_ref || 'pruebas' }}
+
+    steps:
+      - name: Checkout AGUA-VP
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout Api-AguaVp
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.API_REPO }}
+          ref: ${{ env.API_REF }}
+          path: api-AguaVP-src
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api-AguaVP-src/package-lock.json
+
+      - name: Validate version against tag
+        id: version_check
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json | ConvertFrom-Json
+          $appVersion = "$($pkg.version)"
+          if (-not $appVersion) {
+            throw "No se encontró version en package.json"
+          }
+
+          if ("${{ github.event_name }}" -eq "push") {
+            $tag = "${{ github.ref_name }}"
+            $expected = "v$appVersion"
+            if ($tag -ne $expected) {
+              throw "Tag $tag no coincide con package.json version $appVersion (esperado: $expected)"
+            }
+          }
+
+          "app_version=$appVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Pack API tgz
+        id: pack_api
+        working-directory: api-AguaVP-src
+        shell: pwsh
+        run: |
+          npm install --no-fund --no-audit
+          $tgz = (npm pack | Select-Object -Last 1).Trim()
+          if (-not (Test-Path $tgz)) {
+            throw "No se generó el paquete tgz de la API"
+          }
+
+          New-Item -Path "$env:GITHUB_WORKSPACE\api-artifacts" -ItemType Directory -Force | Out-Null
+          Copy-Item $tgz "$env:GITHUB_WORKSPACE\api-artifacts\$tgz" -Force
+          "api_tgz_name=$tgz" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Validate frontend and embedded API env contract
+        id: env_contract
+        shell: pwsh
+        env:
+          SECRET_VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL }}
+          SECRET_VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
+          SECRET_VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL }}
+          SECRET_VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN }}
+          API_EXECUTION_MODE: ${{ vars.API_EXECUTION_MODE }}
+          API_JWT_EXPIRES_IN: ${{ vars.API_JWT_EXPIRES_IN }}
+        run: |
+          if (-not $env:SECRET_VITE_APPKEY_INICIAL) {
+            throw "Falta secret VITE_APPKEY_INICIAL"
+          }
+          if (-not $env:SECRET_VITE_SECRET_KEY) {
+            throw "Falta secret VITE_SECRET_KEY"
+          }
+
+          # Contrato embebido de la API:
+          # - JWT_SECRET y SECRET_APP_KEY no se toman desde GitHub Actions para la app empaquetada;
+          #   Electron los genera y persiste en first-run mediante apiManager.
+          # - APPKEY_INICIAL sí se inyecta desde VITE_APPKEY_INICIAL al proceso main.
+          # - EXECUTION_MODE y JWT_EXPIRES_IN son opcionales y se dejan con defaults seguros.
+
+          $executionMode = if ($env:API_EXECUTION_MODE) { $env:API_EXECUTION_MODE } else { 'LOCAL' }
+          if ($executionMode -notin @('LOCAL', 'SERVER')) {
+            throw "API_EXECUTION_MODE inválido: $executionMode. Valores permitidos: LOCAL, SERVER"
+          }
+
+          $jwtExpiresIn = if ($env:API_JWT_EXPIRES_IN) { $env:API_JWT_EXPIRES_IN } else { '15m' }
+
+          "api_execution_mode=$executionMode" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "api_jwt_expires_in=$jwtExpiresIn" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Prepare app env and API dependency
+        shell: pwsh
+        env:
+          API_TGZ_NAME: ${{ steps.pack_api.outputs.api_tgz_name }}
+          APP_VERSION: ${{ steps.version_check.outputs.app_version }}
+          SECRET_VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL }}
+          SECRET_VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
+          SECRET_VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL }}
+          SECRET_VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN }}
+          API_EXECUTION_MODE: ${{ steps.env_contract.outputs.api_execution_mode }}
+          API_JWT_EXPIRES_IN: ${{ steps.env_contract.outputs.api_jwt_expires_in }}
+        run: |
+          New-Item -Path ".ci\api" -ItemType Directory -Force | Out-Null
+          Copy-Item "$env:GITHUB_WORKSPACE\api-artifacts\$env:API_TGZ_NAME" ".ci\api\$env:API_TGZ_NAME" -Force
+
+          node -e "const fs=require('fs');const p='package.json';const pkg=JSON.parse(fs.readFileSync(p,'utf8'));pkg.dependencies['@aguavp/api-server']='file:.ci/api/'+process.env.API_TGZ_NAME;fs.writeFileSync(p, JSON.stringify(pkg,null,2)+'\n');"
+
+          $envLines = @(
+            "VITE_APP_VERSION=$env:APP_VERSION"
+            "VITE_APPKEY_INICIAL=$env:SECRET_VITE_APPKEY_INICIAL"
+            "VITE_SECRET_KEY=$env:SECRET_VITE_SECRET_KEY"
+            "VITE_TURSO_DATABASE_URL=$env:SECRET_VITE_TURSO_DATABASE_URL"
+            "VITE_TURSO_AUTH_TOKEN=$env:SECRET_VITE_TURSO_AUTH_TOKEN"
+            "VITE_URL_BASE_API_AGUAVP=http://localhost:3000"
+            "VITE_API_REGISTRAR_APP=http://localhost:3000/api/v2/app/registrarApp"
+            "VITE_API_LOGIN=http://localhost:3000/api/v2/auth/login"
+            "VITE_API_DASHBOARD_STATS=http://localhost:3000/api/v2/dashboard"
+            "VITE_API_FETCH_CLIENTES=http://localhost:3000/api/v2/clientes/listar"
+            "VITE_API_FETCH_MEDIDORES=http://localhost:3000/api/v2/medidores/listar"
+            "VITE_API_FETCH_TARIFAS=http://localhost:3000/api/v2/tarifas/listar"
+            "VITE_API_FETCH_FACTURAS=http://localhost:3000/api/v2/facturas/listar"
+            "VITE_API_FETCH_LECTURAS=http://localhost:3000/api/v2/lecturas/listar"
+            "VITE_API_FETCH_PAGOS=http://localhost:3000/api/v2/pagos/listar"
+            "VITE_API_FETCH_RUTAS=http://localhost:3000/api/v2/rutas/listar"
+            "VITE_API_FETCH_RUTAS_INFO_MEDIDORES=http://localhost:3000/api/v2/rutas"
+            "VITE_API_REGISTRAR_USUARIO=http://localhost:3000/api/v2/auth/register"
+            "VITE_API_REGISTRAR_CLIENTE=http://localhost:3000/api/v2/clientes/registrar"
+            "VITE_API_REGISTRAR_MEDIDORES=http://localhost:3000/api/v2/medidores/registrar"
+            "VITE_API_REGISTRAR_TARIFAS=http://localhost:3000/api/v2/tarifas/registrar"
+            "VITE_API_REGISTRAR_RANGOS_TARIFAS=http://localhost:3000/api/v2/tarifas/registrar-rangos"
+            "VITE_API_REGISTRAR_RUTAS=http://localhost:3000/api/v2/rutas/crear"
+            "VITE_API_REGISTRAR_LECTURAS=http://localhost:3000/api/v2/lecturas/registrar"
+            "VITE_API_REGISTRAR_FACTURAS=http://localhost:3000/api/v2/facturas/registrar"
+            "VITE_API_REGISTRAR_PAGOS=http://localhost:3000/api/v2/pagos/registrar"
+            "VITE_API_ACTUALIZAR_CLIENTE=http://localhost:3000/api/v2/clientes/modificar"
+            "VITE_API_ACTUALIZAR_TARIFA_CLINTE=http://localhost:3000/api/v2/clientes"
+            "VITE_API_ACTUALIZAR_TARIFA=http://localhost:3000/api/v2/tarifas/modificar"
+            "VITE_API_ACTUALIZAR_RANGOS_TARIFAS=http://localhost:3000/api/v2/tarifas/modificar-rangos"
+            "VITE_API_ACTUALIZAR_MEDIDOR=http://localhost:3000/api/v2/medidores/modificar"
+            "API_EXECUTION_MODE=$env:API_EXECUTION_MODE"
+            "API_JWT_EXPIRES_IN=$env:API_JWT_EXPIRES_IN"
+          )
+          Set-Content -Path ".env.production" -Value ($envLines -join "`n") -Encoding utf8
+
+      - name: Install app dependencies
+        run: npm install --no-fund --no-audit
+
+      - name: Build app
+        run: npm run build
+
+      - name: Build and publish Windows release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish always
+
+      - name: Upload build outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-dist
+          path: |
+            dist/*
+            !dist/*.zip
+          if-no-files-found: warn

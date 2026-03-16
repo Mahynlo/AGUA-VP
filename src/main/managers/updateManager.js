@@ -74,13 +74,11 @@ function configureAutoUpdater() {
     autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = false;
 
-    // Configurar feed (GitHub Releases)
+    // Configurar feed (GitHub Releases públicas)
     autoUpdater.setFeedURL({
         provider: 'github',
         owner: 'Mahynlo',
-        repo: 'AGUA-VP',
-        token: import.meta.env.VITE_GITHUB_TOKEN,
-        private: true
+        repo: 'AGUA-VP'
     });
 
     // ── Eventos del autoUpdater ───────────────────────────────────────────
