@@ -162,6 +162,7 @@ export const adaptarReciboAPI = (reciboAPI) => {
         fecha_emision: reciboAPI.detalle_facturacion.fecha_lectura 
             ? new Date(reciboAPI.detalle_facturacion.fecha_lectura).toISOString() 
             : new Date().toISOString(),
+        fecha_vencimiento: reciboAPI.detalle_facturacion.fecha_vencimiento || null,
         
         // Montos
         total: reciboAPI.detalle_facturacion.total_mes, // Lo que se facturó este mes

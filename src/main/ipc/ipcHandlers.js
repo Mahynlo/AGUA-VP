@@ -2,7 +2,7 @@
 import { ipcMain, BrowserWindow, app, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import { pathToFileURL } from 'url';
+import { pathToFileURL, fileURLToPath } from 'url';
 
 
 export default function IpcHandlers () {
@@ -737,6 +737,42 @@ export default function IpcHandlers () {
             return { success: true, filePath };
         } catch (error) {
             console.error('Error guardando archivo:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // ============================================================
+    // GUARDAR PDF — copiar el PDF temporal a ubicación elegida por el usuario
+    // ============================================================
+    ipcMain.handle('save-pdf', async (event, fileUrl) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        // Convertir file:// URL a path local
+        let sourcePath;
+        try {
+            sourcePath = fileURLToPath(fileUrl);
+        } catch {
+            sourcePath = fileUrl.replace(/^file:\/\/\//, '');
+        }
+
+        if (!fs.existsSync(sourcePath)) {
+            return { success: false, error: 'El archivo temporal ya no existe' };
+        }
+
+        const { canceled, filePath } = await dialog.showSaveDialog(win, {
+            title: 'Guardar PDF',
+            defaultPath: path.join(app.getPath('downloads'), `documento_${Date.now()}.pdf`),
+            filters: [{ name: 'Archivos PDF', extensions: ['pdf'] }]
+        });
+
+        if (canceled || !filePath) {
+            return { success: false, canceled: true };
+        }
+
+        try {
+            await fs.promises.copyFile(sourcePath, filePath);
+            return { success: true, filePath };
+        } catch (error) {
+            console.error('Error guardando PDF:', error);
             return { success: false, error: error.message };
         }
     });

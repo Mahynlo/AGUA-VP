@@ -213,6 +213,18 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
         // Obtener solo los cambios
         const changes = getChangedFields();
 
+        // Advertencia explícita antes de intentar cambiar lectura base
+        if (Object.prototype.hasOwnProperty.call(changes, 'lectura_base')) {
+            const confirmar = window.confirm(
+                "Estás por modificar la lectura base del medidor. Si ya existen lecturas o facturas, esto puede afectar la trazabilidad histórica. ¿Deseas continuar?"
+            );
+
+            if (!confirmar) {
+                setIsUpdating(false);
+                return;
+            }
+        }
+
         // Si no hay cambios, avisar
         if (Object.keys(changes).length === 0) {
             setSuccess("No hay cambios para guardar.", "Edición de Medidor");
@@ -392,6 +404,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                     placeholder="Ej. 0 o 1234.56"
                                                 />
                                                 <p className="text-xs text-gray-400">Punto de partida al instalar el medidor. Modifícalo si se reemplazó el medidor.</p>
+                                                <p className="text-xs text-amber-600 dark:text-amber-400">Si el medidor ya tiene lecturas registradas, este campo no podrá modificarse para proteger el historial.</p>
                                             </div>
 
                                             {/* Capacidad máxima */}

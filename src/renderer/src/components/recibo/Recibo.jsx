@@ -17,6 +17,13 @@ const ESTILOS = {
     textoBlanco: '#ffffff'
 };
 
+const formatearFecha = (value) => {
+    if (!value) return 'N/A';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('es-MX');
+};
+
 const Recibo = ({ facturaData = null }) => {
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
@@ -79,6 +86,7 @@ const Recibo = ({ facturaData = null }) => {
                         saldo_pendiente: 100.00,
                         mes_facturado: "03",
                         fecha_emision: fechaActual,
+                        fecha_vencimiento: fechaActual,
                         medidor: { numero_serie: "NG-12345" },
                         tarifa_nombre: "Tarifa Domestica",
                         ruta: { nombre: "13/4" }
@@ -96,6 +104,7 @@ const Recibo = ({ facturaData = null }) => {
                     saldo_pendiente: 100.00,
                     mes_facturado: "03",
                     fecha_emision: fechaActual,
+                    fecha_vencimiento: fechaActual,
                     medidor: { numero_serie: "NG-12345" },
                     tarifa_nombre: "Tarifa Domestica",
                     ruta: { nombre: "13/4" }
@@ -182,7 +191,11 @@ const Recibo = ({ facturaData = null }) => {
                             </div>
                             <div className='flex justify-between'>
                                 <span className='font-bold text-gray-700'>Fecha lectura:</span>
-                                <span className='text-gray-800'>{new Date(factura.fecha_emision).toLocaleDateString('es-MX')}</span>
+                                <span className='text-gray-800'>{formatearFecha(factura.fecha_emision)}</span>
+                            </div>
+                            <div className='flex justify-between'>
+                                <span className='font-bold text-gray-700'>Vencimiento:</span>
+                                <span className='text-gray-800'>{formatearFecha(factura.fecha_vencimiento)}</span>
                             </div>
                             <div className='flex justify-between'>
                                 <span className='font-bold text-gray-700'>Total del mes:</span>
@@ -391,7 +404,7 @@ const Recibo = ({ facturaData = null }) => {
 
                                     {/* Leyenda Izquierda */}
                                     <div className="text-gray-400 font-bold font-mono tracking-widest text-xs uppercase">
-                                        AGUA VP <span className="font-normal text-[9px] normal-case opacity-70 ml-2">Sistema de Gestión Municipal</span>
+                                        AGUA Villa Pesqueira <span className="font-normal text-[9px] normal-case opacity-70 ml-2">Sistema de Gestión Municipal</span>
                                     </div>
 
 

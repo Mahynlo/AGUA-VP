@@ -154,6 +154,7 @@ const Recibo = ({ facturaData = null }) => {
                                     <span className='font-bold text-gray-700 w-20 px-2'>Fecha lectura:</span>
                                     <span className='text-gray-800'>{new Date(factura.fecha_emision).toLocaleDateString('es-MX')}</span>
                                 </div>
+                                
                                 <div className='flex'>
                                     <span className='font-bold text-gray-700 w-20 px-2'>Total del mes:</span>
                                     <span className='text-gray-800'>${factura.total?.toFixed(2)}</span>

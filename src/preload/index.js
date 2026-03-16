@@ -163,6 +163,7 @@ const api = {
 
   // Exportar archivos nativamente
   saveFile: (data) => ipcRenderer.invoke('save-file-dialog', data),
+  savePdf: (fileUrl) => ipcRenderer.invoke('save-pdf', fileUrl),
 
   // Impresión avanzada (diálogo personalizado en la UI)
   getPrinters: () => ipcRenderer.invoke('getPrinters'),
