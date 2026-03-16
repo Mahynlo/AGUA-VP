@@ -20,6 +20,8 @@ jobs:
     env:
       API_REPO: Mahynlo/Api-AguaVp
       API_REF: ${{ github.event.inputs.api_ref || 'pruebas' }}
+      OSM_REPO: Mahynlo/RutaCraftOSM
+      OSM_REF: main
 
     steps:
       - name: Checkout AGUA-VP
@@ -33,6 +35,14 @@ jobs:
           repository: ${{ env.API_REPO }}
           ref: ${{ env.API_REF }}
           path: api-AguaVP-src
+          fetch-depth: 1
+
+      - name: Checkout RutaCraftOSM
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.OSM_REPO }}
+          ref: ${{ env.OSM_REF }}
+          path: osm-src
           fetch-depth: 1
 
       - name: Setup Node.js
@@ -86,6 +96,28 @@ jobs:
           Copy-Item $tgz "$env:GITHUB_WORKSPACE\api-artifacts\$tgz" -Force
           "api_tgz_name=$tgz" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      - name: Pack ruta-craft-osm tgz
+        id: pack_osm
+        working-directory: osm-src/Rutas_Auto_Generadas_OSM/ruta-craft-osm
+        shell: pwsh
+        run: |
+          $preferred = 'ruta-craft-osm-0.0.7.tgz'
+          if (Test-Path $preferred) {
+            $tgz = $preferred
+          }
+          else {
+            npm install --no-fund --no-audit
+            $tgz = (npm pack | Select-Object -Last 1).Trim()
+          }
+
+          if (-not $tgz -or -not (Test-Path $tgz)) {
+            throw "No se generó/encontró el paquete tgz de ruta-craft-osm"
+          }
+
+          New-Item -Path "$env:GITHUB_WORKSPACE\osm-artifacts" -ItemType Directory -Force | Out-Null
+          Copy-Item $tgz "$env:GITHUB_WORKSPACE\osm-artifacts\$tgz" -Force
+          "osm_tgz_name=$tgz" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
       - name: Debug secret availability (safe)
         shell: pwsh
         run: |
@@ -135,6 +167,7 @@ jobs:
         shell: pwsh
         env:
           API_TGZ_NAME: ${{ steps.pack_api.outputs.api_tgz_name }}
+          OSM_TGZ_NAME: ${{ steps.pack_osm.outputs.osm_tgz_name }}
           APP_VERSION: ${{ steps.version_check.outputs.app_version }}
           SECRET_VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL }}
           SECRET_VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
@@ -144,9 +177,11 @@ jobs:
           API_JWT_EXPIRES_IN: ${{ steps.env_contract.outputs.api_jwt_expires_in }}
         run: |
           New-Item -Path ".ci\api" -ItemType Directory -Force | Out-Null
+          New-Item -Path ".ci\osm" -ItemType Directory -Force | Out-Null
           Copy-Item "$env:GITHUB_WORKSPACE\api-artifacts\$env:API_TGZ_NAME" ".ci\api\$env:API_TGZ_NAME" -Force
+          Copy-Item "$env:GITHUB_WORKSPACE\osm-artifacts\$env:OSM_TGZ_NAME" ".ci\osm\$env:OSM_TGZ_NAME" -Force
 
-          node -e "const fs=require('fs');const p='package.json';const pkg=JSON.parse(fs.readFileSync(p,'utf8'));pkg.dependencies['@aguavp/api-server']='file:.ci/api/'+process.env.API_TGZ_NAME;fs.writeFileSync(p, JSON.stringify(pkg,null,2)+'\n');"
+          node -e "const fs=require('fs');const p='package.json';const pkg=JSON.parse(fs.readFileSync(p,'utf8'));pkg.dependencies['@aguavp/api-server']='file:.ci/api/'+process.env.API_TGZ_NAME;pkg.dependencies['ruta-craft-osm']='file:.ci/osm/'+process.env.OSM_TGZ_NAME;fs.writeFileSync(p, JSON.stringify(pkg,null,2)+'\n');"
 
           $envLines = @(
             "VITE_APP_VERSION=$env:APP_VERSION"
