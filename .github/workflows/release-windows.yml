@@ -86,6 +86,17 @@ jobs:
           Copy-Item $tgz "$env:GITHUB_WORKSPACE\api-artifacts\$tgz" -Force
           "api_tgz_name=$tgz" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      - name: Debug secret availability (safe)
+        shell: pwsh
+        run: |
+          Write-Host "event=${{ github.event_name }} ref=${{ github.ref }} repo=${{ github.repository }} actor=${{ github.actor }}"
+          Write-Host "has VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL != '' }}"
+          Write-Host "has VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY != '' }}"
+          Write-Host "has VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL != '' }}"
+          Write-Host "has VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN != '' }}"
+          Write-Host "has var API_EXECUTION_MODE: ${{ vars.API_EXECUTION_MODE != '' }}"
+          Write-Host "has var API_JWT_EXPIRES_IN: ${{ vars.API_JWT_EXPIRES_IN != '' }}"
+
       - name: Validate frontend and embedded API env contract
         id: env_contract
         shell: pwsh
