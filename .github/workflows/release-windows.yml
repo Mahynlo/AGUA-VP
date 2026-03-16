@@ -40,9 +40,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            api-AguaVP-src/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Validate version against tag
         id: version_check
@@ -54,15 +52,26 @@ jobs:
             throw "No se encontró version en package.json"
           }
 
+          $releaseType = 'release'
+
           if ("${{ github.event_name }}" -eq "push") {
             $tag = "${{ github.ref_name }}"
-            $expected = "v$appVersion"
-            if ($tag -ne $expected) {
-              throw "Tag $tag no coincide con package.json version $appVersion (esperado: $expected)"
+            $stableTag = "v$appVersion"
+            $prereleasePattern = "^v$([regex]::Escape($appVersion))-[0-9A-Za-z.-]+$"
+
+            if ($tag -eq $stableTag) {
+              $releaseType = 'release'
+            }
+            elseif ($tag -match $prereleasePattern) {
+              $releaseType = 'prerelease'
+            }
+            else {
+              throw "Tag $tag no coincide con package.json version $appVersion. Usa $stableTag para release o v$appVersion-rc.1 / v$appVersion-beta.1 para pre-release"
             }
           }
 
           "app_version=$appVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "release_type=$releaseType" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Pack API tgz
         id: pack_api
@@ -176,7 +185,8 @@ jobs:
       - name: Build and publish Windows release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win --publish always
+          PUBLISH_RELEASE_TYPE: ${{ steps.version_check.outputs.release_type }}
+        run: npx electron-builder --win --publish always --config.publish.releaseType=$env:PUBLISH_RELEASE_TYPE
 
       - name: Upload build outputs
         if: always()
