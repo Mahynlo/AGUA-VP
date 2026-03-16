@@ -98,9 +98,45 @@ jobs:
 
       - name: Pack ruta-craft-osm tgz
         id: pack_osm
-        working-directory: osm-src/Rutas_Auto_Generadas_OSM/ruta-craft-osm
         shell: pwsh
         run: |
+          $candidates = @(
+            "osm-src/ruta-craft-osm"
+            "osm-src/Rutas_Auto_Generadas_OSM/ruta-craft-osm"
+            "osm-src"
+          )
+
+          $osmDir = $null
+          foreach ($c in $candidates) {
+            if (Test-Path (Join-Path $c 'package.json')) {
+              $pkg = Get-Content (Join-Path $c 'package.json') -Raw | ConvertFrom-Json
+              if ($pkg.name -eq 'ruta-craft-osm') {
+                $osmDir = $c
+                break
+              }
+            }
+          }
+
+          if (-not $osmDir) {
+            $pkgFiles = Get-ChildItem "osm-src" -Recurse -File -Filter package.json -ErrorAction SilentlyContinue
+            foreach ($p in $pkgFiles) {
+              try {
+                $pkg = Get-Content $p.FullName -Raw | ConvertFrom-Json
+                if ($pkg.name -eq 'ruta-craft-osm') {
+                  $osmDir = $p.DirectoryName
+                  break
+                }
+              }
+              catch {
+              }
+            }
+          }
+
+          if (-not $osmDir) {
+            throw "No se encontró el package.json de ruta-craft-osm en osm-src"
+          }
+
+          Push-Location $osmDir
           $preferred = 'ruta-craft-osm-0.0.7.tgz'
           if (Test-Path $preferred) {
             $tgz = $preferred
@@ -111,11 +147,13 @@ jobs:
           }
 
           if (-not $tgz -or -not (Test-Path $tgz)) {
+            Pop-Location
             throw "No se generó/encontró el paquete tgz de ruta-craft-osm"
           }
 
           New-Item -Path "$env:GITHUB_WORKSPACE\osm-artifacts" -ItemType Directory -Force | Out-Null
           Copy-Item $tgz "$env:GITHUB_WORKSPACE\osm-artifacts\$tgz" -Force
+          Pop-Location
           "osm_tgz_name=$tgz" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Debug secret availability (safe)
