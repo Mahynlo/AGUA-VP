@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useFacturas } from "../context/FacturasContext";
+import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
 export const useTabFacturas = () =>{
   const { facturas, pagination, loading, initialLoading, fetchFacturas, estadisticas, actualizarFacturas } = useFacturas();
@@ -7,7 +8,7 @@ export const useTabFacturas = () =>{
   // Estados de filtros y búsqueda
   const [search, setSearch] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("All");
-  const [filtroPeriodo, setFiltroPeriodo] = useState("2025-12");
+  const [filtroPeriodo, setFiltroPeriodo] = useState(obtenerPeriodoActual());
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   

@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react";
 import { useAuth } from "./AuthContext";
+import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
 // Crear el contexto
 const FacturasContext = createContext();
@@ -20,7 +21,7 @@ export function FacturasProvider({ children }) {
     cliente_nombre: "",
     estado: "", // "Pendiente", "Pagado", "Vencido"
     ciudad: "", // Para filtrar por pueblo
-    periodo: "2025-12", // Período por defecto
+    periodo: obtenerPeriodoActual(),
     mes_facturado: "", // "Agosto 2025", etc.
     fecha_inicio: "",
     fecha_fin: "",
@@ -40,7 +41,7 @@ export function FacturasProvider({ children }) {
 
       // Parámetros por defecto si no se envían
       const queryParams = {
-        periodo: params.periodo || filtros.periodo || "2025-12",
+        periodo: params.periodo || filtros.periodo || obtenerPeriodoActual(),
         page: params.page || 1,
         limit: params.limit || 60,
         search: params.search || '',

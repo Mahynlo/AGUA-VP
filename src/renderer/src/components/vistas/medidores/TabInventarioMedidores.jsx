@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
     Table,
     TableHeader,
@@ -21,7 +21,6 @@ import {
     Spinner
 } from "@nextui-org/react";
 import { HiSearch, HiPencilAlt, HiEye, HiTrash, HiLocationMarker, HiUser, HiCog, HiDownload } from "react-icons/hi";
-import { useMedidores } from "../../../context/MedidoresContext";
 import { useTabMedidores } from "../../../hooks/useTabMedidores";
 import RegistrarMedidor from "./RegistrarMedidores";
 import ModalDetalleMedidor from "./ModalDetalleMedidor";
@@ -30,10 +29,8 @@ import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
 
 const TabInventarioMedidores = () => {
-    // Usar el hook unificado que maneja paginación, buffer y filtros
     const {
-        medidores, // Buffer completo (60 items)
-        paginatedData, // Data visual actual (10 items)
+        paginatedData,
         loading,
         initialLoading,
         search,
@@ -41,7 +38,8 @@ const TabInventarioMedidores = () => {
         statusFilter,
         handleStatusFilterChange,
         locationFilter,
-        setLocationFilter,
+        locationOptions,
+        handleLocationFilterChange,
         currentPage,
         setCurrentPage,
         rowsPerPage,
@@ -53,28 +51,24 @@ const TabInventarioMedidores = () => {
 
     const { setSuccess, setError } = useFeedback();
 
-    // Estados para modales (se mantienen locales)
     const [selectedMedidor, setSelectedMedidor] = useState(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
 
-    // Handlers
     const handleView = (medidor) => {
         setSelectedMedidor(medidor);
         setIsViewOpen(true);
     };
 
     const handleEdit = (medidor) => {
-        console.log("TabInventario: Seleccionando para editar:", medidor); // DEBUG
         setSelectedMedidor(medidor);
         setIsEditOpen(true);
     };
 
     const handleDelete = () => {
-        setError("La eliminación de medidores no está disponible actualmente. Para retirar un medidor, cambia su estado a 'Retirado'.", "Eliminar Medidor");
+        setError("La eliminacion de medidores no esta disponible actualmente. Para retirar un medidor, cambia su estado a 'Retirado'.", "Eliminar Medidor");
     };
 
-    // --- Renderizado de celdas ---
     const renderCell = React.useCallback((medidor, columnKey) => {
         const cellValue = medidor[columnKey];
 
@@ -111,11 +105,8 @@ const TabInventarioMedidores = () => {
                         )}
                     </div>
                 );
-            case "estado":
-                // Prioridad visual: Si está cortado, mostramos "Cortado" (estado_servicio).
-                // Si está activo el servicio, mostramos el estado físico del medidor (estado_medidor).
-                const estadoVisual = medidor.estado_servicio === 'Cortado' ? 'Cortado' : medidor.estado_medidor;
-
+            case "estado": {
+                const estadoVisual = medidor.estado_servicio === "Cortado" ? "Cortado" : medidor.estado_medidor;
                 return (
                     <Chip
                         className="capitalize"
@@ -126,47 +117,36 @@ const TabInventarioMedidores = () => {
                         {estadoVisual}
                     </Chip>
                 );
+            }
             case "cliente":
                 return medidor.cliente_id ? (
-                    <div className="flex items-center gap-1">
-                        <HiUser className="w-3 h-3 text-blue-500" />
-                        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                            Asignado
-                        </span>
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1">
+                            <HiUser className="w-3 h-3 text-blue-500" />
+                            <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                Asignado
+                            </span>
+                        </div>
+                        {(medidor.cliente_nombre || medidor.numero_predio) && (
+                            <span className="text-[11px] text-gray-500 pl-4">
+                                {medidor.cliente_nombre || "Cliente"}
+                                {medidor.numero_predio ? ` · Predio ${medidor.numero_predio}` : ""}
+                            </span>
+                        )}
                     </div>
                 ) : (
-                    <span className="text-xs text-gray-400 pl-4">
-                        Disponible
-                    </span>
+                    <span className="text-xs text-gray-400 pl-4">Disponible</span>
                 );
             case "acciones":
                 return (
                     <div className="flex items-center gap-2">
-                        <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="primary"
-                            onPress={() => handleView(medidor)}
-                        >
+                        <Button isIconOnly size="sm" variant="light" color="primary" onPress={() => handleView(medidor)}>
                             <HiEye className="w-4 h-4" />
                         </Button>
-                        <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="default"
-                            onPress={() => handleEdit(medidor)}
-                        >
+                        <Button isIconOnly size="sm" variant="light" color="default" onPress={() => handleEdit(medidor)}>
                             <HiPencilAlt className="w-4 h-4" />
                         </Button>
-                        <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="danger"
-                            onPress={handleDelete}
-                        >
+                        <Button isIconOnly size="sm" variant="light" color="danger" onPress={handleDelete}>
                             <HiTrash className="w-4 h-4" />
                         </Button>
                     </div>
@@ -176,13 +156,12 @@ const TabInventarioMedidores = () => {
         }
     }, [getStatusColor]);
 
-    // Columnas
     const columns = [
         { name: "MEDIDOR", uid: "info_medidor" },
-        { name: "UBICACIÓN", uid: "ubicacion" },
+        { name: "UBICACION", uid: "ubicacion" },
         { name: "ESTADO", uid: "estado" },
         { name: "CLIENTE", uid: "cliente" },
-        { name: "ACCIONES", uid: "acciones" },
+        { name: "ACCIONES", uid: "acciones" }
     ];
 
     if (initialLoading) {
@@ -195,25 +174,21 @@ const TabInventarioMedidores = () => {
 
     return (
         <div className="space-y-6">
-
-            {/* Filtros y controles */}
             <Card>
                 <CardHeader>
                     <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold">Filtros y Búsqueda</h3>
+                        <h3 className="text-lg font-semibold">Filtros y Busqueda</h3>
                     </div>
                 </CardHeader>
                 <CardBody>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-
-                        {/* Búsqueda */}
                         <div className="lg:col-span-2">
                             <div className="relative w-full flex">
                                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
                                     <HiSearch className="inline-block mr-2" />
                                 </span>
                                 <input
-                                    placeholder="Buscar por serie, marca..."
+                                    placeholder="Buscar por serie, marca, cliente o predio..."
                                     value={search}
                                     onChange={(e) => handleSearch(e.target.value)}
                                     className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -223,13 +198,12 @@ const TabInventarioMedidores = () => {
                                         onClick={() => handleSearch("")}
                                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
                                     >
-                                        ✕
+                                        x
                                     </button>
                                 )}
                             </div>
                         </div>
 
-                        {/* Filtro de Estado */}
                         <Select
                             label="Estado"
                             placeholder="Todos"
@@ -242,20 +216,22 @@ const TabInventarioMedidores = () => {
                             <SelectItem key="Inactivo" value="Inactivo">Inactivo</SelectItem>
                             <SelectItem key="Mantenimiento" value="Mantenimiento">Mantenimiento</SelectItem>
                             <SelectItem key="Cortado" value="Cortado">Cortado</SelectItem>
+                            <SelectItem key="Retirado" value="Retirado">Retirado</SelectItem>
                         </Select>
 
-                        {/* Filtro de Ubicación (Texto libre ya que medidores no tienen FK a ciudad estricta a veces) */}
-                        <div className="lg:col-span-1">
-                            <input
-                                placeholder="Filtrar ubicación..."
-                                value={locationFilter}
-                                onChange={(e) => setLocationFilter(e.target.value)}
-                                className="border border-gray-300 text-gray-600 rounded-xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            />
-                        </div>
+                        <Select
+                            label="Ubicacion"
+                            placeholder="Todas"
+                            selectedKeys={[locationFilter]}
+                            onChange={(e) => handleLocationFilterChange(e.target.value)}
+                            size="sm"
+                        >
+                            <SelectItem key="All" value="All">Todas</SelectItem>
+                            {locationOptions.map((ubicacion) => (
+                                <SelectItem key={ubicacion} value={ubicacion}>{ubicacion}</SelectItem>
+                            ))}
+                        </Select>
 
-
-                        {/* Botón de Agregar y Exportar */}
                         <div className="flex items-end justify-end gap-2">
                             <Dropdown>
                                 <DropdownTrigger>
@@ -267,43 +243,41 @@ const TabInventarioMedidores = () => {
                                         Exportar
                                     </Button>
                                 </DropdownTrigger>
-                                <DropdownMenu aria-label="Opciones de exportación">
+                                <DropdownMenu aria-label="Opciones de exportacion">
                                     <DropdownItem
                                         key="csv"
                                         startContent={<span className="text-xl">📄</span>}
                                         onPress={async () => {
-                                            const success = await exportData(paginatedData, `Inventario_Medidores_${new Date().toISOString().split('T')[0]}`, 'csv');
+                                            const success = await exportData(paginatedData, `Inventario_Medidores_${new Date().toISOString().split("T")[0]}`, "csv");
                                             if (success) setSuccess("Archivo CSV generado exitosamente");
                                         }}
                                     >
-                                        Exportar CSV (Página actual)
+                                        Exportar CSV (Pagina actual)
                                     </DropdownItem>
                                     <DropdownItem
                                         key="excel"
                                         startContent={<span className="text-xl">📊</span>}
                                         onPress={async () => {
-                                            const success = await exportData(paginatedData, `Inventario_Medidores_${new Date().toISOString().split('T')[0]}`, 'xlsx');
+                                            const success = await exportData(paginatedData, `Inventario_Medidores_${new Date().toISOString().split("T")[0]}`, "xlsx");
                                             if (success) setSuccess("Archivo Excel generado exitosamente");
                                         }}
                                     >
-                                        Exportar Excel (Página actual)
+                                        Exportar Excel (Pagina actual)
                                     </DropdownItem>
                                 </DropdownMenu>
                             </Dropdown>
 
                             <RegistrarMedidor />
                         </div>
-
                     </div>
 
-                    {/* Resumen y Selector de Filas */}
                     <div className="flex justify-between items-center mt-4 text-sm text-gray-600 dark:text-gray-400">
                         <span>
                             Mostrando {paginatedData.length} de {totalItems} medidores
                         </span>
 
                         <Select
-                            label="Por página"
+                            label="Por pagina"
                             size="sm"
                             className="w-32"
                             selectedKeys={[rowsPerPage.toString()]}
@@ -320,14 +294,11 @@ const TabInventarioMedidores = () => {
                 </CardBody>
             </Card>
 
-            {/* Tabla */}
             <Card>
                 <CardBody className="p-0">
                     <Table
                         aria-label="Tabla de inventario de medidores"
-                        classNames={{
-                            wrapper: "min-h-[400px]",
-                        }}
+                        classNames={{ wrapper: "min-h-[400px]" }}
                     >
                         <TableHeader columns={columns}>
                             {(column) => (
@@ -356,7 +327,6 @@ const TabInventarioMedidores = () => {
                 </CardBody>
             </Card>
 
-            {/* Paginación */}
             {totalPages > 1 && (
                 <div className="flex justify-center pb-4">
                     <Pagination
@@ -370,7 +340,6 @@ const TabInventarioMedidores = () => {
                 </div>
             )}
 
-            {/* Modales */}
             <ModalDetalleMedidor
                 isOpen={isViewOpen}
                 onClose={() => setIsViewOpen(false)}

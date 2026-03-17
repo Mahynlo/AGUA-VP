@@ -34,7 +34,7 @@ export const useTabClientes = () => {
           ciudad: cityFilter === "All" ? "" : cityFilter,
           estado: statusFilter === "All" ? "" : statusFilter
       });
-  }, [debouncedSearch, cityFilter, statusFilter, apiPage, fetchClientes]); // rowsPerPage no está porque solo afecta apiPage
+    }, [debouncedSearch, cityFilter, statusFilter, apiPage, fetchClientes]); // rowsPerPage no está porque solo afecta apiPage
 
   // Obtener listas únicas para filtros
   const ciudades = useMemo(() => {
@@ -86,6 +86,15 @@ export const useTabClientes = () => {
     setCurrentPage(1);
   };
 
+  const clearFilters = () => {
+    setSearch("");
+    setCityFilter("All");
+    setStatusFilter("All");
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = search.trim() !== "" || cityFilter !== "All" || statusFilter !== "All";
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Activo": return "success";
@@ -114,6 +123,8 @@ export const useTabClientes = () => {
     handleCityFilterChange,
     handleStatusFilterChange,
     handleRowsPerPageChange,
+    clearFilters,
+    hasActiveFilters,
     setCurrentPage,
     getStatusColor
   };

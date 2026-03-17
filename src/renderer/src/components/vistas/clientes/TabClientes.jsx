@@ -51,6 +51,8 @@ export function TabClientes() {
         handleCityFilterChange,
         handleStatusFilterChange,
         handleRowsPerPageChange,
+        clearFilters,
+        hasActiveFilters,
         setCurrentPage,
         getStatusColor
     } = useTabClientes();
@@ -106,7 +108,7 @@ export function TabClientes() {
                                     <SearchIcon className="inline-block mr-2" />
                                 </span>
                                 <input
-                                    placeholder="Buscar por nombre o dirección..."
+                                    placeholder="Buscar por nombre, dirección, tel., correo o predio..."
                                     value={search}
                                     onChange={(e) => handleSearch(e.target.value)}
                                     className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -159,6 +161,11 @@ export function TabClientes() {
 
                         {/* Botón Agregar Cliente */}
                         <div className="flex items-end gap-2">
+                            {hasActiveFilters && (
+                                <Button variant="flat" onPress={clearFilters}>
+                                    Limpiar
+                                </Button>
+                            )}
                             <Dropdown>
                                 <DropdownTrigger>
                                     <Button

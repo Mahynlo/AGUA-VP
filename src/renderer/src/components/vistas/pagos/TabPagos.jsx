@@ -21,6 +21,8 @@ import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { HiEye, HiCurrencyDollar, HiCash, HiCalendar, HiDownload } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useTabPagos } from "../../../hooks/useTabPagos";
+import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
+import { formatearPeriodo } from "../../../utils/periodoUtils";
 import ModalDetallePago from "./ModalDetallePago";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
 import { exportData } from "../../../utils/exportUtils";
@@ -78,30 +80,8 @@ const TabPagos = () => {
   const [modalDetalle, setModalDetalle] = useState(false);
   const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
 
-  // Generar opciones de períodos (últimos 12 meses)
-  const generarOpcionesPeriodos = () => {
-    const opciones = [];
-    const fechaActual = new Date();
-
-    for (let i = 0; i < 12; i++) {
-      const fecha = new Date(fechaActual.getFullYear(), fechaActual.getMonth() - i, 1);
-      const año = fecha.getFullYear();
-      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-      const periodo = `${año}-${mes}`;
-
-      const nombreMes = fecha.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
-      opciones.push({
-        value: periodo,
-        label: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)
-      });
-    }
-    return opciones;
-  };
-
-  const opcionesPeriodos = generarOpcionesPeriodos();
-
   // Obtener etiqueta del período seleccionado
-  const periodoLabel = opcionesPeriodos.find(p => p.value === filtroPeriodo)?.label || filtroPeriodo;
+  const periodoLabel = formatearPeriodo(filtroPeriodo);
 
   // Función para detectar múltiples pagos por factura
   const obtenerInfoPagosPorFactura = (facturaId) => {
@@ -232,25 +212,15 @@ const TabPagos = () => {
             </div>
 
             {/* Filtro por período */}
-            <Select
-              label="Período"
-              placeholder="Seleccionar período"
-              selectedKeys={filtroPeriodo ? [filtroPeriodo] : []}
+            <SelectorPeriodoAvanzado
+              value={filtroPeriodo}
               onChange={handlePeriodoChange}
-              className="w-full"
-              variant="bordered"
-              startContent={<HiCalendar className="w-4 h-4 text-gray-500" />}
-            >
-              {opcionesPeriodos.map((opcion) => (
-                <SelectItem
-                  key={opcion.value}
-                  value={opcion.value}
-                  textValue={opcion.label}
-                >
-                  {opcion.label}
-                </SelectItem>
-              ))}
-            </Select>
+              label="Período"
+              placeholder="Buscar y seleccionar período"
+              startYear={2020}
+              size="sm"
+              isDisabled={loading}
+            />
 
             {/* Filtro por método de pago */}
             <Select

@@ -2,12 +2,12 @@ import { useState, useMemo, useEffect } from "react";
 import { useMedidores } from "../context/MedidoresContext";
 
 export const useTabMedidores = () => {
-  const { medidores, loading, initialLoading, fetchMedidores, pagination } = useMedidores();
+  const { medidores, allMedidores, loading, initialLoading, fetchMedidores, pagination } = useMedidores();
 
   // Estados locales para filtros y paginación UI
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [locationFilter, setLocationFilter] = useState(""); // Filtro de text para ubicación
+  const [locationFilter, setLocationFilter] = useState("All");
   
   // Paginación UI
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,6 +24,15 @@ export const useTabMedidores = () => {
       }, 500);
       return () => clearTimeout(timer);
   }, [search, locationFilter]);
+
+  const locationOptions = useMemo(() => {
+    const unique = new Set();
+    (allMedidores || []).forEach((m) => {
+      const value = (m?.ubicacion || "").trim();
+      if (value) unique.add(value);
+    });
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  }, [allMedidores]);
 
   // Constante de buffer (Mínimo Común Múltiplo de 5, 10, 15, 20 para alineación perfecta)
   const FETCH_LIMIT = 60;
@@ -81,6 +90,11 @@ export const useTabMedidores = () => {
     setCurrentPage(1);
   };
 
+  const handleLocationFilterChange = (value) => {
+    setLocationFilter(value || "All");
+    setCurrentPage(1);
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Activo": return "success";
@@ -100,13 +114,14 @@ export const useTabMedidores = () => {
     search,
     statusFilter,
     locationFilter,
-    setLocationFilter,
+    locationOptions,
     currentPage,
     rowsPerPage,
     totalPages,
     totalItems,
     handleSearch,
     handleStatusFilterChange,
+    handleLocationFilterChange,
     handleRowsPerPageChange,
     setCurrentPage,
     getStatusColor

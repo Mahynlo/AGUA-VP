@@ -2,7 +2,7 @@
 // Hook para manejar la lógica de la pestaña de rutas (filtros, paginación, estadísticas)
 
 import { useState, useEffect, useMemo } from "react";
-import { calcularEstadisticasRutas, generarOpcionesPeriodo } from "../utils/rutaUtils";
+import { calcularEstadisticasRutas } from "../utils/rutaUtils";
 import { useRutas } from "../context/RutasContext";
 
 /**
@@ -41,8 +41,6 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
      return () => clearTimeout(timer);
   }, [search]);
 
-  const opcionesPeriodo = useMemo(() => generarOpcionesPeriodo(12), []);
-  
   // Effect: Actualizar datos al cambiar filtros, página o refreshToken
   useEffect(() => {
     fetchRutas({
@@ -121,7 +119,6 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
     rutasFiltradas: rutasPaginadas, // Compatibilidad
     rutasPaginadas,
     estadisticas,
-    opcionesPeriodo,
     
     // Utilidades
     limpiarFiltros

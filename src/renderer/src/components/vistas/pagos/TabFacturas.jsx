@@ -26,6 +26,8 @@ import { HiEye, HiCreditCard, HiCalendar, HiCurrencyDollar } from "react-icons/h
 import { useNavigate } from "react-router-dom";
 import { useTabFacturas } from "../../../hooks/useTabFacturas";
 import { usePagos } from "../../../context/PagosContext";
+import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
+import { formatearPeriodo } from "../../../utils/periodoUtils";
 import ModalDetalleFactura from "./ModalDetalleFactura";
 import ModalPago from "./ModalPago";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
@@ -92,31 +94,8 @@ const TabFacturas = () => {
     return <LoadingSkeleton />;
   }
 
-  // Generar opciones de períodos (últimos 12 meses)
-  const generarOpcionesPeriodos = () => {
-    const opciones = [];
-    const fechaActual = new Date();
-
-    for (let i = 0; i < 12; i++) {
-      const fecha = new Date(fechaActual.getFullYear(), fechaActual.getMonth() - i, 1);
-      const año = fecha.getFullYear();
-      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-      const periodo = `${año}-${mes}`;
-
-      const nombreMes = fecha.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
-      opciones.push({
-        value: periodo,
-        label: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)
-      });
-    }
-
-    return opciones;
-  };
-
-  const opcionesPeriodos = generarOpcionesPeriodos();
-
   // Obtener etiqueta del período seleccionado
-  const periodoLabel = opcionesPeriodos.find(p => p.value === filtroPeriodo)?.label || filtroPeriodo;
+  const periodoLabel = formatearPeriodo(filtroPeriodo);
 
   const handleVerDetalle = (factura) => {
     setFacturaSeleccionada(factura);
@@ -249,22 +228,15 @@ const TabFacturas = () => {
             </div>
 
             {/* Filtro por período */}
-            <Select
+            <SelectorPeriodoAvanzado
+              value={filtroPeriodo}
+              onChange={handlePeriodoChange}
               label="Período"
-              placeholder="Seleccionar período"
-              selectedKeys={filtroPeriodo ? [filtroPeriodo] : []}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0];
-                if (value) handlePeriodoChange(value);
-              }}
+              placeholder="Buscar y seleccionar período"
+              startYear={2020}
+              size="sm"
               isDisabled={loading}
-            >
-              {opcionesPeriodos.map((opcion) => (
-                <SelectItem key={opcion.value} value={opcion.value}>
-                  {opcion.label}
-                </SelectItem>
-              ))}
-            </Select>
+            />
 
             {/* Filtro por estado */}
             <Select

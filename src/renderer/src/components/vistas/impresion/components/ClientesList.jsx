@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Card, CardBody, CardHeader, Chip, Checkbox, Button, Select, SelectItem } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Chip, Checkbox, Button } from "@nextui-org/react";
 import { HiUsers, HiSearch } from "react-icons/hi";
-import { generarOpcionesPeriodos } from "../../../../utils/reciboUtils";
+import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
 
 /**
  * Componente para lista de clientes con checkboxes
@@ -17,7 +17,6 @@ const ClientesList = ({
   loading
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const opcionesPeriodos = generarOpcionesPeriodos();
 
   const clientesFiltrados = clientes.filter(c =>
     c.cliente_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,27 +75,16 @@ const ClientesList = ({
           </div>
 
           {/* Selector de Periodo */}
-          <Select
-            placeholder="Seleccionar período"
-            selectedKeys={periodoSeleccionado ? [periodoSeleccionado] : []}
-            onSelectionChange={(keys) => {
-              const selected = Array.from(keys)[0];
-              if (selected) onCambioPeriodo(selected);
-            }}
-            className="w-full"
+          <SelectorPeriodoAvanzado
+            value={periodoSeleccionado}
+            onChange={onCambioPeriodo}
+            label="Período"
+            placeholder="Buscar y seleccionar período"
+            startYear={2020}
             size="sm"
-            classNames={{
-              trigger: "h-10 border border-gray-300 rounded-xl bg-white dark:bg-neutral-800"
-            }}
-            isLoading={loading}
-            aria-label="Seleccionar periodo"
-          >
-            {opcionesPeriodos.map((opcion) => (
-              <SelectItem key={opcion.value} value={opcion.value}>
-                {opcion.label}
-              </SelectItem>
-            ))}
-          </Select>
+            isDisabled={loading}
+            className="w-full"
+          />
         </div>
       </CardHeader>
 

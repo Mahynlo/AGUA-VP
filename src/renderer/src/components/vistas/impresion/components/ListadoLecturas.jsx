@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Card, CardBody, CardHeader, Input, Select, SelectItem } from "@nextui-org/react";
-import { HiUsers, HiSearch, HiCalendar, HiLocationMarker } from "react-icons/hi";
-import { generarOpcionesPeriodos } from "../../../../utils/reciboUtils";
+import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { HiUsers, HiSearch, HiLocationMarker } from "react-icons/hi";
+import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
 
 /**
  * Componente para listar lecturas (Solo lectura)
@@ -14,7 +14,6 @@ const ListadoLecturas = ({
     loading
 }) => {
     const [searchTerm, setSearchTerm] = useState("");
-    const opcionesPeriodos = generarOpcionesPeriodos();
 
     // Aplanar datos para búsqueda si vienen agrupados
     const itemsPlanos = React.useMemo(() => {
@@ -80,35 +79,15 @@ const ListadoLecturas = ({
                         )}
                     </div>
 
-                    {/* Period Selector Style */}
-                    {/* Period Selector Style */}
-                    <Select
-                        placeholder="Seleccionar período"
-                        selectedKeys={[periodo]}
-                        onSelectionChange={(keys) => {
-                            const selected = Array.from(keys)[0];
-                            if (selected) setPeriodo(selected);
-                        }}
-                        className="w-full"
+                    <SelectorPeriodoAvanzado
+                        value={periodo}
+                        onChange={setPeriodo}
+                        label="Período"
+                        placeholder="Buscar y seleccionar período"
+                        startYear={2020}
                         size="sm"
-                        classNames={{
-                            trigger: "h-10 border border-gray-300 rounded-xl bg-white dark:bg-neutral-800"
-                        }}
-                        renderValue={(items) => {
-                            return items.map(item => (
-                                <div key={item.key} className="flex items-center gap-2">
-                                    <HiCalendar className="text-gray-500" />
-                                    <span>{item.textValue}</span>
-                                </div>
-                            ));
-                        }}
-                    >
-                        {opcionesPeriodos.map((opcion) => (
-                            <SelectItem key={opcion.value} value={opcion.value} textValue={opcion.label}>
-                                {opcion.label}
-                            </SelectItem>
-                        ))}
-                    </Select>
+                        className="w-full"
+                    />
                 </div>
             </CardHeader>
 

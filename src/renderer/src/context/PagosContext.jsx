@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext, useCallback } from "react";
 import { useAuth } from "./AuthContext";
+import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
 // Crear el contexto
 const PagosContext = createContext();
@@ -15,7 +16,7 @@ export function PagosProvider({ children }) {
 
   // Agregar estado persistente de filtros
   const [filtros, setFiltros] = useState({
-    periodo: new Date().toISOString().slice(0, 7), // "YYYY-MM"
+    periodo: obtenerPeriodoActual(),
     search: "",
     metodo_pago: "",
     page: 1,

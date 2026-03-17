@@ -13,6 +13,7 @@ import imagenAdivino from "../../../assets/images/Adivino_mapa_ruta.png";
 import { useRutas } from "../../../context/RutasContext";
 import { useTabRutas } from "../../../hooks/useTabRutas";
 import { prefijoDominante, imgPorPrefijo } from "../../../utils/rutaUtils";
+import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
 
 export default function TabRutas() {
   const navigate = useNavigate();
@@ -36,7 +37,6 @@ export default function TabRutas() {
     totalPaginas,
     rutasPaginadas,
     estadisticas,
-    opcionesPeriodo,
     limpiarFiltros
   } = useTabRutas(rutas, actualizarRutas, periodoActual);
 
@@ -125,82 +125,69 @@ export default function TabRutas() {
           </div>
 
           {/* Filtros mejorados */}
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
             {/* Buscador */}
-            <div className="flex-1 max-w-md">
-
-
-              <div className="relative w-full flex">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                  <HiSearch className="inline-block mr-2" />
-                </span>
-                <input
-                  placeholder="Buscar rutas..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="border  border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                />
-                {/* Botón para limpiar */}
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
+            <div className="relative w-full flex">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                <HiSearch className="inline-block mr-2" />
+              </span>
+              <input
+                placeholder="Buscar rutas..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
-            {/* Filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Período */}
+            <SelectorPeriodoAvanzado
+              value={periodoSel || periodoActual}
+              onChange={setPeriodoSel}
+              label="Período"
+              placeholder="Seleccionar período"
+              startYear={2020}
+              size="sm"
+              isDisabled={loading}
+            />
 
-              <Select
-                label="Período"
-                placeholder="Seleccionar período"
-                selectedKeys={[periodoSel || periodoActual]}
-                onChange={(e) => setPeriodoSel(e.target.value)}
-                variant="bordered"
-                size="sm"
-                className="min-w-[160px]"
-                startContent={<HiCalendar className="text-gray-400" />}
-              >
-                {opcionesPeriodo.map(o => (
-                  <SelectItem key={o.val} value={o.val}>{o.label}</SelectItem>
-                ))}
-              </Select>
+            {/* Ciudad */}
+            <Select
+              label="Ciudad"
+              placeholder="Todas las ciudades"
+              selectedKeys={[filtroPueblo]}
+              onChange={(e) => setPueblo(e.target.value)}
+              variant="bordered"
+              size="sm"
+              startContent={<HiMap className="text-gray-400" />}
+            >
+              <SelectItem key="todos" value="todos">Todas</SelectItem>
+              <SelectItem key="ng" value="ng">Nácori</SelectItem>
+              <SelectItem key="mp" value="mp">Matapé</SelectItem>
+              <SelectItem key="ad" value="ad">Adivino</SelectItem>
+            </Select>
 
-              <Select
-                label="Ciudad"
-                placeholder="Todas las ciudades"
-                selectedKeys={[filtroPueblo]}
-                onChange={(e) => setPueblo(e.target.value)}
-                variant="bordered"
-                size="sm"
-                className="min-w-[140px]"
-                startContent={<HiMap className="text-gray-400" />}
-              >
-                <SelectItem key="todos" value="todos">Todas</SelectItem>
-                <SelectItem key="ng" value="ng">Nácori</SelectItem>
-                <SelectItem key="mp" value="mp">Matapé</SelectItem>
-                <SelectItem key="ad" value="ad">Adivino</SelectItem>
-              </Select>
-
-              <Select
-                label="Estado"
-                placeholder="Todos los estados"
-                selectedKeys={[filtro]}
-                onChange={(e) => setFiltro(e.target.value)}
-                variant="bordered"
-                size="sm"
-                className="min-w-[140px]"
-                startContent={<HiFilter className="text-gray-400" />}
-              >
-                <SelectItem key="todos" value="todos">Todos</SelectItem>
-                <SelectItem key="completas" value="completas">Completas</SelectItem>
-                <SelectItem key="incompletas" value="incompletas">Pendientes</SelectItem>
-              </Select>
-            </div>
+            {/* Estado */}
+            <Select
+              label="Estado"
+              placeholder="Todos los estados"
+              selectedKeys={[filtro]}
+              onChange={(e) => setFiltro(e.target.value)}
+              variant="bordered"
+              size="sm"
+              startContent={<HiFilter className="text-gray-400" />}
+            >
+              <SelectItem key="todos" value="todos">Todos</SelectItem>
+              <SelectItem key="completas" value="completas">Completas</SelectItem>
+              <SelectItem key="incompletas" value="incompletas">Pendientes</SelectItem>
+            </Select>
           </div>
         </CardBody>
       </Card>

@@ -64,8 +64,8 @@ export const useTabPagos = () => {
     setCurrentPage(1);
   };
 
-  const handlePeriodoChange = (e) => {
-    const nuevoPeriodo = e.target.value;
+  const handlePeriodoChange = (nuevoPeriodo) => {
+    if (!nuevoPeriodo) return;
     // Actualizar contexto
     fetchPagos({ periodo: nuevoPeriodo, page: 1 });
     setCurrentPage(1);
