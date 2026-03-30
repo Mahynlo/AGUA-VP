@@ -16,8 +16,9 @@ const useImpresionRecibos = () => {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState("");
   const [clientesSeleccionados, setClientesSeleccionados] = useState(new Set());
   const [procesandoAccion, setProcesandoAccion] = useState(null);
-  const [pdfUrl, setPdfUrl] = useState(null);   // Ruta file:// del PDF temporal (para el iframe)
+  const [pdfUrl, setPdfUrl] = useState(null);     // Ruta file:// del PDF temporal (para el visor)
   const [printUrl, setPrintUrl] = useState(null); // URL React original (para impresión silenciosa)
+  const [modoPdf, setModoPdf] = useState(null);   // 'imprimir' | 'vista-previa' | null
   
   // Consumir contexto de reportes
   const { recibos, loading, cargarRecibos } = useReportes();
@@ -103,6 +104,7 @@ const useImpresionRecibos = () => {
         if (response && response.success && response.path) {
           setPrintUrl(batchPrintUrl);
           setPdfUrl(response.path);
+          setModoPdf('imprimir');
         }
         setProcesandoAccion(null);
     } catch (err) {
@@ -135,8 +137,9 @@ const useImpresionRecibos = () => {
         console.log('Preview response:', response);
 
         if (response && response.success && response.path) {
-          setPrintUrl(previewUrl); // Guardar URL para impresión silenciosa desde el modal
+          setPrintUrl(previewUrl);
           setPdfUrl(response.path);
+          setModoPdf('vista-previa');
         } else {
           // Fallback legacy (si devolviera solo string)
           console.warn('Respuesta inesperada del preview:', response);
@@ -183,6 +186,8 @@ const useImpresionRecibos = () => {
     procesandoAccion,
     pdfUrl,
     printUrl,
+    modoPdf,
+    setModoPdf,
     
     // Datos computados
     clientesConFacturasYLecturas: recibos,

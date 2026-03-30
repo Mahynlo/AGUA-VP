@@ -1,4 +1,4 @@
-import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png'
+import { useAppLogo } from '../../context/LogoContext';
 import BarChartRecibo from '../charts/BarChartResibo';
 import { InfoResibosIcon, ValanzaResibosIcon } from '../../IconsApp/IconsResibos';
 import { useSearchParams } from 'react-router-dom';
@@ -25,6 +25,7 @@ const formatearFecha = (value) => {
 };
 
 const Recibo = ({ facturaData = null }) => {
+    const { logoSrc } = useAppLogo();
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
 
@@ -105,7 +106,7 @@ const Recibo = ({ facturaData = null }) => {
                 {/* --- HEADER --- */}
                 <div className="col-span-4 border-2 border-solid rounded-xl p-2 flex items-center shadow-sm print:shadow-none"
                     style={{ backgroundColor: ESTILOS.rojoHeader, borderColor: ESTILOS.rojoHeader }}>
-                    <img src={logoagua} className="h-[80px] mr-2 drop-shadow-sm print:drop-shadow-none" alt="Logo Agua" />
+                    <img src={logoSrc} className="h-[80px] mr-2 drop-shadow-sm print:drop-shadow-none" alt="Logo Agua" />
                     <div className="text-white">
                         <p className='text-[16px] font-bold uppercase leading-tight'>Cuidemos del Agua</p>
                         <p className='text-[12px] font-normal opacity-95'>Comisión Municipal de Agua Potable y Alcantarillado</p>
@@ -272,7 +273,7 @@ const Recibo = ({ facturaData = null }) => {
                 <div className="col-span-4 row-span-6 border-2 border-gray-200 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden bg-gray-50/50">
                     
                     {/* Marca de agua sutil de fondo */}
-                    <img src={logoagua} alt="Watermark" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 w-64 grayscale pointer-events-none" />
+                    <img src={logoSrc} alt="Watermark" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 w-64 grayscale pointer-events-none" />
 
                     <div className="text-center border-b-2 border-gray-200 pb-2 mb-2 z-10">
                         <h2 className="text-lg font-bold text-gray-800 uppercase tracking-widest">Información Importante para el Usuario</h2>

@@ -99,15 +99,17 @@ export default function IpcHandlers () {
           return;
         }
         
-        let win = new BrowserWindow({ 
+        let win = new BrowserWindow({
           show: false,
           backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
           webPreferences: {
+            sandbox: false,
             nodeIntegration: false,
             contextIsolation: true,
             cache: false,
             webSecurity: app.isPackaged || !url.includes('localhost'),
-            allowRunningInsecureContent: !app.isPackaged && url.includes('localhost')
+            allowRunningInsecureContent: !app.isPackaged && url.includes('localhost'),
+            preload: path.join(__dirname, '../preload/index.js')
           }
         });
       
@@ -293,7 +295,7 @@ export default function IpcHandlers () {
               win.show();
               reject(error);
              });
-          }, 2500); // 2.5s delay para asegurar que las gráficas carguen
+          }, 4000); // 4s delay: asegura que isPrintMode omita PantallaCarga y que las gráficas carguen
         });
 
       });
@@ -778,6 +780,45 @@ export default function IpcHandlers () {
     });
 
     // ============================================================
+    // SELECCIONAR IMÁGENES DE LOGIN — multi-selección, devuelve array base64
+    // ======================================================================
+    ipcMain.handle('select-login-images', async (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+            title: 'Seleccionar Imágenes del Login',
+            filters: [{ name: 'Imágenes', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+            properties: ['openFile', 'multiSelections']
+        });
+        if (canceled || !filePaths.length) return { canceled: true };
+        const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', png: 'image/png' };
+        const results = await Promise.all(filePaths.map(async (filePath) => {
+            const ext = path.extname(filePath).slice(1).toLowerCase();
+            const mime = mimeMap[ext] || 'image/png';
+            const data = await fs.promises.readFile(filePath);
+            return `data:${mime};base64,${data.toString('base64')}`;
+        }));
+        return { success: true, data: results };
+    });
+
+    // SELECCIONAR LOGO — abre diálogo de archivo, devuelve base64
+    // ============================================================
+    ipcMain.handle('select-logo', async (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+            title: 'Seleccionar Logo de la Aplicación',
+            filters: [{ name: 'Imágenes', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+            properties: ['openFile']
+        });
+        if (canceled || !filePaths.length) return { canceled: true };
+        const filePath = filePaths[0];
+        const ext = path.extname(filePath).slice(1).toLowerCase();
+        const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', png: 'image/png' };
+        const mime = mimeMap[ext] || 'image/png';
+        const data = await fs.promises.readFile(filePath);
+        return { success: true, data: `data:${mime};base64,${data.toString('base64')}` };
+    });
+
+    // ============================================================
     // IMPRESIÓN SILENCIOSA — sin diálogo del OS
     // El usuario elige la impresora y opciones desde la UI React
     // ============================================================
@@ -789,11 +830,13 @@ export default function IpcHandlers () {
           show: false,
           backgroundColor: '#ffffff',
           webPreferences: {
+            sandbox: false,
             nodeIntegration: false,
             contextIsolation: true,
             cache: false,
             webSecurity: app.isPackaged || !url.includes('localhost'),
-            allowRunningInsecureContent: !app.isPackaged && url.includes('localhost')
+            allowRunningInsecureContent: !app.isPackaged && url.includes('localhost'),
+            preload: path.join(__dirname, '../preload/index.js')
           }
         });
 

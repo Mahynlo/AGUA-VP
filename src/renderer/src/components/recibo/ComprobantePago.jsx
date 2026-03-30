@@ -4,7 +4,7 @@
  * Diseño vertical (portrait), una sola hoja.
  */
 
-import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
+import { useAppLogo } from '../../context/LogoContext';
 import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
@@ -45,6 +45,7 @@ const Fila = ({ label, value, bold }) => (
 // ─── Comprobante individual ────────────────────────────────────────────────
 
 const Comprobante = ({ data }) => {
+    const { logoSrc } = useAppLogo();
     if (!data) return null;
 
     const { folio_pago, factura, pago, cambio, operador, fecha_hora_emision, es_pago_parcial, historial_pagos } = data;
@@ -69,7 +70,7 @@ const Comprobante = ({ data }) => {
                 alignItems: 'center',
                 gap: '16px',
             }}>
-                <img src={logoagua} alt="Escudo" style={{ height: '56px', width: '56px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
+                <img src={logoSrc} alt="Escudo" style={{ height: '56px', width: '56px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
                 <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 800, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                         COMISARÍA DE AGUA POTABLE

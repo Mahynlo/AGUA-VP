@@ -4,9 +4,10 @@ import { Chip } from "@nextui-org/chip";
 import { Card, CardBody, CardHeader, Button, Badge, Tooltip } from "@nextui-org/react";
 import {
   HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer,
-  HiClock, HiCheckCircle, HiExclamationCircle, HiGlobeAlt, HiInformationCircle
+  HiClock, HiCheckCircle, HiExclamationCircle, HiGlobeAlt, HiInformationCircle,
+  HiCamera, HiTrash
 } from "react-icons/hi";
-import AvatarPerfil from "../../assets/images/Avatar.png";
+import defaultAvatar from "../../assets/images/Avatar.png";
 import { useAuth } from "../../context/AuthContext";
 import { formatUTCtoHermosilloSoloFecha, formatUTCtoHermosilloHora } from "../../utils/formatFecha";
 
@@ -44,6 +45,36 @@ const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placehol
 export default function PerfilPage() {
   const { user, sesiones, obtenerSesionesActivas, logout } = useAuth();
   const [closingSession, setClosingSession] = useState(null);
+
+  // Avatar por usuario
+  const avatarKey = user?.id ? `user_avatar_${user.id}` : null;
+  const [avatarSrc, setAvatarSrc] = useState(() => {
+    if (!avatarKey) return null;
+    return localStorage.getItem(avatarKey) || null;
+  });
+  const [changingAvatar, setChangingAvatar] = useState(false);
+
+  const handleChangeAvatar = async () => {
+    setChangingAvatar(true);
+    try {
+      const result = await window.api.selectLogo();
+      if (result?.success && avatarKey) {
+        localStorage.setItem(avatarKey, result.data);
+        setAvatarSrc(result.data);
+      }
+    } catch (err) {
+      console.error("Error seleccionando avatar:", err);
+    } finally {
+      setChangingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    if (avatarKey) {
+      localStorage.removeItem(avatarKey);
+      setAvatarSrc(null);
+    }
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -171,7 +202,7 @@ export default function PerfilPage() {
                 {/* Avatar */}
                 <div className="relative mb-4 mt-2">
                   <Avatar
-                    src={AvatarPerfil}
+                    src={avatarSrc || defaultAvatar}
                     className="w-28 h-28 text-large border-4 border-white dark:border-zinc-900 shadow-md bg-slate-200 dark:bg-zinc-800"
                   />
                   <Badge
@@ -181,7 +212,6 @@ export default function PerfilPage() {
                     placement="bottom-right"
                     className="w-5 h-5 border-2 border-white dark:border-zinc-900 shadow-sm"
                   >
-                    {/* Dummy div para que nextui renderice el badge correctamente */}
                     <div className="w-full h-full rounded-full"></div>
                   </Badge>
                 </div>
@@ -210,12 +240,26 @@ export default function PerfilPage() {
                   </span>
                 </div>
 
-                <Button
-                  className="w-full font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition-colors"
-                  startContent={<HiUser className="text-lg" />}
-                >
-                  Cambiar Fotografía
-                </Button>
+                <div className="flex gap-2 w-full">
+                  <Button
+                    onPress={handleChangeAvatar}
+                    isLoading={changingAvatar}
+                    className="flex-1 font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition-colors"
+                    startContent={!changingAvatar && <HiCamera className="text-lg" />}
+                  >
+                    {changingAvatar ? "Cargando..." : "Cambiar foto"}
+                  </Button>
+                  {avatarSrc && (
+                    <Button
+                      isIconOnly
+                      onPress={handleRemoveAvatar}
+                      className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      title="Eliminar foto"
+                    >
+                      <HiTrash className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </CardBody>
             </Card>
           </div>

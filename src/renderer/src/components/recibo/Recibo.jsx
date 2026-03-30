@@ -1,4 +1,4 @@
-import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png'
+import { useAppLogo } from '../../context/LogoContext';
 import BarChartRecibo from '../charts/BarChartResibo';
 import { InfoResibosIcon, ValanzaResibosIcon } from '../../IconsApp/IconsResibos';
 import { useSearchParams } from 'react-router-dom';
@@ -25,6 +25,7 @@ const formatearFecha = (value) => {
 };
 
 const Recibo = ({ facturaData = null }) => {
+    const { logoSrc } = useAppLogo();
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
 
@@ -125,7 +126,7 @@ const Recibo = ({ facturaData = null }) => {
                 {/* --- HEADER (Rojo con logo) --- */}
                 <div className="col-span-4 border-2 border-solid rounded-xl p-2 flex items-center shadow-sm"
                     style={{ backgroundColor: ESTILOS.rojoHeader, borderColor: ESTILOS.rojoHeader }}>
-                    <img src={logoagua} className="h-[80px] mr-2 drop-shadow-sm" alt="Logo Agua" />
+                    <img src={logoSrc} className="h-[80px] mr-2 drop-shadow-sm" alt="Logo Agua" />
                     <div className="text-white">
                         <p className='text-[16px] font-bold uppercase leading-tight'>
                             Cuidemos del Agua

@@ -3,6 +3,7 @@ import { Card, CardBody, CardHeader, Button, Select, SelectItem } from "@nextui-
 import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport } from "react-icons/hi";
 import ListadoLecturas from "./components/ListadoLecturas";
 import ModalVistaPrevia from "./components/ModalVistaPrevia";
+import ModalImprimir from "./components/ModalImprimir";
 import { useReportes } from "../../../context/ReportesContext";
 import { exportData } from "../../../utils/exportUtils";
 
@@ -16,7 +17,10 @@ const TabReportes = () => {
   } = useReportes();
 
   const [periodo, setPeriodo] = useState(new Date().toISOString().slice(0, 7));
-  const [pdfUrl, setPdfUrl] = useState(null); // Estado para modal PDF
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [printUrl, setPrintUrl] = useState(null);
+  const [modoPdf, setModoPdf] = useState(null);   // 'vista-previa' | 'imprimir' | null
+  const [loadingImprimir, setLoadingImprimir] = useState(false);
 
   // --- LECTURAS: Opciones de impresión ---
   const [ordenLecturas, setOrdenLecturas] = useState("numero_predio"); 
@@ -106,13 +110,12 @@ const TabReportes = () => {
   const handlePreviewPadron = async () => {
     const url = await getUrlPadron();
     if (!url) return;
-
     try {
-      if (window.api && window.api.previewComponent) {
-        const response = await window.api.previewComponent(url);
-        if (response && response.success && response.path) {
-          setPdfUrl(response.path);
-        }
+      const response = await window.api.previewComponent(url);
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf('vista-previa');
       }
     } catch (err) {
       console.error("Error generating padron preview:", err);
@@ -123,13 +126,19 @@ const TabReportes = () => {
   const handlePrintPadron = async () => {
     const url = await getUrlPadron();
     if (!url) return;
-
+    setLoadingImprimir(true);
     try {
-      if (window.api && window.api.printComponent) {
-        window.api.printComponent(url, (res) => console.log(res));
+      const response = await window.api.previewComponent(url);
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf('imprimir');
       }
     } catch (err) {
-      console.error("Error printing padron:", err);
+      console.error("Error preparing padron print:", err);
+      alert("Error al preparar la impresión del padrón");
+    } finally {
+      setLoadingImprimir(false);
     }
   };
 
@@ -239,11 +248,11 @@ const TabReportes = () => {
     if (lecturasData.length === 0) return;
     try {
       const url = await getUrlLecturas();
-      if (window.api && window.api.previewComponent) {
-        const response = await window.api.previewComponent(url);
-        if (response && response.success && response.path) {
-          setPdfUrl(response.path); 
-        }
+      const response = await window.api.previewComponent(url);
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf('vista-previa');
       }
     } catch (err) {
       console.error("Error generating preview:", err);
@@ -253,13 +262,20 @@ const TabReportes = () => {
 
   const handlePrintLecturas = async () => {
     if (lecturasData.length === 0) return;
+    setLoadingImprimir(true);
     try {
       const url = await getUrlLecturas();
-      if (window.api && window.api.printComponent) {
-        window.api.printComponent(url, (res) => console.log(res));
+      const response = await window.api.previewComponent(url);
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf('imprimir');
       }
     } catch (err) {
-      console.error("Error printing:", err);
+      console.error("Error preparing print:", err);
+      alert("Error al preparar la impresión");
+    } finally {
+      setLoadingImprimir(false);
     }
   };
 
@@ -388,11 +404,11 @@ const TabReportes = () => {
                       color="primary"
                       className="w-full font-bold shadow-md shadow-blue-500/30"
                       onPress={handlePrintLecturas}
-                      isLoading={loadingLecturas}
-                      isDisabled={loadingLecturas}
-                      startContent={!loadingLecturas && <HiPrinter className="text-lg" />}
+                      isLoading={loadingImprimir}
+                      isDisabled={loadingLecturas || loadingImprimir}
+                      startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
                     >
-                      Enviar a Impresora
+                      {loadingImprimir ? 'Preparando...' : 'Imprimir'}
                     </Button>
                   </div>
                 ) : (
@@ -477,11 +493,11 @@ const TabReportes = () => {
               color="primary"
               className="font-bold shadow-md shadow-indigo-500/30 bg-indigo-600 hover:bg-indigo-700 text-white w-full"
               onPress={handlePrintPadron}
-              isLoading={loadingPadron}
-              isDisabled={loadingPadron}
-              startContent={!loadingPadron && <HiPrinter className="text-lg" />}
+              isLoading={loadingPadron || loadingImprimir}
+              isDisabled={loadingPadron || loadingImprimir}
+              startContent={!(loadingPadron || loadingImprimir) && <HiPrinter className="text-lg" />}
             >
-              Imprimir Padrón
+              {loadingImprimir ? 'Preparando...' : 'Imprimir Padrón'}
             </Button>
           </div>
         </CardBody>
@@ -560,15 +576,25 @@ const TabReportes = () => {
         </CardBody>
       </Card>
 
-      {/* MODAL PDF */}
-      {
-        pdfUrl && (
-          <ModalVistaPrevia
-            pdfUrl={pdfUrl}
-            onClose={() => setPdfUrl(null)}
-          />
-        )
-      }
+      {/* MODAL DE VISTA PREVIA */}
+      {pdfUrl && modoPdf === 'vista-previa' && (
+        <ModalVistaPrevia
+          pdfUrl={pdfUrl}
+          printUrl={printUrl}
+          onClose={() => { setPdfUrl(null); setPrintUrl(null); setModoPdf(null); }}
+          onImprimir={() => setModoPdf('imprimir')}
+        />
+      )}
+
+      {/* MODAL DE IMPRESIÓN (estilo navegador) */}
+      {pdfUrl && modoPdf === 'imprimir' && (
+        <ModalImprimir
+          pdfUrl={pdfUrl}
+          printUrl={printUrl}
+          onClose={() => { setPdfUrl(null); setPrintUrl(null); setModoPdf(null); }}
+          onVolver={() => setModoPdf('vista-previa')}
+        />
+      )}
     </div>
   );
 };

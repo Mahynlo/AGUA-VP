@@ -6,6 +6,7 @@ import useImpresionRecibos from "../../../hooks/useImpresionRecibos";
 import ClientesList from "./components/ClientesList";
 import AccionesImpresion from "./components/AccionesImpresion";
 import ModalVistaPrevia from "./components/ModalVistaPrevia";
+import ModalImprimir from "./components/ModalImprimir";
 
 /**
  * TabImpresion - Componente orquestador para impresión de recibos
@@ -35,8 +36,16 @@ const TabImpresion = () => {
     pdfUrl,
     setPdfUrl,
     printUrl,
-    setPrintUrl
+    setPrintUrl,
+    modoPdf,
+    setModoPdf,
   } = useImpresionRecibos();
+
+  const handleClosePdf = () => {
+    setPdfUrl(null);
+    setPrintUrl(null);
+    setModoPdf(null);
+  };
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
@@ -156,16 +165,25 @@ const TabImpresion = () => {
 
       </div>
 
-      {/* MODAL DE VISTA PREVIA / IMPRESIÓN */}
-      {
-        pdfUrl && (
-          <ModalVistaPrevia
-            pdfUrl={pdfUrl}
-            printUrl={printUrl}
-            onClose={() => { setPdfUrl(null); setPrintUrl(null); }}
-          />
-        )
-      }
+      {/* MODAL DE VISTA PREVIA */}
+      {pdfUrl && modoPdf === 'vista-previa' && (
+        <ModalVistaPrevia
+          pdfUrl={pdfUrl}
+          printUrl={printUrl}
+          onClose={handleClosePdf}
+          onImprimir={() => setModoPdf('imprimir')}
+        />
+      )}
+
+      {/* MODAL DE IMPRESIÓN (estilo navegador) */}
+      {pdfUrl && modoPdf === 'imprimir' && (
+        <ModalImprimir
+          pdfUrl={pdfUrl}
+          printUrl={printUrl}
+          onClose={handleClosePdf}
+          onVolver={() => setModoPdf('vista-previa')}
+        />
+      )}
 
     </div>
   );

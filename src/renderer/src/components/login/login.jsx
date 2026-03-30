@@ -6,13 +6,16 @@ import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle } from "reac
 
 import { useAuth } from '../../context/AuthContext';
 
-// Imágenes
-import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
-import imagenLogin from '../../assets/images/LoginPrueba.jpg';
-import imagenLogin2 from '../../assets/images/LoginPrueba2.jpg';
-import imagenLogin3 from '../../assets/images/LoginPrueba3.jpg';
+import { useAppLogo } from '../../context/LogoContext';
+import defaultImg1 from '../../assets/images/LoginPrueba.jpg';
+import defaultImg2 from '../../assets/images/LoginPrueba2.jpg';
+import defaultImg3 from '../../assets/images/LoginPrueba3.jpg';
+
+const DEFAULT_LOGIN_IMAGES = [defaultImg1, defaultImg2, defaultImg3];
 
 function LoginApp() {
+    const { logoSrc, loginImages } = useAppLogo();
+    const carouselImages = (loginImages && loginImages.length > 0) ? loginImages : DEFAULT_LOGIN_IMAGES;
     const [correo, setCorreo] = useState("");
     const [contrasena, setContrasena] = useState("");
     const [error, setError] = useState("");
@@ -101,9 +104,9 @@ function LoginApp() {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent z-10 pointer-events-none"></div>
                 
                 <Carousel slideInterval={5000} className="h-full z-0" indicators={false}>
-                    <img src={imagenLogin} alt="Villa Pesqueira 1" className="w-full h-full object-cover" />
-                    <img src={imagenLogin2} alt="Villa Pesqueira 2" className="w-full h-full object-cover" />
-                    <img src={imagenLogin3} alt="Villa Pesqueira 3" className="w-full h-full object-cover" />
+                    {carouselImages.map((src, i) => (
+                        <img key={i} src={src} alt={`Login ${i + 1}`} className="w-full h-full object-cover" />
+                    ))}
                 </Carousel>
 
                 {/* Texto decorativo sobre el carrusel (Opcional) */}
@@ -125,7 +128,7 @@ function LoginApp() {
                     {/* Logo */}
                     <div className="flex justify-center mb-8">
                         <div className="w-32 h-32 p-2 bg-slate-50 dark:bg-zinc-900 rounded-3xl border border-slate-100 dark:border-zinc-800 shadow-sm flex items-center justify-center">
-                            <img src={logoagua} alt="Logo" className="w-full h-full object-contain drop-shadow-sm" />
+                            <img src={logoSrc} alt="Logo" className="w-full h-full object-contain drop-shadow-sm" />
                         </div>
                     </div>
 

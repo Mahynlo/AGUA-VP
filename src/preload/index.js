@@ -165,6 +165,10 @@ const api = {
   saveFile: (data) => ipcRenderer.invoke('save-file-dialog', data),
   savePdf: (fileUrl) => ipcRenderer.invoke('save-pdf', fileUrl),
 
+  // Logo e imágenes personalizables
+  selectLogo: () => ipcRenderer.invoke('select-logo'),
+  selectLoginImages: () => ipcRenderer.invoke('select-login-images'),
+
   // Impresión avanzada (diálogo personalizado en la UI)
   getPrinters: () => ipcRenderer.invoke('getPrinters'),
   printSilent: (url, config) => ipcRenderer.invoke('print-silent', url, config),

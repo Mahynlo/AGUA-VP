@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardBody, CardHeader, Button, Spinner } from "@nextui-org/react";
-import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock } from "react-icons/hi";
+import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiPhotograph, HiUpload, HiTrash, HiCollection, HiPlusCircle } from "react-icons/hi";
+import { useAppLogo } from "../../context/LogoContext";
 
 // Input reutilizable (Premium UI)
 const ConfigInput = ({ label, value, onChange, icon, type = "number", color = "blue", description, min = 0 }) => {
@@ -45,6 +46,34 @@ const ConfigInput = ({ label, value, onChange, icon, type = "number", color = "b
 
 export default function PanelConfiguracion() {
   const token = localStorage.getItem("token");
+  const { logoSrc, hasCustomLogo, setCustomLogo, clearCustomLogo,
+          loginImages, hasCustomLoginImages, addLoginImages, removeLoginImage, clearLoginImages } = useAppLogo();
+  const [savingLogo, setSavingLogo] = useState(false);
+  const [addingLoginImages, setAddingLoginImages] = useState(false);
+
+  const handleSelectLogo = async () => {
+    setSavingLogo(true);
+    try {
+      const result = await window.api.selectLogo();
+      if (result?.success) setCustomLogo(result.data);
+    } catch (err) {
+      console.error("Error seleccionando logo:", err);
+    } finally {
+      setSavingLogo(false);
+    }
+  };
+
+  const handleAddLoginImages = async () => {
+    setAddingLoginImages(true);
+    try {
+      const result = await window.api.selectLoginImages();
+      if (result?.success) addLoginImages(result.data);
+    } catch (err) {
+      console.error("Error seleccionando imágenes:", err);
+    } finally {
+      setAddingLoginImages(false);
+    }
+  };
   const [config, setConfig] = useState({
     facturas_para_primer_aviso: 1,
     facturas_para_segundo_aviso: 2,
@@ -236,6 +265,146 @@ export default function PanelConfiguracion() {
               description="Tiempo límite para pagar (Standard: 30 días desde la emisión)."
             />
           </div>
+        </CardBody>
+      </Card>
+
+      {/* ── SECCIÓN 4: IDENTIDAD VISUAL ── */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
+          <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
+            <HiPhotograph className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Identidad Visual</h3>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
+              Logo que aparece en el login, barra de navegación, recibos e informes impresos.
+            </p>
+          </div>
+        </CardHeader>
+        <CardBody className="p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+
+            {/* Vista previa del logo */}
+            <div className="shrink-0 w-28 h-28 rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center overflow-hidden">
+              <img
+                src={logoSrc}
+                alt="Logo actual"
+                className="w-full h-full object-contain p-3"
+              />
+            </div>
+
+            {/* Controles */}
+            <div className="flex flex-col gap-3 flex-1">
+              <div>
+                <p className="text-sm font-bold text-slate-700 dark:text-zinc-200">
+                  {hasCustomLogo ? "Logo personalizado activo" : "Logo predeterminado de la aplicación"}
+                </p>
+                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-500 mt-0.5">
+                  Formatos soportados: PNG, JPG, JPEG, WEBP. Recomendado: imagen cuadrada con fondo transparente (PNG).
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onPress={handleSelectLogo}
+                  isLoading={savingLogo}
+                  color="primary"
+                  variant="flat"
+                  size="sm"
+                  className="font-bold"
+                  startContent={!savingLogo && <HiUpload className="w-4 h-4" />}
+                >
+                  {savingLogo ? "Cargando..." : "Seleccionar imagen"}
+                </Button>
+
+                {hasCustomLogo && (
+                  <Button
+                    onPress={clearCustomLogo}
+                    color="danger"
+                    variant="flat"
+                    size="sm"
+                    className="font-bold"
+                    startContent={<HiTrash className="w-4 h-4" />}
+                  >
+                    Restaurar predeterminado
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* ── SECCIÓN 5: IMÁGENES DEL LOGIN ── */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
+          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+            <HiCollection className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Imágenes del Login</h3>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
+              Carrusel de fondo en la pantalla de inicio de sesión. Si no hay imágenes personalizadas, se usan las predeterminadas.
+            </p>
+          </div>
+        </CardHeader>
+        <CardBody className="p-6 space-y-4">
+
+          {/* Grid de miniaturas */}
+          {loginImages && loginImages.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {loginImages.map((src, i) => (
+                <div key={i} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700 aspect-video bg-slate-100 dark:bg-zinc-800">
+                  <img src={src} alt={`Login ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removeLoginImage(i)}
+                    className="absolute top-1.5 right-1.5 p-1 bg-red-600/90 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Eliminar imagen"
+                  >
+                    <HiTrash className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="absolute bottom-1.5 left-2 text-[10px] font-bold text-white/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                    #{i + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/30 p-6 text-center">
+              <HiCollection className="w-8 h-8 text-slate-300 dark:text-zinc-600 mx-auto mb-2" />
+              <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">Sin imágenes personalizadas</p>
+              <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-0.5">Se mostrarán las 3 imágenes predeterminadas de la aplicación.</p>
+            </div>
+          )}
+
+          {/* Botones */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button
+              onPress={handleAddLoginImages}
+              isLoading={addingLoginImages}
+              color="primary"
+              variant="flat"
+              size="sm"
+              className="font-bold"
+              startContent={!addingLoginImages && <HiPlusCircle className="w-4 h-4" />}
+            >
+              {addingLoginImages ? "Cargando..." : "Agregar imágenes"}
+            </Button>
+
+            {hasCustomLoginImages && (
+              <Button
+                onPress={clearLoginImages}
+                color="danger"
+                variant="flat"
+                size="sm"
+                className="font-bold"
+                startContent={<HiTrash className="w-4 h-4" />}
+              >
+                Restaurar predeterminadas
+              </Button>
+            )}
+          </div>
+
         </CardBody>
       </Card>
 

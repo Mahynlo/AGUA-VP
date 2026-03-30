@@ -22,6 +22,7 @@ import {
   HiMap
 } from "react-icons/hi";
 import ModalVistaPrevia from "../impresion/components/ModalVistaPrevia";
+import ModalImprimir from "../impresion/components/ModalImprimir";
 
 const ModalDetallePago = ({
   isOpen,
@@ -32,6 +33,7 @@ const ModalDetallePago = ({
 }) => {
   const [comprobanteUrl, setComprobanteUrl] = useState(null);
   const [comprobantePrintUrl, setComprobantePrintUrl] = useState(null);
+  const [modoPdf, setModoPdf] = useState(null); // 'imprimir' | 'vista-previa' | null
   const [generandoComprobante, setGenerandoComprobante] = useState(false);
 
   const handleImprimirComprobante = async () => {
@@ -82,6 +84,7 @@ const ModalDetallePago = ({
       if (response?.success && response?.path) {
         setComprobantePrintUrl(printUrl);
         setComprobanteUrl(response.path);
+        setModoPdf('imprimir');
       }
     } catch (err) {
       console.error('Error generando comprobante:', err);
@@ -401,12 +404,23 @@ const ModalDetallePago = ({
         </ModalContent>
       </Modal>
 
-      {/* Modal de vista previa / impresión del comprobante */}
-      {comprobanteUrl && (
+      {/* Modal de impresión del comprobante */}
+      {comprobanteUrl && modoPdf === 'imprimir' && (
+        <ModalImprimir
+          pdfUrl={comprobanteUrl}
+          printUrl={comprobantePrintUrl}
+          onClose={() => { setComprobanteUrl(null); setComprobantePrintUrl(null); setModoPdf(null); }}
+          onVolver={() => setModoPdf('vista-previa')}
+        />
+      )}
+
+      {/* Vista previa del comprobante (accesible desde ModalImprimir → Volver) */}
+      {comprobanteUrl && modoPdf === 'vista-previa' && (
         <ModalVistaPrevia
           pdfUrl={comprobanteUrl}
           printUrl={comprobantePrintUrl}
-          onClose={() => { setComprobanteUrl(null); setComprobantePrintUrl(null); }}
+          onClose={() => { setComprobanteUrl(null); setComprobantePrintUrl(null); setModoPdf(null); }}
+          onImprimir={() => setModoPdf('imprimir')}
         />
       )}
     </>

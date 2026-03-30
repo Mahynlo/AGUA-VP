@@ -1,5 +1,6 @@
 import React from "react";
 import { HashRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { LogoProvider } from './context/LogoContext';
 
 //Vista de navegación y rutas
 import NavbarApp from './components/menuElements/navbar';
@@ -58,6 +59,7 @@ import FeedbackMessages from "./components/toast/FeedbackMessages"; // Importar 
 
 function App() {
   return (
+    <LogoProvider>
     <Router>
       <AuthAppProvider>
 
@@ -93,6 +95,7 @@ function App() {
       </AuthAppProvider>
 
     </Router>
+    </LogoProvider>
   );
 }
 
@@ -105,8 +108,11 @@ function MainApp() {
   const { loading } = useAuth();
 
   // Verificar si estamos en modo impresión
-  const urlParams = new URLSearchParams(window.location.search);
-  const isPrintMode = urlParams.get('print') === 'true';
+  // Con HashRouter los params van dentro del hash (#/recibo?print=true...), no en window.location.search
+  const hashSearch = window.location.hash.includes('?')
+    ? window.location.hash.split('?')[1]
+    : '';
+  const isPrintMode = new URLSearchParams(hashSearch).get('print') === 'true';
 
 
 

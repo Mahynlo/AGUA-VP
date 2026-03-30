@@ -8,12 +8,13 @@ import { useAuth } from '../../context/AuthContext';
 import { Config } from '../Configuracion/Config';
 import { CloseAppModal } from '../../IconsApp/IconsAppSystem';
 
-import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
+import { useAppLogo } from '../../context/LogoContext';
 import AvatarPerfil from '../../assets/images/Avatar.png';
 
 function NavbarApp() {
-  const location = useLocation(); 
-  const navigate = useNavigate(); 
+  const { logoSrc } = useAppLogo();
+  const location = useLocation();
+  const navigate = useNavigate();
   
   // Estados independientes para cada modal
   const [openCloseAppModal, setOpenCloseAppModal] = useState(false); // Para cerrar la ventana
@@ -67,7 +68,7 @@ function NavbarApp() {
             </button>
 
             <div className="flex items-center gap-3 pointer-events-none select-none">
-              <img src={logoagua} className="h-11 w-auto drop-shadow-md" alt="Logo" />
+              <img src={logoSrc} className="h-11 w-auto drop-shadow-md" alt="Logo" />
               <div className="flex flex-col">
                 <span className="text-xl font-black tracking-tight text-white hidden sm:block leading-none">
                   AGUA DE VILLA PESQUEIRA

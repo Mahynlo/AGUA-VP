@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
+import { useAppLogo } from '../../context/LogoContext';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -36,7 +36,9 @@ const sortLecturasItems = (items, campo) => {
 
 // ─── Subcomponentes ───────────────────────────────────────────────────────────
 
-const PageHeader = ({ mes, totalRegistros }) => (
+const PageHeader = ({ mes, totalRegistros }) => {
+    const { logoSrc } = useAppLogo();
+    return (
     <div style={{ marginBottom: '18px' }}>
         {/* Franja principal */}
         <div style={{
@@ -48,7 +50,7 @@ const PageHeader = ({ mes, totalRegistros }) => (
             gap: '16px',
             borderRadius: '8px 8px 0 0',
         }}>
-            <img src={logoagua} alt="Escudo" style={{ height: '80px', width: '80px', objectFit: 'contain', flexShrink: 0, dropShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+            <img src={logoSrc} alt="Escudo" style={{ height: '80px', width: '80px', objectFit: 'contain', flexShrink: 0, dropShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
             
             <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 800, fontSize: '17px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
@@ -102,7 +104,8 @@ const PageHeader = ({ mes, totalRegistros }) => (
             </div>
         </div>
     </div>
-);
+    );
+};
 
 const TH = ({ children, align = 'left', last = false }) => (
     <th style={{

@@ -111,8 +111,7 @@ const esEs = {
     },
 };
 
-const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
-    const [isPrinting, setIsPrinting] = useState(false);
+const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose, onImprimir }) => {
     const [numPages, setNumPages] = useState(0);
     const { theme } = useTheme();
 
@@ -124,7 +123,8 @@ const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
         return theme;
     }, [theme]);
 
-    // Plugin de layout (toolbar con zoom, navegación, búsqueda)
+    // Plugin de layout — se llama directamente porque defaultLayoutPlugin usa React.useMemo
+    // internamente; envolverlo en useMemo externo viola las Rules of Hooks (hooks condicionales)
     const defaultLayoutPluginInstance = defaultLayoutPlugin({
         sidebarTabs: (defaultTabs) => [defaultTabs[0]],
     });
@@ -135,19 +135,6 @@ const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
-
-    // Imprimir: abre el diálogo de impresión del sistema
-    const handlePrint = async () => {
-        if (!printUrl || isPrinting) return;
-        setIsPrinting(true);
-        try {
-            await window.api.printComponent(printUrl, () => {});
-        } catch (err) {
-            console.error('Error al imprimir:', err);
-        } finally {
-            setIsPrinting(false);
-        }
-    };
 
     // Guardar PDF en disco
     const handleSavePdf = async () => {
@@ -168,7 +155,7 @@ const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
     const isDark = effectiveTheme === 'dark';
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/60 dark:bg-black/80 backdrop-blur-md p-4 sm:p-6 lg:p-8 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/70 dark:bg-black/85 p-4 sm:p-6 lg:p-8 animate-in fade-in duration-200">
             <div className={`w-full max-w-6xl h-full max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl ring-1 ring-white/10 ${
                 isDark ? 'bg-zinc-900' : 'bg-slate-50'
             }`}>
@@ -211,17 +198,16 @@ const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
                             <span className="hidden sm:inline">Guardar PDF</span>
                         </Button>
 
-                        {/* Imprimir */}
+                        {/* Imprimir → abre el modal de opciones de impresión */}
                         <Button
                             color="primary"
                             size="sm"
-                            onPress={handlePrint}
-                            isLoading={isPrinting}
-                            isDisabled={isPrinting || !printUrl}
-                            startContent={!isPrinting && <HiPrinter className="text-lg" />}
+                            onPress={onImprimir}
+                            isDisabled={!printUrl || !onImprimir}
+                            startContent={<HiPrinter className="text-lg" />}
                             className="font-bold shadow-md shadow-blue-500/20"
                         >
-                            {isPrinting ? 'Enviando...' : 'Imprimir'}
+                            Imprimir
                         </Button>
 
                         {/* Divisor vertical */}
@@ -250,7 +236,7 @@ const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
                             defaultScale={SpecialZoomLevel.PageFit}
                             onDocumentLoad={handleDocumentLoad}
                             plugins={[defaultLayoutPluginInstance]}
-                            theme={{ theme: effectiveTheme }}
+                            theme={effectiveTheme}
                             localization={esEs}
                         />
                     </Worker>
