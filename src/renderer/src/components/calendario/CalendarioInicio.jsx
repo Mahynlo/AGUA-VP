@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { FlechaIzquierdaIcon, FlechaDerechaIcon } from "../../IconsApp/IconsAppSystem";
-import { Chip } from "@nextui-org/chip";
 import { CalendarioHomeIcon } from "../../IconsApp/IconsHome";
-import { obtenerFeriadosMexico, esFeriado } from "../../utils/diasHabiles";
+import { obtenerFeriadosMexico } from "../../utils/diasHabiles";
 
 const CalendarInicio = () => {
     const [selectedDate, setSelectedDate] = useState("");
@@ -12,7 +11,6 @@ const CalendarInicio = () => {
     const feriadosMap = useMemo(() => {
         const anio = currentMonth.getFullYear();
         const map = {};
-        // Incluir año actual y adyacentes (para días de meses previos/siguientes)
         [anio - 1, anio, anio + 1].forEach(a => {
             obtenerFeriadosMexico(a).forEach(f => {
                 map[f.fecha] = f.nombre;
@@ -62,11 +60,6 @@ const CalendarInicio = () => {
         setCurrentMonth(newDate);
     };
 
-    const hasEvent = (date) => {
-        const dateString = formatDateString(date);
-        return !!feriadosMap[dateString];
-    };
-
     const formatDateString = (date) => {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -85,89 +78,113 @@ const CalendarInicio = () => {
 
     const daysInMonth = getDaysInMonth(currentMonth);
 
+    // Array estático de días para renderizado más limpio
+    const diasSemana = ["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"];
+
     return (
-        <>
-            <div className="flex w-full h-full">
-                {/* Calendario */}
-                <div className="w-full p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg  flex flex-col h-full min-h-[250px] max-h-[90vh]">
-                    {/*Titulo del calaendario e icono */}
-                    <div className="flex justify-between items-start">
-                        <div className="flex flex-col">
-                            <p className="text-3xl text-gray-600 dark:text-gray-100  font-bold tracking-wide">Calendario</p>
-
-                        </div>
-                        <div className="bg-orange-500 p-2 md:p-1 xl:p-2 rounded-md text-white h-full">
-                            <CalendarioHomeIcon className="h-6 w-6" />
-                        </div>
-                    </div>
-
-                    <div className="flex justify-between items-center mb-4 h-[40px] mt-4">
-
-                        <button onClick={() => changeMonth(-1)} className="p-2 text-gray-700 bg-gray-300 dark:bg-gray-800  dark:text-gray-300 border border-gray-300 rounded-full">
-                            <FlechaIzquierdaIcon className="w-6 h-6" />
-                        </button>
-                        <h2 className="text-xl font-bold text-gray-700 dark:text-gray-100">
-                            {currentMonth.toLocaleString("es-MX", { month: "long" })} {currentMonth.getFullYear()}
-                        </h2>
-                        <button onClick={() => changeMonth(1)} className="p-2 text-gray-700 bg-gray-300 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 rounded-full">
-                            <FlechaDerechaIcon className="w-6 h-6" />
-                        </button>
-                    </div>
-
-                    {/* Días de la semana */}
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-100 h-[30px]">
-
-
-                        {["DOM", "LUN", "MAR", "MIE", "JUE", "VIE", "SAB"].map((day) => (
-                            <div key={day} className="py-2">{day}</div>
-                        ))}
-                    </div>
-
-                    {/* Días del mes */}
-                    <div className="grid grid-cols-7 gap-1 sm:gap-2  flex-1 overflow-auto">
-
-                        {daysInMonth.map(({ date, currentMonth }, index) => {
-                            const dateString = formatDateString(date);
-                            const isFeriado = !!feriadosMap[dateString];
-                            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
-                            return (
-                                <div
-                                    key={index}
-                                    className={`w-full flex flex-col items-center justify-center rounded-lg cursor-pointer transition-all 
-                                        ${currentMonth
-                                            ? isToday(date)
-                                                ? "bg-green-500 text-white font-bold"
-                                                : isFeriado
-                                                    ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 font-semibold"
-                                                    : isWeekend
-                                                        ? "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
-                                                        : "bg-transparent"
-                                            : "text-gray-400 dark:text-gray-500"
-                                        }
-                                        hover:bg-blue-200 dark:hover:bg-blue-500 
-                                    `}
-                                    onClick={() => handleDateChange(dateString)}
-                                    title={isFeriado ? feriadosMap[dateString] : isWeekend ? 'Fin de semana' : ''}
-                                >
-                                    <span className="text-xs sm:text-sm">{date.getDate()}</span>
-                                    {isFeriado && currentMonth && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-0.5"></span>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+        <div className="w-full h-full flex flex-col bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 p-4 sm:p-5 lg:p-6 transition-colors duration-300 overflow-hidden">
+            
+            {/* Cabecera del Calendario (flex-shrink-0) */}
+            <div className="flex justify-between items-start mb-4 sm:mb-6 flex-shrink-0">
+                <div>
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
+                        Calendario
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                        Días hábiles y feriados
+                    </p>
                 </div>
-
-
+                <div className="bg-orange-500/10 dark:bg-orange-500/20 p-2 sm:p-2.5 rounded-xl text-orange-600 dark:text-orange-500">
+                    <CalendarioHomeIcon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
+                </div>
             </div>
 
+            {/* Controles de Navegación de Mes (flex-shrink-0) */}
+            <div className="flex justify-between items-center mb-4 px-1 flex-shrink-0">
+                <button 
+                    onClick={() => changeMonth(-1)} 
+                    className="p-1.5 sm:p-2 lg:p-2.5 text-slate-600 dark:text-zinc-400 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    aria-label="Mes anterior"
+                >
+                    <FlechaIzquierdaIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                </button>
+                
+                <h3 className="text-base sm:text-lg lg:text-xl font-bold text-slate-700 dark:text-zinc-200 capitalize">
+                    {currentMonth.toLocaleString("es-MX", { month: "long" })} {currentMonth.getFullYear()}
+                </h3>
+                
+                <button 
+                    onClick={() => changeMonth(1)} 
+                    className="p-1.5 sm:p-2 lg:p-2.5 text-slate-600 dark:text-zinc-400 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    aria-label="Mes siguiente"
+                >
+                    <FlechaDerechaIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                </button>
+            </div>
 
+            {/* Cuadrícula del Calendario */}
+            <div className="flex-1 flex flex-col min-h-0">
+                
+                {/* Cabecera de días de la semana (flex-shrink-0) */}
+                <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-1 sm:mb-2 flex-shrink-0">
+                    {diasSemana.map((day) => (
+                        <div key={day} className="text-center py-1 text-[9px] sm:text-[10px] lg:text-xs font-bold text-slate-400 dark:text-zinc-500 tracking-wider">
+                            {day}
+                        </div>
+                    ))}
+                </div>
 
-        </>
+                {/* Días del mes (auto-rows-fr para llenar el alto sin scroll) */}
+                <div className="grid grid-cols-7 auto-rows-fr gap-1 sm:gap-2 flex-1 min-h-0">
+                    {daysInMonth.map(({ date, currentMonth: isCurrentMonth }, index) => {
+                        const dateString = formatDateString(date);
+                        const isFeriado = !!feriadosMap[dateString];
+                        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                        const today = isToday(date);
+                        const isSelected = selectedDate === dateString;
 
-
+                        return (
+                            <button
+                                key={index}
+                                onClick={() => handleDateChange(dateString)}
+                                title={isFeriado ? feriadosMap[dateString] : isWeekend ? 'Fin de semana' : ''}
+                                className={`
+                                    relative flex flex-col items-center justify-start pt-1 sm:pt-2 pb-1.5
+                                    w-full h-full rounded-lg sm:rounded-xl 
+                                    text-xs sm:text-sm lg:text-base font-medium 
+                                    transition-all duration-200
+                                    focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                                    ${!isCurrentMonth 
+                                        ? "text-slate-300 dark:text-zinc-600 opacity-40 cursor-not-allowed bg-transparent"
+                                        : isSelected
+                                            ? "bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold scale-[1.02] z-10"
+                                            : today
+                                                ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-bold ring-2 ring-blue-500 ring-inset"
+                                                : isFeriado
+                                                    ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40"
+                                                    : isWeekend
+                                                        ? "text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30"
+                                                        : "text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                                    }
+                                `}
+                                disabled={!isCurrentMonth}
+                            >
+                                <span>{date.getDate()}</span>
+                                
+                                {/* Puntito indicador para Feriados (mt-auto lo empuja abajo) */}
+                                {isCurrentMonth && isFeriado && (
+                                    <span className={`
+                                        mt-auto w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full
+                                        ${isSelected ? "bg-white" : "bg-red-500"}
+                                    `}></span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+            
+        </div>
     );
 };
 

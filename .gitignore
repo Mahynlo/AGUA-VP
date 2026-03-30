@@ -9,3 +9,4 @@ package-lock.json
 .env
 cache_rutas.pkl
 cache_rutas*
+.claude

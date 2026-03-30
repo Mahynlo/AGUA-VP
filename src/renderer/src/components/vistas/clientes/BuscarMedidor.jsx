@@ -13,33 +13,50 @@ import {
     HiCog,
     HiLocationMarker,
     HiX,
-    HiPlus
+    HiPlus,
+    HiInbox
 } from "react-icons/hi";
 
-// Componente de Input Personalizado (Estandarizado)
-const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, placeholder, autoFocus }) => (
-    <div>
-        {label && (
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                {label}
-            </label>
-        )}
-        <div className="relative w-full flex">
-            <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2 pr-2">
-                {icon}
-            </span>
-            <input
-                type={type}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                autoFocus={autoFocus}
-                className={`border border-gray-300 focus:ring-${color}-600 focus:border-${color}-500 text-gray-600 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all shadow-sm`}
-            />
+// Componente de Input Personalizado (UI Mejorada)
+const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, placeholder, autoFocus }) => {
+    // Mapa de colores seguros para focus
+    const focusColors = {
+        blue: "focus:ring-blue-500 focus:border-blue-500",
+        green: "focus:ring-green-500 focus:border-green-500",
+    };
+    
+    return (
+        <div className="w-full">
+            {label && (
+                <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+                    {label}
+                </label>
+            )}
+            <div className="relative w-full flex items-center">
+                <span className="absolute left-3 text-slate-400 dark:text-zinc-500 flex items-center justify-center">
+                    {icon}
+                </span>
+                <input
+                    type={type}
+                    value={value}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                    autoFocus={autoFocus}
+                    className={`
+                        w-full pl-10 pr-4 py-2.5 text-sm rounded-xl transition-all duration-200
+                        bg-slate-50 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100
+                        border border-slate-200 dark:border-zinc-700
+                        hover:bg-slate-100 dark:hover:bg-zinc-800
+                        focus:outline-none focus:ring-2 focus:bg-white dark:focus:bg-zinc-900
+                        placeholder-slate-400 dark:placeholder-zinc-500
+                        ${focusColors[color] || focusColors.blue}
+                    `}
+                />
+            </div>
+            {description && <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5 ml-1">{description}</p>}
         </div>
-        {description && <p className="text-xs text-gray-400 mt-1">{description}</p>}
-    </div>
-);
+    );
+};
 
 const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) => {
     const { allMedidores } = useMedidores();
@@ -55,7 +72,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
         [allMedidores, clienteId]
     );
 
-    // Búsqueda con debounce
+    // Búsqueda con debounce (Lógica intacta)
     useEffect(() => {
         if (busqueda.trim() === "") {
             setResultados([]);
@@ -69,8 +86,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
         const termino = normalizar(busqueda);
         const timeoutId = setTimeout(() => {
             const filtrados = allMedidores.filter((medidor) =>
-                normalizar(`${medidor.numero_serie} ${medidor.ubicacion}`)
-                    .includes(termino)
+                normalizar(`${medidor.numero_serie} ${medidor.ubicacion}`).includes(termino)
             );
             setResultados(filtrados);
             setIsSearching(false);
@@ -79,7 +95,6 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
         return () => clearTimeout(timeoutId);
     }, [busqueda, allMedidores]);
 
-    // Función optimizada para seleccionar medidor
     const seleccionarMedidor = useCallback((medidor) => {
         if (medidor.cliente_id && medidor.cliente_id !== clienteId) return;
 
@@ -94,14 +109,12 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
         setResultados([]);
     }, [medidoresSeleccionados, onMedidorSeleccionado, clienteId]);
 
-    // Función optimizada para quitar medidor
     const quitarMedidor = useCallback((id) => {
         const nuevos = medidoresSeleccionados.filter(m => m.id !== id);
         setMedidoresSeleccionados(nuevos);
         onMedidorSeleccionado(nuevos.map(m => m.id));
     }, [medidoresSeleccionados, onMedidorSeleccionado]);
 
-    // Función para manejar liberación de medidores
     const manejarLiberacion = useCallback((medidorId) => {
         setMedidoresLiberados(prev => {
             const nuevoSet = new Set(prev);
@@ -115,251 +128,267 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
         });
     }, [onLiberarMedidor]);
 
-    // Función para renderizar el estado del medidor
     const renderChip = (medidor) => {
         if (!medidor.cliente_id) {
             return (
-                <span className="text-[10px] px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 rounded border border-yellow-200 dark:border-yellow-800 font-medium">
+                <Chip size="sm" color="warning" variant="flat" className="h-5 text-[10px] font-bold uppercase">
                     Libre
-                </span>
+                </Chip>
             );
         } else if (medidor.cliente_id === clienteId) {
             return (
-                <span className="text-[10px] px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 rounded border border-blue-200 dark:border-blue-800 font-medium">
-                    De este cliente
-                </span>
+                <Chip size="sm" color="primary" variant="flat" className="h-5 text-[10px] font-bold uppercase">
+                    Actual
+                </Chip>
             );
         } else {
             return (
-                <span className="text-[10px] px-2 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 rounded border border-green-200 dark:border-green-800 font-medium">
-                    Asignado
-                </span>
+                <Chip size="sm" color="danger" variant="flat" className="h-5 text-[10px] font-bold uppercase">
+                    Ocupado
+                </Chip>
             );
         }
     };
 
     return (
-        <div className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-                {/* Panel izquierdo: Medidores asignados actualmente */}
-                <div className="space-y-4">
-                    <Card className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 shadow-sm">
-                        <CardBody className="p-5">
-                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 dark:border-gray-800">
-                                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                    <HiCog className="text-lg text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <h4 className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
+        // Contenedor principal con h-full
+        <div className="flex flex-col lg:flex-row w-full h-full gap-4 lg:gap-6 min-h-[500px]">
+            
+            {/* PANEL IZQUIERDO: Medidores Asignados */}
+            <Card className="flex-1 h-full border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col">
+                <CardBody className="p-4 sm:p-5 flex flex-col h-full min-h-0">
+                    
+                    {/* Header Panel Izquierdo (No se encoge) */}
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-zinc-800 flex-shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
+                                <HiCog className="text-xl text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                                <h4 className="text-base font-bold text-slate-800 dark:text-zinc-100 leading-tight">
                                     Medidores Asignados
                                 </h4>
-                                {medidoresAsignadosCliente.length > 0 && (
-                                    <Chip size="sm" color="primary" variant="flat" className="ml-auto">
-                                        {medidoresAsignadosCliente.length}
-                                    </Chip>
-                                )}
+                                <p className="text-xs text-slate-500 dark:text-zinc-400">
+                                    Actualmente en uso
+                                </p>
                             </div>
+                        </div>
+                        {medidoresAsignadosCliente.length > 0 && (
+                            <Chip size="sm" color="primary" variant="solid" className="font-bold shadow-sm">
+                                {medidoresAsignadosCliente.length}
+                            </Chip>
+                        )}
+                    </div>
 
-                            {medidoresAsignadosCliente.length > 0 ? (
-                                <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-1">
-                                    {medidoresAsignadosCliente.map(medidor => (
-                                        <div
-                                            key={medidor.id}
-                                            className="group p-3 rounded-xl border border-blue-100 dark:border-blue-800/50 bg-blue-50/50 dark:bg-blue-900/10 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar
-                                                        icon={<HiCog className="text-lg" />}
-                                                        classNames={{
-                                                            base: "bg-blue-200 dark:bg-blue-800",
-                                                            icon: "text-blue-600 dark:text-blue-400"
-                                                        }}
-                                                        size="sm"
-                                                    />
-                                                    <div>
-                                                        <h5 className="text-sm font-bold text-blue-900 dark:text-blue-100">
-                                                            {medidor.numero_serie}
-                                                        </h5>
-                                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                                            <HiLocationMarker className="text-xs text-blue-500" />
-                                                            <span className="text-xs text-blue-700 dark:text-blue-300">
-                                                                {medidor.ubicacion}
-                                                            </span>
-                                                        </div>
+                    {/* Lista Scrolleable */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 min-h-0">
+                        {medidoresAsignadosCliente.length > 0 ? (
+                            <div className="space-y-3 pb-2">
+                                {medidoresAsignadosCliente.map(medidor => (
+                                    <div
+                                        key={medidor.id}
+                                        className="group p-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 hover:shadow-md transition-all duration-200"
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <Avatar
+                                                    icon={<HiCog className="text-lg" />}
+                                                    classNames={{
+                                                        base: "bg-blue-100 dark:bg-blue-900/30 flex-shrink-0",
+                                                        icon: "text-blue-600 dark:text-blue-400"
+                                                    }}
+                                                    size="sm"
+                                                />
+                                                <div className="min-w-0">
+                                                    <h5 className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">
+                                                        {medidor.numero_serie}
+                                                    </h5>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <HiLocationMarker className="text-[10px] text-slate-400 flex-shrink-0" />
+                                                        <span className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">
+                                                            {medidor.ubicacion}
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <Button
-                                                    size="sm"
-                                                    color={medidoresLiberados.has(medidor.id) ? "success" : "warning"}
-                                                    variant={medidoresLiberados.has(medidor.id) ? "flat" : "ghost"}
-                                                    onPress={() => manejarLiberacion(medidor.id)}
-                                                    className="text-[10px] h-7 min-w-16 font-medium"
-                                                >
-                                                    {medidoresLiberados.has(medidor.id) ? "Liberado" : "Liberar"}
-                                                </Button>
                                             </div>
+                                            <Button
+                                                size="sm"
+                                                color={medidoresLiberados.has(medidor.id) ? "success" : "default"}
+                                                variant={medidoresLiberados.has(medidor.id) ? "flat" : "bordered"}
+                                                onPress={() => manejarLiberacion(medidor.id)}
+                                                className={`text-[10px] h-7 px-2 font-bold uppercase tracking-wide flex-shrink-0 transition-all ${
+                                                    !medidoresLiberados.has(medidor.id) && "border-slate-300 dark:border-zinc-600 text-slate-600 dark:text-zinc-300"
+                                                }`}
+                                            >
+                                                {medidoresLiberados.has(medidor.id) ? "Liberado" : "Liberar"}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            /* Empty State Izquierdo */
+                            <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
+                                <div className="bg-slate-100 dark:bg-zinc-800 p-4 rounded-full mb-3">
+                                    <HiInbox className="text-3xl text-slate-400 dark:text-zinc-500" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">Sin medidores</p>
+                                <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1 max-w-[200px]">
+                                    Este cliente aún no tiene medidores asignados en el sistema.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </CardBody>
+            </Card>
+
+            {/* PANEL DERECHO: Búsqueda y Selección */}
+            <Card className="flex-1 h-full border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col">
+                <CardBody className="p-4 sm:p-5 flex flex-col h-full min-h-0 relative">
+                    
+                    {/* Header Panel Derecho (Búsqueda) */}
+                    <div className="flex-shrink-0 z-20">
+                        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-zinc-800">
+                            <div className="p-2 bg-green-500/10 dark:bg-green-500/20 rounded-xl">
+                                <HiSearch className="text-xl text-green-600 dark:text-green-400" />
+                            </div>
+                            <div>
+                                <h4 className="text-base font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                    Buscar Medidores
+                                </h4>
+                                <p className="text-xs text-slate-500 dark:text-zinc-400">
+                                    Encuentra equipos disponibles
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="relative">
+                            <CustomInput
+                                placeholder="Escribe serie o ubicación..."
+                                value={busqueda}
+                                onChange={(e) => setBusqueda(e.target.value)}
+                                color="green"
+                                icon={isSearching ? <Spinner size="sm" color="success" /> : <HiSearch className="w-4 h-4" />}
+                            />
+
+                            {/* Resultados Flotantes (Dropdown Absoluto) */}
+                            {resultados.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-64 overflow-y-auto custom-scrollbar border border-slate-200 dark:border-zinc-700 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-xl bg-white dark:bg-zinc-800">
+                                    {resultados.map((medidor, index) => {
+                                        const isDisabled = medidor.cliente_id && medidor.cliente_id !== clienteId;
+                                        return (
+                                            <div
+                                                key={medidor.id}
+                                                onClick={() => {
+                                                    if (!isDisabled) seleccionarMedidor(medidor);
+                                                }}
+                                                className={`
+                                                    p-3 transition-colors duration-200 flex items-center gap-3
+                                                    ${index !== resultados.length - 1 ? 'border-b border-slate-100 dark:border-zinc-700' : ''}
+                                                    ${isDisabled 
+                                                        ? 'opacity-60 bg-slate-50 dark:bg-zinc-900/50 cursor-not-allowed' 
+                                                        : 'cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20'
+                                                    }
+                                                `}
+                                            >
+                                                <div className={`p-2 rounded-full flex-shrink-0 ${isDisabled ? 'bg-slate-200 dark:bg-zinc-700' : 'bg-green-100 dark:bg-green-900/40'}`}>
+                                                    <HiCog className={`text-lg ${isDisabled ? 'text-slate-500' : 'text-green-600 dark:text-green-400'}`} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-center mb-0.5">
+                                                        <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">
+                                                            {medidor.numero_serie}
+                                                        </h4>
+                                                        {renderChip(medidor)}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <HiLocationMarker className="text-[10px] text-slate-400 flex-shrink-0" />
+                                                        <span className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">
+                                                            {medidor.ubicacion}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* No hay resultados */}
+                            {busqueda.trim() && !isSearching && resultados.length === 0 && (
+                                <div className="absolute top-full left-0 right-0 z-50 mt-2 border border-slate-200 dark:border-zinc-700 shadow-xl rounded-xl bg-white dark:bg-zinc-800 p-6 text-center">
+                                    <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">No se encontraron equipos</p>
+                                    <p className="text-xs text-slate-500 mt-1">Verifica el número de serie e intenta de nuevo.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Por Asignar (Flex-1 para que ocupe el resto del panel derecho) */}
+                    <div className="mt-6 flex flex-col flex-1 min-h-0 z-10">
+                        <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                            <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                Equipos por agregar
+                            </h4>
+                            {medidoresSeleccionados.length > 0 && (
+                                <Chip size="sm" color="success" variant="flat" className="h-5 text-[10px] font-bold">
+                                    {medidoresSeleccionados.length} listos
+                                </Chip>
+                            )}
+                        </div>
+
+                        {/* Lista de seleccionados scrolleable */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 min-h-0 pb-2">
+                            {medidoresSeleccionados.length > 0 ? (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-300">
+                                    {medidoresSeleccionados.map((medidor) => (
+                                        <div
+                                            key={medidor.id}
+                                            className="flex items-center justify-between p-2 pl-3 bg-green-50 dark:bg-green-900/10 border border-green-200/60 dark:border-green-900/30 rounded-xl"
+                                        >
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className="p-1.5 bg-green-200/50 dark:bg-green-800/40 rounded-full shrink-0">
+                                                    <HiPlus className="text-xs text-green-700 dark:text-green-400" />
+                                                </div>
+                                                <div className="truncate">
+                                                    <h5 className="text-sm font-bold text-green-900 dark:text-green-100 truncate leading-tight">
+                                                        {medidor.numero_serie}
+                                                    </h5>
+                                                    <p className="text-[10px] text-green-700 dark:text-green-400 truncate mt-0.5">
+                                                        {medidor.ubicacion}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                isIconOnly
+                                                size="sm"
+                                                color="danger"
+                                                variant="light"
+                                                onPress={() => quitarMedidor(medidor.id)}
+                                                className="w-7 h-7 min-w-7 ml-2 hover:bg-red-100 dark:hover:bg-red-900/30"
+                                            >
+                                                <HiX className="text-sm" />
+                                            </Button>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-10 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-                                    <HiCog className="text-3xl text-gray-300 dark:text-gray-600 mb-2" />
-                                    <p className="text-sm text-gray-500 font-medium">No hay medidores asignados</p>
-                                    <p className="text-xs text-gray-400 mt-1">Busca y selecciona medidores disponibles</p>
+                                /* Empty State "Por Asignar" */
+                                <div className="h-full flex flex-col items-center justify-center text-center opacity-50 border-2 border-dashed border-slate-200 dark:border-zinc-700 rounded-xl p-4">
+                                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">
+                                        No has seleccionado ningún medidor.
+                                    </p>
                                 </div>
                             )}
-                        </CardBody>
-                    </Card>
-                </div>
+                        </div>
+                    </div>
 
-                {/* Panel derecho: Búsqueda y selección */}
-                <div className="space-y-4">
-                    {/* Campo de búsqueda */}
-                    <Card className="border border-gray-200 dark:border-gray-700 shadow-sm h-full max-h-[800px]">
-                        <CardBody className="p-5">
-                            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 dark:border-gray-800">
-                                <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                                    <HiSearch className="text-lg text-green-600 dark:text-green-400" />
-                                </div>
-                                <h4 className="text-sm font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wide">
-                                    Buscar Medidores
-                                </h4>
-                            </div>
+                </CardBody>
+            </Card>
 
-                            <div className="relative">
-                                <CustomInput
-                                    placeholder="Buscar por número de serie o ubicación..."
-                                    value={busqueda}
-                                    onChange={(e) => setBusqueda(e.target.value)}
-                                    icon={
-                                        isSearching ? (
-                                            <Spinner size="sm" color="success" />
-                                        ) : (
-                                            <HiSearch className="text-green-500 w-5 h-5" />
-                                        )
-                                    }
-                                    color="green"
-                                    description="Busque medidores para asignar a este cliente"
-                                />
-
-                                {/* Resultados de búsqueda */}
-                                {resultados.length > 0 && (
-                                    <div className="absolute z-50 w-full mt-2 max-h-64 overflow-hidden border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl bg-white dark:bg-zinc-800">
-                                        <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                                            {resultados.map((medidor, index) => (
-                                                <div
-                                                    key={medidor.id}
-                                                    className={`p-3 cursor-pointer transition-colors duration-200 hover:bg-green-50 dark:hover:bg-green-900/20 group ${index !== resultados.length - 1 ? 'border-b border-gray-100 dark:border-gray-800' : ''
-                                                        } ${medidor.cliente_id && medidor.cliente_id !== clienteId ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800/50' : ''}`}
-                                                    onClick={() => {
-                                                        if (!medidor.cliente_id || medidor.cliente_id === clienteId) {
-                                                            seleccionarMedidor(medidor);
-                                                        }
-                                                    }}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`p-2 rounded-full ${medidor.cliente_id && medidor.cliente_id !== clienteId ? 'bg-gray-200 dark:bg-gray-700' : 'bg-green-100 dark:bg-green-900/50 group-hover:bg-green-200 dark:group-hover:bg-green-800'}`}>
-                                                            <HiCog className={`text-lg ${medidor.cliente_id && medidor.cliente_id !== clienteId ? 'text-gray-500' : 'text-green-600 dark:text-green-400'}`} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-0.5">
-                                                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                                                    {medidor.numero_serie}
-                                                                </h4>
-                                                                {medidor.id && (
-                                                                    <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded font-medium">
-                                                                        ID: {medidor.id}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <div className="flex items-center gap-1 min-w-0">
-                                                                    <HiLocationMarker className="text-xs text-gray-400 flex-shrink-0" />
-                                                                    <span className="text-xs text-gray-500 truncate">
-                                                                        {medidor.ubicacion}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div>
-                                                                {renderChip(medidor)}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Mensaje cuando no hay resultados */}
-                                {busqueda.trim() && !isSearching && resultados.length === 0 && (
-                                    <div className="absolute z-50 w-full mt-2 border border-gray-200 dark:border-gray-700 shadow-lg rounded-xl bg-white dark:bg-zinc-900 p-6 text-center">
-                                        <div className="bg-gray-50 dark:bg-gray-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <HiCog className="text-xl text-gray-400" />
-                                        </div>
-                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">No se encontraron medidores</p>
-                                        <p className="text-xs text-gray-500 mt-1">Intenta con otro término de búsqueda</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Medidores seleccionados para asignar */}
-                            {medidoresSeleccionados.length > 0 && (
-                                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 animate-in fade-in slide-in-from-top-4 duration-300">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded">
-                                            <HiPlus className="text-sm text-green-600" />
-                                        </div>
-                                        <h4 className="text-xs font-bold text-green-700 dark:text-green-300 uppercase tracking-wide">
-                                            Por Asignar
-                                        </h4>
-                                        <Chip size="sm" color="success" variant="solid" className="ml-auto h-5 text-[10px]">
-                                            {medidoresSeleccionados.length}
-                                        </Chip>
-                                    </div>
-
-                                    <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
-                                        {medidoresSeleccionados.map((medidor) => (
-                                            <div
-                                                key={medidor.id}
-                                                className="flex items-center justify-between p-2 pl-3 bg-green-50/80 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
-                                            >
-                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                    <div className="p-1.5 bg-green-200 dark:bg-green-800/50 rounded-full shrink-0">
-                                                        <HiCog className="text-xs text-green-700 dark:text-green-300" />
-                                                    </div>
-                                                    <div className="truncate">
-                                                        <h5 className="text-xs font-bold text-green-900 dark:text-green-100 truncate">
-                                                            {medidor.numero_serie}
-                                                        </h5>
-                                                        <p className="text-[10px] text-green-700 dark:text-green-400 truncate">
-                                                            {medidor.ubicacion}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <Button
-                                                    isIconOnly
-                                                    size="sm"
-                                                    color="danger"
-                                                    variant="light"
-                                                    onPress={() => quitarMedidor(medidor.id)}
-                                                    className="w-6 h-6 min-w-6 ml-2 text-danger-400 hover:text-danger-600"
-                                                >
-                                                    <HiX className="text-xs" />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </CardBody>
-                    </Card>
-                </div>
-            </div>
         </div>
     );
 };
 
 export default BuscarMedidor;
-
 

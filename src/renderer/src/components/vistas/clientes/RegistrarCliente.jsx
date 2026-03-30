@@ -7,7 +7,7 @@ import {
     Button,
     useDisclosure
 } from "@nextui-org/react";
-import { HiUser, HiPlus } from "react-icons/hi";
+import { HiUser, HiPlus, HiCheck, HiX } from "react-icons/hi";
 import { useClienteForm } from "../../../hooks/useClienteForm";
 import SeccionPersonal from "./components/SeccionPersonal";
 import SeccionDireccion from "./components/SeccionDireccion";
@@ -33,6 +33,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
         resetForm();
         onClose();
     };
+
     // Manejar registro del cliente
     const handleRegistroCliente = async () => {
         const result = await handleSubmit();
@@ -52,8 +53,8 @@ export default function RegistrarClientes({ onSuccess, onError }) {
             <Button
                 aria-label="Registrar Cliente"
                 variant="solid"
-                startContent={<HiPlus className="w-4 h-4" />}
-                className="font-medium bg-green-600 hover:bg-green-700 active:bg-green-800 focus:bg-green-700 text-white rounded-xl px-4 py-2 text-sm sm:text-base"
+                startContent={<HiPlus className="text-lg" />}
+                className="font-bold bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-md shadow-green-600/30"
                 onPress={onOpen}
             >
                 Nuevo Cliente
@@ -69,23 +70,41 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                 isKeyboardDismissDisabled={true}
                 placement="center"
                 classNames={{
-                    backdrop: "bg-gradient-to-t mt-18 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
-                    closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
-                    Modal: "bg-gray-300 dark:bg-gray-800 rounded-lg shadow-lg",
+                    base: "bg-white dark:bg-zinc-900 shadow-2xl",
+                    backdrop: "bg-zinc-900/50 backdrop-blur-sm",
+                    header: "border-b border-slate-100 dark:border-zinc-800",
+                    footer: "border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900",
+                    closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors z-50",
                 }}
             >
                 <ModalContent>
-                    {(onClose) => (
+                    {() => (
                         <>
-                            <ModalHeader className="flex items-center gap-2 text-xl font-bold ">
-                                <HiUser className="w-6 h-6 text-green-600" />
-                                Registrar Nuevo Cliente
+                            {/* HEADER */}
+                            <ModalHeader className="flex flex-col gap-1 pt-6 px-6 shrink-0">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400 rounded-2xl shrink-0">
+                                        <HiUser className="w-7 h-7" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                            Registrar Nuevo Cliente
+                                        </h2>
+                                        <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">
+                                            Datos Personales, Dirección y Tarifa
+                                        </p>
+                                    </div>
+                                </div>
                             </ModalHeader>
 
-                            <ModalBody className="space-y-6 ">
-                                <form id="form-registro-cliente" onSubmit={(e) => { e.preventDefault(); handleRegistroCliente(); }}>
-
-                                    {/* Información Personal */}
+                            {/* BODY */}
+                            <ModalBody className="py-6 px-4 sm:px-6 bg-slate-50/50 dark:bg-black/10 custom-scrollbar">
+                                <form 
+                                    id="form-registro-cliente" 
+                                    onSubmit={(e) => { e.preventDefault(); handleRegistroCliente(); }} 
+                                    className="flex flex-col gap-6"
+                                >
+                                    {/* Información Personal (Se asume que ya tiene su propia Card interna) */}
                                     <SeccionPersonal
                                         formData={formData}
                                         erroresCampos={erroresCampos}
@@ -94,7 +113,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                         limpiarError={limpiarError}
                                     />
 
-                                    {/* Dirección */}
+                                    {/* Dirección (Se asume que ya tiene su propia Card interna) */}
                                     <SeccionDireccion
                                         formData={formData}
                                         erroresCampos={erroresCampos}
@@ -103,7 +122,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                         limpiarError={limpiarError}
                                     />
 
-                                    {/* Tarifa */}
+                                    {/* Tarifa (Se asume que ya tiene su propia Card interna) */}
                                     <SeccionTarifa
                                         formData={formData}
                                         erroresCampos={erroresCampos}
@@ -112,27 +131,31 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                         limpiarError={limpiarError}
                                         modo="crear"
                                     />
-
                                 </form>
                             </ModalBody>
 
-                            <ModalFooter className="">
+                            {/* FOOTER */}
+                            <ModalFooter className="px-6 py-4">
                                 <Button
-                                    color="danger"
+                                    color="default"
                                     variant="light"
                                     onPress={handleCloseModal}
+                                    isDisabled={isUpdating}
+                                    startContent={<HiX className="text-lg" />}
+                                    className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
                                 >
                                     Cancelar
                                 </Button>
                                 <Button
                                     color="primary"
-                                    onClick={handleRegistroCliente}
                                     type="submit"
                                     form="form-registro-cliente"
                                     isDisabled={isUpdating}
                                     isLoading={isUpdating}
+                                    startContent={!isUpdating && <HiCheck className="text-lg" />}
+                                    className="font-bold shadow-md shadow-blue-500/30 px-6"
                                 >
-                                    {isUpdating ? "Registrando..." : "Registrar Cliente"}
+                                    {isUpdating ? "Registrando..." : "Guardar Cliente"}
                                 </Button>
                             </ModalFooter>
                         </>
@@ -142,4 +165,3 @@ export default function RegistrarClientes({ onSuccess, onError }) {
         </>
     );
 }
-

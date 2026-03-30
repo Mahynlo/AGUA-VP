@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { HiX, HiPrinter, HiDownload } from 'react-icons/hi';
+import { HiX, HiPrinter, HiDownload, HiDocumentText } from 'react-icons/hi';
+import { Button } from '@nextui-org/react';
 
 // ── react-pdf-viewer ────────────────────────────────────────
 import { Worker, Viewer, SpecialZoomLevel } from '@react-pdf-viewer/core';
@@ -113,7 +113,7 @@ const esEs = {
 
 const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
     const [isPrinting, setIsPrinting] = useState(false);
-    const [numPages, setNumPages]     = useState(0);
+    const [numPages, setNumPages] = useState(0);
     const { theme } = useTheme();
 
     // Resolver tema efectivo (system → light/dark)
@@ -168,73 +168,82 @@ const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
     const isDark = effectiveTheme === 'dark';
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className={`rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] flex flex-col overflow-hidden ${
-                isDark ? 'bg-gray-800' : 'bg-gray-100'
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/60 dark:bg-black/80 backdrop-blur-md p-4 sm:p-6 lg:p-8 animate-in fade-in duration-200">
+            <div className={`w-full max-w-6xl h-full max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl ring-1 ring-white/10 ${
+                isDark ? 'bg-zinc-900' : 'bg-slate-50'
             }`}>
 
-                {/* ── Header ───────────────────────────────────────── */}
-                <div className={`flex items-center justify-between mt-8 px-5 py-2.5 shrink-0 ${
-                    isDark ? 'bg-gray-900' : 'bg-white border-b border-gray-200'
+                {/* ── Header Premium ───────────────────────────────────────── */}
+                <div className={`flex items-center justify-between px-4 py-3 shrink-0 border-b ${
+                    isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-slate-200'
                 }`}>
                     <div className="flex items-center gap-3">
-                        <div className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                            <HiPrinter size={16} className="opacity-80" />
-                            <h2 className="text-sm font-semibold leading-tight">Vista Previa</h2>
-                            {numPages > 0 && (
-                                <span className={`text-xs ml-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    — {numPages} página{numPages > 1 ? 's' : ''}
-                                </span>
+                        <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                            <HiDocumentText className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h2 className={`text-base font-bold leading-tight ${isDark ? 'text-zinc-100' : 'text-slate-800'}`}>
+                                Vista Previa del Documento
+                            </h2>
+                            {numPages > 0 ? (
+                                <p className={`text-xs font-medium uppercase tracking-wider mt-0.5 ${isDark ? 'text-zinc-500' : 'text-slate-500'}`}>
+                                    {numPages} {numPages === 1 ? 'Página' : 'Páginas'}
+                                </p>
+                            ) : (
+                                <p className={`text-xs font-medium uppercase tracking-wider mt-0.5 ${isDark ? 'text-zinc-500' : 'text-slate-500'} animate-pulse`}>
+                                    Cargando páginas...
+                                </p>
                             )}
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {/* Guardar PDF */}
-                        <button
-                            onClick={handleSavePdf}
-                            title="Guardar PDF"
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                isDark
-                                    ? 'text-gray-200 hover:bg-white/10'
-                                    : 'text-gray-600 hover:bg-gray-100'
-                            }`}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        
+                        {/* Descargar (Móvil: Icono | Desktop: Icono + Texto) */}
+                        <Button
+                            variant="flat"
+                            color="default"
+                            size="sm"
+                            onPress={handleSavePdf}
+                            className="font-bold text-slate-700 dark:text-zinc-300 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                            startContent={<HiDownload className="text-lg" />}
                         >
-                            <HiDownload size={14} />
                             <span className="hidden sm:inline">Guardar PDF</span>
-                        </button>
+                        </Button>
 
                         {/* Imprimir */}
-                        <button
-                            onClick={handlePrint}
-                            disabled={isPrinting || !printUrl}
-                            title="Imprimir"
-                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                isPrinting || !printUrl
-                                    ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.97] text-white shadow-md shadow-blue-900/30'
-                            }`}
+                        <Button
+                            color="primary"
+                            size="sm"
+                            onPress={handlePrint}
+                            isLoading={isPrinting}
+                            isDisabled={isPrinting || !printUrl}
+                            startContent={!isPrinting && <HiPrinter className="text-lg" />}
+                            className="font-bold shadow-md shadow-blue-500/20"
                         >
-                            <HiPrinter size={14} />
-                            {isPrinting ? 'Imprimiendo…' : 'Imprimir'}
-                        </button>
+                            {isPrinting ? 'Enviando...' : 'Imprimir'}
+                        </Button>
+
+                        {/* Divisor vertical */}
+                        <div className={`w-px h-6 mx-1 ${isDark ? 'bg-zinc-700' : 'bg-slate-200'}`}></div>
 
                         {/* Cerrar */}
-                        <button
-                            onClick={onClose}
-                            className={`p-1.5 rounded-full transition-colors ml-1 ${
-                                isDark
-                                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
-                                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'
-                            }`}
+                        <Button
+                            isIconOnly
+                            variant="light"
+                            color="danger"
+                            size="sm"
+                            onPress={onClose}
+                            className="hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
-                            <HiX size={16} />
-                        </button>
+                            <HiX className="text-lg" />
+                        </Button>
                     </div>
                 </div>
 
-                {/* ── Visor PDF (ocupa todo el espacio) ────────────── */}
-                <div className="flex-1 overflow-hidden">
+                {/* ── Visor PDF ───────────────────────────────────────── */}
+                {/* Un sutil contenedor interno para que el toolbar de pdf-viewer no choque visualmente con nuestro header */}
+                <div className={`flex-1 overflow-hidden relative ${isDark ? 'bg-zinc-950' : 'bg-slate-100'}`}>
                     <Worker workerUrl={pdfjsWorker}>
                         <Viewer
                             fileUrl={pdfUrl}
@@ -248,9 +257,21 @@ const ModalVistaPrevia = ({ pdfUrl, printUrl, onClose }) => {
                 </div>
             </div>
 
-            {/* Ocultar botón de abrir archivo del toolbar */}
+            {/* Ocultar botón de abrir archivo del toolbar de react-pdf-viewer y ajustar sus colores para que hagan match */}
             <style>{`
                 .rpv-open__input-wrapper { display: none !important; }
+                
+                /* Ajustes sutiles al theme de react-pdf-viewer para que se integre a la perfección con Tailwind Zinc/Slate */
+                .rpv-core__viewer--dark {
+                    --rpv-core__theme-bg-body: #09090b !important; /* zinc-950 */
+                    --rpv-core__theme-bg-toolbar: #18181b !important; /* zinc-900 */
+                    --rpv-core__theme-border-color: #27272a !important; /* zinc-800 */
+                }
+                .rpv-core__viewer--light {
+                    --rpv-core__theme-bg-body: #f8fafc !important; /* slate-50 */
+                    --rpv-core__theme-bg-toolbar: #ffffff !important; /* white */
+                    --rpv-core__theme-border-color: #e2e8f0 !important; /* slate-200 */
+                }
             `}</style>
         </div>
     );

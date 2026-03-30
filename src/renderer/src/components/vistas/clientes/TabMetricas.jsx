@@ -1,43 +1,47 @@
 import React, { useMemo } from "react";
 import { Select, SelectItem, Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
-import { HiUsers, HiTrendingUp, HiLocationMarker, HiCalendar, HiCheckCircle, HiXCircle } from "react-icons/hi";
+import { HiUsers, HiTrendingUp, HiLocationMarker, HiCalendar, HiCheckCircle, HiXCircle, HiDownload, HiChartBar } from "react-icons/hi";
 import { MdSpeed } from "react-icons/md";
 import ClientesPorMesChart from "../../charts/ChartClientesPorMes";
 import LoadingSkeleton from "./components/LoadingSkeleton";
 import { useMetricasClientes } from "../../../hooks/useMetricasClientes";
 import { useClientes } from "../../../context/ClientesContext";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
-import { HiDownload } from "react-icons/hi";
 import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
 
-// --- Sub-componente MetricCard (Sin cambios, ya funcionaba bien) ---
+// --- Sub-componente MetricCard (Premium UI) ---
 const MetricCard = ({ icon: Icon, title, value, subTitle, color, chipValue }) => {
   const colorMap = {
-    blue: "from-blue-50 to-blue-100 text-blue-600 dark:from-blue-900/20 dark:to-blue-800/20",
-    green: "from-green-50 to-green-100 text-green-600 dark:from-green-900/20 dark:to-green-800/20",
-    purple: "from-purple-50 to-purple-100 text-purple-600 dark:from-purple-900/20 dark:to-purple-800/20",
-    red: "from-red-50 to-red-100 text-red-600 dark:from-red-900/20 dark:to-red-800/20",
-    cyan: "from-cyan-50 to-cyan-100 text-cyan-600 dark:from-cyan-900/20 dark:to-cyan-800/20",
-    amber: "from-amber-50 to-amber-100 text-amber-600 dark:from-amber-900/20 dark:to-amber-800/20",
-    teal: "from-teal-50 to-teal-100 text-teal-600 dark:from-teal-900/20 dark:to-teal-800/20",
+    blue: "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30",
+    green: "bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30",
+    purple: "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900/30",
+    red: "bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/30",
+    cyan: "bg-cyan-50 dark:bg-cyan-900/10 text-cyan-600 dark:text-cyan-400 border-cyan-100 dark:border-cyan-900/30",
+    amber: "bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/30",
+    teal: "bg-teal-50 dark:bg-teal-900/10 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-900/30",
   };
 
-  const colorClass = colorMap[color] || colorMap.blue;
-  const textColor = colorClass.split(" ")[2];
+  const themeClass = colorMap[color] || colorMap.blue;
 
   return (
-    <Card className={`bg-gradient-to-br ${colorClass} border-none shadow-sm`}>
-      <CardBody className="text-center p-6">
-        <Icon className={`w-12 h-12 mx-auto mb-3 ${textColor}`} />
-        <p className={`text-3xl font-bold ${textColor}`}>{value}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">{title}</p>
-        {subTitle && <p className="text-xs text-gray-500 mt-1">{subTitle}</p>}
-        {chipValue && (
-          <Chip size="sm" className={`mt-2 bg-white/50 dark:bg-black/20 border border-${color}-200 dark:border-${color}-800`} variant="flat">
-            {chipValue}
-          </Chip>
-        )}
+    <Card className={`border shadow-sm rounded-2xl ${themeClass}`}>
+      <CardBody className="p-5 flex flex-row items-center gap-4">
+        <div className={`p-3 rounded-xl shrink-0 ${themeClass.replace('border', '').replace('text', 'bg').replace('dark:bg', 'dark:bg-opacity-20 text').split(' ')[0]} bg-white dark:bg-white/10`}>
+             <Icon className="w-6 h-6 currentColor" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-wider mb-0.5 opacity-80 truncate">{title}</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-black leading-none">{value}</p>
+            {chipValue && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/50 dark:bg-black/20 border border-current/20">
+                    {chipValue}
+                </span>
+            )}
+          </div>
+          {subTitle && <p className="text-xs opacity-70 mt-1 truncate">{subTitle}</p>}
+        </div>
       </CardBody>
     </Card>
   );
@@ -52,7 +56,6 @@ export const TabMetricas = () => {
     loading,
     tipoGrafica,
     handleCambioTipoGrafica
-
   } = useMetricasClientes();
 
   const { setSuccess } = useFeedback();
@@ -102,26 +105,26 @@ export const TabMetricas = () => {
   if (initialLoading) return <LoadingSkeleton tipo="metricas" />;
 
   return (
-    <div className="space-y-6 p-4 animate-fade-in">
+    <div className="space-y-6 animate-in fade-in duration-300 w-full">
 
       {/* 0. Header con Exportación */}
-      <div className="flex justify-end mb-2">
+      <div className="flex justify-end">
         <Dropdown>
           <DropdownTrigger>
             <Button
               color="success"
-              className="text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md"
+              className="font-bold text-white shadow-md shadow-emerald-500/30"
               startContent={<HiDownload className="text-lg" />}
             >
               Exportar Reporte
             </Button>
           </DropdownTrigger>
-          <DropdownMenu aria-label="Opciones de exportación de métricas">
+          <DropdownMenu aria-label="Opciones de exportación de métricas" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl">
             <DropdownItem
               key="csv"
               startContent={<span className="text-xl">📄</span>}
+              className="hover:bg-slate-50 dark:hover:bg-zinc-800"
               onPress={async () => {
-                // Preparar datos para reporte
                 const reportData = {
                   "Resumen": [{
                     Total: data.total,
@@ -138,11 +141,12 @@ export const TabMetricas = () => {
                 if (success) setSuccess("Reporte CSV generado exitosamente");
               }}
             >
-              Exportar CSV (Resumen)
+              <span className="font-semibold text-slate-700 dark:text-zinc-200">Exportar CSV (Resumen)</span>
             </DropdownItem>
             <DropdownItem
               key="excel"
               startContent={<span className="text-xl">📊</span>}
+              className="hover:bg-slate-50 dark:hover:bg-zinc-800"
               onPress={async () => {
                 const reportData = {
                   "Resumen": [{
@@ -160,7 +164,7 @@ export const TabMetricas = () => {
                 if (success) setSuccess("Reporte Excel generado con múltiples hojas");
               }}
             >
-              Exportar Excel Completo (.xlsx)
+              <span className="font-semibold text-slate-700 dark:text-zinc-200">Exportar Excel Completo (.xlsx)</span>
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
@@ -169,38 +173,42 @@ export const TabMetricas = () => {
       {/* 1. KPIs Principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard icon={HiUsers} title="Total Clientes" value={data.total} color="blue" />
-        <MetricCard icon={HiCheckCircle} title="Clientes Activos" value={data.activos} color="green" chipValue={`${data.porcActivos}% Activos`} />
+        <MetricCard icon={HiCheckCircle} title="Clientes Activos" value={data.activos} color="green" chipValue={`${data.porcActivos}%`} />
         <MetricCard icon={HiCalendar} title="Nuevos este Mes" value={data.nuevos} color="purple" />
         <MetricCard icon={HiXCircle} title="Clientes Inactivos" value={data.inactivos} color="red" />
       </div>
 
       {/* 2. KPIs Medidores */}
       {data.medidores.clientes_con_medidores !== undefined && (
-        <>
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mt-4">Estado de Medición</h3>
+        <div className="pt-2">
+          <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
+            Estado de Medición
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <MetricCard icon={MdSpeed} title="Con Medidor" value={data.medidores.clientes_con_medidores} color="cyan" chipValue={`${data.medidores.porcentaje_con_medidores}%`} />
             <MetricCard icon={MdSpeed} title="Sin Medidor" value={data.medidores.clientes_sin_medidores} color="amber" />
             <MetricCard icon={MdSpeed} title="Medidores Asignados" value={data.medidores.total_medidores_asignados} color="teal" />
           </div>
-        </>
+        </div>
       )}
 
       {/* 3. Distribuciones (Grid Complejo) */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pt-2">
 
-        {/* === MEJORA AQUÍ: Columna Izquierda: Ciudades con Dark Mode Optimizado === */}
-        <Card className="xl:col-span-2 bg-white dark:bg-gray-800 border-none shadow-md">
-          <CardHeader className="flex justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+        {/* Columna Izquierda: Ciudades */}
+        <Card className="xl:col-span-2 border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+          <CardHeader className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-5 px-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
                 <HiLocationMarker className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white">Por Ciudad</h3>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">
+                  Distribución Por Ciudad
+              </h3>
             </div>
             {loading && !initialLoading && <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
           </CardHeader>
-          <CardBody>
+          <CardBody className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {data.ciudades.map((ciudad, index) => {
                 const nombre = ciudad.ciudad || ciudad.nombre;
@@ -210,40 +218,30 @@ export const TabMetricas = () => {
                 return (
                   <div
                     key={index}
-                    className="
-                      p-3 rounded-xl border transition-all duration-200
-                      bg-white border-gray-200 hover:bg-gray-50 hover:shadow-sm
-                      dark:bg-gray-800/50 dark:border-gray-700 dark:hover:bg-gray-700/50
-                    "
+                    className="p-4 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/30 hover:border-blue-300 dark:hover:border-blue-800/50 transition-colors shadow-sm"
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold text-gray-700 dark:text-gray-200 text-sm truncate pr-2">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate pr-2">
                         {nombre}
                       </span>
-                      {/* Chip de Porcentaje Optimizado para Dark Mode */}
-                      <span className="
-                        text-xs font-mono font-bold px-2 py-1 rounded-md
-                        bg-blue-50 text-blue-700
-                        dark:bg-blue-500/10 dark:text-blue-300
-                      ">
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
                         {porcentaje.toFixed(1)}%
                       </span>
                     </div>
 
-                    {/* Barra de Progreso Optimizada */}
-                    <div className="w-full h-2 rounded-full mb-2 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-zinc-700 overflow-hidden mb-3">
                       <div
-                        className="h-full rounded-full bg-blue-500 dark:bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                        className="h-full rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
                         style={{ width: `${porcentaje}%` }}
                       ></div>
                     </div>
 
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>Total: <strong className="text-gray-700 dark:text-gray-300">{total}</strong></span>
+                    <div className="flex justify-between text-xs font-medium text-slate-500 dark:text-zinc-400">
+                      <span>Total: <strong className="text-slate-700 dark:text-zinc-300">{total}</strong></span>
                       {ciudad.activos > 0 && (
-                        <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                          <span className="text-green-600 dark:text-green-400 font-medium">Activos: {ciudad.activos}</span>
+                        <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          Activos: {ciudad.activos}
                         </span>
                       )}
                     </div>
@@ -255,21 +253,21 @@ export const TabMetricas = () => {
         </Card>
 
         {/* Columna Derecha: Estados y Tarifas */}
-        <div className="space-y-6">
+        <div className="space-y-6 flex flex-col h-full">
           {/* Estados */}
           {data.estados.length > 0 && (
-            <Card className="dark:bg-gray-800 border-none shadow-md">
-              <CardHeader className="font-semibold gap-2 border-b border-gray-100 dark:border-gray-700">
-                <HiCheckCircle className="text-green-600 dark:text-green-400" />
-                <span className="dark:text-white">Estado de Cuenta</span>
+            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shrink-0">
+              <CardHeader className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-3 pt-4 px-5">
+                <HiCheckCircle className="text-emerald-500 w-4 h-4" />
+                <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Estado de Cuenta</span>
               </CardHeader>
-              <CardBody className="flex flex-wrap gap-2">
+              <CardBody className="p-4 flex flex-wrap gap-2">
                 {data.estados.map((est, i) => (
                   <Chip
                     key={i}
                     color={est.estado === "Activo" ? "success" : "danger"}
                     variant="flat"
-                    className="capitalize border dark:border-transparent"
+                    className="capitalize font-bold text-xs"
                   >
                     {est.estado}: {est.cantidad}
                   </Chip>
@@ -280,19 +278,19 @@ export const TabMetricas = () => {
 
           {/* Tarifas */}
           {data.tarifas.length > 0 && (
-            <Card className="flex-1 dark:bg-gray-800 border-none shadow-md">
-              <CardHeader className="font-semibold gap-2 border-b border-gray-100 dark:border-gray-700">
-                <HiTrendingUp className="text-purple-600 dark:text-purple-400" />
-                <span className="dark:text-white">Tarifas</span>
+            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 flex-1 min-h-0">
+              <CardHeader className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-3 pt-4 px-5">
+                <HiTrendingUp className="text-purple-500 w-4 h-4" />
+                <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Tarifas Asignadas</span>
               </CardHeader>
-              <CardBody className="space-y-3">
+              <CardBody className="p-4 space-y-3 overflow-y-auto custom-scrollbar">
                 {data.tarifas.map((t, i) => (
-                  <div key={i} className="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2 last:border-0 last:pb-0">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{t.tarifa_nombre}</p>
-                      <p className="text-[10px] text-gray-400">{t.tarifa_descripcion}</p>
+                  <div key={i} className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800/50 pb-2 last:border-0 last:pb-0">
+                    <div className="min-w-0 pr-2">
+                      <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{t.tarifa_nombre}</p>
+                      <p className="text-[10px] font-medium text-slate-400 dark:text-zinc-500 truncate mt-0.5">{t.tarifa_descripcion}</p>
                     </div>
-                    <span className="font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded text-xs">
+                    <span className="font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded-md text-xs shrink-0">
                       {t.cantidad_clientes}
                     </span>
                   </div>
@@ -304,15 +302,23 @@ export const TabMetricas = () => {
       </div>
 
       {/* 4. Gráfica Principal */}
-      <Card className="overflow-visible dark:bg-gray-800 border-none shadow-md">
-        <CardHeader className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 pt-6">
-          <h3 className="text-lg font-semibold dark:text-white">Análisis Gráfico</h3>
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 mt-2 overflow-visible">
+        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-5 pt-5 border-b border-slate-100 dark:border-zinc-800/50 pb-4">
+          <div className="flex items-center gap-2">
+              <HiChartBar className="w-5 h-5 text-blue-500" />
+              <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Análisis Gráfico</h3>
+          </div>
           <Select
             size="sm"
-            label="Visualizar"
-            className="w-full sm:w-48"
+            aria-label="Visualizar"
+            className="w-full sm:w-56"
             selectedKeys={[tipoGrafica]}
             onChange={(e) => handleCambioTipoGrafica(e.target.value)}
+            variant="bordered"
+            classNames={{
+                trigger: "bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl",
+                value: "font-bold text-slate-700 dark:text-zinc-200"
+            }}
           >
             <SelectItem key="registros_mes">Registros Anuales</SelectItem>
             <SelectItem key="tendencia">Tendencia Histórica</SelectItem>
@@ -320,13 +326,13 @@ export const TabMetricas = () => {
             <SelectItem key="tarifas">Por Tarifa</SelectItem>
           </Select>
         </CardHeader>
-        <CardBody className="px-6 pb-6">
+        <CardBody className="p-2 sm:p-6">
           {renderChart()}
         </CardBody>
       </Card>
 
       {/* 5. Footer */}
-      <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="text-center text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest pt-4 mt-8">
         {data.fechaActualizacion && `Última actualización de métricas: ${data.fechaActualizacion}`}
       </div>
     </div>

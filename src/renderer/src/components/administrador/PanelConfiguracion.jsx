@@ -1,28 +1,47 @@
 import { useState, useEffect } from "react";
-import { Card, CardBody, CardHeader, Button, Divider, Spinner } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Button, Spinner } from "@nextui-org/react";
 import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock } from "react-icons/hi";
 
-// Input reutilizable
-const ConfigInput = ({ label, value, onChange, icon, type = "number", color = "blue", description, min = 0 }) => (
-  <div>
-    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-      {label}
-    </label>
-    <div className="relative w-full flex">
-      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2 pr-2">
-        {icon}
-      </span>
-      <input
-        type={type}
-        value={value}
-        min={min}
-        onChange={onChange}
-        className={`border border-gray-300 focus:ring-${color}-600 focus:border-${color}-500 text-gray-600 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all`}
-      />
+// Input reutilizable (Premium UI)
+const ConfigInput = ({ label, value, onChange, icon, type = "number", color = "blue", description, min = 0 }) => {
+  const focusColors = {
+    blue: "focus:ring-blue-500 focus:border-blue-500",
+    amber: "focus:ring-amber-500 focus:border-amber-500",
+    orange: "focus:ring-orange-500 focus:border-orange-500",
+    red: "focus:ring-red-500 focus:border-red-500",
+    purple: "focus:ring-purple-500 focus:border-purple-500",
+  };
+
+  const focusClass = focusColors[color] || focusColors.blue;
+
+  return (
+    <div className="w-full">
+      <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+        {label}
+      </label>
+      <div className="relative w-full flex items-center">
+        <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+          {icon}
+        </span>
+        <input
+          type={type}
+          value={value}
+          min={min}
+          onChange={onChange}
+          className={`
+            w-full pl-10 pr-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none h-11
+            bg-slate-50 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100
+            border border-slate-200 dark:border-zinc-700
+            hover:bg-slate-100 dark:hover:bg-zinc-800
+            focus:outline-none focus:ring-2 focus:bg-white dark:focus:bg-zinc-900 shadow-sm
+            ${focusClass}
+          `}
+        />
+      </div>
+      {description && <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5 ml-1 font-bold leading-tight">{description}</p>}
     </div>
-    {description && <p className="text-xs text-gray-400 mt-1">{description}</p>}
-  </div>
-);
+  );
+};
 
 export default function PanelConfiguracion() {
   const token = localStorage.getItem("token");
@@ -38,7 +57,6 @@ export default function PanelConfiguracion() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Cargar configuración al montar
   useEffect(() => {
     if (token) {
       setLoading(true);
@@ -69,165 +87,158 @@ export default function PanelConfiguracion() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner label="Cargando configuración..." />
+      <div className="flex flex-col items-center justify-center p-12 h-64 gap-4 animate-in fade-in">
+        <Spinner size="lg" color="primary" />
+        <span className="text-sm font-bold text-slate-500 dark:text-zinc-400 animate-pulse">Cargando configuración del sistema...</span>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Configuración del Sistema
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Reglas de avisos, cortes de servicio y facturación
-          </p>
+    <div className="p-4 space-y-6 max-w-4xl mx-auto animate-in fade-in duration-300 pb-20">
+      
+      {/* ── HEADER ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+        <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 rounded-2xl">
+                <HiCog className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-zinc-100 tracking-tight">
+                Configuración General
+            </h2>
+            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
+                Reglas de negocio y facturación
+            </p>
+            </div>
         </div>
         <Button
           color={saved ? "success" : "primary"}
           onPress={handleSave}
           isLoading={saving}
-          startContent={saved ? null : <HiSave className="w-4 h-4" />}
-          radius="lg"
-          className={saved ? "shadow-lg shadow-green-500/30" : "shadow-lg shadow-blue-500/30"}
+          startContent={saved ? null : <HiSave className="w-5 h-5" />}
+          className={`font-bold h-12 px-6 w-full sm:w-auto shadow-md ${saved ? "text-white shadow-emerald-500/30" : "shadow-blue-500/30"}`}
         >
-          {saved ? "✓ Guardado" : "Guardar Cambios"}
+          {saved ? "✓ Guardado correctamente" : "Guardar Cambios"}
         </Button>
       </div>
 
-      {/* Sección: Avisos */}
-      <Card className="shadow-sm">
-        <CardHeader className="flex gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+      {/* Nota informativa Superior */}
+      <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200/60 dark:border-orange-800/50 rounded-xl p-4 flex gap-3 animate-in slide-in-from-top-2">
+        <HiExclamation className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-sm font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">Aviso Importante</p>
+          <p className="text-xs font-medium text-orange-700/80 dark:text-orange-400/80 leading-relaxed max-w-2xl">
+            Modificar estos valores afectará el cálculo automático de deudores en todo el sistema durante la próxima sincronización nocturna. Asegúrate de que los valores de avisos sean progresivos (Primer Aviso &lt; Segundo &lt; Tercer &lt; Corte).
+          </p>
+        </div>
+      </div>
+
+      {/* ── SECCIÓN 1: AVISOS (AZUL) ── */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
             <HiBell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold">Reglas de Avisos</h3>
-            <p className="text-xs text-gray-400">
-              Umbrales de facturas vencidas para generar avisos a los clientes
+            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Umbrales de Avisos</h3>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
+              Cantidad de facturas vencidas requeridas para generar cada tipo de aviso.
             </p>
           </div>
         </CardHeader>
-        <Divider />
-        <CardBody className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardBody className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <ConfigInput
               label="Primer Aviso"
               value={config.facturas_para_primer_aviso}
-              onChange={(e) =>
-                setConfig({ ...config, facturas_para_primer_aviso: Number(e.target.value) })
-              }
+              onChange={(e) => setConfig({ ...config, facturas_para_primer_aviso: Number(e.target.value) })}
               icon={<HiBell className="w-5 h-5 text-blue-500" />}
-              description="Facturas vencidas para 1er aviso"
+              color="blue"
+              description="Ej. Al deber 1 factura"
             />
             <ConfigInput
               label="Segundo Aviso"
               value={config.facturas_para_segundo_aviso}
-              onChange={(e) =>
-                setConfig({ ...config, facturas_para_segundo_aviso: Number(e.target.value) })
-              }
+              onChange={(e) => setConfig({ ...config, facturas_para_segundo_aviso: Number(e.target.value) })}
               icon={<HiBell className="w-5 h-5 text-amber-500" />}
               color="amber"
-              description="Facturas vencidas para 2do aviso"
+              description="Ej. Al deber 2 facturas"
             />
             <ConfigInput
               label="Tercer Aviso"
               value={config.facturas_para_tercer_aviso}
-              onChange={(e) =>
-                setConfig({ ...config, facturas_para_tercer_aviso: Number(e.target.value) })
-              }
+              onChange={(e) => setConfig({ ...config, facturas_para_tercer_aviso: Number(e.target.value) })}
               icon={<HiBell className="w-5 h-5 text-orange-500" />}
               color="orange"
-              description="Facturas vencidas para 3er aviso"
+              description="Aviso previo o extrajudicial"
             />
           </div>
         </CardBody>
       </Card>
 
-      {/* Sección: Cortes */}
-      <Card className="shadow-sm">
-        <CardHeader className="flex gap-3">
-          <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
+      {/* ── SECCIÓN 2: CORTES (ROJO/PÚRPURA) ── */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
+          <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
             <HiBan className="w-5 h-5 text-red-600 dark:text-red-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold">Reglas de Corte</h3>
-            <p className="text-xs text-gray-400">
-              Umbrales para generar órdenes de corte de servicio
+            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Reglas de Suspensión</h3>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
+              Criterios para emitir órdenes de corte de servicio a morosos.
             </p>
           </div>
         </CardHeader>
-        <Divider />
-        <CardBody className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardBody className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ConfigInput
-              label="Facturas para Corte de Servicio"
+              label="Límite de Facturas para Corte"
               value={config.facturas_para_corte}
-              onChange={(e) =>
-                setConfig({ ...config, facturas_para_corte: Number(e.target.value) })
-              }
-              icon={<HiBan className="w-5 h-5 text-red-600" />}
+              onChange={(e) => setConfig({ ...config, facturas_para_corte: Number(e.target.value) })}
+              icon={<HiBan className="w-5 h-5 text-red-500" />}
               color="red"
-              description="Cantidad de facturas vencidas para generar orden de corte"
+              description="¿A las cuántas facturas impagas se corta el servicio?"
             />
             <ConfigInput
-              label="Días de Gracia"
+              label="Días de Gracia post-vencimiento"
               value={config.dias_gracia}
-              onChange={(e) =>
-                setConfig({ ...config, dias_gracia: Number(e.target.value) })
-              }
-              icon={<HiClock className="w-5 h-5 text-purple-600" />}
+              onChange={(e) => setConfig({ ...config, dias_gracia: Number(e.target.value) })}
+              icon={<HiClock className="w-5 h-5 text-purple-500" />}
               color="purple"
-              description="Días de gracia después del vencimiento antes de considerar candidato a corte"
+              description="Días extra que se le dan al cliente antes de ejecutar el corte."
             />
           </div>
         </CardBody>
       </Card>
 
-      {/* Sección: Facturación */}
-      <Card className="shadow-sm">
-        <CardHeader className="flex gap-3">
-          <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
-            <HiCalendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+      {/* ── SECCIÓN 3: FACTURACIÓN (AMBER) ── */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
+          <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+            <HiCalendar className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold">Facturación</h3>
-            <p className="text-xs text-gray-400">
-              Configuración de plazos de facturación
+            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Ciclo de Facturación</h3>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
+              Tiempos estándar para la emisión y cobro de recibos.
             </p>
           </div>
         </CardHeader>
-        <Divider />
-        <CardBody>
-          <div className="max-w-sm">
+        <CardBody className="p-6">
+          <div className="max-w-md">
             <ConfigInput
-              label="Días de Vencimiento de Factura"
+              label="Días de Vigencia del Recibo"
               value={config.dias_vencimiento_factura}
-              onChange={(e) =>
-                setConfig({ ...config, dias_vencimiento_factura: Number(e.target.value) })
-              }
-              icon={<HiCalendar className="w-5 h-5 text-amber-600" />}
-              color="amber"
-              description="Días desde la emisión hasta que una factura se considera vencida (por defecto 30)"
+              onChange={(e) => setConfig({ ...config, dias_vencimiento_factura: Number(e.target.value) })}
+              icon={<HiCalendar className="w-5 h-5 text-emerald-500" />}
+              color="green"
+              description="Tiempo límite para pagar (Standard: 30 días desde la emisión)."
             />
           </div>
         </CardBody>
       </Card>
 
-      {/* Nota informativa */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30 flex gap-3">
-        <HiExclamation className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">Importante</p>
-          <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
-            Cambiar estas reglas actualizará automáticamente el estado de todos los deudores en la próxima
-            sincronización. Los valores de avisos deben ser progresivos (1er &lt; 2do &lt; 3er &lt; Corte).
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

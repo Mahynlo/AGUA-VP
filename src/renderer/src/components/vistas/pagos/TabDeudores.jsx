@@ -7,18 +7,17 @@ import {
   Chip,
   Select,
   SelectItem,
-  Input,
   User,
   Pagination,
   Tooltip,
   Progress,
-  Spinner
+  Spinner,
+  Skeleton
 } from "@nextui-org/react";
 import { FlechaReturnIcon } from "../../../IconsApp/IconsAppSystem";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
-import { HiExclamation, HiCurrencyDollar, HiClipboardList, HiBan, HiFilter, HiCog, HiCheckCircle, HiRefresh } from "react-icons/hi";
+import { HiExclamation, HiBan, HiFilter, HiCog, HiCheckCircle, HiRefresh, HiDocumentText, HiClipboardList, HiX } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../context/AuthContext";
 import { useDeudores } from "../../../context/DeudoresContext";
 
 // Modals
@@ -27,11 +26,41 @@ import ModalRealizarCorte from "./modals/ModalRealizarCorte";
 import ModalCrearConvenio from "./modals/ModalCrearConvenio";
 import ModalParcialidadesConvenio from "./ModalParcialidadesConvenio";
 
+// Componente LoadingSkeleton premium
+const LoadingSkeleton = () => (
+  <div className="space-y-6 w-full animate-in fade-in">
+    <Card className="border-none shadow-sm rounded-2xl">
+      <CardBody className="p-6 space-y-4">
+        <div className="flex justify-between">
+          <Skeleton className="h-10 w-48 rounded-xl" />
+          <div className="flex gap-2">
+              <Skeleton className="h-10 w-32 rounded-xl" />
+              <Skeleton className="h-10 w-32 rounded-xl" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+        </div>
+      </CardBody>
+    </Card>
+    <Card className="border-none shadow-sm rounded-2xl">
+      <CardBody className="p-0">
+          <Skeleton className="h-12 w-full rounded-none border-b border-gray-100" />
+          {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-none border-b border-gray-50" />
+          ))}
+      </CardBody>
+    </Card>
+  </div>
+);
+
 const TabDeudores = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
-  // Datos compartidos desde DeudoresContext (elimina fetch duplicado)
   const { deudores: candidatos, loading, fetchDeudores } = useDeudores();
   const [error, setError] = useState(null);
 
@@ -46,17 +75,15 @@ const TabDeudores = () => {
   // Estados de UI
   const [search, setSearch] = useState("");
   const [filtroGravedad, setFiltroGravedad] = useState("All");
-  const [filtroEstado, setFiltroEstado] = useState("All"); // NUEVO: Filtro por estado del servicio
+  const [filtroEstado, setFiltroEstado] = useState("All"); 
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // --- API CALLS (acciones, no fetch de datos — eso viene del context) ---
-
+  // --- API CALLS ---
   const handleReconectar = async (deudor) => {
     if (!confirm(`¿Confirmar reconexión para ${deudor.cliente?.nombre}?`)) return;
 
     try {
-      setLoading(true);
       const result = await window.api.deudores.registrarReconexion(token, {
         medidor_id: deudor.medidor.id,
         observaciones: "Reconexión manual desde panel"
@@ -64,15 +91,12 @@ const TabDeudores = () => {
 
       console.log("Reconexión exitosa:", result);
       alert("Servicio reconectado exitosamente");
-      fetchDeudores(); // Recargar
+      fetchDeudores(); 
     } catch (error) {
       console.error("Error reconectando:", error);
-
-      // Extraer mensaje de error del backend
       let errorMsg = "Error al reconectar servicio";
 
       if (error.message) {
-        // Si el error contiene información del backend
         if (error.message.includes("403") || error.message.includes("Forbidden")) {
           errorMsg = `No se puede reconectar:\n\n` +
             `• El medidor tiene deuda pendiente\n` +
@@ -84,20 +108,15 @@ const TabDeudores = () => {
           errorMsg = error.message;
         }
       }
-
       alert(errorMsg);
-    } finally {
-      setLoading(false);
     }
   };
-
 
   // --- LÓGICA DE PROCESAMIENTO ---
   const deudoresEnriquecidos = useMemo(() => {
     const hoy = new Date();
 
     return candidatos.map(d => {
-      // Usar fecha_vencimiento del API (campo de compatibilidad)
       const fechaVencimiento = d.fecha_vencimiento ? new Date(d.fecha_vencimiento) :
         (d.deuda?.fecha_mas_antigua ? new Date(d.deuda.fecha_mas_antigua) : new Date(new Date().setMonth(new Date().getMonth() - 1)));
 
@@ -115,13 +134,11 @@ const TabDeudores = () => {
         colorGravedad = "warning";
       }
 
-      // Si ya está cortado, sobrescribir gravedad visual
-      // CORREGIDO: El campo es 'estado_servicio' no 'estado'
       const isCortado = d.medidor?.estado === "Cortado" || d.medidor?.estado_servicio === "Cortado";
 
       return {
         ...d,
-        id: d.id || d.medidor?.id, // Asegurar ID único
+        id: d.id || d.medidor?.id,
         cliente_nombre: d.cliente?.nombre || "N/A",
         direccion_cliente: d.cliente?.direccion || d.medidor?.direccion || "N/A",
         saldo_pendiente: Number(d.deuda?.total || 0),
@@ -142,7 +159,6 @@ const TabDeudores = () => {
 
       const matchesGravedad = filtroGravedad === "All" || item.gravedad === filtroGravedad;
 
-      // Filtro por estado del servicio (incluye convenio)
       const matchesEstado = filtroEstado === "All" ||
         (filtroEstado === "Activo" && !item.isCortado && !item.tiene_convenio) ||
         (filtroEstado === "Cortado" && item.isCortado) ||
@@ -152,13 +168,6 @@ const TabDeudores = () => {
     });
   }, [deudoresEnriquecidos, search, filtroGravedad, filtroEstado]);
 
-  // Estadísticas
-  const estadisticas = useMemo(() => {
-    const totalDeuda = filteredData.reduce((acc, curr) => acc + curr.saldo_pendiente, 0);
-    const criticos = filteredData.filter(d => d.gravedad === "Crítico").length;
-    return { totalDeuda, criticos, totalDeudores: filteredData.length };
-  }, [filteredData]);
-
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
     return filteredData.slice(start, start + rowsPerPage);
@@ -166,336 +175,438 @@ const TabDeudores = () => {
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
+  // Determinar color de la barra lateral de la fila
+  const getRowBorderColor = (item) => {
+      if (item.isCortado) return "bg-slate-400 dark:bg-zinc-600";
+      if (item.colorGravedad === 'danger') return "bg-red-500";
+      if (item.colorGravedad === 'warning') return "bg-orange-500";
+      return "bg-emerald-500";
+  };
+
+  const hasActiveFilters = search !== "" || filtroGravedad !== "All" || filtroEstado !== "All";
+
+  const clearFilters = () => {
+      setSearch("");
+      setFiltroGravedad("All");
+      setFiltroEstado("All");
+      setCurrentPage(1);
+  };
+
+  const selectClassNames = {
+    trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors h-11",
+    value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
+  };
+
+  if (!candidatos.length && loading) { // Solo si es la primera carga real
+    return <LoadingSkeleton />;
+  }
+
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 w-full animate-in fade-in duration-300">
 
-      {/* 1. HEADER (Fuera de Card, igual que Facturas) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            Cartera Vencida y Cortes
-          </h1>
-          <p className="text-small text-gray-500 mt-1">Gestión de morosidad y cortes de servicio</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            startContent={<HiCog className="w-5 h-5" />}
-            variant="flat"
-            onPress={() => setShowConfigModal(true)}
-          >
-            Configuración
-          </Button>
-          <Button
-            startContent={<HiRefresh className="w-5 h-5" />}
-            color="primary"
-            onPress={fetchDeudores}
-            isLoading={loading}
-          >
-            {loading ? "Cargando..." : "Recargar Datos"}
-          </Button>
-          <Button
-            color="default"
-            variant="bordered"
-            onPress={() => navigate(-1)}
-          >
-            <FlechaReturnIcon className="w-5 h-5" />
-            <span className="ml-2 hidden md:inline">Volver</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* 3. FILTROS (Card Independiente con Header) */}
-      <Card>
-        <CardHeader>
+      {/* ── 1. HEADER Y FILTROS ── */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold">Filtros y Búsqueda</h3>
-            {loading && (
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            )}
-          </div>
-        </CardHeader>
-        <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Buscador (2 columnas) */}
-            <div className="lg:col-span-2">
-              <div className="relative w-full flex">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                  <SearchIcon className="inline-block mr-2" />
-                </span>
-                <input
-                  placeholder="Buscar cliente o dirección..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
-                  >
-                    ✕
-                  </button>
+            <div className="p-2.5 bg-red-500/10 dark:bg-red-500/20 rounded-xl">
+              <HiExclamation className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                    Cartera Vencida y Cortes
+                </h3>
+                {loading && (
+                    <Spinner size="sm" color="danger" className="w-4 h-4 ml-1" />
                 )}
               </div>
+              <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
+                  Gestión de morosidad y convenios
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
+            <Button
+              color="default"
+              variant="flat"
+              onPress={() => navigate(-1)}
+              className="bg-slate-100 dark:bg-zinc-800 font-bold text-slate-600 dark:text-zinc-300"
+              startContent={<FlechaReturnIcon className="w-5 h-5" />}
+              isIconOnly
+              title="Volver"
+            />
+            <Button
+              color="primary"
+              variant="flat"
+              className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold"
+              onPress={fetchDeudores}
+              startContent={!loading && <HiRefresh className="text-lg" />}
+              isLoading={loading}
+            >
+              Recargar
+            </Button>
+            <Button
+              color="primary"
+              className="font-bold shadow-md shadow-blue-500/30"
+              onPress={() => setShowConfigModal(true)}
+              startContent={<HiCog className="text-lg" />}
+            >
+              Configuración
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardBody className="p-6 bg-slate-50/50 dark:bg-black/10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
+            
+            {/* Buscador */}
+            <div className="lg:col-span-5 relative w-full flex items-center">
+              <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+                <SearchIcon className="w-5 h-5" />
+              </span>
+              <input
+                placeholder="Buscar cliente o dirección..."
+                value={search}
+                onChange={(e) => {
+                    setSearch(e.target.value);
+                    setCurrentPage(1);
+                }}
+                className="w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 shadow-sm h-11"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                >
+                  <HiX className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Filtro Gravedad */}
-            <Select
-              label="Gravedad"
-              placeholder="Todas"
-              selectedKeys={[filtroGravedad]}
-              onSelectionChange={(keys) => {
-                setFiltroGravedad(Array.from(keys)[0] || "All");
-                setCurrentPage(1);
-              }}
-              startContent={<HiExclamation className="text-gray-400" />}
-            >
-              <SelectItem key="All" value="All">Todas</SelectItem>
-              <SelectItem key="Crítico" value="Crítico" color="danger">Críticos</SelectItem>
-              <SelectItem key="Moderado" value="Moderado" color="warning">Moderados</SelectItem>
-              <SelectItem key="Leve" value="Leve" color="success">Leves</SelectItem>
-            </Select>
+            <div className="lg:col-span-3">
+                <Select
+                    placeholder="Todas las gravedades"
+                    selectedKeys={[filtroGravedad]}
+                    onSelectionChange={(keys) => {
+                        setFiltroGravedad(Array.from(keys)[0] || "All");
+                        setCurrentPage(1);
+                    }}
+                    startContent={<HiExclamation className="text-slate-400" />}
+                    aria-label="Filtrar por Gravedad"
+                    variant="bordered"
+                    classNames={selectClassNames}
+                >
+                    <SelectItem key="All" value="All">Todas</SelectItem>
+                    <SelectItem key="Crítico" value="Crítico" className="text-red-600 font-medium">Críticos (+90 días)</SelectItem>
+                    <SelectItem key="Moderado" value="Moderado" className="text-orange-500 font-medium">Moderados (+30 días)</SelectItem>
+                    <SelectItem key="Leve" value="Leve" className="text-emerald-600 font-medium">Leves</SelectItem>
+                </Select>
+            </div>
 
             {/* Filtro Estado Servicio */}
-            <Select
-              label="Estado Servicio"
-              placeholder="Todos"
-              selectedKeys={[filtroEstado]}
-              onSelectionChange={(keys) => {
-                setFiltroEstado(Array.from(keys)[0] || "All");
-                setCurrentPage(1);
-              }}
-              startContent={<HiFilter className="text-gray-400" />}
-            >
-              <SelectItem key="All" value="All">Todos</SelectItem>
-              <SelectItem key="Activo" value="Activo">Activos (con déuda)</SelectItem>
-              <SelectItem key="Cortado" value="Cortado">Cortados</SelectItem>
-              <SelectItem key="Convenio" value="Convenio">En Convenio</SelectItem>
-            </Select>
+            <div className="lg:col-span-3">
+                <Select
+                    placeholder="Todos los estados"
+                    selectedKeys={[filtroEstado]}
+                    onSelectionChange={(keys) => {
+                        setFiltroEstado(Array.from(keys)[0] || "All");
+                        setCurrentPage(1);
+                    }}
+                    startContent={<HiFilter className="text-slate-400" />}
+                    aria-label="Filtrar por Estado"
+                    variant="bordered"
+                    classNames={selectClassNames}
+                >
+                    <SelectItem key="All" value="All">Todos</SelectItem>
+                    <SelectItem key="Activo" value="Activo">Activos (Con Deuda)</SelectItem>
+                    <SelectItem key="Cortado" value="Cortado">Servicios Cortados</SelectItem>
+                    <SelectItem key="Convenio" value="Convenio">En Convenio</SelectItem>
+                </Select>
+            </div>
 
-            {/* Rows Per Page */}
-            <Select
-              label="Por página"
-              selectedKeys={[rowsPerPage.toString()]}
-              onSelectionChange={(keys) => {
-                setRowsPerPage(Number(Array.from(keys)[0]));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectItem key="5" value="5">5</SelectItem>
-              <SelectItem key="10" value="10">10</SelectItem>
-              <SelectItem key="15" value="15">15</SelectItem>
-              <SelectItem key="20" value="20">20</SelectItem>
-            </Select>
-          </div>
+            {/* Botón Limpiar */}
+            <div className="lg:col-span-1 flex justify-end">
+                {hasActiveFilters ? (
+                    <Button 
+                        variant="flat" 
+                        color="default"
+                        onPress={clearFilters}
+                        className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm h-11 min-w-0"
+                        isIconOnly
+                        title="Limpiar filtros"
+                    >
+                        <HiFilter className="text-slate-400 text-lg" />
+                    </Button>
+                ) : (
+                    <div className="w-full h-11"></div> 
+                )}
+            </div>
 
-          <div className="flex justify-between items-center mt-4 text-sm text-gray-600 dark:text-gray-400">
-            <span>
-              Mostrando {paginatedData.length} de {filteredData.length} deudores
-              {filteredData.length !== candidatos.length && ` (filtrado de ${candidatos.length} total)`}
-            </span>
           </div>
         </CardBody>
-      </Card >
+      </Card>
 
+      {/* ── 2. LISTA DE DEUDORES (Vista de Filas) ── */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        
+        {/* Cabecera interna de tabla */}
+        <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4">
+            <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">
+                Mostrando <span className="text-red-600 dark:text-red-400">{paginatedData.length}</span> de <span className="text-slate-800 dark:text-zinc-200">{filteredData.length}</span> deudores
+                {filteredData.length !== candidatos.length && ` (filtrado de ${candidatos.length})`}
+            </span>
 
-
-      {/* LISTA DE TARJETAS */}
-      < div className="flex flex-col gap-3 min-h-[300px]" >
-        {
-          loading ? (
-            <div className="flex justify-center items-center h-40" >
-              <Spinner label="Cargando deudores..." color="danger" />
+            <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:block">
+                    Filas por página:
+                </span>
+                <Select
+                    size="sm"
+                    aria-label="Por página"
+                    className="w-24"
+                    variant="bordered"
+                    selectedKeys={[rowsPerPage.toString()]}
+                    onSelectionChange={(keys) => {
+                        setRowsPerPage(Number(Array.from(keys)[0]));
+                        setCurrentPage(1);
+                    }}
+                    classNames={{
+                        trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-lg",
+                        value: "font-bold text-slate-700 dark:text-zinc-300"
+                    }}
+                >
+                    <SelectItem key="5" value="5">5</SelectItem>
+                    <SelectItem key="10" value="10">10</SelectItem>
+                    <SelectItem key="15" value="15">15</SelectItem>
+                    <SelectItem key="20" value="20">20</SelectItem>
+                    <SelectItem key="50" value="50">50</SelectItem>
+                </Select>
             </div>
-          ) : paginatedData.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-              <p className="text-gray-500">No se encontraron deudores con estos criterios.</p>
-            </div>
-          ) : (
-            paginatedData.map((item) => (
-              <div
-                key={item.id}
-                className={`group relative bg-white border rounded-xl shadow-sm hover:shadow-md transition-all p-4 overflow-hidden ${item.isCortado ? 'border-red-200 bg-red-50/10' : 'border-gray-200'}`}
-              >
-                {/* Barra de Color Lateral */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${item.isCortado ? 'bg-gray-500' :
-                  item.colorGravedad === 'danger' ? 'bg-red-500' :
-                    item.colorGravedad === 'warning' ? 'bg-orange-400' : 'bg-green-400'
-                  }`}></div>
+        </div>
 
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pl-3">
-
-                  {/* 1. Información del Cliente */}
-                  <div className="flex items-center gap-3 md:w-1/3">
-                    <User
-                      name={
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-gray-800 uppercase tracking-tight text-sm">
-                            {item.cliente_nombre}
-                          </span>
-                          {item.isCortado && <Chip size="sm" color="danger" variant="flat">CORTADO</Chip>}
-                          {item.tiene_convenio && <Chip size="sm" color="success" variant="flat">CONVENIO</Chip>}
-                        </div>
-                      }
-                      description={
-                        <span className="text-xs text-gray-500 block truncate max-w-[200px]">
-                          {item.direccion_cliente}
-                        </span>
-                      }
-                      avatarProps={{
-                        radius: "lg",
-                        size: "sm",
-                        className: item.isCortado ? "bg-gray-200 text-gray-400 grayscale" :
-                          (item.tiene_convenio ? "bg-green-100 text-green-600" :
-                            (item.colorGravedad === 'danger' ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600")),
-                        name: item.cliente_nombre?.charAt(0)
-                      }}
-                    />
-                  </div>
-
-                  {/* 2. Información de Deuda y Tiempo */}
-                  <div className="flex flex-col md:flex-row gap-6 md:w-1/3 justify-center w-full">
-                    {/* Monto */}
-                    <div className="flex flex-col items-center md:items-start min-w-[100px]">
-                      <span className="text-[10px] uppercase font-bold text-gray-400">
-                        {item.tiene_convenio ? "Saldo Convenio" : "Saldo Pendiente"}
-                      </span>
-                      <span className={`text-xl font-black ${item.tiene_convenio ? 'text-green-600' : 'text-gray-800'}`}>
-                        ${item.tiene_convenio ? item.convenio?.saldo_restante?.toLocaleString() : item.saldo_pendiente?.toLocaleString()}
-                      </span>
-                      {item.tiene_convenio && (
-                        <span className="text-[9px] text-green-600 mt-0.5">
-                          {item.convenio?.parcialidades} cuotas
-                        </span>
-                      )}
+        <CardBody className="p-0">
+            {paginatedData.length === 0 ? (
+                <div className="text-center py-16 flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center mb-4">
+                        <HiClipboardList className="text-3xl text-slate-400 dark:text-zinc-500" />
                     </div>
-
-                    {/* Tiempo de Retraso con Barra */}
-                    <div className="flex flex-col w-full md:w-32">
-                      <div className="flex justify-between text-[10px] font-bold mb-1">
-                        <span className={
-                          item.tiene_convenio ? 'text-green-600' :
-                            (item.isCortado ? 'text-gray-500' :
-                              item.colorGravedad === 'danger' ? 'text-red-600' :
-                                item.colorGravedad === 'warning' ? 'text-orange-500' : 'text-green-600')
-                        }>
-                          {item.dias_retraso} días
-                        </span>
-                        <span className="text-gray-400">Retraso</span>
-                      </div>
-                      <Progress
-                        size="sm"
-                        value={item.dias_retraso > 120 ? 100 : (item.dias_retraso / 120) * 100}
-                        color={item.tiene_convenio ? "success" : (item.isCortado ? "default" : item.colorGravedad)}
-                        aria-label="Gravedad de deuda"
-                        className="h-1.5"
-                      />
-                      <span className="text-[9px] text-gray-400 mt-1">
-                        Acción: <b>{item.accion_sugerida}</b>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 3. Acciones y Estado */}
-                  <div className="flex items-center gap-4 md:w-1/3 justify-end border-t md:border-t-0 pt-3 md:pt-0 w-full mt-2 md:mt-0">
-
-                    <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-100 ml-auto md:ml-0">
-
-                      {/* Botón Convenio - Condicional según si ya tiene convenio */}
-                      {item.tiene_convenio ? (
-                        <Tooltip
-                          content={
-                            <div className="px-1 py-2">
-                              <div className="text-small font-bold">Convenio Activo</div>
-                              <div className="text-tiny">Saldo: ${item.convenio?.saldo_restante?.toLocaleString()}</div>
-                              <div className="text-tiny">Parcialidades: {item.convenio?.parcialidades_pendientes}/{item.convenio?.total_parcialidades}</div>
-                            </div>
-                          }
-                        >
-                          <Button
-                            size="sm"
-                            color="success"
-                            variant="flat"
-                            onPress={() => {
-                              console.log('Abriendo modal para convenio:', item.convenio?.id);
-                              setSelectedConvenioId(item.convenio?.id);
-                              setShowParcialidadesModal(true);
-                            }}
-                          >
-                            Ver Convenio
-                          </Button>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip content="Crear Convenio de Pago">
-                          <Button
-                            size="sm"
-                            color="primary"
-                            variant="flat"
-                            onPress={() => {
-                              setSelectedDeudor(item);
-                              setShowConvenioModal(true);
-                            }}
-                          >
-                            Crear Convenio
-                          </Button>
-                        </Tooltip>
-                      )}
-
-                      <div className="w-px h-4 bg-gray-300 mx-1"></div>
-
-                      {item.isCortado ? (
-                        <Tooltip content="Reconectar Servicio" color="success">
-                          <Button isIconOnly size="sm" variant="flat" color="success" onPress={() => handleReconectar(item)}>
-                            <HiCheckCircle className="w-5 h-5" />
-                          </Button>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip content="Generar Corte" color="danger">
-                          <Button
-                            isIconOnly
-                            size="sm"
-                            variant="flat"
-                            color="danger"
-                            onPress={() => {
-                              if (item.isCortado) {
-                                alert("El servicio ya está cortado");
-                                return;
-                              }
-                              setSelectedDeudor(item);
-                              setShowCorteModal(true);
-                            }}
-                          >
-                            <HiBan className="w-5 h-5" />
-                          </Button>
-                        </Tooltip>
-                      )}
-                    </div>
-                  </div>
-
+                    <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">
+                        {candidatos.length === 0 && !loading ? "No hay deudores registrados" : "Sin coincidencias"}
+                    </p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mt-1 max-w-[250px]">
+                        Intenta cambiar los filtros o recarga la página para obtener datos recientes.
+                    </p>
                 </div>
-              </div>
-            ))
-          )}
-      </div >
+            ) : (
+                <div className="flex flex-col">
+                    {paginatedData.map((item) => (
+                        <div 
+                            key={item.id} 
+                            className={`relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-5 border-b border-slate-100 dark:border-zinc-800/50 transition-colors
+                            ${item.isCortado ? 'bg-slate-50/50 dark:bg-zinc-800/20' : 'hover:bg-slate-50/30 dark:hover:bg-zinc-800/10'}`}
+                        >
+                            {/* Barra indicadora lateral */}
+                            <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-md ${getRowBorderColor(item)} opacity-80`}></div>
 
-      {/* Paginación */}
-      {
-        totalPages > 1 && (
-          <div className="flex justify-center mt-4">
-            <Pagination
-              total={totalPages}
-              page={currentPage}
-              onChange={setCurrentPage}
-              showControls
-              showShadow
-              color="primary"
-            />
-          </div>
-        )
-      }
+                            {/* 1. Información del Cliente */}
+                            <div className="flex items-center gap-4 lg:w-1/3 pl-3">
+                                <User
+                                    name={
+                                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                            <span className={`font-bold text-sm truncate max-w-[180px] sm:max-w-[250px] ${item.isCortado ? 'text-slate-500 dark:text-zinc-400 line-through decoration-slate-400/50' : 'text-slate-800 dark:text-zinc-100'}`}>
+                                                {item.cliente_nombre}
+                                            </span>
+                                        </div>
+                                    }
+                                    description={
+                                        <div className="flex flex-col gap-1.5 mt-1">
+                                            <span className="text-[11px] font-medium text-slate-500 truncate max-w-[250px]">
+                                                {item.direccion_cliente}
+                                            </span>
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                {item.isCortado && (
+                                                    <Chip size="sm" className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold text-[9px] uppercase tracking-widest px-1 h-5 border border-slate-200 dark:border-zinc-700">
+                                                        CORTADO
+                                                    </Chip>
+                                                )}
+                                                {item.tiene_convenio && (
+                                                    <Chip size="sm" className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-widest px-1 h-5 border border-emerald-200 dark:border-emerald-800/50">
+                                                        CONVENIO
+                                                    </Chip>
+                                                )}
+                                            </div>
+                                        </div>
+                                    }
+                                    avatarProps={{
+                                        radius: "md",
+                                        size: "sm",
+                                        className: `font-bold text-sm ${
+                                            item.isCortado ? "bg-slate-200 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500" :
+                                            item.tiene_convenio ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400" :
+                                            item.colorGravedad === 'danger' ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400" : 
+                                            item.colorGravedad === 'warning' ? "bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400" : 
+                                            "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
+                                        }`,
+                                        name: item.cliente_nombre?.charAt(0) || "?"
+                                    }}
+                                />
+                            </div>
+
+                            {/* 2. Información de Deuda y Tiempo */}
+                            <div className="flex flex-row gap-6 lg:w-1/3 justify-start sm:justify-center w-full pl-12 lg:pl-0">
+                                
+                                {/* Monto */}
+                                <div className="flex flex-col items-start min-w-[100px]">
+                                    <span className="text-[9px] uppercase font-bold tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+                                        {item.tiene_convenio ? "Saldo Convenio" : "Deuda Total"}
+                                    </span>
+                                    <span className={`text-xl font-black tracking-tight ${item.tiene_convenio ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-zinc-100'}`}>
+                                        ${item.tiene_convenio ? item.convenio?.saldo_restante?.toLocaleString("es-MX", {minimumFractionDigits: 2}) : item.saldo_pendiente?.toLocaleString("es-MX", {minimumFractionDigits: 2})}
+                                    </span>
+                                    {item.tiene_convenio && (
+                                        <span className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">
+                                            {item.convenio?.parcialidades_pendientes} cuotas restantes
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Tiempo de Retraso con Barra */}
+                                <div className="flex flex-col w-full max-w-[140px]">
+                                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5">
+                                        <span className={
+                                            item.tiene_convenio ? 'text-emerald-600 dark:text-emerald-400' :
+                                            item.isCortado ? 'text-slate-500 dark:text-zinc-400' :
+                                            item.colorGravedad === 'danger' ? 'text-red-600 dark:text-red-400' :
+                                            item.colorGravedad === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'
+                                        }>
+                                            {item.dias_retraso} días
+                                        </span>
+                                        <span className="text-slate-400 dark:text-zinc-500">Retraso</span>
+                                    </div>
+                                    <Progress
+                                        size="sm"
+                                        value={item.dias_retraso > 120 ? 100 : (item.dias_retraso / 120) * 100}
+                                        color={item.tiene_convenio ? "success" : (item.isCortado ? "default" : item.colorGravedad === 'danger' ? 'danger' : item.colorGravedad === 'warning' ? 'warning' : 'primary')}
+                                        aria-label="Gravedad de deuda"
+                                        className="h-1.5"
+                                        classNames={{ track: "bg-slate-100 dark:bg-zinc-800" }}
+                                    />
+                                    <span className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 mt-1.5 truncate">
+                                        Sugerido: <span className="font-bold text-slate-700 dark:text-zinc-300">{item.accion_sugerida}</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* 3. Acciones y Estado */}
+                            <div className="flex flex-wrap items-center gap-2 lg:w-1/3 justify-end w-full pl-12 lg:pl-0">
+
+                                {/* Botón Convenio */}
+                                {item.tiene_convenio ? (
+                                    <Tooltip
+                                        content={
+                                            <div className="px-1 py-2">
+                                                <div className="text-xs font-bold mb-1">Convenio Activo</div>
+                                                <div className="text-[11px] font-medium text-slate-500">Saldo: ${item.convenio?.saldo_restante?.toLocaleString()}</div>
+                                                <div className="text-[11px] font-medium text-slate-500">Avance: {item.convenio?.total_parcialidades - item.convenio?.parcialidades_pendientes}/{item.convenio?.total_parcialidades} cuotas</div>
+                                            </div>
+                                        }
+                                        classNames={{content: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl"}}
+                                    >
+                                        <Button
+                                            size="sm"
+                                            className="font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100"
+                                            variant="flat"
+                                            startContent={<HiDocumentText />}
+                                            onPress={() => {
+                                                setSelectedConvenioId(item.convenio?.id);
+                                                setShowParcialidadesModal(true);
+                                            }}
+                                        >
+                                            Ver Convenio
+                                        </Button>
+                                    </Tooltip>
+                                ) : (
+                                    <Tooltip content="Crear Convenio de Pago" classNames={{content: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl font-medium text-xs"}}>
+                                        <Button
+                                            size="sm"
+                                            color="primary"
+                                            variant="flat"
+                                            className="font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100"
+                                            startContent={<HiDocumentText />}
+                                            onPress={() => {
+                                                setSelectedDeudor(item);
+                                                setShowConvenioModal(true);
+                                            }}
+                                        >
+                                            Crear Convenio
+                                        </Button>
+                                    </Tooltip>
+                                )}
+
+                                <div className="w-px h-6 bg-slate-200 dark:bg-zinc-700 mx-1 hidden sm:block"></div>
+
+                                {/* Botón Corte / Reconectar */}
+                                {item.isCortado ? (
+                                    <Tooltip content="Reconectar Servicio" color="success" classNames={{content: "font-bold text-xs"}}>
+                                        <Button 
+                                            size="sm" 
+                                            variant="flat" 
+                                            color="success" 
+                                            className="font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 shadow-sm"
+                                            onPress={() => handleReconectar(item)}
+                                            startContent={<HiCheckCircle className="text-lg" />}
+                                        >
+                                            Reconectar
+                                        </Button>
+                                    </Tooltip>
+                                ) : (
+                                    <Tooltip content="Generar orden de corte" color="danger" classNames={{content: "font-bold text-xs"}}>
+                                        <Button
+                                            size="sm"
+                                            variant="flat"
+                                            color="danger"
+                                            className="font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 shadow-sm"
+                                            startContent={<HiBan className="text-lg" />}
+                                            onPress={() => {
+                                                if (item.isCortado) {
+                                                    alert("El servicio ya está cortado");
+                                                    return;
+                                                }
+                                                setSelectedDeudor(item);
+                                                setShowCorteModal(true);
+                                            }}
+                                        >
+                                            Cortar
+                                        </Button>
+                                    </Tooltip>
+                                )}
+                            </div>
+
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Paginación */}
+            {totalPages > 1 && (
+                <div className="flex justify-center p-4 bg-slate-50/50 dark:bg-zinc-900">
+                    <Pagination
+                        total={totalPages}
+                        page={currentPage}
+                        onChange={setCurrentPage}
+                        showControls
+                        color="primary"
+                        variant="light"
+                        classNames={{
+                            cursor: "bg-blue-600 text-white font-bold shadow-md",
+                        }}
+                    />
+                </div>
+            )}
+        </CardBody>
+      </Card>
 
       {/* MODALS */}
       <ModalConfiguracionCortes isOpen={showConfigModal} onClose={() => setShowConfigModal(false)} />
@@ -507,7 +618,6 @@ const TabDeudores = () => {
         onSuccess={fetchDeudores}
       />
 
-      {/* Modal de Convenio */}
       <ModalCrearConvenio
         isOpen={showConvenioModal}
         onClose={() => {
@@ -518,11 +628,10 @@ const TabDeudores = () => {
         onSuccess={() => {
           setShowConvenioModal(false);
           setSelectedDeudor(null);
-          fetchDeudores(); // Recargar lista
+          fetchDeudores(); 
         }}
       />
 
-      {/* Modal de Parcialidades de Convenio */}
       <ModalParcialidadesConvenio
         isOpen={showParcialidadesModal}
         onClose={() => {
@@ -531,10 +640,10 @@ const TabDeudores = () => {
         }}
         convenioId={selectedConvenioId}
         onPagoExitoso={() => {
-          fetchDeudores(); // Recargar lista después de pagar parcialidad
+          fetchDeudores(); 
         }}
       />
-    </div >
+    </div>
   );
 };
 

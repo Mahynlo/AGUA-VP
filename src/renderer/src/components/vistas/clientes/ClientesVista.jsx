@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { HiUserCircle, HiUsers, HiUserAdd, HiTrendingUp } from "react-icons/hi";
 import { TabClientes } from "./TabClientes";
 import { TabMetricas } from "./TabMetricas";
-import { Tabs, Tab, Card, CardBody, Chip, Skeleton } from "@nextui-org/react";
+import { Tabs, Tab, Chip, Skeleton } from "@nextui-org/react";
 import { MetricasLecturaIcon } from "../../../IconsApp/IconsResibos";
 import { useClientes } from "../../../context/ClientesContext";
 
@@ -21,7 +21,6 @@ const Clientes = () => {
 
   // Calcular estadísticas reales basadas en los datos
   const estadisticas = useMemo(() => {
-    // Si estamos en loading inicial, mostrar valores de 0 temporalmente
     if (initialLoading) {
       return {
         total: 0,
@@ -62,124 +61,148 @@ const Clientes = () => {
   }, [clientes, initialLoading]);
 
   return (
-    // CONTENEDOR PRINCIPAL: Maneja el scroll general
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
+    // CONTENEDOR PRINCIPAL: padding exterior fluido para dejar el espacio de separación sutil
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
 
-      {/* CAMBIO: Usamos 'min-h-full' y quitamos 'overflow-x-hidden' para permitir que el contenido crezca */}
-      <div className="w-full min-h-full bg-white p-6 rounded-lg shadow-md dark:bg-gray-800">
+      {/* CONTENEDOR DE LA VISTA: 'w-full' para que ocupe todo el espacio (sin max-w) */}
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8">
 
-        {/* Header con título y estadísticas */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <HiUsers className="bg-blue-600 text-white rounded-full p-2 h-12 w-12" />
+        {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+          
+          {/* Título de la vista */}
+          <div className="flex gap-4 items-center shrink-0">
+            <div className="p-3.5 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+              <HiUsers className="w-8 h-8" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
                 Gestión de Clientes
               </h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-2">
-                Administra la información de todos los clientes del sistema
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-lg leading-relaxed">
+                Administra la información, analiza el comportamiento y gestiona el estado de todos los clientes.
               </p>
             </div>
+          </div>
 
-            {/* Estadísticas rápidas */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiUsers className="w-8 h-8 mx-auto mb-2" />
-                  {initialLoading ? (
-                    <Skeleton className="h-8 w-12 mx-auto mb-1 bg-white/20" />
-                  ) : (
-                    <p className="text-2xl font-bold">{estadisticas.total}</p>
-                  )}
-                  <p className="text-xs opacity-90">Total Clientes</p>
-                </CardBody>
-              </Card>
+          {/* Tarjetas de Estadísticas (KPIs) - Se alinean a la derecha en pantallas grandes */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full xl:w-auto shrink-0">
+            
+            {/* KPI: Total Clientes */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
+              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
+                <HiUsers className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Total Clientes</span>
+              </div>
+              {initialLoading ? (
+                <Skeleton className="h-8 w-16 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+              ) : (
+                <p className="text-2xl font-black text-blue-600 dark:text-blue-400 leading-none">
+                  {estadisticas.total.toLocaleString('es-MX')}
+                </p>
+              )}
+            </div>
 
-              <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiUserCircle className="w-8 h-8 mx-auto mb-2" />
-                  {initialLoading ? (
-                    <Skeleton className="h-8 w-12 mx-auto mb-1 bg-white/20" />
-                  ) : (
-                    <p className="text-2xl font-bold">{estadisticas.activos}</p>
-                  )}
-                  <p className="text-xs opacity-90">Activos</p>
-                </CardBody>
-              </Card>
+            {/* KPI: Activos */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
+              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
+                <HiUserCircle className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Activos</span>
+              </div>
+              {initialLoading ? (
+                <Skeleton className="h-8 w-16 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+              ) : (
+                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none">
+                  {estadisticas.activos.toLocaleString('es-MX')}
+                </p>
+              )}
+            </div>
 
-              <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiUserAdd className="w-8 h-8 mx-auto mb-2" />
-                  {initialLoading ? (
-                    <Skeleton className="h-8 w-12 mx-auto mb-1 bg-white/20" />
-                  ) : (
-                    <p className="text-2xl font-bold">{estadisticas.nuevosEsteMes}</p>
-                  )}
-                  <p className="text-xs opacity-90">Nuevos (mes)</p>
-                </CardBody>
-              </Card>
+            {/* KPI: Nuevos (Mes) */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
+              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
+                <HiUserAdd className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Nuevos (Mes)</span>
+              </div>
+              {initialLoading ? (
+                <Skeleton className="h-8 w-12 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+              ) : (
+                <p className="text-2xl font-black text-purple-600 dark:text-purple-400 leading-none">
+                  {estadisticas.nuevosEsteMes}
+                </p>
+              )}
+            </div>
 
-              <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white min-w-[120px]">
-                <CardBody className="text-center p-4">
-                  <HiTrendingUp className="w-8 h-8 mx-auto mb-2" />
-                  {initialLoading ? (
-                    <Skeleton className="h-8 w-12 mx-auto mb-1 bg-white/20" />
-                  ) : (
-                    <p className="text-2xl font-bold">{estadisticas.ciudades}</p>
-                  )}
-                  <p className="text-xs opacity-90">Ciudades</p>
-                </CardBody>
-              </Card>
+            {/* KPI: Ciudades */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
+              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
+                <HiTrendingUp className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Ciudades</span>
+              </div>
+              {initialLoading ? (
+                <Skeleton className="h-8 w-12 rounded-lg bg-slate-200 dark:bg-zinc-800" />
+              ) : (
+                <p className="text-2xl font-black text-orange-500 dark:text-orange-400 leading-none">
+                  {estadisticas.ciudades}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Tabs Content */}
-        <div className="flex w-full flex-col">
+        {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
+        <div className="flex flex-col w-full flex-1 mt-4">
           <Tabs
             aria-label="Opciones de Clientes"
             selectedKey={selectedTab}
             onSelectionChange={handleTabChange}
-            classNames={{
-              tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider bg-white dark:bg-gray-800",
-              cursor: "w-full bg-gradient-to-r from-blue-500 to-blue-600",
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-blue-600 font-semibold",
-            }}
-            color="primary"
             variant="underlined"
+            classNames={{
+              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
+              tabList: "gap-6 w-full relative rounded-none p-0",
+              cursor: "w-full bg-blue-600 dark:bg-blue-500 h-0.5",
+              tab: "max-w-fit px-0 h-12",
+              tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
+            }}
           >
+            {/* TAB 1: LISTA DE CLIENTES */}
             <Tab
               key="Clientes"
               title={
-                <div className="flex items-center gap-3">
-                  <HiUserCircle className="w-6 h-6" />
+                <div className="flex items-center gap-2.5">
+                  <HiUserCircle className="w-5 h-5" />
                   <span>Lista de Clientes</span>
-                  <Chip size="sm" variant="flat" color="primary">
+                  <Chip size="sm" variant="flat" className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold h-5 text-[10px] px-1 ml-1">
                     {estadisticas.total}
                   </Chip>
                 </div>
               }
             >
-              <TabClientes />
+              <div className="animate-in fade-in duration-500">
+                <TabClientes />
+              </div>
             </Tab>
 
+            {/* TAB 2: MÉTRICAS Y ANÁLISIS */}
             <Tab
               key="Metricas"
               title={
-                <div className="flex items-center gap-3">
-                  <MetricasLecturaIcon className="w-6 h-6" />
+                <div className="flex items-center gap-2.5">
+                  <MetricasLecturaIcon className="w-5 h-5" />
                   <span>Métricas y Análisis</span>
-                  <Chip size="sm" variant="flat" color="secondary">
+                  <Chip size="sm" variant="flat" className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-widest text-[9px] h-5 px-1 ml-1">
                     Gráficos
                   </Chip>
                 </div>
               }
             >
-              <TabMetricas />
+              <div className="animate-in fade-in duration-500">
+                <TabMetricas />
+              </div>
             </Tab>
           </Tabs>
         </div>
+
       </div>
     </div>
   );

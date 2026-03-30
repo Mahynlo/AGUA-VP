@@ -1,25 +1,26 @@
 import { useState, useEffect } from "react";
 import { Avatar } from "@nextui-org/avatar";
 import { Chip } from "@nextui-org/chip";
-import { Card, CardBody, CardHeader, Button, Badge, Spinner, Tooltip } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Button, Badge, Tooltip } from "@nextui-org/react";
 import {
   HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer,
-  HiClock, HiCheckCircle, HiExclamationCircle, HiLocationMarker,
-  HiChip, HiGlobeAlt, HiInformationCircle
+  HiClock, HiCheckCircle, HiExclamationCircle, HiGlobeAlt, HiInformationCircle
 } from "react-icons/hi";
 import AvatarPerfil from "../../assets/images/Avatar.png";
 import { useAuth } from "../../context/AuthContext";
 import { formatUTCtoHermosilloSoloFecha, formatUTCtoHermosilloHora } from "../../utils/formatFecha";
 
-// Componente reutilizable para Input con Icono (Estilo Consistente)
-const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placeholder, onChange, iconColor = "text-blue-600" }) => (
-  <div className="space-y-2">
-    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+// Componente reutilizable para Input con Icono (Premium UI)
+const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placeholder, onChange, iconColor = "text-blue-500" }) => (
+  <div className="w-full">
+    <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
       {label}
     </label>
-    <div className="relative w-full flex group">
-      <span className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${readOnly ? 'text-gray-400' : 'text-gray-500 group-focus-within:text-blue-500'} dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 pr-2 py-1 transition-colors duration-200`}>
-        <Icon className={`text-lg ${readOnly ? 'opacity-70' : ''} ${iconColor}`} />
+    <div className="relative w-full flex items-center group">
+      <span className={`absolute left-3 flex items-center justify-center pointer-events-none transition-colors duration-200 
+        ${readOnly ? 'text-slate-400 dark:text-zinc-600' : 'text-slate-400 dark:text-zinc-500 group-focus-within:' + iconColor}`}
+      >
+        <Icon className="w-5 h-5" />
       </span>
       <input
         type={type}
@@ -28,10 +29,11 @@ const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placehol
         onChange={onChange}
         placeholder={placeholder}
         className={`
-          w-full pl-12 pr-4 py-2.5 rounded-xl border text-sm transition-all duration-200
+          w-full pl-10 pr-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none h-11
+          border border-slate-200 dark:border-zinc-700 shadow-sm
           ${readOnly
-            ? 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-400 cursor-default'
-            : 'bg-white text-gray-700 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:focus:border-blue-400 dark:focus:ring-blue-900/30'
+            ? 'bg-slate-50 dark:bg-zinc-800/30 text-slate-500 dark:text-zinc-500 cursor-default select-none focus:outline-none'
+            : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-950'
           }
         `}
       />
@@ -43,53 +45,35 @@ export default function PerfilPage() {
   const { user, sesiones, obtenerSesionesActivas, logout } = useAuth();
   const [closingSession, setClosingSession] = useState(null);
 
-  // Cargar sesiones al entrar al perfil
-  // import { useEffect } from "react"; (Asegurar importación arriba si falta, pero ya está en linea 1)
   useEffect(() => {
     if (user?.id) {
       obtenerSesionesActivas(user.id);
     }
-  }, [user]);
+  }, [user, obtenerSesionesActivas]);
 
   // Estados para cambio de contraseña
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
   const [passLoading, setPassLoading] = useState(false);
   const [passMessage, setPassMessage] = useState({ type: "", text: "" });
 
-  // Función para obtener sesión actual (Token)
-  const getCurrentSessionId = () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return null;
-      const decoded = JSON.parse(atob(token.split(".")[1]));
-      return decoded.jti || null;
-    } catch (error) {
-      return null;
-    }
-  };
-
-  // Mostrar todas las sesiones (incluida la actual)
   const displaySessions = sesiones || [];
 
-  // Manejar inputs de contraseña
   const handlePassChange = (e, field) => {
     setPasswords(prev => ({ ...prev, [field]: e.target.value }));
-    if (passMessage.text) setPassMessage({ type: "", text: "" }); // Limpiar errores al escribir
+    if (passMessage.text) setPassMessage({ type: "", text: "" });
   };
 
-  // Función para cambiar contraseña (conectada con la API real)
   const handleChangePassword = async () => {
-    // ── Validación local básica (el backend hará la validación completa) ───
     if (passwords.new !== passwords.confirm) {
-      setPassMessage({ type: "error", text: "Las contraseñas nuevas no coinciden" });
+      setPassMessage({ type: "error", text: "Las contraseñas nuevas no coinciden." });
       return;
     }
-    if (passwords.new.length < 8) {
-      setPassMessage({ type: "error", text: "La contraseña debe tener al menos 8 caracteres" });
+    if (passwords.new.length < 6) {
+      setPassMessage({ type: "error", text: "La contraseña debe tener al menos 6 caracteres." });
       return;
     }
     if (passwords.current === passwords.new) {
-      setPassMessage({ type: "error", text: "La nueva contraseña debe ser diferente a la actual" });
+      setPassMessage({ type: "error", text: "La nueva contraseña debe ser diferente a la actual." });
       return;
     }
 
@@ -99,14 +83,14 @@ export default function PerfilPage() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        setPassMessage({ type: "error", text: "Sesión no disponible. Vuelve a iniciar sesión." });
+        setPassMessage({ type: "error", text: "Sesión expirada. Vuelve a iniciar sesión." });
         return;
       }
 
       const res = await window.api.changePassword(
         {
-          contraseñaActual:          passwords.current,
-          contraseñaNueva:           passwords.new,
+          contraseñaActual: passwords.current,
+          contraseñaNueva: passwords.new,
           confirmarContraseñaNueva: passwords.confirm
         },
         token
@@ -115,20 +99,17 @@ export default function PerfilPage() {
       if (res?.success) {
         setPassMessage({
           type: "success",
-          text: "Contraseña actualizada. Cerrando sesión..."
+          text: "¡Contraseña actualizada! Cerrando sesión por seguridad..."
         });
         setPasswords({ current: "", new: "", confirm: "" });
-        // El backend revoca todos los refresh tokens al cambiar la clave.
-        // Hacemos logout para que el usuario se autentique con la nueva contraseña.
-        setTimeout(() => logout(), 2000);
+        setTimeout(() => logout(), 2500);
       } else {
-        // Mostrar el error devuelto por el servidor
-        const msg = res?.error || res?.message || "Error al actualizar la contraseña";
+        const msg = res?.error || res?.message || "Ocurrió un error al actualizar la contraseña.";
         setPassMessage({ type: "error", text: msg });
       }
     } catch (error) {
       console.error("Error al cambiar contraseña:", error);
-      setPassMessage({ type: "error", text: "Error de conexión. Intenta nuevamente." });
+      setPassMessage({ type: "error", text: "Error de conexión con el servidor. Intenta nuevamente." });
     } finally {
       setPassLoading(false);
     }
@@ -156,302 +137,317 @@ export default function PerfilPage() {
 
   return (
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24 scroll-smooth">
-      <div className="min-h-full rounded-2xl p-4 sm:p-8 bg-gradient-to-br from-gray-50 to-blue-50/50 dark:from-gray-900 dark:to-blue-950/30">
-        <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300 w-full">
 
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 border-b border-gray-200 dark:border-gray-800 pb-6">
-            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/20">
-              <HiUser className="text-white text-3xl" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                Mi Perfil
-              </h1>
-              <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">
-                Gestiona tu información personal y seguridad de la cuenta
-              </p>
-            </div>
+        {/* ── HEADER DEL MÓDULO ── */}
+        <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+          <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 py-6">
+              <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 rounded-2xl shrink-0">
+                      <HiUser className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                          Mi Perfil
+                      </h3>
+                      <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">
+                          Gestión de cuenta y configuración de seguridad
+                      </p>
+                  </div>
+              </div>
+          </CardHeader>
+        </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          {/* ── COLUMNA IZQUIERDA: Tarjeta de Identidad (4 columnas) ── */}
+          <div className="lg:col-span-4 space-y-6">
+            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 relative overflow-hidden">
+              {/* Background cover color */}
+              <div className="h-24 bg-slate-100 dark:bg-zinc-800/50 w-full absolute top-0 left-0 border-b border-slate-200 dark:border-zinc-700/50"></div>
+              
+              <CardBody className="p-6 pt-12 text-center relative z-10 flex flex-col items-center">
+                
+                {/* Avatar */}
+                <div className="relative mb-4 mt-2">
+                  <Avatar
+                    src={AvatarPerfil}
+                    className="w-28 h-28 text-large border-4 border-white dark:border-zinc-900 shadow-md bg-slate-200 dark:bg-zinc-800"
+                  />
+                  <Badge
+                    content=""
+                    color="success"
+                    shape="circle"
+                    placement="bottom-right"
+                    className="w-5 h-5 border-2 border-white dark:border-zinc-900 shadow-sm"
+                  >
+                    {/* Dummy div para que nextui renderice el badge correctamente */}
+                    <div className="w-full h-full rounded-full"></div>
+                  </Badge>
+                </div>
+
+                <h2 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none mb-1">
+                  {user?.nombre}
+                </h2>
+                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mb-5">
+                  @{user?.username}
+                </p>
+
+                <Chip 
+                    size="sm" 
+                    variant="flat" 
+                    color="success" 
+                    className="mb-6 font-bold text-[10px] uppercase tracking-widest px-2"
+                    startContent={<span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-1" />}
+                >
+                  En línea
+                </Chip>
+
+                <div className="w-full bg-slate-50 dark:bg-zinc-800/50 rounded-xl p-4 mb-6 border border-slate-100 dark:border-zinc-800 text-left flex justify-between items-center shadow-inner">
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Membro Desde</span>
+                  <span className="font-bold text-sm text-slate-700 dark:text-zinc-300">
+                    {user?.fecha_creacion ? formatUTCtoHermosilloSoloFecha(user.fecha_creacion) : 'N/A'}
+                  </span>
+                </div>
+
+                <Button
+                  className="w-full font-bold bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition-colors"
+                  startContent={<HiUser className="text-lg" />}
+                >
+                  Cambiar Fotografía
+                </Button>
+              </CardBody>
+            </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* ── COLUMNA DERECHA: Detalles y Configuración (8 columnas) ── */}
+          <div className="lg:col-span-8 space-y-6">
 
-            {/* Columna Izquierda: Tarjeta de Perfil (4 columnas) */}
-            <div className="lg:col-span-4 space-y-6">
-              <Card className="overflow-visible backdrop-blur-xl bg-white/90 dark:bg-gray-800/90 border border-gray-100 dark:border-gray-700 shadow-xl">
-                <CardBody className="p-8 text-center relative">
-                  {/* Badge de estado flotante */}
-                  <div className="absolute top-4 right-4">
-                    <Chip
-                      color="success"
-                      variant="flat"
-                      size="sm"
-                      classNames={{ base: "bg-green-100/50 dark:bg-green-900/30 border border-green-200 dark:border-green-800" }}
-                      startContent={<span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse box-content border-2 border-transparent" />}
-                    >
-                      Online
-                    </Chip>
-                  </div>
-
-                  <div className="relative inline-block mb-4 group">
-                    <div className="absolute inset-0 bg-blue-500 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-                    <Avatar
-                      src={AvatarPerfil}
-                      className="w-32 h-32 text-large ring-4 ring-white dark:ring-gray-800 shadow-2xl relative z-10"
-                    />
-                    <Badge
-                      content=""
-                      color="success"
-                      shape="circle"
-                      className="absolute bottom-2 right-2 w-5 h-5 border-2 border-white dark:border-gray-800 z-20"
-                    />
-                  </div>
-
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                    {user.nombre}
-                  </h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-6">
-                    @{user.username}
-                  </p>
-
-                  <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4 mb-6 border border-gray-100 dark:border-gray-700">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Miembro desde</span>
-                      <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        {formatUTCtoHermosilloSoloFecha(user.fecha_creacion)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Button
-                    className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold shadow-lg hover:transform hover:-translate-y-0.5 transition-all duration-200"
-                    startContent={<HiUser className="text-lg" />}
-                  >
-                    Editar Foto
-                  </Button>
-                </CardBody>
-              </Card>
-            </div>
-
-            {/* Columna Derecha: Detalles y Configuración (8 columnas) */}
-            <div className="lg:col-span-8 space-y-8">
-
-              {/* Sección 1: Información Personal (Read-Only) */}
-              <Card className="backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
-                <CardHeader className="px-6 pt-6 pb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400">
-                      <HiUser className="text-xl" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-800 dark:text-white">Datos Personales</h3>
-                  </div>
-                </CardHeader>
-                <CardBody className="px-6 pb-8 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* SECCIÓN 1: Información Personal (Read-Only) */}
+            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+              <CardHeader className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
+                <div className="flex items-center gap-2.5">
+                  <HiInformationCircle className="w-5 h-5 text-blue-500" />
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Datos de Identidad</h3>
+                </div>
+              </CardHeader>
+              
+              <CardBody className="p-6 bg-slate-50/50 dark:bg-black/10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <IconInput
                     label="Nombre Completo"
                     icon={HiUser}
-                    value={user.nombre}
+                    value={user?.nombre || ''}
                     readOnly
                   />
                   <IconInput
-                    label="Nombre de Usuario"
+                    label="Usuario de Acceso"
                     icon={HiShieldCheck}
-                    value={user.username}
+                    value={user?.username || ''}
                     readOnly
                   />
                   <div className="md:col-span-2">
                     <IconInput
-                      label="Correo Electrónico"
+                      label="Correo Electrónico Principal"
                       icon={HiMail}
-                      value={user.correo}
+                      value={user?.correo || ''}
                       readOnly
                     />
                   </div>
 
-                  {/* Chip de Rol destacado */}
+                  {/* Rol Info Block */}
                   <div className="md:col-span-2 mt-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">Rol de Usuario</label>
-                    <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/30 rounded-xl">
-                      <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400">
-                        <HiShieldCheck />
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+                        Nivel de Privilegios
+                    </label>
+                    <div className="flex items-center gap-3 p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
+                      <div className="p-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400">
+                        <HiShieldCheck className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">{user.rol}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Permisos completos de administración</p>
+                        <p className="text-sm font-black text-slate-800 dark:text-zinc-100 capitalize">{user?.rol || 'No asignado'}</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mt-0.5">
+                            {user?.rol === 'superadmin' ? 'Acceso total y control absoluto del sistema.' : 
+                             user?.rol === 'administrador' ? 'Permisos administrativos y reportes avanzados.' : 
+                             'Permisos operativos básicos.'}
+                        </p>
                       </div>
                     </div>
                   </div>
-                </CardBody>
-              </Card>
+                </div>
+              </CardBody>
+            </Card>
 
-              {/* Sección 2: Seguridad (Formulario) */}
-              <Card className="backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
-                <CardHeader className="px-6 pt-6 pb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-orange-600 dark:text-orange-400">
-                      <HiKey className="text-xl" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-800 dark:text-white">Cambiar Contraseña</h3>
-                  </div>
-                </CardHeader>
-                <CardBody className="px-6 pb-8 pt-4 space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="md:col-span-2">
-                      <IconInput
-                        type="password"
-                        label="Contraseña Actual"
-                        icon={HiKey}
-                        iconColor="text-orange-500"
-                        placeholder="••••••••"
-                        value={passwords.current}
-                        onChange={(e) => handlePassChange(e, 'current')}
-                      />
-                    </div>
+            {/* SECCIÓN 2: Seguridad (Formulario Password) */}
+            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+              <CardHeader className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
+                <div className="flex items-center gap-2.5">
+                  <HiKey className="w-5 h-5 text-orange-500" />
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Seguridad y Credenciales</h3>
+                </div>
+              </CardHeader>
+              
+              <CardBody className="p-6 bg-slate-50/50 dark:bg-black/10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="md:col-span-2">
                     <IconInput
                       type="password"
-                      label="Nueva Contraseña"
+                      label="Contraseña Actual"
                       icon={HiKey}
-                      iconColor="text-gray-400"
+                      iconColor="text-orange-500"
                       placeholder="••••••••"
-                      value={passwords.new}
-                      onChange={(e) => handlePassChange(e, 'new')}
-                    />
-                    <IconInput
-                      type="password"
-                      label="Confirmar Contraseña"
-                      icon={HiKey}
-                      iconColor="text-gray-400"
-                      placeholder="••••••••"
-                      value={passwords.confirm}
-                      onChange={(e) => handlePassChange(e, 'confirm')}
+                      value={passwords.current}
+                      onChange={(e) => handlePassChange(e, 'current')}
                     />
                   </div>
+                  <IconInput
+                    type="password"
+                    label="Nueva Contraseña"
+                    icon={HiKey}
+                    iconColor="text-blue-500"
+                    placeholder="••••••••"
+                    value={passwords.new}
+                    onChange={(e) => handlePassChange(e, 'new')}
+                  />
+                  <IconInput
+                    type="password"
+                    label="Confirmar Contraseña"
+                    icon={HiKey}
+                    iconColor="text-blue-500"
+                    placeholder="••••••••"
+                    value={passwords.confirm}
+                    onChange={(e) => handlePassChange(e, 'confirm')}
+                  />
+                </div>
 
-                  {/* Mensajes de Error/Éxito */}
-                  {passMessage.text && (
-                    <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${passMessage.type === 'error'
-                      ? 'bg-red-50 text-red-600 border border-red-100 dark:bg-red-900/20 dark:border-red-800'
-                      : 'bg-green-50 text-green-600 border border-green-100 dark:bg-green-900/20 dark:border-green-800'
-                      }`}>
-                      {passMessage.type === 'error' ? <HiExclamationCircle /> : <HiCheckCircle />}
-                      {passMessage.text}
-                    </div>
-                  )}
-
-                  <div className="flex justify-end">
-                    <Button
-                      color="primary"
-                      className="font-semibold shadow-md bg-gradient-to-r from-orange-500 to-red-500 border-none"
-                      onPress={handleChangePassword}
-                      isLoading={passLoading}
-                      isDisabled={!passwords.current || !passwords.new || !passwords.confirm}
-                    >
-                      Actualizar Seguridad
-                    </Button>
+                {/* Mensajes de Error/Éxito */}
+                {passMessage.text && (
+                  <div className={`mt-5 p-3.5 rounded-xl text-sm font-bold flex items-start gap-2.5 animate-in fade-in slide-in-from-top-2 border ${
+                    passMessage.type === 'error'
+                      ? 'bg-red-50 text-red-600 border-red-200/60 dark:bg-red-900/10 dark:border-red-900/50'
+                      : 'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-900/10 dark:border-emerald-900/50'
+                    }`}>
+                    {passMessage.type === 'error' ? <HiExclamationCircle className="w-5 h-5 shrink-0 mt-0.5" /> : <HiCheckCircle className="w-5 h-5 shrink-0 mt-0.5" />}
+                    <p>{passMessage.text}</p>
                   </div>
-                </CardBody>
-              </Card>
+                )}
 
-              {/* Sección 3: Sesiones Activas */}
-              <Card className="backdrop-blur-md bg-white/80 dark:bg-gray-800/80 border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
-                <CardHeader className="px-6 pt-6 pb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg text-green-600 dark:text-green-400">
-                      <HiDesktopComputer className="text-xl" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-800 dark:text-white">Sesiones Activas</h3>
-                      <p className="text-xs text-gray-500">Dispositivos donde tu cuenta está abierta actualmente</p>
-                    </div>
+                <div className="flex justify-end mt-6">
+                  <Button
+                    color="primary"
+                    className="font-bold shadow-md shadow-blue-500/30 px-8 h-11 w-full sm:w-auto"
+                    onPress={handleChangePassword}
+                    isLoading={passLoading}
+                    isDisabled={!passwords.current || !passwords.new || !passwords.confirm}
+                  >
+                    Actualizar Contraseña
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* SECCIÓN 3: Sesiones Activas */}
+            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+              <CardHeader className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
+                <div className="flex items-center gap-2.5">
+                  <HiDesktopComputer className="w-5 h-5 text-emerald-500" />
+                  <div className="flex flex-col">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider leading-tight">Dispositivos Conectados</h3>
+                    <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500 mt-0.5">Controla las sesiones activas en tu cuenta</p>
                   </div>
-                </CardHeader>
-                <CardBody className="px-6 pb-8 pt-4">
-                  {displaySessions.length > 0 ? (
-                    <div className="space-y-3">
-                      {displaySessions.map((sesion, i) => (
-                        <div
-                          key={i}
-                          className={`flex flex-col p-4 rounded-xl border transition-colors gap-3
-                            ${sesion.actual
-                              ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
-                              : 'bg-gray-50 dark:bg-gray-700/30 border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800'
-                            }`}
-                        >
-                          {/* Fila superior: ícono + nombre + badge actual */}
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2.5 rounded-full shadow-sm flex-shrink-0 ${sesion.actual ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-white dark:bg-gray-800'}`}>
-                                <HiDesktopComputer className={`${sesion.actual ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'} text-lg`} />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{sesion.dispositivo || 'Dispositivo desconocido'}</p>
-                                  {sesion.actual && (
-                                    <Chip size="sm" color="primary" variant="flat" className="h-4 text-[10px] px-1">Sesión actual</Chip>
-                                  )}
-                                </div>
-                              </div>
+                </div>
+              </CardHeader>
+              
+              <CardBody className="p-6 bg-slate-50/50 dark:bg-black/10">
+                {displaySessions.length > 0 ? (
+                  <div className="space-y-4">
+                    {displaySessions.map((sesion, i) => (
+                      <div
+                        key={i}
+                        className={`flex flex-col p-5 rounded-2xl border transition-colors shadow-sm gap-4
+                          ${sesion.actual
+                            ? 'bg-white dark:bg-zinc-900 border-blue-200 dark:border-blue-900/50'
+                            : 'bg-slate-50 dark:bg-zinc-800/30 border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600'
+                          }`}
+                      >
+                        {/* Fila superior: ícono + nombre + badge actual + botón */}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2.5 rounded-xl shadow-sm shrink-0 ${sesion.actual ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-white dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 border border-slate-100 dark:border-zinc-700'}`}>
+                              <HiDesktopComputer className="text-xl" />
                             </div>
-                            {!sesion.actual ? (
-                              <Button
-                                size="sm"
-                                color="danger"
-                                variant="flat"
-                                className="font-medium flex-shrink-0"
-                                onPress={() => handleCloseSession(sesion.id)}
-                                isLoading={closingSession === sesion.id}
-                              >
-                                Cerrar
-                              </Button>
-                            ) : (
-                              <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/20 px-2 py-1 rounded-lg flex-shrink-0">
-                                En uso
+                            <div className="min-w-0 pr-2">
+                              <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                <p className="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate">{sesion.dispositivo || 'Dispositivo desconocido'}</p>
+                                {sesion.actual && (
+                                  <Chip size="sm" color="primary" variant="flat" className="h-5 text-[9px] font-bold tracking-wider uppercase px-1">Este dispositivo</Chip>
+                                )}
                               </div>
-                            )}
-                          </div>
-
-                          {/* Fila de detalles del dispositivo */}
-                          <div className="grid grid-cols-1 gap-1 text-[11px] text-gray-500 dark:text-gray-400 pl-10">
-                            {sesion.direccion_ip && (
-                              <div className="flex items-center gap-1.5">
-                                <HiGlobeAlt className="flex-shrink-0 text-gray-400" />
-                                <span>IP: <span className="font-medium text-gray-700 dark:text-gray-300">{sesion.direccion_ip}</span></span>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1.5">
-                              <HiClock className="flex-shrink-0 text-gray-400" />
-                              <span>Inicio: <span className="font-medium text-gray-700 dark:text-gray-300">{formatUTCtoHermosilloHora(sesion.fecha_inicio)}</span></span>
-                              {sesion.ultimo_uso && (
-                                <span className="ml-2">· Última act: <span className="font-medium text-gray-700 dark:text-gray-300">{formatUTCtoHermosilloHora(sesion.ultimo_uso)}</span></span>
+                              {sesion.direccion_ip && (
+                                <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500">
+                                  <HiGlobeAlt className="shrink-0 text-slate-400" />
+                                  <span>IP: {sesion.direccion_ip}</span>
+                                </div>
                               )}
                             </div>
-                            {sesion.user_agent && (
-                              <Tooltip content={sesion.user_agent} placement="bottom" classNames={{ content: "max-w-xs text-xs" }}>
-                                <div className="flex items-center gap-1.5 cursor-help">
-                                  <HiInformationCircle className="flex-shrink-0 text-gray-400" />
-                                  <span className="truncate max-w-[220px]">
-                                    {sesion.user_agent.length > 60
-                                      ? sesion.user_agent.slice(0, 57) + '...'
-                                      : sesion.user_agent}
-                                  </span>
-                                </div>
-                              </Tooltip>
-                            )}
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                      <HiShieldCheck className="text-4xl text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500 font-medium">Todo seguro</p>
-                      <p className="text-sm text-gray-400">No hay otras sesiones activas en este momento</p>
-                    </div>
-                  )}
-                </CardBody>
-              </Card>
 
-            </div>
+                          {!sesion.actual ? (
+                            <Button
+                              size="sm"
+                              color="danger"
+                              variant="flat"
+                              className="font-bold shrink-0 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100"
+                              onPress={() => handleCloseSession(sesion.id)}
+                              isLoading={closingSession === sesion.id}
+                            >
+                              Cerrar Sesión
+                            </Button>
+                          ) : (
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md shrink-0">
+                              Activa
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Fila de detalles de tiempo */}
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-slate-500 dark:text-zinc-400 pt-3 border-t border-slate-100 dark:border-zinc-800/50">
+                          <div className="flex items-center gap-1.5">
+                            <HiClock className="shrink-0 text-slate-400" />
+                            <span>Iniciada: <strong className="text-slate-700 dark:text-zinc-300 font-medium">{formatUTCtoHermosilloHora(sesion.fecha_inicio)}</strong></span>
+                          </div>
+                          {sesion.ultimo_uso && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                              <span>Último uso: <strong className="text-slate-700 dark:text-zinc-300 font-medium">{formatUTCtoHermosilloHora(sesion.ultimo_uso)}</strong></span>
+                            </div>
+                          )}
+                          
+                          {/* Info User Agent */}
+                          {sesion.user_agent && (
+                            <Tooltip content={sesion.user_agent} placement="top" classNames={{ content: "max-w-xs text-xs font-medium" }}>
+                              <div className="flex items-center gap-1.5 cursor-help ml-auto">
+                                <HiInformationCircle className="shrink-0 text-slate-400" />
+                                <span className="truncate max-w-[120px] sm:max-w-[200px]">
+                                  Navegador Info
+                                </span>
+                              </div>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl bg-white/50 dark:bg-zinc-900/50">
+                    <HiShieldCheck className="text-5xl text-slate-300 dark:text-zinc-700 mx-auto mb-3" />
+                    <p className="text-sm font-bold text-slate-600 dark:text-zinc-300 mb-1">Todo seguro</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500">No hay otras sesiones activas en este momento.</p>
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
           </div>
         </div>
       </div>

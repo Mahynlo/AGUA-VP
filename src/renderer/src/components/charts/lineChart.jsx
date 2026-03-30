@@ -6,11 +6,9 @@ const LineChart = ({ data }) => {
     document.documentElement.classList.contains("dark")
   );
 
-  // Detectar cambios en el modo oscuro con MutationObserver
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      const dark = document.documentElement.classList.contains("dark");
-      setIsDarkMode(dark);
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
     });
 
     observer.observe(document.documentElement, {
@@ -21,161 +19,185 @@ const LineChart = ({ data }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Procesar datos dinámicos o usar defaults
+  // 1. FUNCIÓN NUEVA: Convierte "03-2026" o "2026-03" a "Mar 2026"
+  const formatearMes = (cadenaMes) => {
+    if (!cadenaMes) return "Desconocido";
+    
+    const partes = cadenaMes.split("-");
+    if (partes.length === 2) {
+      // Detectar cuál parte es el año (la de 4 dígitos) y cuál el mes
+      const esAnioPrimero = partes[0].length === 4;
+      const mes = parseInt(esAnioPrimero ? partes[1] : partes[0], 10);
+      const anio = esAnioPrimero ? partes[0] : partes[1];
+      
+      // Construir una fecha válida (mes - 1 porque en JavaScript Enero es 0)
+      const fecha = new Date(anio, mes - 1, 1);
+      
+      // Obtener el nombre del mes (ej: "marzo" o "mar")
+      const nombreMes = fecha.toLocaleString("es-MX", { month: "short" });
+      
+      // Retornar capitalizado "Mar 2026"
+      return `${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${anio}`;
+    }
+    return cadenaMes; // Si llega otro formato, lo devuelve como está
+  };
+
   const isDynamic = data && data.length > 0;
 
   const series = isDynamic
     ? [{
-      name: "Consumo Total",
-      data: data.map(item => item.total)
-    }]
+        name: "Consumo Total",
+        data: data.map(item => item.total)
+      }]
     : [
-      {
-        name: "Consumo Nacori Grande",
-        data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240],
-      },
-      {
-        name: "Consumo Matape",
-        data: [110, 140, 90, 180, 230, 590, 600, 180, 210, 260, 240, 220],
-      },
-      {
-        name: "Consumo Adivino",
-        data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720],
-      },
-    ];
+        { name: "Nacori Grande", data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240] },
+        { name: "Matape", data: [110, 140, 90, 180, 230, 590, 600, 180, 210, 260, 240, 220] },
+        { name: "Adivino", data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720] },
+      ];
 
+  // 2. APLICAMOS LA FUNCIÓN A TUS DATOS DINÁMICOS AQUÍ:
   const categories = isDynamic
-    ? data.map(item => item.mes)
-    : [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-    ];
+    ? data.map(item => formatearMes(item.mes)) // Transforma "03-2026" -> "Mar 2026"
+    : ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+  const chartColors = isDarkMode 
+    ? ["#3b82f6", "#10b981", "#8b5cf6"] 
+    : ["#2563eb", "#059669", "#7c3aed"]; 
 
   const options = {
     chart: {
-      type: "line",
+      type: "area",
       height: "100%",
-      toolbar: { show: true },
-      zoom: { enabled: true },
+      fontFamily: 'inherit',
       background: "transparent",
-      foreColor: isDarkMode ? "#cbd5e1" : "#374151",
+      toolbar: { 
+        show: true,
+        tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true }
+      },
     },
     theme: {
       mode: isDarkMode ? "dark" : "light",
-      palette: 'palette1',
     },
-    title: {
-      text: "Consumo Mensual",
-      align: "center",
-      style: {
-        fontSize: "20px",
-        fontWeight: "bold",
-        color: isDarkMode ? "#e2e8f0" : "#1e293b",
-        fontFamily: "Inter, sans-serif",
-      },
+    colors: chartColors,
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: isDarkMode ? 0.4 : 0.4,
+        opacityTo: 0.05,
+        stops: [0, 100]
+      }
     },
-    colors: isDarkMode ? ["#60a5fa"] : ["#0284c7"],
     dataLabels: { enabled: false },
     stroke: {
       curve: "smooth",
-      width: 4,
+      width: 3,
+    },
+    title: {
+      text: "Historial de Consumo",
+      align: "left",
+      offsetX: 10,
+      style: {
+        fontSize: "16px",
+        fontWeight: "700",
+        color: isDarkMode ? "#f8fafc" : "#0f172a",
+      },
     },
     grid: {
-      borderColor: isDarkMode ? "#374151" : "#cbd5e1",
+      show: true,
+      borderColor: isDarkMode ? "#334155" : "#e2e8f0",
       strokeDashArray: 4,
-      xaxis: {
-        lines: { show: true }
-      }
+      xaxis: { lines: { show: false } }, 
+      yaxis: { lines: { show: true } },
+      padding: { top: 0, right: 0, bottom: 0, left: 10 },
     },
     xaxis: {
+      // 3. APEXCHARTS USA LAS CATEGORÍAS FORMATEADAS AQUÍ
       categories: categories,
+      axisBorder: { show: false },
+      axisTicks: { show: false },
       labels: {
         style: {
-          colors: isDarkMode ? "#94a3b8" : "#374151",
+          colors: isDarkMode ? "#94a3b8" : "#64748b",
           fontSize: "12px",
-          fontWeight: 600,
-          fontFamily: "Inter, sans-serif",
+          fontWeight: 500,
         },
       },
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
-      tooltip: {
-        enabled: false,
-      },
+      tooltip: { enabled: false },
     },
     yaxis: {
       title: {
-        text: "Metros Cúbicos (m³)",
+        text: "Volumen (m³)",
         style: {
-          fontSize: "14px",
+          fontSize: "12px",
           fontWeight: "600",
           color: isDarkMode ? "#94a3b8" : "#64748b",
-          fontFamily: "Inter, sans-serif",
         },
       },
       labels: {
         style: {
           colors: isDarkMode ? "#94a3b8" : "#64748b",
-          fontSize: "12px",
-          fontFamily: "Inter, sans-serif",
+          fontSize: "11px",
         },
+        formatter: (val) => `${val.toFixed(0)}` 
       },
     },
     legend: {
       position: "top",
       horizontalAlign: "right",
-      fontSize: "14px",
-      fontFamily: "Inter, sans-serif",
+      offsetY: -20, 
+      fontSize: "13px",
+      fontWeight: 500,
       labels: {
-        colors: isDarkMode ? "#e2e8f0" : "#1e293b",
+        colors: isDarkMode ? "#cbd5e1" : "#334155",
       },
       markers: {
-        width: 10,
-        height: 10,
-        radius: 10,
+        width: 12,
+        height: 12,
+        radius: 4, 
       }
     },
     tooltip: {
       theme: isDarkMode ? "dark" : "light",
+      // El título del cuadrito (Header) mostrará la Categoría (Ej. "Mar 2026")
+      x: {
+        show: true,
+      },
+      // El valor del cuadrito (Body) mostrará el consumo con el "m³"
       y: {
         formatter: (val) => `${val} m³`
+      },
+      style: {
+        fontSize: '13px',
       }
     },
     markers: {
-      size: 4,
-      colors: isDarkMode ? ["#60a5fa"] : ["#2563eb"],
-      strokeColors: isDarkMode ? "#1e293b" : "#ffffff",
-      strokeWidth: 2,
+      size: 0, 
       hover: {
-        size: 6,
+        size: 6, 
       }
     },
     responsive: [
       {
         breakpoint: 768,
         options: {
-          chart: {
-            height: 300,
-          },
+          chart: { height: 320 },
+          legend: { position: "bottom", horizontalAlign: "center", offsetY: 0 },
         },
       },
     ],
   };
 
   return (
-    <div className="flex items-center justify-center p-3 rounded-lg bg-white border shadow border-gray-200 dark:border-gray-700 dark:bg-gray-800 w-full h-full">
+    <div className="w-full h-full min-h-[350px] p-5 rounded-xl bg-white border shadow-sm border-slate-200 dark:border-zinc-800 dark:bg-zinc-900 transition-colors duration-300">
       <div className="relative w-full h-full">
         <Chart
           options={options}
           series={series}
-          type="line"
+          type="area"
           height="100%"
           width="100%"
-          key={isDarkMode ? "dark" : "light"} // 🔁 Fuerza re-render al cambiar el tema
+          key={isDarkMode ? "dark" : "light"}
         />
       </div>
     </div>

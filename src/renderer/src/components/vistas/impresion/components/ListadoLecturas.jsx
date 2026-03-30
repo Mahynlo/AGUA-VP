@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
-import { HiUsers, HiSearch, HiLocationMarker } from "react-icons/hi";
+import { Card, CardBody, CardHeader, Chip, Spinner } from "@nextui-org/react";
+import { HiUsers, HiSearch, HiLocationMarker, HiX } from "react-icons/hi";
+import { IoWaterOutline } from "react-icons/io5";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
 
 /**
@@ -40,107 +41,155 @@ const ListadoLecturas = ({
     });
 
     return (
-        <Card className="shadow-md border border-gray-200 dark:border-gray-700 h-full">
-            <CardHeader className="flex flex-col gap-4 p-4 bg-gray-50 dark:bg-gray-800/50">
+        <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col h-full min-h-[600px]">
+            
+            {/* ── HEADER: Título, Filtros y Conteo ── */}
+            <CardHeader className="flex flex-col gap-5 pt-6 px-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
 
-                {/* Title and Count */}
+                {/* Fila 1: Título y Conteo */}
                 <div className="flex justify-between items-center w-full">
-                    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-                        <HiUsers className="text-blue-500" />
-                        Padrón General
-                    </h3>
-                    <div className="flex gap-2 items-center">
-                        <span className="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
+                            <HiUsers className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                Padrón General
+                            </h3>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
+                                Base de datos de lecturas
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center">
+                        <Chip size="sm" variant="flat" color="primary" className="font-bold text-[10px] uppercase tracking-wider px-1">
                             {filtrados.length} Registros
-                        </span>
+                        </Chip>
                     </div>
                 </div>
 
-                {/* Filters Input Grid matches ClientesList */}
+                {/* Fila 2: Inputs de Búsqueda y Periodo */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-                    {/* Buscador Styles */}
-                    <div className="md:col-span-2 relative w-full flex">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 z-10">
-                            <HiSearch className="w-5 h-5 inline-block" />
+                    
+                    {/* Buscador */}
+                    <div className="md:col-span-2 relative w-full flex items-center">
+                        <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+                            <HiSearch className="w-5 h-5" />
                         </span>
                         <input
+                            type="text"
                             placeholder="Buscar usuario, medidor o localidad..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="border border-gray-300 text-gray-600 rounded-xl pl-10 pr-10 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-all duration-200 h-10"
+                            className="w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-50 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 shadow-sm"
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm("")}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+                                className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                                title="Limpiar búsqueda"
                             >
-                                ✕
+                                <HiX className="w-4 h-4" />
                             </button>
                         )}
                     </div>
 
+                    {/* Selector de Periodo */}
                     <SelectorPeriodoAvanzado
                         value={periodo}
                         onChange={setPeriodo}
                         label="Período"
-                        placeholder="Buscar y seleccionar período"
+                        placeholder="Seleccionar período"
                         startYear={2020}
                         size="sm"
-                        className="w-full"
+                        isDisabled={loading}
+                        className="w-full h-11"
                     />
                 </div>
             </CardHeader>
 
-            <CardBody className="pt-0 px-2 pb-2 bg-white dark:bg-gray-900">
-                <div className="max-h-[600px] overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-purple-200 mt-2">
+            {/* ── BODY: Lista de Tarjetas ── */}
+            <CardBody className="p-4 bg-slate-50/30 dark:bg-black/10">
+                <div className="max-h-[500px] overflow-y-auto space-y-2.5 pr-2 custom-scrollbar">
+                    
+                    {/* Estado de Carga */}
                     {loading ? (
-                        <div className="flex justify-center items-center h-40">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                        <div className="flex flex-col justify-center items-center h-40 gap-4">
+                            <Spinner size="md" color="primary" />
+                            <p className="text-sm font-bold text-slate-500 dark:text-zinc-400 animate-pulse">Cargando padrón...</p>
                         </div>
-                    ) : filtrados.length === 0 ? (
-                        <div className="text-center py-8 text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                            <p>No hay registros para este periodo</p>
+                    ) : 
+                    
+                    /* Estado Vacío */
+                    filtrados.length === 0 ? (
+                        <div className="text-center py-12 flex flex-col items-center justify-center">
+                            <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
+                                <HiUsers className="text-3xl text-slate-400 dark:text-zinc-500" />
+                            </div>
+                            <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">
+                                No hay registros para este periodo
+                            </p>
+                            <p className="text-xs font-medium text-slate-500 mt-1">
+                                Intenta seleccionar un mes diferente o limpia tu búsqueda.
+                            </p>
                         </div>
                     ) : (
-                        filtrados.map((item, idx) => (
-                            <Card
-                                key={idx}
-                                className="border border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:shadow-md transition-all duration-200 group"
-                                shadow="none"
-                            >
-                                <CardBody className="py-3 px-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            {/* Marcador Visual (Left Border equivalent) */}
-                                            <div className="w-1 h-10 bg-blue-500 rounded-full"></div>
 
-                                            <div className="flex-1">
-                                                <p className="font-bold text-base text-gray-900 dark:text-white mb-0.5">
+                        /* Lista de Elementos */
+                        filtrados.map((item, idx) => {
+                            const lecturaAteriorValor = typeof item.lectura_anterior === 'object' ? (item.lectura_anterior?.valor ?? 0) : (item.lectura_anterior ?? 0);
+                            
+                            return (
+                                <div
+                                    key={idx}
+                                    className="w-full transition-all duration-200 rounded-xl border p-3.5 border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-blue-300 dark:hover:border-zinc-600 hover:shadow-sm"
+                                >
+                                    <div className="flex items-center justify-between gap-4">
+                                        
+                                        {/* Left: Info Principal */}
+                                        <div className="flex items-center gap-3.5 min-w-0">
+                                            {/* Marcador Visual Vertical */}
+                                            <div className="w-1 h-10 bg-blue-500 rounded-full shrink-0"></div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-sm text-slate-800 dark:text-zinc-100 mb-0.5 truncate">
                                                     {item.cliente || item.nombre}
                                                 </p>
-                                                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                                                
+                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-zinc-400 font-medium">
                                                     {item._localidad && (
-                                                        <span className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md text-xs">
-                                                            <HiLocationMarker className="text-blue-500" /> {item._localidad}
+                                                        <span className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-300">
+                                                            <HiLocationMarker className="shrink-0 text-blue-500" /> 
+                                                            <span className="truncate max-w-[120px]">{item._localidad}</span>
                                                         </span>
                                                     )}
-                                                    <span className="flex items-center gap-1">
-                                                        Medidor: <span className="font-mono text-gray-800 dark:text-gray-300">{item.medidor?.serie || item.medidor || "S/N"}</span>
+                                                    
+                                                    <span className="flex items-center gap-1 shrink-0">
+                                                        <span className="text-slate-400 dark:text-zinc-500">Medidor:</span> 
+                                                        <span className="font-mono font-bold text-slate-700 dark:text-zinc-300">
+                                                            {item.medidor?.serie || item.medidor || "S/N"}
+                                                        </span>
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="text-right flex flex-col items-end gap-1">
-                                            <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">Lectura Anterior</span>
-                                            <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded text-blue-700 font-mono font-bold">
-                                                {typeof item.lectura_anterior === 'object' ? (item.lectura_anterior?.valor ?? 0) : (item.lectura_anterior ?? 0)}
+                                        {/* Right: Lectura Anterior */}
+                                        <div className="text-right flex flex-col items-end gap-1 shrink-0">
+                                            <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-widest">
+                                                Lec. Anterior
+                                            </span>
+                                            <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg text-blue-700 dark:text-blue-400 font-mono font-bold text-sm">
+                                                <IoWaterOutline className="text-blue-500" />
+                                                {lecturaAteriorValor}
                                             </div>
                                         </div>
+
                                     </div>
-                                </CardBody>
-                            </Card>
-                        ))
+                                </div>
+                            );
+                        })
                     )}
                 </div>
             </CardBody>

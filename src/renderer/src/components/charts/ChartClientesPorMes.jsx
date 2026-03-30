@@ -7,7 +7,8 @@ const ClientesPorMesChart = ({
   esDataServidor = false, 
   mostrarMesCompleto = false,
   titulo = "Clientes Registrados por Mes",
-  colorPersonalizado = "#00BAEC"
+  colorPersonalizado = "#00BAEC",
+  isDarkMode = false
 }) => {
   const chartRef = useRef(null);
 
@@ -17,41 +18,35 @@ const ClientesPorMesChart = ({
     let registrosPorMes = [];
     let categorias = [];
 
+    // --- LÓGICA DE DATOS ---
     if (esDataServidor && data) {
-      // Validar que data sea un array válido
       if (!Array.isArray(data) || data.length === 0) {
         console.warn('ChartClientesPorMes: data no es válido', data);
         return;
       }
       
-      // Usar datos del servidor
       registrosPorMes = data.map(item => item?.cantidad || 0);
       categorias = data.map(item => {
         const mes = item?.mes || '';
         if (mostrarMesCompleto && mes.includes('-')) {
-          // Formato YYYY-MM -> "Agosto 2025"
           const [año, mesNum] = mes.split('-');
           const fecha = new Date(año, parseInt(mesNum) - 1);
-          return fecha.toLocaleString("es-MX", { month: "long", year: "numeric" });
+          return fecha.toLocaleString("es-MX", { month: "short", year: "numeric" }).toUpperCase();
         } else {
-          // Mes corto o nombre directo
-          return mes;
+          return mes.toUpperCase();
         }
       });
     } else {
-      // Cálculo local desde array de clientes
       const ahora = new Date();
-      const mesActual = ahora.getMonth(); // 0 a 11
+      const mesActual = ahora.getMonth();
 
-      // Inicializa los meses hasta el actual
       for (let i = 0; i <= mesActual; i++) {
         registrosPorMes.push(0);
         categorias.push(
-          new Date(0, i).toLocaleString("es-MX", { month: "long" }).toUpperCase()
+          new Date(0, i).toLocaleString("es-MX", { month: "short" }).toUpperCase()
         );
       }
 
-      // Contar registros por mes hasta el mes actual
       if (Array.isArray(clientes) && clientes.length > 0) {
         clientes.forEach((c) => {
           if (c?.fecha_creacion) {
@@ -69,28 +64,34 @@ const ClientesPorMesChart = ({
       }
     }
     
-    // Validar que tenemos datos antes de crear el gráfico
-    if (!registrosPorMes.length || !categorias.length) {
-      console.warn('ChartClientesPorMes: No hay datos para renderizar');
-      return;
-    }
+    if (!registrosPorMes.length || !categorias.length) return;
 
-    const chart = new ApexCharts(chartRef.current, {
+    const textColor = isDarkMode ? "#a1a1aa" : "#64748b";
+    const gridColor = isDarkMode ? "#27272a" : "#f1f5f9";
+
+    // --- CONFIGURACIÓN VISUAL ---
+    const options = {
+      // ESTO ES LO QUE FALTABA: LA DATA
+      series: [
+        {
+          name: (() => {
+            if (!esDataServidor) return "Clientes";
+            if (!categorias.length || !categorias[0]) return "Clientes";
+            const categoria = String(categorias[0]);
+            const esMes = /[A-Za-z]/.test(categoria);
+            return esMes ? "Clientes" : "Cantidad";
+          })(),
+          data: registrosPorMes,
+        },
+      ],
       chart: {
         type: "bar",
-        height: 320,
-        foreColor: "#333",
+        height: "100%", 
+        minHeight: 300,
+        fontFamily: 'inherit', // Hereda la fuente de tu proyecto
+        background: "transparent",
         toolbar: {
-          show: true,
-          tools: {
-            download: true,
-            selection: false,
-            zoom: false,
-            zoomin: false,
-            zoomout: false,
-            pan: false,
-            reset: false,
-          },
+          show: false, 
         },
         animations: {
           enabled: true,
@@ -98,129 +99,122 @@ const ClientesPorMesChart = ({
           speed: 800,
         },
       },
-      responsive: [
-        {
-          breakpoint: 1024,
-          options: {
-            chart: {
-              height: 280,
-            },
-            plotOptions: {
-              bar: {
-                columnWidth: "60%",
-              },
-            },
-            xaxis: {
-              labels: {
-                rotate: -45,
-                style: {
-                  fontSize: '10px',
-                }
-              }
-            }
+      colors: [colorPersonalizado],
+      plotOptions: {
+        bar: {
+          borderRadius: 6,
+          borderRadiusApplication: 'end', 
+          columnWidth: "45%",   
+          dataLabels: {
+            position: 'top', 
           },
-        },
-        {
-          breakpoint: 640,
-          options: {
-            chart: {
-              height: 250,
-            },
-            plotOptions: {
-              bar: {
-                columnWidth: "70%",
-              },
-            },
-            xaxis: {
-              labels: {
-                rotate: -45,
-                style: {
-                  fontSize: '9px',
-                }
-              }
-            }
-          },
-        },
-      ],
-      title: {
-        text: titulo,
-        align: "center",
-        style: {
-          fontSize: "18px",
-          fontWeight: "bold",
-          color: colorPersonalizado,
         },
       },
-      series: [
-        {
-          name: (() => {
-            if (!esDataServidor) return "Clientes";
-            if (!categorias.length || !categorias[0]) return "Clientes";
-            const categoria = String(categorias[0]);
-            // Si parece un mes (letras mayúsculas/minúsculas), es "Clientes", si no "Cantidad"
-            const esMes = /[A-Za-z]/.test(categoria);
-            return esMes ? "Clientes" : "Cantidad";
-          })(),
-          data: registrosPorMes,
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shade: isDarkMode ? 'dark' : 'light',
+          type: "vertical",
+          shadeIntensity: 0.25,
+          inverseColors: true,
+          opacityFrom: 1,
+          opacityTo: 0.7,
+          stops: [50, 100],
+        }
+      },
+      dataLabels: {
+        enabled: true,
+        offsetY: -20, 
+        style: {
+          fontSize: '12px',
+          fontWeight: 'bold',
+          colors: [isDarkMode ? "#e4e4e7" : "#334155"] 
         },
-      ],
+        formatter: function (val) {
+          return val > 0 ? val : ""; // Oculta los ceros
+        }
+      },
+      stroke: {
+        show: true,
+        width: 2,
+        colors: ['transparent']
+      },
       xaxis: {
         categories: categorias,
+        axisBorder: { show: false },
+        axisTicks: { show: false },
         labels: {
           style: {
-            fontWeight: 600,
+            colors: textColor,
             fontSize: '11px',
+            fontWeight: 500,
           },
-          trim: true,
-          hideOverlappingLabels: true,
         },
       },
       yaxis: {
         labels: {
           style: {
+            colors: textColor,
             fontSize: '11px',
           },
+          formatter: (value) => { return Math.round(value) } 
         },
-      },
-      colors: [colorPersonalizado],
-      plotOptions: {
-        bar: {
-          borderRadius: 6,
-          columnWidth: "55%",
-          dataLabels: {
-            position: 'top',
-          },
-        },
-      },
-      dataLabels: {
-        enabled: true,
-        offsetY: -20,
-        style: {
-          fontSize: '12px',
-          colors: ["#304758"]
-        }
-      },
-      tooltip: {
-        y: {
-          formatter: function(val) {
-            return val + " clientes"
-          }
-        }
       },
       grid: {
-        borderColor: '#f1f1f1',
+        show: true,
+        borderColor: gridColor,
         strokeDashArray: 4,
-      }
-    });
+        position: 'back',
+        xaxis: { lines: { show: false } }, 
+        yaxis: { lines: { show: true } },
+        padding: { top: 0, right: 0, bottom: 0, left: 10 },
+      },
+      tooltip: {
+        theme: isDarkMode ? 'dark' : 'light',
+        y: {
+          formatter: function (val) {
+            return val + (val === 1 ? " cliente" : " clientes");
+          }
+        },
+      },
+      title: {
+        text: titulo,
+        align: "left", 
+        margin: 20,
+        offsetX: 10,
+        style: {
+          fontSize: "16px",
+          fontWeight: 700,
+          color: isDarkMode ? "#f4f4f5" : "#1e293b",
+        },
+      },
+      responsive: [
+        {
+          breakpoint: 768, 
+          options: {
+            plotOptions: {
+              bar: { columnWidth: "65%" }
+            },
+            xaxis: {
+              labels: {
+                rotate: -45,
+                style: { fontSize: '10px' }
+              }
+            }
+          }
+        }
+      ]
+    };
 
+    const chart = new ApexCharts(chartRef.current, options);
     chart.render();
 
     return () => chart.destroy();
-  }, [clientes, data, esDataServidor, mostrarMesCompleto]);
+  }, [clientes, data, esDataServidor, mostrarMesCompleto, titulo, colorPersonalizado, isDarkMode]);
 
   return (
-    <div className="w-full h-full">
-      <div ref={chartRef} className="h-full" />
+    <div className="w-full h-full min-h-[320px] bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-100 dark:border-zinc-800 p-4">
+      <div ref={chartRef} className="h-full w-full" />
     </div>
   );
 };

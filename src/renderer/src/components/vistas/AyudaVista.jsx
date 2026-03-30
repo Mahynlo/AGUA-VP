@@ -1,19 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { 
-  Card, 
-  CardBody, 
-  Button, 
   Spinner, 
-  Chip, 
   useDisclosure 
 } from "@nextui-org/react";
 import { 
   HiBookOpen, 
   HiSearch, 
   HiMenu, 
-  HiFolder, 
-  HiDocument, 
-  HiLightningBolt 
 } from "react-icons/hi";
 import 'katex/dist/katex.min.css';
 
@@ -28,7 +21,6 @@ const AyudaVista = () => {
   // ==========================================
   // 1. ESTADOS
   // ==========================================
-  // Datos y contenido
   const [sections, setSections] = useState({});
   const [fileContents, setFileContents] = useState({});
   const [selectedSection, setSelectedSection] = useState(null);
@@ -37,11 +29,9 @@ const AyudaVista = () => {
   const [currentMetadata, setCurrentMetadata] = useState({});
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   
-  // UI y Carga
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   
-  // Búsqueda
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [modalSearchTerm, setModalSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -50,8 +40,6 @@ const AyudaVista = () => {
   // ==========================================
   // 2. EFECTOS DE INICIALIZACIÓN
   // ==========================================
-  
-  // Ajuste responsivo del sidebar
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) setSidebarOpen(true);
@@ -60,7 +48,6 @@ const AyudaVista = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Atajo de teclado (Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k' && !isOpen) {
@@ -72,7 +59,6 @@ const AyudaVista = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onOpen]);
 
-  // Carga inicial de datos
   useEffect(() => {
     const cargarEstructura = async () => {
       setLoading(true);
@@ -83,7 +69,6 @@ const AyudaVista = () => {
         
         if (resultado.success) {
           setSections(resultado.sections);
-          // Iniciar precarga de contenidos en segundo plano
           precargarContenidos(resultado.sections);
         } else {
           throw new Error(resultado.error);
@@ -101,7 +86,6 @@ const AyudaVista = () => {
   // ==========================================
   // 3. LÓGICA DE DATOS (Precarga y Búsqueda)
   // ==========================================
-
   const precargarContenidos = async (sectionsData) => {
     const contenidos = {};
     for (const [sectionKey, files] of Object.entries(sectionsData)) {
@@ -122,7 +106,7 @@ const AyudaVista = () => {
     
     lines.forEach((line) => {
       if (regex.test(line)) {
-        let cleanLine = line.replace(/[*#`]/g, '').trim(); // Limpieza básica
+        let cleanLine = line.replace(/[*#`]/g, '').trim(); 
         const matchIndex = cleanLine.toLowerCase().indexOf(term.toLowerCase());
         
         if (matchIndex !== -1) {
@@ -156,7 +140,6 @@ const AyudaVista = () => {
         let score = 0;
         const matches = [];
 
-        // Scoring
         if (metadata.titulo?.toLowerCase().includes(termLower)) {
           score += 10;
           matches.push({ type: 'titulo', text: metadata.titulo });
@@ -195,10 +178,9 @@ const AyudaVista = () => {
     setSearching(false);
   }, [sections, fileContents]);
 
-  // Debounce para búsqueda
   useEffect(() => {
     if (!modalSearchTerm) {
-      setSearchResults([]);
+      searchResults.length > 0 && setSearchResults([]);
       setSearching(false);
       return;
     }
@@ -209,7 +191,6 @@ const AyudaVista = () => {
   // ==========================================
   // 4. NAVEGACIÓN Y CARGA DE ARCHIVOS
   // ==========================================
-
   const cargarArchivo = useCallback(async (section, fileName) => {
     try {
       const resultado = await window.docsApp.loadDocumentationFile(section, fileName);
@@ -246,7 +227,6 @@ const AyudaVista = () => {
     setModalSearchTerm("");
   }, [navegarA, onOpenChange]);
 
-  // Helpers de navegación relativa (Next/Prev)
   const getCurrentFiles = useCallback(() => sections[selectedSection] || [], [selectedSection, sections]);
   const getCurrentSectionConfig = useCallback(() => selectedSection ? sectionIcons[selectedSection] : null, [selectedSection]);
 
@@ -264,7 +244,6 @@ const AyudaVista = () => {
     navegarA(selectedSection, files[newIndex].fileName);
   }, [currentFileIndex, selectedSection, navegarA, getCurrentFiles]);
 
-  // Filtrado para el sidebar (ordenamiento)
   const filteredSections = useMemo(() => {
     return Object.entries(sections).reduce((acc, [key, files]) => {
       acc[key] = [...files].sort((a, b) => (a.metadata?.orden || 999) - (b.metadata?.orden || 999));
@@ -276,12 +255,17 @@ const AyudaVista = () => {
   // 5. RENDERIZADO
   // ==========================================
 
+  // Pantalla de carga integrada al diseño Premium
   if (loading) {
     return (
-      <div className="mt-16 h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:ml-24">
-        <div className="text-center">
-          <Spinner size="lg" />
-          <p className="mt-4 text-gray-500">Cargando base de conocimiento...</p>
+      <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
+        <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <Spinner size="lg" color="primary" />
+              <p className="text-sm font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest animate-pulse">
+                Cargando base de conocimiento...
+              </p>
+            </div>
         </div>
       </div>
     );
@@ -290,7 +274,8 @@ const AyudaVista = () => {
   const totalDocs = Object.values(sections).reduce((acc, f) => acc + f.length, 0);
 
   return (
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-hidden p-4 sm:ml-24">
+    // CONTENEDOR PRINCIPAL: Fluido y con padding exterior
+    <div className="mt-16 h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
       
       <SearchModal
         isOpen={isOpen}
@@ -303,52 +288,64 @@ const AyudaVista = () => {
         handleSelectResult={handleSelectResult}
       />
       
-      {/* Contenedor Principal (Flexible y Moderno) */}
-      <div className="w-full h-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden">
+      {/* CONTENEDOR DE LA VISTA: Ocupa el 100% de altura, sin overflow para manejar el sidebar correctamente */}
+      <div className="w-full h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm flex flex-col overflow-hidden relative">
         
-        {/* Header Compacto */}
-        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 bg-white dark:bg-gray-800 z-10">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <HiBookOpen className="text-blue-600 h-8 w-8" />
-                Centro de Ayuda
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {totalDocs} documentos disponibles en {Object.keys(sections).length} secciones
-              </p>
+        {/* ── HEADER SUPERIOR ── */}
+        <div className="p-6 sm:p-8 border-b border-slate-200 dark:border-zinc-800/80 flex-shrink-0 bg-white dark:bg-zinc-950 z-10">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            
+            <div className="flex items-center gap-4">
+              <div className="p-3.5 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+                <HiBookOpen className="w-8 h-8" />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
+                  Centro de Ayuda
+                </h1>
+                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+                  Explora {totalDocs} documentos disponibles en {Object.keys(sections).length} secciones
+                </p>
+              </div>
             </div>
 
-            <div className="flex gap-3 w-full lg:w-auto">
-                <Button 
-                    className="flex-1 lg:flex-none bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-200"
-                    startContent={<HiSearch />}
-                    onPress={onOpen}
-                >
-                    Buscar <Chip size="sm" className="ml-2 h-5 bg-white dark:bg-black/20">Ctrl K</Chip>
-                </Button>
-            </div>
+            {/* Barra de Búsqueda Estilo "DocSearch" */}
+            <button 
+              onClick={onOpen}
+              className="w-full lg:w-72 flex items-center justify-between px-4 py-2.5 bg-slate-100/70 hover:bg-slate-200/70 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-700/50 rounded-xl text-sm font-medium text-slate-500 dark:text-zinc-400 transition-all duration-200 shadow-sm group"
+            >
+              <div className="flex items-center gap-2">
+                <HiSearch className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                <span>Buscar documentación...</span>
+              </div>
+              <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 font-mono text-[10px] font-bold text-slate-400 bg-white dark:bg-zinc-800 rounded border border-slate-200 dark:border-zinc-700 shadow-sm">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
+
           </div>
         </div>
 
-        {/* Layout Cuerpo */}
+        {/* ── LAYOUT DE CUERPO (Sidebar + Contenido) ── */}
         <div className="flex flex-1 overflow-hidden relative">
           
           {/* Botón Móvil Sidebar */}
           {!sidebarOpen && (
-            <Button isIconOnly className="absolute top-4 left-4 z-50 lg:hidden shadow-md" onPress={() => setSidebarOpen(true)}>
-              <HiMenu />
-            </Button>
+            <button 
+                className="absolute top-4 left-4 z-50 lg:hidden p-2.5 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl shadow-md border border-slate-200 dark:border-zinc-700" 
+                onClick={() => setSidebarOpen(true)}
+            >
+              <HiMenu className="w-5 h-5" />
+            </button>
           )}
 
           {/* Sidebar */}
           <div className={`
-            absolute lg:relative z-40 h-full bg-gray-50 dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-700
+            absolute lg:relative z-40 h-full bg-slate-50 dark:bg-zinc-900/40 border-r border-slate-200 dark:border-zinc-800/80
             transition-all duration-300 ease-in-out
             ${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full lg:w-0 lg:translate-x-0 lg:hidden'}
           `}>
             <DocsSidebar
-              // Aquí pasamos filteredSections para que funcione el ordenamiento
               filteredSections={filteredSections} 
               sectionIcons={sectionIcons}
               selectedSection={selectedSection}
@@ -362,12 +359,12 @@ const AyudaVista = () => {
 
           {/* Overlay Móvil */}
           {sidebarOpen && (
-            <div className="absolute inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+            <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 z-30 lg:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
           )}
 
-          {/* Área de Contenido (Fluido y Centrado) */}
-          <div className="flex-1 overflow-y-auto scroll-smooth w-full relative bg-white dark:bg-gray-800">
-            <div className="max-w-4xl mx-auto p-6 lg:p-10 min-h-full">
+          {/* Área de Contenido Central */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar w-full relative bg-white dark:bg-zinc-950">
+            <div className="max-w-5xl mx-auto p-6 sm:p-10 lg:p-12 min-h-full">
               {selectedSection && selectedFile ? (
                 <DocumentViewer
                   currentContent={currentContent}
@@ -382,7 +379,7 @@ const AyudaVista = () => {
                 />
               ) : (
                 <WelcomeView 
-                    sections={filteredSections} // Usar secciones filtradas/ordenadas
+                    sections={filteredSections}
                     sectionIcons={sectionIcons}
                     navegarA={navegarA}
                 />

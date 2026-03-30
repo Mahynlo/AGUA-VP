@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Card, CardBody, Skeleton, Tabs, Tab } from "@nextui-org/react";
+import { Tabs, Tab, Skeleton, Chip } from "@nextui-org/react";
 import { HiCog, HiCheck, HiX, HiLocationMarker, HiMap, HiTable } from "react-icons/hi";
 
 import { useMedidores } from "../../../context/MedidoresContext";
@@ -50,12 +50,11 @@ const Medidores = () => {
     };
   }, [allMedidores, medidoresAsignados, medidoresNoAsignados, initialLoading]);
 
-  // Si está cargando datos iniciales, mostramos el skeleton
+  // Si está cargando datos iniciales, mostramos el skeleton unificado con el nuevo layout
   if (initialLoading) {
-    // Usamos una versión adaptada del skeleton o el mismo si envuelve toda la página
     return (
-      <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
-        <div className="w-full min-h-full bg-white p-6 rounded-lg shadow-md dark:bg-gray-800">
+      <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
+        <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8">
           <LoadingSkeleton />
         </div>
       </div>
@@ -63,107 +62,132 @@ const Medidores = () => {
   }
 
   return (
-    // CONTENEDOR PRINCIPAL: Scroll general de la página
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:ml-24">
+    // CONTENEDOR PRINCIPAL: Padding exterior fluido
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
 
-      <div className="w-full min-h-full bg-white p-6 rounded-lg shadow-md dark:bg-gray-800">
+      {/* CONTENEDOR DE LA VISTA: 'w-full' para ocupar todo el espacio disponible */}
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8">
 
-        {/* Header con título y estadísticas (Global) */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
+        {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+          
+          {/* Título de la vista */}
+          <div className="flex gap-4 items-center shrink-0">
+            <div className="p-3.5 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0 flex items-center justify-center">
+              {/* Le pasamos un w-8 h-8 al icono para estandarizar su tamaño */}
+              <MedidoresIcon className="w-8 h-8" />
+            </div>
+            <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <MedidoresIcon className="bg-blue-600 text-white rounded-full p-2 h-12 w-12" />
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
                   Gestión de Medidores
                 </h1>
+                {/* Loader de fondo súper sutil (cuando actualiza pero no es carga inicial) */}
                 {loading && !initialLoading && (
-                  <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-600 rounded-full animate-spin" title="Actualizando datos..."></div>
                 )}
               </div>
-              <p className="text-gray-600 dark:text-gray-300 mt-2">
-                Administra y monitorea todos los medidores del sistema
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-lg leading-relaxed">
+                Administra el inventario, monitorea ubicaciones y gestiona la asignación de todos los medidores.
               </p>
+            </div>
+          </div>
 
+          {/* Tarjetas de Estadísticas (KPIs) - Se alinean a la derecha */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full xl:w-auto shrink-0">
+            
+            {/* KPI: Total */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
+              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
+                <HiCog className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Total Inventario</span>
+              </div>
+              <p className="text-2xl font-black text-blue-600 dark:text-blue-400 leading-none">
+                {estadisticas.total.toLocaleString('es-MX')}
+              </p>
             </div>
 
-            {/* Estadísticas rápidas - Siempre visibles */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white min-w-[120px] backdrop-blur-md border-0 shadow-xl">
-                <CardBody className="text-center p-4">
-                  <HiCog className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{estadisticas.total}</p>
-                  <p className="text-xs opacity-90">Total Medidores</p>
-                </CardBody>
-              </Card>
-              <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white min-w-[120px] backdrop-blur-md border-0 shadow-xl">
-                <CardBody className="text-center p-4">
-                  <HiCheck className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{estadisticas.asignados}</p>
-                  <div className="text-xs opacity-90">
-                    Asignados ({estadisticas.porcentajeAsignados.toFixed(0)}%)
-                  </div>
-                </CardBody>
-              </Card>
-              <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white min-w-[120px] backdrop-blur-md border-0 shadow-xl">
-                <CardBody className="text-center p-4">
-                  <HiX className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{estadisticas.libres}</p>
-                  <p className="text-xs opacity-90">Disponibles</p>
-                </CardBody>
-              </Card>
-              <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white min-w-[120px] backdrop-blur-md border-0 shadow-xl">
-                <CardBody className="text-center p-4">
-                  <HiLocationMarker className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-2xl font-bold">{estadisticas.activos}</p>
-                  <div className="text-xs opacity-90">
-                    Activos ({estadisticas.porcentajeActivos.toFixed(0)}%)
-                  </div>
-                </CardBody>
-              </Card>
+            {/* KPI: Asignados */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
+              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
+                <HiCheck className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Asignados</span>
+              </div>
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none flex items-baseline gap-1.5">
+                {estadisticas.asignados.toLocaleString('es-MX')}
+                <span className="text-[11px] font-bold text-emerald-500/70">({estadisticas.porcentajeAsignados.toFixed(0)}%)</span>
+              </p>
+            </div>
+
+            {/* KPI: Disponibles/Libres */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
+              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
+                <HiX className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Disponibles</span>
+              </div>
+              <p className="text-2xl font-black text-rose-500 dark:text-rose-400 leading-none">
+                {estadisticas.libres.toLocaleString('es-MX')}
+              </p>
+            </div>
+
+            {/* KPI: Activos */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
+              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
+                <HiLocationMarker className="w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">En Servicio</span>
+              </div>
+              <p className="text-2xl font-black text-orange-500 dark:text-orange-400 leading-none flex items-baseline gap-1.5">
+                {estadisticas.activos.toLocaleString('es-MX')}
+                <span className="text-[11px] font-bold text-orange-500/70">({estadisticas.porcentajeActivos.toFixed(0)}%)</span>
+              </p>
             </div>
           </div>
         </div>
 
-        {/* TABS PRINCIPALES */}
-        <div className="flex w-full flex-col">
+        {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
+        <div className="flex flex-col w-full flex-1 mt-4">
           <Tabs
             aria-label="Opciones de Medidores"
             selectedKey={selectedTab}
             onSelectionChange={handleTabChange}
-            classNames={{
-              tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
-              cursor: "w-full bg-blue-600",
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-blue-600 font-medium",
-            }}
-            color="primary"
             variant="underlined"
+            classNames={{
+              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
+              tabList: "gap-6 w-full relative rounded-none p-0",
+              cursor: "w-full bg-blue-600 dark:bg-blue-500 h-0.5",
+              tab: "max-w-fit px-0 h-12",
+              tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
+            }}
           >
-            {/* TAB 1: MAPA (Vista Original) */}
+            {/* TAB 1: MAPA */}
             <Tab
               key="mapa"
               title={
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <HiMap className="w-5 h-5" />
-                  <span>Mapa y Ubicación</span>
+                  <span>Mapa y Ubicaciones</span>
                 </div>
               }
             >
-              <TabMapaMedidores />
+              <div className="animate-in fade-in duration-500 pt-2">
+                <TabMapaMedidores />
+              </div>
             </Tab>
 
-            {/* TAB 2: INVENTARIO (Nueva tabla) */}
+            {/* TAB 2: INVENTARIO */}
             <Tab
               key="inventario"
               title={
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <HiTable className="w-5 h-5" />
                   <span>Inventario General</span>
+                  <Chip size="sm" variant="flat" className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold h-5 text-[10px] px-1 ml-1">
+                    {estadisticas.total}
+                  </Chip>
                 </div>
               }
             >
-              <div className="pt-4">
+              <div className="animate-in fade-in duration-500 pt-2">
                 <TabInventarioMedidores />
               </div>
             </Tab>

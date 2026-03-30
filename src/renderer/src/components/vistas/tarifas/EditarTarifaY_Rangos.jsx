@@ -7,19 +7,13 @@ import {
   Button,
   useDisclosure,
   Tabs,
-  Tab,
-  Card,
-  CardBody
+  Tab
 } from "@nextui-org/react";
-import { HiCurrencyDollar, HiCalendar, HiDocumentText, HiPencil, HiTrash, HiPlus } from "react-icons/hi";
+import { HiCurrencyDollar, HiCalendar, HiDocumentText, HiPencil, HiTrash, HiPlus, HiCheck, HiX } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useTarifas } from "../../../context/TarifasContext";
-
-//para los iconos de los mensajes de feedback
 import { useFeedback } from "../../../context/FeedbackContext";
-
-
 
 export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
@@ -45,17 +39,14 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
 
   const id_usuario = user?.id || null;
 
-  // Función para limpiar errores cuando el usuario empiece a escribir
+  // Limpiar error al escribir
   const limpiarError = (campo) => {
     if (erroresCampos[campo]) {
-      setErroresCampos(prev => ({
-        ...prev,
-        [campo]: false
-      }));
+      setErroresCampos(prev => ({ ...prev, [campo]: false }));
     }
   };
 
-  // Función para manejar el cierre del modal y resetear estados
+  // Cerrar modal y resetear estados
   const handleCloseModal = () => {
     setErroresCampos({});
     setMostrarErrores(false);
@@ -63,11 +54,10 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
     onClose();
   };
 
-
-  //useEffect para inicializar los rangos del componente
+  // Inicializar estados al abrir el modal
   useEffect(() => {
-    if (isOpen) { // Si el modal se abre, inicializa los campos con los datos de la tarifa
-      setNombre(tarifa.nombre);
+    if (isOpen && tarifa) {
+      setNombre(tarifa.nombre || "");
       setDescripcion(tarifa.descripcion || "");
       setFechaInicio(tarifa.fecha_inicio || "");
       setFechaFin(tarifa.fecha_fin || "");
@@ -76,15 +66,12 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
     }
   }, [isOpen, tarifa, rangosIniciales]);
 
-
-  //handleGuardarTarifa es la función que se encarga de guardar los cambios de la tarifa
   const handleGuardarTarifa = async () => {
     setIsSaving(true);
     setError("");
     setSuccess("");
     setMostrarErrores(true);
 
-    // Validaciones de campos específicas
     const nuevosErrores = {};
     if (!nombre) nuevosErrores.nombre = true;
     if (!descripcion) nuevosErrores.descripcion = true;
@@ -92,15 +79,14 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
 
     if (Object.keys(nuevosErrores).length > 0) {
       setErroresCampos(nuevosErrores);
-      const camposFaltantes = Object.keys(nuevosErrores)
-        .map((campo) => {
-          switch (campo) {
-            case "nombre": return "Nombre";
-            case "descripcion": return "Descripción";
-            case "fechaInicio": return "Fecha de Inicio";
-            default: return campo;
-          }
-        });
+      const camposFaltantes = Object.keys(nuevosErrores).map((campo) => {
+        switch (campo) {
+          case "nombre": return "Nombre";
+          case "descripcion": return "Descripción";
+          case "fechaInicio": return "Fecha de Inicio";
+          default: return campo;
+        }
+      });
       setError(`Los siguientes campos son obligatorios: ${camposFaltantes.join(", ")}`, "Edición de Tarifa");
       setIsSaving(false);
       return;
@@ -122,9 +108,10 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
 
       if (!response.success) throw new Error(response.message);
       setSuccess("Tarifa actualizada correctamente.", "Edición de Tarifa");
-      handleCloseModal();
-      setIsSaving(false);
       actualizarTarifas();
+      setTimeout(() => {
+        handleCloseModal();
+      }, 1000);
     } catch (err) {
       setError("Error al actualizar tarifa.", "Edición de Tarifa");
       setIsSaving(false);
@@ -132,130 +119,110 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
   };
 
   const handleGuardarRangos = async () => {
-  setError("");
-  setSuccess("");
-  setIsSaving(true);
+    setError("");
+    setSuccess("");
+    setIsSaving(true);
 
-  const parsedRangos = rangos.map((r, i) => ({
-    index: i + 1,
-    consumo_min: parseFloat(r.consumo_min),
-    consumo_max: parseFloat(r.consumo_max),
-    precio_por_m3: parseFloat(r.precio_por_m3),
-  }));
+    const parsedRangos = rangos.map((r, i) => ({
+      index: i + 1,
+      consumo_min: parseFloat(r.consumo_min),
+      consumo_max: parseFloat(r.consumo_max),
+      precio_por_m3: parseFloat(r.precio_por_m3),
+    }));
 
-  // Validaciones de campos vacíos o inválidos
-  for (const r of parsedRangos) {
-    if (
-      isNaN(r.consumo_min) || isNaN(r.consumo_max) || isNaN(r.precio_por_m3) ||
-      r.consumo_min === "" || r.consumo_max === "" || r.precio_por_m3 === ""
-    ) {
-      setError("Todos los campos deben ser numéricos y no vacíos.(Advertencia-FNED)", "Edición de Rangos");
-      setIsSaving(false);
-      return;
+    // Validaciones
+    for (const r of parsedRangos) {
+      if (
+        isNaN(r.consumo_min) || isNaN(r.consumo_max) || isNaN(r.precio_por_m3) ||
+        r.consumo_min === "" || r.consumo_max === "" || r.precio_por_m3 === ""
+      ) {
+        setError("Todos los campos deben ser numéricos y no vacíos.", "Edición de Rangos");
+        setIsSaving(false);
+        return;
+      }
+      if (r.consumo_min < 0 || r.consumo_max < 0 || r.precio_por_m3 < 0) {
+        setError("Los valores no pueden ser negativos.", "Edición de Rangos");
+        setIsSaving(false);
+        return;
+      }
+      if (r.consumo_min >= r.consumo_max) {
+        setError(`El consumo mínimo debe ser menor que el máximo en el rango ${r.index}.`, "Edición de Rangos");
+        setIsSaving(false);
+        return;
+      }
     }
 
-    if (r.consumo_min < 0 || r.consumo_max < 0 || r.precio_por_m3 < 0) {
-      setError("Los valores no pueden ser negativos.(Advertencia-FNED)", "Edición de Rangos");
-      setIsSaving(false);
-      return;
+    // Duplicados
+    const claves = new Set();
+    for (const r of parsedRangos) {
+      const clave = `${r.consumo_min}-${r.consumo_max}`;
+      if (claves.has(clave)) {
+        setError(`Rango duplicado [${clave}].`, "Edición de Rangos");
+        setIsSaving(false);
+        return;
+      }
+      claves.add(clave);
     }
 
-    if (r.consumo_min >= r.consumo_max) {
-      setError(`El consumo mínimo debe ser menor que el máximo en el rango ${r.index}.(Advertencia-FNED)`, "Edición de Rangos");
-      setIsSaving(false);
-      return;
+    // Solapamientos
+    const ordenados = [...parsedRangos].sort((a, b) => a.consumo_min - b.consumo_min);
+    for (let i = 0; i < ordenados.length - 1; i++) {
+      const actual = ordenados[i];
+      const siguiente = ordenados[i + 1];
+
+      if (actual.consumo_max >= siguiente.consumo_min) {
+        setError(`El rango ${actual.index} se solapa o toca con el rango ${siguiente.index}.`, "Edición de Rangos");
+        setIsSaving(false);
+        return;
+      }
     }
-  }
 
-  // Detección de duplicados exactos
-  const claves = new Set();
-  for (const r of parsedRangos) {
-    const clave = `${r.consumo_min}-${r.consumo_max}`;
-    if (claves.has(clave)) {
-      setError(`Rango duplicado [${clave}].(Advertencia-FNED)`, "Edición de Rangos");
-      setIsSaving(false);
-      return;
+    // Huecos
+    for (let i = 0; i < ordenados.length - 1; i++) {
+      const actual = ordenados[i];
+      const siguiente = ordenados[i + 1];
+
+      if (actual.consumo_max + 1 < siguiente.consumo_min) {
+        setError(`Hay un hueco entre los rangos ${actual.index} y ${siguiente.index}.`, "Edición de Rangos");
+        setIsSaving(false);
+        return;
+      }
     }
-    claves.add(clave);
-  }
 
-  // Validación de solapamientos o contactos
-  const ordenados = [...parsedRangos].sort((a, b) => a.consumo_min - b.consumo_min);
-  for (let i = 0; i < ordenados.length - 1; i++) {
-    const actual = ordenados[i];
-    const siguiente = ordenados[i + 1];
+    try {
+      const token = localStorage.getItem("token");
+      const response = await window.tarifasApp.updateRangosTarifa({
+        id: tarifa.id,
+        rangos: parsedRangos.map(r => ({
+          id: rangos[r.index - 1].id || null, // Mantenemos el ID original si existe
+          consumo_min: r.consumo_min,
+          consumo_max: r.consumo_max,
+          precio_por_m3: r.precio_por_m3,
+        })),
+        token_session: token
+      });
 
-    if (actual.consumo_max >= siguiente.consumo_min) {
-      setError(
-        `El rango ${actual.index} se solapa o toca con el rango ${siguiente.index}.(Advertencia-FNED)`,
-        "Edición de Rangos"
-      );
-      setIsSaving(false);
-      return;
-    }
-  }
+      if (!response.success) throw new Error(response.message);
 
-  // (Opcional) Detectar huecos entre rangos
-  for (let i = 0; i < ordenados.length - 1; i++) {
-    const actual = ordenados[i];
-    const siguiente = ordenados[i + 1];
-
-    if (actual.consumo_max + 1 < siguiente.consumo_min) {
-      setError(
-        `Hay un hueco entre los rangos ${actual.index} y ${siguiente.index}.(Advertencia-FNED)`,
-        "Edición de Rangos"
-      );
-      setIsSaving(false);
-      return;
-    }
-  }
-
-  // Si pasa todas las validaciones, enviar
-  try {
-    const token = localStorage.getItem("token");
-
-    const response = await window.tarifasApp.updateRangosTarifa({
-      id: tarifa.id,
-      rangos: parsedRangos.map(r => ({
-        id: rangos[r.index - 1].id || null,
-        consumo_min: r.consumo_min,
-        consumo_max: r.consumo_max,
-        precio_por_m3: r.precio_por_m3,
-      })),
-      token_session: token
-    });
-
-    if (!response.success) throw new Error(response.message);
-
-    setSuccess("Rangos actualizados correctamente.", "Edición de Rangos");
-    setTimeout(() => {
-      handleCloseModal();
+      setSuccess("Rangos actualizados correctamente.", "Edición de Rangos");
       actualizarTarifas();
+      setTimeout(() => {
+        handleCloseModal();
+      }, 1000);
+
+    } catch (err) {
+      console.error(err);
+      setError("Error al guardar los rangos.", "Edición de Rangos");
       setIsSaving(false);
-    }, 1000);
+    }
+  };
 
-  } catch (err) {
-    console.error(err);
-    setError("Error al guardar los rangos.", "Edición de Rangos");
-    setIsSaving(false);
-  }
-};
-
-
-  // Función para agregar un nuevo rango
   const agregarRango = () => {
     const ultimo = rangos[rangos.length - 1];
 
-    if (
-      ultimo.consumo_min === "" || ultimo.consumo_min === null || ultimo.consumo_min === undefined ||
-      ultimo.consumo_max === "" || ultimo.consumo_max === null || ultimo.consumo_max === undefined ||
-      ultimo.precio_por_m3 === "" || ultimo.precio_por_m3 === null || ultimo.precio_por_m3 === undefined
-    ) {
-      setTimeout(() => {
-        setError("Completa el rango actual antes de agregar otro.", "Edición de Rangos");
-        return;
-      }, 1000);
-
+    if (!ultimo || !ultimo.consumo_min || !ultimo.consumo_max || !ultimo.precio_por_m3) {
+      setError("Completa el rango actual antes de agregar otro.", "Edición de Rangos");
+      return;
     }
 
     const yaExiste = rangos.some((r, idx) =>
@@ -274,21 +241,51 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
     setRangos([...rangos, { consumo_min: "", consumo_max: "", precio_por_m3: "" }]);
   };
 
-  // Función para manejar el cambio de un rango específico
   const handleChangeRango = (index, field, value) => {
     const nuevos = [...rangos];
     nuevos[index][field] = value;
     setRangos(nuevos);
   };
 
+  const eliminarRango = (indexToRemove) => {
+    if (rangos.length === 1) return;
+    setRangos(rangos.filter((_, index) => index !== indexToRemove));
+  };
+
+  // Clases para inputs
+  const inputClasses = (hasError) => `
+    w-full text-sm font-medium rounded-xl transition-all duration-200 resize-none
+    border focus:outline-none focus:ring-2 px-4 py-2.5 bg-white dark:bg-zinc-900
+    ${hasError 
+      ? 'border-red-300 dark:border-red-800 focus:ring-red-500/50 focus:border-red-500' 
+      : 'border-slate-200 dark:border-zinc-700 focus:ring-blue-500/50 focus:border-blue-500 dark:text-zinc-100 hover:border-blue-300 dark:hover:border-zinc-500'
+    }
+  `;
+
+  // Clases para inputs de tabla (más compactos)
+  const tableInputClasses = `
+    w-full text-sm font-medium rounded-xl transition-all duration-200 resize-none
+    border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900/50
+    focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-950
+    px-3 py-2 text-slate-800 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 text-center
+  `;
 
   return (
     <>
-      <Button color="primary" onPress={onOpen} className="ml-2 px-8 py-2">
+      <Button 
+        color="primary" 
+        variant="flat" 
+        onPress={onOpen} 
+        startContent={<HiPencil className="w-4 h-4" />}
+        className="font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
+      >
         Editar
       </Button>
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} onClose={handleCloseModal} 
+      <Modal 
+        isOpen={isOpen} 
+        onOpenChange={onOpenChange} 
+        onClose={handleCloseModal} 
         size="3xl"
         scrollBehavior="inside"
         isDismissable={false}
@@ -296,248 +293,265 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
         backdrop="blur"
         placement="center"
         classNames={{
-          backdrop: "bg-gradient-to-t mt-18 ml-24 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
-          closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white",
+          base: "bg-white dark:bg-zinc-900 shadow-2xl",
+          backdrop: "bg-zinc-900/50 backdrop-blur-sm",
+          header: "border-b border-slate-100 dark:border-zinc-800",
+          footer: "border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900",
+          closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors z-50",
         }}
       >
         <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex items-center gap-2 text-xl font-bold">
-                <HiPencil className="w-6 h-6 text-green-600" />
-                Editar Tarifa y Rangos
+              {/* ── HEADER ── */}
+              <ModalHeader className="flex flex-col gap-1">
+                <div className="flex items-center gap-3.5">
+                    <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+                        <HiPencil className="w-7 h-7" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                        <h2 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
+                            Editar Tarifa
+                        </h2>
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                            Modificación de parámetros
+                        </p>
+                    </div>
+                </div>
               </ModalHeader>
 
-              <ModalBody className="space-y-4">
-
+              {/* ── BODY CON TABS ── */}
+              <ModalBody>
                 <Tabs
                   selectedKey={tab}
                   onSelectionChange={setTab}
                   variant="underlined"
-                  className="mb-4"
+                  aria-label="Opciones de Edición"
+                  classNames={{
+                    base: "w-full border-b border-slate-200 dark:border-zinc-800 px-6 pt-2 bg-white dark:bg-zinc-950",
+                    tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+                    cursor: "w-full bg-blue-500",
+                    tab: "max-w-fit px-0 h-12",
+                    tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm"
+                  }}
                 >
-
-                  <Tab key="tarifa" title="Tarifa">
-                    <Card className="border border-green-200 dark:border-green-800">
-                      <CardBody className="space-y-4">
-                        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                          <HiDocumentText className="w-5 h-5 text-green-600" />
-                          Información de la Tarifa
-                        </h3>
-                        
-                        <form className="space-y-4"
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            handleGuardarTarifa();
-                          }}
-                          id="form-editar-tarifa"
+                  {/* TAB 1: DATOS DE TARIFA */}
+                  <Tab key="tarifa" title="Datos Generales">
+                    <div className="p-6 sm:p-8 space-y-6">
+                        <form 
+                            id="form-editar-tarifa" 
+                            onSubmit={(e) => { e.preventDefault(); handleGuardarTarifa(); }}
+                            className="flex flex-col gap-6"
                         >
-                          {/* Nombre de la Tarifa con estilo personalizado */}
-                          <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Nombre de la Tarifa*
-                            </label>
-                            <div className="relative w-full flex">
-                              <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2">
-                                <HiCurrencyDollar className="inline-block mr-1 h-5 w-5 text-green-600" />
-                              </span>
-                              <input
-                                type="text"
-                                placeholder="ej. Tarifa Residencial 2024"
-                                value={nombre}
-                                onChange={(e) => {
-                                  setNombre(e.target.value);
-                                  limpiarError('nombre');
-                                }}
-                                required
-                                className={`border ${mostrarErrores && erroresCampos.nombre ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-green-600 focus:border-green-500'} text-gray-600 rounded-xl pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all duration-200`}
-                              />
-                            </div>
-                            {mostrarErrores && erroresCampos.nombre && (
-                              <p className="text-sm text-red-500 mt-1">El nombre de la tarifa es requerido</p>
-                            )}
-                          </div>
+                            {/* Información General */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-2">
+                                    <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-slate-500">1</span>
+                                    <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                                        Información General
+                                    </h3>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 gap-4 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 mb-1.5 block">
+                                            Nombre de la Tarifa <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                <HiCurrencyDollar className="w-5 h-5" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={nombre}
+                                                onChange={(e) => { setNombre(e.target.value); limpiarError('nombre'); }}
+                                                className={`${inputClasses(mostrarErrores && erroresCampos.nombre)} pl-10`}
+                                            />
+                                        </div>
+                                    </div>
 
-                          {/* Descripción con estilo personalizado */}
-                          <div>
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Descripción*
-                            </label>
-                            <textarea
-                              placeholder="Describe el propósito y características de esta tarifa..."
-                              value={descripcion}
-                              onChange={(e) => {
-                                setDescripcion(e.target.value);
-                                limpiarError('descripcion');
-                              }}
-                              required
-                              rows={3}
-                              className={`border ${mostrarErrores && erroresCampos.descripcion ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-green-600 focus:border-green-500'} text-gray-600 rounded-xl pl-4 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none transition-all duration-200`}
-                            />
-                            {mostrarErrores && erroresCampos.descripcion && (
-                              <p className="text-sm text-red-500 mt-1">La descripción es requerida</p>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Fecha de Inicio con estilo personalizado */}
-                            <div>
-                              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Fecha de Inicio*
-                              </label>
-                              <div className="relative w-full flex">
-                                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2">
-                                  <HiCalendar className="inline-block mr-1 h-5 w-5 text-green-600" />
-                                </span>
-                                <input
-                                  type="date"
-                                  value={fechaInicio}
-                                  onChange={(e) => {
-                                    setFechaInicio(e.target.value);
-                                    limpiarError('fechaInicio');
-                                  }}
-                                  required
-                                  className={`border ${mostrarErrores && erroresCampos.fechaInicio ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-green-600 focus:border-green-500'} text-gray-600 rounded-xl pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all duration-200`}
-                                />
-                              </div>
-                              {mostrarErrores && erroresCampos.fechaInicio && (
-                                <p className="text-sm text-red-500 mt-1">La fecha de inicio es requerida</p>
-                              )}
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 mb-1.5 block">
+                                            Descripción <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            value={descripcion}
+                                            onChange={(e) => { setDescripcion(e.target.value); limpiarError('descripcion'); }}
+                                            rows={3}
+                                            className={inputClasses(mostrarErrores && erroresCampos.descripcion)}
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Fecha de Fin con estilo personalizado */}
-                            <div>
-                              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Fecha de Fin (opcional)
-                              </label>
-                              <div className="relative w-full flex">
-                                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2">
-                                  <HiCalendar className="inline-block mr-1 h-5 w-5 text-green-600" />
-                                </span>
-                                <input
-                                  type="date"
-                                  value={fechaFin}
-                                  onChange={(e) => setFechaFin(e.target.value)}
-                                  className="border border-gray-300 focus:ring-green-600 focus:border-green-500 text-gray-600 rounded-xl pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all duration-200"
-                                />
-                              </div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Dejar vacío para tarifa indefinida</p>
-                            </div>
-                          </div>
-
-                          {fechaFin && fechaInicio && (
-                            <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                              <p className="text-sm text-green-600 dark:text-green-400">
-                                ℹ️ Duración: {Math.ceil((new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60 * 24))} días
-                              </p>
-                            </div>
-                          )}
-                        </form>
-                      </CardBody>
-                    </Card>
-                  </Tab>
-
-                  <Tab key="rangos" title="Rangos">
-                    <Card className="border border-blue-200 dark:border-blue-800">
-                      <CardBody className="space-y-4">
-                        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                          <HiCurrencyDollar className="w-5 h-5 text-blue-600" />
-                          Rangos de Consumo
-                        </h3>
-
-                        <form className="overflow-x-auto"
-                          id="form-editar-rangos"
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            handleGuardarRangos();
-                          }}
-                        >
-                      <table className="min-w-full border-separate border-spacing-y-2">
-                        <thead>
-                          <tr>
-                            <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                              Consumo mínimo
-                            </th>
-                            <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                              Consumo máximo
-                            </th>
-                            <th className="px-4 py-2 text-center text-sm font-semibold text-gray-900 dark:text-white">
-                              Precio ($/m³)
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="text-sm">
-                          {rangos.map((r, i) => (
-                            <tr key={i} className="bg-gray-50 dark:bg-neutral-800">
-                              <td className="px-4 py-2">
-                                <div className="flex items-center gap-2">
-                                  <label className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {i + 1}:
-                                  </label>
-                                  <input
-                                    placeholder="Mín"
-                                    value={r.consumo_min}
-                                    onChange={(e) => handleChangeRango(i, "consumo_min", e.target.value)}
-                                    className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-neutral-700 dark:text-white"
-                                    required
-                                  />
+                            {/* Vigencia */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-2">
+                                    <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-slate-500">2</span>
+                                    <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                                        Período de Vigencia
+                                    </h3>
                                 </div>
 
-                              </td>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 mb-1.5 block">
+                                            Fecha de Inicio <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                <HiCalendar className="w-5 h-5" />
+                                            </span>
+                                            <input
+                                                type="date"
+                                                value={fechaInicio}
+                                                onChange={(e) => { setFechaInicio(e.target.value); limpiarError('fechaInicio'); }}
+                                                className={`${inputClasses(mostrarErrores && erroresCampos.fechaInicio)} pl-10`}
+                                            />
+                                        </div>
+                                    </div>
 
-                              <td className="px-4 py-2">
-                                <input
-                                  placeholder="Máx"
-                                  value={r.consumo_max}
-                                  onChange={(e) => handleChangeRango(i, "consumo_max", e.target.value)}
-                                  className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-neutral-700 dark:text-white"
-                                  required
-                                />
-                              </td>
-                              <td className="px-4 py-2">
-                                <input
-                                  placeholder="$/m³"
-                                  value={r.precio_por_m3}
-                                  onChange={(e) => handleChangeRango(i, "precio_por_m3", e.target.value)}
-                                  className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-neutral-700 dark:text-white"
-                                  required
-                                />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <div className="mt-4">
-                        <Button size="sm" onClick={agregarRango} color="secondary" className="text-white bg-green-600">
-                          + Agregar Rango
-                        </Button>
-                      </div>
-
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 mb-1.5 block">
+                                            Fecha de Fin <span className="font-normal text-slate-400">(Opcional)</span>
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                <HiCalendar className="w-5 h-5" />
+                                            </span>
+                                            <input
+                                                type="date"
+                                                value={fechaFin}
+                                                onChange={(e) => setFechaFin(e.target.value)}
+                                                className={`${inputClasses(false)} pl-10`}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
-                      </CardBody>
-                    </Card>
+                    </div>
+                  </Tab>
+
+                  {/* TAB 2: RANGOS */}
+                  <Tab key="rangos" title="Bloques de Consumo">
+                    <div className="p-6 sm:p-8 space-y-6">
+                        <form 
+                            id="form-editar-rangos" 
+                            onSubmit={(e) => { e.preventDefault(); handleGuardarRangos(); }}
+                            className="flex flex-col gap-6"
+                        >
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-2">
+                                    <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-slate-500">1</span>
+                                    <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                                        Configuración de Rangos
+                                    </h3>
+                                </div>
+                                
+                                {/* Tabla Moderna */}
+                                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead className="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-800">
+                                                <tr>
+                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-12">#</th>
+                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Mínimo (m³)</th>
+                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Máximo (m³)</th>
+                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Precio ($/m³)</th>
+                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-12"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+                                                {rangos.map((r, index) => (
+                                                    <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                                                        <td className="px-4 py-3 text-center">
+                                                            <span className="text-xs font-bold text-slate-400 dark:text-zinc-500">{index + 1}</span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <input
+                                                                type="number" min="0" step="0.01"
+                                                                value={r.consumo_min}
+                                                                onChange={(e) => handleChangeRango(index, "consumo_min", e.target.value)}
+                                                                className={tableInputClasses}
+                                                                required
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <input
+                                                                type="number" min="0" step="0.01"
+                                                                value={r.consumo_max}
+                                                                onChange={(e) => handleChangeRango(index, "consumo_max", e.target.value)}
+                                                                className={tableInputClasses}
+                                                                required
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="relative">
+                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                                                                <input
+                                                                    type="number" min="0" step="0.01"
+                                                                    value={r.precio_por_m3}
+                                                                    onChange={(e) => handleChangeRango(index, "precio_por_m3", e.target.value)}
+                                                                    className={`${tableInputClasses} pl-7`}
+                                                                    required
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {rangos.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => eliminarRango(index)}
+                                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                                >
+                                                                    <HiTrash className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="p-3 bg-slate-50 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800">
+                                        <Button
+                                            type="button" onClick={agregarRango} variant="flat"
+                                            className="w-full font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-800 shadow-sm"
+                                            startContent={<HiPlus className="w-4 h-4 text-blue-500" />}
+                                        >
+                                            Añadir Nuevo Rango
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                   </Tab>
                 </Tabs>
-
-
               </ModalBody>
-              
-              <ModalFooter>
+
+              {/* ── FOOTER ── */}
+              <ModalFooter className="flex justify-end gap-3">
                 <Button
-                  color="danger"
-                  variant="light"
-                  onPress={handleCloseModal}
+                    variant="flat"
+                    onPress={handleCloseModal}
+                    isDisabled={isSaving}
+                    startContent={<HiX className="text-lg" />}
+                    className="font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 h-11 px-6"
                 >
-                  Cancelar
+                    Cancelar
                 </Button>
                 <Button
-                  color="primary"
-                  type="submit"
-                  form={tab === "tarifa" ? "form-editar-tarifa" : "form-editar-rangos"}
-                  isDisabled={isSaving}
-                  isLoading={isSaving}
+                    color="primary"
+                    type="submit"
+                    form={tab === "tarifa" ? "form-editar-tarifa" : "form-editar-rangos"}
+                    isDisabled={isSaving}
+                    isLoading={isSaving}
+                    startContent={!isSaving && <HiCheck className="text-lg" />}
+                    className="font-bold shadow-md shadow-blue-500/30 h-11 px-8"
                 >
-                  {isSaving ? "Guardando..." : "Guardar Cambios"}
+                    {isSaving ? "Guardando..." : "Guardar Cambios"}
                 </Button>
               </ModalFooter>
             </>

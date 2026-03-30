@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Button, Card, CardBody, CardHeader } from "@nextui-org/react";
-import { HiSpeakerphone, HiScale } from "react-icons/hi";
+import { Button, Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
+import { HiSpeakerphone, HiScale, HiInformationCircle, HiLightBulb } from "react-icons/hi";
 import ModalAnuncioRecibo from "./ModalAnuncioRecibo";
 import ModalEquivalenciaConsumo from "./ModalEquivalenciaConsumo";
 import useAnuncioRecibo from "../../../hooks/useAnuncioRecibo";
@@ -35,147 +35,152 @@ const TabConfiguracion = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Sección de configuración del anuncio */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-              <HiSpeakerphone className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+    <div className="space-y-6 w-full animate-in fade-in duration-300">
+      
+      {/* 1. Sección de configuración del anuncio (Naranja) */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-orange-500/10 dark:bg-orange-500/20 rounded-xl">
+              <HiSpeakerphone className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Configuración de Anuncio
-            </h3>
+            <div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                Anuncio en Recibos
+                </h3>
+                <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
+                    Mensaje global impreso en tickets
+                </p>
+            </div>
           </div>
+          <Button 
+            onPress={handleAbrirModalAnuncio}
+            color="warning"
+            className="w-full sm:w-auto font-bold bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 shadow-sm"
+            startContent={<HiSpeakerphone className="text-lg" />}
+          >
+            Editar Anuncio
+          </Button>
         </CardHeader>
-        <CardBody className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Mensaje actual en los recibos
+
+        <CardBody className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Previsualización del Mensaje */}
+            <div className="lg:col-span-2 flex flex-col h-full">
+              <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-2 block uppercase tracking-wider">
+                Mensaje Actual Publicado
               </label>
-              <Card>
-                <CardBody className="bg-gray-50 dark:bg-gray-800 min-h-[120px]">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    {anuncio || "No hay mensaje configurado"}
-                  </p>
-                </CardBody>
-              </Card>
+              <div className="flex-1 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-xl p-5 shadow-inner min-h-[120px] flex items-center justify-center text-center">
+                {anuncio ? (
+                    <p className="text-sm font-medium text-slate-700 dark:text-zinc-300 italic">
+                        "{anuncio}"
+                    </p>
+                ) : (
+                    <p className="text-sm font-bold text-slate-400 dark:text-zinc-600">
+                        No hay ningún mensaje configurado actualmente.
+                    </p>
+                )}
+              </div>
             </div>
             
-            <div className="flex items-end">
-              <Button 
-                onPress={handleAbrirModalAnuncio}
-                color="warning"
-                className="w-full"
-                startContent={<HiSpeakerphone />}
-                size="lg"
-              >
-                Configurar Anuncio
-              </Button>
-            </div>
-          </div>
-          
-          <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-orange-200 dark:bg-orange-800 rounded-lg">
-                <HiSpeakerphone className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-orange-800 dark:text-orange-200 mb-1">
-                  Información sobre el anuncio
+            {/* Caja de Información Lateral */}
+            <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200/60 dark:border-orange-800/50 rounded-xl p-5 flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-3">
+                <HiInformationCircle className="w-5 h-5 text-orange-500" />
+                <h4 className="font-bold text-orange-800 dark:text-orange-300 text-sm">
+                  ¿Para qué sirve?
                 </h4>
-                <p className="text-sm text-orange-600 dark:text-orange-300">
-                  Este mensaje aparecerá en todos los recibos impresos. Es ideal para comunicar información importante, promociones, avisos de mantenimiento o recordatorios de pago.
-                </p>
               </div>
+              <p className="text-xs text-orange-700/80 dark:text-orange-400/80 leading-relaxed font-medium">
+                Este mensaje aparecerá en el pie de página de <strong>todos los recibos impresos</strong>. Es el lugar ideal para comunicar información importante de forma masiva, como promociones vigentes, avisos de mantenimiento en la red de agua o recordatorios generales de pago oportuno.
+              </p>
             </div>
+
           </div>
         </CardBody>
       </Card>
 
-      {/* Sección de configuración de equivalencias de consumo */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <HiScale className="w-5 h-5 text-green-600 dark:text-green-400" />
+      {/* 2. Sección de configuración de equivalencias de consumo (Verde) */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-xl">
+              <HiScale className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Configuración de Equivalencias de Consumo
-            </h3>
+            <div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                Equivalencias de Consumo
+                </h3>
+                <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
+                    Datos curiosos impresos por rango de agua
+                </p>
+            </div>
           </div>
+          <Button 
+            onPress={handleAbrirModalEquivalencia}
+            color="success"
+            className="w-full sm:w-auto font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 shadow-sm"
+            startContent={<HiScale className="text-lg" />}
+          >
+            Editar Equivalencias
+          </Button>
         </CardHeader>
-        <CardBody className="pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Frases de equivalencia automática
+        
+        <CardBody className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Lista de Rangos */}
+            <div className="lg:col-span-2 flex flex-col h-full">
+              <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-2 block uppercase tracking-wider">
+                Distribución Actual
               </label>
-              <Card>
-                <CardBody className="bg-gray-50 dark:bg-gray-800 min-h-[120px]">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Se muestran automáticamente en los recibos según el consumo del cliente 
-                    (ej: "Equivale a unas 50 duchas de 10 minutos")
-                  </p>
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">0-15 m³: Frases de uso eficiente</span>
+              <div className="flex-1 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 rounded-xl p-5 shadow-inner">
+                <p className="text-sm font-bold text-slate-700 dark:text-zinc-300 mb-4">
+                    El sistema selecciona automáticamente una frase aleatoria basándose en los metros cúbicos (m³) consumidos por el cliente:
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-white dark:bg-zinc-900 p-3 rounded-lg border border-slate-200 dark:border-zinc-700 flex flex-col gap-1 shadow-sm">
+                        <Chip size="sm" color="success" variant="flat" className="font-bold text-[10px] w-fit">0 - 15 m³</Chip>
+                        <span className="text-xs font-medium text-slate-600 dark:text-zinc-400 mt-1">Frases de uso eficiente (Bajo)</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full"></span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">16-30 m³: Frases de uso moderado</span>
+                    <div className="bg-white dark:bg-zinc-900 p-3 rounded-lg border border-slate-200 dark:border-zinc-700 flex flex-col gap-1 shadow-sm">
+                        <Chip size="sm" color="warning" variant="flat" className="font-bold text-[10px] w-fit">16 - 30 m³</Chip>
+                        <span className="text-xs font-medium text-slate-600 dark:text-zinc-400 mt-1">Frases de uso moderado (Medio)</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">30+ m³: Frases de uso alto</span>
+                    <div className="bg-white dark:bg-zinc-900 p-3 rounded-lg border border-slate-200 dark:border-zinc-700 flex flex-col gap-1 shadow-sm">
+                        <Chip size="sm" color="danger" variant="flat" className="font-bold text-[10px] w-fit">+ 30 m³</Chip>
+                        <span className="text-xs font-medium text-slate-600 dark:text-zinc-400 mt-1">Frases de alerta/exceso (Alto)</span>
                     </div>
-                  </div>
-                </CardBody>
-              </Card>
+                </div>
+              </div>
             </div>
             
-            <div className="flex items-end">
-              <Button 
-                onPress={handleAbrirModalEquivalencia}
-                color="success"
-                className="w-full"
-                startContent={<HiScale />}
-                size="lg"
-              >
-                Configurar Equivalencias
-              </Button>
-            </div>
-          </div>
-          
-          <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-green-200 dark:bg-green-800 rounded-lg">
-                <HiScale className="w-5 h-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200 mb-1">
-                  Acerca de las equivalencias
+            {/* Caja de Información Lateral */}
+            <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200/60 dark:border-emerald-800/50 rounded-xl p-5 flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-3">
+                <HiLightBulb className="w-5 h-5 text-emerald-500" />
+                <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">
+                  Cultura del Agua
                 </h4>
-                <p className="text-sm text-green-600 dark:text-green-300">
-                  Las equivalencias ayudan a los clientes a entender su consumo de agua comparándolo con actividades cotidianas. 
-                  Esto promueve la conciencia del uso del agua y puede fomentar hábitos más sostenibles.
-                </p>
               </div>
+              <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80 leading-relaxed font-medium">
+                A veces es difícil dimensionar cuánta agua representan 10m³. Las equivalencias traducen el consumo técnico en ejemplos cotidianos (ej: <i>"Equivale a 50 duchas de 10 minutos"</i>). Esto educa al usuario, promueve la conciencia hídrica y fomenta hábitos sostenibles.
+              </p>
             </div>
+
           </div>
         </CardBody>
       </Card>
 
-      {/* Modal para configurar anuncio */}
+      {/* Modales ocultos */}
       <ModalAnuncioRecibo 
         isOpen={modalAnuncioAbierto}
         onClose={handleCerrarModalAnuncio}
         onSave={handleGuardarAnuncio}
       />
 
-      {/* Modal para configurar equivalencias */}
       <ModalEquivalenciaConsumo 
         isOpen={modalEquivalenciaAbierto}
         onClose={handleCerrarModalEquivalencia}

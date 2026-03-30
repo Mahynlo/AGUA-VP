@@ -7,18 +7,74 @@ import {
     Button,
     Select,
     SelectItem,
-    Input,
     Card,
     CardBody,
     Chip
 } from "@nextui-org/react";
-import { HiCog, HiLocationMarker, HiUser } from "react-icons/hi";
+import { HiCog, HiLocationMarker, HiUser, HiHashtag, HiCalendar, HiInformationCircle, HiCheck, HiX } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { useClientes } from "../../../context/ClientesContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 import BuscarCliente from "./BuscarCliente";
 import SelectorCoordenadas from "../../mapa/SelectorCoordenadas";
+
+// Componente de Input Personalizado (Premium UI)
+const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, placeholder, as = "input", min, step, ...props }) => {
+    const focusColors = {
+        blue: "focus:ring-blue-500 focus:border-blue-500",
+        orange: "focus:ring-orange-500 focus:border-orange-500",
+        indigo: "focus:ring-indigo-500 focus:border-indigo-500",
+    };
+
+    const inputClasses = `
+        w-full pl-10 pr-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none
+        bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100
+        border border-slate-200 dark:border-zinc-700
+        hover:bg-slate-50 dark:hover:bg-zinc-800
+        focus:outline-none focus:ring-2 shadow-sm
+        placeholder-slate-400 dark:placeholder-zinc-500
+        ${focusColors[color] || focusColors.blue}
+    `;
+
+    return (
+        <div className="w-full">
+            {label && (
+                <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+                    {label}
+                </label>
+            )}
+            <div className="relative w-full flex items-start">
+                <span className="absolute left-3 top-3.5 text-slate-400 dark:text-zinc-500 flex items-center justify-center pointer-events-none">
+                    {icon}
+                </span>
+                {as === "textarea" ? (
+                    <textarea
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        className={inputClasses}
+                        {...props}
+                    />
+                ) : (
+                    <input
+                        type={type}
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        min={min}
+                        step={step}
+                        className={inputClasses}
+                        {...props}
+                    />
+                )}
+            </div>
+            {description && (
+                <div className="mt-1.5 ml-1 font-medium">{description}</div>
+            )}
+        </div>
+    );
+};
 
 export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     const { actualizarMedidores } = useMedidores();
@@ -32,7 +88,6 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     ];
 
     // --- LOGIC TO PARSE PROPS INTO INITIAL STATE ---
-    // We do this directly in initialization to avoid flash of empty state
     const parseInitialState = () => {
         if (!medidor) return {
             ciudad: "",
@@ -90,12 +145,9 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     const [lecturaBase, setLecturaBase] = useState(initialState.lecturaBase);
     const [capacidadMaxima, setCapacidadMaxima] = useState(initialState.capacidadMaxima);
 
-    // Fixed reference
     const [clienteActual] = useState(initialState.clienteId);
-
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // Sync if medidor prop changes significantly (fallback if key={id} approach fails, but usually initialization is enough)
     useEffect(() => {
         if (medidor && isOpen) {
             const newData = parseInitialState();
@@ -105,7 +157,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             setModelo(newData.modelo);
             setUbicacion(newData.ubicacion);
             setFechaInstalacion(newData.fechaInstalacion);
-            setLatitud(newData.latitud); // This is key for the map
+            setLatitud(newData.latitud);
             setLongitud(newData.longitud);
             setEstadoMedidor(newData.estadoMedidor);
             setClienteId(newData.clienteId);
@@ -123,69 +175,31 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     const getChangedFields = () => {
         const changes = {};
 
-        // 1. Serie
-        if (numeroSerieCompleto !== medidor.numero_serie) {
-            changes.numero_serie = numeroSerieCompleto;
-        }
-
-        // 2. Ubicacion
-        if (ubicacion !== medidor.ubicacion) {
-            changes.ubicacion = ubicacion;
-        }
-
-        // 2a. Marca
-        if (marca !== (medidor.marca || "")) {
-            changes.marca = marca.trim() || null;
-        }
-
-        // 2b. Modelo
-        if (modelo !== (medidor.modelo || "")) {
-            changes.modelo = modelo.trim() || null;
-        }
-
-        // 3. Fecha
+        if (numeroSerieCompleto !== medidor.numero_serie) changes.numero_serie = numeroSerieCompleto;
+        if (ubicacion !== medidor.ubicacion) changes.ubicacion = ubicacion;
+        if (marca !== (medidor.marca || "")) changes.marca = marca.trim() || null;
+        if (modelo !== (medidor.modelo || "")) changes.modelo = modelo.trim() || null;
+        
         const originalDate = medidor.fecha_instalacion ? medidor.fecha_instalacion.split('T')[0] : "";
-        if (fechaInstalacion !== originalDate) {
-            changes.fecha_instalacion = fechaInstalacion;
-        }
+        if (fechaInstalacion !== originalDate) changes.fecha_instalacion = fechaInstalacion;
 
-        // 4. Coordenadas
         const currentLat = parseFloat(latitud);
         const currentLng = parseFloat(longitud);
         const originalLat = parseFloat(medidor.latitud);
         const originalLng = parseFloat(medidor.longitud);
 
-        if (Math.abs(currentLat - originalLat) > 0.000001) {
-            changes.latitud = currentLat;
-        }
-        if (Math.abs(currentLng - originalLng) > 0.000001) {
-            changes.longitud = currentLng;
-        }
+        if (Math.abs(currentLat - originalLat) > 0.000001) changes.latitud = currentLat;
+        if (Math.abs(currentLng - originalLng) > 0.000001) changes.longitud = currentLng;
+        if (estadoMedidor !== medidor.estado_medidor) changes.estado_medidor = estadoMedidor;
+        if (clienteId != medidor.cliente_id) changes.cliente_id = clienteId === null ? null : clienteId;
 
-        // 5. Estado
-        if (estadoMedidor !== medidor.estado_medidor) {
-            changes.estado_medidor = estadoMedidor;
-        }
-
-        // 6. Cliente
-        // Si el clienteId cambia (comparación flexible para ids numéricos/string)
-        if (clienteId != medidor.cliente_id) {
-            changes.cliente_id = clienteId === null ? null : clienteId;
-        }
-
-        // 7. Lectura base
         const newLecturaBase = lecturaBase !== "" ? parseFloat(lecturaBase) : null;
         const origLecturaBase = medidor.lectura_base !== null && medidor.lectura_base !== undefined ? parseFloat(medidor.lectura_base) : null;
-        if (newLecturaBase !== origLecturaBase) {
-            changes.lectura_base = newLecturaBase;
-        }
+        if (newLecturaBase !== origLecturaBase) changes.lectura_base = newLecturaBase;
 
-        // 8. Capacidad máxima
         const newCapMaxima = capacidadMaxima !== "" ? parseFloat(capacidadMaxima) : null;
         const origCapMaxima = medidor.capacidad_maxima !== null && medidor.capacidad_maxima !== undefined ? parseFloat(medidor.capacidad_maxima) : null;
-        if (newCapMaxima !== origCapMaxima) {
-            changes.capacidad_maxima = newCapMaxima;
-        }
+        if (newCapMaxima !== origCapMaxima) changes.capacidad_maxima = newCapMaxima;
 
         return changes;
     }
@@ -194,7 +208,6 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
         setIsUpdating(true);
         setError("");
 
-        // Validaciones básicas de integridad
         if (!numeroSerie || !ubicacion || !latitud || !longitud) {
             setError("Por favor verifica que no haya campos vacíos inválidos.", "Edición de Medidor");
             setIsUpdating(false);
@@ -210,10 +223,8 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             return;
         }
 
-        // Obtener solo los cambios
         const changes = getChangedFields();
 
-        // Advertencia explícita antes de intentar cambiar lectura base
         if (Object.prototype.hasOwnProperty.call(changes, 'lectura_base')) {
             const confirmar = window.confirm(
                 "Estás por modificar la lectura base del medidor. Si ya existen lecturas o facturas, esto puede afectar la trazabilidad histórica. ¿Deseas continuar?"
@@ -225,7 +236,6 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             }
         }
 
-        // Si no hay cambios, avisar
         if (Object.keys(changes).length === 0) {
             setSuccess("No hay cambios para guardar.", "Edición de Medidor");
             setIsUpdating(false);
@@ -234,8 +244,6 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             }, 1000);
             return;
         }
-
-        // console.log("Enviando cambios parciales:", changes);
 
         try {
             const token = localStorage.getItem("token");
@@ -273,70 +281,100 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             scrollBehavior="inside"
             isDismissable={false}
             isKeyboardDismissDisabled={true}
+            placement="center"
             classNames={{
-                backdrop: "bg-gradient-to-t from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
-                closeButton: "hover:bg-red-600 hover:text-white"
+                base: "bg-white dark:bg-zinc-900 shadow-2xl",
+                backdrop: "bg-zinc-900/50 backdrop-blur-sm",
+                header: "border-b border-slate-100 dark:border-zinc-800",
+                footer: "border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900",
+                closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors z-50",
             }}
         >
             <ModalContent>
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex items-center gap-2 text-xl font-bold">
-                            <HiCog className="w-6 h-6 text-blue-600" />
-                            Editar Medidor
+                        {/* HEADER */}
+                        <ModalHeader className="flex flex-col gap-1 pt-6 px-6 shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+                                    <HiCog className="w-7 h-7" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                        Editar Medidor
+                                    </h2>
+                                    <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">
+                                        Actualizar datos técnicos, cliente y ubicación
+                                    </p>
+                                </div>
+                            </div>
                         </ModalHeader>
-                        <ModalBody className="space-y-4">
-                            <form id="form-editar-medidor" onSubmit={(e) => { e.preventDefault(); handleUpdate(); }}>
 
-                                {/* 1. Información del Medidor */}
-                                <Card className="border border-gray-200 dark:border-gray-700">
-                                    <CardBody className="space-y-4">
-                                        <h3 className="font-semibold flex items-center gap-2">
-                                            <HiCog className="w-5 h-5 text-blue-600" />
-                                            Datos del Medidor
+                        {/* BODY */}
+                        <ModalBody className="py-6 px-4 sm:px-6 bg-slate-50/50 dark:bg-black/10 custom-scrollbar">
+                            <form id="form-editar-medidor" onSubmit={(e) => { e.preventDefault(); handleUpdate(); }} className="flex flex-col gap-6">
+
+                                {/* 1. Información del Medidor (AZUL) */}
+                                <Card className="shadow-sm bg-blue-50/40 dark:bg-blue-900/10 rounded-2xl border border-blue-200/70 dark:border-blue-800/50">
+                                    <CardBody className="p-5 sm:p-6 space-y-6">
+                                        <h3 className="font-bold text-base text-blue-900 dark:text-blue-300 flex items-center gap-2 border-b border-blue-100 dark:border-blue-900/30 pb-3">
+                                            <HiHashtag className="w-5 h-5 text-blue-500" />
+                                            Datos del Equipo
                                         </h3>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {/* Serie */}
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium">Número de Serie</label>
-                                                <div className="flex gap-2 items-center">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {/* Número de Serie */}
+                                            <div>
+                                                <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+                                                    Número de Serie *
+                                                </label>
+                                                <div className="flex items-stretch gap-2">
                                                     <Select
-                                                        className="w-24 flex-shrink-0"
-                                                        aria-label="Prefijo"
-                                                        placeholder="Código"
+                                                        aria-label="Código de Ciudad"
+                                                        placeholder="Cód."
                                                         selectedKeys={ciudad ? [ciudad] : []}
                                                         onChange={(e) => setCiudad(e.target.value)}
                                                         variant="bordered"
-                                                        size="sm"
+                                                        className="w-28 shrink-0"
+                                                        classNames={{
+                                                            trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm h-[42px] rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800",
+                                                            value: "text-sm font-medium text-slate-800 dark:text-zinc-100"
+                                                        }}
                                                     >
                                                         {pueblos.map((p) => (
                                                             <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
                                                         ))}
                                                     </Select>
-                                                    <span className="text-gray-500">-</span>
-                                                    <input
-                                                        type="text"
-                                                        className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
-                                                        value={numeroSerie}
-                                                        onChange={(e) => setNumeroSerie(e.target.value)}
-                                                        placeholder="123456"
-                                                    />
+                                                    <div className="flex-1">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="123456"
+                                                            value={numeroSerie}
+                                                            onChange={(e) => setNumeroSerie(e.target.value)}
+                                                            required
+                                                            className="w-full px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <p className="text-xs text-gray-500">
-                                                    Serie completa: <strong>{numeroSerieCompleto}</strong>
+                                                <p className="text-[10px] mt-1.5 ml-1 font-bold text-slate-400 dark:text-zinc-500">
+                                                    Serie completa: <span className="text-blue-600 dark:text-blue-400 font-mono">{numeroSerieCompleto || "---"}</span>
                                                 </p>
                                             </div>
 
-                                            {/* Estado */}
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium">Estado</label>
+                                            {/* Estado del Medidor */}
+                                            <div>
+                                                <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+                                                    Estado Operativo
+                                                </label>
                                                 <Select
                                                     selectedKeys={[estadoMedidor]}
                                                     onChange={(e) => setEstadoMedidor(e.target.value)}
                                                     variant="bordered"
-                                                    size="sm"
                                                     aria-label="Estado del medidor"
+                                                    classNames={{
+                                                        trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm h-[42px] rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800",
+                                                        value: "text-sm font-medium text-slate-800 dark:text-zinc-100"
+                                                    }}
                                                 >
                                                     <SelectItem key="Activo" value="Activo">Activo</SelectItem>
                                                     <SelectItem key="Inactivo" value="Inactivo">Inactivo</SelectItem>
@@ -344,190 +382,193 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 </Select>
                                             </div>
 
-                                            {/* Fecha Instalación */}
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium">Fecha de Instalación</label>
-                                                <input
-                                                    type="date"
-                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
-                                                    value={fechaInstalacion}
-                                                    onChange={(e) => setFechaInstalacion(e.target.value)}
-                                                />
-                                            </div>
+                                            <CustomInput
+                                                label="Fecha de Instalación *"
+                                                type="date"
+                                                value={fechaInstalacion}
+                                                onChange={(e) => setFechaInstalacion(e.target.value)}
+                                                icon={<HiCalendar className="w-5 h-5 text-blue-500" />}
+                                                required
+                                            />
 
-                                            {/* Marca */}
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium">Marca</label>
-                                                <input
-                                                    type="text"
-                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
-                                                    value={marca}
-                                                    onChange={(e) => setMarca(e.target.value)}
-                                                    placeholder="Ej. AquaTech"
-                                                />
-                                            </div>
+                                            <CustomInput
+                                                label="Marca"
+                                                placeholder="Ej. AquaTech"
+                                                value={marca}
+                                                onChange={(e) => setMarca(e.target.value)}
+                                                icon={<HiCog className="w-5 h-5 text-blue-500" />}
+                                            />
 
-                                            {/* Modelo */}
-                                            <div className="space-y-2">
-                                                <label className="text-sm font-medium">Modelo</label>
-                                                <input
-                                                    type="text"
-                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
-                                                    value={modelo}
-                                                    onChange={(e) => setModelo(e.target.value)}
-                                                    placeholder="Ej. AT-150"
-                                                />
-                                            </div>
+                                            <CustomInput
+                                                label="Modelo"
+                                                placeholder="Ej. AT-150"
+                                                value={modelo}
+                                                onChange={(e) => setModelo(e.target.value)}
+                                                icon={<HiInformationCircle className="w-5 h-5 text-blue-500" />}
+                                            />
 
-                                            {/* Ubicación Texto */}
-                                            <div className="space-y-2 md:col-span-2">
-                                                <label className="text-sm font-medium">Comentarios de Ubicación</label>
-                                                <input
-                                                    type="text"
-                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
-                                                    value={ubicacion}
-                                                    onChange={(e) => setUbicacion(e.target.value)}
-                                                    placeholder="Ej. Frente al poste..."
-                                                />
-                                            </div>
+                                            <CustomInput
+                                                label="Lectura Base (m³)"
+                                                type="number"
+                                                min="0"
+                                                step="any"
+                                                placeholder="Ej. 0 o 1234.56"
+                                                value={lecturaBase}
+                                                onChange={(e) => setLecturaBase(e.target.value)}
+                                                icon={<HiHashtag className="w-5 h-5 text-blue-500" />}
+                                                description={
+                                                    <>
+                                                        Punto de partida al instalar. <span className="text-amber-600 dark:text-amber-400">Puede afectar el historial.</span>
+                                                    </>
+                                                }
+                                            />
 
-                                            {/* Lectura base */}
-                                            <div className="space-y-1">
-                                                <label className="text-sm font-medium">Lectura base del medidor (m³) <span className="text-gray-400 font-normal">— Opcional</span></label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="any"
-                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
-                                                    value={lecturaBase}
-                                                    onChange={(e) => setLecturaBase(e.target.value)}
-                                                    placeholder="Ej. 0 o 1234.56"
-                                                />
-                                                <p className="text-xs text-gray-400">Punto de partida al instalar el medidor. Modifícalo si se reemplazó el medidor.</p>
-                                                <p className="text-xs text-amber-600 dark:text-amber-400">Si el medidor ya tiene lecturas registradas, este campo no podrá modificarse para proteger el historial.</p>
-                                            </div>
-
-                                            {/* Capacidad máxima */}
-                                            <div className="space-y-1">
-                                                <label className="text-sm font-medium">Capacidad máxima del totalizador (m³) <span className="text-gray-400 font-normal">— Opcional</span></label>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    step="1"
-                                                    className="w-full p-2 rounded-md border dark:bg-neutral-800 dark:border-gray-600"
-                                                    value={capacidadMaxima}
-                                                    onChange={(e) => setCapacidadMaxima(e.target.value)}
-                                                    placeholder="99999"
-                                                />
-                                                <p className="text-xs text-gray-400">Límite del dial antes de dar vuelta a cero. El estándar es 99,999.</p>
-                                            </div>
+                                            <CustomInput
+                                                label="Capacidad Máxima (m³)"
+                                                type="number"
+                                                min="1"
+                                                step="1"
+                                                placeholder="99999"
+                                                value={capacidadMaxima}
+                                                onChange={(e) => setCapacidadMaxima(e.target.value)}
+                                                icon={<HiHashtag className="w-5 h-5 text-blue-500" />}
+                                                description="Límite antes de dar vuelta a cero (estándar: 99,999)."
+                                            />
                                         </div>
+
+                                        <CustomInput
+                                            as="textarea"
+                                            rows={3}
+                                            label="Comentarios de Ubicación *"
+                                            placeholder="Ej. Frente a la casa, junto al poste..."
+                                            value={ubicacion}
+                                            onChange={(e) => setUbicacion(e.target.value)}
+                                            icon={<HiLocationMarker className="w-5 h-5 text-blue-500" />}
+                                            required
+                                        />
                                     </CardBody>
                                 </Card>
 
-                                {/* 2. Asignación de Cliente */}
-                                <Card className="border border-blue-200 dark:border-blue-800 mt-2">
-                                    <CardBody className="space-y-4">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="font-semibold flex items-center gap-2">
-                                                <HiUser className="w-5 h-5 text-blue-600" />
+                                {/* 2. Asignación de Cliente (ÍNDIGO) */}
+                                <Card className="shadow-sm bg-indigo-50/40 dark:bg-indigo-900/10 rounded-2xl border border-indigo-200/70 dark:border-indigo-800/50">
+                                    <CardBody className="p-5 sm:p-6">
+                                        <div className="flex justify-between items-center mb-2 border-b border-indigo-100 dark:border-indigo-900/30 pb-3">
+                                            <h3 className="font-bold text-base text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                                                <HiUser className="w-5 h-5 text-indigo-500" />
                                                 Asignación de Cliente
                                             </h3>
-                                            {clienteId ? (
-                                                <Chip color="primary" variant="solid" size="sm">Ocupado</Chip>
-                                            ) : (
-                                                <Chip color="success" variant="flat" size="sm">Disponible</Chip>
-                                            )}
+                                            <Chip 
+                                                color={clienteId ? "primary" : "success"} 
+                                                variant={clienteId ? "solid" : "flat"} 
+                                                size="sm" 
+                                                className="font-bold text-[10px] uppercase tracking-wider h-6 px-1"
+                                            >
+                                                {clienteId ? "Ocupado" : "Disponible"}
+                                            </Chip>
                                         </div>
 
-                                        {/* Lógica Estricta de Asignación */}
-                                        {clienteId ? (
-                                            <div className="space-y-3">
-                                                {/* Información del Cliente Actual */}
-                                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
-                                                    <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">
-                                                        Asignado a
+                                        <div className="mt-4">
+                                            {clienteId ? (
+                                                <div className="space-y-3">
+                                                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-indigo-100 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-indigo-500/80 dark:text-indigo-400/80 uppercase tracking-widest mb-1">
+                                                                Asignado Actualmente a
+                                                            </p>
+                                                            <p className="text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight truncate">
+                                                                {allClientes.find(c => c.id === clienteId)?.nombre || "Cargando nombre..."}
+                                                            </p>
+                                                            <p className="text-xs text-slate-500 dark:text-zinc-500 font-mono mt-0.5">
+                                                                ID Cliente: {clienteId}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-orange-50 dark:bg-orange-900/10 p-3.5 rounded-xl border border-orange-200/60 dark:border-orange-800/50 flex gap-3 items-start">
+                                                        <div className="p-1.5 bg-orange-100 dark:bg-orange-800/50 rounded-full shrink-0">
+                                                            <HiCog className="text-orange-600 dark:text-orange-400 w-4 h-4 animate-spin-slow" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-orange-800 dark:text-orange-300">Acción Requerida para Reasignar</p>
+                                                            <p className="text-xs text-orange-700/80 dark:text-orange-200/80 mt-1 leading-relaxed">
+                                                                Para asignar este medidor a otra persona, <strong>primero debe liberarlo</strong> desde el panel de edición del cliente actual.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    <p className="text-sm font-medium text-slate-600 dark:text-zinc-400">
+                                                        Este medidor está libre. Busque un cliente para asignarlo ahora.
                                                     </p>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-lg font-bold text-gray-800 dark:text-white">
-                                                            {allClientes.find(c => c.id === clienteId)?.nombre || "Cargando nombre..."}
-                                                        </span>
-                                                        <span className="text-sm text-gray-500 font-mono">
-                                                            ID Cliente: {clienteId}
-                                                        </span>
+                                                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-indigo-100 dark:border-zinc-800 shadow-sm">
+                                                        <BuscarCliente onClienteSeleccionado={handleClienteSeleccionado} />
+                                                        {clienteIdBusqueda && (
+                                                            <div className="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2 animate-in fade-in">
+                                                                <HiCheck className="text-emerald-600 dark:text-emerald-400 text-lg shrink-0" />
+                                                                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                                                                    Se asignará al Cliente ID: <strong>{clienteIdBusqueda}</strong> al guardar.
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-
-                                                {/* Advertencia de Bloqueo */}
-                                                <div className="bg-orange-50 dark:bg-orange-900/10 p-3 rounded border border-orange-200 dark:border-orange-800 flex gap-3 items-start">
-                                                    <div className="mt-0.5 min-w-[20px]">
-                                                        <HiCog className="text-orange-500 animate-spin-slow" />
-                                                    </div>
-                                                    <div className="text-sm text-orange-800 dark:text-orange-200">
-                                                        <p className="font-bold">Acción Requerida para Reasignar</p>
-                                                        <p className="mt-1 opacity-90">
-                                                            Para asignar este medidor a otra persona, <strong>primero debe liberarlo</strong> del cliente actual.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-3">
-                                                <div className="text-sm text-gray-600">
-                                                    <p>Este medidor no tiene cliente asignado. Busque un cliente para asignarlo ahora.</p>
-                                                </div>
-
-                                                {/* Componente de Búsqueda solo visible si NO hay cliente */}
-                                                <BuscarCliente onClienteSeleccionado={handleClienteSeleccionado} />
-
-                                                {clienteId && (
-                                                    <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded text-sm text-green-700">
-                                                        Se asignará al Cliente ID: <strong>{clienteId}</strong> al guardar.
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
+                                            )}
+                                        </div>
                                     </CardBody>
                                 </Card>
 
-                                {/* 3. Ubicación Geográfica */}
-                                <Card className="border border-orange-200 dark:border-orange-800 mt-2">
-                                    <CardBody className="space-y-4">
-                                        <h3 className="font-semibold flex items-center gap-2">
-                                            <HiLocationMarker className="w-5 h-5 text-orange-600" />
-                                            Ubicación Geográfica
+                                {/* 3. Coordenadas (NARANJA) */}
+                                <Card className="shadow-sm bg-orange-50/40 dark:bg-orange-900/10 rounded-2xl border border-orange-200/70 dark:border-orange-800/50">
+                                    <CardBody className="p-5 sm:p-6 space-y-4">
+                                        <h3 className="font-bold text-base text-orange-900 dark:text-orange-300 flex items-center gap-2 mb-2 border-b border-orange-100 dark:border-orange-900/30 pb-3">
+                                            <HiLocationMarker className="w-5 h-5 text-orange-500" />
+                                            Ubicación Geográfica *
                                         </h3>
-                                        <SelectorCoordenadas
-                                            key={`coords-${medidor?.id}`}
-                                            valorInicial={{
-                                                lat: parseFloat(latitud) || 29.1180777,
-                                                lng: parseFloat(longitud) || -109.9669819
-                                            }}
-                                            onChange={({ lat, lng }) => {
-                                                setLatitud(lat.toFixed(6));
-                                                setLongitud(lng.toFixed(6));
-                                            }}
-                                        />
-                                        <div className="flex gap-4 text-xs text-gray-500">
-                                            <span>Lat: {latitud}</span>
-                                            <span>Lng: {longitud}</span>
+                                        
+                                        <div className="rounded-xl overflow-hidden border border-orange-200/60 dark:border-orange-800/50 shadow-sm">
+                                            <SelectorCoordenadas
+                                                key={`coords-${medidor?.id}`}
+                                                valorInicial={{
+                                                    lat: parseFloat(latitud) || 29.1180777,
+                                                    lng: parseFloat(longitud) || -109.9669819
+                                                }}
+                                                onChange={({ lat, lng }) => {
+                                                    setLatitud(lat.toFixed(6));
+                                                    setLongitud(lng.toFixed(6));
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="flex gap-4 text-xs font-mono text-orange-700/60 dark:text-orange-400/60 bg-white dark:bg-zinc-900 w-fit px-3 py-1.5 rounded-lg border border-orange-100 dark:border-zinc-800 shadow-sm">
+                                            <span>Lat: <strong className="text-slate-700 dark:text-zinc-300">{latitud}</strong></span>
+                                            <span>Lng: <strong className="text-slate-700 dark:text-zinc-300">{longitud}</strong></span>
                                         </div>
                                     </CardBody>
                                 </Card>
 
                             </form>
                         </ModalBody>
-                        <ModalFooter>
-                            <Button color="danger" variant="light" onPress={onClose}>
+                        
+                        {/* FOOTER */}
+                        <ModalFooter className="px-6 py-4">
+                            <Button 
+                                color="default" 
+                                variant="light" 
+                                onPress={onClose}
+                                startContent={<HiX className="text-lg" />}
+                                className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                            >
                                 Cancelar
                             </Button>
                             <Button
                                 color="primary"
+                                onClick={handleUpdate}
                                 type="submit"
                                 form="form-editar-medidor"
-                                isLoading={isUpdating}
                                 isDisabled={isUpdating}
+                                isLoading={isUpdating}
+                                startContent={!isUpdating && <HiCheck className="text-lg" />}
+                                className="font-bold shadow-md shadow-blue-500/30 px-6"
                             >
                                 {isUpdating ? "Guardando..." : "Guardar Cambios"}
                             </Button>

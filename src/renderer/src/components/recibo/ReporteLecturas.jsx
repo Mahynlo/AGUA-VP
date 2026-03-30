@@ -4,13 +4,8 @@ import logoagua from '../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const fmtFecha = (iso) => {
-    if (!iso) return '—';
-    try { return new Date(iso).toLocaleDateString('es-MX', { year: 'numeric', month: '2-digit', day: '2-digit' }); }
-    catch { return iso; }
-};
-
 const getFechaHoy = () => new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
 const getMesLabel = (mes) => {
     if (!mes) return '';
     try {
@@ -26,7 +21,6 @@ const sortLecturasItems = (items, campo) => {
         if (campo === 'id') {
             return (a.id || 0) - (b.id || 0);
         }
-        // numero_predio: natural sort (NG-2 < NG-10)
         const parse = (val) => {
             if (!val) return ['', 0];
             const match = val.match(/^([A-Za-z]*)[-\/]?(\d+)$/);
@@ -54,7 +48,8 @@ const PageHeader = ({ mes, totalRegistros }) => (
             gap: '16px',
             borderRadius: '8px 8px 0 0',
         }}>
-            <img src={logoagua} alt="Escudo" style={{ height: '56px', width: '56px', objectFit: 'contain', flexShrink: 0, filter: 'brightness(0) invert(1)' }} />
+            <img src={logoagua} alt="Escudo" style={{ height: '80px', width: '80px', objectFit: 'contain', flexShrink: 0, dropShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+            
             <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 800, fontSize: '17px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Comisión Municipal de Agua Potable y Alcantarillado
@@ -109,17 +104,15 @@ const PageHeader = ({ mes, totalRegistros }) => (
     </div>
 );
 
-// ─── Tabla real con <thead> para que el encabezado se repita en cada hoja ────────────
-
 const TH = ({ children, align = 'left', last = false }) => (
     <th style={{
-        padding: '7px 9px',
+        padding: '7px 6px',
         background: '#1e3a8a',
         color: '#fff',
         fontSize: '9px',
         fontWeight: 700,
         textTransform: 'uppercase',
-        letterSpacing: '0.07em',
+        letterSpacing: '0.05em',
         textAlign: align,
         borderRight: last ? 'none' : '1px solid rgba(255,255,255,0.18)',
         whiteSpace: 'nowrap',
@@ -136,23 +129,26 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
         fontSize: '10px',
     }}>
         <colgroup>
-            <col style={{ width: '30px' }} />
-            <col style={{ width: '70px' }} />
+            <col style={{ width: '25px' }} />
+            <col style={{ width: '60px' }} />
             <col />
-            <col style={{ width: '105px' }} />
-            <col style={{ width: '72px' }} />
             <col style={{ width: '80px' }} />
-            <col style={{ width: '80px' }} />
+            {/* Nuevas dimensiones para los campos de lectura física */}
+            <col style={{ width: '65px' }} /> {/* Mes Ant. (Consumo m3) */}
+            <col style={{ width: '65px' }} /> {/* Lect. Ant. (5 dígitos) */}
+            <col style={{ width: '65px' }} /> {/* Lect. Actual (en blanco) */}
+            <col style={{ width: '65px' }} /> {/* Diferencia (en blanco + m3) */}
         </colgroup>
         <thead>
             <tr>
                 <TH align="center">#</TH>
-                <TH align="center">{ordenarPor === 'numero_predio' ? 'N° Predio' : 'ID'}</TH>
+                <TH align="center">{ordenarPor === 'numero_predio' ? 'Predio' : 'ID'}</TH>
                 <TH>Cliente / Dirección</TH>
                 <TH>N° Medidor</TH>
+                <TH align="center">Mes Ant.</TH>
                 <TH align="center">Lect. Ant.</TH>
-                <TH align="center">Diferencia</TH>
-                <TH align="center" last>Lect. Actual</TH>
+                <TH align="center">Lect. Actual</TH>
+                <TH align="center" last>Diferencia</TH>
             </tr>
         </thead>
         <tbody>
@@ -162,24 +158,31 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
                 const medidorObj = typeof item.medidor === 'object' ? item.medidor : null;
                 const serie      = sinMedidor ? null : (medidorObj ? (medidorObj.serie || medidorObj.numero_serie || 'S/N') : (item.medidor || 'S/N'));
                 const direccion  = medidorObj?.ubicacion || item.direccion || '';
+                
+                // Extraemos consumo y preparamos la variable para los 5 dígitos
                 const lectAntObj = typeof item.lectura_anterior === 'object' ? item.lectura_anterior : null;
                 const consumoAnt = sinMedidor ? '' : (lectAntObj?.consumo_registrado ?? (typeof item.lectura_anterior === 'number' ? item.lectura_anterior : ''));
+                
+                // NOTA: Esta variable "lecturaFisicaAnt" está lista para cuando la extraigas de la BD. 
+                // Por ahora será vacía (o mostrará un guión si no existe).
+                const lecturaFisicaAnt = sinMedidor ? '' : (lectAntObj?.lectura_fisica ?? '');
+
                 const isEven     = idx % 2 === 0;
                 const bgBase     = sinMedidor ? '#fff7ed' : (isEven ? '#ffffff' : '#f5f8ff');
-                const td         = { padding: '5px 8px', borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', color: '#111827', background: bgBase };
+                const td         = { padding: '5px 6px', borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', color: '#111827', background: bgBase };
+                
                 return (
                     <tr key={idx} style={{ pageBreakInside: 'avoid' }}>
                         {/* # */}
                         <td style={{ ...td, textAlign: 'center', color: '#9ca3af', fontWeight: 700, background: sinMedidor ? '#fff7ed' : '#f9fafb', fontSize: '9px' }}>
                             {offset + idx + 1}
                         </td>
-                        {/* N° Predio o ID (columna principal de orden) */}
+                        
+                        {/* N° Predio o ID */}
                         <td style={{ ...td, textAlign: 'center', fontFamily: 'monospace', fontWeight: 700, fontSize: '10px', color: sinMedidor ? '#c2410c' : '#1e3a8a', background: sinMedidor ? '#ffedd5' : (isEven ? '#f0f4ff' : '#e8eeff') }}>
-                            {ordenarPor === 'numero_predio'
-                                ? (item.numero_predio || '—')
-                                : (item.id || '—')
-                            }
+                            {ordenarPor === 'numero_predio' ? (item.numero_predio || '—') : (item.id || '—')}
                         </td>
+                        
                         {/* Cliente */}
                         <td style={{ ...td, overflow: 'hidden', maxWidth: 0 }}>
                             <div style={{ fontWeight: 700, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -191,6 +194,7 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
                                 </div>
                             )}
                         </td>
+                        
                         {/* Medidor */}
                         <td style={{ ...td, background: sinMedidor ? '#ffedd5' : (isEven ? '#f0f4ff' : '#e8eeff') }}>
                             {sinMedidor ? (
@@ -199,7 +203,8 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
                                 <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{serie}</span>
                             )}
                         </td>
-                        {/* Lect. Anterior */}
+                        
+                        {/* 1. MES ANTERIOR (Metros cúbicos consumidos) */}
                         <td style={{ ...td, textAlign: 'center', background: sinMedidor ? '#fff7ed' : '#eff6ff' }}>
                             {sinMedidor ? (
                                 <span style={{ color: '#d1d5db' }}>—</span>
@@ -209,20 +214,31 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
                                 </span>
                             ) : <span style={{ color: '#d1d5db' }}>—</span>}
                         </td>
-                        {/* Diferencia — espacio de escritura */}
-                        <td style={{ ...td, background: sinMedidor ? '#fff7ed' : '#fafafa', position: 'relative', borderRight: '1px solid #e5e7eb' }}>
+
+                        {/* 2. LECTURA ANTERIOR (Lectura física 5 dígitos del medidor) */}
+                        <td style={{ ...td, textAlign: 'center', background: sinMedidor ? '#fff7ed' : '#eff6ff' }}>
                             {sinMedidor ? (
                                 <span style={{ color: '#d1d5db' }}>—</span>
-                            ) : (
-                                <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#d1d5db' }}>m³</span>
+                            ) : lecturaFisicaAnt !== '' ? (
+                                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1e40af', fontSize: '11px', letterSpacing: '2px' }}>
+                                    {lecturaFisicaAnt}
+                                </span>
+                            ) : <span style={{ color: '#9ca3af' }}>—</span>}
+                        </td>
+
+                        {/* 3. LECTURA ACTUAL (Espacio totalmente en blanco para escritura de los 5 dígitos) */}
+                        <td style={{ ...td, background: sinMedidor ? '#fff7ed' : '#fafafa' }}>
+                            {sinMedidor && (
+                                <span style={{ color: '#d1d5db', display: 'flex', justifyContent: 'center' }}>—</span>
                             )}
                         </td>
-                        {/* Lect. Actual — espacio de escritura */}
+
+                        {/* 4. DIFERENCIA (Espacio de escritura con prefijo m³) */}
                         <td style={{ ...td, background: sinMedidor ? '#fff7ed' : '#fafafa', borderRight: 'none', position: 'relative' }}>
                             {sinMedidor ? (
-                                <span style={{ color: '#d1d5db' }}>—</span>
+                                <span style={{ color: '#d1d5db', display: 'flex', justifyContent: 'center' }}>—</span>
                             ) : (
-                                <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#d1d5db' }}>m³</span>
+                                <span style={{ position: 'absolute', bottom: '3px', right: '5px', fontSize: '7px', color: '#9ca3af', fontWeight: 'bold' }}>m³</span>
                             )}
                         </td>
                     </tr>
@@ -233,14 +249,12 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
 );
 
 const GrupoSection = ({ grupo, offset = 0, ordenarPor = 'numero_predio' }) => {
-    // Ordenar clientes dentro del grupo
     const clientesOrdenados = useMemo(() => {
         return sortLecturasItems(grupo.clientes || [], ordenarPor);
     }, [grupo.clientes, ordenarPor]);
 
     return (
         <div style={{ marginBottom: '22px' }}>
-            {/* Etiqueta del grupo */}
             <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 background: '#e0e7ff', border: '1px solid #c7d2fe',
@@ -295,7 +309,7 @@ const ReporteLecturas = () => {
                     id: 1000 + i, nombre: `CLIENTE DEMO ${i + 1}`,
                     direccion: `CALLE ${i + 1}, COLONIA CENTRO`,
                     medidor: { numero_serie: `M-${5000 + i}`, ubicacion: `CALLE ${i + 1}` },
-                    lectura_anterior: { consumo_registrado: 1200 + i * 15 },
+                    lectura_anterior: { consumo_registrado: 1200 + i * 15, lectura_fisica: '12405' },
                 })));
             }
             setIsReady(true);
@@ -304,8 +318,11 @@ const ReporteLecturas = () => {
     }, [searchParams]);
 
     if (!isReady) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#6b7280' }}>
-            Cargando reporte…
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#6b7280', backgroundColor: '#f8fafc' }}>
+            <div className="animate-pulse flex flex-col items-center">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                Cargando formato de lecturas...
+            </div>
         </div>
     );
 
@@ -320,52 +337,57 @@ const ReporteLecturas = () => {
             <style>{`
                 @media print {
                     @page { size: letter portrait; margin: 10mm; }
-                    body { margin: 0; padding: 0; }
+                    body { margin: 0; padding: 0; background: white; }
                     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     thead { display: table-header-group; }
                     tr    { page-break-inside: avoid; }
                 }
             `}</style>
 
-            <div style={{
-                background: '#fff',
-                minHeight: '100vh',
-                padding: '24px',
-                fontFamily: "'Segoe UI', Arial, sans-serif",
-                color: '#111827',
-            }}>
-                <PageHeader mes={mes} totalRegistros={totalRegistros} />
+            {/* CONTENEDOR EN PANTALLA */}
+            <div className="bg-slate-50 dark:bg-black/20 min-h-screen py-8 px-4 flex justify-center print:p-0 print:bg-white print:block">
+                
+                {/* LA HOJA DE PAPEL */}
+                <div className="w-full max-w-[900px] bg-white rounded-2xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none print:max-w-none"
+                     style={{
+                         padding: '24px',
+                         fontFamily: "'Segoe UI', Arial, sans-serif",
+                         color: '#111827',
+                     }}>
+                    
+                    <PageHeader mes={mes} totalRegistros={totalRegistros} />
 
-                {/* Tablas */}
-                {isGrouped ? (
-                    (() => {
-                        let offset = 0;
-                        return data.map((grupo, gIdx) => {
-                            const el = <GrupoSection key={gIdx} grupo={grupo} offset={offset} ordenarPor={ordenarPor} />;
-                            offset += grupo.clientes?.length || 0;
-                            return el;
-                        });
-                    })()
-                ) : (
-                    <div style={{ marginBottom: '20px' }}>
-                        <DataTable items={sortLecturasItems(data, ordenarPor)} offset={0} ordenarPor={ordenarPor} />
-                        <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
+                    {/* Tablas */}
+                    {isGrouped ? (
+                        (() => {
+                            let offset = 0;
+                            return data.map((grupo, gIdx) => {
+                                const el = <GrupoSection key={gIdx} grupo={grupo} offset={offset} ordenarPor={ordenarPor} />;
+                                offset += grupo.clientes?.length || 0;
+                                return el;
+                            });
+                        })()
+                    ) : (
+                        <div style={{ marginBottom: '20px' }}>
+                            <DataTable items={sortLecturasItems(data, ordenarPor)} offset={0} ordenarPor={ordenarPor} />
+                            <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <div style={{
+                        marginTop: '16px',
+                        paddingTop: '10px',
+                        borderTop: '1px dashed #d1d5db',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '9px',
+                        color: '#9ca3af',
+                    }}>
+                        <span>Sistema AguaVP — Comisaría de Agua Potable Villa Pesqueira</span>
+                        <span style={{ fontWeight: 600, color: '#374151' }}>{totalRegistros} tomas de lectura listadas</span>
+                        <span>Documento generado automáticamente — no requiere firma</span>
                     </div>
-                )}
-
-                {/* Footer */}
-                <div style={{
-                    marginTop: '16px',
-                    paddingTop: '10px',
-                    borderTop: '1px dashed #d1d5db',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '9px',
-                    color: '#9ca3af',
-                }}>
-                    <span>Sistema AguaVP — Comisaría de Agua Potable Villa Pesqueira</span>
-                    <span style={{ fontWeight: 600, color: '#374151' }}>{totalRegistros} tomas de lectura listadas</span>
-                    <span>Documento generado automáticamente — no requiere firma</span>
                 </div>
             </div>
         </>
