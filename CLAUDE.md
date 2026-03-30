@@ -86,3 +86,68 @@ Print-only routes (`/recibo`, `/reporteLecturas`, `/reporteClientes`, `/comproba
 - **API package:** `@aguavp/api-server` is installed from `../api-AguaVP/aguavp-api-server-*.tgz`. To update the API, rebuild the tarball in the `api-AguaVP` project and `npm install` here.
 - **No TypeScript:** Pure JSX throughout. No type checking.
 - **`tailwindcss-animate`** is NOT installed. The `animate-in`/`fade-in` classes in some components are inert (no animation runs, but the elements render normally).
+
+## Release / Versioning System
+
+Version is the single source of truth in `package.json` → `"version"` field (e.g. `"1.2.530"`).
+The script `scripts/version-tag.cjs` manages git tags. Pushing a `v*` tag to GitHub triggers the `release-windows.yml` CI workflow which builds and publishes a Windows installer to GitHub Releases.
+
+### Tag naming rules (enforced by the script)
+| Type | Tag format | Example |
+|---|---|---|
+| Stable release | `v<version>` | `v1.2.531` |
+| Pre-release | `v<version>-<suffix>` | `v1.2.531-rc.1`, `v1.2.531-beta.1` |
+
+The tag **must match** the `version` in `package.json` — CI will fail otherwise.
+
+### How to publish a new stable release
+
+```bash
+# 1. Bump version in package.json (edit manually)
+#    e.g. "version": "1.2.530"  →  "1.2.531"
+
+# 2. Commit and push the version bump
+git add package.json
+git commit -m "chore: bump version to 1.2.531"
+git push
+
+# 3. Create the tag and push it — this triggers GitHub Actions
+npm run release:push
+# → creates tag v1.2.531 locally and pushes to origin
+```
+
+### How to publish a pre-release (testing/beta)
+
+```bash
+# package.json version stays the same (e.g. 1.2.531)
+npm run prerelease:push -- rc.1
+# → creates and pushes tag v1.2.531-rc.1 → CI publishes as pre-release
+```
+
+### Other useful scripts
+
+```bash
+npm run release:new        # Only create local tag v<version> (don't push)
+npm run prerelease:new -- beta.1  # Only create local pre-release tag
+npm run latest:tag         # Print the latest tag on origin
+npm run latest:release     # Print latest GitHub Release info (name, date, url)
+```
+
+### What the CI workflow does (release-windows.yml)
+1. Validates tag matches `package.json` version; determines `release` vs `prerelease` type.
+2. Checks out `Api-AguaVp` (branch configurable via `api_ref` input, default `pruebas`) and `RutaCraftOSM` (main).
+3. Packs both as `.tgz` and patches `package.json` dependencies to point to them.
+4. Injects secrets (`VITE_APPKEY_INICIAL`, `VITE_SECRET_KEY`, `VITE_TURSO_*`) into `.env.production`.
+5. Runs `npm install` → `npm run build` → `electron-builder --win --publish always`.
+6. Creates GitHub Release (stable or pre-release) with the Windows installer.
+7. Uploads build artifacts as `windows-dist` for inspection.
+
+### Required GitHub secrets / variables
+| Name | Type | Purpose |
+|---|---|---|
+| `VITE_APPKEY_INICIAL` | Secret | Initial app registration key |
+| `VITE_SECRET_KEY` | Secret | Frontend signing key |
+| `VITE_TURSO_DATABASE_URL` | Secret | Turso DB URL |
+| `VITE_TURSO_AUTH_TOKEN` | Secret | Turso auth token |
+| `API_EXECUTION_MODE` | Variable | `LOCAL` or `SERVER` (default `LOCAL`) |
+| `API_JWT_EXPIRES_IN` | Variable | JWT expiry (default `15m`) |
