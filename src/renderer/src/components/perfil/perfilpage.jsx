@@ -61,6 +61,7 @@ export default function PerfilPage() {
       if (result?.success && avatarKey) {
         localStorage.setItem(avatarKey, result.data);
         setAvatarSrc(result.data);
+        window.dispatchEvent(new CustomEvent('user-avatar-changed', { detail: { key: avatarKey } }));
       }
     } catch (err) {
       console.error("Error seleccionando avatar:", err);
@@ -73,6 +74,7 @@ export default function PerfilPage() {
     if (avatarKey) {
       localStorage.removeItem(avatarKey);
       setAvatarSrc(null);
+      window.dispatchEvent(new CustomEvent('user-avatar-changed', { detail: { key: avatarKey } }));
     }
   };
 

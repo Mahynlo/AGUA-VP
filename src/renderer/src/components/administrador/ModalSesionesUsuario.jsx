@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
-    Button, Chip, Tooltip
+    Button, Chip, Tooltip, Avatar
 } from "@nextui-org/react";
+import defaultAvatar from "../../assets/images/Avatar.png";
 import {
     HiDeviceMobile, HiDesktopComputer, HiClock, HiBan,
     HiTrash, HiShieldCheck, HiGlobeAlt, HiInformationCircle,
@@ -14,6 +15,11 @@ import { formatUTCtoHermosilloHora } from "../../utils/formatFecha";
 const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
     const { fetchUserSessions, closeSession, closeAllSessions } = useUsuarios();
     const [sesiones, setSesiones] = useState([]);
+
+    const usuarioAvatarSrc = useMemo(() => {
+        if (!usuario?.id) return null;
+        return localStorage.getItem(`user_avatar_${usuario.id}`) || null;
+    }, [usuario?.id]);
     const [loading, setLoading] = useState(false);
 
     // Confirmación inline — evita window.confirm() que bloquea el hilo y no va con el diseño
@@ -86,9 +92,11 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
                         <ModalHeader className="flex flex-col gap-1">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400 rounded-full">
-                                        <HiShieldCheck className="w-6 h-6" />
-                                    </div>
+                                    <Avatar
+                                        src={usuarioAvatarSrc || defaultAvatar}
+                                        size="md"
+                                        className="border-2 border-purple-200 dark:border-purple-700 shrink-0"
+                                    />
                                     <div className="flex flex-col">
                                         <span className="text-xl font-bold text-gray-800 dark:text-white">
                                             Sesiones Activas
