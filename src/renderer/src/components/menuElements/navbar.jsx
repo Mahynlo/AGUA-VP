@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar, Tooltip, Modal, ModalContent, ModalBody, ModalFooter, Button as NextUIButton } from "@nextui-org/react";
 import { VscChromeMinimize, VscChromeMaximize, VscChromeClose } from "react-icons/vsc";
 import { HiOutlineLogout, HiOutlineQuestionMarkCircle, HiOutlineCog, HiOutlineUser, HiMenuAlt2 } from "react-icons/hi";
@@ -21,6 +21,19 @@ function NavbarApp() {
   const [openLogoutModal, setOpenLogoutModal] = useState(false); // Para cerrar la sesión
 
   const { logout, user } = useAuth();
+
+  const avatarKey = user?.id ? `user_avatar_${user.id}` : null;
+  const [avatarSrc, setAvatarSrc] = useState(() =>
+    avatarKey ? localStorage.getItem(avatarKey) || null : null
+  );
+
+  useEffect(() => {
+    if (!avatarKey) return;
+    setAvatarSrc(localStorage.getItem(avatarKey) || null);
+    const handler = () => setAvatarSrc(localStorage.getItem(avatarKey) || null);
+    window.addEventListener('user-avatar-changed', handler);
+    return () => window.removeEventListener('user-avatar-changed', handler);
+  }, [avatarKey]);
 
   const handleNavigation = (path, sectionName) => {
     try {
@@ -95,7 +108,7 @@ function NavbarApp() {
                         isBordered
                         color="primary"
                         className="w-9 h-9 border-2 border-white/80 shadow"
-                        src={AvatarPerfil}
+                        src={avatarSrc || AvatarPerfil}
                       />
                     </button>
                   </DropdownTrigger>
@@ -107,7 +120,7 @@ function NavbarApp() {
                       textValue="Perfil"
                     >
                       <div className="flex items-center gap-3 p-1 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-inner w-full">
-                          <Avatar src={AvatarPerfil} size="sm" className="shrink-0" />
+                          <Avatar src={avatarSrc || AvatarPerfil} size="sm" className="shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-sm text-slate-800 dark:text-zinc-100 truncate">{user?.nombre || "Usuario"}</p>
                             <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 truncate mt-0.5">
