@@ -4,51 +4,32 @@ import { HiLocationMarker, HiUser, HiHashtag } from 'react-icons/hi';
 import MarkerMap from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 import municipiojson from "../../../../public/VillaPesqueira.json";
 import './MapaMedidores.css';
+import { TILE_LAYER, SATELLITE_LAYER, HYBRID_LAYER, MUNICIPIO_STYLE } from './mapConfig';
+import { useLeafletSetup } from './useLeafletSetup';
+import OfflineTileLayer from './OfflineTileLayer';
 
 // Componente LeafletMap separado para evitar redefinición constante
 const LeafletMap = React.memo(({ position, municipioData, lat, lng, cliente, setIsLoading, setMapError }) => {
-  const [MapComponents, setMapComponents] = useState(null);
+  const { mapLibrary: MapComponents, mapError: libError } = useLeafletSetup();
 
   useEffect(() => {
-    const loadMapComponents = async () => {
-      try {
-        const leafletComponents = await import('react-leaflet');
-        const L = await import('leaflet');
-        
-        // Fix para los iconos
-        delete L.default.Icon.Default.prototype._getIconUrl;
-        L.default.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        });
+    if (libError) setMapError(true);
+  }, [libError, setMapError]);
 
-        setMapComponents(leafletComponents);
-      } catch (error) {
-        console.error('Error loading map components:', error);
-        setMapError(true);
-      }
-    };
-
-    loadMapComponents();
-  }, [setMapError]);
-
-  // Icono personalizado memoizado
+  // Icono personalizado — depende de MapComponents para que se cree después de que Leaflet cargue
   const customIcon = useMemo(() => {
-    if (typeof window !== 'undefined' && window.L) {
-      return new window.L.Icon({
-        iconUrl: MarkerMap,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      });
-    }
-    return null;
-  }, []);
+    if (!MapComponents?.L) return null;
+    return new MapComponents.L.Icon({
+      iconUrl: MarkerMap,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
+    });
+  }, [MapComponents]);
 
   if (!MapComponents) return null;
 
-  const { MapContainer, TileLayer, Marker, Popup, GeoJSON } = MapComponents;
+  const { MapContainer, TileLayer, Marker, Popup, GeoJSON, LayersControl } = MapComponents;
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
@@ -59,28 +40,25 @@ const LeafletMap = React.memo(({ position, municipioData, lat, lng, cliente, set
         zoomControl={true}
         style={{ height: "100%", width: "100%", borderRadius: "0.5rem" }}
         className="leaflet-container"
-        whenCreated={() => {
-          // Map está listo, remover loading
+        whenReady={() => {
           setTimeout(() => setIsLoading(false), 500);
         }}
       >
-        <TileLayer
-          
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <LayersControl position="bottomright">
+          <LayersControl.BaseLayer checked name="🌐 Mapa Calles">
+            <OfflineTileLayer {...TILE_LAYER} />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="🛰️ Satélite">
+            <TileLayer {...SATELLITE_LAYER} />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="🗺️ Híbrido">
+            <TileLayer {...HYBRID_LAYER} />
+          </LayersControl.BaseLayer>
+        </LayersControl>
 
         {/* Delimitación de zona de cobertura */}
         {municipioData && (
-          <GeoJSON 
-            data={municipioData} 
-            style={{ 
-              color: "#3b82f6", 
-              weight: 3, 
-              fillColor: "rgba(59, 130, 246, 0.1)",
-              fillOpacity: 0.1,
-              dashArray: "5, 5"
-            }} 
-          />
+          <GeoJSON data={municipioData} style={MUNICIPIO_STYLE} />
         )}
 
         {/* Marcador del medidor */}
@@ -155,34 +133,19 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
   // Memoizar la posición para evitar re-renders innecesarios
   const position = useMemo(() => [lat || 29.567, lng || -109.456], [lat, lng]);
 
+  // Timeout de seguridad: quitar loading si el mapa tarda demasiado
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Cargar datos del municipio una sola vez
   useEffect(() => {
     setMunicipioData(municipiojson);
   }, []);
 
-  useEffect(() => {
-    // Verificar si react-leaflet está disponible
-    const checkLeaflet = async () => {
-      try {
-        // Intentar cargar el componente dinámicamente
-        const { MapContainer, TileLayer, Marker, Popup } = await import('react-leaflet');
-        await import('leaflet/dist/leaflet.css');
-        
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 500);
-      } catch (error) {
-        console.error('Error cargando Leaflet:', error);
-        setMapError(true);
-        setIsLoading(false);
-      }
-    };
-
-    checkLeaflet();
-  }, []);
-
   // Si hay error, mostrar mapa fallback
-  if (mapError || !window.L) {
+  if (mapError) {
     return (
       <div className="relative h-full w-full bg-gradient-to-br from-blue-100 to-green-100 dark:from-blue-900/20 dark:to-green-900/20 rounded-lg overflow-hidden">
         {/* Fondo de mapa estático */}

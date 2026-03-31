@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, GeoJSON, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, GeoJSON, useMapEvents, useMap, LayersControl } from "react-leaflet";
 import { Card, CardBody } from "@nextui-org/react";
 import { HiLocationMarker, HiGlobeAlt, HiMap } from "react-icons/hi";
 import L from "leaflet";
@@ -8,6 +8,8 @@ import "leaflet/dist/leaflet.css";
 // Importaciones de recursos
 import municipiojson from "../../../../public/VillaPesqueira.json";
 import ubicacionIcon from "../../assets/svgs/Markador_azul_Agua_VP.svg";
+import { MAP_DEFAULT_CENTER, TILE_LAYER, SATELLITE_LAYER, HYBRID_LAYER, MUNICIPIO_STYLE_NO_FILL } from './mapConfig';
+import OfflineTileLayer from './OfflineTileLayer';
 
 // 1. Componente para corregir tamaño (Vital para Modals)
 const MapResizer = () => {
@@ -64,18 +66,7 @@ export default function SelectorCoordenadas({
     });
   }, []);
 
-  // Sync internal state with prop changes - Deep compare to avoid loops on new object references
-  useEffect(() => {
-    if (valorInicial) {
-      setCoordenadas(prev => {
-        // Only update if significantly different
-        if (prev.lat == valorInicial.lat && prev.lng == valorInicial.lng) return prev;
-        return valorInicial;
-      });
-    }
-  }, [JSON.stringify(valorInicial)]);
-
-  // Sync internal state with prop changes
+  // Sync internal state when prop changes
   useEffect(() => {
     if (valorInicial) {
       setCoordenadas(valorInicial);
@@ -107,7 +98,6 @@ export default function SelectorCoordenadas({
     return (!isNaN(lat) && !isNaN(lng)) ? [lat, lng] : null;
   }, [coordenadas.lat, coordenadas.lng]);
 
-  const defaultCenter = [29.1180777, -109.9669819];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
@@ -115,28 +105,27 @@ export default function SelectorCoordenadas({
       {/* Columna Izquierda: Mapa */}
       <div className="lg:col-span-2 h-[300px] lg:h-full min-h-[300px] rounded-xl overflow-hidden shadow-md border-2 border-gray-200 dark:border-gray-700 relative z-0">
         <MapContainer
-          center={position || defaultCenter}
+          center={position || MAP_DEFAULT_CENTER}
           zoom={15}
           scrollWheelZoom={true}
           className="h-full w-full bg-gray-100" // Fondo gris mientras carga
           style={{ height: "100%", width: "100%", zIndex: 0 }}
         >
           <MapResizer />
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap'
-          />
+          <LayersControl position="bottomright">
+            <LayersControl.BaseLayer checked name="🌐 Mapa Calles">
+              <OfflineTileLayer {...TILE_LAYER} />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="🛰️ Satélite">
+              <TileLayer {...SATELLITE_LAYER} />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="🗺️ Híbrido">
+              <TileLayer {...HYBRID_LAYER} />
+            </LayersControl.BaseLayer>
+          </LayersControl>
 
           {/* Capa del Municipio SIN RELLENO */}
-          <GeoJSON
-            data={municipiojson}
-            style={{
-              color: "#3b82f6",   // Color del borde (Azul)
-              weight: 3,          // Grosor del borde
-              fillOpacity: 0,     // <--- IMPORTANTE: Transparencia total del relleno
-              dashArray: "5, 5"   // Borde punteado
-            }}
-          />
+          <GeoJSON data={municipiojson} style={MUNICIPIO_STYLE_NO_FILL} />
 
           <LocationMarker
             position={position}
