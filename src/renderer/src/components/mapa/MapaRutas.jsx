@@ -14,6 +14,8 @@ import { LatLng, Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import './MapaMedidores.css';
 import markerIcon from "../../assets/svgs/Markador_azul_Agua_VP.svg";
+import { MAP_DEFAULT_CENTER, TILE_LAYER, SATELLITE_LAYER, HYBRID_LAYER } from './mapConfig';
+import OfflineTileLayer from './OfflineTileLayer';
 
 // Componente invisible para rastrear el nivel de zoom del mapa
 const ZoomHandler = ({ onZoomChange }) => {
@@ -64,13 +66,6 @@ const getClosestPoint = (punto, ruta) => {
   return { closest, distance: minDist };
 };
 
-const customIcon = new Icon({
-  iconUrl: markerIcon,
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -35],
-});
-
 export default function MapaRutas({
   medidores = [],
   puntosRuta = [],
@@ -81,7 +76,14 @@ export default function MapaRutas({
   readOnly = false,
 }) {
   const [zoomLevel, setZoomLevel] = useState(15);
-  const MOSTRAR_NUMEROS_ZOOM = 16; 
+  const MOSTRAR_NUMEROS_ZOOM = 16;
+
+  const customIcon = useMemo(() => new Icon({
+    iconUrl: markerIcon,
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -35],
+  }), []);
 
   const inicio = puntosRuta[0];
   const fin = puntosRuta[puntosRuta.length - 1];
@@ -130,7 +132,7 @@ export default function MapaRutas({
   return (
     <div className="w-full h-full rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-neutral-800 relative z-0">
       <MapContainer
-        center={[29.1180777, -109.9669819]}
+        center={MAP_DEFAULT_CENTER}
         zoom={15}
         scrollWheelZoom={true}
         style={{ height: "100%", width: "100%" }}
@@ -139,25 +141,21 @@ export default function MapaRutas({
         <ZoomHandler onZoomChange={setZoomLevel} />
 
         {/* 🔹 CONTROL DE CAPAS AÑADIDO AQUÍ 🔹 */}
-        <LayersControl position="topright">
+        <LayersControl position="bottomright">
           
           {/* Capa 1: Mapa Estándar de Calles (Marcada por defecto con 'checked') */}
           <LayersControl.BaseLayer checked name="🌐 Mapa Calles">
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            <OfflineTileLayer {...TILE_LAYER} />
           </LayersControl.BaseLayer>
 
-          {/* Capa 2: Mapa Satelital de Esri */}
           <LayersControl.BaseLayer name="🛰️ Satélite">
-            <TileLayer
-              attribution='&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              maxZoom={19}
-            />
+            <TileLayer {...SATELLITE_LAYER} />
           </LayersControl.BaseLayer>
-          
+
+          <LayersControl.BaseLayer name="🗺️ Híbrido">
+            <TileLayer {...HYBRID_LAYER} />
+          </LayersControl.BaseLayer>
+
         </LayersControl>
 
         {/* Ruta y conexiones */}

@@ -1,9 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Card, CardBody, Chip } from '@nextui-org/react';
-import { HiLocationMarker, HiCog, HiHashtag, HiCheck, HiX, HiWifi, HiUser } from 'react-icons/hi';
+import { HiLocationMarker, HiCog, HiHashtag, HiCheck, HiX, HiWifi } from 'react-icons/hi';
 import MarkerMap from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 import municipiojson from "../../../../public/VillaPesqueira.json";
 import './MapaMedidores.css';
+import { MAP_DEFAULT_CENTER, TILE_LAYER, SATELLITE_LAYER, HYBRID_LAYER, MUNICIPIO_STYLE } from './mapConfig';
+import { useLeafletSetup } from './useLeafletSetup';
+import OfflineTileLayer from './OfflineTileLayer';
 
 // 1. Componente invisible para ajustar tamaño e inicializar
 const MapResizer = ({ useMap, onMapReady, setMapInstance }) => {
@@ -30,43 +33,23 @@ const MapResizer = ({ useMap, onMapReady, setMapInstance }) => {
 
 // 2. Componente del Mapa (Lógica interna)
 const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady, setMapError, selectedMedidor }) => {
-  const [MapLibrary, setMapLibrary] = useState(null);
+  const { mapLibrary: MapLibrary, mapError: libError } = useLeafletSetup();
   const [mapInstance, setMapInstance] = useState(null);
   const markerRefs = React.useRef({});
 
   useEffect(() => {
-    let isMounted = true;
+    if (libError && setMapError) setMapError(true);
+  }, [libError, setMapError]);
 
-    const initMap = async () => {
-      try {
-        if (typeof window !== "undefined") {
-          const L = (await import("leaflet")).default;
-          const ReactLeaflet = await import("react-leaflet");
-
-          // Fix leaflet icons
-          delete L.Icon.Default.prototype._getIconUrl;
-          L.Icon.Default.mergeOptions({
-            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-          });
-
-          if (isMounted) {
-            setMapLibrary({ ...ReactLeaflet, L });
-          }
-        }
-      } catch (error) {
-        console.error("Error loading map:", error);
-        if (isMounted && setMapError) setMapError(true);
+  // Limpiar refs de markers que ya no están en el array
+  useEffect(() => {
+    const currentIds = new Set(medidores.map(m => m.id));
+    Object.keys(markerRefs.current).forEach(id => {
+      if (!currentIds.has(Number(id))) {
+        delete markerRefs.current[id];
       }
-    };
-
-    initMap();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [setMapError]);
+    });
+  }, [medidores]);
 
   // Efecto para mover el mapa cuando cambia el medidor seleccionado
   useEffect(() => {
@@ -194,7 +177,7 @@ const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady,
 
   if (!MapLibrary) return null;
 
-  const { MapContainer, TileLayer, GeoJSON, useMap } = MapLibrary;
+  const { MapContainer, TileLayer, GeoJSON, useMap, LayersControl } = MapLibrary;
 
   return (
     <div className="h-full w-full">
@@ -212,22 +195,20 @@ const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady,
       >
         <MapResizer useMap={useMap} />
 
-        <TileLayer
-          attribution='&copy; OpenStreetMap'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <LayersControl position="bottomright">
+          <LayersControl.BaseLayer checked name="🌐 Mapa Calles">
+            <OfflineTileLayer {...TILE_LAYER} />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="🛰️ Satélite">
+            <TileLayer {...SATELLITE_LAYER} />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="🗺️ Híbrido">
+            <TileLayer {...HYBRID_LAYER} />
+          </LayersControl.BaseLayer>
+        </LayersControl>
 
         {municipioData && (
-          <GeoJSON
-            data={municipioData}
-            style={{
-              color: "#3b82f6",
-              weight: 3,
-              fillColor: "rgba(59, 130, 246, 0.1)",
-              fillOpacity: 0.1,
-              dashArray: "5, 5"
-            }}
-          />
+          <GeoJSON data={municipioData} style={MUNICIPIO_STYLE} />
         )}
 
         {MarkersRendered}
@@ -250,7 +231,7 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
   const [mapError, setMapError] = useState(false);
   const [municipioData, setMunicipioData] = useState(null);
 
-  const position = useMemo(() => [29.1180777, -109.9669819], []);
+  const position = MAP_DEFAULT_CENTER;
 
   const estadisticas = useMemo(() => {
     if (!medidores) return { total: 0, activos: 0, asignados: 0 };
