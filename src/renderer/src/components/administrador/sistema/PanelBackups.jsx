@@ -2,7 +2,7 @@
  * PanelBackups — Gestión de backups de la base de datos
  *
  * Características:
- *  - Crear backup manual (con razón)
+ *  - Crear backup manual
  *  - Listar backups existentes con fecha y tamaño
  *  - Restaurar backup (con confirmación doble)
  *  - Configurar cantidad máxima de backups
@@ -10,14 +10,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Card, CardBody, CardHeader,
+  Card, CardBody,
   Button, Chip, Input, Tooltip,
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell,
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
   useDisclosure, Spinner, Divider
 } from "@nextui-org/react";
+import { HiExclamationCircle } from "react-icons/hi";
+import { useFeedback } from "../../../context/FeedbackContext";
+import { formatSize, formatDate } from "../../../utils/formatSystem";
 
 export default function PanelBackups() {
+  const { setSuccess, setError } = useFeedback();
   const [backups, setBackups] = useState([]);
   const [config, setConfig] = useState({ maxBackups: 5 });
   const [cargando, setCargando] = useState(true);
@@ -28,7 +32,6 @@ export default function PanelBackups() {
   const [confirmText, setConfirmText] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  // Cargar lista de backups
   const cargarBackups = useCallback(async () => {
     try {
       setCargando(true);
@@ -37,97 +40,88 @@ export default function PanelBackups() {
         window.api.system.getBackupConfig(),
       ]);
 
-      if (listResult.success) {
+      if (listResult?.success) {
         setBackups(listResult.backups || []);
       }
-      if (configResult.success) {
+      if (configResult?.success) {
         const cfg = configResult.config || configResult;
         setConfig(cfg);
         setMaxBackupsInput(String(cfg.maxBackups || 5));
       }
     } catch (err) {
       console.error("Error cargando backups:", err);
+      setError("No se pudo cargar la lista de backups", "Backups");
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [setError]);
 
   useEffect(() => {
     cargarBackups();
   }, [cargarBackups]);
 
-  // Crear backup manual
   const crearBackup = async () => {
     try {
       setCreando(true);
-      const result = await window.api.system.createBackup("manual");
-      if (result.success) {
+      const result = await window.api.system.createBackup();
+      if (result?.success) {
+        setSuccess("Backup creado exitosamente", "Backups");
         cargarBackups();
+      } else {
+        setError(result?.error || "No se pudo crear el backup", "Backups");
       }
     } catch (err) {
       console.error("Error creando backup:", err);
+      setError("Error al crear el backup", "Backups");
     } finally {
       setCreando(false);
     }
   };
 
-  // Abrir modal de restauración
   const abrirRestauracion = (backup) => {
     setBackupSeleccionado(backup);
     setConfirmText("");
     onOpen();
   };
 
-  // Ejecutar restauración
   const ejecutarRestauracion = async () => {
     if (confirmText !== "RESTAURAR") return;
-
     try {
       setRestaurando(true);
-      const userToken = localStorage.getItem('token');
+      const userToken = localStorage.getItem("token");
       const result = await window.api.system.restoreBackup(backupSeleccionado.path, userToken);
-      if (result.success) {
+      if (result?.success) {
+        setSuccess("Backup restaurado exitosamente", "Backups");
         onClose();
         cargarBackups();
       } else {
-        alert(`Error: ${result.error}`);
+        setError(result?.error || "Error al restaurar el backup", "Backups");
       }
     } catch (err) {
       console.error("Error restaurando:", err);
+      setError("Error inesperado al restaurar el backup", "Backups");
     } finally {
       setRestaurando(false);
     }
   };
 
-  // Guardar configuración de backups
   const guardarConfig = async () => {
     const num = parseInt(maxBackupsInput, 10);
     if (isNaN(num) || num < 1 || num > 50) return;
-
-    const result = await window.api.system.updateBackupConfig({ maxBackups: num });
-    if (result.success) {
-      setConfig((prev) => ({ ...prev, maxBackups: num }));
+    try {
+      const result = await window.api.system.updateBackupConfig({ maxBackups: num });
+      if (result?.success) {
+        setConfig((prev) => ({ ...prev, maxBackups: num }));
+        setSuccess(`Límite actualizado a ${num} backups`, "Backups");
+      } else {
+        setError("No se pudo guardar la configuración", "Backups");
+      }
+    } catch (err) {
+      console.error("Error guardando config:", err);
+      setError("Error al guardar la configuración", "Backups");
     }
   };
 
-  // Formatear tamaño
-  const formatSize = (bytes) => {
-    if (!bytes) return "—";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
-  // Formatear fecha
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleString("es-MX", {
-      dateStyle: "short",
-      timeStyle: "medium",
-    });
-  };
-
-  // Extraer razón del nombre del archivo
   const extraerRazon = (nombre) => {
     if (!nombre) return "—";
     if (nombre.includes("pre-update")) return "Pre-actualización";
@@ -258,8 +252,9 @@ export default function PanelBackups() {
       {/* Modal de confirmación de restauración */}
       <Modal isOpen={isOpen} onClose={onClose} size="lg">
         <ModalContent>
-          <ModalHeader className="text-warning-600">
-            ⚠️ Confirmar Restauración de Backup
+          <ModalHeader className="text-warning-600 flex items-center gap-2">
+            <HiExclamationCircle className="w-5 h-5 text-warning" />
+            Confirmar Restauración de Backup
           </ModalHeader>
           <ModalBody>
             <div className="space-y-3">

@@ -14,10 +14,13 @@ import {
   Card, CardBody, CardHeader,
   Button, Chip, Progress, Divider, Spinner
 } from "@nextui-org/react";
+import { useFeedback } from "../../../context/FeedbackContext";
+import { formatBytes } from "../../../utils/formatSystem";
 
 export default function PanelActualizaciones() {
+  const { setError } = useFeedback();
   const [status, setStatus] = useState(null);
-  const [evento, setEvento] = useState(null); // último evento recibido
+  const [novedadMostrada, setNovedadMostrada] = useState(false);
   const [cargando, setCargando] = useState(true);
   const cleanupRef = useRef(null);
 
@@ -26,88 +29,76 @@ export default function PanelActualizaciones() {
     const cargar = async () => {
       try {
         const result = await window.api.system.getUpdateStatus();
-        if (result.success) setStatus(result);
+        if (result?.success) setStatus(result);
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error cargando estado de actualizaciones:", err);
+        setError("No se pudo cargar el estado de actualizaciones", "Actualizaciones");
       } finally {
         setCargando(false);
       }
     };
     cargar();
-  }, []);
+  }, [setError]);
 
   // Suscribirse a eventos de actualización
   useEffect(() => {
     const cleanup = window.api.system.onUpdateProgress((data) => {
-      setEvento(data);
-
-      // Actualizar estado local según el evento
-      if (data.event === "update-available") {
-        setStatus((prev) => ({
-          ...prev,
-          updateAvailable: true,
-          updateInfo: data.info,
-        }));
-      }
-      if (data.event === "update-not-available") {
-        setStatus((prev) => ({
-          ...prev,
-          updateAvailable: false,
-          checking: false,
-        }));
-      }
-      if (data.event === "update-downloaded") {
-        setStatus((prev) => ({
-          ...prev,
-          updateDownloaded: true,
-          downloading: false,
-        }));
-      }
-      if (data.event === "download-progress") {
-        setStatus((prev) => ({
-          ...prev,
-          downloading: true,
-          downloadProgress: data.progress,
-        }));
-      }
-      if (data.event === "error") {
-        setStatus((prev) => ({
-          ...prev,
-          checking: false,
-          downloading: false,
-          error: data.error,
-        }));
+      switch (data.event) {
+        case "update-available":
+          setStatus((prev) => ({ ...prev, updateAvailable: true, updateInfo: data.info, checking: false }));
+          setNovedadMostrada(false);
+          break;
+        case "update-not-available":
+          setStatus((prev) => ({ ...prev, updateAvailable: false, checking: false }));
+          setNovedadMostrada(true);
+          break;
+        case "update-downloaded":
+          setStatus((prev) => ({ ...prev, updateDownloaded: true, downloading: false }));
+          break;
+        case "download-progress":
+          setStatus((prev) => ({ ...prev, downloading: true, downloadProgress: data.progress }));
+          break;
+        case "error":
+          setStatus((prev) => ({ ...prev, checking: false, downloading: false, error: data.error }));
+          setError(data.error || "Error en el proceso de actualización", "Actualizaciones");
+          break;
+        default:
+          break;
       }
     });
     cleanupRef.current = cleanup;
-
     return () => {
       if (cleanupRef.current) cleanupRef.current();
     };
-  }, []);
+  }, [setError]);
 
-  // Acciones
   const verificar = async () => {
-    setEvento(null);
+    setNovedadMostrada(false);
     setStatus((prev) => ({ ...prev, checking: true, error: null }));
-    await window.api.system.checkForUpdates();
+    try {
+      await window.api.system.checkForUpdates();
+    } catch (err) {
+      setError("Error al verificar actualizaciones", "Actualizaciones");
+      setStatus((prev) => ({ ...prev, checking: false }));
+    }
   };
 
   const descargar = async () => {
     setStatus((prev) => ({ ...prev, downloading: true }));
-    await window.api.system.downloadUpdate();
+    try {
+      await window.api.system.downloadUpdate();
+    } catch (err) {
+      setError("Error al descargar la actualización", "Actualizaciones");
+      setStatus((prev) => ({ ...prev, downloading: false }));
+    }
   };
 
   const instalar = async () => {
-    await window.api.system.installUpdate();
-  };
-
-  // Formatear bytes
-  const formatBytes = (b) => {
-    if (!b) return "—";
-    if (b < 1024) return `${b} B`;
-    if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
-    return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+    try {
+      await window.api.system.installUpdate();
+    } catch (err) {
+      setError("Error al instalar la actualización", "Actualizaciones");
+    }
   };
 
   if (cargando) {
@@ -244,7 +235,7 @@ export default function PanelActualizaciones() {
       )}
 
       {/* Sin actualización disponible */}
-      {evento?.event === "update-not-available" && !status?.updateAvailable && (
+      {novedadMostrada && !status?.updateAvailable && (
         <Card>
           <CardBody>
             <div className="flex items-center gap-3">

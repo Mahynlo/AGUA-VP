@@ -2,12 +2,14 @@ import React, { useState, useMemo } from "react";
 import { Card, CardBody, Button, Chip } from "@nextui-org/react";
 import { HiChevronLeft, HiChevronRight, HiCalendar, HiClock } from "react-icons/hi";
 import { useTarifas } from "../../context/TarifasContext";
+import { useFacturas } from "../../context/FacturasContext";
 import { obtenerFeriadosMexico } from "../../utils/diasHabiles";
 
 const CalendarComponent = () => {
     const [selectedDate, setSelectedDate] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const { tarifas } = useTarifas();
+    const { facturas } = useFacturas();
 
     const handleDateChange = (dateString) => {
         setSelectedDate(dateString);
@@ -15,6 +17,28 @@ const CalendarComponent = () => {
 
     const events = useMemo(() => {
         const evts = {};
+
+        // Vencimientos de facturas pendientes agrupados por fecha
+        facturas.forEach((f) => {
+            if (f.fecha_vencimiento && f.saldo_pendiente > 0 && f.estado !== "Pagado") {
+                const fecha = f.fecha_vencimiento.substring(0, 10);
+                if (!evts[fecha]) evts[fecha] = [];
+                // Acumular en el mismo evento si ya existe uno de vencimiento
+                const existing = evts[fecha].find(e => e.tipo === 'vencimiento');
+                if (existing) {
+                    existing.count += 1;
+                    existing.title = `${existing.count} recibos por vencer`;
+                } else {
+                    evts[fecha].push({
+                        title: '1 recibo por vencer',
+                        descripcion: 'Fecha límite de pago del período actual',
+                        tipo: 'vencimiento',
+                        color: 'primary',
+                        count: 1,
+                    });
+                }
+            }
+        });
 
         // Eventos de tarifas
         if (tarifas && tarifas.length > 0) {
@@ -227,9 +251,11 @@ const CalendarComponent = () => {
                                                 <span 
                                                     key={i} 
                                                     className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${
-                                                        isSelected 
-                                                            ? "bg-white/90" 
-                                                            : evt.color === 'danger' ? "bg-red-500" : "bg-orange-500"
+                                                        isSelected
+                                                            ? "bg-white/90"
+                                                            : evt.color === 'danger' ? "bg-red-500"
+                                                            : evt.color === 'primary' ? "bg-blue-500"
+                                                            : "bg-orange-500"
                                                     }`}
                                                 ></span>
                                             ))}
@@ -278,7 +304,9 @@ const CalendarComponent = () => {
                                         p-3 sm:p-4 rounded-xl border transition-all duration-200
                                         ${event.tipo === 'feriado'
                                             ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'
-                                            : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'
+                                            : event.tipo === 'vencimiento'
+                                                ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30'
+                                                : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'
                                         }
                                     `}
                                 >
@@ -288,7 +316,7 @@ const CalendarComponent = () => {
                                         </h4>
                                     </div>
                                     <Chip size="sm" color={event.color} variant="flat" className="h-4 px-1 text-[9px] font-semibold uppercase mb-2">
-                                        {event.tipo}
+                                        {event.tipo === 'vencimiento' ? 'Vencimiento' : event.tipo === 'feriado' ? 'Feriado' : 'Tarifa'}
                                     </Chip>
                                     {event.descripcion && (
                                         <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
