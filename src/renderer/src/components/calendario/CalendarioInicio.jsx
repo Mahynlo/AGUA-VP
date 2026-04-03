@@ -2,10 +2,24 @@ import React, { useState, useMemo } from "react";
 import { FlechaIzquierdaIcon, FlechaDerechaIcon } from "../../IconsApp/IconsAppSystem";
 import { CalendarioHomeIcon } from "../../IconsApp/IconsHome";
 import { obtenerFeriadosMexico } from "../../utils/diasHabiles";
+import { useFacturas } from "../../context/FacturasContext";
 
 const CalendarInicio = () => {
     const [selectedDate, setSelectedDate] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const { facturas } = useFacturas();
+
+    // Agrupar vencimientos de facturas pendientes por fecha
+    const vencimientosMap = useMemo(() => {
+        const map = {};
+        facturas.forEach((f) => {
+            if (f.fecha_vencimiento && f.saldo_pendiente > 0 && f.estado !== "Pagado") {
+                const fecha = f.fecha_vencimiento.substring(0, 10);
+                map[fecha] = (map[fecha] || 0) + 1;
+            }
+        });
+        return map;
+    }, [facturas]);
 
     // Generar feriados para el año visible
     const feriadosMap = useMemo(() => {
@@ -139,22 +153,28 @@ const CalendarInicio = () => {
                     {daysInMonth.map(({ date, currentMonth: isCurrentMonth }, index) => {
                         const dateString = formatDateString(date);
                         const isFeriado = !!feriadosMap[dateString];
+                        const vencimientos = vencimientosMap[dateString] || 0;
                         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                         const today = isToday(date);
                         const isSelected = selectedDate === dateString;
+
+                        const titleParts = [];
+                        if (isFeriado) titleParts.push(feriadosMap[dateString]);
+                        if (vencimientos > 0) titleParts.push(`${vencimientos} recibo${vencimientos !== 1 ? 's' : ''} por vencer`);
+                        if (!isFeriado && isWeekend) titleParts.push('Fin de semana');
 
                         return (
                             <button
                                 key={index}
                                 onClick={() => handleDateChange(dateString)}
-                                title={isFeriado ? feriadosMap[dateString] : isWeekend ? 'Fin de semana' : ''}
+                                title={titleParts.join(' · ')}
                                 className={`
                                     relative flex flex-col items-center justify-start pt-1 sm:pt-2 pb-1.5
-                                    w-full h-full rounded-lg sm:rounded-xl 
-                                    text-xs sm:text-sm lg:text-base font-medium 
+                                    w-full h-full rounded-lg sm:rounded-xl
+                                    text-xs sm:text-sm lg:text-base font-medium
                                     transition-all duration-200
                                     focus:outline-none focus:ring-2 focus:ring-blue-500/50
-                                    ${!isCurrentMonth 
+                                    ${!isCurrentMonth
                                         ? "text-slate-300 dark:text-zinc-600 opacity-40 cursor-not-allowed bg-transparent"
                                         : isSelected
                                             ? "bg-blue-600 text-white shadow-md shadow-blue-500/30 font-bold scale-[1.02] z-10"
@@ -170,13 +190,17 @@ const CalendarInicio = () => {
                                 disabled={!isCurrentMonth}
                             >
                                 <span>{date.getDate()}</span>
-                                
-                                {/* Puntito indicador para Feriados (mt-auto lo empuja abajo) */}
-                                {isCurrentMonth && isFeriado && (
-                                    <span className={`
-                                        mt-auto w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full
-                                        ${isSelected ? "bg-white" : "bg-red-500"}
-                                    `}></span>
+
+                                {/* Puntos indicadores en la parte inferior */}
+                                {isCurrentMonth && (isFeriado || vencimientos > 0) && (
+                                    <div className="mt-auto flex items-center gap-0.5">
+                                        {isFeriado && (
+                                            <span className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-red-500"}`} />
+                                        )}
+                                        {vencimientos > 0 && (
+                                            <span className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-blue-500"}`} />
+                                        )}
+                                    </div>
                                 )}
                             </button>
                         );

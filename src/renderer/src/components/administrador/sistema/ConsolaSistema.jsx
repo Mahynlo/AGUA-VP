@@ -11,6 +11,9 @@
 
 import { useState } from "react";
 import { Tabs, Tab, Chip } from "@nextui-org/react";
+import {
+  HiChartBar, HiClipboardList, HiSave, HiDatabase, HiRefresh
+} from "react-icons/hi";
 
 import ErrorBoundary from "./ErrorBoundary";
 import PanelInfoSistema from "./PanelInfoSistema";
@@ -52,7 +55,7 @@ export default function ConsolaSistema() {
           key="info"
           title={
             <div className="flex items-center gap-2">
-              <span>📊</span>
+              <HiChartBar className="w-4 h-4" />
               <span>Sistema</span>
             </div>
           }
@@ -68,7 +71,7 @@ export default function ConsolaSistema() {
           key="logs"
           title={
             <div className="flex items-center gap-2">
-              <span>📋</span>
+              <HiClipboardList className="w-4 h-4" />
               <span>Logs</span>
             </div>
           }
@@ -84,7 +87,7 @@ export default function ConsolaSistema() {
           key="backups"
           title={
             <div className="flex items-center gap-2">
-              <span>💾</span>
+              <HiSave className="w-4 h-4" />
               <span>Backups</span>
             </div>
           }
@@ -100,7 +103,7 @@ export default function ConsolaSistema() {
           key="basedatos"
           title={
             <div className="flex items-center gap-2">
-              <span>🗄️</span>
+              <HiDatabase className="w-4 h-4" />
               <span>Base de Datos</span>
             </div>
           }
@@ -116,7 +119,7 @@ export default function ConsolaSistema() {
           key="actualizaciones"
           title={
             <div className="flex items-center gap-2">
-              <span>🔄</span>
+              <HiRefresh className="w-4 h-4" />
               <span>Actualizaciones</span>
             </div>
           }

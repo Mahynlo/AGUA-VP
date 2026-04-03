@@ -9,57 +9,49 @@ import {
   Card, CardBody, CardHeader,
   Chip, Spinner, Button, Divider
 } from "@nextui-org/react";
+import { HiRefresh, HiExclamationCircle } from "react-icons/hi";
+import { useFeedback } from "../../../context/FeedbackContext";
+import { formatSize, formatUptime } from "../../../utils/formatSystem";
 
 export default function PanelInfoSistema() {
+  const { setError } = useFeedback();
   const [serverStatus, setServerStatus] = useState(null);
   const [dbInfo, setDbInfo] = useState(null);
   const [appVersion, setAppVersion] = useState("—");
   const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const cargarInfo = useCallback(async () => {
     try {
       setCargando(true);
+      setErrorCarga(null);
       const [statusResult, dbResult, versionResult] = await Promise.all([
         window.api.system.getServerStatus(),
         window.api.system.getDatabaseInfo(),
         window.api.getAppVersion(),
       ]);
 
-      if (statusResult.success) setServerStatus(statusResult);
-      if (dbResult.success) setDbInfo(dbResult.info);
+      if (statusResult?.success) setServerStatus(statusResult);
+      if (dbResult?.success) setDbInfo(dbResult.info);
       if (versionResult) setAppVersion(versionResult);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error("Error cargando info:", err);
+      setErrorCarga("No se pudo cargar la información del sistema.");
+      setError("Error al cargar información del sistema", "Sistema");
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [setError]);
 
   useEffect(() => {
     cargarInfo();
-    // Refrescar cada 30 segundos
     const interval = setInterval(cargarInfo, 30000);
     return () => clearInterval(interval);
   }, [cargarInfo]);
 
-  const formatUptime = (seconds) => {
-    if (!seconds) return "—";
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    if (h > 0) return `${h}h ${m}m ${s}s`;
-    if (m > 0) return `${m}m ${s}s`;
-    return `${s}s`;
-  };
-
-  const formatSize = (bytes) => {
-    if (!bytes && bytes !== 0) return "—";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
-  if (cargando) {
+  if (cargando && !serverStatus) {
     return (
       <div className="flex justify-center py-12">
         <Spinner label="Cargando información del sistema..." />
@@ -71,6 +63,14 @@ export default function PanelInfoSistema() {
 
   return (
     <div className="space-y-4">
+      {/* Banner de error */}
+      {errorCarga && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+          <HiExclamationCircle className="w-5 h-5 flex-shrink-0" />
+          <span>{errorCarga}</span>
+        </div>
+      )}
+
       {/* Estado del servidor */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card>
@@ -110,9 +110,22 @@ export default function PanelInfoSistema() {
       <Card>
         <CardHeader className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">Detalles del Servidor</h3>
-          <Button size="sm" variant="flat" onPress={cargarInfo}>
-            Actualizar
-          </Button>
+          <div className="flex items-center gap-3">
+            {lastUpdated && (
+              <span className="text-xs text-gray-400">
+                Actualizado: {lastUpdated.toLocaleTimeString("es-MX", { hour12: false })}
+              </span>
+            )}
+            <Button
+              size="sm"
+              variant="flat"
+              onPress={cargarInfo}
+              isLoading={cargando}
+              startContent={!cargando && <HiRefresh className="w-4 h-4" />}
+            >
+              Actualizar
+            </Button>
+          </div>
         </CardHeader>
         <CardBody className="text-sm space-y-2">
           <div className="flex justify-between">
@@ -122,7 +135,7 @@ export default function PanelInfoSistema() {
           <Divider />
           <div className="flex justify-between">
             <span className="text-gray-500">URL:</span>
-            <span className="font-mono">http://localhost:{serverStatus?.port || "3000"}</span>
+            <span className="font-mono">http://localhost:{serverStatus?.port || "—"}</span>
           </div>
           <Divider />
           <div className="flex justify-between">
@@ -132,7 +145,7 @@ export default function PanelInfoSistema() {
           <Divider />
           <div className="flex justify-between">
             <span className="text-gray-500">Plataforma:</span>
-            <span>{serverStatus?.platform || "Windows"}</span>
+            <span>{serverStatus?.platform || "—"}</span>
           </div>
         </CardBody>
       </Card>

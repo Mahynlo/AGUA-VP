@@ -3,20 +3,22 @@
  *
  * Características:
  *  - Streaming en tiempo real desde LogManager
- *  - Filtros por nivel (info, warn, error, debug)
- *  - Filtro por fuente (api, auth, backup, update, etc.)
- *  - Búsqueda de texto
+ *  - Filtros por nivel (info, warn, error, debug) — aplicados localmente
+ *  - Filtro por fuente (api, auth, backup, update, etc.) — aplicado localmente
+ *  - Búsqueda de texto — aplicada localmente
  *  - Auto-scroll con toggle
  *  - Limpiar logs
+ *  - Stats calculadas del array local (se actualizan en tiempo real)
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   Card, CardBody, CardHeader,
   Button, Input, Chip, Switch,
-  Select, SelectItem, Tooltip,
-  Divider
+  Tooltip, Divider
 } from "@nextui-org/react";
+import { HiRefresh, HiTrash } from "react-icons/hi";
+import { useFeedback } from "../../../context/FeedbackContext";
 
 const NIVELES = [
   { key: "all", label: "Todos", color: "default" },
@@ -33,48 +35,34 @@ const COLORES_NIVEL = {
   debug: "text-gray-400",
 };
 
-const BADGE_NIVEL = {
-  info: "bg-blue-500/20 text-blue-400",
-  warn: "bg-yellow-500/20 text-yellow-400",
-  error: "bg-red-500/20 text-red-400",
-  debug: "bg-gray-500/20 text-gray-400",
-};
-
 export default function PanelLogs() {
-  const [logs, setLogs] = useState([]);
-  const [stats, setStats] = useState(null);
+  const { setError } = useFeedback();
+  // logsRaw: fuente de verdad — todos los logs cargados + los de streaming
+  const [logsRaw, setLogsRaw] = useState([]);
   const [filtroNivel, setFiltroNivel] = useState("all");
   const [filtroFuente, setFiltroFuente] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
   const [cargando, setCargando] = useState(true);
+  const [confirmLimpiar, setConfirmLimpiar] = useState(false);
   const terminalRef = useRef(null);
   const cleanupRef = useRef(null);
 
-  // Cargar logs iniciales
+  // Cargar logs iniciales sin filtros — el filtrado es local
   const cargarLogs = useCallback(async () => {
     try {
       setCargando(true);
-      const options = { limit: 200 };
-      if (filtroNivel !== "all") options.level = filtroNivel;
-      if (filtroFuente) options.source = filtroFuente;
-      if (busqueda) options.search = busqueda;
-
-      const result = await window.api.system.getLogs(options);
-      if (result.success) {
-        setLogs(result.logs || []);
-      }
-
-      const statsResult = await window.api.system.getLogStats();
-      if (statsResult.success) {
-        setStats(statsResult.stats);
+      const result = await window.api.system.getLogs({ limit: 200 });
+      if (result?.success) {
+        setLogsRaw(result.logs || []);
       }
     } catch (err) {
       console.error("Error cargando logs:", err);
+      setError("No se pudieron cargar los logs del sistema", "Logs");
     } finally {
       setCargando(false);
     }
-  }, [filtroNivel, filtroFuente, busqueda]);
+  }, [setError]);
 
   useEffect(() => {
     cargarLogs();
@@ -83,15 +71,14 @@ export default function PanelLogs() {
   // Suscribirse a logs en tiempo real
   useEffect(() => {
     const cleanup = window.api.system.onLogEntry((entry) => {
-      setLogs((prev) => {
-        const nuevoLogs = [...prev, entry];
+      setLogsRaw((prev) => {
+        const siguiente = [...prev, entry];
         // Mantener máximo 500 en el visor
-        if (nuevoLogs.length > 500) nuevoLogs.shift();
-        return nuevoLogs;
+        if (siguiente.length > 500) siguiente.shift();
+        return siguiente;
       });
     });
     cleanupRef.current = cleanup;
-
     return () => {
       if (cleanupRef.current) cleanupRef.current();
     };
@@ -102,51 +89,68 @@ export default function PanelLogs() {
     if (autoScroll && terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
-  }, [logs, autoScroll]);
+  }, [logsRaw, autoScroll]);
 
-  // Limpiar logs
+  // Stats calculadas localmente — siempre sincronizadas con logsRaw
+  const stats = useMemo(() => ({
+    total: logsRaw.length,
+    byLevel: {
+      info: logsRaw.filter((l) => l.level === "info").length,
+      warn: logsRaw.filter((l) => l.level === "warn").length,
+      error: logsRaw.filter((l) => l.level === "error").length,
+      debug: logsRaw.filter((l) => l.level === "debug").length,
+    },
+  }), [logsRaw]);
+
+  // Filtrado local — no hace IPC calls
+  const logsFiltrados = useMemo(() => {
+    return logsRaw.filter((l) => {
+      if (filtroNivel !== "all" && l.level !== filtroNivel) return false;
+      if (filtroFuente && l.source && !l.source.toLowerCase().includes(filtroFuente.toLowerCase())) return false;
+      if (busqueda && !l.message?.toLowerCase().includes(busqueda.toLowerCase())) return false;
+      return true;
+    });
+  }, [logsRaw, filtroNivel, filtroFuente, busqueda]);
+
+  // Limpiar logs con confirmación inline
   const limpiarLogs = async () => {
-    await window.api.system.clearLogs();
-    setLogs([]);
+    try {
+      await window.api.system.clearLogs();
+      setLogsRaw([]);
+      setConfirmLimpiar(false);
+    } catch (err) {
+      console.error("Error limpiando logs:", err);
+      setError("No se pudieron limpiar los logs", "Logs");
+      setConfirmLimpiar(false);
+    }
   };
 
-  // Formatear timestamp
   const formatTime = (ts) => {
     if (!ts) return "";
     const d = new Date(ts);
     return d.toLocaleTimeString("es-MX", { hour12: false }) + "." + String(d.getMilliseconds()).padStart(3, "0");
   };
 
-  // Filtrar logs localmente (para fuente y búsqueda si el streaming trae todo)
-  const logsFiltrados = logs.filter((l) => {
-    if (filtroNivel !== "all" && l.level !== filtroNivel) return false;
-    if (filtroFuente && l.source && !l.source.includes(filtroFuente)) return false;
-    if (busqueda && !l.message?.toLowerCase().includes(busqueda.toLowerCase())) return false;
-    return true;
-  });
-
   return (
     <div className="space-y-4">
-      {/* Estadísticas rápidas */}
-      {stats && (
-        <div className="flex flex-wrap gap-2">
-          <Chip size="sm" variant="flat" color="default">
-            Total: {stats.total}
-          </Chip>
-          <Chip size="sm" variant="flat" color="primary">
-            Info: {stats.byLevel?.info || 0}
-          </Chip>
-          <Chip size="sm" variant="flat" color="warning">
-            Warnings: {stats.byLevel?.warn || 0}
-          </Chip>
-          <Chip size="sm" variant="flat" color="danger">
-            Errors: {stats.byLevel?.error || 0}
-          </Chip>
-          <Chip size="sm" variant="flat" color="secondary">
-            Debug: {stats.byLevel?.debug || 0}
-          </Chip>
-        </div>
-      )}
+      {/* Estadísticas rápidas — calculadas del array local */}
+      <div className="flex flex-wrap gap-2">
+        <Chip size="sm" variant="flat" color="default">
+          Total: {stats.total}
+        </Chip>
+        <Chip size="sm" variant="flat" color="primary">
+          Info: {stats.byLevel.info}
+        </Chip>
+        <Chip size="sm" variant="flat" color="warning">
+          Warnings: {stats.byLevel.warn}
+        </Chip>
+        <Chip size="sm" variant="flat" color="danger">
+          Errors: {stats.byLevel.error}
+        </Chip>
+        <Chip size="sm" variant="flat" color="secondary">
+          Debug: {stats.byLevel.debug}
+        </Chip>
+      </div>
 
       {/* Barra de filtros */}
       <Card>
@@ -197,16 +201,40 @@ export default function PanelLogs() {
             </Switch>
 
             <Tooltip content="Recargar logs">
-              <Button size="sm" variant="flat" onPress={cargarLogs} isLoading={cargando}>
-                ↻
+              <Button
+                size="sm"
+                variant="flat"
+                onPress={cargarLogs}
+                isLoading={cargando}
+                isIconOnly
+              >
+                <HiRefresh className="w-4 h-4" />
               </Button>
             </Tooltip>
 
-            <Tooltip content="Limpiar todos los logs">
-              <Button size="sm" variant="flat" color="danger" onPress={limpiarLogs}>
-                Limpiar
-              </Button>
-            </Tooltip>
+            {confirmLimpiar ? (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-red-500 font-medium">¿Confirmar?</span>
+                <Button size="sm" color="danger" onPress={limpiarLogs}>
+                  Sí
+                </Button>
+                <Button size="sm" variant="flat" onPress={() => setConfirmLimpiar(false)}>
+                  No
+                </Button>
+              </div>
+            ) : (
+              <Tooltip content="Limpiar todos los logs">
+                <Button
+                  size="sm"
+                  variant="flat"
+                  color="danger"
+                  startContent={<HiTrash className="w-4 h-4" />}
+                  onPress={() => setConfirmLimpiar(true)}
+                >
+                  Limpiar
+                </Button>
+              </Tooltip>
+            )}
           </div>
         </CardBody>
       </Card>
