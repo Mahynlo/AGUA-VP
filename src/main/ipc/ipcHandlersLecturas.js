@@ -44,10 +44,10 @@ export default function IpcHandlerLecturas () {
 
     // 🧾 Generar facturas para lecturas pendientes de una ruta
     ipcMain.handle("generar-facturas-ruta", async (event, params, token_session) => {
-        const { ruta_id, periodo, fecha_emision } = params;
+        const { ruta_id, periodo, fecha_emision, recalcular = false, motivo_recalculo = '' } = params || {};
         if (!ruta_id || !periodo || !fecha_emision) {
             return { success: false, message: 'ruta_id, periodo y fecha_emision son requeridos' };
         }
-        return await generarFacturasRuta({ ruta_id, periodo, fecha_emision }, token_session);
+        return await generarFacturasRuta({ ruta_id, periodo, fecha_emision, recalcular, motivo_recalculo }, token_session);
     });
 }

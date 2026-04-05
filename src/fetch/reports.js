@@ -84,3 +84,43 @@ export const fetchReporteLecturas = async (token_session, periodo, localidad = n
         throw error;
     }
 };
+
+/**
+ * Fetch para obtener reporte financiero consolidado
+ * @param {string} token_session - Token JWT del usuario
+ * @param {Object} filtros - Filtros del reporte
+ */
+export const fetchReporteFinanciero = async (token_session, filtros = {}) => {
+    try {
+        const token_app = leerToken();
+        if (!token_app || !token_session) {
+            throw new Error("Tokens de autenticación faltantes");
+        }
+
+        const url = new URL(`${BASE_URL}/api/v2/reports/financiero`);
+        Object.entries(filtros || {}).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                url.searchParams.append(key, String(value));
+            }
+        });
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'x-app-key': `AppKey ${token_app}`,
+                'Authorization': `Bearer ${token_session}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error en fetchReporteFinanciero:", error);
+        throw error;
+    }
+};

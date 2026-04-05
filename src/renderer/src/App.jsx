@@ -46,6 +46,7 @@ import Recibo from "./components/recibo/Recibo";
 import ReporteLecturas from "./components/recibo/ReporteLecturas";
 import ReporteClientesCompleto from "./components/recibo/ReporteClientes"
 import ComprobantePago from "./components/recibo/ComprobantePago";
+import ReporteFinancieroPagos from "./components/recibo/ReporteFinancieroPagos";
 
 // Pantalla de carga de la aplicación
 import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
@@ -102,8 +103,8 @@ function App() {
 
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteClientes', '/comprobante-pago'];
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteClientes', '/comprobante-pago'];
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos'];
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos'];
 
   const { loading } = useAuth();
 
@@ -182,6 +183,7 @@ function MainApp() {
         <Route path="/reporteLecturas" element={<ReporteLecturas />} />
         <Route path="/reporteClientes" element={<ReporteClientesCompleto />} />
         <Route path="/comprobante-pago" element={<ComprobantePago />} />
+        <Route path="/reporteFinancieroPagos" element={<ReporteFinancieroPagos />} />
         {/* Rutas públicas */}
         <Route path='/' element={<LoginApp />} />
         <Route path='/recuperarPassword' element={<RecuperarPassword />} />

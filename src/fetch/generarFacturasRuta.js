@@ -4,10 +4,10 @@ const URL_BASE = import.meta.env.VITE_URL_BASE_API_AGUAVP;
 
 /**
  * Genera facturas para todas las lecturas pendientes de una ruta y periodo.
- * @param {object} params  - { ruta_id, periodo, fecha_emision }
+ * @param {object} params  - { ruta_id, periodo, fecha_emision, recalcular?, motivo_recalculo? }
  * @param {string} token_session
  */
-export const generarFacturasRuta = async ({ ruta_id, periodo, fecha_emision }, token_session) => {
+export const generarFacturasRuta = async ({ ruta_id, periodo, fecha_emision, recalcular = false, motivo_recalculo = '' }, token_session) => {
   try {
     const token_app = leerToken();
 
@@ -25,7 +25,7 @@ export const generarFacturasRuta = async ({ ruta_id, periodo, fecha_emision }, t
         Authorization: `Bearer ${token_session}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ruta_id, periodo, fecha_emision }),
+      body: JSON.stringify({ ruta_id, periodo, fecha_emision, recalcular, motivo_recalculo }),
     });
 
     const data = await response.json();

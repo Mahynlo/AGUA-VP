@@ -6,6 +6,7 @@ import ModalVistaPrevia from "./components/ModalVistaPrevia";
 import ModalImprimir from "./components/ModalImprimir";
 import { useReportes } from "../../../context/ReportesContext";
 import { exportData } from "../../../utils/exportUtils";
+import { obtenerPeriodoActual } from "../../../utils/periodoUtils";
 
 const TabReportes = () => {
   // --- USO DE CONTEXTO ---
@@ -16,7 +17,7 @@ const TabReportes = () => {
     cargarLecturas
   } = useReportes();
 
-  const [periodo, setPeriodo] = useState(new Date().toISOString().slice(0, 7));
+  const [periodo, setPeriodo] = useState(obtenerPeriodoActual());
   const [pdfUrl, setPdfUrl] = useState(null);
   const [printUrl, setPrintUrl] = useState(null);
   const [modoPdf, setModoPdf] = useState(null);   // 'vista-previa' | 'imprimir' | null
