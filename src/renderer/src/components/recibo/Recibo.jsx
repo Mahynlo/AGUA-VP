@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import useAnuncioRecibo from '../../hooks/useAnuncioRecibo';
 import useEquivalenciaConsumo from '../../hooks/useEquivalenciaConsumo';
-import { nowHermosilloDateStr } from '../../utils/diasHabiles';
+import { nowHermosilloDateStr, siguienteDiaHabil } from '../../utils/diasHabiles';
 
 // Colores extraídos de tu diseño objetivo (image_624eeb.png)
 const ESTILOS = {
@@ -22,6 +22,30 @@ const formatearFecha = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return 'N/A';
     return date.toLocaleDateString('es-MX');
+};
+
+const parsearFechaYMD = (value) => {
+    if (!value || typeof value !== 'string') return null;
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) {
+        const fallback = new Date(value);
+        return Number.isNaN(fallback.getTime()) ? null : fallback;
+    }
+
+    const anio = Number(match[1]);
+    const mes = Number(match[2]) - 1;
+    const dia = Number(match[3]);
+    const fecha = new Date(anio, mes, dia);
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
+};
+
+const calcularCorteApartirDe = (fechaVencimiento) => {
+    const fechaBase = parsearFechaYMD(fechaVencimiento);
+    if (!fechaBase) return null;
+
+    // Regla operativa: corte a partir del día siguiente al vencimiento.
+    fechaBase.setDate(fechaBase.getDate() + 1);
+    return siguienteDiaHabil(fechaBase);
 };
 
 const Recibo = ({ facturaData = null }) => {
@@ -118,6 +142,7 @@ const Recibo = ({ facturaData = null }) => {
 
     const renderRecibo = (factura, numeroRecibo) => {
         if (!factura) return null;
+        const fechaCorte = calcularCorteApartirDe(factura.fecha_vencimiento);
 
         return (
             // Mantenemos tu estructura y dimensiones exactas
@@ -197,6 +222,10 @@ const Recibo = ({ facturaData = null }) => {
                             <div className='flex justify-between'>
                                 <span className='font-bold text-gray-700'>Vencimiento:</span>
                                 <span className='text-gray-800'>{formatearFecha(factura.fecha_vencimiento)}</span>
+                            </div>
+                            <div className='flex justify-between'>
+                                <span className='font-bold text-gray-700'>Corte a partir de:</span>
+                                <span className='text-gray-800'>{formatearFecha(fechaCorte)}</span>
                             </div>
                             <div className='flex justify-between'>
                                 <span className='font-bold text-gray-700'>Total del mes:</span>
@@ -283,7 +312,7 @@ const Recibo = ({ facturaData = null }) => {
                             <p className='basis-64 m-2'>Notas:</p>
 
                             <div className='basis-64 ml-5 m-2 gap-8'>
-                                <p className=''>Información de Nota: </p>
+                                <p className='text-[11px]'>Información de Nota: </p>
                                 <p className='text-[11px] flex'>
                                     Usuario: <p className='px-2'>{factura.cliente_nombre}</p>
                                 </p>
