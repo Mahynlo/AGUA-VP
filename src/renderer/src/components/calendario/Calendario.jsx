@@ -3,13 +3,18 @@ import { Card, CardBody, Button, Chip } from "@nextui-org/react";
 import { HiChevronLeft, HiChevronRight, HiCalendar, HiClock } from "react-icons/hi";
 import { useTarifas } from "../../context/TarifasContext";
 import { useFacturas } from "../../context/FacturasContext";
-import { obtenerFeriadosMexico } from "../../utils/diasHabiles";
+import { obtenerFeriadosMexico, esDiaHabil } from "../../utils/diasHabiles";
 
 const CalendarComponent = () => {
     const [selectedDate, setSelectedDate] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const { tarifas } = useTarifas();
     const { facturas } = useFacturas();
+
+    const extractIsoDate = (value) => {
+        if (!value || typeof value !== "string") return null;
+        return value.length >= 10 ? value.substring(0, 10) : null;
+    };
 
     const handleDateChange = (dateString) => {
         setSelectedDate(dateString);
@@ -18,25 +23,46 @@ const CalendarComponent = () => {
     const events = useMemo(() => {
         const evts = {};
 
+        const upsertGroupedEvent = (fecha, tipo, eventFactory) => {
+            if (!evts[fecha]) evts[fecha] = [];
+            const existing = evts[fecha].find(e => e.tipo === tipo);
+            if (existing) {
+                existing.count += 1;
+                existing.title = `${existing.count} ${existing.labelBase}`;
+                return;
+            }
+            evts[fecha].push(eventFactory());
+        };
+
+        // Emisiones de facturas agrupadas por fecha
+        facturas.forEach((f) => {
+            const fechaEmision = extractIsoDate(f.fecha_emision);
+            if (!fechaEmision) return;
+
+            upsertGroupedEvent(fechaEmision, 'emision', () => ({
+                title: '1 factura emitida',
+                descripcion: 'Fecha de emisión de facturas',
+                tipo: 'emision',
+                color: 'secondary',
+                count: 1,
+                labelBase: 'facturas emitidas',
+            }));
+        });
+
         // Vencimientos de facturas pendientes agrupados por fecha
         facturas.forEach((f) => {
             if (f.fecha_vencimiento && f.saldo_pendiente > 0 && f.estado !== "Pagado") {
-                const fecha = f.fecha_vencimiento.substring(0, 10);
-                if (!evts[fecha]) evts[fecha] = [];
-                // Acumular en el mismo evento si ya existe uno de vencimiento
-                const existing = evts[fecha].find(e => e.tipo === 'vencimiento');
-                if (existing) {
-                    existing.count += 1;
-                    existing.title = `${existing.count} recibos por vencer`;
-                } else {
-                    evts[fecha].push({
-                        title: '1 recibo por vencer',
-                        descripcion: 'Fecha límite de pago del período actual',
-                        tipo: 'vencimiento',
-                        color: 'primary',
-                        count: 1,
-                    });
-                }
+                const fecha = extractIsoDate(f.fecha_vencimiento);
+                if (!fecha) return;
+
+                upsertGroupedEvent(fecha, 'vencimiento', () => ({
+                    title: '1 recibo por vencer',
+                    descripcion: 'Fecha límite de pago del período actual',
+                    tipo: 'vencimiento',
+                    color: 'primary',
+                    count: 1,
+                    labelBase: 'recibos por vencer',
+                }));
             }
         });
 
@@ -84,7 +110,42 @@ const CalendarComponent = () => {
         });
 
         return evts;
-    }, [tarifas, currentMonth]);
+    }, [facturas, tarifas, currentMonth]);
+
+    const selectedDateEvents = useMemo(() => {
+        if (!selectedDate) return [];
+
+        const [y, m, d] = selectedDate.split("-").map(Number);
+        const selectedDateObj = new Date(y, m - 1, d);
+        const dayEvents = [...(events[selectedDate] || [])];
+        const isWeekend = selectedDateObj.getDay() === 0 || selectedDateObj.getDay() === 6;
+        const hasHoliday = dayEvents.some(evt => evt.tipo === "feriado");
+
+        if (isWeekend) {
+            dayEvents.push({
+                title: "Fin de semana",
+                descripcion: "Día inhábil para emisión y vencimientos automáticos",
+                tipo: "inhabil",
+                color: "default"
+            });
+        } else if (hasHoliday) {
+            dayEvents.push({
+                title: "Día inhábil",
+                descripcion: "Fecha no hábil por feriado oficial",
+                tipo: "inhabil",
+                color: "default"
+            });
+        } else if (esDiaHabil(selectedDateObj)) {
+            dayEvents.push({
+                title: "Día hábil",
+                descripcion: "Fecha hábil para operaciones de facturación",
+                tipo: "habil",
+                color: "success"
+            });
+        }
+
+        return dayEvents;
+    }, [selectedDate, events]);
 
     function parseDate(str) {
         if (!str) return new Date();
@@ -169,7 +230,7 @@ const CalendarComponent = () => {
                                 Calendario General
                             </h2>
                             <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
-                                Gestión de tarifas y feriados
+                                Emisiones, vencimientos y días hábiles
                             </p>
                         </div>
                     </div>
@@ -296,8 +357,8 @@ const CalendarComponent = () => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
-                        {selectedDate && events[selectedDate] ? (
-                            events[selectedDate].map((event, index) => (
+                        {selectedDate && selectedDateEvents.length > 0 ? (
+                            selectedDateEvents.map((event, index) => (
                                 <div 
                                     key={index} 
                                     className={`
@@ -306,7 +367,13 @@ const CalendarComponent = () => {
                                             ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'
                                             : event.tipo === 'vencimiento'
                                                 ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30'
-                                                : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'
+                                                : event.tipo === 'emision'
+                                                    ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/30'
+                                                    : event.tipo === 'habil'
+                                                        ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
+                                                        : event.tipo === 'inhabil'
+                                                            ? 'bg-slate-100/80 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700'
+                                                            : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'
                                         }
                                     `}
                                 >
@@ -316,7 +383,12 @@ const CalendarComponent = () => {
                                         </h4>
                                     </div>
                                     <Chip size="sm" color={event.color} variant="flat" className="h-4 px-1 text-[9px] font-semibold uppercase mb-2">
-                                        {event.tipo === 'vencimiento' ? 'Vencimiento' : event.tipo === 'feriado' ? 'Feriado' : 'Tarifa'}
+                                        {event.tipo === 'vencimiento' ? 'Vencimiento'
+                                            : event.tipo === 'feriado' ? 'Feriado'
+                                            : event.tipo === 'emision' ? 'Emisión'
+                                            : event.tipo === 'habil' ? 'Hábil'
+                                            : event.tipo === 'inhabil' ? 'Inhábil'
+                                            : 'Tarifa'}
                                     </Chip>
                                     {event.descripcion && (
                                         <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { usePagos } from "../context/PagosContext";
+import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
 export const useTabPagos = () => {
   // Consumir datos y funciones del contexto
@@ -122,7 +123,7 @@ export const useTabPagos = () => {
     search,
     // Exponer valores del contexto para la UI
     filtroMetodo: filtros?.metodo_pago || "All", 
-    filtroPeriodo: filtros?.periodo || new Date().toISOString().slice(0, 7),
+    filtroPeriodo: filtros?.periodo || obtenerPeriodoActual(),
     currentPage,
     rowsPerPage,
     totalPages,

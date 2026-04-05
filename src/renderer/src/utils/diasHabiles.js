@@ -25,6 +25,27 @@ function obtenerNesimoLunes(anio, mes, n) {
  * @param {number} anio
  * @returns {{ fecha: string, nombre: string }[]}
  */
+function obtenerFeriadosAdicionales(anio) {
+    const raw = import.meta?.env?.VITE_FERIADOS_ADICIONALES;
+    if (!raw || typeof raw !== 'string') return [];
+
+    return raw
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(item => {
+            const [fechaRaw, nombreRaw] = item.split('|');
+            const fecha = (fechaRaw || '').trim();
+            const nombre = (nombreRaw || 'Fecha importante').trim();
+
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return null;
+            if (Number(fecha.substring(0, 4)) !== anio) return null;
+
+            return { fecha, nombre };
+        })
+        .filter(Boolean);
+}
+
 export function obtenerFeriadosMexico(anio) {
     const feriados = [
         { fecha: `${anio}-01-01`, nombre: 'Año Nuevo' },
@@ -41,6 +62,15 @@ export function obtenerFeriadosMexico(anio) {
     if (anio >= 2024 && (anio - 2024) % 6 === 0) {
         feriados.push({ fecha: `${anio}-10-01`, nombre: 'Transmisión del Poder Ejecutivo' });
     }
+
+    const feriadosAdicionales = obtenerFeriadosAdicionales(anio);
+    const fechasExistentes = new Set(feriados.map(f => f.fecha));
+    feriadosAdicionales.forEach((f) => {
+        if (!fechasExistentes.has(f.fecha)) {
+            feriados.push(f);
+            fechasExistentes.add(f.fecha);
+        }
+    });
 
     return feriados;
 }

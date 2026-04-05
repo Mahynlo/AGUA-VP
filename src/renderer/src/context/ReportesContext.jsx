@@ -19,6 +19,12 @@ export function ReportesProvider({ children }) {
     const [cacheLecturas, setCacheLecturas] = useState({});
     const [lecturasActuales, setLecturasActuales] = useState([]);
 
+    // --- NUEVO: Cache y estado para reporte financiero ---
+    const [cacheFinanciero, setCacheFinanciero] = useState({});
+    const [financieroActual, setFinancieroActual] = useState(null);
+    const [loadingFinanciero, setLoadingFinanciero] = useState(false);
+    const [errorFinanciero, setErrorFinanciero] = useState(null);
+
     /**
      * Carga los recibos para un periodo dado.
      * Si ya existen en memoria (cache), los usa directamante sin llamar a la API.
@@ -98,6 +104,35 @@ export function ReportesProvider({ children }) {
         }
     }, [cacheLecturas]);
 
+    /**
+     * Carga el reporte financiero con filtros flexibles.
+     */
+    const cargarReporteFinanciero = useCallback(async (token, filtros = {}, forzarRecarga = false) => {
+        const cacheKey = JSON.stringify(filtros || {});
+
+        if (!forzarRecarga && cacheFinanciero[cacheKey]) {
+            setFinancieroActual(cacheFinanciero[cacheKey]);
+            return cacheFinanciero[cacheKey];
+        }
+
+        setLoadingFinanciero(true);
+        setErrorFinanciero(null);
+
+        try {
+            const data = await window.api.fetchReporteFinanciero(token, filtros);
+            setFinancieroActual(data || null);
+            setCacheFinanciero(prev => ({ ...prev, [cacheKey]: data || null }));
+            return data;
+        } catch (err) {
+            console.error("Error cargando reporte financiero:", err);
+            const errorMessage = err?.message || "Error al cargar reporte financiero";
+            setErrorFinanciero(errorMessage);
+            throw err;
+        } finally {
+            setLoadingFinanciero(false);
+        }
+    }, [cacheFinanciero]);
+
 
     /**
      * Limpia la caché si es necesario (ej. logout)
@@ -105,8 +140,11 @@ export function ReportesProvider({ children }) {
     const limpiarCache = useCallback(() => {
         setCacheRecibos({});
         setCacheLecturas({});
+        setCacheFinanciero({});
         setRecibosActuales([]);
         setLecturasActuales([]);
+        setFinancieroActual(null);
+        setErrorFinanciero(null);
         setPeriodoActual("");
     }, []);
 
@@ -116,6 +154,7 @@ export function ReportesProvider({ children }) {
             console.log("🧹 Invalidando caché de reportes por actualización de datos...");
             setCacheRecibos({});
             setCacheLecturas({});
+            setCacheFinanciero({});
         };
 
         window.addEventListener('dashboard-update', handleInvalidate);
@@ -128,8 +167,12 @@ export function ReportesProvider({ children }) {
         periodo: periodoActual,
         loading,
         error,
+        financiero: financieroActual,
+        loadingFinanciero,
+        errorFinanciero,
         cargarRecibos,
         cargarLecturas,
+        cargarReporteFinanciero,
         limpiarCache
     };
 
