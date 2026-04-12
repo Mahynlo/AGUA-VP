@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Card, CardBody, CardHeader, Button, Spinner } from "@nextui-org/react";
 import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiPhotograph, HiUpload, HiTrash, HiCollection, HiPlusCircle } from "react-icons/hi";
 import { useAppLogo } from "../../context/LogoContext";
+import SelectorPeriodoAvanzado from "../ui/SelectorPeriodoAvanzado";
+import { formatearPeriodo, obtenerPeriodoActual } from "../../utils/periodoUtils";
+import { nowHermosilloDateStr } from "../../utils/diasHabiles";
 
 // Input reutilizable (Premium UI)
 const ConfigInput = ({ label, value, onChange, icon, type = "number", color = "blue", description, min = 0 }) => {
@@ -80,11 +83,15 @@ export default function PanelConfiguracion() {
     facturas_para_tercer_aviso: 3,
     facturas_para_corte: 4,
     dias_gracia: 0,
-    dias_vencimiento_factura: 30,
+    dias_vencimiento_factura: 15,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loadingRecalculo, setLoadingRecalculo] = useState(false);
+  const [periodoRecalculo, setPeriodoRecalculo] = useState(obtenerPeriodoActual());
+  const [actualizarFechaEmision, setActualizarFechaEmision] = useState(false);
+  const [fechaEmisionObjetivo, setFechaEmisionObjetivo] = useState(nowHermosilloDateStr());
 
   useEffect(() => {
     if (token) {
@@ -111,6 +118,37 @@ export default function PanelConfiguracion() {
       alert("Error al guardar la configuración");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRecalcularVencimientos = async () => {
+    if (!token) return;
+
+    const confirmar = window.confirm(
+      `Se recalculará la fecha de vencimiento de facturas NO pagadas del período ${formatearPeriodo(periodoRecalculo)} usando los días de vencimiento configurados actualmente.${actualizarFechaEmision ? `\nAdemás, se actualizará fecha de emisión a ${fechaEmisionObjetivo}.` : ""}\n\n¿Desea continuar?`
+    );
+    if (!confirmar) return;
+
+    setLoadingRecalculo(true);
+    try {
+      const resultado = await window.api.deudores.recalcularVencimientosPorPeriodo(token, {
+        periodo: periodoRecalculo,
+        incluir_pagadas: false,
+        actualizar_fecha_emision: actualizarFechaEmision,
+        fecha_emision_objetivo: actualizarFechaEmision ? fechaEmisionObjetivo : null,
+      });
+
+      alert(
+        `${resultado.message || "Recalculo completado"}\n` +
+        `Período: ${formatearPeriodo(resultado.periodo || periodoRecalculo)}\n` +
+        `${resultado.actualizo_fecha_emision ? `Fecha emisión aplicada: ${resultado.fecha_emision_aplicada}\n` : ""}` +
+        `Facturas actualizadas: ${resultado.facturas_actualizadas || 0}`
+      );
+    } catch (error) {
+      console.error("Error recalculando vencimientos:", error);
+      alert(`Error al recalcular vencimientos: ${error.message || error}`);
+    } finally {
+      setLoadingRecalculo(false);
     }
   };
 
@@ -262,13 +300,79 @@ export default function PanelConfiguracion() {
               onChange={(e) => setConfig({ ...config, dias_vencimiento_factura: Number(e.target.value) })}
               icon={<HiCalendar className="w-5 h-5 text-emerald-500" />}
               color="green"
-              description="Tiempo límite para pagar (Standard: 30 días desde la emisión)."
+              description="Tiempo límite para pagar (Estándar: 15 días desde la emisión)."
             />
           </div>
         </CardBody>
       </Card>
 
-      {/* ── SECCIÓN 4: IDENTIDAD VISUAL ── */}
+      {/* ── SECCIÓN 4: CORRECCIÓN DE VENCIMIENTOS ── */}
+      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200/70 dark:border-amber-800/40">
+        <CardHeader className="flex items-center gap-3 border-b border-amber-100 dark:border-amber-900/40 px-6 pt-6 pb-4">
+          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+            <HiExclamation className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Corrección de vencimientos por período</h3>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
+              Herramienta de ajuste para facturas históricas no pagadas.
+            </p>
+          </div>
+        </CardHeader>
+        <CardBody className="p-6 space-y-4">
+          <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+            Use esta acción para corregir facturas generadas con lógica anterior. Solo afecta facturas no pagadas del período seleccionado.
+          </p>
+
+          <SelectorPeriodoAvanzado
+            value={periodoRecalculo}
+            onChange={setPeriodoRecalculo}
+            placeholder="Seleccionar período a recalcular"
+            startYear={2020}
+            size="sm"
+            isDisabled={saving || loadingRecalculo}
+            className="w-full"
+          />
+
+          <label className="flex items-center gap-2 text-sm text-amber-900 dark:text-amber-300">
+            <input
+              type="checkbox"
+              checked={actualizarFechaEmision}
+              onChange={(e) => setActualizarFechaEmision(e.target.checked)}
+              disabled={saving || loadingRecalculo}
+              className="rounded border-amber-300"
+            />
+            Actualizar también la fecha de emisión
+          </label>
+
+          {actualizarFechaEmision && (
+            <ConfigInput
+              label="Nueva fecha de emisión"
+              type="date"
+              value={fechaEmisionObjetivo}
+              onChange={(e) => setFechaEmisionObjetivo(e.target.value)}
+              icon={<HiCalendar className="w-5 h-5 text-amber-600" />}
+              color="amber"
+              description="Esta fecha se aplicará a todas las facturas no pagadas del período seleccionado"
+            />
+          )}
+
+          <div>
+            <Button
+              color="warning"
+              variant="flat"
+              onPress={handleRecalcularVencimientos}
+              isLoading={loadingRecalculo}
+              isDisabled={saving || loadingRecalculo || !periodoRecalculo || (actualizarFechaEmision && !fechaEmisionObjetivo)}
+              className="font-bold"
+            >
+              Recalcular vencimientos del período
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* ── SECCIÓN 5: IDENTIDAD VISUAL ── */}
       <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
         <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
           <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
@@ -335,7 +439,7 @@ export default function PanelConfiguracion() {
         </CardBody>
       </Card>
 
-      {/* ── SECCIÓN 5: IMÁGENES DEL LOGIN ── */}
+      {/* ── SECCIÓN 6: IMÁGENES DEL LOGIN ── */}
       <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
         <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
           <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">

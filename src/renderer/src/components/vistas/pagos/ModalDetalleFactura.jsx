@@ -41,9 +41,21 @@ const ModalDetalleFactura = ({ isOpen, onClose, factura }) => {
 
   const estadoConfig = getEstadoConfig(factura.estado);
 
+  const parseFechaLocal = (valor) => {
+    if (!valor) return null;
+    const match = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+    const parsed = new Date(valor);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
   const formatFecha = (fecha) => {
     if (!fecha) return "No registrada";
-    return new Date(fecha).toLocaleDateString("es-MX", {
+    const parsedDate = parseFechaLocal(fecha);
+    if (!parsedDate) return "No registrada";
+    return parsedDate.toLocaleDateString("es-MX", {
       year: "numeric",
       month: "long",
       day: "numeric",

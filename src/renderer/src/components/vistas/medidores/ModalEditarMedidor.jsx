@@ -378,7 +378,8 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 >
                                                     <SelectItem key="Activo" value="Activo">Activo</SelectItem>
                                                     <SelectItem key="Inactivo" value="Inactivo">Inactivo</SelectItem>
-                                                    <SelectItem key="Mantenimiento" value="Mantenimiento">Mantenimiento</SelectItem>
+                                                    <SelectItem key="Retirado" value="Retirado">Retirado</SelectItem>
+                                                    <SelectItem key="No instalado" value="No instalado">No instalado</SelectItem>
                                                 </Select>
                                             </div>
 
@@ -503,11 +504,11 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                     </p>
                                                     <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-indigo-100 dark:border-zinc-800 shadow-sm">
                                                         <BuscarCliente onClienteSeleccionado={handleClienteSeleccionado} />
-                                                        {clienteIdBusqueda && (
+                                                        {clienteId && (
                                                             <div className="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2 animate-in fade-in">
                                                                 <HiCheck className="text-emerald-600 dark:text-emerald-400 text-lg shrink-0" />
                                                                 <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                                                                    Se asignará al Cliente ID: <strong>{clienteIdBusqueda}</strong> al guardar.
+                                                                    Se asignará al Cliente ID: <strong>{clienteId}</strong> al guardar.
                                                                 </p>
                                                             </div>
                                                         )}

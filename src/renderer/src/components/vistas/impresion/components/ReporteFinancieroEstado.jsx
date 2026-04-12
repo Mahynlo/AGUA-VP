@@ -454,7 +454,7 @@ const ReporteFinancieroEstado = () => {
                     <TableColumn>Facturas</TableColumn>
                     <TableColumn>Deuda</TableColumn>
                   </TableHeader>
-                  <TableBody emptyContent="Sin deudores en el rango" items={(listados.deudores || []).slice(0, 12)}>
+                  <TableBody emptyContent="Sin deudores en el rango" items={listados.deudores || []}>
                     {(item) => (
                       <TableRow key={item.cliente_id}>
                         <TableCell>{item.cliente_nombre}</TableCell>
@@ -481,7 +481,7 @@ const ReporteFinancieroEstado = () => {
                     <TableColumn>Pagos</TableColumn>
                     <TableColumn>Deuda actual</TableColumn>
                   </TableHeader>
-                  <TableBody emptyContent="Sin pagos en el rango" items={(listados.pagadores || []).slice(0, 12)}>
+                  <TableBody emptyContent="Sin pagos en el rango" items={listados.pagadores || []}>
                     {(item) => (
                       <TableRow key={item.cliente_id}>
                         <TableCell>{item.cliente_nombre}</TableCell>

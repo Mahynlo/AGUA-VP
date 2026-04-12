@@ -2,12 +2,15 @@ import { ipcMain } from 'electron';
 import { 
     fetchConfiguracionCorte,
     updateConfiguracionCorte,
+    recalcularVencimientosPorPeriodo,
     fetchCandidatosCorte,
     ejecutarCorte,
     registrarReconexion,
     crearConvenio,
     obtenerConvenio,
-    pagarParcialidad
+    pagarParcialidad,
+    fetchResumenCobroConvenio,
+    pagarIntegradoConvenio
 } from '../../fetch/deudores.js';
 
 export default function IpcHandlerDeudores() {
@@ -18,6 +21,10 @@ export default function IpcHandlerDeudores() {
 
     ipcMain.handle('update-configuracion-corte', async (event, token, config) => {
         return await updateConfiguracionCorte(token, config);
+    });
+
+    ipcMain.handle('recalcular-vencimientos-por-periodo', async (event, token, data) => {
+        return await recalcularVencimientosPorPeriodo(token, data);
     });
 
     ipcMain.handle('fetch-candidatos-corte', async (event, token) => {
@@ -43,5 +50,13 @@ export default function IpcHandlerDeudores() {
 
     ipcMain.handle('pagar-parcialidad', async (event, token, data) => {
         return await pagarParcialidad(token, data);
+    });
+
+    ipcMain.handle('fetch-resumen-cobro-convenio', async (event, token, medidorId) => {
+        return await fetchResumenCobroConvenio(token, medidorId);
+    });
+
+    ipcMain.handle('pagar-integrado-convenio', async (event, token, data) => {
+        return await pagarIntegradoConvenio(token, data);
     });
 }

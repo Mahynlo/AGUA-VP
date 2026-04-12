@@ -72,10 +72,12 @@ export function ClientesProvider({ children }) {
       }
 
       setError(null);
+      return response;
     } catch (err) {
       console.error("❌ Error al obtener clientes:", err);
       setClientes([]);
       setError(err);
+      return null;
     } finally {
       setLoading(false);
       setInitialLoading(false);

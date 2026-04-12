@@ -159,9 +159,10 @@ export const adaptarReciboAPI = (reciboAPI) => {
         
         // Facturación
         mes_facturado: reciboAPI.detalle_facturacion.mes_facturado || "PERIODO ACTUAL",
-        fecha_emision: reciboAPI.detalle_facturacion.fecha_lectura 
-            ? new Date(reciboAPI.detalle_facturacion.fecha_lectura).toISOString() 
-            : new Date().toISOString(),
+        fecha_emision: reciboAPI.detalle_facturacion.fecha_emision || null,
+        fecha_emision_hora: reciboAPI.detalle_facturacion.fecha_generacion || null,
+        fecha_creacion: reciboAPI.detalle_facturacion.fecha_generacion || null,
+        fecha_lectura: reciboAPI.detalle_facturacion.fecha_lectura || null,
         fecha_vencimiento: reciboAPI.detalle_facturacion.fecha_vencimiento || null,
         
         // Montos

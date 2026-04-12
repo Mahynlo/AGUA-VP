@@ -8,6 +8,31 @@ import useAnuncioRecibo from '../../hooks/useAnuncioRecibo';
 import useEquivalenciaConsumo from '../../hooks/useEquivalenciaConsumo';
 import { nowHermosilloDateStr } from '../../utils/diasHabiles';
 
+const formatearFechaAmigable = (value) => {
+    if (!value) return 'N/A';
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = match
+        ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+        : new Date(value);
+
+    if (Number.isNaN(date.getTime())) return 'N/A';
+
+    const base = new Intl.DateTimeFormat('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    }).format(date);
+
+    const partes = base.split(' ');
+    if (partes.length >= 3) {
+        const mes = partes[1].replace('.', '');
+        const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1).toLowerCase();
+        return `${partes[0]} ${mesCapitalizado} ${partes[2]}`;
+    }
+
+    return base.replace('.', '');
+};
+
 const Recibo = ({ facturaData = null }) => {
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
@@ -152,7 +177,7 @@ const Recibo = ({ facturaData = null }) => {
                                 </div>
                                 <div className='flex'>
                                     <span className='font-bold text-gray-700 w-20 px-2'>Fecha lectura:</span>
-                                    <span className='text-gray-800'>{new Date(factura.fecha_emision).toLocaleDateString('es-MX')}</span>
+                                    <span className='text-gray-800'>{formatearFechaAmigable(factura.fecha_emision)}</span>
                                 </div>
                                 
                                 <div className='flex'>
