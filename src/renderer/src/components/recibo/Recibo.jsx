@@ -19,13 +19,31 @@ const ESTILOS = {
 
 const formatearFecha = (value) => {
     if (!value) return 'N/A';
-    const date = new Date(value);
+    const date = parsearFechaYMD(value);
+    if (!date) return 'N/A';
     if (Number.isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleDateString('es-MX');
+    const base = new Intl.DateTimeFormat('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    }).format(date);
+
+    const partes = base.split(' ');
+    if (partes.length >= 3) {
+        const mes = partes[1].replace('.', '');
+        const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1).toLowerCase();
+        return `${partes[0]} ${mesCapitalizado} ${partes[2]}`;
+    }
+
+    return base.replace('.', '');
 };
 
 const parsearFechaYMD = (value) => {
-    if (!value || typeof value !== 'string') return null;
+    if (!value) return null;
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+    if (typeof value !== 'string') return null;
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!match) {
         const fallback = new Date(value);
@@ -48,6 +66,35 @@ const calcularCorteApartirDe = (fechaVencimiento) => {
     return siguienteDiaHabil(fechaBase);
 };
 
+const formatearFechaHoraEmisionCabecera = (factura) => {
+    if (!factura) return 'N/A';
+
+    const fuenteFecha =
+        factura.fecha_emision_hora ||
+        factura.fecha_emision_datetime ||
+        factura.fecha_creacion ||
+        factura.created_at ||
+        factura.fecha_emision;
+
+    if (!fuenteFecha) return 'N/A';
+
+    const date = parsearFechaYMD(fuenteFecha);
+    if (!date || Number.isNaN(date.getTime())) return 'N/A';
+
+    const tieneHora = typeof fuenteFecha === 'string' && /(\d{2}:\d{2})/.test(fuenteFecha);
+    if (!tieneHora) return formatearFecha(date);
+
+    const hora = new Intl.DateTimeFormat('es-MX', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZone: 'America/Hermosillo'
+    }).format(date).toLowerCase();
+
+    return `${formatearFecha(date)}, ${hora}`;
+};
+
 const Recibo = ({ facturaData = null }) => {
     const { logoSrc } = useAppLogo();
     const [searchParams] = useSearchParams();
@@ -59,12 +106,12 @@ const Recibo = ({ facturaData = null }) => {
 
     // Fecha actual en zona horaria de Hermosillo (YYYY-MM-DD)
     const fechaActual = nowHermosilloDateStr();
-    const fechaHora = new Date().toLocaleString('es-MX', {
+    const fechaImpresion = new Date().toLocaleString('es-MX', {
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: true,
         timeZone: 'America/Hermosillo'
     });
-
     useEffect(() => {
         const cargarDatos = async () => {
             if (facturaData) return;
@@ -217,7 +264,7 @@ const Recibo = ({ facturaData = null }) => {
                             </div>
                             <div className='flex justify-between'>
                                 <span className='font-bold text-gray-700'>Fecha lectura:</span>
-                                <span className='text-gray-800'>{formatearFecha(factura.fecha_emision)}</span>
+                                <span className='text-gray-800'>{formatearFecha(factura.fecha_lectura)}</span>
                             </div>
                             <div className='flex justify-between'>
                                 <span className='font-bold text-gray-700'>Vencimiento:</span>
@@ -399,11 +446,14 @@ const Recibo = ({ facturaData = null }) => {
                                 {/* 1. Header Paginación */}
                                 <div className="text-right text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2 px-2 border-b border-dashed border-gray-300 pb-1">
                                     <div className="text-left font-mono text-gray-500">
-                                        {fechaHora} • Recibo {indicePagina * 2 + 1}
+                                        Fecha de emisión: {formatearFechaHoraEmisionCabecera(paginaRecibos[0])} • Recibo {indicePagina * 2 + 1}
                                     </div>
-                                    <div className='text-center'></div>
+                                    <div className='text-center font-mono text-gray-500'>
+                                        
+                                    </div>
+                                    
                                     <div className="text-right font-mono text-gray-500">
-                                        {paginaRecibos[1] ? `${fechaHora}  • Recibo ${indicePagina * 2 + 2}` : ''}
+                                        {paginaRecibos[1] ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(paginaRecibos[1])} • Recibo ${indicePagina * 2 + 2}` : ''}
                                     </div>
                                 </div>
 
@@ -435,6 +485,7 @@ const Recibo = ({ facturaData = null }) => {
                                     {/* Leyenda Izquierda */}
                                     <div className="text-gray-400 font-bold font-mono tracking-widest text-xs uppercase">
                                         AGUA Villa Pesqueira <span className="font-normal text-[9px] normal-case opacity-70 ml-2">Sistema de Gestión Municipal</span>
+                                        
                                     </div>
 
 

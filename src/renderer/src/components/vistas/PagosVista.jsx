@@ -8,13 +8,15 @@ import {
   HiCash, 
   HiExclamation, 
   HiCurrencyDollar, 
-  HiHand 
+  HiHand,
+  HiCalculator
 } from "react-icons/hi";
 import { Tabs, Tab } from "@nextui-org/react";
 import TabFacturas from "./pagos/TabFacturas";
 import TabPagos from "./pagos/TabPagos";
 import TabEstadisticas from "./pagos/TabEstadisticas";
 import TabDeudores from "./pagos/TabDeudores";
+import TabCobranzaCliente from "./pagos/TabCobranzaCliente";
 import { useFacturas } from "../../context/FacturasContext";
 import { usePagos } from "../../context/PagosContext";
 import { useDeudores } from "../../context/DeudoresContext";
@@ -22,7 +24,7 @@ import { useDeudores } from "../../context/DeudoresContext";
 const PagosVista = () => {
   // Estado para la pestaña activa
   const [selectedTab, setSelectedTab] = useState(() => {
-    return localStorage.getItem("pagos_activeTab") || "facturas";
+    return localStorage.getItem("pagos_activeTab") || "cobranza";
   });
 
   // Consumir contextos
@@ -95,6 +97,35 @@ const PagosVista = () => {
             value: "100%", // Placeholder o calculado
             label: "Efectividad",
             color: "teal"
+          }
+        });
+        break;
+
+      case "cobranza":
+        setKpis({
+          card1: {
+            icon: HiCurrencyDollar,
+            value: `$${(statsFacturas?.monto_total_pendiente || 0).toLocaleString('es-MX')}`,
+            label: "Cartera Visible",
+            color: "rose"
+          },
+          card2: {
+            icon: HiDocumentText,
+            value: (statsFacturas?.cantidad_pendientes || 0).toLocaleString('es-MX'),
+            label: "Facturas Pendientes",
+            color: "orange"
+          },
+          card3: {
+            icon: HiCreditCard,
+            value: (statsFacturas?.cantidad_pagadas || 0).toLocaleString('es-MX'),
+            label: "Facturas Pagadas",
+            color: "emerald"
+          },
+          card4: {
+            icon: HiCalculator,
+            value: "FIFO",
+            label: "Metodo Cobro",
+            color: "blue"
           }
         });
         break;
@@ -218,6 +249,36 @@ const PagosVista = () => {
               tabContent: "group-data-[selected=true]:text-emerald-600 dark:group-data-[selected=true]:text-emerald-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
             }}
           >
+            {/* TAB: COBRANZA */}
+            <Tab
+              key="cobranza"
+              title={
+                <div className="flex items-center gap-2.5">
+                  <HiCalculator className="w-5 h-5" />
+                  <span>Cobranza</span>
+                </div>
+              }
+            >
+              <div className="animate-in fade-in duration-500 pt-2">
+                <TabCobranzaCliente />
+              </div>
+            </Tab>
+
+            {/* TAB: DEUDORES */}
+            <Tab
+              key="deudores"
+              title={
+                <div className="flex items-center gap-2.5">
+                  <HiUserGroup className="w-5 h-5" />
+                  <span>Deudores</span>
+                </div>
+              }
+            >
+              <div className="animate-in fade-in duration-500 pt-2">
+                <TabDeudores />
+              </div>
+            </Tab>
+
             {/* TAB: FACTURAS */}
             <Tab
               key="facturas"
@@ -245,21 +306,6 @@ const PagosVista = () => {
             >
               <div className="animate-in fade-in duration-500 pt-2">
                 <TabPagos />
-              </div>
-            </Tab>
-
-            {/* TAB: DEUDORES */}
-            <Tab
-              key="deudores"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiUserGroup className="w-5 h-5" />
-                  <span>Deudores</span>
-                </div>
-              }
-            >
-              <div className="animate-in fade-in duration-500 pt-2">
-                <TabDeudores />
               </div>
             </Tab>
 

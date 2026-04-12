@@ -109,7 +109,18 @@ export const actualizarRuta = async (token_session, id_ruta, datosActualizados) 
         throw new Error(`Error del servidor (${response.status}): ${response.statusText}`);
       }
       
-      throw new Error(errorData.message || "Error al actualizar ruta");
+      const backendMessage =
+        errorData?.message ||
+        errorData?.error ||
+        (Array.isArray(errorData?.error) ? errorData.error.join(", ") : null) ||
+        "Error al actualizar ruta";
+
+      return {
+        success: false,
+        status: response.status,
+        message: backendMessage,
+        details: errorData
+      };
     }
 
     const data = await response.json();

@@ -24,7 +24,7 @@ import {
 } from "@nextui-org/react";
 import { FlechaReturnIcon } from "../../../IconsApp/IconsAppSystem";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
-import { HiEye, HiCreditCard, HiDownload, HiX, HiFilter, HiDocumentText, HiRefresh } from "react-icons/hi";
+import { HiEye, HiCreditCard, HiDownload, HiX, HiFilter, HiDocumentText, HiRefresh, HiCalculator } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useTabFacturas } from "../../../hooks/useTabFacturas";
 import { usePagos } from "../../../context/PagosContext";
@@ -32,6 +32,7 @@ import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
 import { formatearPeriodo } from "../../../utils/periodoUtils";
 import ModalDetalleFactura from "./ModalDetalleFactura";
 import ModalPago from "./ModalPago";
+import ModalPagoRapido from "./ModalPagoRapido";
 import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
 
@@ -61,12 +62,13 @@ const TabFacturas = () => {
   } = useTabFacturas();
 
   const { registrarPago } = usePagos();
-  const { setSuccess, setError } = useFeedback();
+  const { setSuccess } = useFeedback();
 
   // Estados para modales
   const [modalDetalle, setModalDetalle] = useState(false);
   const [modalPago, setModalPago] = useState(false);
   const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
+  const [modalPagoRapido, setModalPagoRapido] = useState(false);
 
   // Componente de skeleton loading premium
   const LoadingSkeleton = () => (
@@ -101,6 +103,16 @@ const TabFacturas = () => {
   if (initialLoading) {
     return <LoadingSkeleton />;
   }
+
+  const formatFechaLocal = (valor, options) => {
+    if (!valor) return "N/A";
+    const match = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = match
+      ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+      : new Date(valor);
+    if (Number.isNaN(date.getTime())) return "N/A";
+    return date.toLocaleDateString('es-MX', options);
+  };
 
   const periodoLabel = formatearPeriodo(filtroPeriodo);
 
@@ -229,6 +241,17 @@ const TabFacturas = () => {
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
+
+            <Button
+              color="success"
+              variant="flat"
+              className="font-bold bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+              startContent={<HiCalculator className="text-lg" />}
+              onPress={() => setModalPagoRapido(true)}
+              title="Modo rapido: marca los que NO pagaron y aplica al resto"
+            >
+              Modo rapido
+            </Button>
           </div>
         </CardHeader>
 
@@ -381,10 +404,10 @@ const TabFacturas = () => {
                         <span className="text-slate-400 font-normal mr-0.5">#</span>{factura.id}
                       </div>
                       <div className="text-[11px] font-medium text-slate-500">
-                        Emisión: {new Date(factura.fecha_emision).toLocaleDateString('es-MX', {day: '2-digit', month:'short', year:'numeric'})}
+                        Emisión: {formatFechaLocal(factura.fecha_emision, {day: '2-digit', month:'short', year:'numeric'})}
                       </div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        Vence: {new Date(factura.fecha_vencimiento).toLocaleDateString('es-MX', {day: '2-digit', month:'2-digit', year:'numeric'})}
+                        Vence: {formatFechaLocal(factura.fecha_vencimiento, {day: '2-digit', month:'2-digit', year:'numeric'})}
                       </div>
                     </div>
                   </TableCell>
@@ -450,17 +473,27 @@ const TabFacturas = () => {
                         <HiEye className="w-4 h-4" />
                       </Button>
 
-                      {/* Solo mostrar botón de pago si NO está en convenio y DEBE dinero */}
-                      {factura.saldo_pendiente > 0 && !factura.convenio_id && factura.estado !== 'En Convenio' && (
+                      {/* Mostrar pago para factura normal y para flujo integrado de convenio */}
+                      {factura.saldo_pendiente > 0 && (
                         <Button
                           isIconOnly
                           size="sm"
                           variant="flat"
-                          className="bg-emerald-50 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/50 dark:text-emerald-400 transition-colors"
+                          className={
+                            factura.estado === 'En Convenio' || factura.convenio_id
+                              ? "bg-blue-50 hover:bg-blue-200 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/50 dark:text-blue-400 transition-colors"
+                              : "bg-emerald-50 hover:bg-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/50 dark:text-emerald-400 transition-colors"
+                          }
                           onClick={() => handlePagar(factura)}
-                          title="Registrar Pago"
+                          title={
+                            factura.estado === 'En Convenio' || factura.convenio_id
+                              ? "Cobro Integrado Convenio"
+                              : "Registrar Pago"
+                          }
                         >
-                          <HiCreditCard className="w-4 h-4" />
+                          {factura.estado === 'En Convenio' || factura.convenio_id
+                            ? <HiCalculator className="w-4 h-4" />
+                            : <HiCreditCard className="w-4 h-4" />}
                         </Button>
                       )}
                     </div>
@@ -504,6 +537,14 @@ const TabFacturas = () => {
         }}
         factura={facturaSeleccionada}
         onConfirmarPago={handleConfirmarPago}
+        onPagoRegistrado={actualizarFacturas}
+      />
+
+      <ModalPagoRapido
+        isOpen={modalPagoRapido}
+        onClose={() => setModalPagoRapido(false)}
+        periodo={filtroPeriodo}
+        onPagoRegistrado={actualizarFacturas}
       />
     </div>
   );

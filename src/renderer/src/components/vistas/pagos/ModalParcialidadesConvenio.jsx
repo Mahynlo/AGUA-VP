@@ -15,7 +15,8 @@ import {
     TableCell,
     Chip,
     Progress,
-    Spinner
+    Spinner,
+    Divider
 } from "@nextui-org/react";
 import { useState, useEffect } from "react";
 import {
@@ -24,10 +25,12 @@ import {
     HiCheck,
     HiX,
     HiClock,
-    HiDocumentText
+    HiDocumentText,
+    HiCalculator
 } from "react-icons/hi";
 import { useAuth } from "../../../context/AuthContext";
 import ModalPagoParcialidad from "./ModalPagoParcialidad";
+import ModalPagoIntegradoConvenio from "./ModalPagoIntegradoConvenio";
 
 const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso }) => {
     const { token: authToken } = useAuth();
@@ -35,10 +38,13 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
     const [convenio, setConvenio] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [resumenCobro, setResumenCobro] = useState(null);
+    const [loadingResumen, setLoadingResumen] = useState(false);
 
     // Estado para modal de pago
     const [modalPagoOpen, setModalPagoOpen] = useState(false);
     const [parcialidadSeleccionada, setParcialidadSeleccionada] = useState(null);
+    const [modalIntegradoOpen, setModalIntegradoOpen] = useState(false);
 
     useEffect(() => {
         console.log('ModalParcialidadesConvenio - isOpen:', isOpen, 'convenioId:', convenioId, 'token:', token ? 'OK' : 'MISSING');
@@ -56,11 +62,31 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
             const data = await window.api.deudores.obtenerConvenio(token, convenioId);
             console.log('Convenio cargado:', data);
             setConvenio(data);
+
+            const medidorId = data?.convenio?.medidor_id;
+            if (medidorId) {
+                await cargarResumenCobro(medidorId);
+            } else {
+                setResumenCobro(null);
+            }
         } catch (err) {
             console.error('Error cargando convenio:', err);
             setError(err.message || 'Error al cargar el convenio');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const cargarResumenCobro = async (medidorId) => {
+        setLoadingResumen(true);
+        try {
+            const resumen = await window.api.deudores.fetchResumenCobroConvenio(token, medidorId);
+            setResumenCobro(resumen);
+        } catch (err) {
+            console.error('Error cargando resumen de cobro:', err);
+            setResumenCobro(null);
+        } finally {
+            setLoadingResumen(false);
         }
     };
 
@@ -77,6 +103,15 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
         await cargarConvenio();
 
         // Notificar al componente padre
+        if (onPagoExitoso) {
+            onPagoExitoso();
+        }
+    };
+
+    const handlePagoIntegradoExitoso = async () => {
+        setModalIntegradoOpen(false);
+        await cargarConvenio();
+
         if (onPagoExitoso) {
             onPagoExitoso();
         }
@@ -192,6 +227,35 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
                                                 className="max-w-full"
                                             />
                                         </div>
+
+                                        <Divider className="my-4" />
+
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                            <div>
+                                                <p className="text-xs text-default-500">Cobro combinado sugerido</p>
+                                                {loadingResumen ? (
+                                                    <p className="text-sm font-medium text-default-500">Calculando...</p>
+                                                ) : (
+                                                    <p className="text-base font-semibold">
+                                                        {resumenCobro?.sugerencia_cobro?.total != null
+                                                            ? formatearMoneda(resumenCobro.sugerencia_cobro.total)
+                                                            : formatearMoneda(0)}
+                                                    </p>
+                                                )}
+                                                <p className="text-xs text-default-400 mt-1">
+                                                    Incluye recibo del periodo + parcialidad del convenio
+                                                </p>
+                                            </div>
+                                            <Button
+                                                color="primary"
+                                                variant="flat"
+                                                startContent={<HiCalculator />}
+                                                onPress={() => setModalIntegradoOpen(true)}
+                                                isDisabled={loadingResumen || !resumenCobro}
+                                            >
+                                                Cobro Integrado
+                                            </Button>
+                                        </div>
                                     </CardBody>
                                 </Card>
 
@@ -298,6 +362,14 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
                 parcialidad={parcialidadSeleccionada}
                 convenio={convenio?.convenio}
                 onConfirmarPago={handlePagoExitoso}
+            />
+
+            <ModalPagoIntegradoConvenio
+                isOpen={modalIntegradoOpen}
+                onClose={() => setModalIntegradoOpen(false)}
+                resumenCobro={resumenCobro}
+                convenioId={convenio?.convenio?.id || convenioId}
+                onPagoExitoso={handlePagoIntegradoExitoso}
             />
         </>
     );

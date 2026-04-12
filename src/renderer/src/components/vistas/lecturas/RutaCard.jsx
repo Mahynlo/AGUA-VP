@@ -33,6 +33,7 @@ import ModalDetalleRuta from "./ModalDetalleRuta";
 import { useRutas } from "../../../context/RutasContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { useAuth } from "../../../context/AuthContext";
+import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
 
 const getResultadoFacturacionStorageKey = (rutaId, periodo) => `facturacion_resultado_${rutaId}_${periodo}`;
 
@@ -91,7 +92,7 @@ export default function RutaCard({ ruta }) {
     setIsGenerando(true);
     try {
       const token = localStorage.getItem('token');
-      const hoy = new Date().toISOString().split('T')[0];
+      const hoy = nowHermosilloDateStr();
       const result = await window.api.generarFacturasRuta(
         { ruta_id: ruta.id, periodo: ruta.periodo_mostrado, fecha_emision: hoy, recalcular: false },
         token
@@ -135,7 +136,7 @@ export default function RutaCard({ ruta }) {
     setIsGenerando(true);
     try {
       const token = localStorage.getItem('token');
-      const hoy = new Date().toISOString().split('T')[0];
+      const hoy = nowHermosilloDateStr();
       const result = await window.api.generarFacturasRuta(
         {
           ruta_id: ruta.id,

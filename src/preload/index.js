@@ -91,6 +91,11 @@ const api = {
     return await ipcRenderer.invoke("register-pago", pago, token_session);
   },
 
+  // Registro de pago distribuido por cliente (FIFO)
+  registerPagoDistribuido: async (pagoDistribuido, token_session) => {
+    return await ipcRenderer.invoke("register-pago-distribuido", pagoDistribuido, token_session);
+  },
+
   // Fetch de facturas
   fetchFacturas: async (token_session, params) => {
     return await ipcRenderer.invoke("fetch-facturas", { token_session, params });
@@ -121,14 +126,16 @@ const api = {
   deudores: {
     fetchConfiguracion: async (token) =>ipcRenderer.invoke('fetch-configuracion-corte', token),
     updateConfiguracion: async (token, config) => ipcRenderer.invoke('update-configuracion-corte', token, config),
+    recalcularVencimientosPorPeriodo: async (token, data) => ipcRenderer.invoke('recalcular-vencimientos-por-periodo', token, data),
     fetchCandidatos: async (token) => ipcRenderer.invoke('fetch-candidatos-corte', token),
     ejecutarCorte: async (token, data) => ipcRenderer.invoke('ejecutar-corte', token, data),
     registrarReconexion: async (token, data) => ipcRenderer.invoke('registrar-reconexion', token, data),
     crearConvenio: async (token, data) => ipcRenderer.invoke('crear-convenio', token, data),
     obtenerConvenio: async (token, convenioId) => ipcRenderer.invoke('obtener-convenio', token, convenioId),
-    pagarParcialidad: async (token, data) => ipcRenderer.invoke('pagar-parcialidad', token, data)
+    pagarParcialidad: async (token, data) => ipcRenderer.invoke('pagar-parcialidad', token, data),
+    fetchResumenCobroConvenio: async (token, medidorId) => ipcRenderer.invoke('fetch-resumen-cobro-convenio', token, medidorId),
+    pagarIntegradoConvenio: async (token, data) => ipcRenderer.invoke('pagar-integrado-convenio', token, data)
   },
-
 
 
 

@@ -157,6 +157,44 @@ export function PagosProvider({ children }) {
     }
   }, [actualizarPagos]);
 
+  // Función para registrar un pago distribuido por cliente (FIFO)
+  const registrarPagoDistribuido = useCallback(async (pagoData) => {
+    try {
+      setLoading(true);
+      const token_session = localStorage.getItem("token");
+      if (!token_session) {
+        throw new Error("No se encontró token de sesión");
+      }
+
+      const requiredFields = ['cliente_id', 'fecha_pago', 'cantidad_entregada', 'metodo_pago', 'modificado_por'];
+      const missingFields = requiredFields.filter(field => !pagoData[field] && pagoData[field] !== 0);
+
+      if (missingFields.length > 0) {
+        throw new Error(`Campos requeridos: ${missingFields.join(', ')}`);
+      }
+
+      const result = await window.api.registerPagoDistribuido(pagoData, token_session);
+
+      if (result.success) {
+        await actualizarPagos();
+        window.dispatchEvent(new CustomEvent('dashboard-update'));
+        return {
+          success: true,
+          message: result.message || "Pago distribuido registrado exitosamente",
+          data: result.data
+        };
+      }
+
+      throw new Error(result.message || "Error al registrar pago distribuido");
+    } catch (error) {
+      console.error("❌ Error al registrar pago distribuido:", error);
+      setError(error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [actualizarPagos]);
+
   // Función para obtener pagos de una factura específica
   const obtenerPagosPorFactura = useCallback((facturaId) => {
     return pagos.filter(pago => pago.factura_id === facturaId);
@@ -174,6 +212,7 @@ export function PagosProvider({ children }) {
       error,
       actualizarPagos,
       registrarPago,
+      registrarPagoDistribuido,
       obtenerPagosPorFactura,
       fetchPagos
     }}>

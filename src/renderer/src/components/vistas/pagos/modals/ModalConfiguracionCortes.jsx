@@ -31,7 +31,7 @@ const ModalConfiguracionCortes = ({ isOpen, onClose }) => {
         facturas_para_tercer_aviso: 3,
         facturas_para_corte: 4,
         dias_gracia: 0,
-        dias_vencimiento_factura: 30
+        dias_vencimiento_factura: 15
     });
     const [loading, setLoading] = useState(false);
 
@@ -111,7 +111,7 @@ const ModalConfiguracionCortes = ({ isOpen, onClose }) => {
                             onChange={(e) => setConfig({ ...config, dias_vencimiento_factura: Number(e.target.value) })}
                             icon={<HiCalendar className="w-5 h-5 text-amber-600" />}
                             color="amber"
-                            description="Días desde la emisión hasta que una factura se considera vencida (por defecto 30)"
+                            description="Días calendario desde la emisión hasta vencimiento (por defecto 15)"
                         />
                     </div>
 

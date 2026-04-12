@@ -19,9 +19,88 @@ const ESTILOS = {
 
 const formatearFecha = (value) => {
     if (!value) return 'N/A';
-    const date = new Date(value);
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = match
+        ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+        : new Date(value);
     if (Number.isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleDateString('es-MX');
+    const base = new Intl.DateTimeFormat('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    }).format(date);
+
+    const partes = base.split(' ');
+    if (partes.length >= 3) {
+        const mes = partes[1].replace('.', '');
+        const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1).toLowerCase();
+        return `${partes[0]} ${mesCapitalizado} ${partes[2]}`;
+    }
+
+    return base.replace('.', '');
+};
+
+const obtenerFuenteFechaFactura = (factura) => {
+    if (!factura) return null;
+    return (
+        factura.fecha_emision_hora ||
+        factura.fecha_emision_datetime ||
+        factura.fecha_creacion ||
+        factura.created_at ||
+        factura.fecha_emision ||
+        null
+    );
+};
+
+const formatearHoraGeneracionCabecera = (factura) => {
+    const fuenteFecha = obtenerFuenteFechaFactura(factura);
+    if (!fuenteFecha) return 'N/A';
+
+    const tieneHora = typeof fuenteFecha === 'string' && /(\d{2}:\d{2})/.test(fuenteFecha);
+    if (!tieneHora) return 'N/A';
+
+    const match = String(fuenteFecha).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = match
+        ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+        : new Date(fuenteFecha);
+
+    if (Number.isNaN(date.getTime())) return 'N/A';
+
+    return new Intl.DateTimeFormat('es-MX', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZone: 'America/Hermosillo'
+    }).format(date).toLowerCase();
+};
+
+const formatearFechaHoraEmisionCabecera = (factura) => {
+    if (!factura) return 'N/A';
+
+    const fuenteFecha = obtenerFuenteFechaFactura(factura);
+
+    if (!fuenteFecha) return 'N/A';
+
+    const match = String(fuenteFecha).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const date = match
+        ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+        : new Date(fuenteFecha);
+
+    if (Number.isNaN(date.getTime())) return 'N/A';
+
+    const tieneHora = typeof fuenteFecha === 'string' && /(\d{2}:\d{2})/.test(fuenteFecha);
+    if (!tieneHora) return formatearFecha(date);
+
+    const hora = new Intl.DateTimeFormat('es-MX', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+        timeZone: 'America/Hermosillo'
+    }).format(date).toLowerCase();
+
+    return `${formatearFecha(date)}, ${hora}`;
 };
 
 const Recibo = ({ facturaData = null }) => {
@@ -33,12 +112,12 @@ const Recibo = ({ facturaData = null }) => {
     const { obtenerFraseEquivalencia } = useEquivalenciaConsumo();
 
     const fechaActual = nowHermosilloDateStr();
-    const fechaHora = new Date().toLocaleString('es-MX', {
+    const fechaImpresion = new Date().toLocaleString('es-MX', {
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: true,
         timeZone: 'America/Hermosillo'
     });
-
     useEffect(() => {
         const cargarDatos = async () => {
             if (facturaData) return;
@@ -163,7 +242,7 @@ const Recibo = ({ facturaData = null }) => {
                             </div>
                             <div className='flex justify-between'>
                                 <span className='font-bold text-gray-700'>Fecha lectura:</span>
-                                <span className='text-gray-800'>{formatearFecha(factura.fecha_emision)}</span>
+                                <span className='text-gray-800'>{formatearFecha(factura.fecha_lectura)}</span>
                             </div>
                             <div className='flex justify-between'>
                                 <span className='font-bold text-gray-700'>Vencimiento:</span>
@@ -373,11 +452,11 @@ const Recibo = ({ facturaData = null }) => {
                                     {/* Header Paginación */}
                                     <div className="text-right text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2 px-2 border-b border-dashed border-gray-300 pb-1">
                                         <div className="text-left font-mono text-gray-500">
-                                            {fechaHora} • Recibo {indicePagina * 2 + 1}
+                                            Fecha de emisión: {formatearFechaHoraEmisionCabecera(reciboIzquierdoFrente)} • Hora generación: {formatearHoraGeneracionCabecera(reciboIzquierdoFrente)} • Recibo {indicePagina * 2 + 1}
                                         </div>
-                                        <div></div>
+                                        <div className="text-center font-mono text-gray-500">Fecha impresión: {fechaImpresion}</div>
                                         <div className="text-right font-mono text-gray-500">
-                                            {reciboDerechoFrente ? `${fechaHora}  • Recibo ${indicePagina * 2 + 2}` : ''}
+                                            {reciboDerechoFrente ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(reciboDerechoFrente)} • Hora generación: ${formatearHoraGeneracionCabecera(reciboDerechoFrente)} • Recibo ${indicePagina * 2 + 2}` : ''}
                                         </div>
                                     </div>
 

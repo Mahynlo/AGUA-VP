@@ -1,6 +1,6 @@
 import { ipcMain} from 'electron';
 import {fetchPagos } from "../../fetch/pagos.js"; // Importa la función fetchPagos
-import {registerPagos } from "../../register/pagos.js"; // Importa la función registerPagos
+import {registerPagos, registerPagoDistribuido } from "../../register/pagos.js"; // Importa funciones de registro de pagos
 export default function IpcHandlerPagos () {
     /**************************************************************************************************************
      * Fetch pagos
@@ -24,5 +24,15 @@ export default function IpcHandlerPagos () {
             return { success: false, message: "Faltan campos obligatorios.(ipcmain-register-pago)" };
         }
         return await registerPagos(pago, token_session);
+    });
+
+    ipcMain.handle("register-pago-distribuido", async (event, pagoDistribuido, token_session) => {
+        const { cliente_id, fecha_pago, cantidad_entregada, metodo_pago, modificado_por } = pagoDistribuido || {};
+
+        if (!cliente_id || !fecha_pago || !cantidad_entregada || !metodo_pago || !modificado_por) {
+            return { success: false, message: "Faltan campos obligatorios.(ipcmain-register-pago-distribuido)" };
+        }
+
+        return await registerPagoDistribuido(pagoDistribuido, token_session);
     });
 }

@@ -67,6 +67,29 @@ async function updateConfiguracionCorte(token, config) {
 }
 
 /**
+ * Recalcula fechas de vencimiento para facturas de un período específico
+ */
+async function recalcularVencimientosPorPeriodo(token, data) {
+    try {
+        const response = await fetch(`${API_URL}/api/v2/deudores/configuracion/recalcular-vencimientos`, {
+            method: 'POST',
+            headers: getHeaders(token),
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error en recalcularVencimientosPorPeriodo:', error);
+        throw error;
+    }
+}
+
+/**
  * Obtiene lista de candidatos a corte
  */
 async function fetchCandidatosCorte(token) {
@@ -199,13 +222,61 @@ async function pagarParcialidad(token, data) {
     }
 }
 
+/**
+ * Obtiene resumen de cobro combinado por medidor
+ */
+async function fetchResumenCobroConvenio(token, medidorId) {
+    try {
+        const response = await fetch(`${API_URL}/api/v2/deudores/convenios/resumen-cobro/${medidorId}`, {
+            method: 'GET',
+            headers: getHeaders(token)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error en fetchResumenCobroConvenio:', error);
+        throw error;
+    }
+}
+
+/**
+ * Registra pago integrado (factura + convenio)
+ */
+async function pagarIntegradoConvenio(token, data) {
+    try {
+        const response = await fetch(`${API_URL}/api/v2/deudores/convenios/pagar-integrado`, {
+            method: 'POST',
+            headers: getHeaders(token),
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Error ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error en pagarIntegradoConvenio:', error);
+        throw error;
+    }
+}
+
 export {
     fetchConfiguracionCorte,
     updateConfiguracionCorte,
+    recalcularVencimientosPorPeriodo,
     fetchCandidatosCorte,
     ejecutarCorte,
     registrarReconexion,
     crearConvenio,
     obtenerConvenio,
-    pagarParcialidad
+    pagarParcialidad,
+    fetchResumenCobroConvenio,
+    pagarIntegradoConvenio
 };
