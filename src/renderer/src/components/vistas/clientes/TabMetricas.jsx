@@ -1,46 +1,73 @@
 import React, { useMemo } from "react";
-import { Select, SelectItem, Card, CardBody, CardHeader, Chip } from "@nextui-org/react";
+import { Select, SelectItem, Card, CardBody, CardHeader, Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
 import { HiUsers, HiTrendingUp, HiLocationMarker, HiCalendar, HiCheckCircle, HiXCircle, HiDownload, HiChartBar } from "react-icons/hi";
 import { MdSpeed } from "react-icons/md";
 import ClientesPorMesChart from "../../charts/ChartClientesPorMes";
 import LoadingSkeleton from "./components/LoadingSkeleton";
 import { useMetricasClientes } from "../../../hooks/useMetricasClientes";
 import { useClientes } from "../../../context/ClientesContext";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
 import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
 
 // --- Sub-componente MetricCard (Premium UI) ---
 const MetricCard = ({ icon: Icon, title, value, subTitle, color, chipValue }) => {
   const colorMap = {
-    blue: "bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/30",
-    green: "bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30",
-    purple: "bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-900/30",
-    red: "bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/30",
-    cyan: "bg-cyan-50 dark:bg-cyan-900/10 text-cyan-600 dark:text-cyan-400 border-cyan-100 dark:border-cyan-900/30",
-    amber: "bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/30",
-    teal: "bg-teal-50 dark:bg-teal-900/10 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-900/30",
+    blue: {
+      card: "bg-sky-500/10 border-sky-200/70 dark:border-sky-900/40",
+      icon: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+      badge: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-200/70 dark:border-sky-900/50"
+    },
+    green: {
+      card: "bg-emerald-500/10 border-emerald-200/70 dark:border-emerald-900/40",
+      icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200/70 dark:border-emerald-900/50"
+    },
+    purple: {
+      card: "bg-violet-500/10 border-violet-200/70 dark:border-violet-900/40",
+      icon: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+      badge: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-200/70 dark:border-violet-900/50"
+    },
+    red: {
+      card: "bg-rose-500/10 border-rose-200/70 dark:border-rose-900/40",
+      icon: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+      badge: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200/70 dark:border-rose-900/50"
+    },
+    cyan: {
+      card: "bg-cyan-500/10 border-cyan-200/70 dark:border-cyan-900/40",
+      icon: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+      badge: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-200/70 dark:border-cyan-900/50"
+    },
+    amber: {
+      card: "bg-amber-500/10 border-amber-200/70 dark:border-amber-900/40",
+      icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      badge: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200/70 dark:border-amber-900/50"
+    },
+    teal: {
+      card: "bg-teal-500/10 border-teal-200/70 dark:border-teal-900/40",
+      icon: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
+      badge: "bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-200/70 dark:border-teal-900/50"
+    },
   };
 
-  const themeClass = colorMap[color] || colorMap.blue;
+  const theme = colorMap[color] || colorMap.blue;
 
   return (
-    <Card className={`border shadow-sm rounded-2xl ${themeClass}`}>
+    <Card className={`border shadow-none rounded-2xl ${theme.card}`}>
       <CardBody className="p-5 flex flex-row items-center gap-4">
-        <div className={`p-3 rounded-xl shrink-0 ${themeClass.replace('border', '').replace('text', 'bg').replace('dark:bg', 'dark:bg-opacity-20 text').split(' ')[0]} bg-white dark:bg-white/10`}>
-             <Icon className="w-6 h-6 currentColor" />
+        <div className={`p-3 rounded-xl shrink-0 ${theme.icon}`}>
+             <Icon className="w-6 h-6" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-wider mb-0.5 opacity-80 truncate">{title}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-slate-500 dark:text-zinc-400 truncate">{title}</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-black leading-none">{value}</p>
+            <p className="text-3xl font-black tracking-tight leading-none text-slate-800 dark:text-zinc-100">{value}</p>
             {chipValue && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/50 dark:bg-black/20 border border-current/20">
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${theme.badge}`}>
                     {chipValue}
                 </span>
             )}
           </div>
-          {subTitle && <p className="text-xs opacity-70 mt-1 truncate">{subTitle}</p>}
+          {subTitle && <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 truncate">{subTitle}</p>}
         </div>
       </CardBody>
     </Card>
@@ -105,21 +132,21 @@ export const TabMetricas = () => {
   if (initialLoading) return <LoadingSkeleton tipo="metricas" />;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300 w-full">
+    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6">
 
       {/* 0. Header con Exportación */}
       <div className="flex justify-end">
         <Dropdown>
           <DropdownTrigger>
             <Button
-              color="success"
-              className="font-bold text-white shadow-md shadow-emerald-500/30"
+              color="default"
+              className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
               startContent={<HiDownload className="text-lg" />}
             >
               Exportar Reporte
             </Button>
           </DropdownTrigger>
-          <DropdownMenu aria-label="Opciones de exportación de métricas" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl">
+          <DropdownMenu aria-label="Opciones de exportación de métricas" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
             <DropdownItem
               key="csv"
               startContent={<span className="text-xl">📄</span>}
@@ -181,7 +208,7 @@ export const TabMetricas = () => {
       {/* 2. KPIs Medidores */}
       {data.medidores.clientes_con_medidores !== undefined && (
         <div className="pt-2">
-          <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-3">
             Estado de Medición
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -196,17 +223,17 @@ export const TabMetricas = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pt-2">
 
         {/* Columna Izquierda: Ciudades */}
-        <Card className="xl:col-span-2 border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+        <Card className="xl:col-span-2 border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl border border-slate-200 dark:border-zinc-800">
           <CardHeader className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-5 px-5">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
-                <HiLocationMarker className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 bg-sky-500/10 rounded-xl">
+                <HiLocationMarker className="w-5 h-5 text-sky-600 dark:text-sky-400" />
               </div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                   Distribución Por Ciudad
               </h3>
             </div>
-            {loading && !initialLoading && <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
+            {loading && !initialLoading && <div className="w-4 h-4 border-2 border-slate-600 border-t-transparent rounded-full animate-spin"></div>}
           </CardHeader>
           <CardBody className="p-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -218,20 +245,20 @@ export const TabMetricas = () => {
                 return (
                   <div
                     key={index}
-                    className="p-4 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/30 hover:border-blue-300 dark:hover:border-blue-800/50 transition-colors shadow-sm"
+                    className="p-4 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-950/30 hover:border-slate-300 dark:hover:border-zinc-700 transition-colors shadow-none"
                   >
                     <div className="flex justify-between items-center mb-3">
                       <span className="font-bold text-slate-800 dark:text-zinc-100 text-sm truncate pr-2">
                         {nombre}
                       </span>
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-200/70 dark:border-sky-900/50">
                         {porcentaje.toFixed(1)}%
                       </span>
                     </div>
 
                     <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-zinc-700 overflow-hidden mb-3">
                       <div
-                        className="h-full rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                        className="h-full rounded-full bg-sky-500"
                         style={{ width: `${porcentaje}%` }}
                       ></div>
                     </div>
@@ -256,10 +283,10 @@ export const TabMetricas = () => {
         <div className="space-y-6 flex flex-col h-full">
           {/* Estados */}
           {data.estados.length > 0 && (
-            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shrink-0">
+            <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl border border-slate-200 dark:border-zinc-800 shrink-0">
               <CardHeader className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-3 pt-4 px-5">
                 <HiCheckCircle className="text-emerald-500 w-4 h-4" />
-                <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Estado de Cuenta</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Estado de Cuenta</span>
               </CardHeader>
               <CardBody className="p-4 flex flex-wrap gap-2">
                 {data.estados.map((est, i) => (
@@ -278,10 +305,10 @@ export const TabMetricas = () => {
 
           {/* Tarifas */}
           {data.tarifas.length > 0 && (
-            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 flex-1 min-h-0">
+            <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl border border-slate-200 dark:border-zinc-800 flex-1 min-h-0">
               <CardHeader className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-3 pt-4 px-5">
-                <HiTrendingUp className="text-purple-500 w-4 h-4" />
-                <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Tarifas Asignadas</span>
+                <HiTrendingUp className="text-violet-500 w-4 h-4" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Tarifas Asignadas</span>
               </CardHeader>
               <CardBody className="p-4 space-y-3 overflow-y-auto custom-scrollbar">
                 {data.tarifas.map((t, i) => (
@@ -290,7 +317,7 @@ export const TabMetricas = () => {
                       <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{t.tarifa_nombre}</p>
                       <p className="text-[10px] font-medium text-slate-400 dark:text-zinc-500 truncate mt-0.5">{t.tarifa_descripcion}</p>
                     </div>
-                    <span className="font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded-md text-xs shrink-0">
+                    <span className="font-bold text-violet-700 dark:text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded-md border border-violet-200/70 dark:border-violet-900/50 text-xs shrink-0">
                       {t.cantidad_clientes}
                     </span>
                   </div>
@@ -302,11 +329,11 @@ export const TabMetricas = () => {
       </div>
 
       {/* 4. Gráfica Principal */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 mt-2 overflow-visible">
+      <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl border border-slate-200 dark:border-zinc-800 mt-2 overflow-visible">
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-5 pt-5 border-b border-slate-100 dark:border-zinc-800/50 pb-4">
           <div className="flex items-center gap-2">
-              <HiChartBar className="w-5 h-5 text-blue-500" />
-              <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Análisis Gráfico</h3>
+              <HiChartBar className="w-5 h-5 text-slate-500" />
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Análisis Gráfico</h3>
           </div>
           <Select
             size="sm"
@@ -314,9 +341,9 @@ export const TabMetricas = () => {
             className="w-full sm:w-56"
             selectedKeys={[tipoGrafica]}
             onChange={(e) => handleCambioTipoGrafica(e.target.value)}
-            variant="bordered"
+            variant="flat"
             classNames={{
-                trigger: "bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl",
+                trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[40px]",
                 value: "font-bold text-slate-700 dark:text-zinc-200"
             }}
           >

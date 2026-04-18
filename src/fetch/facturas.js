@@ -8,12 +8,10 @@ export const fetchFacturas = async (token_session, params, isRetry = false) => {
     try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
-        console.error("Token app no disponible(ipcmain-fetch-facturas)");
-        return [];
+        throw new Error("Token app no disponible(ipcmain-fetch-facturas)");
     }
     if (!token_session) {
-        console.error("Token de sesión no disponible(ipcmain-fetch-facturas)");
-        return [];
+        throw new Error("Token de sesión no disponible(ipcmain-fetch-facturas)");
     }
 
     // Construir query string con parámetros dinámicos
@@ -23,11 +21,14 @@ export const fetchFacturas = async (token_session, params, isRetry = false) => {
     if (params.limit) urlParams.append("limit", params.limit);
     if (params.search) urlParams.append("search", params.search);
     if (params.estado) urlParams.append("estado", params.estado);
+    // Evita respuesta cacheada en Electron/Chromium para datos de cobranza.
+    urlParams.append("_t", String(Date.now()));
     
     const query = "?" + urlParams.toString();
 
     const response = await fetch(`${URL_FACTURAS}${query}`, {
         method: "GET",
+        cache: "no-store",
         headers: {
         "x-app-key": `AppKey ${token_app}`,
         "Authorization": `Bearer ${token_session}`,
@@ -57,7 +58,8 @@ export const fetchFacturas = async (token_session, params, isRetry = false) => {
     const data = await response.json();
     return data; // Esto debe ser un array de lecturas
     } catch (error) {
-    console.error("Error en fetchFacturas:", error," (ipcmain-fetch-facturas)");
-    return [];
+    const message = error?.message || "Error desconocido en fetchFacturas";
+    console.error("Error en fetchFacturas:", message, "(ipcmain-fetch-facturas)");
+    throw error;
     }
 }

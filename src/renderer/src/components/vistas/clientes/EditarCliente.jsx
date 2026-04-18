@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { EliminarClienteIcon, EditIcon } from "../../../IconsApp/IconsClientes";
+import { EditIcon } from "../../../IconsApp/IconsClientes";
 import {
     Modal,
     ModalContent,
@@ -62,7 +61,7 @@ export default function EditarClientes({ id }) {
                     aria-label="Editar"
                     variant="flat"
                     onPress={onOpen}
-                    className="bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors"
+                    className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
                 >
                     <EditIcon />
                 </Button>
@@ -78,27 +77,28 @@ export default function EditarClientes({ id }) {
                 isKeyboardDismissDisabled={true}
                 placement="center"
                 classNames={{
-                    base: "bg-white dark:bg-zinc-900 shadow-2xl",
-                    backdrop: "bg-zinc-900/50 backdrop-blur-sm",
-                    header: "border-b border-slate-100 dark:border-zinc-800",
-                    footer: "border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900",
-                    closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors z-50",
+                    backdrop: "bg-slate-900/40 backdrop-blur-sm",
+                    base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+                    header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
+                    body: "px-8 py-6",
+                    footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+                    closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4",
                 }}
             >
                 <ModalContent>
                     {() => (
                         <>
                             {/* HEADER */}
-                            <ModalHeader className="flex flex-col gap-1 pt-6 px-6 shrink-0">
+                            <ModalHeader className="flex flex-col gap-1 shrink-0">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+                                    <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0">
                                         <HiPencil className="w-7 h-7" />
                                     </div>
                                     <div className="flex flex-col">
-                                        <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                        <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                                             {id ? "Editar Cliente" : "Registrar Cliente"}
                                         </h2>
-                                        <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">
+                                        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
                                             Actualizar Información y Medidores
                                         </p>
                                     </div>
@@ -106,7 +106,7 @@ export default function EditarClientes({ id }) {
                             </ModalHeader>
                             
                             {/* BODY */}
-                            <ModalBody className="py-6 px-4 sm:px-6 bg-slate-50/50 dark:bg-black/10 custom-scrollbar">
+                            <ModalBody className="custom-scrollbar">
                                 <form 
                                     id="form-editar-cliente" 
                                     onSubmit={(e) => { e.preventDefault(); handleActualizarCliente(); }}
@@ -159,25 +159,25 @@ export default function EditarClientes({ id }) {
                             </ModalBody>
                             
                             {/* FOOTER */}
-                            <ModalFooter className="px-6 py-4">
+                            <ModalFooter>
                                 <Button
                                     color="default"
-                                    variant="light"
+                                    variant="flat"
                                     onPress={handleCloseModal}
                                     isDisabled={isUpdating}
                                     startContent={<HiX className="text-lg" />}
-                                    className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                    className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-6"
                                 >
                                     Cancelar
                                 </Button>
                                 <Button
-                                    color="primary"
+                                    color="default"
                                     type="submit"
                                     form="form-editar-cliente"
                                     isDisabled={isUpdating}
                                     isLoading={isUpdating}
                                     startContent={!isUpdating && <HiCheck className="text-lg" />}
-                                    className="font-bold shadow-md shadow-blue-500/30 px-6"
+                                    className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
                                 >
                                     {isUpdating ? "Actualizando..." : (id ? "Guardar Cambios" : "Registrar Cliente")}
                                 </Button>

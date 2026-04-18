@@ -8,8 +8,7 @@ import {
     Button,
     Card,
     CardBody,
-    Chip,
-    Divider
+    Chip
 } from "@nextui-org/react";
 import { 
     HiUser, 
@@ -43,27 +42,28 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
             size="3xl"
             scrollBehavior="inside"
             classNames={{
-                base: "bg-white dark:bg-zinc-900 shadow-2xl",
-                backdrop: "bg-zinc-900/50 backdrop-blur-sm",
-                header: "border-b border-slate-100 dark:border-zinc-800",
-                footer: "border-t border-slate-100 dark:border-zinc-800",
-                closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors",
+                backdrop: "bg-slate-900/40 backdrop-blur-sm",
+                base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+                header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
+                body: "px-8 py-6",
+                footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+                closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4",
             }}
         >
             <ModalContent>
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1 pt-6 px-6">
+                        <ModalHeader className="flex flex-col gap-1">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl">
+                                <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl">
                                     <HiUser className="w-7 h-7" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                                         Detalles del Cliente
                                     </h2>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                                             ID: {cliente.id}
                                         </span>
                                         <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-zinc-600"></span>
@@ -80,13 +80,13 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                             </div>
                         </ModalHeader>
 
-                        <ModalBody className="py-6 px-4 sm:px-6 custom-scrollbar">
+                        <ModalBody className="custom-scrollbar">
                             <div className="space-y-6">
 
                                 {/* 1. Información Personal */}
-                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl">
+                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl">
                                     <CardBody className="p-5">
-                                        <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4 flex items-center gap-2">
                                             <HiUser className="w-4 h-4" /> Información Personal
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
@@ -131,9 +131,9 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                                 </Card>
 
                                 {/* 2. Dirección y Ubicación */}
-                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl">
+                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl">
                                     <CardBody className="p-5">
-                                        <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4 flex items-center gap-2">
                                             <HiLocationMarker className="w-4 h-4" /> Dirección y Ubicación
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
@@ -156,9 +156,9 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                                                 </div>
                                             )}
                                             {cliente.latitud && (
-                                                <div className="col-span-1 md:col-span-2 flex items-center gap-2 mt-2 p-2 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl w-fit">
-                                                    <HiMap className="w-4 h-4 text-blue-500" />
-                                                    <span className="text-xs font-mono text-blue-700 dark:text-blue-400">
+                                                <div className="col-span-1 md:col-span-2 flex items-center gap-2 mt-2 p-2 bg-sky-500/10 border border-sky-200/60 dark:border-sky-900/40 rounded-xl w-fit">
+                                                    <HiMap className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                                                    <span className="text-xs font-mono text-sky-700 dark:text-sky-400">
                                                         {cliente.latitud}, {cliente.longitud}
                                                     </span>
                                                 </div>
@@ -168,19 +168,19 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                                 </Card>
 
                                 {/* 3. Tarifa Asignada */}
-                                <Card className="border border-green-200 dark:border-green-900/50 bg-green-50/50 dark:bg-green-900/10 shadow-sm rounded-2xl">
+                                <Card className="border border-emerald-200/70 dark:border-emerald-900/40 bg-emerald-500/10 shadow-none rounded-2xl">
                                     <CardBody className="p-5 flex flex-row items-center gap-4">
-                                        <div className="p-3 bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400 rounded-full shrink-0">
+                                        <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full shrink-0">
                                             <HiCurrencyDollar className="w-6 h-6" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="text-xs font-bold text-green-700/70 dark:text-green-500/70 uppercase tracking-wider mb-1">
+                                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/80 dark:text-emerald-400/90 mb-1">
                                                 Esquema de Tarifa
                                             </h4>
                                             {tarifaAsignada ? (
                                                 <div>
-                                                    <p className="text-base font-bold text-green-800 dark:text-green-300 truncate">{tarifaAsignada.nombre}</p>
-                                                    <p className="text-xs text-green-600/80 dark:text-green-400/80 truncate mt-0.5">{tarifaAsignada.descripcion}</p>
+                                                    <p className="text-base font-bold text-emerald-800 dark:text-emerald-300 truncate">{tarifaAsignada.nombre}</p>
+                                                    <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80 truncate mt-0.5">{tarifaAsignada.descripcion}</p>
                                                 </div>
                                             ) : (
                                                 <p className="text-sm text-slate-500 dark:text-zinc-400 italic">No tiene una tarifa asignada</p>
@@ -193,8 +193,8 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                                 <div className="pt-2">
                                     <div className="flex items-center justify-between mb-4 px-1">
                                         <div className="flex items-center gap-2">
-                                            <div className="p-1.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-lg">
-                                                <HiCog className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                            <div className="p-1.5 bg-slate-500/10 rounded-lg">
+                                                <HiCog className="w-4 h-4 text-slate-600 dark:text-zinc-300" />
                                             </div>
                                             <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-200">
                                                 Equipos Medidores
@@ -212,12 +212,12 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                                             {medidoresAsignados.map((medidor) => (
                                                 <div 
                                                     key={medidor.id} 
-                                                    className="p-4 border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:border-blue-300 dark:hover:border-blue-800/50 transition-colors rounded-2xl shadow-sm"
+                                                    className="p-4 border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 hover:border-slate-300 dark:hover:border-zinc-700 transition-colors rounded-2xl shadow-none"
                                                 >
                                                     <div className="flex justify-between items-start mb-3">
                                                         <div className="min-w-0 pr-2">
                                                             <span className="text-[10px] text-slate-400 dark:text-zinc-500 block uppercase tracking-wide mb-0.5">Nº Serie</span>
-                                                            <span className="text-sm font-bold text-blue-700 dark:text-blue-400 font-mono truncate block">
+                                                            <span className="text-sm font-bold text-slate-700 dark:text-zinc-200 font-mono truncate block">
                                                                 {medidor.numero_serie}
                                                             </span>
                                                         </div>
@@ -264,12 +264,12 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                             </div>
                         </ModalBody>
                         
-                        <ModalFooter className="px-6 py-4">
+                        <ModalFooter>
                             <Button 
                                 color="default" 
-                                variant="light" 
+                                variant="flat" 
                                 onPress={onClose}
-                                className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-6"
                             >
                                 Cerrar Panel
                             </Button>

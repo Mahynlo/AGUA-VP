@@ -22,17 +22,17 @@ import SelectorCoordenadas from "../../mapa/SelectorCoordenadas";
 // Componente de Input Personalizado (Premium UI)
 const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, placeholder, as = "input", min, step, ...props }) => {
     const focusColors = {
-        blue: "focus:ring-blue-500 focus:border-blue-500",
-        orange: "focus:ring-orange-500 focus:border-orange-500",
-        indigo: "focus:ring-indigo-500 focus:border-indigo-500",
+        blue: "focus:ring-slate-400/20 focus:border-slate-300",
+        orange: "focus:ring-slate-400/20 focus:border-slate-300",
+        indigo: "focus:ring-slate-400/20 focus:border-slate-300",
     };
 
     const inputClasses = `
-        w-full pl-10 pr-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none
-        bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100
-        border border-slate-200 dark:border-zinc-700
-        hover:bg-slate-50 dark:hover:bg-zinc-800
-        focus:outline-none focus:ring-2 shadow-sm
+        w-full pl-10 pr-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 resize-none
+        bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100
+        border border-slate-200 dark:border-zinc-800
+        hover:border-slate-300 dark:hover:border-zinc-700
+        focus:outline-none focus:ring-2 shadow-none
         placeholder-slate-400 dark:placeholder-zinc-500
         ${focusColors[color] || focusColors.blue}
     `;
@@ -40,7 +40,7 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blu
     return (
         <div className="w-full">
             {label && (
-                <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5 block">
                     {label}
                 </label>
             )}
@@ -283,27 +283,28 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
             isKeyboardDismissDisabled={true}
             placement="center"
             classNames={{
-                base: "bg-white dark:bg-zinc-900 shadow-2xl",
-                backdrop: "bg-zinc-900/50 backdrop-blur-sm",
-                header: "border-b border-slate-100 dark:border-zinc-800",
-                footer: "border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900",
-                closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors z-50",
+                backdrop: "bg-slate-900/40 backdrop-blur-sm",
+                base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+                header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
+                body: "px-8 py-6",
+                footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+                closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4",
             }}
         >
             <ModalContent>
                 {(onClose) => (
                     <>
                         {/* HEADER */}
-                        <ModalHeader className="flex flex-col gap-1 pt-6 px-6 shrink-0">
+                        <ModalHeader className="flex flex-col gap-1 shrink-0">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+                                <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0">
                                     <HiCog className="w-7 h-7" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                                         Editar Medidor
                                     </h2>
-                                    <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">
+                                    <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
                                         Actualizar datos técnicos, cliente y ubicación
                                     </p>
                                 </div>
@@ -311,14 +312,14 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                         </ModalHeader>
 
                         {/* BODY */}
-                        <ModalBody className="py-6 px-4 sm:px-6 bg-slate-50/50 dark:bg-black/10 custom-scrollbar">
+                        <ModalBody className="custom-scrollbar">
                             <form id="form-editar-medidor" onSubmit={(e) => { e.preventDefault(); handleUpdate(); }} className="flex flex-col gap-6">
 
                                 {/* 1. Información del Medidor (AZUL) */}
-                                <Card className="shadow-sm bg-blue-50/40 dark:bg-blue-900/10 rounded-2xl border border-blue-200/70 dark:border-blue-800/50">
+                                <Card className="shadow-none bg-sky-500/10 rounded-2xl border border-sky-200/70 dark:border-sky-900/40">
                                     <CardBody className="p-5 sm:p-6 space-y-6">
-                                        <h3 className="font-bold text-base text-blue-900 dark:text-blue-300 flex items-center gap-2 border-b border-blue-100 dark:border-blue-900/30 pb-3">
-                                            <HiHashtag className="w-5 h-5 text-blue-500" />
+                                        <h3 className="font-bold text-base text-sky-900 dark:text-sky-300 flex items-center gap-2 border-b border-sky-200/70 dark:border-sky-900/30 pb-3">
+                                            <HiHashtag className="w-5 h-5 text-sky-500" />
                                             Datos del Equipo
                                         </h3>
 
@@ -334,10 +335,10 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                         placeholder="Cód."
                                                         selectedKeys={ciudad ? [ciudad] : []}
                                                         onChange={(e) => setCiudad(e.target.value)}
-                                                        variant="bordered"
+                                                        variant="flat"
                                                         className="w-28 shrink-0"
                                                         classNames={{
-                                                            trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm h-[42px] rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800",
+                                                            trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-[46px] rounded-xl hover:border-slate-300 dark:hover:border-zinc-700",
                                                             value: "text-sm font-medium text-slate-800 dark:text-zinc-100"
                                                         }}
                                                     >
@@ -352,12 +353,12 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                             value={numeroSerie}
                                                             onChange={(e) => setNumeroSerie(e.target.value)}
                                                             required
-                                                            className="w-full px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                                            className="w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 shadow-none"
                                                         />
                                                     </div>
                                                 </div>
                                                 <p className="text-[10px] mt-1.5 ml-1 font-bold text-slate-400 dark:text-zinc-500">
-                                                    Serie completa: <span className="text-blue-600 dark:text-blue-400 font-mono">{numeroSerieCompleto || "---"}</span>
+                                                    Serie completa: <span className="text-sky-700 dark:text-sky-400 font-mono">{numeroSerieCompleto || "---"}</span>
                                                 </p>
                                             </div>
 
@@ -369,10 +370,10 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 <Select
                                                     selectedKeys={[estadoMedidor]}
                                                     onChange={(e) => setEstadoMedidor(e.target.value)}
-                                                    variant="bordered"
+                                                    variant="flat"
                                                     aria-label="Estado del medidor"
                                                     classNames={{
-                                                        trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm h-[42px] rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800",
+                                                        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-[46px] rounded-xl hover:border-slate-300 dark:hover:border-zinc-700",
                                                         value: "text-sm font-medium text-slate-800 dark:text-zinc-100"
                                                     }}
                                                 >
@@ -388,7 +389,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 type="date"
                                                 value={fechaInstalacion}
                                                 onChange={(e) => setFechaInstalacion(e.target.value)}
-                                                icon={<HiCalendar className="w-5 h-5 text-blue-500" />}
+                                                icon={<HiCalendar className="w-5 h-5 text-sky-500" />}
                                                 required
                                             />
 
@@ -397,7 +398,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 placeholder="Ej. AquaTech"
                                                 value={marca}
                                                 onChange={(e) => setMarca(e.target.value)}
-                                                icon={<HiCog className="w-5 h-5 text-blue-500" />}
+                                                icon={<HiCog className="w-5 h-5 text-sky-500" />}
                                             />
 
                                             <CustomInput
@@ -405,7 +406,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 placeholder="Ej. AT-150"
                                                 value={modelo}
                                                 onChange={(e) => setModelo(e.target.value)}
-                                                icon={<HiInformationCircle className="w-5 h-5 text-blue-500" />}
+                                                icon={<HiInformationCircle className="w-5 h-5 text-sky-500" />}
                                             />
 
                                             <CustomInput
@@ -416,7 +417,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 placeholder="Ej. 0 o 1234.56"
                                                 value={lecturaBase}
                                                 onChange={(e) => setLecturaBase(e.target.value)}
-                                                icon={<HiHashtag className="w-5 h-5 text-blue-500" />}
+                                                icon={<HiHashtag className="w-5 h-5 text-sky-500" />}
                                                 description={
                                                     <>
                                                         Punto de partida al instalar. <span className="text-amber-600 dark:text-amber-400">Puede afectar el historial.</span>
@@ -432,7 +433,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 placeholder="99999"
                                                 value={capacidadMaxima}
                                                 onChange={(e) => setCapacidadMaxima(e.target.value)}
-                                                icon={<HiHashtag className="w-5 h-5 text-blue-500" />}
+                                                icon={<HiHashtag className="w-5 h-5 text-sky-500" />}
                                                 description="Límite antes de dar vuelta a cero (estándar: 99,999)."
                                             />
                                         </div>
@@ -444,14 +445,14 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                             placeholder="Ej. Frente a la casa, junto al poste..."
                                             value={ubicacion}
                                             onChange={(e) => setUbicacion(e.target.value)}
-                                            icon={<HiLocationMarker className="w-5 h-5 text-blue-500" />}
+                                            icon={<HiLocationMarker className="w-5 h-5 text-sky-500" />}
                                             required
                                         />
                                     </CardBody>
                                 </Card>
 
                                 {/* 2. Asignación de Cliente (ÍNDIGO) */}
-                                <Card className="shadow-sm bg-indigo-50/40 dark:bg-indigo-900/10 rounded-2xl border border-indigo-200/70 dark:border-indigo-800/50">
+                                <Card className="shadow-none bg-indigo-500/10 rounded-2xl border border-indigo-200/70 dark:border-indigo-900/40">
                                     <CardBody className="p-5 sm:p-6">
                                         <div className="flex justify-between items-center mb-2 border-b border-indigo-100 dark:border-indigo-900/30 pb-3">
                                             <h3 className="font-bold text-base text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
@@ -471,7 +472,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                         <div className="mt-4">
                                             {clienteId ? (
                                                 <div className="space-y-3">
-                                                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-indigo-100 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                    <div className="bg-slate-50/80 dark:bg-zinc-950/40 p-4 rounded-xl border border-indigo-200/60 dark:border-zinc-800 shadow-none flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                         <div>
                                                             <p className="text-[10px] font-bold text-indigo-500/80 dark:text-indigo-400/80 uppercase tracking-widest mb-1">
                                                                 Asignado Actualmente a
@@ -502,7 +503,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                     <p className="text-sm font-medium text-slate-600 dark:text-zinc-400">
                                                         Este medidor está libre. Busque un cliente para asignarlo ahora.
                                                     </p>
-                                                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-indigo-100 dark:border-zinc-800 shadow-sm">
+                                                    <div className="bg-slate-50/80 dark:bg-zinc-950/40 p-4 rounded-xl border border-indigo-200/60 dark:border-zinc-800 shadow-none">
                                                         <BuscarCliente onClienteSeleccionado={handleClienteSeleccionado} />
                                                         {clienteId && (
                                                             <div className="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2 animate-in fade-in">
@@ -520,14 +521,14 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                 </Card>
 
                                 {/* 3. Coordenadas (NARANJA) */}
-                                <Card className="shadow-sm bg-orange-50/40 dark:bg-orange-900/10 rounded-2xl border border-orange-200/70 dark:border-orange-800/50">
+                                <Card className="shadow-none bg-amber-500/10 rounded-2xl border border-amber-200/70 dark:border-amber-900/40">
                                     <CardBody className="p-5 sm:p-6 space-y-4">
-                                        <h3 className="font-bold text-base text-orange-900 dark:text-orange-300 flex items-center gap-2 mb-2 border-b border-orange-100 dark:border-orange-900/30 pb-3">
-                                            <HiLocationMarker className="w-5 h-5 text-orange-500" />
+                                        <h3 className="font-bold text-base text-amber-900 dark:text-amber-300 flex items-center gap-2 mb-2 border-b border-amber-200/70 dark:border-amber-900/30 pb-3">
+                                            <HiLocationMarker className="w-5 h-5 text-amber-500" />
                                             Ubicación Geográfica *
                                         </h3>
                                         
-                                        <div className="rounded-xl overflow-hidden border border-orange-200/60 dark:border-orange-800/50 shadow-sm">
+                                        <div className="rounded-xl overflow-hidden border border-amber-200/60 dark:border-amber-900/50 shadow-none">
                                             <SelectorCoordenadas
                                                 key={`coords-${medidor?.id}`}
                                                 valorInicial={{
@@ -540,7 +541,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                                 }}
                                             />
                                         </div>
-                                        <div className="flex gap-4 text-xs font-mono text-orange-700/60 dark:text-orange-400/60 bg-white dark:bg-zinc-900 w-fit px-3 py-1.5 rounded-lg border border-orange-100 dark:border-zinc-800 shadow-sm">
+                                        <div className="flex gap-4 text-xs font-mono text-amber-700/70 dark:text-amber-400/80 bg-slate-50/80 dark:bg-zinc-950/40 w-fit px-3 py-1.5 rounded-lg border border-amber-200/60 dark:border-zinc-800 shadow-none">
                                             <span>Lat: <strong className="text-slate-700 dark:text-zinc-300">{latitud}</strong></span>
                                             <span>Lng: <strong className="text-slate-700 dark:text-zinc-300">{longitud}</strong></span>
                                         </div>
@@ -551,25 +552,25 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                         </ModalBody>
                         
                         {/* FOOTER */}
-                        <ModalFooter className="px-6 py-4">
+                        <ModalFooter>
                             <Button 
                                 color="default" 
-                                variant="light" 
+                                variant="flat" 
                                 onPress={onClose}
                                 startContent={<HiX className="text-lg" />}
-                                className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-6"
                             >
                                 Cancelar
                             </Button>
                             <Button
-                                color="primary"
+                                color="default"
                                 onClick={handleUpdate}
                                 type="submit"
                                 form="form-editar-medidor"
                                 isDisabled={isUpdating}
                                 isLoading={isUpdating}
                                 startContent={!isUpdating && <HiCheck className="text-lg" />}
-                                className="font-bold shadow-md shadow-blue-500/30 px-6"
+                                className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
                             >
                                 {isUpdating ? "Guardando..." : "Guardar Cambios"}
                             </Button>

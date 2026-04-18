@@ -1,8 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import {
   Card,
-  CardBody,
-  CardHeader,
   Button,
   Select,
   SelectItem,
@@ -21,9 +19,7 @@ import {
   HiTrendingUp,
   HiTrendingDown,
   HiCalendar,
-  HiChartBar,
   HiUsers,
-  HiEye,
   HiPrinter,
 } from "react-icons/hi";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
@@ -136,14 +132,15 @@ const ReporteFinancieroEstado = () => {
           type: "bar",
           toolbar: { show: true },
           background: "transparent",
-          foreColor: isDark ? "#cbd5e1" : "#334155",
+          fontFamily: "inherit",
+          foreColor: isDark ? "#71717a" : "#94a3b8", // Text-zinc-500 / text-slate-400
         },
         theme: {
           mode: isDark ? "dark" : "light",
         },
         grid: {
-          borderColor: isDark ? "#3f3f46" : "#e2e8f0",
-          strokeDashArray: 3,
+          borderColor: isDark ? "#27272a" : "#f1f5f9", // zinc-800 / slate-100
+          strokeDashArray: 4,
         },
         plotOptions: {
           bar: {
@@ -153,27 +150,34 @@ const ReporteFinancieroEstado = () => {
           },
         },
         dataLabels: { enabled: false },
-        stroke: { show: true, width: 1, colors: ["transparent"] },
+        stroke: { show: true, width: 2, colors: ["transparent"] },
         xaxis: {
           categories,
           labels: {
             style: {
-              colors: isDark ? "#a1a1aa" : "#64748b",
+              colors: isDark ? "#71717a" : "#94a3b8",
+              fontSize: "12px",
+              fontWeight: 500,
             },
           },
+          axisBorder: { show: false },
+          axisTicks: { show: false },
         },
         yaxis: {
           labels: {
             style: {
-              colors: isDark ? "#a1a1aa" : "#64748b",
+              colors: isDark ? "#71717a" : "#94a3b8",
+              fontSize: "12px",
+              fontWeight: 500,
             },
             formatter: (val) => `$${Number(val).toLocaleString("es-MX")}`,
           },
         },
         legend: {
           position: "top",
+          fontWeight: 600,
           labels: {
-            colors: isDark ? "#cbd5e1" : "#334155",
+            colors: isDark ? "#d4d4d8" : "#334155",
           },
         },
         tooltip: {
@@ -197,15 +201,23 @@ const ReporteFinancieroEstado = () => {
     return {
       options: {
         labels: metodos.map((m) => m.metodo),
-        legend: { position: "bottom" },
+        legend: { 
+          position: "bottom",
+          fontWeight: 500,
+          labels: { colors: isDark ? "#d4d4d8" : "#334155" }
+        },
+        chart: { fontFamily: "inherit" },
         dataLabels: {
+          style: { fontSize: "12px", fontWeight: "bold" },
           formatter: (_val, opts) => {
             const idx = opts.seriesIndex;
             const total = metodos[idx]?.total || 0;
             return `$${Number(total).toLocaleString("es-MX")}`;
           },
         },
+        stroke: { show: false },
         tooltip: {
+          theme: isDark ? "dark" : "light",
           y: {
             formatter: (val) => moneda(val),
           },
@@ -214,26 +226,9 @@ const ReporteFinancieroEstado = () => {
       },
       series: metodos.map((m) => Number(m.total || 0)),
     };
-  }, [series]);
+  }, [series, isDark]);
 
   const eficienciaPositiva = Number(resumen.eficiencia_recaudo_porcentaje || 0) >= 70;
-
-  const handlePreview = async () => {
-    const url = await construirUrlReporteFinanciero();
-    if (!url) return;
-
-    try {
-      const response = await window.api.previewComponent(url);
-      if (response && response.success && response.path) {
-        setPrintUrl(url);
-        setPdfUrl(response.path);
-        setModoPdf("vista-previa");
-      }
-    } catch (err) {
-      console.error("Error generando vista previa financiera:", err);
-      alert("Error al generar vista previa del reporte financiero");
-    }
-  };
 
   const handlePrint = async () => {
     const url = await construirUrlReporteFinanciero();
@@ -255,256 +250,234 @@ const ReporteFinancieroEstado = () => {
     }
   };
 
+  const selectClasses = {
+    trigger: "bg-slate-100/70 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none",
+  };
+
   return (
-    <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-visible">
-      <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-amber-500/10 dark:bg-amber-500/20 rounded-xl">
-            <HiCurrencyDollar className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+    <Card className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0">
+      
+      {/* HEADER SECTION */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 print:mb-4">
+        <div className="flex items-center gap-4">
+          <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl p-3 print:hidden">
+            <HiCurrencyDollar className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+            <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
               Estado Financiero de Pagos
             </h3>
-            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
-              Recaudacion, cobranza y cartera por periodo
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
+              Recaudación, cobranza y cartera por periodo
             </p>
           </div>
         </div>
 
-        <div className="w-full sm:w-auto flex items-center gap-2">
-          <Chip color="primary" variant="flat" startContent={<HiCalendar className="w-3.5 h-3.5" />}>
+        <div className="w-full sm:w-auto flex items-center gap-2 print:hidden">
+          <Chip color="default" variant="bordered" className="border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-medium rounded-xl" startContent={<HiCalendar className="w-3.5 h-3.5" />}>
             {financiero?.filtro_aplicado?.etiqueta || "Sin filtro"}
           </Chip>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardBody className="p-6 space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 bg-slate-50 dark:bg-zinc-800/30 p-4 rounded-xl border border-slate-100 dark:border-zinc-800">
-          <div className="lg:col-span-3">
+      {/* FILTER CONTROLS */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8 print:hidden">
+        <div className="lg:col-span-3">
+          <Select
+            label="Vista"
+            selectedKeys={[tipoFiltro]}
+            onChange={(e) => setTipoFiltro(e.target.value || "periodo")}
+            size="sm"
+            variant="flat"
+            classNames={selectClasses}
+          >
+            <SelectItem key="periodo" value="periodo">Periodo puntual</SelectItem>
+            <SelectItem key="ultimos_meses" value="ultimos_meses">Últimos meses</SelectItem>
+            <SelectItem key="anio" value="anio">Año específico</SelectItem>
+          </Select>
+        </div>
+
+        <div className="lg:col-span-6">
+          {tipoFiltro === "periodo" && (
+            <SelectorPeriodoAvanzado
+              value={periodo}
+              onChange={setPeriodo}
+              label="Periodo"
+              placeholder="Seleccionar periodo"
+            />
+          )}
+
+          {tipoFiltro === "ultimos_meses" && (
             <Select
-              label="Vista"
-              selectedKeys={[tipoFiltro]}
-              onChange={(e) => setTipoFiltro(e.target.value || "periodo")}
+              label="Últimos meses"
+              selectedKeys={[ultimosMeses]}
+              onChange={(e) => setUltimosMeses(e.target.value || "3")}
               size="sm"
-              variant="bordered"
-              classNames={{ trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700" }}
+              variant="flat"
+              classNames={selectClasses}
             >
-              <SelectItem key="periodo" value="periodo">Periodo puntual</SelectItem>
-              <SelectItem key="ultimos_meses" value="ultimos_meses">Ultimos meses</SelectItem>
-              <SelectItem key="anio" value="anio">Anio especifico</SelectItem>
+              <SelectItem key="3" value="3">Últimos 3 meses</SelectItem>
+              <SelectItem key="6" value="6">Últimos 6 meses</SelectItem>
+              <SelectItem key="12" value="12">Últimos 12 meses</SelectItem>
             </Select>
-          </div>
+          )}
 
-          <div className="lg:col-span-6">
-            {tipoFiltro === "periodo" && (
-              <SelectorPeriodoAvanzado
-                value={periodo}
-                onChange={setPeriodo}
-                label="Periodo"
-                placeholder="Seleccionar periodo"
-              />
-            )}
+          {tipoFiltro === "anio" && (
+            <Select
+              label="Año"
+              selectedKeys={[anioEspecifico]}
+              onChange={(e) => setAnioEspecifico(e.target.value || String(new Date().getFullYear()))}
+              size="sm"
+              variant="flat"
+              classNames={selectClasses}
+            >
+              {opcionesAnio.map((anio) => (
+                <SelectItem key={anio} value={anio}>{anio}</SelectItem>
+              ))}
+            </Select>
+          )}
+        </div>
 
-            {tipoFiltro === "ultimos_meses" && (
-              <Select
-                label="Ultimos meses"
-                selectedKeys={[ultimosMeses]}
-                onChange={(e) => setUltimosMeses(e.target.value || "3")}
-                size="sm"
-                variant="bordered"
-                classNames={{ trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700" }}
-              >
-                <SelectItem key="3" value="3">Ultimos 3 meses</SelectItem>
-                <SelectItem key="6" value="6">Ultimos 6 meses</SelectItem>
-                <SelectItem key="12" value="12">Ultimos 12 meses</SelectItem>
-              </Select>
-            )}
+        <div className="lg:col-span-3 flex items-end">
+          <Button
+            color="primary"
+            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl"
+            onPress={handlePrint}
+            isLoading={loadingImprimir}
+            isDisabled={!financiero || loadingFinanciero || loadingImprimir}
+            startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
+          >
+            {loadingImprimir ? "Preparando..." : "Imprimir"}
+          </Button>
+        </div>
+      </div>
 
-            {tipoFiltro === "anio" && (
-              <Select
-                label="Anio"
-                selectedKeys={[anioEspecifico]}
-                onChange={(e) => setAnioEspecifico(e.target.value || String(new Date().getFullYear()))}
-                size="sm"
-                variant="bordered"
-                classNames={{ trigger: "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700" }}
-              >
-                {opcionesAnio.map((anio) => (
-                  <SelectItem key={anio} value={anio}>{anio}</SelectItem>
-                ))}
-              </Select>
-            )}
-          </div>
+      {errorFinanciero && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-900/50 p-4 mb-8 print:hidden">
+          <p className="text-sm font-medium text-red-700 dark:text-red-400">{errorFinanciero}</p>
+        </div>
+      )}
 
-          <div className="lg:col-span-3 flex items-end">
-            <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Button
-                color="warning"
-                className="w-full font-bold text-white"
-                onPress={() => cargarDatos(true)}
-                isLoading={loadingFinanciero}
-                startContent={!loadingFinanciero && <HiChartBar className="text-lg" />}
-              >
-                {loadingFinanciero ? "Generando..." : "Generar"}
-              </Button>
+      {/* KPIs GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-8 print:grid-cols-5 print:gap-2">
+        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Total Esperado</p>
+          <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(resumen.total_esperado)}</p>
+        </div>
 
-              <Button
-                color="primary"
-                variant="flat"
-                className="w-full font-bold"
-                onPress={handlePreview}
-                isDisabled={!financiero || loadingFinanciero}
-                startContent={<HiEye className="text-lg" />}
-              >
-                Vista previa
-              </Button>
+        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Total Recaudado</p>
+          <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(resumen.total_recaudado)}</p>
+        </div>
 
-              <Button
-                color="primary"
-                className="w-full font-bold"
-                onPress={handlePrint}
-                isLoading={loadingImprimir}
-                isDisabled={!financiero || loadingFinanciero || loadingImprimir}
-                startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
-              >
-                {loadingImprimir ? "Preparando..." : "Imprimir"}
-              </Button>
+        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Por cobrar</p>
+          <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(resumen.por_cobrar_estimado)}</p>
+        </div>
+
+        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Recaudado a hoy</p>
+          <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(resumen.recaudado_hasta_fecha_actual)}</p>
+        </div>
+
+        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Eficiencia</p>
+          <div className="flex items-center gap-3">
+            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{porcentaje(resumen.eficiencia_recaudo_porcentaje)}</p>
+            <div className={`p-1.5 rounded-lg ${eficienciaPositiva ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'} print:hidden`}>
+              {eficienciaPositiva ? <HiTrendingUp className="w-5 h-5" /> : <HiTrendingDown className="w-5 h-5" />}
             </div>
           </div>
         </div>
+      </div>
 
-        {errorFinanciero && (
-          <div className="rounded-xl border border-danger-200 bg-danger-50 dark:bg-danger-900/20 p-3">
-            <p className="text-sm font-medium text-danger-700 dark:text-danger-300">{errorFinanciero}</p>
-          </div>
-        )}
+      {loadingFinanciero && !financiero ? (
+        <div className="flex items-center justify-center py-20 print:hidden">
+          <Spinner size="lg" color="default" label="Cargando estado financiero..." classNames={{ label: "text-slate-500 text-sm font-medium mt-4" }} />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          
+          {/* CHARTS SECTION */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 print:block">
+            <div className="xl:col-span-2 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0 print:mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">{tituloAnioTendencia}</p>
+                <span className="text-slate-300 dark:text-zinc-600">•</span>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Tendencia mensual</p>
+              </div>
+              <Chart options={chartMensual.options} series={chartMensual.series} type="bar" height={310} />
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-          <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/40 bg-indigo-50/70 dark:bg-indigo-900/15 p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600/80">Esperado</p>
-            <p className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{moneda(resumen.total_esperado)}</p>
-          </div>
-
-          <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/70 dark:bg-emerald-900/15 p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-600/80">Recaudado</p>
-            <p className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{moneda(resumen.total_recaudado)}</p>
-          </div>
-
-          <div className="rounded-xl border border-orange-200 dark:border-orange-900/40 bg-orange-50/70 dark:bg-orange-900/15 p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-orange-600/80">Por cobrar</p>
-            <p className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{moneda(resumen.por_cobrar_estimado)}</p>
-          </div>
-
-          <div className="rounded-xl border border-sky-200 dark:border-sky-900/40 bg-sky-50/70 dark:bg-sky-900/15 p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-sky-600/80">Recaudado a hoy</p>
-            <p className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-1">{moneda(resumen.recaudado_hasta_fecha_actual)}</p>
-          </div>
-
-          <div className="rounded-xl border border-violet-200 dark:border-violet-900/40 bg-violet-50/70 dark:bg-violet-900/15 p-4">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-violet-600/80">Eficiencia</p>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-xl font-black text-slate-800 dark:text-zinc-100">{porcentaje(resumen.eficiencia_recaudo_porcentaje)}</p>
-              {eficienciaPositiva ? (
-                <HiTrendingUp className="text-emerald-500 w-5 h-5" />
+            <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4">Métodos de pago</p>
+              {(chartMetodos.series || []).length > 0 ? (
+                <Chart options={chartMetodos.options} series={chartMetodos.series} type="donut" height={310} />
               ) : (
-                <HiTrendingDown className="text-rose-500 w-5 h-5" />
+                <div className="h-[310px] flex items-center justify-center text-sm font-medium text-slate-400 dark:text-zinc-500">
+                  Sin pagos en el rango seleccionado.
+                </div>
               )}
             </div>
           </div>
-        </div>
 
-        {loadingFinanciero && !financiero ? (
-          <div className="flex items-center justify-center py-16">
-            <Spinner size="lg" color="warning" label="Cargando estado financiero..." />
+          {/* TABLES SECTION */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 print:block">
+            <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0 print:mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Lista de deudores</p>
+                <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold" startContent={<HiUsers className="w-3 h-3" />}>
+                  {(listados.deudores || []).length}
+                </Chip>
+              </div>
+              <Table aria-label="Tabla de deudores" removeWrapper className="max-h-[350px] overflow-auto print:max-h-none" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-3" }}>
+                <TableHeader>
+                  <TableColumn>Cliente</TableColumn>
+                  <TableColumn>Localidad</TableColumn>
+                  <TableColumn>Facturas</TableColumn>
+                  <TableColumn className="text-right">Deuda</TableColumn>
+                </TableHeader>
+                <TableBody emptyContent="Sin deudores en el rango" items={listados.deudores || []}>
+                  {(item) => (
+                    <TableRow key={item.cliente_id}>
+                      <TableCell className="font-semibold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
+                      <TableCell>{item.localidad || "-"}</TableCell>
+                      <TableCell>{item.facturas_con_deuda}</TableCell>
+                      <TableCell className="text-right font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(item.deuda_total)}</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Clientes que pagaron</p>
+                <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold" startContent={<HiUsers className="w-3 h-3" />}>
+                  {(listados.pagadores || []).length}
+                </Chip>
+              </div>
+              <Table aria-label="Tabla de pagadores" removeWrapper className="max-h-[350px] overflow-auto print:max-h-none" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-3" }}>
+                <TableHeader>
+                  <TableColumn>Cliente</TableColumn>
+                  <TableColumn>Pagado</TableColumn>
+                  <TableColumn>Pagos</TableColumn>
+                  <TableColumn className="text-right">Deuda actual</TableColumn>
+                </TableHeader>
+                <TableBody emptyContent="Sin pagos en el rango" items={listados.pagadores || []}>
+                  {(item) => (
+                    <TableRow key={item.cliente_id}>
+                      <TableCell className="font-semibold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
+                      <TableCell className="font-black tracking-tight text-emerald-600 dark:text-emerald-400">{moneda(item.total_pagado)}</TableCell>
+                      <TableCell>{item.pagos_realizados}</TableCell>
+                      <TableCell className="text-right font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(item.deuda_total_actual)}</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-              <div className="xl:col-span-2 rounded-xl border border-slate-200 dark:border-zinc-800 p-3 bg-white dark:bg-zinc-900">
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-zinc-500 mb-1">{tituloAnioTendencia}</p>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-300 mb-2">Tendencia mensual</p>
-                <Chart options={chartMensual.options} series={chartMensual.series} type="bar" height={310} />
-              </div>
-
-              <div className="rounded-xl border border-slate-200 dark:border-zinc-800 p-3 bg-white dark:bg-zinc-900">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-2">Metodos de pago</p>
-                {(chartMetodos.series || []).length > 0 ? (
-                  <Chart options={chartMetodos.options} series={chartMetodos.series} type="donut" height={310} />
-                ) : (
-                  <div className="h-[310px] flex items-center justify-center text-sm text-slate-500 dark:text-zinc-400">
-                    Sin pagos en el rango seleccionado.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Lista de deudores</p>
-                  <Chip size="sm" variant="flat" color="danger" startContent={<HiUsers className="w-3 h-3" />}>
-                    {(listados.deudores || []).length}
-                  </Chip>
-                </div>
-                <Table aria-label="Tabla de deudores" removeWrapper className="max-h-[350px] overflow-auto">
-                  <TableHeader>
-                    <TableColumn>Cliente</TableColumn>
-                    <TableColumn>Localidad</TableColumn>
-                    <TableColumn>Facturas</TableColumn>
-                    <TableColumn>Deuda</TableColumn>
-                  </TableHeader>
-                  <TableBody emptyContent="Sin deudores en el rango" items={listados.deudores || []}>
-                    {(item) => (
-                      <TableRow key={item.cliente_id}>
-                        <TableCell>{item.cliente_nombre}</TableCell>
-                        <TableCell>{item.localidad || "-"}</TableCell>
-                        <TableCell>{item.facturas_con_deuda}</TableCell>
-                        <TableCell className="font-semibold text-danger">{moneda(item.deuda_total)}</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Lista de clientes que pagaron</p>
-                  <Chip size="sm" variant="flat" color="success" startContent={<HiUsers className="w-3 h-3" />}>
-                    {(listados.pagadores || []).length}
-                  </Chip>
-                </div>
-                <Table aria-label="Tabla de pagadores" removeWrapper className="max-h-[350px] overflow-auto">
-                  <TableHeader>
-                    <TableColumn>Cliente</TableColumn>
-                    <TableColumn>Pagado</TableColumn>
-                    <TableColumn>Pagos</TableColumn>
-                    <TableColumn>Deuda actual</TableColumn>
-                  </TableHeader>
-                  <TableBody emptyContent="Sin pagos en el rango" items={listados.pagadores || []}>
-                    {(item) => (
-                      <TableRow key={item.cliente_id}>
-                        <TableCell>{item.cliente_nombre}</TableCell>
-                        <TableCell className="font-semibold text-emerald-600">{moneda(item.total_pagado)}</TableCell>
-                        <TableCell>{item.pagos_realizados}</TableCell>
-                        <TableCell>{moneda(item.deuda_total_actual)}</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </>
-        )}
-      </CardBody>
-
-      {pdfUrl && modoPdf === "vista-previa" && (
-        <ModalVistaPrevia
-          pdfUrl={pdfUrl}
-          printUrl={printUrl}
-          onClose={() => { setPdfUrl(null); setPrintUrl(null); setModoPdf(null); }}
-          onImprimir={() => setModoPdf("imprimir")}
-        />
+        </div>
       )}
 
       {pdfUrl && modoPdf === "imprimir" && (

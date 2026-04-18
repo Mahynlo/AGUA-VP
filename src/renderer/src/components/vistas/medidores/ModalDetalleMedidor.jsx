@@ -41,27 +41,28 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
             size="3xl"
             scrollBehavior="inside"
             classNames={{
-                base: "bg-white dark:bg-zinc-900 shadow-2xl",
-                backdrop: "bg-zinc-900/50 backdrop-blur-sm",
-                header: "border-b border-slate-100 dark:border-zinc-800",
-                footer: "border-t border-slate-100 dark:border-zinc-800",
-                closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors",
+                backdrop: "bg-slate-900/40 backdrop-blur-sm",
+                base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+                header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
+                body: "px-8 py-6",
+                footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+                closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4",
             }}
         >
             <ModalContent>
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1 pt-6 px-6">
+                        <ModalHeader className="flex flex-col gap-1">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl">
+                                <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl">
                                     <HiCog className="w-7 h-7" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                                         Detalle del Medidor
                                     </h2>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                                             ID: {medidor.id}
                                         </span>
                                         <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-zinc-600"></span>
@@ -78,12 +79,12 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                             </div>
                         </ModalHeader>
                         
-                        <ModalBody className="py-6 px-4 sm:px-6 custom-scrollbar space-y-6">
+                        <ModalBody className="custom-scrollbar space-y-6">
 
                             {/* 1. Información Técnica Principal */}
-                            <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl">
+                            <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl">
                                 <CardBody className="p-5">
-                                    <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4 flex items-center gap-2">
                                         <HiFingerPrint className="w-4 h-4" /> Especificaciones Técnicas
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
@@ -113,9 +114,9 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* 2. Ubicación e Instalación */}
-                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl h-full">
+                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl h-full">
                                     <CardBody className="p-5">
-                                        <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4 flex items-center gap-2">
                                             <HiLocationMarker className="w-4 h-4" /> Ubicación y Registro
                                         </h4>
                                         <div className="space-y-4 flex flex-col h-full">
@@ -129,7 +130,7 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                                             {medidor.latitud && medidor.longitud && (
                                                 <div className="flex flex-col">
                                                     <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Coordenadas</span>
-                                                    <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 px-2 py-1 rounded w-fit">
+                                                    <div className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-200/70 dark:border-sky-900/40 px-2 py-1 rounded w-fit">
                                                         <HiMap className="w-3.5 h-3.5" />
                                                         <span className="text-xs font-mono">
                                                             {medidor.latitud}, {medidor.longitud}
@@ -156,23 +157,23 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                                 {/* 3. Cliente Asignado */}
                                 <Card className={`border-none shadow-none rounded-2xl h-full ${
                                     clienteAsignado
-                                        ? "bg-green-50/50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30"
-                                        : "bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-800/50"
+                                        ? "bg-emerald-500/10 border border-emerald-200/70 dark:border-emerald-900/40"
+                                        : "bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800/50"
                                 }`}>
                                     <CardBody className="p-5 flex flex-col h-full">
-                                        <h4 className={`text-xs font-bold mb-4 uppercase tracking-wider flex items-center gap-2 ${clienteAsignado ? "text-green-600 dark:text-green-500" : "text-slate-500 dark:text-zinc-400"}`}>
+                                        <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2 ${clienteAsignado ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400 dark:text-zinc-500"}`}>
                                             <HiUser className="w-4 h-4" /> Asignación de Cliente
                                         </h4>
 
                                         {clienteAsignado ? (
                                             <div className="flex flex-col h-full">
                                                 <div className="mb-4">
-                                                    <span className="text-[11px] font-bold text-green-700/60 dark:text-green-500/60 uppercase tracking-wider block mb-1">Cliente Titular</span>
+                                                    <span className="text-[11px] font-bold text-emerald-700/70 dark:text-emerald-400/70 uppercase tracking-wider block mb-1">Cliente Titular</span>
                                                     <div className="flex items-center justify-between gap-2">
                                                         <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">
                                                             {clienteAsignado.nombre}
                                                         </p>
-                                                        <Chip size="sm" color="success" variant="flat" className="h-5 px-1 text-[10px] font-bold">
+                                                        <Chip size="sm" color="success" variant="flat" className="h-5 px-1 text-[10px] font-bold uppercase tracking-wider">
                                                             ID: {clienteAsignado.id}
                                                         </Chip>
                                                     </div>
@@ -183,16 +184,16 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                                                     )}
                                                 </div>
 
-                                                <div className="mt-auto pt-4 border-t border-green-200/50 dark:border-green-900/30">
-                                                    <span className="text-[11px] font-bold text-green-700/60 dark:text-green-500/60 uppercase tracking-wider block mb-1">Esquema de Tarifa</span>
+                                                <div className="mt-auto pt-4 border-t border-emerald-200/50 dark:border-emerald-900/30">
+                                                    <span className="text-[11px] font-bold text-emerald-700/70 dark:text-emerald-400/70 uppercase tracking-wider block mb-1">Esquema de Tarifa</span>
                                                     <div className="flex items-start gap-2">
-                                                        <HiCurrencyDollar className="w-4 h-4 text-green-600 dark:text-green-500 mt-0.5 shrink-0" />
+                                                        <HiCurrencyDollar className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                                                         <div className="min-w-0">
-                                                            <span className="text-sm font-bold text-green-700 dark:text-green-400 block truncate">
+                                                            <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400 block truncate">
                                                                 {tarifaCliente?.nombre || "Sin tarifa asignada"}
                                                             </span>
                                                             {tarifaCliente?.descripcion && (
-                                                                <span className="text-[10px] text-green-600/80 dark:text-green-500/80 block line-clamp-2 leading-tight mt-0.5">
+                                                                <span className="text-[10px] text-emerald-700/80 dark:text-emerald-400/80 block line-clamp-2 leading-tight mt-0.5">
                                                                     {tarifaCliente.descripcion}
                                                                 </span>
                                                             )}
@@ -216,12 +217,12 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                             </div>
 
                         </ModalBody>
-                        <ModalFooter className="px-6 py-4">
+                        <ModalFooter>
                             <Button 
                                 color="default" 
-                                variant="light" 
+                                variant="flat" 
                                 onPress={onClose}
-                                className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-6"
                             >
                                 Cerrar Panel
                             </Button>
