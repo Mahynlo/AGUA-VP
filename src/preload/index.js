@@ -118,6 +118,9 @@ const api = {
   fetchReporteLecturas: async (token_session, periodo, localidad) => {
     return await ipcRenderer.invoke("fetch-reporte-lecturas", token_session, periodo, localidad);
   },
+  fetchReporteConsumoAgua: async (token_session, filtros) => {
+    return await ipcRenderer.invoke("fetch-reporte-consumo-agua", token_session, filtros);
+  },
   fetchReporteFinanciero: async (token_session, filtros) => {
     return await ipcRenderer.invoke("fetch-reporte-financiero", token_session, filtros);
   },

@@ -1,14 +1,95 @@
-import { useMemo, useState } from "react";
-import { Card, CardBody, CardHeader, Chip, Progress, Tabs, Tab } from "@nextui-org/react";
-import { HiMap, HiDocumentText, HiChartBar, HiClock, HiCheckCircle, HiTrendingUp, HiExclamation, HiTrendingDown } from "react-icons/hi";
-import { useRutas } from "../../../context/RutasContext";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Button,
+  Card,
+  Chip,
+  Progress,
+  Select,
+  SelectItem,
+  Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+} from "@nextui-org/react";
+import {
+  HiChartBar,
+  HiCheckCircle,
+  HiClock,
+  HiFire,
+  HiMap,
+  HiPrinter,
+  HiTrendingDown,
+  HiTrendingUp,
+  HiBeaker,
+} from "react-icons/hi";
 import ReactApexChart from "react-apexcharts";
+
+import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
+import ModalImprimir from "../impresion/components/ModalImprimir";
+import { useRutas } from "../../../context/RutasContext";
+import { formatearPeriodo, obtenerPeriodoActual } from "../../../utils/periodoUtils";
+
+const formatearNumero = (valor, decimales = 0) => {
+  const n = Number(valor || 0);
+  return n.toLocaleString("es-MX", {
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
+  });
+};
 
 export default function TabMetricas() {
   const { rutas, initialLoading } = useRutas();
-  const [selectedTab, setSelectedTab] = useState("rutas");
 
-  // Estadísticas de Rutas
+  const [vista, setVista] = useState("consumo");
+  const [tipoFiltro, setTipoFiltro] = useState("ultimos_meses");
+  const [periodo, setPeriodo] = useState(obtenerPeriodoActual());
+  const [ultimosMeses, setUltimosMeses] = useState("3");
+
+  const [loadingConsumo, setLoadingConsumo] = useState(false);
+  const [errorConsumo, setErrorConsumo] = useState("");
+  const [reporteConsumo, setReporteConsumo] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [printUrl, setPrintUrl] = useState(null);
+  const [modoPdf, setModoPdf] = useState(null);
+  const [loadingImprimir, setLoadingImprimir] = useState(false);
+
+  const filtrosActivos = useMemo(() => {
+    if (tipoFiltro === "periodo") {
+      return { tipo: "periodo", periodo };
+    }
+    return { tipo: "ultimos_meses", meses: Number(ultimosMeses || 3) };
+  }, [tipoFiltro, periodo, ultimosMeses]);
+
+  const cargarReporteConsumo = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setErrorConsumo("No se encontró token de sesión.");
+      setReporteConsumo(null);
+      return;
+    }
+
+    setLoadingConsumo(true);
+    setErrorConsumo("");
+
+    try {
+      const data = await window.api.fetchReporteConsumoAgua(token, filtrosActivos);
+      setReporteConsumo(data || null);
+    } catch (error) {
+      console.error("Error cargando métricas de consumo:", error);
+      setErrorConsumo(error?.message || "No se pudo cargar el reporte de consumo.");
+      setReporteConsumo(null);
+    } finally {
+      setLoadingConsumo(false);
+    }
+  }, [filtrosActivos]);
+
+  useEffect(() => {
+    cargarReporteConsumo();
+  }, [cargarReporteConsumo]);
+
   const estadisticasRutas = useMemo(() => {
     if (initialLoading || !rutas.length) {
       return {
@@ -21,40 +102,36 @@ export default function TabMetricas() {
         puntosCompletados: 0,
         mejorRuta: null,
         peorRuta: null,
-        distribucionPorEstado: []
+        distribucionPorEstado: [],
       };
     }
 
-    const rutasCompletadas = rutas.filter(r => r.completadas === r.total_puntos && r.total_puntos > 0);
-    const rutasEnProgreso = rutas.filter(r => r.completadas > 0 && r.completadas < r.total_puntos);
-    const rutasSinIniciar = rutas.filter(r => r.completadas === 0);
-    
+    const rutasCompletadas = rutas.filter((r) => r.completadas === r.total_puntos && r.total_puntos > 0);
+    const rutasEnProgreso = rutas.filter((r) => r.completadas > 0 && r.completadas < r.total_puntos);
+    const rutasSinIniciar = rutas.filter((r) => r.completadas === 0);
+
     const totalPuntos = rutas.reduce((acc, r) => acc + (r.total_puntos || 0), 0);
     const puntosCompletados = rutas.reduce((acc, r) => acc + (r.completadas || 0), 0);
     const promedioCompletado = totalPuntos > 0 ? Math.round((puntosCompletados / totalPuntos) * 100) : 0;
 
-    const rutasConDatos = rutas.filter(r => r.total_puntos > 0);
-    const mejorRuta = rutasConDatos.length > 0 
-      ? rutasConDatos.reduce((max, r) => {
-          const porcentaje = (r.completadas / r.total_puntos) * 100;
-          const maxPorcentaje = (max.completadas / max.total_puntos) * 100;
-          return porcentaje > maxPorcentaje ? r : max;
-        })
-      : null;
+    const rutasConDatos = rutas.filter((r) => r.total_puntos > 0);
+    const mejorRuta =
+      rutasConDatos.length > 0
+        ? rutasConDatos.reduce((max, r) => {
+            const porcentaje = (r.completadas / r.total_puntos) * 100;
+            const maxPorcentaje = (max.completadas / max.total_puntos) * 100;
+            return porcentaje > maxPorcentaje ? r : max;
+          })
+        : null;
 
-    const peorRuta = rutasConDatos.length > 0
-      ? rutasConDatos.reduce((min, r) => {
-          const porcentaje = (r.completadas / r.total_puntos) * 100;
-          const minPorcentaje = (min.completadas / min.total_puntos) * 100;
-          return porcentaje < minPorcentaje ? r : min;
-        })
-      : null;
-
-    const distribucionPorEstado = [
-      { name: 'Completadas', value: rutasCompletadas.length, color: '#10B981' }, // emerald-500
-      { name: 'En Progreso', value: rutasEnProgreso.length, color: '#F59E0B' }, // amber-500
-      { name: 'Sin Iniciar', value: rutasSinIniciar.length, color: '#EF4444' }  // red-500
-    ];
+    const peorRuta =
+      rutasConDatos.length > 0
+        ? rutasConDatos.reduce((min, r) => {
+            const porcentaje = (r.completadas / r.total_puntos) * 100;
+            const minPorcentaje = (min.completadas / min.total_puntos) * 100;
+            return porcentaje < minPorcentaje ? r : min;
+          })
+        : null;
 
     return {
       totalRutas: rutas.length,
@@ -66,398 +143,520 @@ export default function TabMetricas() {
       puntosCompletados,
       mejorRuta,
       peorRuta,
-      distribucionPorEstado
+      distribucionPorEstado: [
+        { name: "Completadas", value: rutasCompletadas.length, color: "#10B981" },
+        { name: "En Progreso", value: rutasEnProgreso.length, color: "#F59E0B" },
+        { name: "Sin Iniciar", value: rutasSinIniciar.length, color: "#EF4444" },
+      ],
     };
   }, [rutas, initialLoading]);
 
-  // Estadísticas de Lecturas
-  const estadisticasLecturas = useMemo(() => {
-    if (initialLoading || !rutas.length) {
-      return {
-        totalLecturas: 0,
-        lecturasCompletadas: 0,
-        lecturasPendientes: 0,
-        porcentajeCompletado: 0,
-        lecturasPorRuta: [],
-        tendencia: []
-      };
+  const resumenConsumo = reporteConsumo?.resumen || {};
+  const consumoMensual = reporteConsumo?.series?.consumo_mensual || [];
+  const topConsumidores = reporteConsumo?.listados?.top_consumidores || [];
+  const menorConsumo = reporteConsumo?.listados?.menor_consumo || [];
+  const distribucionRutasConsumo = reporteConsumo?.distribucion_rutas || [];
+
+  const topConsumidor = topConsumidores[0] || null;
+  const menorConsumidor = menorConsumo[0] || null;
+
+  const chartConsumoMensual = useMemo(() => {
+    return {
+      series: [
+        {
+          name: "Consumo total (m3)",
+          type: "column",
+          data: consumoMensual.map((r) => Number(r.consumo_total_m3 || 0)),
+        },
+        {
+          name: "Recibos",
+          type: "line",
+          data: consumoMensual.map((r) => Number(r.recibos || 0)),
+        },
+      ],
+      options: {
+        chart: {
+          type: "line",
+          stacked: false,
+          toolbar: { show: false },
+          background: "transparent",
+        },
+        stroke: {
+          width: [0, 3],
+          curve: "smooth",
+        },
+        colors: ["#0ea5e9", "#6366f1"],
+        xaxis: {
+          categories: consumoMensual.map((r) => formatearPeriodo(r.periodo)),
+          labels: { style: { colors: "currentColor" } },
+        },
+        yaxis: [
+          {
+            title: { text: "m3" },
+            labels: { style: { colors: "currentColor" } },
+          },
+          {
+            opposite: true,
+            title: { text: "Recibos" },
+            labels: { style: { colors: "currentColor" } },
+          },
+        ],
+        dataLabels: { enabled: false },
+        legend: {
+          position: "top",
+          labels: { colors: "currentColor" },
+        },
+        grid: { borderColor: "#d4d4d8" },
+      },
+    };
+  }, [consumoMensual]);
+
+  const chartDistribucionRutas = useMemo(() => {
+    const topRutas = distribucionRutasConsumo.slice(0, 8);
+    return {
+      series: topRutas.map((r) => Number(r.consumo_total_m3 || 0)),
+      options: {
+        chart: {
+          type: "donut",
+          background: "transparent",
+        },
+        labels: topRutas.map((r) => r.ruta_nombre),
+        colors: ["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#6366f1", "#14b8a6", "#f97316", "#a855f7"],
+        legend: {
+          position: "bottom",
+          labels: { colors: "currentColor" },
+        },
+        dataLabels: {
+          enabled: true,
+          formatter: (val) => `${Math.round(val)}%`,
+        },
+        stroke: { show: false },
+      },
+    };
+  }, [distribucionRutasConsumo]);
+
+  const chartEstadosRutas = useMemo(() => {
+    return {
+      series: estadisticasRutas.distribucionPorEstado.map((d) => d.value),
+      options: {
+        chart: {
+          type: "donut",
+          background: "transparent",
+        },
+        labels: estadisticasRutas.distribucionPorEstado.map((d) => d.name),
+        colors: estadisticasRutas.distribucionPorEstado.map((d) => d.color),
+        legend: {
+          position: "bottom",
+          labels: { colors: "currentColor" },
+        },
+        dataLabels: {
+          enabled: true,
+          formatter: (val) => `${Math.round(val)}%`,
+        },
+        stroke: { show: false },
+      },
+    };
+  }, [estadisticasRutas]);
+
+  const etiquetaFiltro = reporteConsumo?.filtro_aplicado?.etiqueta || "Sin filtro";
+
+  const construirUrlReporteLecturasMetricas = useCallback(async () => {
+    if (!reporteConsumo) return null;
+
+    const payload = {
+      titulo: "Reporte de Métricas de Lecturas",
+      filtro_aplicado: reporteConsumo.filtro_aplicado || {},
+      consumo: {
+        resumen: resumenConsumo,
+        series: {
+          consumo_mensual: consumoMensual,
+        },
+        listados: {
+          top_consumidores: topConsumidores,
+          menor_consumo: menorConsumo,
+        },
+        distribucion_rutas: distribucionRutasConsumo,
+      },
+      rutas: {
+        resumen: {
+          total_rutas: estadisticasRutas.totalRutas,
+          rutas_completadas: estadisticasRutas.rutasCompletadas,
+          rutas_en_progreso: estadisticasRutas.rutasEnProgreso,
+          rutas_sin_iniciar: estadisticasRutas.rutasSinIniciar,
+          promedio_completado: estadisticasRutas.promedioCompletado,
+          total_puntos: estadisticasRutas.totalPuntos,
+          puntos_completados: estadisticasRutas.puntosCompletados,
+        },
+      },
+      generated_at: new Date().toISOString(),
+    };
+
+    const dataKey = await window.api.savePrintData(JSON.stringify(payload));
+    const { protocol, origin, href } = window.location;
+    const params = `print=true&dataKey=${dataKey}`;
+
+    if (protocol === "file:") {
+      const base = href.split("#")[0];
+      return `${base}#/reporteLecturasMetricas?${params}`;
     }
 
-    const totalLecturas = rutas.reduce((acc, r) => acc + (r.total_puntos || 0), 0);
-    const lecturasCompletadas = rutas.reduce((acc, r) => acc + (r.completadas || 0), 0);
-    const lecturasPendientes = totalLecturas - lecturasCompletadas;
-    const porcentajeCompletado = totalLecturas > 0 ? Math.round((lecturasCompletadas / totalLecturas) * 100) : 0;
+    return `${origin}/#/reporteLecturasMetricas?${params}`;
+  }, [
+    reporteConsumo,
+    resumenConsumo,
+    consumoMensual,
+    topConsumidores,
+    menorConsumo,
+    distribucionRutasConsumo,
+    estadisticasRutas,
+  ]);
 
-    const lecturasPorRuta = rutas
-      .map(r => ({
-        nombre: r.nombre,
-        completadas: r.completadas || 0,
-        total: r.total_puntos || 0,
-        porcentaje: r.total_puntos > 0 ? Math.round((r.completadas / r.total_puntos) * 100) : 0
-      }))
-      .sort((a, b) => b.completadas - a.completadas)
-      .slice(0, 5);
+  const handlePrint = async () => {
+    const url = await construirUrlReporteLecturasMetricas();
+    if (!url) return;
 
-    return {
-      totalLecturas,
-      lecturasCompletadas,
-      lecturasPendientes,
-      porcentajeCompletado,
-      lecturasPorRuta
-    };
-  }, [rutas, initialLoading]);
-
-  // Configuración del gráfico de distribución de rutas
-  const chartDistribucionRutas = {
-    series: estadisticasRutas.distribucionPorEstado.map(d => d.value),
-    options: {
-      chart: {
-        type: 'donut',
-        fontFamily: 'inherit',
-        background: 'transparent'
-      },
-      labels: estadisticasRutas.distribucionPorEstado.map(d => d.name),
-      colors: estadisticasRutas.distribucionPorEstado.map(d => d.color),
-      legend: {
-        position: 'bottom',
-        labels: { colors: 'currentColor' }
-      },
-      stroke: { show: false },
-      dataLabels: {
-        enabled: true,
-        formatter: function (val) {
-          return Math.round(val) + "%";
-        },
-        dropShadow: { enabled: false }
-      },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: '70%',
-            labels: {
-              show: true,
-              name: { show: true, color: 'currentColor' },
-              value: { show: true, fontSize: '24px', fontWeight: 700, color: 'currentColor' },
-              total: { show: true, showAlways: true, label: 'Total', color: 'currentColor' }
-            }
-          }
-        }
-      },
-      theme: { mode: 'light' } // ApexCharts se maneja mejor en light por defecto si no forzamos todo
+    setLoadingImprimir(true);
+    try {
+      const response = await window.api.previewComponent(url);
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf("imprimir");
+      }
+    } catch (error) {
+      console.error("Error preparando impresión de métricas de lecturas:", error);
+      alert("No se pudo preparar la impresión del reporte de métricas.");
+    } finally {
+      setLoadingImprimir(false);
     }
   };
 
-  // Configuración del gráfico de lecturas por ruta
-  const chartLecturasPorRuta = {
-    series: [{
-      name: 'Completadas',
-      data: estadisticasLecturas.lecturasPorRuta.map(r => r.completadas)
-    }, {
-      name: 'Pendientes',
-      data: estadisticasLecturas.lecturasPorRuta.map(r => r.total - r.completadas)
-    }],
-    options: {
-      chart: {
-        type: 'bar',
-        stacked: true,
-        fontFamily: 'inherit',
-        toolbar: { show: false },
-        background: 'transparent'
-      },
-      plotOptions: {
-        bar: {
-          horizontal: true,
-          borderRadius: 4,
-        },
-      },
-      stroke: { width: 1, colors: ['#fff'] },
-      xaxis: {
-        categories: estadisticasLecturas.lecturasPorRuta.map(r => r.nombre),
-        labels: { style: { colors: 'currentColor' } }
-      },
-      yaxis: {
-        labels: { style: { colors: 'currentColor' } }
-      },
-      colors: ['#10B981', '#F59E0B'], // emerald, amber
-      legend: {
-        position: 'top',
-        labels: { colors: 'currentColor' }
-      },
-      dataLabels: { enabled: false }
-    }
+  const selectClasses = {
+    trigger: "bg-slate-100/70 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none",
   };
 
   return (
     <div className="w-full space-y-6">
-      <Tabs
-        selectedKey={selectedTab}
-        onSelectionChange={setSelectedTab}
-        color="primary"
-        variant="underlined"
-        classNames={{
-          tabList: "gap-6 w-full relative rounded-none p-0 border-b border-slate-200 dark:border-zinc-800",
-          cursor: "w-full bg-blue-500",
-          tab: "max-w-fit px-0 h-12",
-          tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 font-bold text-slate-500",
-        }}
-      >
-        {/* TAB DE ESTADÍSTICAS DE RUTAS */}
-        <Tab
-          key="rutas"
-          title={
-            <div className="flex items-center gap-2">
-              <HiMap className="text-lg" />
-              <span>Estadísticas de Rutas</span>
+      <Card className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 print:mb-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl p-3 print:hidden">
+              <HiChartBar className="w-6 h-6" />
             </div>
-          }
-        >
-          <div className="pt-6 space-y-6">
-            
-            {/* KPI Cards (Resumen Rápido) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="border-none shadow-sm bg-blue-50 dark:bg-blue-900/10 rounded-2xl">
-                <CardBody className="p-5 flex flex-row items-center gap-4">
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
-                    <HiMap className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase tracking-wider mb-0.5">Total Rutas</p>
-                    <p className="text-3xl font-black text-blue-700 dark:text-blue-300 leading-none">
-                      {estadisticasRutas.totalRutas}
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
-
-              <Card className="border-none shadow-sm bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl">
-                <CardBody className="p-5 flex flex-row items-center gap-4">
-                  <div className="p-3 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
-                    <HiCheckCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-wider mb-0.5">Completadas</p>
-                    <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300 leading-none">
-                      {estadisticasRutas.rutasCompletadas}
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
-
-              <Card className="border-none shadow-sm bg-amber-50 dark:bg-amber-900/10 rounded-2xl">
-                <CardBody className="p-5 flex flex-row items-center gap-4">
-                  <div className="p-3 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-xl shrink-0">
-                    <HiClock className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-wider mb-0.5">En Progreso</p>
-                    <p className="text-3xl font-black text-amber-700 dark:text-amber-300 leading-none">
-                      {estadisticasRutas.rutasEnProgreso}
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
-
-              <Card className="border-none shadow-sm bg-red-50 dark:bg-red-900/10 rounded-2xl">
-                <CardBody className="p-5 flex flex-row items-center gap-4">
-                  <div className="p-3 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-xl shrink-0">
-                    <HiExclamation className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-red-600/70 dark:text-red-400/70 uppercase tracking-wider mb-0.5">Sin Iniciar</p>
-                    <p className="text-3xl font-black text-red-700 dark:text-red-300 leading-none">
-                      {estadisticasRutas.rutasSinIniciar}
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
+            <div>
+              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Métricas Unificadas de Lecturas</h3>
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Consumo de agua potable y rendimiento operativo por rutas</p>
             </div>
+          </div>
 
-            {/* Gráficos y Detalles */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
-              {/* Distribución por estado */}
-              <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl">
-                <CardHeader className="pt-6 px-6 pb-0">
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-                    <HiChartBar className="text-blue-500" /> Distribución por Estado
-                  </h3>
-                </CardHeader>
-                <CardBody className="px-6 py-6 flex items-center justify-center">
-                  {estadisticasRutas.totalRutas > 0 ? (
-                    <div className="w-full" style={{ color: 'var(--nextui-colors-foreground)' }}>
-                      <ReactApexChart
-                        options={chartDistribucionRutas.options}
-                        series={chartDistribucionRutas.series}
-                        type="donut"
-                        height={320}
-                      />
-                    </div>
+          <div className="w-full sm:w-auto flex items-center gap-2 print:hidden">
+            <Chip color="default" variant="bordered" className="border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-medium rounded-xl" startContent={<HiClock className="w-3.5 h-3.5" />}>
+              {etiquetaFiltro}
+            </Chip>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8 print:hidden">
+          <div className="lg:col-span-3">
+            <Select
+              label="Vista"
+              selectedKeys={[vista]}
+              onChange={(e) => setVista(e.target.value || "consumo")}
+              size="sm"
+              variant="flat"
+              classNames={selectClasses}
+            >
+              <SelectItem key="consumo" value="consumo">Consumo de agua</SelectItem>
+              <SelectItem key="rutas" value="rutas">Rutas y distribución</SelectItem>
+            </Select>
+          </div>
+
+          <div className="lg:col-span-3">
+            <Select
+              label="Rango"
+              selectedKeys={[tipoFiltro]}
+              onChange={(e) => setTipoFiltro(e.target.value || "ultimos_meses")}
+              size="sm"
+              variant="flat"
+              classNames={selectClasses}
+            >
+              <SelectItem key="ultimos_meses" value="ultimos_meses">Últimos meses</SelectItem>
+              <SelectItem key="periodo" value="periodo">Período específico</SelectItem>
+            </Select>
+          </div>
+
+          <div className="lg:col-span-4">
+            {tipoFiltro === "periodo" ? (
+              <SelectorPeriodoAvanzado
+                value={periodo}
+                onChange={setPeriodo}
+                label="Período"
+                placeholder="Seleccionar período"
+              />
+            ) : (
+              <Select
+                label="Últimos meses"
+                selectedKeys={[ultimosMeses]}
+                onChange={(e) => setUltimosMeses(e.target.value || "3")}
+                size="sm"
+                variant="flat"
+                classNames={selectClasses}
+              >
+                <SelectItem key="3" value="3">Últimos 3 meses</SelectItem>
+                <SelectItem key="6" value="6">Últimos 6 meses</SelectItem>
+                <SelectItem key="12" value="12">Últimos 12 meses</SelectItem>
+              </Select>
+            )}
+          </div>
+
+          <div className="lg:col-span-2 flex items-end">
+            <Button
+              color="primary"
+              className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl"
+              onPress={handlePrint}
+              isLoading={loadingImprimir}
+              isDisabled={!reporteConsumo || loadingConsumo || loadingImprimir}
+              startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
+            >
+              {loadingImprimir ? "Preparando..." : "Imprimir"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {errorConsumo && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-900/50 p-4 mb-8 print:hidden">
+          <p className="text-sm font-medium text-red-700 dark:text-red-400">{errorConsumo}</p>
+        </div>
+      )}
+
+      {loadingConsumo && !reporteConsumo ? (
+        <div className="flex items-center justify-center py-20 print:hidden">
+          <Spinner size="lg" color="default" label="Generando métricas de consumo..." classNames={{ label: "text-slate-500 text-sm font-medium mt-4" }} />
+        </div>
+      ) : (
+        <>
+          {vista === "consumo" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-8 print:grid-cols-5 print:gap-2">
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Recibos</p>
+                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.total_recibos)}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Agua consumida</p>
+                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.consumo_total_m3, 2)} m3</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Promedio por recibo</p>
+                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.consumo_promedio_m3, 2)} m3</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Clientes analizados</p>
+                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.total_clientes)}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Promedio por cliente</p>
+                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.promedio_consumo_por_cliente_m3, 2)} m3</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4">Tendencia de consumo y recibos</p>
+                  {consumoMensual.length > 0 ? (
+                    <ReactApexChart options={chartConsumoMensual.options} series={chartConsumoMensual.series} type="line" height={330} />
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-[300px] opacity-50">
-                      <HiChartBar className="w-12 h-12 text-slate-400 mb-2" />
-                      <p className="text-sm font-medium text-slate-500">No hay datos de rutas</p>
-                    </div>
+                    <div className="h-[300px] flex items-center justify-center text-sm text-slate-500 dark:text-zinc-400">Sin datos para el rango seleccionado.</div>
                   )}
-                </CardBody>
-              </Card>
+                </div>
 
-              {/* Progreso General y Destacados */}
-              <div className="flex flex-col gap-6">
-                <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl">
-                  <CardHeader className="pt-6 px-6 pb-0">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-                      <HiChartBar className="text-emerald-500" /> Progreso General
-                    </h3>
-                  </CardHeader>
-                  <CardBody className="px-6 py-6">
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Avance de Lecturas
-                      </span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-slate-800 dark:text-zinc-100">
-                          {estadisticasRutas.puntosCompletados}
-                        </span>
-                        <span className="text-sm font-bold text-slate-400">/ {estadisticasRutas.totalPuntos}</span>
-                      </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600"><HiTrendingUp className="w-4 h-4" /></div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Mayor consumo</span>
                     </div>
-                    <Progress
-                      value={estadisticasRutas.promedioCompletado}
-                      color="success"
-                      className="h-3"
-                      classNames={{ track: "bg-slate-100 dark:bg-zinc-800", indicator: "rounded-full bg-emerald-500" }}
-                      aria-label="Progreso general"
-                    />
-                    <p className="text-right text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-2">
-                        {estadisticasRutas.promedioCompletado}% Completado
-                    </p>
-                  </CardBody>
-                </Card>
+                    {topConsumidor ? (
+                      <>
+                        <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{topConsumidor.cliente_nombre}</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">{formatearNumero(topConsumidor.consumo_total_m3, 2)} m3 en {formatearNumero(topConsumidor.recibos)} recibos</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-slate-500 dark:text-zinc-400">Sin datos disponibles.</p>
+                    )}
+                  </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
-                    {estadisticasRutas.mejorRuta ? (
-                        <Card className="border-none shadow-sm bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-800/30 rounded-2xl">
-                            <CardBody className="p-5 flex flex-col justify-center">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="p-1.5 bg-emerald-500 text-white rounded-full"><HiTrendingUp className="w-4 h-4" /></div>
-                                    <span className="text-[11px] font-bold text-emerald-700/70 dark:text-emerald-500/70 uppercase tracking-wider">Mejor Ruta</span>
-                                </div>
-                                <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate mb-1">{estadisticasRutas.mejorRuta.nombre}</p>
-                                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                    {estadisticasRutas.mejorRuta.completadas} / {estadisticasRutas.mejorRuta.total_puntos} puntos ({Math.round((estadisticasRutas.mejorRuta.completadas / estadisticasRutas.mejorRuta.total_puntos) * 100)}%)
-                                </p>
-                            </CardBody>
-                        </Card>
-                    ) : <div />}
+                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="p-1.5 rounded-lg bg-red-500/10 text-red-600"><HiTrendingDown className="w-4 h-4" /></div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Menor consumo</span>
+                    </div>
+                    {menorConsumidor ? (
+                      <>
+                        <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{menorConsumidor.cliente_nombre}</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">{formatearNumero(menorConsumidor.consumo_total_m3, 2)} m3 en {formatearNumero(menorConsumidor.recibos)} recibos</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-slate-500 dark:text-zinc-400">Sin datos disponibles.</p>
+                    )}
+                  </div>
 
-                    {estadisticasRutas.peorRuta ? (
-                        <Card className="border-none shadow-sm bg-red-50 dark:bg-red-900/10 border border-red-200/50 dark:border-red-800/30 rounded-2xl">
-                            <CardBody className="p-5 flex flex-col justify-center">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="p-1.5 bg-red-500 text-white rounded-full"><HiTrendingDown className="w-4 h-4" /></div>
-                                    <span className="text-[11px] font-bold text-red-700/70 dark:text-red-500/70 uppercase tracking-wider">Requiere Atención</span>
-                                </div>
-                                <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate mb-1">{estadisticasRutas.peorRuta.nombre}</p>
-                                <p className="text-xs font-medium text-red-600 dark:text-red-400">
-                                    {estadisticasRutas.peorRuta.completadas} / {estadisticasRutas.peorRuta.total_puntos} puntos ({Math.round((estadisticasRutas.peorRuta.completadas / estadisticasRutas.peorRuta.total_puntos) * 100)}%)
-                                </p>
-                            </CardBody>
-                        </Card>
-                    ) : <div />}
+                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 rounded-lg bg-slate-500/10 text-slate-600 dark:text-zinc-300"><HiMap className="w-4 h-4" /></div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Rutas con consumo</span>
+                    </div>
+                    <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(distribucionRutasConsumo.length)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Top consumidores</p>
+                    <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold" startContent={<HiFire className="w-3 h-3" />}>{topConsumidores.length}</Chip>
+                  </div>
+                  <Table aria-label="Top consumidores" removeWrapper className="max-h-[340px] overflow-auto" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-3" }}>
+                    <TableHeader>
+                      <TableColumn>Cliente</TableColumn>
+                      <TableColumn>Localidad</TableColumn>
+                      <TableColumn>Recibos</TableColumn>
+                      <TableColumn>Consumo m3</TableColumn>
+                    </TableHeader>
+                    <TableBody emptyContent="Sin datos" items={topConsumidores}>
+                      {(item) => (
+                        <TableRow key={item.cliente_id}>
+                          <TableCell className="font-semibold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
+                          <TableCell>{item.localidad || "-"}</TableCell>
+                          <TableCell>{formatearNumero(item.recibos)}</TableCell>
+                          <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Menor consumo</p>
+                    <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold" startContent={<HiTrendingDown className="w-3 h-3" />}>{menorConsumo.length}</Chip>
+                  </div>
+                  <Table aria-label="Menor consumo" removeWrapper className="max-h-[340px] overflow-auto" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-3" }}>
+                    <TableHeader>
+                      <TableColumn>Cliente</TableColumn>
+                      <TableColumn>Localidad</TableColumn>
+                      <TableColumn>Recibos</TableColumn>
+                      <TableColumn>Consumo m3</TableColumn>
+                    </TableHeader>
+                    <TableBody emptyContent="Sin datos" items={menorConsumo}>
+                      {(item) => (
+                        <TableRow key={item.cliente_id}>
+                          <TableCell className="font-semibold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
+                          <TableCell>{item.localidad || "-"}</TableCell>
+                          <TableCell>{formatearNumero(item.recibos)}</TableCell>
+                          <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>
-          </div>
-        </Tab>
+          )}
 
-        {/* TAB DE ESTADÍSTICAS DE LECTURAS */}
-        <Tab
-          key="lecturas"
-          title={
-            <div className="flex items-center gap-2">
-              <HiDocumentText className="text-lg" />
-              <span>Métricas de Lecturas</span>
-            </div>
-          }
-        >
-          <div className="pt-6 space-y-6">
-            {/* KPI Cards de Lecturas */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card className="border-none shadow-sm bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl">
-                <CardBody className="p-5 flex flex-row items-center gap-4">
-                  <div className="p-3 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-xl shrink-0">
-                    <HiDocumentText className="w-6 h-6" />
+          {vista === "rutas" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8 print:grid-cols-4 print:gap-2">
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Rutas activas</p>
+                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(estadisticasRutas.totalRutas)}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Rutas completadas</p>
+                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(estadisticasRutas.rutasCompletadas)}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">En progreso</p>
+                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(estadisticasRutas.rutasEnProgreso)}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Avance operativo</p>
+                  <div className="flex items-center gap-3 mb-2">
+                    <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{estadisticasRutas.promedioCompletado}%</p>
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600"><HiCheckCircle className="w-4 h-4" /></div>
                   </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-indigo-600/70 dark:text-indigo-400/70 uppercase tracking-wider mb-0.5">Total Lecturas</p>
-                    <p className="text-3xl font-black text-indigo-700 dark:text-indigo-300 leading-none">
-                      {estadisticasLecturas.totalLecturas.toLocaleString()}
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
+                  <Progress
+                    value={estadisticasRutas.promedioCompletado}
+                    className="h-2"
+                    classNames={{ track: "bg-slate-200 dark:bg-zinc-800", indicator: "bg-slate-800 dark:bg-zinc-200 rounded-full" }}
+                    aria-label="Avance operativo"
+                  />
+                </div>
+              </div>
 
-              <Card className="border-none shadow-sm bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl">
-                <CardBody className="p-5 flex flex-row items-center gap-4">
-                  <div className="p-3 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
-                    <HiCheckCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-wider mb-0.5">Realizadas</p>
-                    <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300 leading-none">
-                      {estadisticasLecturas.lecturasCompletadas.toLocaleString()}
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
-
-              <Card className="border-none shadow-sm bg-amber-50 dark:bg-amber-900/10 rounded-2xl">
-                <CardBody className="p-5 flex flex-row items-center gap-4">
-                  <div className="p-3 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-xl shrink-0">
-                    <HiClock className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-amber-600/70 dark:text-amber-400/70 uppercase tracking-wider mb-0.5">Pendientes</p>
-                    <p className="text-3xl font-black text-amber-700 dark:text-amber-300 leading-none">
-                      {estadisticasLecturas.lecturasPendientes.toLocaleString()}
-                    </p>
-                  </div>
-                </CardBody>
-              </Card>
-            </div>
-
-            {/* Gráfico de lecturas */}
-            <div className="grid grid-cols-1 gap-6">
-              
-              <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl">
-                <CardHeader className="pt-6 px-6 pb-0">
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-                    <HiChartBar className="text-blue-500" /> Top 5 Rutas (Avance de Lectura)
-                  </h3>
-                </CardHeader>
-                <CardBody className="px-6 py-6">
-                  {estadisticasLecturas.lecturasPorRuta.length > 0 ? (
-                    <div className="w-full" style={{ color: 'var(--nextui-colors-foreground)' }}>
-                        <ReactApexChart
-                        options={chartLecturasPorRuta.options}
-                        series={chartLecturasPorRuta.series}
-                        type="bar"
-                        height={350}
-                        />
-                    </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4">Distribución operativa de rutas</p>
+                  {estadisticasRutas.totalRutas > 0 ? (
+                    <ReactApexChart options={chartEstadosRutas.options} series={chartEstadosRutas.series} type="donut" height={320} />
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-[300px] opacity-50">
-                      <HiDocumentText className="w-12 h-12 text-slate-400 mb-2" />
-                      <p className="text-sm font-medium text-slate-500">No hay datos de lecturas</p>
-                    </div>
+                    <div className="h-[300px] flex items-center justify-center text-sm text-slate-500 dark:text-zinc-400">No hay rutas disponibles.</div>
                   )}
-                </CardBody>
-              </Card>
-              
+                </div>
+
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4">Distribución de consumo por ruta</p>
+                  {distribucionRutasConsumo.length > 0 ? (
+                    <ReactApexChart options={chartDistribucionRutas.options} series={chartDistribucionRutas.series} type="donut" height={320} />
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center text-sm text-slate-500 dark:text-zinc-400">Sin consumo facturado para el rango seleccionado.</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo por ruta</p>
+                  <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold" startContent={<HiMap className="w-3 h-3" />}>{distribucionRutasConsumo.length}</Chip>
+                </div>
+                <Table aria-label="Consumo por ruta" removeWrapper className="max-h-[360px] overflow-auto" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-3" }}>
+                  <TableHeader>
+                    <TableColumn>Ruta</TableColumn>
+                    <TableColumn>Recibos</TableColumn>
+                    <TableColumn>Consumo total (m3)</TableColumn>
+                    <TableColumn>Promedio (m3)</TableColumn>
+                  </TableHeader>
+                  <TableBody emptyContent="Sin datos" items={distribucionRutasConsumo}>
+                    {(item) => (
+                      <TableRow key={`${item.ruta_id}-${item.ruta_nombre}`}>
+                        <TableCell className="font-semibold text-slate-800 dark:text-zinc-100">{item.ruta_nombre}</TableCell>
+                        <TableCell>{formatearNumero(item.recibos)}</TableCell>
+                        <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
+                        <TableCell>{formatearNumero(item.consumo_promedio_m3, 2)}</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-          </div>
-        </Tab>
-      </Tabs>
+          )}
+        </>
+      )}
+
+      {pdfUrl && modoPdf === "imprimir" && (
+        <ModalImprimir
+          pdfUrl={pdfUrl}
+          printUrl={printUrl}
+          onClose={() => {
+            setPdfUrl(null);
+            setPrintUrl(null);
+            setModoPdf(null);
+          }}
+          onVolver={() => setModoPdf("vista-previa")}
+        />
+      )}
     </div>
   );
 }

@@ -44,6 +44,7 @@ import RecuperarPassword from "./components/AdministrarPassword/Recuperacion";
 //Impresion de recibos
 import Recibo from "./components/recibo/Recibo";
 import ReporteLecturas from "./components/recibo/ReporteLecturas";
+import ReporteLecturasMetricas from "./components/recibo/ReporteLecturasMetricas";
 import ReporteClientesCompleto from "./components/recibo/ReporteClientes"
 import ComprobantePago from "./components/recibo/ComprobantePago";
 import ReporteFinancieroPagos from "./components/recibo/ReporteFinancieroPagos";
@@ -103,8 +104,8 @@ function App() {
 
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos'];
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos'];
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos'];
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos'];
 
   const { loading } = useAuth();
 
@@ -181,6 +182,7 @@ function MainApp() {
         </Route>
         <Route path="/recibo" element={<Recibo />} />
         <Route path="/reporteLecturas" element={<ReporteLecturas />} />
+        <Route path="/reporteLecturasMetricas" element={<ReporteLecturasMetricas />} />
         <Route path="/reporteClientes" element={<ReporteClientesCompleto />} />
         <Route path="/comprobante-pago" element={<ComprobantePago />} />
         <Route path="/reporteFinancieroPagos" element={<ReporteFinancieroPagos />} />

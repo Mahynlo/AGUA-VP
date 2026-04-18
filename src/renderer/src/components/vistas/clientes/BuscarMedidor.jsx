@@ -21,8 +21,8 @@ import {
 const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, placeholder, autoFocus }) => {
     // Mapa de colores seguros para focus
     const focusColors = {
-        blue: "focus:ring-blue-500 focus:border-blue-500",
-        green: "focus:ring-green-500 focus:border-green-500",
+        blue: "focus:ring-slate-400/20 focus:border-slate-300",
+        green: "focus:ring-slate-400/20 focus:border-slate-300",
     };
     
     return (
@@ -43,11 +43,11 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blu
                     placeholder={placeholder}
                     autoFocus={autoFocus}
                     className={`
-                        w-full pl-10 pr-4 py-2.5 text-sm rounded-xl transition-all duration-200
-                        bg-slate-50 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100
-                        border border-slate-200 dark:border-zinc-700
-                        hover:bg-slate-100 dark:hover:bg-zinc-800
-                        focus:outline-none focus:ring-2 focus:bg-white dark:focus:bg-zinc-900
+                        w-full pl-10 pr-4 py-3 text-sm rounded-xl transition-all duration-200
+                        bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100
+                        border border-slate-200 dark:border-zinc-800
+                        hover:border-slate-300 dark:hover:border-zinc-700
+                        focus:outline-none focus:ring-2
                         placeholder-slate-400 dark:placeholder-zinc-500
                         ${focusColors[color] || focusColors.blue}
                     `}
@@ -155,14 +155,14 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
         <div className="flex flex-col lg:flex-row w-full h-full gap-4 lg:gap-6 min-h-[500px]">
             
             {/* PANEL IZQUIERDO: Medidores Asignados */}
-            <Card className="flex-1 h-full border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col">
+            <Card className="flex-1 h-full border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col">
                 <CardBody className="p-4 sm:p-5 flex flex-col h-full min-h-0">
                     
                     {/* Header Panel Izquierdo (No se encoge) */}
                     <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-zinc-800 flex-shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
-                                <HiCog className="text-xl text-blue-600 dark:text-blue-400" />
+                            <div className="p-2 bg-slate-500/10 rounded-xl">
+                                <HiCog className="text-xl text-slate-600 dark:text-zinc-300" />
                             </div>
                             <div>
                                 <h4 className="text-base font-bold text-slate-800 dark:text-zinc-100 leading-tight">
@@ -174,7 +174,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                             </div>
                         </div>
                         {medidoresAsignadosCliente.length > 0 && (
-                            <Chip size="sm" color="primary" variant="solid" className="font-bold shadow-sm">
+                            <Chip size="sm" color="default" variant="flat" className="font-bold text-[10px] uppercase tracking-wider">
                                 {medidoresAsignadosCliente.length}
                             </Chip>
                         )}
@@ -187,15 +187,15 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                 {medidoresAsignadosCliente.map(medidor => (
                                     <div
                                         key={medidor.id}
-                                        className="group p-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 hover:shadow-md transition-all duration-200"
+                                        className="group p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/30 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200"
                                     >
                                         <div className="flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <Avatar
                                                     icon={<HiCog className="text-lg" />}
                                                     classNames={{
-                                                        base: "bg-blue-100 dark:bg-blue-900/30 flex-shrink-0",
-                                                        icon: "text-blue-600 dark:text-blue-400"
+                                                        base: "bg-slate-200/80 dark:bg-zinc-800 flex-shrink-0",
+                                                        icon: "text-slate-600 dark:text-zinc-300"
                                                     }}
                                                     size="sm"
                                                 />
@@ -243,14 +243,14 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
             </Card>
 
             {/* PANEL DERECHO: Búsqueda y Selección */}
-            <Card className="flex-1 h-full border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col">
+            <Card className="flex-1 h-full border-none shadow-none bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col">
                 <CardBody className="p-4 sm:p-5 flex flex-col h-full min-h-0 relative">
                     
                     {/* Header Panel Derecho (Búsqueda) */}
                     <div className="flex-shrink-0 z-20">
                         <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100 dark:border-zinc-800">
-                            <div className="p-2 bg-green-500/10 dark:bg-green-500/20 rounded-xl">
-                                <HiSearch className="text-xl text-green-600 dark:text-green-400" />
+                            <div className="p-2 bg-emerald-500/10 rounded-xl">
+                                <HiSearch className="text-xl text-emerald-600 dark:text-emerald-400" />
                             </div>
                             <div>
                                 <h4 className="text-base font-bold text-slate-800 dark:text-zinc-100 leading-tight">
@@ -273,7 +273,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
 
                             {/* Resultados Flotantes (Dropdown Absoluto) */}
                             {resultados.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-64 overflow-y-auto custom-scrollbar border border-slate-200 dark:border-zinc-700 shadow-xl shadow-slate-200/50 dark:shadow-black/50 rounded-xl bg-white dark:bg-zinc-800">
+                                <div className="absolute top-full left-0 right-0 z-50 mt-2 max-h-64 overflow-y-auto custom-scrollbar border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl bg-white dark:bg-zinc-950">
                                     {resultados.map((medidor, index) => {
                                         const isDisabled = medidor.cliente_id && medidor.cliente_id !== clienteId;
                                         return (
@@ -287,12 +287,12 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                                     ${index !== resultados.length - 1 ? 'border-b border-slate-100 dark:border-zinc-700' : ''}
                                                     ${isDisabled 
                                                         ? 'opacity-60 bg-slate-50 dark:bg-zinc-900/50 cursor-not-allowed' 
-                                                        : 'cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20'
+                                                        : 'cursor-pointer hover:bg-emerald-500/10'
                                                     }
                                                 `}
                                             >
-                                                <div className={`p-2 rounded-full flex-shrink-0 ${isDisabled ? 'bg-slate-200 dark:bg-zinc-700' : 'bg-green-100 dark:bg-green-900/40'}`}>
-                                                    <HiCog className={`text-lg ${isDisabled ? 'text-slate-500' : 'text-green-600 dark:text-green-400'}`} />
+                                                <div className={`p-2 rounded-full flex-shrink-0 ${isDisabled ? 'bg-slate-200 dark:bg-zinc-700' : 'bg-emerald-500/10'}`}>
+                                                    <HiCog className={`text-lg ${isDisabled ? 'text-slate-500' : 'text-emerald-600 dark:text-emerald-400'}`} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-center mb-0.5">
@@ -316,7 +316,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
 
                             {/* No hay resultados */}
                             {busqueda.trim() && !isSearching && resultados.length === 0 && (
-                                <div className="absolute top-full left-0 right-0 z-50 mt-2 border border-slate-200 dark:border-zinc-700 shadow-xl rounded-xl bg-white dark:bg-zinc-800 p-6 text-center">
+                                <div className="absolute top-full left-0 right-0 z-50 mt-2 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl bg-white dark:bg-zinc-950 p-6 text-center">
                                     <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">No se encontraron equipos</p>
                                     <p className="text-xs text-slate-500 mt-1">Verifica el número de serie e intenta de nuevo.</p>
                                 </div>
@@ -331,7 +331,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                 Equipos por agregar
                             </h4>
                             {medidoresSeleccionados.length > 0 && (
-                                <Chip size="sm" color="success" variant="flat" className="h-5 text-[10px] font-bold">
+                                <Chip size="sm" color="success" variant="flat" className="h-5 text-[10px] font-bold uppercase tracking-wider">
                                     {medidoresSeleccionados.length} listos
                                 </Chip>
                             )}
@@ -344,17 +344,17 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                     {medidoresSeleccionados.map((medidor) => (
                                         <div
                                             key={medidor.id}
-                                            className="flex items-center justify-between p-2 pl-3 bg-green-50 dark:bg-green-900/10 border border-green-200/60 dark:border-green-900/30 rounded-xl"
+                                            className="flex items-center justify-between p-2 pl-3 bg-emerald-500/10 border border-emerald-200/70 dark:border-emerald-900/40 rounded-xl"
                                         >
                                             <div className="flex items-center gap-3 overflow-hidden">
-                                                <div className="p-1.5 bg-green-200/50 dark:bg-green-800/40 rounded-full shrink-0">
-                                                    <HiPlus className="text-xs text-green-700 dark:text-green-400" />
+                                                <div className="p-1.5 bg-emerald-500/10 rounded-full shrink-0">
+                                                    <HiPlus className="text-xs text-emerald-700 dark:text-emerald-400" />
                                                 </div>
                                                 <div className="truncate">
-                                                    <h5 className="text-sm font-bold text-green-900 dark:text-green-100 truncate leading-tight">
+                                                    <h5 className="text-sm font-bold text-emerald-900 dark:text-emerald-200 truncate leading-tight">
                                                         {medidor.numero_serie}
                                                     </h5>
-                                                    <p className="text-[10px] text-green-700 dark:text-green-400 truncate mt-0.5">
+                                                    <p className="text-[10px] text-emerald-700 dark:text-emerald-400 truncate mt-0.5">
                                                         {medidor.ubicacion}
                                                     </p>
                                                 </div>
@@ -362,10 +362,10 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                             <Button
                                                 isIconOnly
                                                 size="sm"
-                                                color="danger"
-                                                variant="light"
+                                                color="default"
+                                                variant="flat"
                                                 onPress={() => quitarMedidor(medidor.id)}
-                                                className="w-7 h-7 min-w-7 ml-2 hover:bg-red-100 dark:hover:bg-red-900/30"
+                                                className="w-7 h-7 min-w-7 ml-2 bg-white/80 dark:bg-zinc-900/60 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400"
                                             >
                                                 <HiX className="text-sm" />
                                             </Button>

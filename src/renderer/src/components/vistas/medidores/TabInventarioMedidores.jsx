@@ -79,7 +79,7 @@ const TabInventarioMedidores = () => {
             case "info_medidor":
                 return (
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/40 rounded-xl text-blue-600 dark:text-blue-400">
+                        <div className="p-2.5 bg-slate-500/10 rounded-xl text-slate-600 dark:text-zinc-300">
                             <HiCog className="text-lg" />
                         </div>
                         <div className="flex flex-col min-w-0">
@@ -96,7 +96,7 @@ const TabInventarioMedidores = () => {
                 return (
                     <div className="flex flex-col space-y-1">
                         <div className="flex items-center gap-1.5">
-                            <HiLocationMarker className="w-4 h-4 text-orange-500" />
+                            <HiLocationMarker className="w-4 h-4 text-slate-400" />
                             <p className="font-bold text-xs text-slate-700 dark:text-zinc-200 capitalize truncate max-w-[200px]">
                                 {medidor.ubicacion || "Sin ubicación"}
                             </p>
@@ -127,8 +127,8 @@ const TabInventarioMedidores = () => {
                 return medidor.cliente_id ? (
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1.5">
-                            <HiUser className="w-3.5 h-3.5 text-indigo-500" />
-                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                            <HiUser className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                            <span className="text-[10px] font-bold text-sky-700 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md uppercase tracking-wider border border-sky-200/70 dark:border-sky-900/40">
                                 Asignado
                             </span>
                         </div>
@@ -149,7 +149,7 @@ const TabInventarioMedidores = () => {
                             isIconOnly 
                             size="sm" 
                             variant="flat" 
-                            className="bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors"
+                            className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
                             onPress={() => handleView(medidor)}
                             title="Ver Detalle"
                         >
@@ -159,7 +159,7 @@ const TabInventarioMedidores = () => {
                             isIconOnly 
                             size="sm" 
                             variant="flat" 
-                            className="bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors"
+                            className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
                             onPress={() => handleEdit(medidor)}
                             title="Editar Medidor"
                         >
@@ -169,7 +169,7 @@ const TabInventarioMedidores = () => {
                             isIconOnly 
                             size="sm" 
                             variant="flat" 
-                            className="bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 dark:bg-zinc-800 dark:hover:bg-red-900/30 dark:text-zinc-400 dark:hover:text-red-400 transition-colors"
+                            className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                             onPress={handleDelete}
                             title="Eliminar"
                         >
@@ -193,37 +193,37 @@ const TabInventarioMedidores = () => {
     if (initialLoading) {
         return (
             <div className="flex flex-col items-center justify-center p-12 h-64">
-                <Spinner size="lg" color="primary" />
+                <Spinner size="lg" color="default" />
                 <p className="mt-4 text-sm font-bold text-slate-500 dark:text-zinc-400 animate-pulse">Cargando inventario de medidores...</p>
             </div>
         );
     }
 
     const selectClassNames = {
-        trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors h-11",
+        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
         value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
     };
 
     return (
-        <div className="space-y-6 w-full animate-in fade-in duration-300">
+        <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6">
             
             {/* ── SECCIÓN 1: FILTROS Y ACCIONES ── */}
-            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+            <Card className="border-none shadow-none bg-transparent rounded-2xl border border-slate-200 dark:border-zinc-800">
                 <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
-                            <HiCog className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl">
+                            <HiCog className="w-6 h-6" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                                     Inventario de Medidores
                                 </h3>
                                 {loading && !initialLoading && (
-                                    <Spinner size="sm" color="primary" className="w-4 h-4 ml-1" />
+                                    <Spinner size="sm" color="default" className="w-4 h-4 ml-1" />
                                 )}
                             </div>
-                            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
+                            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
                                 Gestión técnica y ubicación
                             </p>
                         </div>
@@ -234,15 +234,14 @@ const TabInventarioMedidores = () => {
                         <Dropdown>
                             <DropdownTrigger>
                                 <Button
-                                    color="success"
                                     variant="flat"
-                                    className="font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 flex-1 sm:flex-none"
+                                    className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm flex-1 sm:flex-none"
                                     startContent={<HiDownload className="text-lg" />}
                                 >
                                     Exportar
                                 </Button>
                             </DropdownTrigger>
-                            <DropdownMenu aria-label="Opciones de exportacion" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl">
+                            <DropdownMenu aria-label="Opciones de exportacion" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
                                 <DropdownItem
                                     key="csv"
                                     startContent={<span className="text-xl">📄</span>}
@@ -275,7 +274,7 @@ const TabInventarioMedidores = () => {
                     </div>
                 </CardHeader>
                 
-                <CardBody className="p-6 bg-slate-50/50 dark:bg-black/10">
+                <CardBody className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
                         
                         {/* Buscador */}
@@ -287,7 +286,7 @@ const TabInventarioMedidores = () => {
                                 placeholder="Buscar por serie, marca, cliente o predio..."
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                className="w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 shadow-sm h-11"
+                                className="w-full pl-10 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 shadow-none h-[52px]"
                             />
                             {search && (
                                 <button
@@ -309,7 +308,7 @@ const TabInventarioMedidores = () => {
                                     handleStatusFilterChange(value);
                                 }}
                                 aria-label="Filtrar por estado"
-                                variant="bordered"
+                                variant="flat"
                                 classNames={selectClassNames}
                             >
                                 <SelectItem key="All" value="All">Todos</SelectItem>
@@ -331,7 +330,7 @@ const TabInventarioMedidores = () => {
                                     handleLocationFilterChange(value);
                                 }}
                                 aria-label="Filtrar por ubicacion"
-                                variant="bordered"
+                                variant="flat"
                                 classNames={selectClassNames}
                             >
                                 <SelectItem key="All" value="All">Todas</SelectItem>
@@ -348,13 +347,13 @@ const TabInventarioMedidores = () => {
                                     variant="flat" 
                                     color="default"
                                     onPress={clearFilters}
-                                    className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm h-11"
+                                    className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-[52px] rounded-xl"
                                     startContent={<HiFilter className="text-slate-400" />}
                                 >
                                     Limpiar
                                 </Button>
                             ) : (
-                                <div className="w-full h-11"></div> // Espaciador para mantener grid
+                                <div className="w-full h-[52px]"></div> // Espaciador para mantener grid
                             )}
                         </div>
                     </div>
@@ -362,28 +361,28 @@ const TabInventarioMedidores = () => {
             </Card>
 
             {/* ── SECCIÓN 2: TABLA DE DATOS ── */}
-            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+            <Card className="border-none shadow-none bg-transparent rounded-2xl border border-slate-200 dark:border-zinc-800">
                 {/* Cabecera interna de tabla */}
-                <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4">
-                    <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">
-                        Mostrando <span className="text-blue-600 dark:text-blue-400">{paginatedData.length}</span> de <span className="text-slate-800 dark:text-zinc-200">{totalItems}</span> medidores
+                <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+                        Mostrando <span className="text-slate-700 dark:text-zinc-200">{paginatedData.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{totalItems}</span> medidores
                     </span>
 
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:block">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
                             Filas por página:
                         </span>
                         <Select
                             size="sm"
                             aria-label="Por página"
                             className="w-24"
-                            variant="bordered"
+                            variant="flat"
                             selectedKeys={[rowsPerPage.toString()]}
                             onSelectionChange={(keys) => {
                                 handleRowsPerPageChange(Array.from(keys)[0]);
                             }}
                             classNames={{
-                                trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-lg",
+                                trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-none h-[40px]",
                                 value: "font-bold text-slate-700 dark:text-zinc-300"
                             }}
                         >
@@ -403,10 +402,9 @@ const TabInventarioMedidores = () => {
                         classNames={{
                             base: "min-h-[400px]",
                             table: "min-w-full",
-                            thead: "bg-slate-50 dark:bg-zinc-800/50",
-                            th: "bg-transparent text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px] py-3 border-b border-slate-200 dark:border-zinc-700",
-                            td: "py-3 border-b border-slate-100 dark:border-zinc-800/50",
-                            tr: "hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors cursor-default"
+                            th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4",
+                            td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4",
+                            tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
                         }}
                     >
                         <TableHeader columns={columns}>
@@ -420,7 +418,7 @@ const TabInventarioMedidores = () => {
                             emptyContent={
                                 loading ? (
                                     <div className="flex flex-col items-center justify-center gap-3 py-12">
-                                        <Spinner size="lg" color="primary" />
+                                        <Spinner size="lg" color="default" />
                                         <span className="text-sm font-bold text-slate-500 animate-pulse">Cargando medidores...</span>
                                     </div>
                                 ) : (
@@ -447,10 +445,10 @@ const TabInventarioMedidores = () => {
                                 page={currentPage}
                                 onChange={setCurrentPage}
                                 showControls
-                                color="primary"
-                                variant="light"
+                                color="default"
+                                variant="flat"
                                 classNames={{
-                                    cursor: "bg-blue-600 text-white font-bold shadow-md",
+                                    cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold",
                                 }}
                             />
                         </div>

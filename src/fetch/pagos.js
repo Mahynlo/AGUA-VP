@@ -11,12 +11,10 @@ export const fetchPagos = async (token_session, params = {}, isRetry = false) =>
     try {
     const token_app = leerToken(); // Asegúrate de que esta función retorne el token correctamente
     if (!token_app) {
-        console.error("Token app no disponible(ipcmain-fetch-pagos)");
-        return [];
+        throw new Error("Token app no disponible(ipcmain-fetch-pagos)");
     }
     if (!token_session) {
-        console.error("Token de sesión no disponible(ipcmain-fetch-pagos)");
-        return [];
+        throw new Error("Token de sesión no disponible(ipcmain-fetch-pagos)");
     }
 
     // Construir URL query string
@@ -33,12 +31,15 @@ export const fetchPagos = async (token_session, params = {}, isRetry = false) =>
         if (params.search) urlParams.append('search', params.search);
         if (params.metodo_pago) urlParams.append('metodo_pago', params.metodo_pago);
     }
+    // Evita respuestas cacheadas justo después de registrar cobros.
+    urlParams.append('_t', String(Date.now()));
 
     const query = urlParams.toString();
     const url = `${URL_PAGOS}?${query}`;
 
     const response = await fetch(url, {
         method: "GET",
+        cache: "no-store",
         headers: {
         "x-app-key": `AppKey ${token_app}`,
         "Authorization": `Bearer ${token_session}`,
@@ -66,7 +67,8 @@ export const fetchPagos = async (token_session, params = {}, isRetry = false) =>
     const data = await response.json();
     return data; // Esto debe ser un array de pagos
     } catch (error) {
-    console.error("Error en fetchPagos:", error," (ipcmain-fetch-pagos)");
-    return [];
+    const message = error?.message || "Error desconocido en fetchPagos";
+    console.error("Error en fetchPagos:", message, "(ipcmain-fetch-pagos)");
+    throw error;
     }
 }

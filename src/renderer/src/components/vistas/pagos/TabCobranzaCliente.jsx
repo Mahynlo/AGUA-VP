@@ -6,14 +6,7 @@ import {
   Button,
   Select,
   SelectItem,
-  Tabs,
-  Tab,
   Pagination,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Chip,
   Table,
   TableHeader,
@@ -23,13 +16,14 @@ import {
   TableCell,
   Spinner
 } from "@nextui-org/react";
-import { HiCash, HiUserGroup, HiDocumentText, HiCalculator, HiEye, HiUser, HiCog, HiFilter, HiX } from "react-icons/hi";
+import { HiCash, HiUserGroup, HiDocumentText, HiCalculator, HiEye, HiFilter, HiX } from "react-icons/hi";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 import ModalPagoDistribuidoCliente from "./ModalPagoDistribuidoCliente";
 import ModalPagoRapido from "./ModalPagoRapido";
-import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
+import ModalDetalleCobranzaCliente from "./ModalDetalleCobranzaCliente";
+import ModalSeleccionPeriodoRapido from "./ModalSeleccionPeriodoRapido";
 import { formatearPeriodo, obtenerPeriodoActual } from "../../../utils/periodoUtils";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 
@@ -385,14 +379,63 @@ const TabCobranzaCliente = () => {
 
     const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
 
+    const aplicaciones = Array.isArray(payload?.preview?.aplicaciones) ? payload.preview.aplicaciones : [];
+    if (aplicaciones.length === 0) {
+      throw new Error("No hay facturas con monto aplicable para registrar el cobro.");
+    }
+
     const result = await registrarPagoDistribuido({
-        cliente_id: clienteSeleccionado.cliente_id,
-        fecha_pago: payload.fecha_pago,
-        cantidad_entregada: payload.cantidad_entregada,
-        metodo_pago: payload.metodo_pago,
-        comentario: payload.comentario || null,
-        modificado_por: usuario.id || 1
-      });
+      cliente_id: clienteSeleccionado.cliente_id,
+      fecha_pago: payload.fecha_pago,
+      cantidad_entregada: payload.cantidad_entregada,
+      metodo_pago: payload.metodo_pago,
+      comentario: payload.comentario || null,
+      modificado_por: usuario.id || 1
+    });
+
+    const responseData = result?.data?.data || result?.data || {};
+    const responseDataNested = responseData?.data || {};
+
+    const aplicacionesRaw =
+      (Array.isArray(responseData?.aplicaciones) ? responseData.aplicaciones : null)
+      || (Array.isArray(responseDataNested?.aplicaciones) ? responseDataNested.aplicaciones : []);
+
+    let pagosCreados = aplicacionesRaw
+      .map((item) => ({
+        factura_id: Number(item?.factura_id ?? item?.id_factura),
+        monto_aplicado: Number(item?.monto_aplicado ?? item?.monto ?? item?.cantidad_entregada ?? 0)
+      }))
+      .filter((item) =>
+        Number.isFinite(item.factura_id) &&
+        item.factura_id > 0 &&
+        Number.isFinite(item.monto_aplicado) &&
+        item.monto_aplicado > 0
+      );
+
+    const facturasAfectadas = Number(responseData?.facturas_afectadas ?? responseDataNested?.facturas_afectadas ?? 0);
+    const pagosIdsCount =
+      (Array.isArray(responseData?.pagos_ids) ? responseData.pagos_ids.length : 0)
+      || (Array.isArray(responseDataNested?.pagos_ids) ? responseDataNested.pagos_ids.length : 0);
+
+    // Compatibilidad defensiva: algunos builds pueden devolver solo contador/ids sin detalle de aplicaciones.
+    if (pagosCreados.length === 0 && (facturasAfectadas > 0 || pagosIdsCount > 0)) {
+      pagosCreados = aplicaciones
+        .map((item) => ({
+          factura_id: Number(item?.factura_id),
+          monto_aplicado: Number(item?.monto_aplicado || 0)
+        }))
+        .filter((item) =>
+          Number.isFinite(item.factura_id) &&
+          item.factura_id > 0 &&
+          Number.isFinite(item.monto_aplicado) &&
+          item.monto_aplicado > 0
+        );
+    }
+
+    if (pagosCreados.length === 0) {
+      console.error("Respuesta inesperada de pago distribuido", { result, responseData, responseDataNested });
+      throw new Error(result?.message || "El endpoint distribuido no devolvió aplicaciones válidas para este cobro.");
+    }
 
       await Promise.all([
         cargarFacturasHistorial(),
@@ -402,10 +445,16 @@ const TabCobranzaCliente = () => {
       ]);
 
       setSuccess(
-        `Cobro aplicado en ${result?.data?.facturas_afectadas || payload?.preview?.aplicaciones?.length || 0} factura(s).`,
+        `Cobro aplicado en ${pagosCreados.length} factura(s).`,
         "Cobranza"
       );
-      return result;
+      return {
+        success: true,
+        data: {
+          facturas_afectadas: pagosCreados.length,
+          aplicaciones: pagosCreados
+        }
+      };
   };
 
   const abrirModalSeleccionPeriodoRapido = () => {
@@ -578,68 +627,71 @@ const TabCobranzaCliente = () => {
   const hasActiveFilters = search || rowsPerPage !== 10 || filtroRanking !== "deuda_desc";
 
   const selectClassNames = {
-    trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors h-11",
+    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
     value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
   };
 
   return (
-    <div className="space-y-6 w-full animate-in fade-in duration-300">
+    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border border-slate-200 dark:border-zinc-800 shadow-sm rounded-2xl">
-          <CardBody className="p-4">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
-              <HiUserGroup className="w-4 h-4" />
+        <Card className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-0 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 shadow-none">
+          <CardBody className="p-6">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+              <span className="p-1.5 rounded-lg bg-slate-500/10 text-slate-600 dark:text-zinc-300"><HiUserGroup className="w-4 h-4" /></span>
               Clientes totales
             </div>
-            <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 mt-2">{resumen.clientes_total.toLocaleString("es-MX")}</p>
+            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 mt-3">{resumen.clientes_total.toLocaleString("es-MX")}</p>
           </CardBody>
         </Card>
 
-        <Card className="border border-slate-200 dark:border-zinc-800 shadow-sm rounded-2xl">
-          <CardBody className="p-4">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
-              <HiCalculator className="w-4 h-4" />
+        <Card className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-0 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 shadow-none">
+          <CardBody className="p-6">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+              <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600"><HiCalculator className="w-4 h-4" /></span>
               Clientes con deuda
             </div>
-            <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 mt-2">{resumen.clientes_con_deuda.toLocaleString("es-MX")}</p>
+            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 mt-3">{resumen.clientes_con_deuda.toLocaleString("es-MX")}</p>
           </CardBody>
         </Card>
 
-        <Card className="border border-slate-200 dark:border-zinc-800 shadow-sm rounded-2xl">
-          <CardBody className="p-4">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
-              <HiDocumentText className="w-4 h-4" />
+        <Card className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-0 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 shadow-none">
+          <CardBody className="p-6">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+              <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600"><HiDocumentText className="w-4 h-4" /></span>
               Facturas pendientes
             </div>
-            <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 mt-2">{resumen.facturas.toLocaleString("es-MX")}</p>
+            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 mt-3">{resumen.facturas.toLocaleString("es-MX")}</p>
           </CardBody>
         </Card>
 
-        <Card className="border border-slate-200 dark:border-zinc-800 shadow-sm rounded-2xl">
-          <CardBody className="p-4">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
-              <HiCash className="w-4 h-4" />
+        <Card className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-0 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 shadow-none">
+          <CardBody className="p-6">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+              <span className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600"><HiCash className="w-4 h-4" /></span>
               Deuda total visible
             </div>
-            <p className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-2">${resumen.deuda.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 mt-3">${resumen.deuda.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
           </CardBody>
         </Card>
       </div>
 
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+      <Card className="border-none shadow-none bg-transparent rounded-2xl border border-slate-200 dark:border-zinc-800">
         <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100">Cobranza por cliente</h3>
-            <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 mt-1">
+          <div className="flex items-center gap-4">
+            <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl p-3">
+              <HiCash className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Cobranza por cliente</h3>
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
               Historial completo de facturas por cliente. Cobro distribuido FIFO al pagar.
-            </p>
+              </p>
+            </div>
           </div>
 
           <div className="w-full md:w-auto flex items-center justify-end">
             <Button
-              color="success"
-              variant="flat"
-              className="font-bold bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+              className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm"
               startContent={<HiCalculator className="text-lg" />}
               onPress={abrirModalSeleccionPeriodoRapido}
               title="Modo rapido: selecciona periodo, marca los que NO pagaron y aplica al resto"
@@ -649,7 +701,7 @@ const TabCobranzaCliente = () => {
           </div>
         </CardHeader>
 
-        <CardBody className="p-6 bg-slate-50/50 dark:bg-black/10 border-b border-slate-100 dark:border-zinc-800/50">
+        <CardBody className="p-6 border-b border-slate-100 dark:border-zinc-800/50">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
             <div className="lg:col-span-5 relative w-full flex items-center">
               <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
@@ -659,7 +711,7 @@ const TabCobranzaCliente = () => {
                 placeholder="Buscar nombre, predio, direccion, correo o telefono..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 shadow-sm h-11"
+                className="w-full pl-10 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 shadow-none h-[52px]"
               />
               {search && (
                 <button
@@ -679,7 +731,7 @@ const TabCobranzaCliente = () => {
                   const value = Array.from(keys)[0] || "deuda_desc";
                   setFiltroRanking(String(value));
                 }}
-                variant="bordered"
+                variant="flat"
                 classNames={selectClassNames}
               >
                 <SelectItem key="deuda_desc" value="deuda_desc">Mas deuda</SelectItem>
@@ -699,7 +751,7 @@ const TabCobranzaCliente = () => {
                   const value = Number(Array.from(keys)[0] || 10);
                   setRowsPerPage(value);
                 }}
-                variant="bordered"
+                variant="flat"
                 classNames={selectClassNames}
               >
                 <SelectItem key="10" value="10">10 clientes</SelectItem>
@@ -719,7 +771,7 @@ const TabCobranzaCliente = () => {
                     setRowsPerPage(10);
                     setFiltroRanking("deuda_desc");
                   }}
-                  className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm h-11 min-w-0"
+                  className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-[52px] min-w-0 rounded-xl"
                   isIconOnly
                   title="Limpiar filtros"
                 >
@@ -732,9 +784,9 @@ const TabCobranzaCliente = () => {
           </div>
         </CardBody>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4">
-          <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">
-            Mostrando <span className="text-blue-600 dark:text-blue-400">{clientesTablaOrdenada.length}</span> de <span className="text-slate-800 dark:text-zinc-200">{clientesPagination.total || 0}</span> clientes
+        <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+            Mostrando <span className="text-slate-700 dark:text-zinc-200">{clientesTablaOrdenada.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{clientesPagination.total || 0}</span> clientes
           </span>
         </div>
 
@@ -745,10 +797,9 @@ const TabCobranzaCliente = () => {
             classNames={{
               base: "min-h-[420px]",
               table: "min-w-full",
-              thead: "bg-slate-50 dark:bg-zinc-800/50",
-              th: "bg-transparent text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px] py-3 border-b border-slate-200 dark:border-zinc-700",
-              td: "py-3 border-b border-slate-100 dark:border-zinc-800/50",
-              tr: "hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors cursor-default"
+              th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4",
+              td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4",
+              tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
             }}
           >
             <TableHeader>
@@ -762,7 +813,7 @@ const TabCobranzaCliente = () => {
             <TableBody
               items={clientesTablaPaginada}
               isLoading={isLoading}
-              loadingContent={<Spinner color="success" />}
+              loadingContent={<Spinner color="default" />}
               emptyContent={
                 <div className="flex flex-col items-center justify-center gap-2 py-12 text-slate-400 dark:text-zinc-500">
                   <HiUserGroup className="w-12 h-12 opacity-20 mb-2" />
@@ -775,27 +826,26 @@ const TabCobranzaCliente = () => {
                   <TableCell>
                     <div className="space-y-1">
                       <div className="font-bold text-sm text-slate-800 dark:text-zinc-100">{cliente.cliente_nombre}</div>
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">ID: {cliente.cliente_id} · Predio: {cliente.numero_predio}</div>
+                      <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Predio: {cliente.numero_predio}</div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{cliente.estado_cliente}</div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-0.5 text-xs text-slate-600 dark:text-zinc-300 max-w-[220px]">
-                      <div className="font-semibold">{cliente.telefono}</div>
-                      <div className="truncate">{cliente.correo}</div>
-                      <div className="truncate text-slate-500 dark:text-zinc-400">{cliente.direccion}</div>
+                      <div className="font-semibold">Telefono: {cliente.telefono}</div>
+                      <div className="truncate text-slate-500 dark:text-zinc-400">Direccion: {cliente.direccion}</div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <Chip size="sm" color="primary" variant="flat">{cliente.total_facturas} total</Chip>
+                      <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">{cliente.total_facturas} en total</Chip>
                       <div className="text-[10px] font-medium text-slate-500 dark:text-zinc-400">Pagadas: {cliente.facturas_pagadas}</div>
-                      <div className="text-[10px] font-medium text-red-500 dark:text-red-400">Vencidas: {cliente.facturas_vencidas}</div>
+                      <div className="text-[10px] font-medium text-rose-500 dark:text-rose-400">Vencidas: {cliente.facturas_vencidas}</div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm text-slate-700 dark:text-zinc-300">
-                      <Chip size="sm" color={cliente.facturas_pendientes > 0 ? "warning" : "success"} variant="flat">{cliente.facturas_pendientes}</Chip>
+                      <Chip size="sm" variant="flat" className={cliente.facturas_pendientes > 0 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}>{cliente.facturas_pendientes} en total</Chip>
                       <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
                         {cliente.factura_mas_antigua_pendiente ? `Antigua #${cliente.factura_mas_antigua_pendiente.id}` : "Sin deuda pendiente"}
                       </div>
@@ -809,8 +859,8 @@ const TabCobranzaCliente = () => {
                   <TableCell>
                     <div className="flex gap-2">
                       <Button
-                        color="default"
                         variant="flat"
+                        className="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold"
                         startContent={<HiEye className="w-4 h-4" />}
                         onPress={() => abrirDetalleCliente(cliente)}
                       >
@@ -818,8 +868,8 @@ const TabCobranzaCliente = () => {
                       </Button>
 
                       <Button
-                        color="success"
                         variant="flat"
+                        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold"
                         startContent={<HiCalculator className="w-4 h-4" />}
                         onPress={() => abrirModalCobro(cliente)}
                         isDisabled={cliente.deuda_total <= 0}
@@ -842,360 +892,44 @@ const TabCobranzaCliente = () => {
               page={currentPage}
               onChange={setCurrentPage}
               showControls
-              color="success"
+              color="default"
+              classNames={{ cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold" }}
             />
           </div>
         </CardBody>
       </Card>
 
-      <Modal isOpen={detalleOpen} onClose={cerrarDetalleCliente} size="5xl" scrollBehavior="inside">
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <span className="text-xl font-bold">Detalle de facturas del cliente</span>
-            <span className="text-sm text-slate-500 dark:text-zinc-400">{clienteDetalle?.cliente_nombre} - Predio {clienteDetalle?.numero_predio}</span>
-          </ModalHeader>
-          <ModalBody className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Chip color="primary" variant="flat">Facturas historial: {clienteDetalle?.total_facturas || 0}</Chip>
-              <Chip color="warning" variant="flat">Pendientes: {clienteDetalle?.facturas_pendientes || 0}</Chip>
-              <Chip color="danger" variant="flat">Deuda total: ${toMoney(clienteDetalle?.deuda_total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</Chip>
-            </div>
-
-            <Tabs
-              selectedKey={detalleTab}
-              onSelectionChange={(key) => setDetalleTab(String(key))}
-              variant="underlined"
-              classNames={{
-                base: "w-full",
-                tabList: "gap-6 w-full relative rounded-none p-0 border-b border-slate-200 dark:border-zinc-800",
-                cursor: "w-full bg-blue-600 dark:bg-blue-500 h-0.5",
-                tab: "max-w-fit px-0 h-11",
-                tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors"
-              }}
-            >
-              <Tab key="facturas" title={<div className="flex items-center gap-2"><HiDocumentText className="w-4 h-4" /><span>Facturas</span></div>}>
-                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl mt-4">
-                  <CardBody className="p-5 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Select
-                        label="Año"
-                        selectedKeys={[anioFiltroDetalle]}
-                        onSelectionChange={(keys) => {
-                          const value = Array.from(keys)[0] || "all";
-                          setAnioFiltroDetalle(String(value));
-                          setPeriodoFiltroDetalle("all");
-                          setFacturaSeleccionadaDetalle(null);
-                        }}
-                      >
-                        <SelectItem key="all" value="all">Todos los años</SelectItem>
-                        {aniosClienteDetalle.map((anio) => (
-                          <SelectItem key={anio} value={anio}>{anio}</SelectItem>
-                        ))}
-                      </Select>
-
-                      <Select
-                        label="Período del año"
-                        selectedKeys={[periodoFiltroDetalle]}
-                        isDisabled={anioFiltroDetalle === "all"}
-                        onSelectionChange={(keys) => {
-                          const value = Array.from(keys)[0] || "all";
-                          setPeriodoFiltroDetalle(String(value));
-                          setFacturaSeleccionadaDetalle(null);
-                        }}
-                      >
-                        <SelectItem key="all" value="all">Todos los períodos del año</SelectItem>
-                        {periodosClienteDetalle.map((periodo) => (
-                          <SelectItem key={periodo} value={periodo}>{formatearPeriodo(periodo)}</SelectItem>
-                        ))}
-                      </Select>
-
-                      <div className="flex items-end">
-                        <Button
-                          variant="flat"
-                          color="default"
-                          className="w-full"
-                          onPress={() => {
-                            setAnioFiltroDetalle("all");
-                            setPeriodoFiltroDetalle("all");
-                            setFacturaSeleccionadaDetalle(null);
-                          }}
-                        >
-                          Limpiar filtros
-                        </Button>
-                      </div>
-                    </div>
-
-                    <Table aria-label="Facturas del cliente" removeWrapper>
-                      <TableHeader>
-                        <TableColumn>FACTURA</TableColumn>
-                        <TableColumn>PERIODO</TableColumn>
-                        <TableColumn>ESTADO</TableColumn>
-                        <TableColumn>TOTAL</TableColumn>
-                        <TableColumn>SALDO</TableColumn>
-                        <TableColumn>ULT. PAGO</TableColumn>
-                        <TableColumn>ACCIONES</TableColumn>
-                      </TableHeader>
-                      <TableBody items={facturasDetalleFiltradas} emptyContent="No hay facturas para ese filtro">
-                        {(item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>#{item.id}</TableCell>
-                            <TableCell>{item.periodo || item.mes_facturado || "Sin periodo"}</TableCell>
-                            <TableCell><Chip size="sm" variant="flat">{item.estado || "Pendiente"}</Chip></TableCell>
-                            <TableCell>${toMoney(item.total).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
-                            <TableCell>${toMoney(item.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
-                            <TableCell>{formatFecha(ultimoPagoPorFactura.get(Number(item.id)))}</TableCell>
-                            <TableCell>
-                              <Button
-                                size="sm"
-                                color="primary"
-                                variant="flat"
-                                onPress={() => setFacturaSeleccionadaDetalle(String(item.id))}
-                              >
-                                Mas info
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-
-                    {facturaDetalleSeleccionada && (
-                      <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm pt-2">
-                          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                            <p className="text-slate-500 dark:text-zinc-400">Estado</p>
-                            <p className="font-bold text-slate-800 dark:text-zinc-100">{facturaDetalleSeleccionada.estado || "Pendiente"}</p>
-                          </div>
-                          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                            <p className="text-slate-500 dark:text-zinc-400">Periodo facturado</p>
-                            <p className="font-bold text-slate-800 dark:text-zinc-100">{facturaDetalleSeleccionada.periodo || facturaDetalleSeleccionada.mes_facturado || "Sin periodo"}</p>
-                          </div>
-                          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                            <p className="text-slate-500 dark:text-zinc-400">Vencimiento</p>
-                            <p className="font-bold text-slate-800 dark:text-zinc-100">{formatFecha(facturaDetalleSeleccionada.fecha_vencimiento)}</p>
-                          </div>
-                          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                            <p className="text-slate-500 dark:text-zinc-400">Consumo registrado</p>
-                            <p className="font-bold text-slate-800 dark:text-zinc-100">{facturaDetalleSeleccionada.consumo_m3 ?? "-"} m3</p>
-                          </div>
-                          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                            <p className="text-slate-500 dark:text-zinc-400">Fecha de lectura</p>
-                            <p className="font-bold text-slate-800 dark:text-zinc-100">{formatFecha(facturaDetalleSeleccionada.fecha_lectura)}</p>
-                          </div>
-                          <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                            <p className="text-slate-500 dark:text-zinc-400">Fecha de pago</p>
-                            <p className="font-bold text-slate-800 dark:text-zinc-100">{formatFecha(ultimoPagoPorFactura.get(Number(facturaDetalleSeleccionada.id)))}</p>
-                          </div>
-                        </div>
-
-                        <Card className="border border-blue-200/60 dark:border-blue-900/50 bg-blue-50/30 dark:bg-blue-900/10 rounded-2xl shadow-sm">
-                          <CardBody className="p-5 space-y-4">
-                            <h4 className="text-xs font-bold text-blue-700/60 dark:text-blue-500/60 uppercase tracking-wider flex items-center gap-2">
-                              <HiCog className="w-4 h-4" /> Datos del Servicio
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-[11px] font-bold text-blue-700/60 dark:text-blue-500/60 uppercase tracking-wider">Medidor</p>
-                                <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 font-mono">{facturaDetalleSeleccionada.medidor?.numero_serie || "No asignado"}</p>
-                              </div>
-                              <div>
-                                <p className="text-[11px] font-bold text-blue-700/60 dark:text-blue-500/60 uppercase tracking-wider">Tarifa</p>
-                                <p className="text-sm font-semibold text-slate-700 dark:text-zinc-300">{facturaDetalleSeleccionada.tarifa_nombre || "No especificada"}</p>
-                              </div>
-                              <div>
-                                <p className="text-[11px] font-bold text-blue-700/60 dark:text-blue-500/60 uppercase tracking-wider">Ruta</p>
-                                <p className="text-sm font-semibold text-slate-700 dark:text-zinc-300">{facturaDetalleSeleccionada.ruta?.nombre || "Sin ruta"}</p>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-blue-100/50 dark:border-blue-900/30">
-                              <div>
-                                <p className="text-[11px] font-bold text-blue-700/60 dark:text-blue-500/60 uppercase tracking-wider">Total factura</p>
-                                <p className="text-lg font-black text-slate-800 dark:text-zinc-100">${toMoney(facturaDetalleSeleccionada.total).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                              </div>
-                              <div>
-                                <p className="text-[11px] font-bold text-blue-700/60 dark:text-blue-500/60 uppercase tracking-wider">Saldo pendiente</p>
-                                <p className="text-lg font-black text-rose-600 dark:text-rose-400">${toMoney(facturaDetalleSeleccionada.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                              </div>
-                            </div>
-                          </CardBody>
-                        </Card>
-                      </>
-                    )}
-                  </CardBody>
-                </Card>
-              </Tab>
-
-              <Tab key="cliente" title={<div className="flex items-center gap-2"><HiUser className="w-4 h-4" /><span>Datos del Cliente</span></div>}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                  <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl">
-                    <CardBody className="p-5 space-y-4">
-                      <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Identificacion</h4>
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Nombre</p>
-                        <p className="text-sm font-bold text-slate-800 dark:text-zinc-100">{clienteDetalle?.cliente_nombre || "-"}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Numero de predio</p>
-                        <p className="text-sm font-semibold text-slate-700 dark:text-zinc-300">{clienteDetalle?.numero_predio || "-"}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Estado del cliente</p>
-                        <Chip size="sm" variant="flat" color={String(clienteDetalle?.estado_cliente || "").toLowerCase() === "activo" ? "success" : "warning"}>{clienteDetalle?.estado_cliente || "Activo"}</Chip>
-                      </div>
-                    </CardBody>
-                  </Card>
-
-                  <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl">
-                    <CardBody className="p-5 space-y-4">
-                      <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Contacto</h4>
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Telefono</p>
-                        <p className="text-sm font-semibold text-slate-700 dark:text-zinc-300">{clienteDetalle?.telefono || "No registrado"}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Correo</p>
-                        <p className="text-sm font-semibold text-slate-700 dark:text-zinc-300 break-all">{clienteDetalle?.correo || "No registrado"}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Direccion</p>
-                        <p className="text-sm font-semibold text-slate-700 dark:text-zinc-300">{clienteDetalle?.direccion || "No registrada"}</p>
-                      </div>
-                    </CardBody>
-                  </Card>
-                </div>
-              </Tab>
-
-              <Tab key="pagos" title={<div className="flex items-center gap-2"><HiCash className="w-4 h-4" /><span>Pagos Hechos</span></div>}>
-                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl mt-4">
-                  <CardBody className="p-5 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Select
-                        label="Año"
-                        selectedKeys={[anioFiltroPagosDetalle]}
-                        onSelectionChange={(keys) => {
-                          const value = Array.from(keys)[0] || "all";
-                          setAnioFiltroPagosDetalle(String(value));
-                          setPeriodoFiltroPagosDetalle("all");
-                          setPagoSeleccionadoDetalle(null);
-                        }}
-                      >
-                        <SelectItem key="all" value="all">Todos los años</SelectItem>
-                        {aniosPagosClienteDetalle.map((anio) => (
-                          <SelectItem key={anio} value={anio}>{anio}</SelectItem>
-                        ))}
-                      </Select>
-
-                      <Select
-                        label="Período del año"
-                        selectedKeys={[periodoFiltroPagosDetalle]}
-                        isDisabled={anioFiltroPagosDetalle === "all"}
-                        onSelectionChange={(keys) => {
-                          const value = Array.from(keys)[0] || "all";
-                          setPeriodoFiltroPagosDetalle(String(value));
-                          setPagoSeleccionadoDetalle(null);
-                        }}
-                      >
-                        <SelectItem key="all" value="all">Todos los períodos del año</SelectItem>
-                        {periodosPagosClienteDetalle.map((periodo) => (
-                          <SelectItem key={periodo} value={periodo}>{formatearPeriodo(periodo)}</SelectItem>
-                        ))}
-                      </Select>
-
-                      <div className="flex items-end">
-                        <Button
-                          variant="flat"
-                          color="default"
-                          className="w-full"
-                          onPress={() => {
-                            setAnioFiltroPagosDetalle("all");
-                            setPeriodoFiltroPagosDetalle("all");
-                            setPagoSeleccionadoDetalle(null);
-                          }}
-                        >
-                          Limpiar filtros
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Chip color="primary" variant="flat">Pagos registrados: {resumenPagosClienteDetalle.totalPagos}</Chip>
-                      <Chip color="success" variant="flat">Monto total pagado: ${toMoney(resumenPagosClienteDetalle.montoTotal).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</Chip>
-                      <Chip color="warning" variant="flat">Ultimo pago: {formatFecha(resumenPagosClienteDetalle.ultimoPago?.fecha_pago || resumenPagosClienteDetalle.ultimoPago?.fecha_creacion)}</Chip>
-                    </div>
-
-                    <Table aria-label="Pagos del cliente" removeWrapper>
-                      <TableHeader>
-                        <TableColumn>PAGO</TableColumn>
-                        <TableColumn>FACTURA</TableColumn>
-                        <TableColumn>FECHA</TableColumn>
-                        <TableColumn>METODO</TableColumn>
-                        <TableColumn>MONTO</TableColumn>
-                        <TableColumn>ACCIONES</TableColumn>
-                      </TableHeader>
-                      <TableBody items={pagosClienteDetalleFiltrados} emptyContent="No hay pagos registrados para ese filtro">
-                        {(item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>#{item.id}</TableCell>
-                            <TableCell>#{item.factura_id || "-"}</TableCell>
-                            <TableCell>{formatFecha(item.fecha_pago || item.fecha_creacion)}</TableCell>
-                            <TableCell>
-                              <Chip size="sm" variant="flat" color="primary">{item.metodo_pago || "No especificado"}</Chip>
-                            </TableCell>
-                            <TableCell>${toMoney(item.monto || item.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</TableCell>
-                            <TableCell>
-                              <Button
-                                size="sm"
-                                color="primary"
-                                variant="flat"
-                                onPress={() => setPagoSeleccionadoDetalle(String(item.id))}
-                              >
-                                Mas info
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-
-                    {pagoDetalleSeleccionado && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm pt-2">
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                          <p className="text-slate-500 dark:text-zinc-400">ID del pago</p>
-                          <p className="font-bold text-slate-800 dark:text-zinc-100">#{pagoDetalleSeleccionado.id}</p>
-                        </div>
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                          <p className="text-slate-500 dark:text-zinc-400">Factura relacionada</p>
-                          <p className="font-bold text-slate-800 dark:text-zinc-100">#{pagoDetalleSeleccionado.factura_id || "-"}</p>
-                        </div>
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                          <p className="text-slate-500 dark:text-zinc-400">Fecha de pago</p>
-                          <p className="font-bold text-slate-800 dark:text-zinc-100">{formatFecha(pagoDetalleSeleccionado.fecha_pago || pagoDetalleSeleccionado.fecha_creacion)}</p>
-                        </div>
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                          <p className="text-slate-500 dark:text-zinc-400">Metodo</p>
-                          <p className="font-bold text-slate-800 dark:text-zinc-100">{pagoDetalleSeleccionado.metodo_pago || "No especificado"}</p>
-                        </div>
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                          <p className="text-slate-500 dark:text-zinc-400">Monto pagado</p>
-                          <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">${toMoney(pagoDetalleSeleccionado.monto || pagoDetalleSeleccionado.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-                        </div>
-                        <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700">
-                          <p className="text-slate-500 dark:text-zinc-400">Comentario</p>
-                          <p className="font-semibold text-slate-700 dark:text-zinc-300">{pagoDetalleSeleccionado.comentario || "Sin comentario"}</p>
-                        </div>
-                      </div>
-                    )}
-                  </CardBody>
-                </Card>
-              </Tab>
-
-            </Tabs>
-          </ModalBody>
-          <ModalFooter>
-            <Button color="primary" onPress={cerrarDetalleCliente}>Cerrar</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ModalDetalleCobranzaCliente
+        isOpen={detalleOpen}
+        onClose={cerrarDetalleCliente}
+        clienteDetalle={clienteDetalle}
+        detalleTab={detalleTab}
+        setDetalleTab={setDetalleTab}
+        anioFiltroDetalle={anioFiltroDetalle}
+        setAnioFiltroDetalle={setAnioFiltroDetalle}
+        periodoFiltroDetalle={periodoFiltroDetalle}
+        setPeriodoFiltroDetalle={setPeriodoFiltroDetalle}
+        facturaSeleccionadaDetalle={facturaSeleccionadaDetalle}
+        setFacturaSeleccionadaDetalle={setFacturaSeleccionadaDetalle}
+        aniosClienteDetalle={aniosClienteDetalle}
+        periodosClienteDetalle={periodosClienteDetalle}
+        facturasDetalleFiltradas={facturasDetalleFiltradas}
+        ultimoPagoPorFactura={ultimoPagoPorFactura}
+        facturaDetalleSeleccionada={facturaDetalleSeleccionada}
+        anioFiltroPagosDetalle={anioFiltroPagosDetalle}
+        setAnioFiltroPagosDetalle={setAnioFiltroPagosDetalle}
+        periodoFiltroPagosDetalle={periodoFiltroPagosDetalle}
+        setPeriodoFiltroPagosDetalle={setPeriodoFiltroPagosDetalle}
+        setPagoSeleccionadoDetalle={setPagoSeleccionadoDetalle}
+        aniosPagosClienteDetalle={aniosPagosClienteDetalle}
+        periodosPagosClienteDetalle={periodosPagosClienteDetalle}
+        resumenPagosClienteDetalle={resumenPagosClienteDetalle}
+        pagosClienteDetalleFiltrados={pagosClienteDetalleFiltrados}
+        pagoDetalleSeleccionado={pagoDetalleSeleccionado}
+        toMoney={toMoney}
+        formatFecha={formatFecha}
+        formatearPeriodo={formatearPeriodo}
+      />
 
       <ModalPagoDistribuidoCliente
         isOpen={modalOpen}
@@ -1204,31 +938,14 @@ const TabCobranzaCliente = () => {
         onConfirmarPago={procesarCobroDistribuido}
       />
 
-      <Modal isOpen={modalSeleccionPeriodoRapido} onClose={() => setModalSeleccionPeriodoRapido(false)} size="lg" backdrop="opaque">
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
-            <span className="text-xl font-bold">Modo rapido de pagos</span>
-            <span className="text-sm text-slate-500 dark:text-zinc-400">Selecciona el periodo para aplicar pagos masivos</span>
-          </ModalHeader>
-          <ModalBody>
-            <SelectorPeriodoAvanzado
-              value={periodoPagoRapido}
-              onChange={setPeriodoPagoRapido}
-              placeholder="Buscar y seleccionar período"
-              startYear={2020}
-              size="sm"
-              className="w-full"
-            />
-            <p className="text-xs text-slate-500 dark:text-zinc-400">
-              Periodo seleccionado: <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatearPeriodo(periodoPagoRapido)}</span>
-            </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="light" onPress={() => setModalSeleccionPeriodoRapido(false)}>Cancelar</Button>
-            <Button color="success" onPress={confirmarPeriodoPagoRapido}>Continuar</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <ModalSeleccionPeriodoRapido
+        isOpen={modalSeleccionPeriodoRapido}
+        onClose={() => setModalSeleccionPeriodoRapido(false)}
+        periodo={periodoPagoRapido}
+        onChangePeriodo={setPeriodoPagoRapido}
+        onConfirmar={confirmarPeriodoPagoRapido}
+        formatearPeriodo={formatearPeriodo}
+      />
 
       <ModalPagoRapido
         isOpen={modalPagoRapidoOpen}

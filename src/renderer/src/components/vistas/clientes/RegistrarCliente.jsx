@@ -54,7 +54,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                 aria-label="Registrar Cliente"
                 variant="solid"
                 startContent={<HiPlus className="text-lg" />}
-                className="font-bold bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-md shadow-green-600/30"
+                className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
                 onPress={onOpen}
             >
                 Nuevo Cliente
@@ -70,27 +70,28 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                 isKeyboardDismissDisabled={true}
                 placement="center"
                 classNames={{
-                    base: "bg-white dark:bg-zinc-900 shadow-2xl",
-                    backdrop: "bg-zinc-900/50 backdrop-blur-sm",
-                    header: "border-b border-slate-100 dark:border-zinc-800",
-                    footer: "border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900",
-                    closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors z-50",
+                    backdrop: "bg-slate-900/40 backdrop-blur-sm",
+                    base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+                    header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
+                    body: "px-8 py-6",
+                    footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+                    closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4",
                 }}
             >
                 <ModalContent>
                     {() => (
                         <>
                             {/* HEADER */}
-                            <ModalHeader className="flex flex-col gap-1 pt-6 px-6 shrink-0">
+                            <ModalHeader className="flex flex-col gap-1 shrink-0">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400 rounded-2xl shrink-0">
+                                    <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0">
                                         <HiUser className="w-7 h-7" />
                                     </div>
                                     <div className="flex flex-col">
-                                        <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                        <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                                             Registrar Nuevo Cliente
                                         </h2>
-                                        <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">
+                                        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
                                             Datos Personales, Dirección y Tarifa
                                         </p>
                                     </div>
@@ -98,7 +99,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                             </ModalHeader>
 
                             {/* BODY */}
-                            <ModalBody className="py-6 px-4 sm:px-6 bg-slate-50/50 dark:bg-black/10 custom-scrollbar">
+                            <ModalBody className="custom-scrollbar">
                                 <form 
                                     id="form-registro-cliente" 
                                     onSubmit={(e) => { e.preventDefault(); handleRegistroCliente(); }} 
@@ -135,25 +136,25 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                             </ModalBody>
 
                             {/* FOOTER */}
-                            <ModalFooter className="px-6 py-4">
+                            <ModalFooter>
                                 <Button
                                     color="default"
-                                    variant="light"
+                                    variant="flat"
                                     onPress={handleCloseModal}
                                     isDisabled={isUpdating}
                                     startContent={<HiX className="text-lg" />}
-                                    className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                    className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-6"
                                 >
                                     Cancelar
                                 </Button>
                                 <Button
-                                    color="primary"
+                                    color="default"
                                     type="submit"
                                     form="form-registro-cliente"
                                     isDisabled={isUpdating}
                                     isLoading={isUpdating}
                                     startContent={!isUpdating && <HiCheck className="text-lg" />}
-                                    className="font-bold shadow-md shadow-blue-500/30 px-6"
+                                    className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
                                 >
                                     {isUpdating ? "Registrando..." : "Guardar Cliente"}
                                 </Button>
