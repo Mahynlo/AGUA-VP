@@ -27,6 +27,7 @@ import ModalDetalleMedidor from "./ModalDetalleMedidor";
 import ModalEditarMedidor from "./ModalEditarMedidor";
 import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
+import { usePermissions } from "../../../context/PermissionsContext";
 
 const TabInventarioMedidores = () => {
     const {
@@ -53,6 +54,8 @@ const TabInventarioMedidores = () => {
     } = useTabMedidores();
 
     const { setSuccess, setError } = useFeedback();
+    const { can } = usePermissions();
+    const canModificarMedidores = can("medidores.modificar");
 
     const [selectedMedidor, setSelectedMedidor] = useState(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
@@ -64,6 +67,11 @@ const TabInventarioMedidores = () => {
     };
 
     const handleEdit = (medidor) => {
+        if (!canModificarMedidores) {
+            setError("No tienes permisos para modificar medidores.", "Edición de Medidor");
+            return;
+        }
+
         setSelectedMedidor(medidor);
         setIsEditOpen(true);
     };
@@ -161,6 +169,7 @@ const TabInventarioMedidores = () => {
                             variant="flat" 
                             className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
                             onPress={() => handleEdit(medidor)}
+                            isDisabled={!canModificarMedidores}
                             title="Editar Medidor"
                         >
                             <HiCog className="w-4 h-4" /> {/* Cambié el icono a Cog para diferenciarlo visualmente en este contexto */}
@@ -180,7 +189,7 @@ const TabInventarioMedidores = () => {
             default:
                 return cellValue;
         }
-    }, [getStatusColor]);
+    }, [getStatusColor, canModificarMedidores, setError]);
 
     const columns = [
         { name: "DATOS DEL EQUIPO", uid: "info_medidor" },

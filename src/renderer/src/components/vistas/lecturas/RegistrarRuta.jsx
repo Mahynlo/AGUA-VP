@@ -16,6 +16,8 @@ import { HiPlus, HiMap, HiInformationCircle, HiCollection, HiX, HiCheck } from "
 import MapaRutas from "../../mapa/MapaRutas";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { useRutaForm } from "../../../hooks/useRutaForm";
+import { usePermissions } from "../../../context/PermissionsContext";
+import { useFeedback } from "../../../context/FeedbackContext";
 import PanelGestionRuta from "./PanelGestionRuta";
 
 // Componente de Input Personalizado (Premium UI) reutilizado para consistencia
@@ -76,6 +78,9 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blu
 export default function ModalRegistrarRuta() {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const { allMedidores } = useMedidores();
+  const { can } = usePermissions();
+  const { setError } = useFeedback();
+  const canCrearRutas = can("rutas.crear");
 
   const {
     nombre,
@@ -101,11 +106,20 @@ export default function ModalRegistrarRuta() {
     onClose();
   };
 
+  const handleGuardarRuta = () => {
+    if (!canCrearRutas) {
+      setError("No tienes permisos para crear rutas.", "Registro de Rutas");
+      return;
+    }
+    guardarRuta();
+  };
+
   return (
     <>
       <Button
         color="default"
         onPress={onOpen}
+        isDisabled={!canCrearRutas}
         startContent={<HiPlus className="text-lg" />}
         className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
       >
@@ -270,8 +284,8 @@ export default function ModalRegistrarRuta() {
                 </Button>
                 <Button
                   color="default"
-                  onClick={guardarRuta}
-                  isDisabled={isSaving}
+                  onClick={handleGuardarRuta}
+                  isDisabled={isSaving || !canCrearRutas}
                   isLoading={isSaving}
                   startContent={!isSaving && <HiCheck className="text-lg" />}
                   className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"

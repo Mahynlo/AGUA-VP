@@ -33,6 +33,7 @@ import ModalDetalleRuta from "./ModalDetalleRuta";
 import { useRutas } from "../../../context/RutasContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { useAuth } from "../../../context/AuthContext";
+import { usePermissions } from "../../../context/PermissionsContext";
 import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
 
 const getResultadoFacturacionStorageKey = (rutaId, periodo) => `facturacion_resultado_${rutaId}_${periodo}`;
@@ -41,6 +42,8 @@ export default function RutaCard({ ruta }) {
   const { obtenerInfoRuta } = useRutas();
   const { setError, setSuccess } = useFeedback();
   const { user } = useAuth();
+  const { can } = usePermissions();
+  const canModificarRutas = can("rutas.modificar");
   
   const [modalEditarOpen, setModalEditarOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
@@ -81,6 +84,14 @@ export default function RutaCard({ ruta }) {
   const porcentajeCompletado = ruta.total_puntos > 0
     ? (ruta.completadas / ruta.total_puntos) * 100
     : 0;
+
+  const handleOpenEditarRuta = () => {
+    if (!canModificarRutas) {
+      setError("No tienes permisos para modificar rutas.", "Rutas");
+      return;
+    }
+    setModalEditarOpen(true);
+  };
 
   const handleGenerarFacturas = async () => {
     if (isGenerando || porcentajeCompletado < 100 || facturasGeneradas) return;
@@ -268,7 +279,8 @@ export default function RutaCard({ ruta }) {
               <DropdownItem
                 key="edit"
                 startContent={<HiPencil className="w-4 h-4 text-emerald-500" />}
-                onClick={() => setModalEditarOpen(true)}
+                onClick={handleOpenEditarRuta}
+                isDisabled={!canModificarRutas}
                 className="font-medium text-slate-700 dark:text-zinc-300"
               >
                 Editar Ruta

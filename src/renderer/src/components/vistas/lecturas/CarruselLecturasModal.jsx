@@ -34,6 +34,7 @@ import MapaLecturas from "../../mapa/MapaLecturas";
 import { useRutas } from "../../../context/RutasContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { useAuth } from "../../../context/AuthContext";
+import { usePermissions } from "../../../context/PermissionsContext";
 
 // Componente separado para el input de lectura (UI Premium)
 const LecturaInput = React.memo(React.forwardRef(
@@ -259,6 +260,9 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
   const { obtenerInfoRuta, actualizarRutas, rutas, loading } = useRutas();
   const { setError, setSuccess } = useFeedback();
   const { user } = useAuth();
+  const { can } = usePermissions();
+  const canTomarLecturas = can("lecturas.tomar");
+  const canModificarLecturas = can("lecturas.modificar");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lecturas, setLecturas] = useState({});
@@ -401,6 +405,11 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
   const handleGuardarLectura = useCallback(async (forceVueltaCero = false) => {
     if (!puntoActual) return;
+    if (!canTomarLecturas) {
+      setError("No tienes permisos para registrar lecturas.", "Toma de Lecturas");
+      return;
+    }
+
     const medidorId = puntoActual.medidor_id;
     const numeroSerieActual = puntoActual.numero_serie;
     const lectura = lecturas[medidorId];
@@ -478,7 +487,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [puntoActual, lecturas, vueltasCero, rutaId, periodoMostrado, user.id, obtenerFechaActual, setSuccess, setError, currentIndex, total, actualizarRutas]);
+  }, [puntoActual, lecturas, vueltasCero, rutaId, periodoMostrado, user.id, obtenerFechaActual, setSuccess, setError, currentIndex, total, actualizarRutas, canTomarLecturas]);
 
   const handleConfirmarVueltaCero = useCallback(async () => {
     if (!puntoActual) return;
@@ -488,6 +497,11 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
   const handleRectificarGuardar = useCallback(async () => {
     if (!puntoActual) return;
+    if (!canModificarLecturas) {
+      setError("No tienes permisos para modificar lecturas.", "Toma de Lecturas");
+      return;
+    }
+
     const medidorId = puntoActual.medidor_id;
     const infoAnterior = lecturasRegistradas[medidorId];
     const lecturaValue = lecturas[medidorId];
@@ -539,7 +553,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [puntoActual, lecturas, lecturasRegistradas, setSuccess, setError]);
+  }, [puntoActual, lecturas, lecturasRegistradas, setSuccess, setError, canModificarLecturas]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < total - 1) {
@@ -621,6 +635,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
       <Button 
         color="default" 
         onPress={onOpen}
+        isDisabled={!canTomarLecturas}
         className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
         startContent={<HiMap className="text-lg" />}
       >

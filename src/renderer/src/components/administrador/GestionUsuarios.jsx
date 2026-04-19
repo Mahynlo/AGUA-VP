@@ -23,6 +23,7 @@ import { HiShieldCheck, HiSearch, HiTrash, HiCheck, HiUserGroup, HiX, HiFilter }
 import { useNavigate } from "react-router-dom";
 import ModalRegistrarUsuario from "./ModalRegistroUsuario";
 import ModalSesionesUsuario from "./ModalSesionesUsuario";
+import ModalPermisosUsuario from "./ModalPermisosUsuario";
 import { useUsuarios } from "../../context/UsuariosContext";
 import { useAuth } from "../../context/AuthContext";
 
@@ -64,6 +65,8 @@ const GestionUsuarios = () => {
   // Estados para modal de sesiones
   const [selectedUserForSessions, setSelectedUserForSessions] = useState(null);
   const [isSessionsModalOpen, setIsSessionsModalOpen] = useState(false);
+  const [selectedUserForPermissions, setSelectedUserForPermissions] = useState(null);
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
 
   // Filtros
   const [filtroEstado, setFiltroEstado] = useState("todos");
@@ -148,6 +151,11 @@ const GestionUsuarios = () => {
   const handleOpenSessions = (usuario) => {
     setSelectedUserForSessions(usuario);
     setIsSessionsModalOpen(true);
+  };
+
+  const handleOpenPermissions = (usuario) => {
+    setSelectedUserForPermissions(usuario);
+    setIsPermissionsModalOpen(true);
   };
 
   // Estadísticas calculadas
@@ -438,6 +446,18 @@ const GestionUsuarios = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
+                        <Tooltip content="Gestionar permisos" classNames={{content: "font-bold text-xs"}}>
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            variant="flat"
+                            className="bg-violet-50 hover:bg-violet-100 text-violet-600 dark:bg-violet-900/20 dark:hover:bg-violet-900/50 dark:text-violet-300 border border-violet-100 dark:border-violet-900/30 transition-colors"
+                            onPress={() => handleOpenPermissions(usuario)}
+                          >
+                            <HiShieldCheck className="w-4 h-4" />
+                          </Button>
+                        </Tooltip>
+
                         <Tooltip content="Ver sesiones activas" classNames={{content: "font-bold text-xs"}}>
                           <Button 
                             isIconOnly 
@@ -506,6 +526,12 @@ const GestionUsuarios = () => {
         isOpen={isSessionsModalOpen}
         onClose={() => setIsSessionsModalOpen(false)}
         usuario={selectedUserForSessions}
+      />
+
+      <ModalPermisosUsuario
+        isOpen={isPermissionsModalOpen}
+        onClose={() => setIsPermissionsModalOpen(false)}
+        usuario={selectedUserForPermissions}
       />
     </div>
   );

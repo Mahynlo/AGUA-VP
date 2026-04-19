@@ -16,6 +16,8 @@ import { HiPencil, HiMap, HiInformationCircle, HiCollection, HiX, HiCheck } from
 import MapaRutas from "../../mapa/MapaRutas";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { useRutaForm } from "../../../hooks/useRutaForm";
+import { usePermissions } from "../../../context/PermissionsContext";
+import { useFeedback } from "../../../context/FeedbackContext";
 import PanelGestionRuta from "./PanelGestionRuta";
 
 // Componente de Input Personalizado (Premium UI) reutilizado para consistencia
@@ -75,6 +77,9 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blu
 
 export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
   const { allMedidores } = useMedidores();
+  const { can } = usePermissions();
+  const { setError } = useFeedback();
+  const canModificarRutas = can("rutas.modificar");
 
   const {
     nombre,
@@ -99,6 +104,14 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
     isOpen: isOpen,
     onSuccess: onClose,
   });
+
+  const handleGuardarRuta = () => {
+    if (!canModificarRutas) {
+      setError("No tienes permisos para modificar rutas.", "Editar Ruta");
+      return;
+    }
+    guardarRuta();
+  };
 
   return (
     <Modal
@@ -269,8 +282,8 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
               </Button>
               <Button
                 color="default"
-                onClick={guardarRuta}
-                isDisabled={isSaving || isLoading}
+                onClick={handleGuardarRuta}
+                isDisabled={isSaving || isLoading || !canModificarRutas}
                 isLoading={isSaving}
                 startContent={!isSaving && <HiCheck className="text-lg" />}
                 className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"

@@ -13,12 +13,15 @@ import { HiCurrencyDollar, HiCalendar, HiDocumentText, HiPencil, HiTrash, HiPlus
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useTarifas } from "../../../context/TarifasContext";
+import { usePermissions } from "../../../context/PermissionsContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 
 export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const { user } = useAuth();
   const { actualizarTarifas } = useTarifas();
+  const { can } = usePermissions();
+  const canModificarTarifas = can("tarifas.modificar");
 
   // Estado de Tarifa
   const [nombre, setNombre] = useState("");
@@ -67,6 +70,11 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
   }, [isOpen, tarifa, rangosIniciales]);
 
   const handleGuardarTarifa = async () => {
+    if (!canModificarTarifas) {
+      setError("No tienes permisos para modificar tarifas.", "Edición de Tarifa");
+      return;
+    }
+
     setIsSaving(true);
     setError("");
     setSuccess("");
@@ -119,6 +127,11 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
   };
 
   const handleGuardarRangos = async () => {
+    if (!canModificarTarifas) {
+      setError("No tienes permisos para modificar rangos de tarifa.", "Edición de Rangos");
+      return;
+    }
+
     setError("");
     setSuccess("");
     setIsSaving(true);
@@ -276,6 +289,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
         color="primary" 
         variant="flat" 
         onPress={onOpen} 
+        isDisabled={!canModificarTarifas}
         startContent={<HiPencil className="w-4 h-4" />}
         className="font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
       >

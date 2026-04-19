@@ -108,6 +108,49 @@ export const UsuariosProvider = ({ children }) => {
         }
     };
 
+        const fetchPermissionsCatalog = async () => {
+            try {
+                const token = getToken();
+                const result = await window.api.fetchPermissionsCatalog(token);
+                return result?.data || [];
+            } catch (error) {
+                console.error("Error fetching permissions catalog:", error);
+                setFeedbackError(error.message || "Error al cargar catálogo de permisos");
+                return [];
+            }
+        };
+
+        const fetchUserPermissions = async (id) => {
+            try {
+                const token = getToken();
+                const result = await window.api.fetchUserPermissions(id, token);
+                return result?.permissions || [];
+            } catch (error) {
+                console.error("Error fetching user permissions:", error);
+                setFeedbackError(error.message || "Error al cargar permisos del usuario");
+                return [];
+            }
+        };
+
+        const updateUserPermissions = async (id, overrides) => {
+            try {
+                const token = getToken();
+                const result = await window.api.updateUserPermissions(id, overrides, token);
+                if (!result?.success) {
+                    const errMsg = result?.error || "No se pudieron actualizar los permisos";
+                    setFeedbackError(errMsg);
+                    throw new Error(errMsg);
+                }
+
+                setSuccess("Permisos actualizados correctamente");
+                return result;
+            } catch (error) {
+                console.error("Error updating user permissions:", error);
+                setFeedbackError(error.message || "Error al actualizar permisos del usuario");
+                throw error;
+            }
+        };
+
     // Gestión de Sesiones
     const fetchUserSessions = async (usuarioId) => {
         try {
@@ -165,6 +208,9 @@ export const UsuariosProvider = ({ children }) => {
                 updateUser,
                 deleteUser,
                 reactivateUser,
+                fetchPermissionsCatalog,
+                fetchUserPermissions,
+                updateUserPermissions,
                 fetchUserSessions,
                 closeSession,
                 closeAllSessions
