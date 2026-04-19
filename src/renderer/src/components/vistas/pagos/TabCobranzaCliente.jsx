@@ -16,7 +16,7 @@ import {
   TableCell,
   Spinner
 } from "@nextui-org/react";
-import { HiCash, HiUserGroup, HiDocumentText, HiCalculator, HiEye, HiFilter, HiX } from "react-icons/hi";
+import { HiCash, HiUserGroup, HiDocumentText, HiCalculator, HiEye, HiFilter, HiX, HiPrinter } from "react-icons/hi";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
 import { useFeedback } from "../../../context/FeedbackContext";
@@ -24,6 +24,7 @@ import ModalPagoDistribuidoCliente from "./ModalPagoDistribuidoCliente";
 import ModalPagoRapido from "./ModalPagoRapido";
 import ModalDetalleCobranzaCliente from "./ModalDetalleCobranzaCliente";
 import ModalSeleccionPeriodoRapido from "./ModalSeleccionPeriodoRapido";
+import ModalImprimir from "../impresion/components/ModalImprimir";
 import { formatearPeriodo, obtenerPeriodoActual } from "../../../utils/periodoUtils";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 
@@ -63,6 +64,10 @@ const TabCobranzaCliente = () => {
   const [modalSeleccionPeriodoRapido, setModalSeleccionPeriodoRapido] = useState(false);
   const [modalPagoRapidoOpen, setModalPagoRapidoOpen] = useState(false);
   const [periodoPagoRapido, setPeriodoPagoRapido] = useState(obtenerPeriodoActual());
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [printUrl, setPrintUrl] = useState(null);
+  const [modoPdf, setModoPdf] = useState(null);
+  const [loadingImprimirDeudores, setLoadingImprimirDeudores] = useState(false);
 
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [clienteDetalle, setClienteDetalle] = useState(null);
@@ -476,6 +481,90 @@ const TabCobranzaCliente = () => {
     ]);
   };
 
+  const construirPayloadDeudoresMayores = useCallback(() => {
+    const deudores = clientesTablaOrdenada
+      .filter((cliente) => Number(cliente.deuda_total || 0) > 0)
+      .map((cliente) => {
+        const facturasConDeuda = (cliente.facturas || []).filter((f) => {
+          const saldo = toMoney(f?.saldo_pendiente);
+          const estado = String(f?.estado || "").toLowerCase();
+          return saldo > 0 && !estado.includes("pagad");
+        });
+
+        const mesesDeuda = Array.from(
+          new Set(
+            facturasConDeuda
+              .map((f) => f?.periodo || f?.periodo_mes || f?.mes)
+              .filter(Boolean)
+          )
+        ).sort();
+
+        const medidor =
+          facturasConDeuda[0]?.medidor_numero_serie ||
+          facturasConDeuda[0]?.numero_serie ||
+          facturasConDeuda[0]?.medidor?.numero_serie ||
+          cliente.facturas?.[0]?.medidor_numero_serie ||
+          cliente.facturas?.[0]?.numero_serie ||
+          "S/N";
+
+        return {
+          cliente_id: cliente.cliente_id,
+          numero_predio: cliente.numero_predio,
+          nombre: cliente.cliente_nombre,
+          numero_serie: medidor,
+          meses_deuda: mesesDeuda,
+          recibos_con_deuda: facturasConDeuda.length,
+          total_adeudo: toMoney(cliente.deuda_total),
+          facturas: facturasConDeuda.map((f) => ({
+            id: f.id,
+            periodo: f.periodo || f.periodo_mes || f.mes,
+            estado: f.estado,
+            saldo_pendiente: toMoney(f.saldo_pendiente)
+          }))
+        };
+      })
+      .sort((a, b) => Number(b.total_adeudo || 0) - Number(a.total_adeudo || 0));
+
+    return {
+      deudores,
+      generated_at: new Date().toISOString(),
+      fuente: "cobranza_cliente"
+    };
+  }, [clientesTablaOrdenada]);
+
+  const handleImprimirMayoresDeudores = useCallback(async () => {
+    const payload = construirPayloadDeudoresMayores();
+    if (!payload.deudores.length) {
+      setError("No hay deudores con saldo pendiente para imprimir.", "Cobranza");
+      return;
+    }
+
+    setLoadingImprimirDeudores(true);
+    try {
+      const dataKey = await window.api.savePrintData(JSON.stringify(payload));
+      const { protocol, origin, href } = window.location;
+      const params = `print=true&dataKey=${dataKey}`;
+
+      const url = protocol === "file:"
+        ? `${href.split("#")[0]}#/reporteDeudoresMayores?${params}`
+        : `${origin}/#/reporteDeudoresMayores?${params}`;
+
+      const response = await window.api.previewComponent(url);
+      if (response?.success && response?.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf("imprimir");
+      } else {
+        setError("No se pudo preparar el reporte para impresión.", "Cobranza");
+      }
+    } catch (error) {
+      console.error("Error al preparar impresión de deudores:", error);
+      setError("Error al generar el reporte de deudores.", "Cobranza");
+    } finally {
+      setLoadingImprimirDeudores(false);
+    }
+  }, [construirPayloadDeudoresMayores, setError]);
+
   const facturaDetalleSeleccionada = useMemo(() => {
     if (!clienteDetalle || !facturaSeleccionadaDetalle) return null;
     return clienteDetalle.facturas.find((f) => String(f.id) === String(facturaSeleccionadaDetalle)) || null;
@@ -689,7 +778,17 @@ const TabCobranzaCliente = () => {
             </div>
           </div>
 
-          <div className="w-full md:w-auto flex items-center justify-end">
+          <div className="w-full md:w-auto flex items-center justify-end gap-2">
+            <Button
+              className="font-bold bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 rounded-xl px-6 shadow-none"
+              startContent={<HiPrinter className="text-lg" />}
+              onPress={handleImprimirMayoresDeudores}
+              isLoading={loadingImprimirDeudores}
+              title="Imprimir reporte de mayores deudores"
+            >
+              Imprimir deudores
+            </Button>
+
             <Button
               className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm"
               startContent={<HiCalculator className="text-lg" />}
@@ -953,6 +1052,18 @@ const TabCobranzaCliente = () => {
         periodo={periodoPagoRapido}
         onPagoRegistrado={refrescarCobranzaTrasPagoRapido}
       />
+
+      {pdfUrl && modoPdf === "imprimir" && (
+        <ModalImprimir
+          pdfUrl={pdfUrl}
+          printUrl={printUrl}
+          onClose={() => {
+            setPdfUrl(null);
+            setPrintUrl(null);
+            setModoPdf(null);
+          }}
+        />
+      )}
     </div>
   );
 };

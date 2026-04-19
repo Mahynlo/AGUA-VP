@@ -21,24 +21,24 @@ import PanelGestionRuta from "./PanelGestionRuta";
 // Componente de Input Personalizado (Premium UI) reutilizado para consistencia
 const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, placeholder, as = "input", rows }) => {
     const focusColors = {
-        blue: "focus:ring-blue-500 focus:border-blue-500",
+    blue: "focus:ring-slate-400/20 focus:border-slate-300",
         red: "focus:ring-red-500 focus:border-red-500 bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800",
     };
 
     const inputClasses = `
         w-full pl-10 pr-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none
-        bg-slate-50 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100
-        border border-slate-200 dark:border-zinc-700
-        hover:bg-slate-100 dark:hover:bg-zinc-800
+    bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100
+    border border-slate-200 dark:border-zinc-800
+    hover:border-slate-300 dark:hover:border-zinc-700
         focus:outline-none focus:ring-2 focus:bg-white dark:focus:bg-zinc-900
-        placeholder-slate-400 dark:placeholder-zinc-500 shadow-sm
+    placeholder-slate-400 dark:placeholder-zinc-500 shadow-none
         ${focusColors[color] || focusColors.blue}
     `;
 
     return (
         <div className="w-full">
             {label && (
-                <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-1.5 block uppercase tracking-widest">
                     {label}
                 </label>
             )}
@@ -111,27 +111,29 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
       isKeyboardDismissDisabled={true}
       placement="center"
       classNames={{
-          base: "bg-white dark:bg-zinc-900 shadow-2xl w-full max-w-[1200px] h-[90vh]", // Ajuste para que se vea ancho y alto
-          backdrop: "bg-zinc-900/60 dark:bg-black/80 backdrop-blur-md",
-          header: "border-b border-slate-100 dark:border-zinc-800",
-          footer: "border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900",
-          closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors z-50",
+          wrapper: "items-start p-1 sm:p-2 pt-16 sm:pt-20 overflow-y-hidden",
+          backdrop: "bg-slate-900/40 backdrop-blur-sm",
+          base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl w-full max-w-[1200px] h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] max-h-[calc(100dvh-4.25rem)] sm:max-h-[calc(100dvh-5.25rem)]",
+          header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
+          body: "px-8 py-6 flex-1 min-h-0",
+          footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+          closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4 z-50",
       }}
     >
-      <ModalContent>
+      <ModalContent className="h-full">
         {() => (
           <>
             {/* HEADER */}
-            <ModalHeader className="flex flex-col gap-1 pt-6 px-6 shrink-0">
+            <ModalHeader className="flex flex-col gap-1 shrink-0">
               <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+                  <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0">
                       <HiPencil className="w-7 h-7" />
                   </div>
                   <div className="flex flex-col">
-                      <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                      <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                           Editar Ruta de Lectura
                       </h2>
-                      <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-1">
+                      <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
                           Modificar Configuración y Trazado
                       </p>
                   </div>
@@ -139,10 +141,10 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
             </ModalHeader>
 
             {/* BODY */}
-            <ModalBody className="py-4 px-4 sm:px-6 flex flex-col min-h-0">
+            <ModalBody className="flex flex-col min-h-0">
               {isLoading ? (
                 <div className="flex flex-col justify-center items-center h-full gap-4">
-                  <Spinner size="lg" color="primary" />
+                  <Spinner size="lg" color="default" />
                   <p className="text-sm font-bold text-slate-500 dark:text-zinc-400 animate-pulse">
                       Cargando información de la ruta...
                   </p>
@@ -153,10 +155,11 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
                   color="primary"
                   variant="underlined"
                   classNames={{
+                      base: "w-full",
                       tabList: "gap-6 w-full relative rounded-none p-0 border-b border-slate-200 dark:border-zinc-800",
-                      cursor: "w-full bg-blue-500",
+                      cursor: "w-full bg-slate-800 dark:bg-zinc-200 h-[2px]",
                       tab: "max-w-fit px-0 h-12",
-                      tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 font-bold",
+                      tabContent: "group-data-[selected=true]:text-slate-800 dark:group-data-[selected=true]:text-zinc-100 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
                       panel: "pt-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0"
                   }}
                 >
@@ -170,7 +173,7 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
                         </div>
                     }
                   >
-                    <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl h-full">
+                    <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl h-full">
                         <CardBody className="p-6">
                             <div className="max-w-3xl space-y-6">
                                 <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">
@@ -182,7 +185,7 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
                                     placeholder="Ej: Ruta Centro 1"
                                     value={nombre}
                                     onChange={(e) => { setNombre(e.target.value); limpiarError("nombre"); }}
-                                    icon={<HiMap className="w-5 h-5 text-blue-500" />}
+                                    icon={<HiMap className="w-5 h-5 text-slate-500" />}
                                     color={mostrarErrores && erroresCampos.nombre ? "red" : "blue"}
                                     description={mostrarErrores && erroresCampos.nombre ? "⚠ El nombre es requerido" : "Un nombre corto y descriptivo para ubicarla en el sistema."}
                                 />
@@ -193,7 +196,7 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
                                     placeholder="Describe la ruta, zona o características..."
                                     value={descripcion}
                                     onChange={(e) => { setDescripcion(e.target.value); limpiarError("descripcion"); }}
-                                    icon={<HiCollection className="w-5 h-5 text-blue-500" />}
+                                    icon={<HiCollection className="w-5 h-5 text-slate-500" />}
                                     color={mostrarErrores && erroresCampos.descripcion ? "red" : "blue"}
                                     rows={5}
                                     description={mostrarErrores && erroresCampos.descripcion ? "⚠ La descripción es requerida" : "Información adicional de utilidad."}
@@ -216,7 +219,7 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 h-full min-h-[500px]">
                       
                       {/* Columna Izquierda: Panel gestión */}
-                      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col h-full min-h-[500px]">
+                      <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-white dark:bg-zinc-900/50 rounded-2xl flex flex-col h-full min-h-[500px]">
                           <CardBody className="p-0 flex flex-col h-full overflow-hidden">
                             <PanelGestionRuta
                                 key={ruta?.id}
@@ -234,7 +237,7 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
                       </Card>
 
                       {/* Columna Derecha: Mapa */}
-                      <Card className="border-none shadow-sm bg-slate-50 dark:bg-zinc-800/50 rounded-2xl overflow-hidden h-full min-h-[400px] lg:min-h-[500px]">
+                      <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl overflow-hidden h-full min-h-[400px] lg:min-h-[500px]">
                           <CardBody className="p-0 relative h-full">
                             <MapaRutas
                                 medidores={allMedidores}
@@ -253,24 +256,24 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
             </ModalBody>
 
             {/* FOOTER */}
-            <ModalFooter className="px-6 py-4">
+            <ModalFooter>
               <Button 
                   color="default" 
-                  variant="light" 
+                  variant="flat" 
                   onPress={onClose}
                   isDisabled={isSaving}
                   startContent={<HiX className="text-lg" />}
-                  className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800"
               >
                 Cancelar
               </Button>
               <Button
-                color="primary"
+                color="default"
                 onClick={guardarRuta}
                 isDisabled={isSaving || isLoading}
                 isLoading={isSaving}
                 startContent={!isSaving && <HiCheck className="text-lg" />}
-                className="font-bold shadow-md shadow-blue-500/30 px-6"
+                className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
               >
                 {isSaving ? "Guardando Cambios..." : "Guardar Cambios"}
               </Button>

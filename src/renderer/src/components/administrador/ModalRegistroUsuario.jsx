@@ -127,9 +127,10 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
   return (
     <>
       <Button
-        color="primary"
+        color="default"
         onPress={onOpen}
         startContent={<HiUser className="w-5 h-5" />}
+        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
       >
         Nuevo Usuario
       </Button>
@@ -143,31 +144,36 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
         isDismissable={!isUpdating}
         isKeyboardDismissDisabled={isUpdating}
         classNames={{
-          backdrop: "bg-gradient-to-t mt-18 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
-          closeButton: "hover:bg-red-600 hover:text-white dark:hover:bg-red-600 text-gray-600 dark:text-white"
+          wrapper: "items-start p-1 sm:p-2 pt-16 sm:pt-20 overflow-y-hidden",
+          backdrop: "bg-slate-900/40 backdrop-blur-sm",
+          base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] max-h-[calc(100dvh-4.25rem)] sm:max-h-[calc(100dvh-5.25rem)]",
+          header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
+          body: "px-8 py-6 flex-1 min-h-0",
+          footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+          closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4"
         }}
         onClose={handleClose}
       >
-        <ModalContent>
+        <ModalContent className="h-full">
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full">
+                  <div className="p-2 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
                     <HiUser className="w-6 h-6" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xl font-bold text-gray-800 dark:text-white">
+                    <span className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
                       Registrar Usuario
                     </span>
-                    <span className="text-sm font-normal text-gray-500">
+                    <span className="text-sm font-medium text-slate-500 dark:text-zinc-400">
                       Crear un nuevo acceso al sistema
                     </span>
                   </div>
                 </div>
               </ModalHeader>
 
-              <ModalBody className="py-6 space-y-4">
+              <ModalBody className="space-y-4 custom-scrollbar">
                 <FeedbackMessages
                   error={generalError}
                   success={success}
@@ -258,39 +264,46 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
                   />
 
                   <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5 block">
                       Rol / Permisos <span className="text-red-500">*</span>
                     </label>
                     <Select
                       selectedKeys={[rol]}
                       onChange={(e) => setRol(e.target.value)}
                       placeholder="Selecciona el rol"
-                      startContent={<HiShieldCheck className="text-gray-400 text-lg" />}
+                      startContent={<HiShieldCheck className="text-slate-400 dark:text-zinc-500 text-lg" />}
+                      classNames={{
+                        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
+                        value: "text-sm font-medium text-slate-700 dark:text-zinc-200",
+                        listboxWrapper: "bg-white dark:bg-zinc-950"
+                      }}
                       className="w-full"
                     >
                       <SelectItem key="operador" value="operador">Operador (Básico)</SelectItem>
                       <SelectItem key="administrador" value="administrador">Administrador (Gestión)</SelectItem>
                       <SelectItem key="superadmin" value="superadmin">Superadmin (Acceso Total)</SelectItem>
                     </Select>
-                    <p className="text-xs text-gray-400 mt-1">Define el nivel de acceso al sistema.</p>
+                    <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">Define el nivel de acceso al sistema.</p>
                   </div>
 
                 </form>
               </ModalBody>
 
-              <ModalFooter className="border-t border-gray-200 dark:border-zinc-800">
+              <ModalFooter>
                 <Button
-                  color="danger"
-                  variant="light"
+                  color="default"
+                  variant="flat"
                   onPress={handleClose}
                   isDisabled={isUpdating}
+                  className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800"
                 >
                   Cancelar
                 </Button>
                 <Button
-                  color="primary"
+                  color="default"
                   onPress={handleRegistro}
                   isLoading={isUpdating}
+                  className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
                 >
                   {isUpdating ? "Registrando..." : "Confirmar Registro"}
                 </Button>
