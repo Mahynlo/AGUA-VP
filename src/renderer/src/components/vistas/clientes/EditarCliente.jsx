@@ -11,6 +11,8 @@ import {
 } from "@nextui-org/react";
 import { HiPencil, HiCheck, HiX } from "react-icons/hi";
 import { useClienteForm } from "../../../hooks/useClienteForm";
+import { usePermissions } from "../../../context/PermissionsContext";
+import { useFeedback } from "../../../context/FeedbackContext";
 import SeccionPersonal from "./components/SeccionPersonal";
 import SeccionDireccion from "./components/SeccionDireccion";
 import SeccionTarifa from "./components/SeccionTarifa";
@@ -20,6 +22,9 @@ import InfoRegistro from "./components/InfoRegistro";
 
 export default function EditarClientes({ id }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+    const { can } = usePermissions();
+    const { setError } = useFeedback();
+    const canModificarClientes = can("clientes.modificar");
 
     // Usar el hook personalizado
     const {
@@ -28,6 +33,7 @@ export default function EditarClientes({ id }) {
         mostrarErrores,
         isUpdating,
         fechaRegistroCliente,
+        cliente,
         handleChange,
         handleSubmit,
         limpiarError,
@@ -44,6 +50,11 @@ export default function EditarClientes({ id }) {
 
     // Manejar actualización del cliente
     const handleActualizarCliente = async () => {
+        if (!canModificarClientes) {
+            setError("No tienes permisos para modificar clientes.", "Actualización de Cliente");
+            return;
+        }
+
         const result = await handleSubmit();
         
         if (result.success) {
@@ -61,6 +72,7 @@ export default function EditarClientes({ id }) {
                     aria-label="Editar"
                     variant="flat"
                     onPress={onOpen}
+                    isDisabled={!canModificarClientes}
                     className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
                 >
                     <EditIcon />
@@ -138,7 +150,7 @@ export default function EditarClientes({ id }) {
                                         onChange={handleChange}
                                         limpiarError={limpiarError}
                                         modo="editar"
-                                        tarifaIdOriginal={useClienteForm(id).cliente?.id_tarifa || useClienteForm(id).cliente?.tarifa_id}
+                                        tarifaIdOriginal={cliente?.id_tarifa || cliente?.tarifa_id}
                                     />
 
                                     {/* Medidor */}
@@ -174,7 +186,7 @@ export default function EditarClientes({ id }) {
                                     color="default"
                                     type="submit"
                                     form="form-editar-cliente"
-                                    isDisabled={isUpdating}
+                                    isDisabled={isUpdating || !canModificarClientes}
                                     isLoading={isUpdating}
                                     startContent={!isUpdating && <HiCheck className="text-lg" />}
                                     className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"

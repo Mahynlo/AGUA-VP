@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardBody, CardHeader, Button, Spinner } from "@nextui-org/react";
 import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiPhotograph, HiUpload, HiTrash, HiCollection, HiPlusCircle } from "react-icons/hi";
 import { useAppLogo } from "../../context/LogoContext";
+import { usePermissions } from "../../context/PermissionsContext";
 import SelectorPeriodoAvanzado from "../ui/SelectorPeriodoAvanzado";
 import { formatearPeriodo, obtenerPeriodoActual } from "../../utils/periodoUtils";
 import { nowHermosilloDateStr } from "../../utils/diasHabiles";
@@ -49,6 +50,8 @@ const ConfigInput = ({ label, value, onChange, icon, type = "number", color = "b
 
 export default function PanelConfiguracion() {
   const token = localStorage.getItem("token");
+  const { can } = usePermissions();
+  const canRecalcularLecturas = can("lecturas.recalcular");
   const { logoSrc, hasCustomLogo, setCustomLogo, clearCustomLogo,
           loginImages, hasCustomLoginImages, addLoginImages, removeLoginImage, clearLoginImages } = useAppLogo();
   const [savingLogo, setSavingLogo] = useState(false);
@@ -123,6 +126,10 @@ export default function PanelConfiguracion() {
 
   const handleRecalcularVencimientos = async () => {
     if (!token) return;
+    if (!canRecalcularLecturas) {
+      alert("No tienes permisos para recalcular vencimientos.");
+      return;
+    }
 
     const confirmar = window.confirm(
       `Se recalculará la fecha de vencimiento de facturas NO pagadas del período ${formatearPeriodo(periodoRecalculo)} usando los días de vencimiento configurados actualmente.${actualizarFechaEmision ? `\nAdemás, se actualizará fecha de emisión a ${fechaEmisionObjetivo}.` : ""}\n\n¿Desea continuar?`
@@ -363,7 +370,7 @@ export default function PanelConfiguracion() {
               variant="flat"
               onPress={handleRecalcularVencimientos}
               isLoading={loadingRecalculo}
-              isDisabled={saving || loadingRecalculo || !periodoRecalculo || (actualizarFechaEmision && !fechaEmisionObjetivo)}
+              isDisabled={!canRecalcularLecturas || saving || loadingRecalculo || !periodoRecalculo || (actualizarFechaEmision && !fechaEmisionObjetivo)}
               className="font-bold"
             >
               Recalcular vencimientos del período

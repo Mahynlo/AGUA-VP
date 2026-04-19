@@ -11,12 +11,15 @@ import { HiCurrencyDollar, HiPlus, HiCheck, HiX, HiCalendar } from "react-icons/
 import { useState } from "react";
 import { useAuth } from '../../../context/AuthContext';
 import { useTarifas } from '../../../context/TarifasContext';
+import { usePermissions } from '../../../context/PermissionsContext';
 import { useFeedback } from "../../../context/FeedbackContext";
 
 export default function RegistrarTarifa({ onTarifaRegistrada }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
     const { user } = useAuth();
     const { actualizarTarifas } = useTarifas();
+    const { can } = usePermissions();
+    const canCrearTarifas = can("tarifas.crear");
 
     const [nombre, setNombre] = useState("");
     const [descripcion, setDescripcion] = useState("");
@@ -56,6 +59,11 @@ export default function RegistrarTarifa({ onTarifaRegistrada }) {
     // Manejar el envío del formulario
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
+        if (!canCrearTarifas) {
+            setError("No tienes permisos para crear tarifas.", "Registro de Tarifas");
+            return;
+        }
+
         setSuccess("");
         setError("");
         setIsSaving(true);
@@ -137,6 +145,7 @@ export default function RegistrarTarifa({ onTarifaRegistrada }) {
                 startContent={<HiPlus className="text-lg" />}
                 className="font-bold shadow-md shadow-blue-600/30"
                 onPress={onOpen}
+                isDisabled={!canCrearTarifas}
             >
                 Nueva Tarifa
             </Button>

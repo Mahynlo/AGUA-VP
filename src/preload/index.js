@@ -32,6 +32,10 @@ const api = {
   updateUser: (data, token) => ipcRenderer.invoke("update-user", data, token),
   deleteUser: (data, token) => ipcRenderer.invoke("delete-user", data, token),
   reactivateUser: (id, token) => ipcRenderer.invoke("reactivate-user", id, token),
+  fetchPermissionsCatalog: (token) => ipcRenderer.invoke("fetch-permissions-catalog", token),
+  fetchUserPermissions: (id, token) => ipcRenderer.invoke("fetch-user-permissions", id, token),
+  fetchMyPermissions: (token) => ipcRenderer.invoke("fetch-my-permissions", token),
+  updateUserPermissions: (id, overrides, token) => ipcRenderer.invoke("update-user-permissions", id, overrides, token),
 
   //sesiones (cerrar sesión, verificar sesión, obtener sesiones activas, renovar token)
   verifySession: (token) => ipcRenderer.invoke("verify-session", token),

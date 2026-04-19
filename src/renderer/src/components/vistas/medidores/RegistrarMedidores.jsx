@@ -14,6 +14,7 @@ import {
 import { HiPlus, HiLocationMarker, HiCog, HiHashtag, HiCalendar, HiCheck, HiX, HiInformationCircle, HiUser } from "react-icons/hi";
 import { useState } from "react";
 import { useMedidores } from "../../../context/MedidoresContext";
+import { usePermissions } from "../../../context/PermissionsContext";
 import BuscarCliente from "./BuscarCliente";
 import SelectorCoordenadas from "../../mapa/SelectorCoordenadas";
 import { useFeedback } from "../../../context/FeedbackContext";
@@ -86,6 +87,8 @@ export default function RegistrarMedidor() {
     ];
 
     const { actualizarMedidores } = useMedidores();
+    const { can } = usePermissions();
+    const canCrearMedidores = can("medidores.crear");
     const [ciudad, setCiudad] = useState("");
     const [clienteIdBusqueda, setClienteIdBusqueda] = useState(null);
 
@@ -109,6 +112,11 @@ export default function RegistrarMedidor() {
     const [isUpdating, setIsUpdating] = useState(false);
 
     const handleRegistroMedidor = async () => {
+        if (!canCrearMedidores) {
+            setError("No tienes permisos para registrar medidores.", "Registro de Medidores");
+            return;
+        }
+
         setError("");
         setSuccess("");
         setIsUpdating(true);
@@ -196,6 +204,7 @@ export default function RegistrarMedidor() {
                 startContent={<HiPlus className="text-lg" />}
                 className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
                 onPress={onOpen}
+                isDisabled={!canCrearMedidores}
             >
                 Nuevo Medidor
             </Button>

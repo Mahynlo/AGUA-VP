@@ -222,4 +222,24 @@ export default function IpcHandlerUsuario () {
         return await apiRequest(`${API_USERS_URL}/${id}/activar`, "PATCH", token);
     });
 
+    // Catálogo de permisos
+    ipcMain.handle("fetch-permissions-catalog", async (event, token) => {
+        return await apiRequest(`${API_USERS_URL}/permissions/catalog`, "GET", token);
+    });
+
+    // Snapshot de permisos por usuario
+    ipcMain.handle("fetch-user-permissions", async (event, id, token) => {
+        return await apiRequest(`${API_USERS_URL}/${id}/permissions`, "GET", token);
+    });
+
+    // Snapshot de permisos del usuario autenticado
+    ipcMain.handle("fetch-my-permissions", async (event, token) => {
+        return await apiRequest(`${API_USERS_URL}/me/permissions`, "GET", token);
+    });
+
+    // Actualizar overrides de permisos por usuario
+    ipcMain.handle("update-user-permissions", async (event, id, overrides, token) => {
+        return await apiRequest(`${API_USERS_URL}/${id}/permissions`, "PUT", token, { overrides });
+    });
+
 }

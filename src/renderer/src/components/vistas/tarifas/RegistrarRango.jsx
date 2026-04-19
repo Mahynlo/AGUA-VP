@@ -10,12 +10,15 @@ import {
 import { HiDocumentText, HiPlus, HiCheck, HiX, HiTrash } from "react-icons/hi";
 import { useState } from "react";
 import { useTarifas } from "../../../context/TarifasContext";
+import { usePermissions } from "../../../context/PermissionsContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 
 export default function RegistrarRangoTarifa({ tarifaId }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
     const [rangos, setRangos] = useState([{ consumo_min: "", consumo_max: "", precio_por_m3: "" }]);
     const { setSuccess, setError } = useFeedback();
+    const { can } = usePermissions();
+    const canGestionarRangos = can("tarifas.modificar") || can("tarifas.crear");
     const [isSaving, setIsSaving] = useState(false);
 
     const { actualizarTarifas, tarifas } = useTarifas();
@@ -59,6 +62,11 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
 
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
+        if (!canGestionarRangos) {
+            setError("No tienes permisos para registrar rangos de tarifa.", "Registro de Rangos");
+            return;
+        }
+
         setSuccess("");
         setError("");
         setIsSaving(true);
@@ -182,6 +190,7 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
                 color="secondary" 
                 variant="solid"
                 onPress={onOpen} 
+                isDisabled={!canGestionarRangos}
                 className="font-bold shadow-md shadow-secondary/30 ml-2 px-6"
                 startContent={<HiPlus className="w-4 h-4" />}
             >

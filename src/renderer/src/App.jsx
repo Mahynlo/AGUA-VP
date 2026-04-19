@@ -35,6 +35,7 @@ import { FacturasProvider } from "./context/FacturasContext";
 import { PagosProvider } from "./context/PagosContext";
 import { DeudoresProvider } from "./context/DeudoresContext";
 import { UsuariosProvider } from "./context/UsuariosContext";
+import { PermissionsProvider } from "./context/PermissionsContext";
 
 // Rutas protegidas
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoute";
@@ -67,33 +68,34 @@ function App() {
       <AuthAppProvider>
 
         <AuthProvider>
+          <PermissionsProvider>
+            <ClientesProvider>
+              <MedidoresProvider>
+                <TarifasProvider>
+                  <RutasProvider>
+                    <FacturasProvider>
+                      <PagosProvider>
+                        <UsuariosProvider>
+                          <DeudoresProvider>
 
-          <ClientesProvider>
-            <MedidoresProvider>
-              <TarifasProvider>
-                <RutasProvider>
-                  <FacturasProvider>
-                    <PagosProvider>
-                      <UsuariosProvider>
-                        <DeudoresProvider>
-
-                          <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
+                            <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
 
 
-                          <MainApp /> {/* Aqui se cargan las rutas de al apalicacion*/}
-                          {/* Componente global de mensajes */}
-                          <FeedbackMessages position="bottom-right" />
+                            <MainApp /> {/* Aqui se cargan las rutas de al apalicacion*/}
+                            {/* Componente global de mensajes */}
+                            <FeedbackMessages position="bottom-right" />
 
-                          <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
-                        </DeudoresProvider>
-                      </UsuariosProvider>
-                    </PagosProvider>
+                            <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
+                          </DeudoresProvider>
+                        </UsuariosProvider>
+                      </PagosProvider>
 
-                  </FacturasProvider>
-                </RutasProvider>
-              </TarifasProvider>
-            </MedidoresProvider>
-          </ClientesProvider>
+                    </FacturasProvider>
+                  </RutasProvider>
+                </TarifasProvider>
+              </MedidoresProvider>
+            </ClientesProvider>
+          </PermissionsProvider>
         </AuthProvider>
       </AuthAppProvider>
 

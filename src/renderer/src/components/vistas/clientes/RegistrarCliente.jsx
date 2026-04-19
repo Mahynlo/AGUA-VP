@@ -9,12 +9,17 @@ import {
 } from "@nextui-org/react";
 import { HiUser, HiPlus, HiCheck, HiX } from "react-icons/hi";
 import { useClienteForm } from "../../../hooks/useClienteForm";
+import { usePermissions } from "../../../context/PermissionsContext";
+import { useFeedback } from "../../../context/FeedbackContext";
 import SeccionPersonal from "./components/SeccionPersonal";
 import SeccionDireccion from "./components/SeccionDireccion";
 import SeccionTarifa from "./components/SeccionTarifa";
 
 export default function RegistrarClientes({ onSuccess, onError }) {
     const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+    const { can } = usePermissions();
+    const { setError } = useFeedback();
+    const canCrearClientes = can("clientes.crear");
     
     // Usar el hook personalizado
     const {
@@ -36,6 +41,11 @@ export default function RegistrarClientes({ onSuccess, onError }) {
 
     // Manejar registro del cliente
     const handleRegistroCliente = async () => {
+        if (!canCrearClientes) {
+            setError("No tienes permisos para registrar clientes.", "Registro de Clientes");
+            return;
+        }
+
         const result = await handleSubmit();
         
         if (result.success) {
@@ -56,6 +66,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                 startContent={<HiPlus className="text-lg" />}
                 className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
                 onPress={onOpen}
+                isDisabled={!canCrearClientes}
             >
                 Nuevo Cliente
             </Button>
@@ -151,7 +162,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                     color="default"
                                     type="submit"
                                     form="form-registro-cliente"
-                                    isDisabled={isUpdating}
+                                    isDisabled={isUpdating || !canCrearClientes}
                                     isLoading={isUpdating}
                                     startContent={!isUpdating && <HiCheck className="text-lg" />}
                                     className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"

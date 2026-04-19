@@ -15,6 +15,7 @@ import { HiCog, HiLocationMarker, HiUser, HiHashtag, HiCalendar, HiInformationCi
 import { useState, useEffect } from "react";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { useClientes } from "../../../context/ClientesContext";
+import { usePermissions } from "../../../context/PermissionsContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 import BuscarCliente from "./BuscarCliente";
 import SelectorCoordenadas from "../../mapa/SelectorCoordenadas";
@@ -79,7 +80,9 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blu
 export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     const { actualizarMedidores } = useMedidores();
     const { allClientes } = useClientes();
+    const { can } = usePermissions();
     const { setSuccess, setError } = useFeedback();
+    const canModificarMedidores = can("medidores.modificar");
 
     const pueblos = [
         { key: "NG-", label: "NG" },
@@ -205,6 +208,11 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
     }
 
     const handleUpdate = async () => {
+        if (!canModificarMedidores) {
+            setError("No tienes permisos para modificar medidores.", "Edición de Medidor");
+            return;
+        }
+
         setIsUpdating(true);
         setError("");
 
@@ -567,7 +575,7 @@ export default function ModalEditarMedidor({ isOpen, onClose, medidor }) {
                                 onClick={handleUpdate}
                                 type="submit"
                                 form="form-editar-medidor"
-                                isDisabled={isUpdating}
+                                isDisabled={isUpdating || !canModificarMedidores}
                                 isLoading={isUpdating}
                                 startContent={!isUpdating && <HiCheck className="text-lg" />}
                                 className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
