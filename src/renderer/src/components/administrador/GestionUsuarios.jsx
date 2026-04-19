@@ -29,7 +29,7 @@ import { useAuth } from "../../context/AuthContext";
 // Componente LoadingSkeleton premium
 const LoadingSkeleton = () => (
   <div className="space-y-6 w-full animate-in fade-in">
-    <Card className="border-none shadow-sm rounded-2xl">
+    <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-white dark:bg-zinc-950 rounded-2xl">
       <CardBody className="p-6 space-y-4">
         <div className="flex justify-between">
           <Skeleton className="h-10 w-48 rounded-xl" />
@@ -45,11 +45,11 @@ const LoadingSkeleton = () => (
         </div>
       </CardBody>
     </Card>
-    <Card className="border-none shadow-sm rounded-2xl">
+    <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-white dark:bg-zinc-950 rounded-2xl">
       <CardBody className="p-0">
-          <Skeleton className="h-12 w-full rounded-none border-b border-gray-100" />
+          <Skeleton className="h-12 w-full rounded-none border-b border-slate-100 dark:border-zinc-800" />
           {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-none border-b border-gray-50" />
+              <Skeleton key={i} className="h-16 w-full rounded-none border-b border-slate-100/70 dark:border-zinc-800/50" />
           ))}
       </CardBody>
     </Card>
@@ -168,7 +168,7 @@ const GestionUsuarios = () => {
   };
 
   const selectClassNames = {
-    trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors h-11",
+    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 h-11",
     value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
   };
 
@@ -180,18 +180,18 @@ const GestionUsuarios = () => {
     <div className="space-y-6 w-full animate-in fade-in duration-300">
       
       {/* ── 1. HEADER Y KPIs ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+      <Card className="border-none shadow-none bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800">
         
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
-              <HiUserGroup className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="p-2.5 bg-sky-500/10 rounded-xl">
+              <HiUserGroup className="w-6 h-6 text-sky-600 dark:text-sky-400" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                 Gestión de Usuarios
               </h3>
-              <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
                 Administración de accesos y roles del sistema
               </p>
             </div>
@@ -202,7 +202,7 @@ const GestionUsuarios = () => {
               color="default"
               variant="flat"
               onPress={() => navigate(-1)}
-              className="bg-slate-100 dark:bg-zinc-800 font-bold text-slate-600 dark:text-zinc-300"
+              className="bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 font-bold text-slate-600 dark:text-zinc-300"
               startContent={<FlechaReturnIcon className="w-5 h-5" />}
               isIconOnly
               title="Volver"
@@ -213,13 +213,13 @@ const GestionUsuarios = () => {
           </div>
         </CardHeader>
 
-        <CardBody className="p-6 bg-slate-50/50 dark:bg-black/10 flex flex-col gap-6">
+        <CardBody className="p-6 bg-slate-50/40 dark:bg-zinc-950/40 flex flex-col gap-6">
           
           {/* Estadísticas */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 rounded-2xl shadow-sm flex items-center gap-4">
-              <div className="p-2.5 bg-slate-100 dark:bg-zinc-800 rounded-xl text-slate-500 dark:text-zinc-400 shrink-0">
+            <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 p-4 rounded-2xl shadow-none flex items-center gap-4">
+              <div className="p-2.5 bg-slate-500/10 rounded-xl text-slate-600 dark:text-zinc-400 shrink-0">
                 <HiUserGroup className="w-5 h-5" />
               </div>
               <div>
@@ -228,8 +228,8 @@ const GestionUsuarios = () => {
               </div>
             </div>
 
-            <div className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30 p-4 rounded-2xl shadow-sm flex items-center gap-4">
-              <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
+            <div className="bg-emerald-500/10 border border-emerald-200/70 dark:border-emerald-900/40 p-4 rounded-2xl shadow-none flex items-center gap-4">
+              <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
                 <HiCheck className="w-5 h-5" />
               </div>
               <div>
@@ -238,8 +238,8 @@ const GestionUsuarios = () => {
               </div>
             </div>
 
-            <div className="bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-4 rounded-2xl shadow-sm flex items-center gap-4">
-              <div className="p-2.5 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-xl shrink-0">
+            <div className="bg-red-500/10 border border-red-200/70 dark:border-red-900/40 p-4 rounded-2xl shadow-none flex items-center gap-4">
+              <div className="p-2.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl shrink-0">
                 <HiShieldCheck className="w-5 h-5" />
               </div>
               <div>
@@ -248,13 +248,13 @@ const GestionUsuarios = () => {
               </div>
             </div>
 
-            <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-4 rounded-2xl shadow-sm flex items-center gap-4">
-              <div className="p-2.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
+            <div className="bg-sky-500/10 border border-sky-200/70 dark:border-sky-900/40 p-4 rounded-2xl shadow-none flex items-center gap-4">
+              <div className="p-2.5 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl shrink-0">
                 <HiUserGroup className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-blue-600/70 dark:text-blue-500/70 uppercase tracking-widest mb-0.5">Operadores</p>
-                <p className="text-xl font-black text-blue-700 dark:text-blue-400 leading-none">{estadisticas.operadores}</p>
+                <p className="text-[10px] font-bold text-sky-700/70 dark:text-sky-400/80 uppercase tracking-widest mb-0.5">Operadores</p>
+                <p className="text-xl font-black text-sky-700 dark:text-sky-300 leading-none">{estadisticas.operadores}</p>
               </div>
             </div>
 
@@ -274,7 +274,7 @@ const GestionUsuarios = () => {
                 placeholder="Buscar por nombre, usuario o correo..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 shadow-sm h-11"
+                className="w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 shadow-none h-11"
               />
               {busqueda && (
                 <button
@@ -322,7 +322,7 @@ const GestionUsuarios = () => {
                         variant="flat" 
                         color="default"
                         onPress={clearFilters}
-                        className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm h-11 min-w-[44px] px-0 shrink-0"
+                        className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-11 min-w-[44px] px-0 shrink-0"
                         title="Limpiar filtros"
                     >
                         <HiFilter className="text-slate-400 text-lg mr-2 lg:mr-0" />
@@ -338,12 +338,12 @@ const GestionUsuarios = () => {
       </Card>
 
       {/* ── 2. TABLA DE USUARIOS ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
+      <Card className="border-none shadow-none bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800">
         
         {/* Cabecera interna de tabla */}
         <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4">
             <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">
-                Mostrando <span className="text-blue-600 dark:text-blue-400">{items.length}</span> de <span className="text-slate-800 dark:text-zinc-200">{filteredUsers.length}</span> usuarios
+              Mostrando <span className="text-sky-700 dark:text-sky-300">{items.length}</span> de <span className="text-slate-800 dark:text-zinc-200">{filteredUsers.length}</span> usuarios
             </span>
 
             <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ const GestionUsuarios = () => {
                         setPage(1);
                     }}
                     classNames={{
-                        trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-lg",
+                      trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none rounded-lg",
                         value: "font-bold text-slate-700 dark:text-zinc-300"
                     }}
                 >
@@ -379,8 +379,8 @@ const GestionUsuarios = () => {
             classNames={{
                 base: "min-h-[400px]",
                 table: "min-w-full",
-                thead: "bg-slate-50 dark:bg-zinc-800/50",
-                th: "bg-transparent text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px] py-3 border-b border-slate-200 dark:border-zinc-700",
+              thead: "bg-slate-50 dark:bg-zinc-900/40",
+              th: "bg-transparent text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-widest text-[10px] py-3 border-b border-slate-200 dark:border-zinc-800",
                 td: "py-3 border-b border-slate-100 dark:border-zinc-800/50",
                 tr: "hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors cursor-default"
             }}
@@ -407,7 +407,7 @@ const GestionUsuarios = () => {
                   <TableRow key={usuario.id}>
                     <TableCell>
                       <User
-                        name={<span className={`font-bold text-sm ${isSelf ? 'text-blue-600 dark:text-blue-400' : 'text-slate-800 dark:text-zinc-100'}`}>{usuario.nombre} {isSelf && "(Tú)"}</span>}
+                        name={<span className={`font-bold text-sm ${isSelf ? 'text-sky-700 dark:text-sky-300' : 'text-slate-800 dark:text-zinc-100'}`}>{usuario.nombre} {isSelf && "(Tú)"}</span>}
                         description={<div className="flex flex-col gap-0.5 mt-0.5"><span className="text-[11px] font-bold text-slate-500">@{usuario.username}</span><span className="text-[10px] font-medium text-slate-400">{usuario.correo}</span></div>}
                         avatarProps={{
                           src: `https://ui-avatars.com/api/?name=${usuario.nombre}&background=random`,
@@ -443,7 +443,7 @@ const GestionUsuarios = () => {
                             isIconOnly 
                             size="sm" 
                             variant="flat" 
-                            className="bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors"
+                            className="bg-slate-100/70 hover:bg-slate-200 text-slate-600 hover:text-slate-800 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 border border-slate-200 dark:border-zinc-800 transition-colors"
                             onPress={() => handleOpenSessions(usuario)}
                           >
                             <HiShieldCheck className="w-4 h-4" />
@@ -490,11 +490,11 @@ const GestionUsuarios = () => {
                 total={totalPages}
                 page={page}
                 onChange={setPage}
-                color="primary"
+                color="default"
                 variant="light"
                 showControls
                 classNames={{
-                    cursor: "bg-blue-600 text-white font-bold shadow-md",
+                    cursor: "bg-slate-900 text-white dark:bg-white dark:text-zinc-950 font-bold shadow-sm",
                 }}
               />
             </div>

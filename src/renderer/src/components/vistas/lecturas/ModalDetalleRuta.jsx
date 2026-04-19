@@ -110,24 +110,26 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
             backdrop="blur"
             scrollBehavior="inside"
             classNames={{
-                base: "bg-white dark:bg-zinc-900 shadow-2xl",
-                backdrop: "bg-zinc-900/50 backdrop-blur-sm",
-                header: "border-b border-slate-100 dark:border-zinc-800",
-                footer: "border-t border-slate-100 dark:border-zinc-800",
-                closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors",
+                wrapper: "items-start p-1 sm:p-2 pt-16 sm:pt-20 overflow-y-hidden",
+                backdrop: "bg-slate-900/40 backdrop-blur-sm",
+                base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] max-h-[calc(100dvh-4.25rem)] sm:max-h-[calc(100dvh-5.25rem)] w-full max-w-[1300px]",
+                header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
+                body: "px-8 py-6 flex-1 min-h-0",
+                footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+                closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4",
             }}
         >
-            <ModalContent>
+            <ModalContent className="h-full">
                 {(onClose) => (
                     <>
-                        <ModalHeader className="flex flex-col gap-1 pt-6 px-6">
+                        <ModalHeader className="flex flex-col gap-1">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                                    <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl">
                                         <HiMap className="w-7 h-7" />
                                     </div>
                                     <div className="flex flex-col">
-                                        <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                                        <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                                             Ruta de Lectura: {ruta.nombre}
                                         </h2>
                                         <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
@@ -139,26 +141,26 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                     size="sm" 
                                     color={porcentaje === 100 ? "success" : porcentaje > 0 ? "primary" : "default"} 
                                     variant="flat" 
-                                    className="h-7 px-2 font-bold uppercase tracking-wider hidden sm:flex"
+                                    className="h-7 px-2 font-bold uppercase tracking-widest text-[10px] hidden sm:flex"
                                 >
                                     {porcentaje === 100 ? "Completada" : porcentaje > 0 ? "En Progreso" : "Pendiente"}
                                 </Chip>
                             </div>
                         </ModalHeader>
 
-                        <ModalBody className="py-6 px-4 sm:px-6 custom-scrollbar space-y-6">
+                        <ModalBody className="custom-scrollbar space-y-6">
 
                             {/* 1. Panel de Métricas Rápidas */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                                 
                                 {/* Progreso */}
-                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl">
+                                <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl">
                                     <CardBody className="p-5 flex flex-col justify-between">
                                         <div className="flex justify-between items-center mb-4">
-                                            <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                                                <HiChartPie className="text-blue-500 w-4 h-4" /> Avance de Lectura
+                                            <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                                                <HiChartPie className="text-sky-500 w-4 h-4" /> Avance de Lectura
                                             </h4>
-                                            <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
+                                            <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800">
                                                 {porcentaje.toFixed(1)}%
                                             </span>
                                         </div>
@@ -182,10 +184,10 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                 </Card>
 
                                 {/* Periodo */}
-                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl">
+                                <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl">
                                     <CardBody className="p-5 flex flex-col justify-between">
-                                        <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-4 uppercase tracking-wider flex items-center gap-2">
-                                            <HiCalendar className="text-purple-500 w-4 h-4" /> Periodo Asignado
+                                        <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-4 uppercase tracking-widest flex items-center gap-2">
+                                            <HiCalendar className="text-violet-500 w-4 h-4" /> Periodo Asignado
                                         </h4>
                                         <div className="mt-auto">
                                             <span className="text-2xl font-black text-slate-800 dark:text-zinc-100 tracking-tight block mb-1">
@@ -199,10 +201,10 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                 </Card>
 
                                 {/* Estado de Asignación */}
-                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl">
+                                <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl">
                                     <CardBody className="p-5 flex flex-col justify-between">
                                         <div className="flex justify-between items-center mb-4">
-                                            <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                                            <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                                                 <HiUserGroup className="text-teal-500 w-4 h-4" /> Puntos de Ruta
                                             </h4>
                                             {missingCount > 0 && (
@@ -233,10 +235,10 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
 
                             {/* 2. Warning Card for Unassigned (Solo si missingCount > 0) */}
                             {missingCount > 0 && (
-                                <Card className="border-none shadow-none bg-red-50 dark:bg-red-900/10 border-l-4 border-l-red-500 rounded-xl overflow-hidden">
+                                <Card className="border border-red-200/70 dark:border-red-900/40 shadow-none bg-red-500/10 rounded-2xl overflow-hidden">
                                     <CardBody className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                         <div className="flex gap-4 items-center">
-                                            <div className="p-2.5 bg-red-100 dark:bg-red-900/30 rounded-full text-red-600 dark:text-red-400 shrink-0">
+                                            <div className="p-2.5 bg-red-500/10 rounded-full text-red-600 dark:text-red-400 shrink-0">
                                                 <HiExclamation className="w-6 h-6" />
                                             </div>
                                             <div>
@@ -250,9 +252,9 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                         </div>
                                         <Button
                                             size="sm"
-                                            color="danger"
+                                            color="default"
                                             variant="flat"
-                                            className="font-bold shrink-0 w-full sm:w-auto"
+                                            className="font-bold shrink-0 w-full sm:w-auto bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800"
                                             endContent={<HiArrowRight />}
                                             onPress={onClose}
                                         >
@@ -264,15 +266,15 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
 
                             {/* 3. Mapa de la Ruta */}
                             <div className="flex flex-col gap-3">
-                                <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2 pl-1">
-                                    <HiLocationMarker className="text-indigo-500 w-4 h-4" /> Recorrido Geográfico
+                                <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2 pl-1">
+                                    <HiLocationMarker className="text-sky-500 w-4 h-4" /> Recorrido Geográfico
                                 </h4>
                                 {/* AQUI ESTABA EL ERROR: Necesita h-[400px] sm:h-[500px] obligatorio */}
-                                <Card className="border-none shadow-none bg-slate-50 dark:bg-zinc-800/50 rounded-2xl overflow-hidden h-[400px] sm:h-[500px]">
+                                <Card className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl overflow-hidden h-[400px] sm:h-[500px]">
                                     <CardBody className="p-0 relative h-full w-full">
                                         {loading ? (
                                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm z-20">
-                                                <Spinner size="lg" color="primary" />
+                                                <Spinner size="lg" color="default" />
                                                 <p className="text-sm font-bold text-slate-500 mt-4">Trazando ruta...</p>
                                             </div>
                                         ) : (
@@ -292,12 +294,12 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
 
                         </ModalBody>
                         
-                        <ModalFooter className="px-6 py-4">
+                        <ModalFooter>
                             <Button 
                                 color="default" 
-                                variant="light" 
+                                variant="flat" 
                                 onPress={onClose}
-                                className="font-bold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800"
                             >
                                 Cerrar Panel
                             </Button>
