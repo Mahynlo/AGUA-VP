@@ -5,6 +5,7 @@ import {fetchLecturas, modificarLectura} from '../../fetch/lecturas.js';
 // registro y actualizar
 import {registerLectura} from '../../register/lecturas.js'; // Importa la función registerLectura
 import { generarFacturasRuta } from '../../fetch/generarFacturasRuta.js';
+import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlerLecturas () {
     /**************************************************************************************************************
@@ -13,7 +14,10 @@ export default function IpcHandlerLecturas () {
      */
     // Evento para obtener lecturas desde la base de datos
     ipcMain.handle("fetch-lecturas", async (event, token_session) => {
-        return await fetchLecturas(token_session); // Pasar el token recibido como argumento
+        return await runWithAppKeyFlow(
+            () => fetchLecturas(token_session),
+            { fallbackValue: [] }
+        ); // Pasar el token recibido como argumento
     });
 
     // 📌 Manejar el registro de una lectura
@@ -28,7 +32,7 @@ export default function IpcHandlerLecturas () {
         if (lectura_actual === undefined && !consumo_m3) {
             return { success: false, message: "Debe proporcionar lectura_actual o consumo_m3." };
         }
-        return await registerLectura(lectura, token_session);
+        return await runWithAppKeyFlow(() => registerLectura(lectura, token_session));
     });
 
     // ✏️ Rectificar / modificar una lectura ya registrada (antes de generar factura)
@@ -39,7 +43,7 @@ export default function IpcHandlerLecturas () {
         if (!datos || Object.keys(datos).length === 0) {
             return { success: false, message: 'Debe proporcionar al menos un campo para modificar.' };
         }
-        return await modificarLectura(lecturaId, datos, token_session);
+        return await runWithAppKeyFlow(() => modificarLectura(lecturaId, datos, token_session));
     });
 
     // 🧾 Generar facturas para lecturas pendientes de una ruta
@@ -48,6 +52,8 @@ export default function IpcHandlerLecturas () {
         if (!ruta_id || !periodo || !fecha_emision) {
             return { success: false, message: 'ruta_id, periodo y fecha_emision son requeridos' };
         }
-        return await generarFacturasRuta({ ruta_id, periodo, fecha_emision, recalcular, motivo_recalculo }, token_session);
+        return await runWithAppKeyFlow(
+            () => generarFacturasRuta({ ruta_id, periodo, fecha_emision, recalcular, motivo_recalculo }, token_session)
+        );
     });
 }

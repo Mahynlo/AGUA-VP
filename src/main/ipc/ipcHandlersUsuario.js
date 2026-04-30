@@ -2,11 +2,11 @@
 
 import { ipcMain } from 'electron';
 import os from 'os';
-import { app } from 'electron';
+import { app, BrowserWindow } from 'electron';
 
 // NOTA: Funciones locales comentadas para usar exclusivamente API V2.
 
-import { leerToken } from '../../appConfig/authApp';
+import { leerToken, ensureAppToken, recuperarORegistrarTokenApp } from '../../appConfig/authApp';
 
 export default function IpcHandlerUsuario () {
     // Definir URL Base y asegurar que no tenga slash final extra si se concatenan
@@ -18,10 +18,49 @@ export default function IpcHandlerUsuario () {
     const API_USERS_URL = `${BASE_URL}/api/v2/users`;
     const AUTH_API_URL = `${BASE_URL}/api/v2/auth`;
 
+    const notifyAppTokenMissing = () => {
+        BrowserWindow.getAllWindows().forEach((windowRef) => {
+            if (!windowRef.isDestroyed()) {
+                windowRef.webContents.send('auth-app:token-missing');
+            }
+        });
+    };
+
+    const isAppKeyAuthError = (status, payload) => {
+        const msg = (payload?.error || payload?.message || '').toString().toLowerCase();
+        const code = (payload?.code || '').toString().toUpperCase();
+
+        if (code === 'APPKEY_REVOKED') return true;
+        if (!Number.isFinite(status)) return false;
+
+        return msg.includes('appkey') || msg.includes('midappkey') || msg.includes('app key');
+    };
+
+    const decodeTokenPayloadUnsafe = (jwtToken) => {
+        try {
+            const parts = jwtToken.split('.');
+            if (parts.length < 2) return null;
+
+            const base64Url = parts[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+            const payloadJson = Buffer.from(base64 + padding, 'base64').toString('utf8');
+            return JSON.parse(payloadJson);
+        } catch {
+            return null;
+        }
+    };
+
     // 📌 Helper generic request (Moved up for scope)
-    const apiRequest = async (url, method, token = null, body = null) => {
-        // Obtener AppKey Token
-        const appToken = leerToken();
+    const apiRequest = async (url, method, token = null, body = null, retryOnAppKeyFailure = true) => {
+        // Garantizar AppKey Token (si falta, intenta registrar la app)
+        const tokenResult = await ensureAppToken('Electron App');
+        const appToken = tokenResult?.token || leerToken();
+
+        if (!appToken) {
+            notifyAppTokenMissing();
+            return { success: false, error: 'Token de app no disponible', message: 'Token de app no disponible' };
+        }
 
         const headers = { 
             "Content-Type": "application/json",
@@ -37,14 +76,34 @@ export default function IpcHandlerUsuario () {
             const response = await fetch(url, options);
             if (!response.ok) {
                 const errorText = await response.text();
+                let errorPayload = null;
                 try {
-                    const errorJson = JSON.parse(errorText);
-                    console.error("❌ API Error JSON:", errorJson);
+                    errorPayload = JSON.parse(errorText);
+                    console.error("❌ API Error JSON:", errorPayload);
+
+                    // Si falla por AppKey (expirada/revocada), intentar recuperación y reintentar 1 vez.
+                    if (retryOnAppKeyFailure && isAppKeyAuthError(response.status, errorPayload)) {
+                        const tokenRecovery = await recuperarORegistrarTokenApp('Electron App');
+                        if (tokenRecovery?.success) {
+                            return await apiRequest(url, method, token, body, false);
+                        }
+                        notifyAppTokenMissing();
+                    }
+
                     // Retornar 'message' también para compatibilidad con frontend
-                    const msg = errorJson.error || errorJson.mensaje || response.statusText;
-                    return { success: false, error: msg, message: msg, ...errorJson };
+                    const msg = errorPayload.error || errorPayload.mensaje || response.statusText;
+                    return { success: false, error: msg, message: msg, ...errorPayload };
                 } catch (e) {
                     console.error("❌ API Error Text:", errorText);
+
+                    if (retryOnAppKeyFailure && isAppKeyAuthError(response.status, { error: errorText })) {
+                        const tokenRecovery = await recuperarORegistrarTokenApp('Electron App');
+                        if (tokenRecovery?.success) {
+                            return await apiRequest(url, method, token, body, false);
+                        }
+                        notifyAppTokenMissing();
+                    }
+
                     return { success: false, error: errorText || response.statusText, message: errorText || response.statusText };
                 }
             }
@@ -152,10 +211,36 @@ export default function IpcHandlerUsuario () {
 
     // 📌 Verificar Sesión (Simplificado para API V2)
     ipcMain.handle("verify-session", async (event, token) => {
-        // En una implementación pura con API, deberíamos validar con backend.
-        // Por ahora, asumimos éxito local para no bloquear inicio si hay token.
-        // La validación real ocurre al hacer cualquier request a la API que devuelva 401.
-        return { success: true }; 
+        if (!token) {
+            return { success: false, message: 'Token no proporcionado' };
+        }
+
+        const decoded = decodeTokenPayloadUnsafe(token);
+        const userId = decoded?.id;
+
+        if (!userId) {
+            return { success: false, message: 'Token inválido (payload)' };
+        }
+
+        const result = await apiRequest(`${AUTH_API_URL}/sesionesActivas/${userId}`, "GET", token);
+        if (result?.success || Array.isArray(result?.sesiones_activas)) {
+            return {
+                success: true,
+                user: {
+                    id: decoded?.id,
+                    correo: decoded?.correo,
+                    nombre: decoded?.nombre,
+                    username: decoded?.username,
+                    rol: decoded?.rol
+                }
+            };
+        }
+
+        return {
+            success: false,
+            message: result?.message || result?.error || 'Sesión inválida o expirada',
+            code: result?.code
+        };
     });
 
     // 📌 Sessiones activas de usuario (API V2)

@@ -2,6 +2,7 @@ import { ipcMain} from 'electron';
 import { registerMedidor  } from '../../register/medidor.js'; // Importa la función registerMedidor
 import { fetchMedidores } from '../../fetch/medidores.js';
 import { updateMedidor } from '../../update/medidores.js';
+import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlersMedidores () {
   ipcMain.handle("register-medidor", async (event, data) => {
@@ -19,9 +20,8 @@ export default function IpcHandlersMedidores () {
         throw new Error("Faltan datos obligatorios.");
       }
 
-      const response = await registerMedidor(
-        medidor,
-        token_session
+      const response = await runWithAppKeyFlow(
+        () => registerMedidor(medidor, token_session)
       );
 
       return response;
@@ -35,11 +35,14 @@ export default function IpcHandlersMedidores () {
   });
 
    ipcMain.handle("fetch-medidores", async (event, token_session, params) => {
-      return await fetchMedidores(token_session, params);
+      return await runWithAppKeyFlow(
+        () => fetchMedidores(token_session, params),
+        { fallbackValue: [] }
+      );
     });
 
     ipcMain.handle("update-medidor", async (event, data) => {
         const { id, medidor, token_session } = data;
-        return await updateMedidor(id, medidor, token_session);
+      return await runWithAppKeyFlow(() => updateMedidor(id, medidor, token_session));
     });
 }
