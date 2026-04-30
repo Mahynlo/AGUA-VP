@@ -157,6 +157,22 @@ export async function startApiServer() {
         throw new Error('[apiManager] VITE_APPKEY_INICIAL no está definido en el entorno.');
     }
 
+    const resendApiKey = import.meta.env.VITE_RESEND_API_KEY;
+    const resendFromEmail = import.meta.env.VITE_RESEND_FROM_EMAIL;
+    const appPublicUrl = import.meta.env.VITE_APP_PUBLIC_URL || import.meta.env.VITE_APP_URL;
+
+    if (resendApiKey && !process.env.RESEND_API_KEY) {
+        process.env.RESEND_API_KEY = resendApiKey;
+    }
+
+    if (resendFromEmail && !process.env.RESEND_FROM_EMAIL) {
+        process.env.RESEND_FROM_EMAIL = resendFromEmail;
+    }
+
+    if (appPublicUrl && !process.env.APP_PUBLIC_URL) {
+        process.env.APP_PUBLIC_URL = appPublicUrl;
+    }
+
     // Dynamic import: vite-main no lo transforma a require(), así el módulo ESM carga correctamente
     const { default: AguaVPServer } = await import('@aguavp/api-server');
 

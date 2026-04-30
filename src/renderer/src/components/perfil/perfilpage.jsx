@@ -5,14 +5,14 @@ import { Card, CardBody, CardHeader, Button, Badge, Tooltip } from "@nextui-org/
 import {
   HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer,
   HiClock, HiCheckCircle, HiExclamationCircle, HiGlobeAlt, HiInformationCircle,
-  HiCamera, HiTrash
+  HiCamera, HiTrash, HiEye, HiEyeOff
 } from "react-icons/hi";
 import defaultAvatar from "../../assets/images/Avatar.png";
 import { useAuth } from "../../context/AuthContext";
 import { formatUTCtoHermosilloSoloFecha, formatUTCtoHermosilloHora } from "../../utils/formatFecha";
 
 // Componente reutilizable para Input con Icono (Premium UI)
-const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placeholder, onChange, iconColor = "text-blue-500" }) => (
+const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placeholder, onChange, iconColor = "text-blue-500", endContent }) => (
   <div className="w-full">
     <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
       {label}
@@ -30,7 +30,7 @@ const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placehol
         onChange={onChange}
         placeholder={placeholder}
         className={`
-          w-full pl-10 pr-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none h-11
+          w-full pl-10 ${endContent ? 'pr-12' : 'pr-4'} py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none h-11
           border border-slate-200 dark:border-zinc-700 shadow-sm
           ${readOnly
             ? 'bg-slate-50 dark:bg-zinc-800/30 text-slate-500 dark:text-zinc-500 cursor-default select-none focus:outline-none'
@@ -38,6 +38,11 @@ const IconInput = ({ label, icon: Icon, type = "text", value, readOnly, placehol
           }
         `}
       />
+      {endContent && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          {endContent}
+        </div>
+      )}
     </div>
   </div>
 );
@@ -88,6 +93,7 @@ export default function PerfilPage() {
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
   const [passLoading, setPassLoading] = useState(false);
   const [passMessage, setPassMessage] = useState({ type: "", text: "" });
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
 
   const displaySessions = sesiones || [];
 
@@ -96,13 +102,24 @@ export default function PerfilPage() {
     if (passMessage.text) setPassMessage({ type: "", text: "" });
   };
 
+  const getPasswordIssues = (value) => {
+    const issues = [];
+    if (value.length < 8) issues.push('Debe tener al menos 8 caracteres.');
+    if (!/[a-z]/.test(value)) issues.push('Incluye una letra minuscula.');
+    if (!/[A-Z]/.test(value)) issues.push('Incluye una letra mayuscula.');
+    if (!/[0-9]/.test(value)) issues.push('Incluye un numero.');
+    if (!/[@$!%*?&#]/.test(value)) issues.push('Incluye un caracter especial (@$!%*?&#).');
+    return issues;
+  };
+
   const handleChangePassword = async () => {
-    if (passwords.new !== passwords.confirm) {
-      setPassMessage({ type: "error", text: "Las contraseñas nuevas no coinciden." });
+    const passwordIssues = getPasswordIssues(passwords.new);
+    if (passwordIssues.length > 0) {
+      setPassMessage({ type: "error", text: passwordIssues[0] });
       return;
     }
-    if (passwords.new.length < 6) {
-      setPassMessage({ type: "error", text: "La contraseña debe tener al menos 6 caracteres." });
+    if (passwords.new !== passwords.confirm) {
+      setPassMessage({ type: "error", text: "Las contraseñas nuevas no coinciden." });
       return;
     }
     if (passwords.current === passwords.new) {
@@ -146,6 +163,10 @@ export default function PerfilPage() {
     } finally {
       setPassLoading(false);
     }
+  };
+
+  const toggleShowPassword = (field) => {
+    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   const handleCloseSession = async (sesionId) => {
@@ -337,33 +358,67 @@ export default function PerfilPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="md:col-span-2">
                     <IconInput
-                      type="password"
+                      type={showPasswords.current ? "text" : "password"}
                       label="Contraseña Actual"
                       icon={HiKey}
                       iconColor="text-orange-500"
                       placeholder="••••••••"
                       value={passwords.current}
                       onChange={(e) => handlePassChange(e, 'current')}
+                      endContent={
+                        <button
+                          type="button"
+                          onClick={() => toggleShowPassword('current')}
+                          className="rounded-lg p-2 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-zinc-200"
+                          aria-label={showPasswords.current ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        >
+                          {showPasswords.current ? <HiEyeOff className="h-4 w-4" /> : <HiEye className="h-4 w-4" />}
+                        </button>
+                      }
                     />
                   </div>
                   <IconInput
-                    type="password"
+                    type={showPasswords.new ? "text" : "password"}
                     label="Nueva Contraseña"
                     icon={HiKey}
                     iconColor="text-blue-500"
                     placeholder="••••••••"
                     value={passwords.new}
                     onChange={(e) => handlePassChange(e, 'new')}
+                    endContent={
+                      <button
+                        type="button"
+                        onClick={() => toggleShowPassword('new')}
+                        className="rounded-lg p-2 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-zinc-200"
+                        aria-label={showPasswords.new ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      >
+                        {showPasswords.new ? <HiEyeOff className="h-4 w-4" /> : <HiEye className="h-4 w-4" />}
+                      </button>
+                    }
                   />
                   <IconInput
-                    type="password"
+                    type={showPasswords.confirm ? "text" : "password"}
                     label="Confirmar Contraseña"
                     icon={HiKey}
                     iconColor="text-blue-500"
                     placeholder="••••••••"
                     value={passwords.confirm}
                     onChange={(e) => handlePassChange(e, 'confirm')}
+                    endContent={
+                      <button
+                        type="button"
+                        onClick={() => toggleShowPassword('confirm')}
+                        className="rounded-lg p-2 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-zinc-200"
+                        aria-label={showPasswords.confirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      >
+                        {showPasswords.confirm ? <HiEyeOff className="h-4 w-4" /> : <HiEye className="h-4 w-4" />}
+                      </button>
+                    }
                   />
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[11px] font-semibold text-slate-600 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/60 dark:text-zinc-300">
+                  Requisitos: minimo 8 caracteres, 1 mayuscula, 1 minuscula, 1 numero y 1 caracter especial.
                 </div>
 
                 {/* Mensajes de Error/Éxito */}
