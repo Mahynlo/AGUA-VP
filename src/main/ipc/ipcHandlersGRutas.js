@@ -4,6 +4,7 @@ import { GenerarRutaLectura } from "../../generador_rutas/generar_ruta.js";
 import {registrarRutas} from "../../register/rutas.js"; // Asegúrate de que esta ruta sea correcta
 import {fetchRutas} from "../../fetch/rutas.js"; // Asegúrate de que esta ruta sea correcta
 import {fetchRutasInfoMedidores} from "../../fetch/infoRutas.js"; // Asegúrate de que esta ruta sea correcta
+import { runWithAppKeyFlow } from './appKeyFlow.js';
 export default function IpcHandlersRutas() {
 
   
@@ -37,7 +38,7 @@ export default function IpcHandlersRutas() {
         throw new Error("La ruta debe contener al menos dos puntos, un nombre y una descripción");
       }
 
-      const result = await registrarRutas(ruta, token_session);
+      const result = await runWithAppKeyFlow(() => registrarRutas(ruta, token_session));
       return result;
 
     } catch (error) {
@@ -57,7 +58,10 @@ export default function IpcHandlersRutas() {
 
       // Validar si es params object o periodo string (legacy)
       // fetchRutas manejará ambos casos, solo pasamos el argumento
-      const rutas = await fetchRutas(token_session, periodo); // 'periodo' aquí es el 2do argumento del invoke, puede ser params
+      const rutas = await runWithAppKeyFlow(
+        () => fetchRutas(token_session, periodo),
+        { fallbackValue: [] }
+      ); // 'periodo' aquí es el 2do argumento del invoke, puede ser params
       return rutas;
 
     } catch (error) {
@@ -74,7 +78,10 @@ export default function IpcHandlersRutas() {
         throw new Error("Token de sesión no proporcionado");
       }
 
-      const medidores = await fetchRutasInfoMedidores(token_session, id_ruta);
+      const medidores = await runWithAppKeyFlow(
+        () => fetchRutasInfoMedidores(token_session, id_ruta),
+        { fallbackValue: [] }
+      );
       return medidores;
 
     } catch (error) {
@@ -103,7 +110,9 @@ export default function IpcHandlersRutas() {
       // Importar dinámicamente la función de actualización
       const { actualizarRuta } = await import("../../fetch/rutas.js");
       
-      const result = await actualizarRuta(token_session, id_ruta, datosActualizados);
+      const result = await runWithAppKeyFlow(
+        () => actualizarRuta(token_session, id_ruta, datosActualizados)
+      );
       return result;
 
     } catch (error) {

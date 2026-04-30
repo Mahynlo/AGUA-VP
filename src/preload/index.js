@@ -238,8 +238,15 @@ const api = {
 const authApp = {
   leerToken: () => ipcRenderer.invoke('auth-app:leer-token'),
   leerId: () => ipcRenderer.invoke('auth-app:leer-id'),
+  ensureToken: (nombreApp = 'Electron App') => ipcRenderer.invoke('auth-app:ensure-token', nombreApp),
+  recoverOrRegister: (nombreApp = 'Electron App') => ipcRenderer.invoke('auth-app:recover-or-register', nombreApp),
   registrarApp: (nombreApp = 'Electron App') => ipcRenderer.invoke('auth-app:registrar-app', nombreApp),
-  borrarToken: () => ipcRenderer.invoke('auth-app:borrar-token')
+  borrarToken: () => ipcRenderer.invoke('auth-app:borrar-token'),
+  onTokenMissing: (callback) => {
+    const handler = (_event, payload) => callback(payload);
+    ipcRenderer.on('auth-app:token-missing', handler);
+    return () => ipcRenderer.removeListener('auth-app:token-missing', handler);
+  }
 };
 
 // objecto para manejar las tarifas de la aplicación

@@ -27,11 +27,11 @@ const ModalBienvenida = () => {
       isDismissable={false} // No se cierra al dar clic afuera
       isKeyboardDismissDisabled={true} // No se cierra con ESC
       placement="center"
-      backdrop="blur"
+      backdrop="opaque"
       classNames={{
-        wrapper: "z-[100000]",
+        wrapper: "z-[100000] pt-16",
         base: "bg-white dark:bg-zinc-950 shadow-2xl rounded-[2rem] border border-slate-200 dark:border-zinc-800 overflow-hidden",
-        backdrop: "bg-slate-900/80 dark:bg-black/80 backdrop-blur-md z-[99999]",
+        backdrop: "bg-slate-900/80 dark:bg-black/80 z-[99999] top-16",
         header: "border-b border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50 px-6 sm:px-8 py-5 shrink-0",
         body: "py-8 px-6 sm:px-8 bg-slate-50/50 dark:bg-black/10",
         footer: "border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50 px-6 sm:px-8 py-4",
