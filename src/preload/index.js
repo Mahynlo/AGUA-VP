@@ -25,6 +25,8 @@ const api = {
   //login y registro de usuario
   login: (data) => ipcRenderer.invoke("login", data),
   register: (data) => ipcRenderer.invoke("register", data),
+  requestPasswordRecovery: (correo) => ipcRenderer.invoke("request-password-recovery", correo),
+  resetPasswordRecovery: (data) => ipcRenderer.invoke("reset-password-recovery", data),
 
   // Gestión de Usuarios (Admin V2)
   fetchUsuarios: async (token, params) => ipcRenderer.invoke("fetch-usuarios", token, params),

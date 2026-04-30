@@ -274,6 +274,20 @@ export default function IpcHandlerUsuario () {
         });
     });
 
+    // 📌 Solicitar recuperación de contraseña (API V2)
+    ipcMain.handle("request-password-recovery", async (event, correo) => {
+        return await apiRequest(`${AUTH_API_URL}/solicitar-recuperacion`, "POST", null, { correo });
+    });
+
+    // 📌 Restablecer contraseña con token (API V2)
+    ipcMain.handle("reset-password-recovery", async (event, data) => {
+        return await apiRequest(`${AUTH_API_URL}/recuperar-contrasena`, "POST", null, {
+            token: data.token,
+            contraseña_nueva: data.contraseñaNueva,
+            confirmar_contraseña_nueva: data.confirmarContraseñaNueva
+        });
+    });
+
     // ==========================================
     // 📌 GESTIÓN DE USUARIOS (CRUD Admin - API v2)
     // ==========================================
