@@ -96,6 +96,7 @@ export const AuthProvider = ({ children }) => {
                         localStorage.setItem("refreshToken", response.refreshToken);
                     }
                     programarRenovacion(response.expiresIn || "15m");
+                    window.dispatchEvent(new CustomEvent("token-refreshed"));
                     return response.accessToken;
                 }
 

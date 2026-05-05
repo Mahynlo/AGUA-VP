@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Card,
-  CardBody,
-  CardHeader,
   Button,
   Select,
   SelectItem,
@@ -14,9 +11,23 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Spinner
+  Spinner,
+  User
 } from "@nextui-org/react";
-import { HiCash, HiUserGroup, HiDocumentText, HiCalculator, HiEye, HiFilter, HiX, HiPrinter } from "react-icons/hi";
+import { 
+  HiCash, 
+  HiUserGroup, 
+  HiDocumentText, 
+  HiCalculator, 
+  HiEye, 
+  HiFilter, 
+  HiX, 
+  HiPrinter,
+  HiSearch,
+  HiPhone,
+  HiMail,
+  HiLocationMarker
+} from "react-icons/hi";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
 import { useFeedback } from "../../../context/FeedbackContext";
@@ -26,7 +37,6 @@ import ModalDetalleCobranzaCliente from "./ModalDetalleCobranzaCliente";
 import ModalSeleccionPeriodoRapido from "./ModalSeleccionPeriodoRapido";
 import ModalImprimir from "../impresion/components/ModalImprimir";
 import { formatearPeriodo, obtenerPeriodoActual } from "../../../utils/periodoUtils";
-import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 
 const toMoney = (value) => {
   const num = Number(value);
@@ -422,7 +432,6 @@ const TabCobranzaCliente = () => {
       (Array.isArray(responseData?.pagos_ids) ? responseData.pagos_ids.length : 0)
       || (Array.isArray(responseDataNested?.pagos_ids) ? responseDataNested.pagos_ids.length : 0);
 
-    // Compatibilidad defensiva: algunos builds pueden devolver solo contador/ids sin detalle de aplicaciones.
     if (pagosCreados.length === 0 && (facturasAfectadas > 0 || pagosIdsCount > 0)) {
       pagosCreados = aplicaciones
         .map((item) => ({
@@ -721,96 +730,94 @@ const TabCobranzaCliente = () => {
   };
 
   return (
-    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-0 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 shadow-none">
-          <CardBody className="p-6">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              <span className="p-1.5 rounded-lg bg-slate-500/10 text-slate-600 dark:text-zinc-300"><HiUserGroup className="w-4 h-4" /></span>
-              Clientes totales
-            </div>
-            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 mt-3">{resumen.clientes_total.toLocaleString("es-MX")}</p>
-          </CardBody>
-        </Card>
+    <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500">
+      
+      {/* ── 1. HEADER Y KPIs ── */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl p-3 shrink-0">
+            <HiCalculator className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Cobranza por Cliente</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+              Historial completo y cobro distribuido FIFO.
+            </p>
+          </div>
+        </div>
 
-        <Card className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-0 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 shadow-none">
-          <CardBody className="p-6">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600"><HiCalculator className="w-4 h-4" /></span>
-              Clientes con deuda
-            </div>
-            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 mt-3">{resumen.clientes_con_deuda.toLocaleString("es-MX")}</p>
-          </CardBody>
-        </Card>
+        <div className="w-full md:w-auto flex items-center justify-end gap-3">
+          <Button
+            className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl px-5 h-[44px] shadow-sm"
+            startContent={<HiPrinter className="text-lg" />}
+            onPress={handleImprimirMayoresDeudores}
+            isLoading={loadingImprimirDeudores}
+          >
+            Imprimir Deudores
+          </Button>
 
-        <Card className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-0 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 shadow-none">
-          <CardBody className="p-6">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600"><HiDocumentText className="w-4 h-4" /></span>
-              Facturas pendientes
-            </div>
-            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 mt-3">{resumen.facturas.toLocaleString("es-MX")}</p>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-0 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 shadow-none">
-          <CardBody className="p-6">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              <span className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600"><HiCash className="w-4 h-4" /></span>
-              Deuda total visible
-            </div>
-            <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 mt-3">${resumen.deuda.toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-          </CardBody>
-        </Card>
+          <Button
+            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[44px] shadow-sm"
+            startContent={<HiCalculator className="text-lg" />}
+            onPress={abrirModalSeleccionPeriodoRapido}
+          >
+            Modo Rápido
+          </Button>
+        </div>
       </div>
 
-      <Card className="border-none shadow-none bg-transparent rounded-2xl border border-slate-200 dark:border-zinc-800">
-        <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
-          <div className="flex items-center gap-4">
-            <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl p-3">
-              <HiCash className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Cobranza por cliente</h3>
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-              Historial completo de facturas por cliente. Cobro distribuido FIFO al pagar.
-              </p>
-            </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total Clientes</span>
+            <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiUserGroup className="w-4 h-4" /></div>
           </div>
+          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{resumen.clientes_total.toLocaleString("es-MX")}</p>
+        </div>
 
-          <div className="w-full md:w-auto flex items-center justify-end gap-2">
-            <Button
-              className="font-bold bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 rounded-xl px-6 shadow-none"
-              startContent={<HiPrinter className="text-lg" />}
-              onPress={handleImprimirMayoresDeudores}
-              isLoading={loadingImprimirDeudores}
-              title="Imprimir reporte de mayores deudores"
-            >
-              Imprimir deudores
-            </Button>
-
-            <Button
-              className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm"
-              startContent={<HiCalculator className="text-lg" />}
-              onPress={abrirModalSeleccionPeriodoRapido}
-              title="Modo rapido: selecciona periodo, marca los que NO pagaron y aplica al resto"
-            >
-              Modo rapido
-            </Button>
+        <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Con Deuda</span>
+            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><HiCalculator className="w-4 h-4" /></div>
           </div>
-        </CardHeader>
+          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{resumen.clientes_con_deuda.toLocaleString("es-MX")}</p>
+        </div>
 
-        <CardBody className="p-6 border-b border-slate-100 dark:border-zinc-800/50">
+        <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Fact. Pendientes</span>
+            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"><HiDocumentText className="w-4 h-4" /></div>
+          </div>
+          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{resumen.facturas.toLocaleString("es-MX")}</p>
+        </div>
+
+        <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Deuda Visible</span>
+            <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400"><HiCash className="w-4 h-4" /></div>
+          </div>
+          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none flex items-baseline gap-0.5">
+            <span className="text-lg font-bold text-slate-400">$</span>
+            {resumen.deuda.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+          </p>
+        </div>
+      </div>
+
+      {/* ── 2. FILTROS Y TABLA ── */}
+      <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-hidden flex flex-col">
+        
+        {/* Filtros */}
+        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
             <div className="lg:col-span-5 relative w-full flex items-center">
-              <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
-                <SearchIcon className="w-5 h-5" />
+              <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+                <HiSearch className="w-5 h-5" />
               </span>
               <input
-                placeholder="Buscar nombre, predio, direccion, correo o telefono..."
+                placeholder="Buscar nombre, predio, correo o teléfono..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 shadow-none h-[52px]"
+                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none h-[52px]"
               />
               {search && (
                 <button
@@ -833,18 +840,18 @@ const TabCobranzaCliente = () => {
                 variant="flat"
                 classNames={selectClassNames}
               >
-                <SelectItem key="deuda_desc" value="deuda_desc">Mas deuda</SelectItem>
-                <SelectItem key="deuda_asc" value="deuda_asc">Menos deuda</SelectItem>
-                <SelectItem key="vencidas_desc" value="vencidas_desc">Mas facturas vencidas</SelectItem>
-                <SelectItem key="pagadas_desc" value="pagadas_desc">Mas facturas pagadas</SelectItem>
-                <SelectItem key="predio_asc" value="predio_asc">Numero de predio</SelectItem>
-                <SelectItem key="nombre_asc" value="nombre_asc">Orden alfabetico</SelectItem>
+                <SelectItem key="deuda_desc" value="deuda_desc">Más deuda primero</SelectItem>
+                <SelectItem key="deuda_asc" value="deuda_asc">Menos deuda primero</SelectItem>
+                <SelectItem key="vencidas_desc" value="vencidas_desc">Más facturas vencidas</SelectItem>
+                <SelectItem key="pagadas_desc" value="pagadas_desc">Más facturas pagadas</SelectItem>
+                <SelectItem key="predio_asc" value="predio_asc">Número de predio</SelectItem>
+                <SelectItem key="nombre_asc" value="nombre_asc">Orden alfabético</SelectItem>
               </Select>
             </div>
 
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-2">
               <Select
-                aria-label="Clientes por pagina"
+                aria-label="Clientes por página"
                 selectedKeys={[String(rowsPerPage)]}
                 onSelectionChange={(keys) => {
                   const value = Number(Array.from(keys)[0] || 10);
@@ -860,44 +867,44 @@ const TabCobranzaCliente = () => {
               </Select>
             </div>
 
-            <div className="lg:col-span-1 flex justify-end">
+            <div className="lg:col-span-2 flex justify-end">
               {hasActiveFilters ? (
                 <Button
                   variant="flat"
-                  color="default"
                   onPress={() => {
                     setSearch("");
                     setRowsPerPage(10);
                     setFiltroRanking("deuda_desc");
                   }}
-                  className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-[52px] min-w-0 rounded-xl"
-                  isIconOnly
-                  title="Limpiar filtros"
+                  className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl"
+                  startContent={<HiFilter className="text-lg" />}
                 >
-                  <HiFilter className="text-slate-400 text-lg" />
+                  Limpiar
                 </Button>
               ) : (
-                <div className="w-full h-11" />
+                <div className="w-full h-[52px]" />
               )}
             </div>
           </div>
-        </CardBody>
+        </div>
 
+        {/* Sub-Header Paginación */}
         <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
             Mostrando <span className="text-slate-700 dark:text-zinc-200">{clientesTablaOrdenada.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{clientesPagination.total || 0}</span> clientes
           </span>
         </div>
 
-        <CardBody className="p-0">
+        {/* Tabla */}
+        <div className="w-full overflow-x-auto bg-white dark:bg-zinc-950">
           <Table
             aria-label="Clientes para cobranza"
             removeWrapper
             classNames={{
               base: "min-h-[420px]",
               table: "min-w-full",
-              th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4",
-              td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4",
+              th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4 px-6",
+              td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4 px-6",
               tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
             }}
           >
@@ -907,7 +914,7 @@ const TabCobranzaCliente = () => {
               <TableColumn>FACTURAS (HISTORIAL)</TableColumn>
               <TableColumn>PENDIENTES</TableColumn>
               <TableColumn>DEUDA TOTAL</TableColumn>
-              <TableColumn>ACCIONES</TableColumn>
+              <TableColumn align="end">ACCIONES</TableColumn>
             </TableHeader>
             <TableBody
               items={clientesTablaPaginada}
@@ -923,30 +930,63 @@ const TabCobranzaCliente = () => {
               {(cliente) => (
                 <TableRow key={cliente.cliente_id}>
                   <TableCell>
-                    <div className="space-y-1">
-                      <div className="font-bold text-sm text-slate-800 dark:text-zinc-100">{cliente.cliente_nombre}</div>
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Predio: {cliente.numero_predio}</div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{cliente.estado_cliente}</div>
+                    <User
+                      name={<span className="font-bold text-sm text-slate-800 dark:text-zinc-100">{cliente.cliente_nombre}</span>}
+                      description={<span className="font-medium text-[11px] text-slate-500">{cliente.numero_predio ? `Predio #${cliente.numero_predio} · ID: ${cliente.cliente_id}` : `ID: ${cliente.cliente_id}`}</span>}
+                      avatarProps={{
+                        name: cliente.cliente_nombre?.charAt(0) || "C",
+                        size: "sm",
+                        className: "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold border border-slate-200 dark:border-zinc-700 shadow-sm"
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1.5 text-xs text-slate-600 dark:text-zinc-300 max-w-[220px]">
+                      {cliente.telefono ? (
+                        <div className="flex items-center gap-2 font-semibold">
+                          <HiPhone className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{cliente.telefono}</span>
+                        </div>
+                      ) : null}
+                      {cliente.correo && cliente.correo !== "-" ? (
+                        <div className="flex items-center gap-2">
+                          <HiMail className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="truncate">{cliente.correo}</span>
+                        </div>
+                      ) : null}
+                      {cliente.direccion && cliente.direccion !== "-" ? (
+                        <div className="flex items-center gap-2">
+                          <HiLocationMarker className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate text-slate-500 dark:text-zinc-400">{cliente.direccion}</span>
+                        </div>
+                      ) : null}
+                      {!cliente.telefono && (!cliente.correo || cliente.correo === "-") && (!cliente.direccion || cliente.direccion === "-") && (
+                        <span className="italic text-slate-400">Sin contacto</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-0.5 text-xs text-slate-600 dark:text-zinc-300 max-w-[220px]">
-                      <div className="font-semibold">Telefono: {cliente.telefono}</div>
-                      <div className="truncate text-slate-500 dark:text-zinc-400">Direccion: {cliente.direccion}</div>
+                    <div className="flex flex-col gap-1.5">
+                      <Chip size="sm" variant="flat" className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold text-[10px] uppercase tracking-widest px-1">
+                        {cliente.total_facturas} en total
+                      </Chip>
+                      <div className="flex gap-3 text-[10px] font-bold uppercase tracking-widest mt-1">
+                        <span className="text-emerald-600 dark:text-emerald-400">PAGADAS: {cliente.facturas_pagadas}</span>
+                        <span className="text-rose-600 dark:text-rose-400">VENCIDAS: {cliente.facturas_vencidas}</span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1">
-                      <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">{cliente.total_facturas} en total</Chip>
-                      <div className="text-[10px] font-medium text-slate-500 dark:text-zinc-400">Pagadas: {cliente.facturas_pagadas}</div>
-                      <div className="text-[10px] font-medium text-rose-500 dark:text-rose-400">Vencidas: {cliente.facturas_vencidas}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm text-slate-700 dark:text-zinc-300">
-                      <Chip size="sm" variant="flat" className={cliente.facturas_pendientes > 0 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}>{cliente.facturas_pendientes} en total</Chip>
-                      <div className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-                        {cliente.factura_mas_antigua_pendiente ? `Antigua #${cliente.factura_mas_antigua_pendiente.id}` : "Sin deuda pendiente"}
+                    <div className="flex flex-col gap-1.5 items-start">
+                      <Chip 
+                        size="sm" 
+                        variant="flat" 
+                        className={`font-bold text-[10px] uppercase tracking-widest px-1 h-6 ${cliente.facturas_pendientes > 0 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}
+                      >
+                        {cliente.facturas_pendientes} Pendientes
+                      </Chip>
+                      <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
+                        {cliente.factura_mas_antigua_pendiente ? `Más Antigua: #${cliente.factura_mas_antigua_pendiente.id}` : "Sin deuda pendiente"}
                       </div>
                     </div>
                   </TableCell>
@@ -956,19 +996,22 @@ const TabCobranzaCliente = () => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <Button
+                        isIconOnly
+                        size="sm"
                         variant="flat"
-                        className="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold"
-                        startContent={<HiEye className="w-4 h-4" />}
+                        className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors rounded-lg"
                         onPress={() => abrirDetalleCliente(cliente)}
+                        title="Ver Detalle"
                       >
-                        Detalle
+                        <HiEye className="w-4 h-4" />
                       </Button>
 
                       <Button
+                        size="sm"
                         variant="flat"
-                        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold"
+                        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 font-bold rounded-lg px-3"
                         startContent={<HiCalculator className="w-4 h-4" />}
                         onPress={() => abrirModalCobro(cliente)}
                         isDisabled={cliente.deuda_total <= 0}
@@ -981,10 +1024,13 @@ const TabCobranzaCliente = () => {
               )}
             </TableBody>
           </Table>
+        </div>
 
+        {/* Paginación Inferior */}
+        {totalPages > 1 && (
           <div className="flex justify-between items-center px-6 py-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-900/40">
-            <span className="text-xs text-slate-500 dark:text-zinc-400">
-              Mostrando pagina {clientesPagination.page || currentPage} de {Math.max(1, clientesPagination.totalPages || 1)} · Total clientes: {clientesPagination.total || 0}
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+              Página {clientesPagination.page || currentPage} de {Math.max(1, clientesPagination.totalPages || 1)}
             </span>
             <Pagination
               total={Math.max(1, clientesPagination.totalPages || 1)}
@@ -992,12 +1038,14 @@ const TabCobranzaCliente = () => {
               onChange={setCurrentPage}
               showControls
               color="default"
-              classNames={{ cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold" }}
+              variant="flat"
+              classNames={{ cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold shadow-sm" }}
             />
           </div>
-        </CardBody>
-      </Card>
+        )}
+      </div>
 
+      {/* Modales */}
       <ModalDetalleCobranzaCliente
         isOpen={detalleOpen}
         onClose={cerrarDetalleCliente}
@@ -1069,3 +1117,4 @@ const TabCobranzaCliente = () => {
 };
 
 export default TabCobranzaCliente;
+

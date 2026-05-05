@@ -1,31 +1,23 @@
 import { useState, useEffect } from "react";
-import { Card, CardBody, CardHeader, Button, Spinner } from "@nextui-org/react";
-import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiPhotograph, HiUpload, HiTrash, HiCollection, HiPlusCircle } from "react-icons/hi";
-import { useAppLogo } from "../../context/LogoContext";
+import { Button, Spinner, Divider } from "@nextui-org/react";
+// Aquí está la corrección: se agregó HiCheck
+import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiCheck } from "react-icons/hi";
 import { usePermissions } from "../../context/PermissionsContext";
 import SelectorPeriodoAvanzado from "../ui/SelectorPeriodoAvanzado";
 import { formatearPeriodo, obtenerPeriodoActual } from "../../utils/periodoUtils";
 import { nowHermosilloDateStr } from "../../utils/diasHabiles";
 
-// Input reutilizable (Premium UI)
-const ConfigInput = ({ label, value, onChange, icon, type = "number", color = "blue", description, min = 0 }) => {
-  const focusColors = {
-    blue: "focus:ring-blue-500 focus:border-blue-500",
-    amber: "focus:ring-amber-500 focus:border-amber-500",
-    orange: "focus:ring-orange-500 focus:border-orange-500",
-    red: "focus:ring-red-500 focus:border-red-500",
-    purple: "focus:ring-purple-500 focus:border-purple-500",
-  };
-
-  const focusClass = focusColors[color] || focusColors.blue;
-
+// Input reutilizable (Premium SaaS UI - Token 4)
+const ConfigInput = ({ label, value, onChange, icon, type = "number", description, min = 0 }) => {
   return (
-    <div className="w-full">
-      <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
-        {label}
-      </label>
+    <div className="w-full flex flex-col gap-1.5">
+      {label && (
+        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+          {label}
+        </label>
+      )}
       <div className="relative w-full flex items-center">
-        <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+        <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
           {icon}
         </span>
         <input
@@ -33,17 +25,10 @@ const ConfigInput = ({ label, value, onChange, icon, type = "number", color = "b
           value={value}
           min={min}
           onChange={onChange}
-          className={`
-            w-full pl-10 pr-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none h-11
-            bg-slate-50 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100
-            border border-slate-200 dark:border-zinc-700
-            hover:bg-slate-100 dark:hover:bg-zinc-800
-            focus:outline-none focus:ring-2 focus:bg-white dark:focus:bg-zinc-900 shadow-sm
-            ${focusClass}
-          `}
+          className="w-full pl-11 pr-4 h-[52px] text-sm font-medium rounded-xl transition-all duration-200 resize-none bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:border-slate-400 dark:focus:border-zinc-500 shadow-none"
         />
       </div>
-      {description && <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1.5 ml-1 font-bold leading-tight">{description}</p>}
+      {description && <p className="text-[10px] text-slate-400 dark:text-zinc-500 ml-1 mt-0.5 leading-tight">{description}</p>}
     </div>
   );
 };
@@ -52,34 +37,7 @@ export default function PanelConfiguracion() {
   const token = localStorage.getItem("token");
   const { can } = usePermissions();
   const canRecalcularLecturas = can("lecturas.recalcular");
-  const { logoSrc, hasCustomLogo, setCustomLogo, clearCustomLogo,
-          loginImages, hasCustomLoginImages, addLoginImages, removeLoginImage, clearLoginImages } = useAppLogo();
-  const [savingLogo, setSavingLogo] = useState(false);
-  const [addingLoginImages, setAddingLoginImages] = useState(false);
-
-  const handleSelectLogo = async () => {
-    setSavingLogo(true);
-    try {
-      const result = await window.api.selectLogo();
-      if (result?.success) setCustomLogo(result.data);
-    } catch (err) {
-      console.error("Error seleccionando logo:", err);
-    } finally {
-      setSavingLogo(false);
-    }
-  };
-
-  const handleAddLoginImages = async () => {
-    setAddingLoginImages(true);
-    try {
-      const result = await window.api.selectLoginImages();
-      if (result?.success) addLoginImages(result.data);
-    } catch (err) {
-      console.error("Error seleccionando imágenes:", err);
-    } finally {
-      setAddingLoginImages(false);
-    }
-  };
+  
   const [config, setConfig] = useState({
     facturas_para_primer_aviso: 1,
     facturas_para_segundo_aviso: 2,
@@ -88,6 +46,7 @@ export default function PanelConfiguracion() {
     dias_gracia: 0,
     dias_vencimiento_factura: 15,
   });
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -162,363 +121,252 @@ export default function PanelConfiguracion() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-12 h-64 gap-4 animate-in fade-in">
-        <Spinner size="lg" color="primary" />
-        <span className="text-sm font-bold text-slate-500 dark:text-zinc-400 animate-pulse">Cargando configuración del sistema...</span>
+        <Spinner size="lg" color="default" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 animate-pulse">
+          Cargando configuración del sistema...
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-4xl mx-auto animate-in fade-in duration-300 pb-20">
+    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0 animate-in fade-in duration-500 flex flex-col gap-8">
       
-      {/* ── HEADER ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
-        <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 rounded-2xl">
-                <HiCog className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-zinc-100 tracking-tight">
-                Configuración General
+      {/* ── HEADER GLOBAL ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+            <HiCog className="w-7 h-7" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
+              Configuración General
             </h2>
-            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
-                Reglas de negocio y facturación
+            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+              Reglas de negocio y facturación
             </p>
-            </div>
+          </div>
         </div>
+        
         <Button
-          color={saved ? "success" : "primary"}
           onPress={handleSave}
           isLoading={saving}
-          startContent={saved ? null : <HiSave className="w-5 h-5" />}
-          className={`font-bold h-12 px-6 w-full sm:w-auto shadow-md ${saved ? "text-white shadow-emerald-500/30" : "shadow-blue-500/30"}`}
+          startContent={saved ? null : <HiSave className="text-lg" />}
+          className={`font-bold h-[52px] px-8 w-full sm:w-auto shadow-sm rounded-xl transition-all ${
+            saved 
+              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
+              : "bg-slate-900 text-white dark:bg-white dark:text-zinc-950"
+          }`}
         >
-          {saved ? "✓ Guardado correctamente" : "Guardar Cambios"}
+          {saved ? "Guardado Exitoso" : "Guardar Cambios"}
         </Button>
       </div>
 
+      <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
+
       {/* Nota informativa Superior */}
-      <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200/60 dark:border-orange-800/50 rounded-xl p-4 flex gap-3 animate-in slide-in-from-top-2">
-        <HiExclamation className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="text-sm font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">Aviso Importante</p>
-          <p className="text-xs font-medium text-orange-700/80 dark:text-orange-400/80 leading-relaxed max-w-2xl">
+      <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-6 flex items-start gap-4">
+        <div className="p-2 bg-orange-500/20 text-orange-600 dark:text-orange-400 rounded-xl shrink-0">
+          <HiExclamation className="w-5 h-5" />
+        </div>
+        <div className="flex flex-col gap-1.5 pt-0.5">
+          <p className="text-[10px] font-bold text-orange-600/80 dark:text-orange-400/80 uppercase tracking-widest">
+            Aviso Importante
+          </p>
+          <p className="text-sm font-medium text-orange-800 dark:text-orange-200 leading-relaxed">
             Modificar estos valores afectará el cálculo automático de deudores en todo el sistema durante la próxima sincronización nocturna. Asegúrate de que los valores de avisos sean progresivos (Primer Aviso &lt; Segundo &lt; Tercer &lt; Corte).
           </p>
         </div>
       </div>
 
-      {/* ── SECCIÓN 1: AVISOS (AZUL) ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
-        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <HiBell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+      {/* ── SECCIÓN 1: AVISOS ── */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
+            <HiBell className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Umbrales de Avisos</h3>
-            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
-              Cantidad de facturas vencidas requeridas para generar cada tipo de aviso.
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+              Generación de avisos a morosos
+            </h3>
+            <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              Umbrales de Notificación
             </p>
           </div>
-        </CardHeader>
-        <CardBody className="p-6">
+        </div>
+
+        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <ConfigInput
               label="Primer Aviso"
               value={config.facturas_para_primer_aviso}
               onChange={(e) => setConfig({ ...config, facturas_para_primer_aviso: Number(e.target.value) })}
-              icon={<HiBell className="w-5 h-5 text-blue-500" />}
-              color="blue"
+              icon={<HiBell className="w-5 h-5" />}
               description="Ej. Al deber 1 factura"
             />
             <ConfigInput
               label="Segundo Aviso"
               value={config.facturas_para_segundo_aviso}
               onChange={(e) => setConfig({ ...config, facturas_para_segundo_aviso: Number(e.target.value) })}
-              icon={<HiBell className="w-5 h-5 text-amber-500" />}
-              color="amber"
+              icon={<HiBell className="w-5 h-5" />}
               description="Ej. Al deber 2 facturas"
             />
             <ConfigInput
               label="Tercer Aviso"
               value={config.facturas_para_tercer_aviso}
               onChange={(e) => setConfig({ ...config, facturas_para_tercer_aviso: Number(e.target.value) })}
-              icon={<HiBell className="w-5 h-5 text-orange-500" />}
-              color="orange"
+              icon={<HiBell className="w-5 h-5" />}
               description="Aviso previo o extrajudicial"
             />
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      {/* ── SECCIÓN 2: CORTES (ROJO/PÚRPURA) ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
-        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
-          <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-            <HiBan className="w-5 h-5 text-red-600 dark:text-red-400" />
+      {/* ── SECCIÓN 2: CORTES ── */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl shrink-0">
+            <HiBan className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Reglas de Suspensión</h3>
-            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
-              Criterios para emitir órdenes de corte de servicio a morosos.
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+              Criterios para emitir órdenes
+            </h3>
+            <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              Reglas de Suspensión
             </p>
           </div>
-        </CardHeader>
-        <CardBody className="p-6">
+        </div>
+
+        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ConfigInput
               label="Límite de Facturas para Corte"
               value={config.facturas_para_corte}
               onChange={(e) => setConfig({ ...config, facturas_para_corte: Number(e.target.value) })}
-              icon={<HiBan className="w-5 h-5 text-red-500" />}
-              color="red"
+              icon={<HiBan className="w-5 h-5" />}
               description="¿A las cuántas facturas impagas se corta el servicio?"
             />
             <ConfigInput
               label="Días de Gracia post-vencimiento"
               value={config.dias_gracia}
               onChange={(e) => setConfig({ ...config, dias_gracia: Number(e.target.value) })}
-              icon={<HiClock className="w-5 h-5 text-purple-500" />}
-              color="purple"
+              icon={<HiClock className="w-5 h-5" />}
               description="Días extra que se le dan al cliente antes de ejecutar el corte."
             />
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
-      {/* ── SECCIÓN 3: FACTURACIÓN (AMBER) ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
-        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
-          <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-            <HiCalendar className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+      {/* ── SECCIÓN 3: FACTURACIÓN ── */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
+            <HiCalendar className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Ciclo de Facturación</h3>
-            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
-              Tiempos estándar para la emisión y cobro de recibos.
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+              Tiempos estándar para recibos
+            </h3>
+            <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              Ciclo de Facturación
             </p>
           </div>
-        </CardHeader>
-        <CardBody className="p-6">
+        </div>
+
+        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8">
           <div className="max-w-md">
             <ConfigInput
               label="Días de Vigencia del Recibo"
               value={config.dias_vencimiento_factura}
               onChange={(e) => setConfig({ ...config, dias_vencimiento_factura: Number(e.target.value) })}
-              icon={<HiCalendar className="w-5 h-5 text-emerald-500" />}
-              color="green"
+              icon={<HiCalendar className="w-5 h-5" />}
               description="Tiempo límite para pagar (Estándar: 15 días desde la emisión)."
             />
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
+
+      <Divider className="bg-slate-100 dark:bg-zinc-800/80 my-2" />
 
       {/* ── SECCIÓN 4: CORRECCIÓN DE VENCIMIENTOS ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200/70 dark:border-amber-800/40">
-        <CardHeader className="flex items-center gap-3 border-b border-amber-100 dark:border-amber-900/40 px-6 pt-6 pb-4">
-          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-            <HiExclamation className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl shrink-0">
+            <HiExclamation className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Corrección de vencimientos por período</h3>
-            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
-              Herramienta de ajuste para facturas históricas no pagadas.
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+              Ajuste para facturas históricas no pagadas
+            </h3>
+            <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              Corrección de Vencimientos
             </p>
           </div>
-        </CardHeader>
-        <CardBody className="p-6 space-y-4">
-          <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+        </div>
+
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6 sm:p-8 space-y-6">
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-200 leading-relaxed max-w-3xl">
             Use esta acción para corregir facturas generadas con lógica anterior. Solo afecta facturas no pagadas del período seleccionado.
           </p>
 
-          <SelectorPeriodoAvanzado
-            value={periodoRecalculo}
-            onChange={setPeriodoRecalculo}
-            placeholder="Seleccionar período a recalcular"
-            startYear={2020}
-            size="sm"
-            isDisabled={saving || loadingRecalculo}
-            className="w-full"
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+                Período a recalcular
+              </label>
+              <SelectorPeriodoAvanzado
+                value={periodoRecalculo}
+                onChange={setPeriodoRecalculo}
+                placeholder="Seleccionar período a recalcular"
+                startYear={2020}
+                size="md"
+                isDisabled={saving || loadingRecalculo}
+                className="w-full h-[52px]"
+              />
+            </div>
 
-          <label className="flex items-center gap-2 text-sm text-amber-900 dark:text-amber-300">
-            <input
-              type="checkbox"
-              checked={actualizarFechaEmision}
-              onChange={(e) => setActualizarFechaEmision(e.target.checked)}
-              disabled={saving || loadingRecalculo}
-              className="rounded border-amber-300"
-            />
-            Actualizar también la fecha de emisión
-          </label>
+            {actualizarFechaEmision && (
+              <ConfigInput
+                label="Nueva fecha de emisión"
+                type="date"
+                value={fechaEmisionObjetivo}
+                onChange={(e) => setFechaEmisionObjetivo(e.target.value)}
+                icon={<HiCalendar className="w-5 h-5" />}
+                description="Aplicará a todas las facturas impagas del período"
+              />
+            )}
+          </div>
 
-          {actualizarFechaEmision && (
-            <ConfigInput
-              label="Nueva fecha de emisión"
-              type="date"
-              value={fechaEmisionObjetivo}
-              onChange={(e) => setFechaEmisionObjetivo(e.target.value)}
-              icon={<HiCalendar className="w-5 h-5 text-amber-600" />}
-              color="amber"
-              description="Esta fecha se aplicará a todas las facturas no pagadas del período seleccionado"
-            />
-          )}
+          <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between pt-2">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  checked={actualizarFechaEmision}
+                  onChange={(e) => setActualizarFechaEmision(e.target.checked)}
+                  disabled={saving || loadingRecalculo}
+                  className="peer appearance-none w-5 h-5 border-2 border-slate-300 dark:border-zinc-700 rounded-md checked:bg-amber-500 checked:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all cursor-pointer disabled:opacity-50"
+                />
+                <HiCheck className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+              </div>
+              <span className="text-sm font-bold text-slate-700 dark:text-zinc-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                Actualizar también la fecha de emisión
+              </span>
+            </label>
 
-          <div>
             <Button
-              color="warning"
               variant="flat"
               onPress={handleRecalcularVencimientos}
               isLoading={loadingRecalculo}
               isDisabled={!canRecalcularLecturas || saving || loadingRecalculo || !periodoRecalculo || (actualizarFechaEmision && !fechaEmisionObjetivo)}
-              className="font-bold"
+              className="font-bold bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/20 rounded-xl px-8 h-11 w-full sm:w-auto"
             >
-              Recalcular vencimientos del período
+              Ejecutar Recálculo
             </Button>
           </div>
-        </CardBody>
-      </Card>
-
-      {/* ── SECCIÓN 5: IDENTIDAD VISUAL ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
-        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
-          <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-            <HiPhotograph className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Identidad Visual</h3>
-            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
-              Logo que aparece en el login, barra de navegación, recibos e informes impresos.
-            </p>
-          </div>
-        </CardHeader>
-        <CardBody className="p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-
-            {/* Vista previa del logo */}
-            <div className="shrink-0 w-28 h-28 rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center overflow-hidden">
-              <img
-                src={logoSrc}
-                alt="Logo actual"
-                className="w-full h-full object-contain p-3"
-              />
-            </div>
-
-            {/* Controles */}
-            <div className="flex flex-col gap-3 flex-1">
-              <div>
-                <p className="text-sm font-bold text-slate-700 dark:text-zinc-200">
-                  {hasCustomLogo ? "Logo personalizado activo" : "Logo predeterminado de la aplicación"}
-                </p>
-                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-500 mt-0.5">
-                  Formatos soportados: PNG, JPG, JPEG, WEBP. Recomendado: imagen cuadrada con fondo transparente (PNG).
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  onPress={handleSelectLogo}
-                  isLoading={savingLogo}
-                  color="primary"
-                  variant="flat"
-                  size="sm"
-                  className="font-bold"
-                  startContent={!savingLogo && <HiUpload className="w-4 h-4" />}
-                >
-                  {savingLogo ? "Cargando..." : "Seleccionar imagen"}
-                </Button>
-
-                {hasCustomLogo && (
-                  <Button
-                    onPress={clearCustomLogo}
-                    color="danger"
-                    variant="flat"
-                    size="sm"
-                    className="font-bold"
-                    startContent={<HiTrash className="w-4 h-4" />}
-                  >
-                    Restaurar predeterminado
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* ── SECCIÓN 6: IMÁGENES DEL LOGIN ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
-        <CardHeader className="flex items-center gap-3 border-b border-slate-100 dark:border-zinc-800/50 px-6 pt-6 pb-4">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-            <HiCollection className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 uppercase tracking-wider">Imágenes del Login</h3>
-            <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-500">
-              Carrusel de fondo en la pantalla de inicio de sesión. Si no hay imágenes personalizadas, se usan las predeterminadas.
-            </p>
-          </div>
-        </CardHeader>
-        <CardBody className="p-6 space-y-4">
-
-          {/* Grid de miniaturas */}
-          {loginImages && loginImages.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {loginImages.map((src, i) => (
-                <div key={i} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700 aspect-video bg-slate-100 dark:bg-zinc-800">
-                  <img src={src} alt={`Login ${i + 1}`} className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => removeLoginImage(i)}
-                    className="absolute top-1.5 right-1.5 p-1 bg-red-600/90 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Eliminar imagen"
-                  >
-                    <HiTrash className="w-3.5 h-3.5" />
-                  </button>
-                  <div className="absolute bottom-1.5 left-2 text-[10px] font-bold text-white/70 opacity-0 group-hover:opacity-100 transition-opacity">
-                    #{i + 1}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/30 p-6 text-center">
-              <HiCollection className="w-8 h-8 text-slate-300 dark:text-zinc-600 mx-auto mb-2" />
-              <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">Sin imágenes personalizadas</p>
-              <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-0.5">Se mostrarán las 3 imágenes predeterminadas de la aplicación.</p>
-            </div>
-          )}
-
-          {/* Botones */}
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Button
-              onPress={handleAddLoginImages}
-              isLoading={addingLoginImages}
-              color="primary"
-              variant="flat"
-              size="sm"
-              className="font-bold"
-              startContent={!addingLoginImages && <HiPlusCircle className="w-4 h-4" />}
-            >
-              {addingLoginImages ? "Cargando..." : "Agregar imágenes"}
-            </Button>
-
-            {hasCustomLoginImages && (
-              <Button
-                onPress={clearLoginImages}
-                color="danger"
-                variant="flat"
-                size="sm"
-                className="font-bold"
-                startContent={<HiTrash className="w-4 h-4" />}
-              >
-                Restaurar predeterminadas
-              </Button>
-            )}
-          </div>
-
-        </CardBody>
-      </Card>
-
+        </div>
+      </div>
     </div>
   );
 }

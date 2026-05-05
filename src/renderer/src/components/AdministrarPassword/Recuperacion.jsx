@@ -1,7 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Card, CardBody, CardHeader } from "@nextui-org/react";
-import { HiMail, HiKey, HiShieldCheck, HiArrowLeft, HiInformationCircle } from "react-icons/hi";
+import { Button } from "@nextui-org/react";
+import { 
+  HiMail, 
+  HiKey, 
+  HiShieldCheck, 
+  HiArrowLeft, 
+  HiInformationCircle,
+  HiExclamationCircle,
+  HiCheckCircle
+} from "react-icons/hi";
 
 function useRecoveryTokenFromLocation() {
   const location = useLocation();
@@ -9,7 +17,6 @@ function useRecoveryTokenFromLocation() {
   return useMemo(() => {
     const query = new URLSearchParams(location.search);
     const searchToken = query.get('token');
-
     if (searchToken) return searchToken;
 
     const hash = location.hash || (typeof window !== 'undefined' ? window.location.hash || '' : '');
@@ -42,10 +49,8 @@ export default function RecuperarPassword() {
       setMessage({ type: 'error', text: 'Ingresa tu correo electrónico.' });
       return;
     }
-
     setLoading(true);
     setMessage({ type: '', text: '' });
-
     try {
       const res = await window.api.requestPasswordRecovery(correo.trim().toLowerCase());
       if (res?.success) {
@@ -55,13 +60,9 @@ export default function RecuperarPassword() {
         });
         setStep('reset');
       } else {
-        setMessage({
-          type: 'error',
-          text: res?.message || res?.error || 'No se pudo procesar la solicitud.'
-        });
+        setMessage({ type: 'error', text: res?.message || res?.error || 'No se pudo procesar la solicitud.' });
       }
     } catch (error) {
-      console.error('Error solicitando recuperación:', error);
       setMessage({ type: 'error', text: 'Error de conexión. Intenta nuevamente.' });
     } finally {
       setLoading(false);
@@ -73,41 +74,29 @@ export default function RecuperarPassword() {
       setMessage({ type: 'error', text: 'Ingresa el token de recuperación.' });
       return;
     }
-
     if (!passwords.nueva || !passwords.confirmar) {
       setMessage({ type: 'error', text: 'Completa la nueva contraseña y su confirmación.' });
       return;
     }
-
     if (passwords.nueva !== passwords.confirmar) {
       setMessage({ type: 'error', text: 'Las contraseñas no coinciden.' });
       return;
     }
-
     setLoading(true);
     setMessage({ type: '', text: '' });
-
     try {
       const res = await window.api.resetPasswordRecovery({
         token,
         contraseñaNueva: passwords.nueva,
         confirmarContraseñaNueva: passwords.confirmar
       });
-
       if (res?.success) {
-        setMessage({
-          type: 'success',
-          text: res.message || 'Contraseña restablecida correctamente.'
-        });
+        setMessage({ type: 'success', text: res.message || 'Contraseña restablecida correctamente.' });
         setPasswords({ nueva: '', confirmar: '' });
       } else {
-        setMessage({
-          type: 'error',
-          text: res?.message || res?.error || 'No se pudo restablecer la contraseña.'
-        });
+        setMessage({ type: 'error', text: res?.message || res?.error || 'No se pudo restablecer la contraseña.' });
       }
     } catch (error) {
-      console.error('Error restableciendo contraseña:', error);
       setMessage({ type: 'error', text: 'Error de conexión. Intenta nuevamente.' });
     } finally {
       setLoading(false);
@@ -119,21 +108,13 @@ export default function RecuperarPassword() {
     if (message.text) setMessage({ type: '', text: '' });
   };
 
-  const renderInput = ({
-    id,
-    label,
-    type = 'text',
-    value,
-    onChange,
-    placeholder,
-    icon
-  }) => (
-    <div className="space-y-2">
-      <label htmlFor={id} className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400">
+  const renderInput = ({ id, label, type = 'text', value, onChange, placeholder, icon }) => (
+    <div className="flex flex-col gap-1.5 w-full">
+      <label htmlFor={id} className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
         {label}
       </label>
-      <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500">
+      <div className="relative group w-full flex items-center">
+        <span className="absolute left-4 pointer-events-none text-slate-400 dark:text-zinc-500 group-focus-within:text-blue-500 transition-colors duration-200">
           {icon}
         </span>
         <input
@@ -142,107 +123,110 @@ export default function RecuperarPassword() {
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className="h-12 w-full rounded-xl border border-slate-200 bg-white/95 pl-10 pr-4 text-sm font-semibold text-slate-700 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-100"
+          className="w-full pl-11 pr-4 h-[52px] text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none"
         />
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-zinc-950 dark:via-slate-950 dark:to-zinc-900 px-4 pb-10 pt-20 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Recuperar contraseña</h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-zinc-400">
-              Solicita el enlace por correo y luego establece una nueva contraseña segura.
-            </p>
-          </div>
-          <Link to="/" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800">
-            <HiArrowLeft className="text-base" />
-            Volver
-          </Link>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-zinc-950 dark:via-slate-950 dark:to-zinc-900 px-4 py-10 flex flex-col items-center justify-center relative">
+      
+      <div className="w-full max-w-md flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        
+        {/* Tarjeta Central */}
+        <div className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden">
+          
+          {/* Header de Tarjeta */}
+          <div className="relative flex flex-col gap-4 border-b border-slate-100 dark:border-zinc-800/80 px-8 py-8 items-center text-center">
+            {/* Botón de Volver integrado en el header */}
+            <Link to="/" className="absolute top-6 left-6 text-slate-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors" title="Volver al Login">
+              <HiArrowLeft className="text-xl" />
+            </Link>
 
-        {message.text && (
-          <div className={`rounded-2xl border px-4 py-3 text-sm font-semibold ${message.type === 'error' ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300'}`}>
-            {message.text}
+            <div className="rounded-2xl bg-blue-500/10 p-4 text-blue-600 dark:text-blue-400 mb-1">
+              {step === 'request' ? <HiMail className="w-8 h-8" /> : <HiKey className="w-8 h-8" />}
+            </div>
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                {step === 'request' ? 'Recuperar Cuenta' : 'Nueva Contraseña'}
+              </h2>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mt-2">
+                {step === 'request' ? 'Paso 1: Solicitar Token' : 'Paso 2: Restablecer'}
+              </p>
+            </div>
           </div>
-        )}
 
-        <Card className="border border-slate-200 bg-white/95 shadow-xl shadow-blue-500/10 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/90">
-          <CardHeader className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-blue-500/10 p-3 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300">
-              {step === 'request' ? <HiMail className="text-2xl" /> : <HiKey className="text-2xl" />}
+          <div className="flex flex-col px-8 py-8 gap-6">
+            
+            {/* Mensajes de Alerta */}
+            {message.text && (
+              <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-3 animate-in fade-in slide-in-from-top-2 border ${
+                message.type === 'error'
+                  ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
+                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                }`}>
+                {message.type === 'error' ? <HiExclamationCircle className="w-6 h-6 shrink-0" /> : <HiCheckCircle className="w-6 h-6 shrink-0" />}
+                <p className="leading-tight">{message.text}</p>
               </div>
-              <div>
-                <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                  {step === 'request' ? 'Solicitar recuperación' : 'Restablecer contraseña'}
-                </h2>
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400">
-                  {step === 'request' ? 'Enviaremos un token temporal al correo registrado' : 'Usa el token recibido por correo'}
+            )}
+
+            {/* Aviso Informativo */}
+            {!message.text && (
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-[11px] font-medium text-slate-600 dark:text-zinc-300 flex items-start gap-3">
+                <HiInformationCircle className="text-lg text-blue-600 dark:text-blue-400 shrink-0" />
+                <p className="leading-relaxed">
+                  Por seguridad, el token temporal enviado por correo tiene una validez limitada. No compartas este código con nadie.
                 </p>
               </div>
-            </div>
-            <div className="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.3em] text-blue-700 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-300">
-              {step === 'request' ? 'Paso 1' : 'Paso 2'}
-            </div>
-          </CardHeader>
+            )}
 
-          <CardBody className="space-y-5 px-6 py-6">
-            <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 text-sm text-slate-700 dark:border-blue-900/50 dark:bg-blue-950/20 dark:text-zinc-200">
-              <div className="flex items-start gap-3">
-                <HiInformationCircle className="mt-0.5 text-lg text-blue-600 dark:text-blue-300" />
-                <p>
-                  El correo de recuperación no revelará si la cuenta existe. Si el correo está registrado, recibirás un token temporal de un solo uso con expiración corta.
-                </p>
-              </div>
-            </div>
-
+            {/* Paso 1: Solicitud */}
             {step === 'request' ? (
-              <div className="space-y-4">
+              <div className="flex flex-col gap-6">
                 {renderInput({
                   id: 'correo-recuperacion',
-                  label: 'Correo electrónico',
+                  label: 'Correo Electrónico',
                   type: 'email',
                   value: correo,
                   onChange: (e) => setCorreo(e.target.value),
-                  placeholder: 'usuario@aguavp.com',
+                  placeholder: 'ejemplo@aguavp.com',
                   icon: <HiMail className="text-lg" />
                 })}
 
-                <Button
-                  color="primary"
-                  className="h-12 w-full font-bold"
-                  onPress={handleRequestRecovery}
-                  isLoading={loading}
-                >
-                  Enviar token de recuperación
-                </Button>
+                <div className="flex flex-col gap-4 mt-2">
+                  <Button
+                    className="h-[52px] w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm transition-transform active:scale-95"
+                    onPress={handleRequestRecovery}
+                    isLoading={loading}
+                  >
+                    Enviar Token
+                  </Button>
 
-                <button
-                  type="button"
-                  className="w-full text-sm font-semibold text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
-                  onClick={() => setStep('reset')}
-                >
-                  Ya tengo el token
-                </button>
+                  <button
+                    type="button"
+                    className="w-full text-[11px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors"
+                    onClick={() => setStep('reset')}
+                  >
+                    Ya tengo un token
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              /* Paso 2: Restablecimiento */
+              <div className="flex flex-col gap-5">
                 {renderInput({
                   id: 'token-recuperacion',
-                  label: 'Token de recuperación',
+                  label: 'Token de Recuperación',
                   value: token,
                   onChange: (e) => setToken(e.target.value),
-                  placeholder: 'Pega aquí el token recibido por correo',
+                  placeholder: 'Ingresa el código',
                   icon: <HiShieldCheck className="text-lg" />
                 })}
 
                 {renderInput({
                   id: 'password-nueva',
-                  label: 'Nueva contraseña',
+                  label: 'Nueva Contraseña',
                   type: 'password',
                   value: passwords.nueva,
                   onChange: handleInputPassword('nueva'),
@@ -252,7 +236,7 @@ export default function RecuperarPassword() {
 
                 {renderInput({
                   id: 'password-confirmar',
-                  label: 'Confirmar nueva contraseña',
+                  label: 'Confirmar Contraseña',
                   type: 'password',
                   value: passwords.confirmar,
                   onChange: handleInputPassword('confirmar'),
@@ -260,32 +244,33 @@ export default function RecuperarPassword() {
                   icon: <HiKey className="text-lg" />
                 })}
 
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-3 mt-4">
                   <Button
-                    color="primary"
-                    className="h-12 flex-1 font-bold"
+                    className="h-[52px] w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm transition-transform active:scale-95"
                     onPress={handleResetPassword}
                     isLoading={loading}
                   >
-                    Restablecer contraseña
+                    Actualizar Contraseña
                   </Button>
+                  
+                  {/* Botón Volver Atrás reintegrado */}
                   <Button
                     variant="flat"
-                    className="h-12 flex-1 font-bold"
+                    className="h-[52px] w-full font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 rounded-xl transition-colors"
                     onPress={() => setStep('request')}
                     isDisabled={loading}
                   >
-                    Volver al correo
+                    Volver al Paso 1
                   </Button>
                 </div>
               </div>
             )}
+          </div>
+        </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400">
-              Si ya recuerdas tu contraseña, puedes volver al inicio de sesión sin completar este flujo.
-            </div>
-          </CardBody>
-        </Card>
+        <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-600">
+          Sistema de Agua Potable • Villa Pesqueira
+        </p>
       </div>
     </div>
   );

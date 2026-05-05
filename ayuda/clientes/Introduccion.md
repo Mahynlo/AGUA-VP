@@ -8,51 +8,65 @@ tags: ["cliente", "registro", "modificación", "baja", "asignación", "cancelar"
 
 # Introducción
 
-El módulo de **Clientes** permite realizar el **registro de nuevos clientes**, la **modificación de datos existentes**, así como la **asignación o liberación de medidores**.  
-Además, incluye herramientas para la **gestión de clientes** y una sección de **estadísticas** que apoyan en el análisis de la información registrada.
+El módulo de **Clientes** es el lugar donde se administra la información principal de cada persona que recibe el servicio. Desde aquí puede registrar a un cliente nuevo, revisar su ficha, hacer cambios, asignarle un medidor o liberar ese medidor cuando ya no corresponda.
 
 ---
 
-### Clientes
+## Vista principal
 
-En este apartado se muestra una **tabla con información de los clientes registrados**, acompañada de un sistema de **filtros avanzados** y una **barra de búsqueda** que permite localizar clientes por:  
-- Nombre del cliente  
-- Pueblo de registro  
-- Estado  
-- Número de clientes a mostrar en la tabla  
+Al abrir el módulo verá una **tabla de clientes** con la información más importante organizada por filas. También encontrará herramientas para buscar, filtrar y revisar estadísticas.
 
-#### Contenido de la tabla
+Puede buscar clientes por:
+- Nombre
+- Pueblo
+- Estado
+- Texto libre si necesita ubicar algo específico
 
-La tabla contiene las siguientes columnas principales:
+### Qué significa cada columna
 
-- **Cliente**: Muestra el **nombre completo** del cliente y, en la parte inferior, su **ID asignado**.  
-- **Contacto**: Presenta el **número telefónico** registrado del cliente.  
-- **Ubicación**: Indica el **pueblo de registro** y, debajo, la **dirección principal** asociada al cliente.  
-  > Nota: Un cliente puede habitar en varias residencias en diferentes pueblos, pero en esta sección únicamente se muestra la **residencia principal**.  
-- **Estado**: Informa si el cliente se encuentra **activo o inactivo** en el sistema.  
-- **Acciones**: Ofrece diversas opciones de gestión:
-  - 🔍 **Ver información** → Representado con un ícono de “ojo”; al presionarlo se abre un modal con el resumen detallado de los datos del cliente.  
-  - ✏️ **Modificar información** → Permite actualizar los datos del cliente.  
-  - 🔗 **Asignar / liberar medidores** → Vincular o desvincular medidores asociados al cliente.  
-  - ✅ **Activar / Desactivar cliente** → Cambiar el estado del cliente en el sistema.  
+- **Cliente**: muestra el nombre completo y su identificación interna.
+- **Contacto**: muestra el teléfono registrado.
+- **Ubicación**: muestra el pueblo y la dirección principal.
+- **Estado**: indica si el cliente está activo o no.
+- **Acciones**: abre las opciones disponibles para ese cliente.
+
+> Nota: si una persona tiene más de una residencia, aquí se muestra la residencia principal para mantener la tabla clara.
 
 ---
 
-### Estadísticas
+## Acciones rápidas
 
-En este apartado se presenta información relevante que permite dar seguimiento al estado general de los clientes en el sistema.  
+Las acciones que aparecen en cada fila sirven para trabajar sin tener que abrir varias pantallas.
 
-Los principales indicadores mostrados son:  
-- **Total de clientes** registrados en la base de datos.  
-- **Clientes activos** en comparación con los inactivos.  
-- **Nuevos clientes registrados en el mes actual**.  
-- **Crecimiento mensual** de la base de clientes.  
+- **Ver información**: abre una ventana con el resumen completo del cliente.
+- **Ver detalle**: permite revisar la tarifa asignada, los medidores vinculados y los datos principales sin hacer cambios.
+- **Modificar información**: permite corregir nombres, teléfono, dirección o tarifa.
+- **Asignar o liberar medidor**: vincula un medidor al cliente o lo deja disponible para otro usuario.
+- **Eliminar cliente**: borra el registro cuando realmente ya no debe seguir en el sistema.
 
-Además, se incluyen representaciones visuales que facilitan el análisis:  
-- 📊 **Gráficas de distribución por pueblo** → Muestran la proporción de clientes registrados en cada localidad.  
-- 📈 **Evolución temporal** → Gráficas de tendencia que reflejan la cantidad de clientes registrados mes a mes.  
+Cuando un cliente ya tiene medidores asociados, el sistema muestra esa relación dentro de su ficha para evitar reasignaciones por error.
 
-Este apartado está diseñado para brindar una **visión clara y dinámica del crecimiento y la distribución de los clientes**, apoyando la toma de decisiones estratégicas.
+---
+
+## Estadísticas
+
+La parte inferior del módulo muestra indicadores que ayudan a entender cómo va la base de clientes.
+
+Los principales indicadores mostrados son:
+- **Total de clientes**.
+- **Clientes activos** frente a inactivos.
+- **Nuevos registros del mes**.
+- **Crecimiento mensual**.
+
+También puede ver gráficas para reconocer en qué pueblos hay más clientes y cómo ha crecido el padrón con el tiempo.
+
+---
+
+## Recomendación de uso
+
+Primero busque al cliente, después revise su información y al final aplique el cambio que necesite. Si solo quiere corregir un dato, use el botón de edición; si lo que necesita es reasignar el medidor, hágalo desde el mismo modal para evitar errores.
+
+Si va a cambiar un medidor, primero confirme cuál está actualmente asignado y verifique que el nuevo equipo esté disponible antes de guardar.
 
 
 

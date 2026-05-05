@@ -8,7 +8,7 @@ import {
   Marker,
   Tooltip,
   useMapEvents,
-  LayersControl, // <-- NUEVO IMPORT
+  LayersControl,
 } from "react-leaflet";
 import { LatLng, Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -17,30 +17,36 @@ import markerIcon from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 import { MAP_DEFAULT_CENTER, TILE_LAYER, SATELLITE_LAYER, HYBRID_LAYER } from './mapConfig';
 import OfflineTileLayer from './OfflineTileLayer';
 
-// Componente invisible para rastrear el nivel de zoom del mapa
-const ZoomHandler = ({ onZoomChange }) => {
-  const map = useMapEvents({
-    zoomend: () => {
-      onZoomChange(map.getZoom());
+const MOSTRAR_NUMEROS_ZOOM = 16;
+
+// 🔥 OPTIMIZACIÓN 1: El ZoomHandler ahora solo avisa cuando cruzamos el umbral (de <16 a >=16), 
+// evitando que todo el componente se re-renderice en cada pequeño scroll del ratón.
+const ZoomThresholdHandler = ({ isZoomedIn, onThresholdChange }) => {
+  useMapEvents({
+    zoomend: (e) => {
+      const currentZoom = e.target.getZoom();
+      const isCurrentlyZoomedIn = currentZoom >= MOSTRAR_NUMEROS_ZOOM;
+      if (isZoomedIn !== isCurrentlyZoomedIn) {
+        onThresholdChange(isCurrentlyZoomedIn);
+      }
     },
   });
   return null;
 };
 
+// 🔥 OPTIMIZACIÓN 2: Reducción del uso de memoria (Garbage Collector).
+// Se eliminó la creación de `new LatLng` dentro del bucle. Solo se crea el candidato.
 const getClosestPoint = (punto, ruta) => {
   if (!ruta || ruta.length < 2) return { closest: null, distance: Infinity };
 
-  const p = new LatLng(punto[0], punto[1]);
+  const pLatLng = new LatLng(punto[0], punto[1]);
+  const [py, px] = punto; // lat, lng
   let minDist = Infinity;
   let closest = null;
 
   for (let i = 0; i < ruta.length - 1; i++) {
-    const a = new LatLng(ruta[i][0], ruta[i][1]);
-    const b = new LatLng(ruta[i + 1][0], ruta[i + 1][1]);
-
-    const [ax, ay] = [a.lng, a.lat];
-    const [bx, by] = [b.lng, b.lat];
-    const [px, py] = [p.lng, p.lat];
+    const [ay, ax] = ruta[i];
+    const [by, bx] = ruta[i + 1];
 
     const abx = bx - ax, aby = by - ay;
     const apx = px - ax, apy = py - ay;
@@ -54,8 +60,9 @@ const getClosestPoint = (punto, ruta) => {
     const closestX = ax + abx * t;
     const closestY = ay + aby * t;
 
+    // Solo instanciamos el candidato final para usar la fórmula geodésica de Leaflet
     const candidate = new LatLng(closestY, closestX);
-    const dist = p.distanceTo(candidate);
+    const dist = pLatLng.distanceTo(candidate);
 
     if (dist < minDist) {
       minDist = dist;
@@ -75,8 +82,8 @@ export default function MapaRutas({
   onEliminarMedidor,
   readOnly = false,
 }) {
-  const [zoomLevel, setZoomLevel] = useState(15);
-  const MOSTRAR_NUMEROS_ZOOM = 16;
+  // Ahora guardamos un booleano, no el nivel exacto de zoom
+  const [isZoomedIn, setIsZoomedIn] = useState(false);
 
   const customIcon = useMemo(() => new Icon({
     iconUrl: markerIcon,
@@ -85,11 +92,20 @@ export default function MapaRutas({
     popupAnchor: [0, -35],
   }), []);
 
+  // 🔥 OPTIMIZACIÓN 3: Diccionario O(1) para búsquedas instantáneas
+  // Evita iterar el array completo de medidores por cada punto en la ruta
+  const medidoresDict = useMemo(() => {
+    const dict = new Map();
+    for (const m of medidores) {
+      dict.set(m.id, m);
+    }
+    return dict;
+  }, [medidores]);
+
   const inicio = puntosRuta[0];
   const fin = puntosRuta[puntosRuta.length - 1];
 
   const conexionesExtremos = useMemo(() => {
-    // ... (Misma lógica optimizada) ...
     const conexiones = [];
     if (!readOnly && dibujar && rutaCalculada?.ruta?.length >= 2) {
       if (inicio) {
@@ -105,7 +121,6 @@ export default function MapaRutas({
   }, [inicio, fin, rutaCalculada, dibujar, readOnly]);
 
   const conexionesIntermedias = useMemo(() => {
-    // ... (Misma lógica optimizada) ...
     const conexiones = [];
     if (!readOnly && dibujar && rutaCalculada?.puntos_gps?.length > 0 && rutaCalculada?.ruta?.length >= 2) {
        rutaCalculada.puntos_gps.forEach((punto, idx) => {
@@ -129,6 +144,91 @@ export default function MapaRutas({
     }
   }, [puntosRuta, onAgregarMedidor, onEliminarMedidor]);
 
+  // 🔥 OPTIMIZACIÓN 4: Renderizados de marcadores memorizados
+  // Si dibujas una línea o agregas un punto, los medidores que NO cambiaron no se vuelven a procesar.
+  const MarkersDisponibles = useMemo(() => {
+    return medidores.map((medidor) => {
+      if (medidoresEnRutaIds.has(medidor.id)) return null;
+
+      return (
+        <Marker key={medidor.id} position={[medidor.latitud, medidor.longitud]} icon={customIcon}>
+          <Popup className="custom-popup" closeButton={false} autoPanPadding={[40, 40]}>
+            <div className="p-2 min-w-[220px]">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-neutral-700">
+                <div className="p-1.5 bg-blue-100 dark:bg-blue-900/40 rounded-full flex-shrink-0">
+                  <span className="text-sm">💧</span>
+                </div>
+                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">
+                  Serie: {medidor.numero_serie}
+                </h3>
+              </div>
+              {!readOnly && (
+                <button
+                  onClick={() => handleToggleMedidor(medidor, false)}
+                  className="w-full py-2 px-3 rounded-lg text-xs font-bold text-white transition-all flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20"
+                >
+                  <><span>➕</span> Agregar a ruta</>
+                </button>
+              )}
+            </div>
+          </Popup>
+        </Marker>
+      );
+    });
+  }, [medidores, medidoresEnRutaIds, customIcon, readOnly, handleToggleMedidor]);
+
+  const MarkersEnRuta = useMemo(() => {
+    const currentRadius = isZoomedIn ? 11 : 6;
+
+    return puntosRuta.map((p, i) => {
+      // 🔥 Uso del Diccionario O(1) en lugar de medidores.find() O(N)
+      const medidorCompleto = medidoresDict.get(p.id) || p;
+
+      return (
+        <CircleMarker
+          key={`punto-${p.id || i}`}
+          center={[p.lat, p.lng]}
+          radius={currentRadius}
+          pathOptions={{
+            color: "#ffffff",
+            fillColor: "#f97316",
+            fillOpacity: 1,
+            weight: isZoomedIn ? 2 : 1
+          }}
+        >
+          {isZoomedIn && (
+            <Tooltip direction="center" offset={[0, 0]} opacity={1} permanent className="leaflet-tooltip-own">
+              {i + 1}
+            </Tooltip>
+          )}
+
+          <Popup className="custom-popup" closeButton={false} autoPanPadding={[40, 40]}>
+            <div className="p-2 min-w-[220px]">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100 dark:border-neutral-700">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-full flex-shrink-0 font-black text-xs w-6 h-6 flex items-center justify-center">
+                    {i + 1}
+                  </div>
+                  <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">
+                    Serie: {medidorCompleto.numero_serie}
+                  </h3>
+                </div>
+              </div>
+              {!readOnly && (
+                <button
+                  onClick={() => handleToggleMedidor(medidorCompleto, true)}
+                  className="w-full py-2 px-3 rounded-lg text-xs font-bold text-white transition-all flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/20"
+                >
+                  <><span>🗑</span> Quitar de ruta</>
+                </button>
+              )}
+            </div>
+          </Popup>
+        </CircleMarker>
+      );
+    });
+  }, [puntosRuta, medidoresDict, isZoomedIn, readOnly, handleToggleMedidor]);
+
   return (
     <div className="w-full h-full rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-neutral-800 relative z-0">
       <MapContainer
@@ -138,12 +238,9 @@ export default function MapaRutas({
         style={{ height: "100%", width: "100%" }}
         className="leaflet-container h-full w-full bg-gray-50 dark:bg-neutral-900"
       >
-        <ZoomHandler onZoomChange={setZoomLevel} />
+        <ZoomThresholdHandler isZoomedIn={isZoomedIn} onThresholdChange={setIsZoomedIn} />
 
-        {/* 🔹 CONTROL DE CAPAS AÑADIDO AQUÍ 🔹 */}
         <LayersControl position="bottomright">
-          
-          {/* Capa 1: Mapa Estándar de Calles (Marcada por defecto con 'checked') */}
           <LayersControl.BaseLayer checked name="🌐 Mapa Calles">
             <OfflineTileLayer {...TILE_LAYER} />
           </LayersControl.BaseLayer>
@@ -155,10 +252,8 @@ export default function MapaRutas({
           <LayersControl.BaseLayer name="🗺️ Híbrido">
             <TileLayer {...HYBRID_LAYER} />
           </LayersControl.BaseLayer>
-
         </LayersControl>
 
-        {/* Ruta y conexiones */}
         {dibujar && rutaCalculada?.ruta?.length >= 2 && (
           <Polyline positions={rutaCalculada.ruta.map(([lat, lng]) => [lat, lng])} pathOptions={{ color: "#3b82f6", weight: 5, opacity: 0.85, lineCap: "round", lineJoin: "round" }} />
         )}
@@ -169,88 +264,8 @@ export default function MapaRutas({
           <Polyline key={key} positions={[from, to]} pathOptions={{ color: "#10b981", dashArray: "4, 8", weight: 2, opacity: 0.6 }} />
         ))}
 
-        {/* 1. MEDIDORES DISPONIBLES */}
-        {medidores.map((medidor) => {
-          const enRuta = medidoresEnRutaIds.has(medidor.id);
-          if (enRuta) return null;
-
-          return (
-            <Marker key={medidor.id} position={[medidor.latitud, medidor.longitud]} icon={customIcon}>
-              <Popup className="custom-popup" closeButton={false} autoPanPadding={[40, 40]}>
-                {/* ... (Contenido del popup igual que antes) ... */}
-                <div className="p-2 min-w-[220px]">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100 dark:border-neutral-700">
-                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/40 rounded-full flex-shrink-0">
-                      <span className="text-sm">💧</span>
-                    </div>
-                    <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">
-                      Serie: {medidor.numero_serie}
-                    </h3>
-                  </div>
-                  {!readOnly && (
-                    <button
-                      onClick={() => handleToggleMedidor(medidor, false)}
-                      className="w-full py-2 px-3 rounded-lg text-xs font-bold text-white transition-all flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20"
-                    >
-                      <><span>➕</span> Agregar a ruta</>
-                    </button>
-                  )}
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-
-        {/* 2. MEDIDORES EN RUTA */}
-        {puntosRuta.map((p, i) => {
-          const medidorCompleto = medidores.find(m => m.id === p.id) || p;
-          const isZoomedIn = zoomLevel >= MOSTRAR_NUMEROS_ZOOM;
-          const currentRadius = isZoomedIn ? 11 : 6;
-
-          return (
-            <CircleMarker
-              key={`punto-${p.id || i}`}
-              center={[p.lat, p.lng]}
-              radius={currentRadius}
-              pathOptions={{
-                color: "#ffffff",
-                fillColor: "#f97316",
-                fillOpacity: 1,
-                weight: isZoomedIn ? 2 : 1
-              }}
-            >
-              {isZoomedIn && (
-                <Tooltip direction="center" offset={[0, 0]} opacity={1} permanent className="leaflet-tooltip-own">
-                  {i + 1}
-                </Tooltip>
-              )}
-
-              <Popup className="custom-popup" closeButton={false} autoPanPadding={[40, 40]}>
-                {/* ... (Contenido del popup igual que antes) ... */}
-                <div className="p-2 min-w-[220px]">
-                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100 dark:border-neutral-700">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-full flex-shrink-0 font-black text-xs w-6 h-6 flex items-center justify-center">
-                        {i + 1}
-                      </div>
-                      <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">
-                        Serie: {medidorCompleto.numero_serie}
-                      </h3>
-                    </div>
-                  </div>
-                  {!readOnly && (
-                    <button
-                      onClick={() => handleToggleMedidor(medidorCompleto, true)}
-                      className="w-full py-2 px-3 rounded-lg text-xs font-bold text-white transition-all flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/20"
-                    >
-                      <><span>🗑</span> Quitar de ruta</>
-                    </button>
-                  )}
-                </div>
-              </Popup>
-            </CircleMarker>
-          );
-        })}
+        {MarkersDisponibles}
+        {MarkersEnRuta}
       </MapContainer>
 
       <style>{`
@@ -266,8 +281,6 @@ export default function MapaRutas({
         .leaflet-tooltip.leaflet-tooltip-own::before {
           display: none;
         }
-        
-        /* Opcional: Estilizar el control de capas para que combine con tu diseño */
         .leaflet-control-layers {
           border: none !important;
           border-radius: 0.5rem !important;
@@ -277,4 +290,3 @@ export default function MapaRutas({
     </div>
   );
 }
-

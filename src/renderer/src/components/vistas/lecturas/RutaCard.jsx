@@ -4,9 +4,6 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Card,
-  CardBody,
-  CardFooter,
   Chip,
   Progress,
   Button,
@@ -57,7 +54,6 @@ export default function RutaCard({ ruta }) {
   const [ultimoResultadoFacturacion, setUltimoResultadoFacturacion] = useState(null);
 
   useEffect(() => {
-    // Cada período debe recuperar su último resultado guardado si existe.
     try {
       const storageKey = getResultadoFacturacionStorageKey(ruta.id, ruta.periodo_mostrado);
       const saved = localStorage.getItem(storageKey);
@@ -199,25 +195,26 @@ export default function RutaCard({ ruta }) {
   const totalFallidas = ultimoResultadoFacturacion?.facturas_fallidas ?? 0;
   const tieneFacturacionEnPeriodo = Number(ruta?.facturas_generadas_periodo || 0) > 0 || !!ruta?.tiene_facturacion_periodo;
   const puedeRecalcularPeriodo = porcentajeCompletado >= 100 && tieneFacturacionEnPeriodo;
-  const tieneResultadoPeriodoActual = !!ultimoResultadoFacturacion && ultimoResultadoFacturacion?.periodo === ruta.periodo_mostrado;
   const puedeGenerarPrimeraFacturacion = porcentajeCompletado >= 100 && !tieneFacturacionEnPeriodo;
   const esResultadoRecalculo = !!ultimoResultadoFacturacion?.recalculo_activado || totalRecalculadas > 0;
   const etiquetaTipoProceso = esResultadoRecalculo ? 'Recálculo' : 'Primera Facturación';
   const savedAtLabel = ultimoResultadoFacturacion?._saved_at
     ? new Date(ultimoResultadoFacturacion._saved_at).toLocaleString('es-MX')
     : null;
+    
   const estadoFacturacionLabel = !tieneFacturacionEnPeriodo
     ? 'Sin Facturación'
     : esResultadoRecalculo
       ? 'Con Recalculo'
       : 'Facturada';
+      
+  // Regla de Tintes para Chip de Estado
   const estadoFacturacionChipClass = !tieneFacturacionEnPeriodo
-    ? 'bg-slate-500/90 text-white'
+    ? 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'
     : esResultadoRecalculo
-      ? 'bg-blue-500/90 text-white'
-      : 'bg-emerald-500/95 text-white';
+      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
 
-  // Verificar integridad (medidores sin asignar) al montar
   useEffect(() => {
     let isMounted = true;
     const checkIntegrity = async () => {
@@ -242,7 +239,8 @@ export default function RutaCard({ ruta }) {
   }, [ruta.id, ruta.total_puntos, obtenerInfoRuta]);
 
   return (
-    <Card className="border-none shadow-md hover:shadow-xl transition-all duration-300 bg-white dark:bg-zinc-950 rounded-[2rem] overflow-hidden flex flex-col h-full ring-1 ring-slate-200 dark:ring-zinc-800/80 group">
+    /* Token 1: Contenedor Tarjeta Limpia */
+    <div className="flex flex-col bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300 relative h-full">
       
       {/* ── 1. HEADER (IMAGEN + DROPDOWN + CHIPS) ── */}
       <div className="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100 dark:bg-zinc-900">
@@ -256,13 +254,13 @@ export default function RutaCard({ ruta }) {
 
         {/* Dropdown de Opciones (Top Right) */}
         <div className="absolute top-4 right-4 z-20">
-          <Dropdown placement="bottom-end" classNames={{ content: "min-w-[180px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl" }}>
+          <Dropdown placement="bottom-end" classNames={{ content: "min-w-[180px] bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl" }}>
             <DropdownTrigger>
               <Button
                 isIconOnly
                 variant="flat"
                 size="sm"
-                className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-slate-700 dark:text-zinc-200 shadow-sm hover:scale-105 transition-transform"
+                className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-slate-700 dark:text-zinc-200 shadow-sm hover:scale-105 transition-transform rounded-xl"
               >
                 <HiDotsVertical className="w-4 h-4" />
               </Button>
@@ -289,40 +287,32 @@ export default function RutaCard({ ruta }) {
           </Dropdown>
         </div>
 
-        {/* Chips de Estado (Bottom Left) */}
+        {/* Chips de Estado (Bottom Left) sobre imagen - Conserva fondos sólidos translúcidos por contraste */}
         <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 z-20">
-          <Chip
-            size="sm"
-            variant="solid"
-            className={`border border-white/10 font-bold tracking-wide text-[10px] uppercase shadow-md ${
-              porcentajeCompletado === 100 
-                ? "bg-emerald-500/95 text-white backdrop-blur-md" 
-                : "bg-blue-500/95 text-white backdrop-blur-md"
-            }`}
-            startContent={porcentajeCompletado === 100 && <HiCheckCircle className="w-3.5 h-3.5 ml-1" />}
-          >
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-bold tracking-widest text-[10px] uppercase shadow-md backdrop-blur-md border border-white/10 ${
+            porcentajeCompletado === 100 
+              ? "bg-emerald-500/90 text-white" 
+              : "bg-blue-500/90 text-white"
+          }`}>
+            {porcentajeCompletado === 100 && <HiCheckCircle className="w-3.5 h-3.5" />}
             {porcentajeCompletado === 100 ? "Completada" : "En progreso"}
-          </Chip>
+          </div>
 
           {missingMetersCount > 0 && (
-            <Chip
-              size="sm"
-              variant="flat"
-              className="bg-red-500/90 text-white backdrop-blur-md border border-red-400/50 font-bold tracking-wide text-[10px] uppercase shadow-md"
-              startContent={<HiExclamation className="w-4 h-4 ml-1" />}
-            >
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/90 text-white backdrop-blur-md border border-red-400/50 font-bold tracking-widest text-[10px] uppercase shadow-md animate-pulse">
+              <HiExclamation className="w-3.5 h-3.5" />
               {missingMetersCount} Sin Asignar
-            </Chip>
+            </div>
           )}
         </div>
       </div>
 
       {/* ── 2. CUERPO DE LA TARJETA ── */}
-      <CardBody className="px-5 sm:px-6 py-5 flex-1 flex flex-col gap-4">
+      <div className="p-6 flex-1 flex flex-col gap-6">
         
         {/* Título y Descripción */}
-        <div>
-          <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-tight mb-1 line-clamp-1">
+        <div className="flex flex-col gap-1.5">
+          <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-tight line-clamp-1">
             {ruta.nombre}
           </h3>
           <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
@@ -331,13 +321,13 @@ export default function RutaCard({ ruta }) {
         </div>
 
         {/* Barra de Progreso */}
-        <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-4 border border-slate-100 dark:border-zinc-800 mt-auto">
-          <div className="flex justify-between items-end mb-2">
+        <div className="bg-slate-50 dark:bg-zinc-900/50 rounded-2xl p-5 border border-slate-100 dark:border-zinc-800/80 flex flex-col gap-3 mt-auto">
+          <div className="flex justify-between items-end">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
               Progreso de Lectura
             </span>
-            <span className="text-xs font-black text-slate-700 dark:text-zinc-300">
-              {ruta.completadas} <span className="text-slate-400 dark:text-zinc-500 font-medium">/ {ruta.total_puntos}</span>
+            <span className="text-sm font-black text-slate-700 dark:text-zinc-200">
+              {ruta.completadas} <span className="text-slate-400 dark:text-zinc-500 font-bold">/ {ruta.total_puntos}</span>
             </span>
           </div>
           
@@ -346,99 +336,98 @@ export default function RutaCard({ ruta }) {
             size="sm"
             classNames={{
               base: "w-full",
-              track: "bg-slate-200 dark:bg-zinc-700 drop-shadow-sm",
+              track: "bg-slate-200 dark:bg-zinc-800",
               indicator: porcentajeCompletado === 100 ? "bg-emerald-500" : "bg-blue-500"
             }}
           />
           
-          <div className="flex justify-between items-center mt-2">
-            <span className={`text-[10px] font-bold ${porcentajeCompletado === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
+          <div className="flex justify-between items-center">
+            <span className={`text-[10px] font-bold uppercase tracking-widest ${porcentajeCompletado === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
               {porcentajeCompletado.toFixed(1)}% COMPLETADO
             </span>
-            {missingMetersCount > 0 && (
-              <span className="text-[10px] font-bold text-red-500 flex items-center gap-1 animate-pulse">
-                <HiExclamation className="w-3 h-3" /> REVISAR INVENTARIO
-              </span>
-            )}
           </div>
         </div>
 
-        {/* Info Extra (Metadatos) */}
-        <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest px-1">
-          <div className="flex items-center gap-1.5">
-            <HiCalendar className="w-3.5 h-3.5" />
-            <span>{ruta.periodo_mostrado}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <HiMap className="w-3.5 h-3.5" />
-            <span>Ruta #{ruta.id}</span>
-          </div>
+        {/* Info Extra (Metadatos) y Estado Facturación */}
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+              <div className="flex items-center gap-1.5">
+                <HiCalendar className="w-3.5 h-3.5" />
+                <span>{ruta.periodo_mostrado}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <HiMap className="w-3.5 h-3.5" />
+                <span>Ruta #{ruta.id}</span>
+              </div>
+            </div>
+            
+            {/* Regla de Tintes pura */}
+            <div className={`px-2.5 py-1 rounded-md font-bold tracking-widest text-[9px] uppercase ${estadoFacturacionChipClass}`}>
+                {estadoFacturacionLabel}
+            </div>
         </div>
-
-        {/* Estado de Facturación del período */}
-        <div className="px-1 pt-1">
-          <Chip
-            size="sm"
-            className={`font-bold tracking-wide text-[10px] uppercase shadow-sm ${estadoFacturacionChipClass}`}
-          >
-            {estadoFacturacionLabel}
-          </Chip>
-        </div>
-      </CardBody>
+      </div>
 
       {/* ── 3. FOOTER Y BOTONES DE ACCIÓN ── */}
-      <CardFooter className="px-5 sm:px-6 pb-6 pt-0 flex flex-col gap-3">
+      <div className="p-6 pt-0 flex flex-col gap-3">
         
-        {/* Componente Carrusel (Asume que renderiza su propio botón que se adaptará al width) */}
+        {/* Componente Carrusel */}
         <div className="w-full">
             <CarruselLecturasModal rutaId={ruta.id} periodoMostrado={ruta.periodo_mostrado} />
         </div>
 
-        {/* Botón Principal: Generar Facturas */}
-        <Button
-          isDisabled={!puedeGenerarPrimeraFacturacion || isGenerando}
-          isLoading={isGenerando}
-          className={`w-full h-11 font-bold shadow-md transition-all duration-300 ${
-              puedeGenerarPrimeraFacturacion
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/30" // Listo para generar
-                : "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 shadow-none border border-slate-200 dark:border-zinc-700" // Pendiente o ya generado
-          }`}
-          startContent={!isGenerando && (!puedeGenerarPrimeraFacturacion && tieneFacturacionEnPeriodo ? <HiCheckCircle className="text-lg" /> : <HiCurrencyDollar className="text-lg" />)}
-          onPress={handleGenerarFacturas}
-        >
-          {!puedeGenerarPrimeraFacturacion && tieneFacturacionEnPeriodo
-            ? 'Primera Facturación Ya Generada'
-            : porcentajeCompletado < 100
-              ? `Faltan ${ruta.total_puntos - ruta.completadas} Lecturas`
-              : 'Generar Facturas de Ruta'
-          }
-        </Button>
+        <div className="grid grid-cols-2 gap-3">
+            {/* Botón Principal: Generar Facturas */}
+            <Button
+            isDisabled={!puedeGenerarPrimeraFacturacion || isGenerando}
+            isLoading={isGenerando}
+            className={`w-full h-11 font-bold shadow-sm transition-all duration-300 rounded-xl ${
+                puedeGenerarPrimeraFacturacion
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-zinc-950" // Botón Maestro
+                    : "bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 shadow-none" // Deshabilitado
+            }`}
+            startContent={!isGenerando && (!puedeGenerarPrimeraFacturacion && tieneFacturacionEnPeriodo ? <HiCheckCircle className="text-lg" /> : <HiCurrencyDollar className="text-lg" />)}
+            onPress={handleGenerarFacturas}
+            >
+            {!puedeGenerarPrimeraFacturacion && tieneFacturacionEnPeriodo
+                ? 'Facturado'
+                : porcentajeCompletado < 100
+                ? `Faltan ${ruta.total_puntos - ruta.completadas}`
+                : 'Generar'
+            }
+            </Button>
 
-        <Button
-          isDisabled={!puedeRecalcularPeriodo || isGenerando}
-          variant="bordered"
-          className="w-full h-11 font-bold border-amber-400 text-amber-700 dark:text-amber-300 dark:border-amber-700"
-          onPress={handleRecalcularFacturas}
-        >
-          Recalcular Facturación
-        </Button>
+            {/* Botón Secundario: Recalcular */}
+            <Button
+            isDisabled={!puedeRecalcularPeriodo || isGenerando}
+            className={`w-full h-11 font-bold rounded-xl ${
+                puedeRecalcularPeriodo 
+                ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400"
+                : "bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500"
+            }`}
+            onPress={handleRecalcularFacturas}
+            >
+            Recalcular
+            </Button>
+        </div>
 
         {!tieneFacturacionEnPeriodo && porcentajeCompletado >= 100 && (
-          <p className="text-[11px] text-slate-500 dark:text-zinc-400 text-center px-2">
-            Aún no existe una primera facturación para este período; primero genera facturas.
+          <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest text-center mt-1">
+            Requiere primera facturación
           </p>
         )}
 
+        {/* Ver Resultado */}
         <Button
           variant="flat"
-          className="w-full h-10 font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+          className="w-full h-10 font-bold bg-slate-50 hover:bg-slate-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-xl mt-1"
           onPress={() => setModalResultadoOpen(true)}
         >
-          Ver Último Resultado de Facturación
+          Ver Último Resultado
         </Button>
-      </CardFooter>
+      </div>
 
-      {/* Modales */}
+      {/* ── MODALES ── */}
       <ModalEditarRuta
         isOpen={modalEditarOpen}
         onClose={() => setModalEditarOpen(false)}
@@ -450,41 +439,49 @@ export default function RutaCard({ ruta }) {
         ruta={ruta}
       />
 
+      {/* Modal Generar */}
       <Modal
         isOpen={modalGenerarOpen}
         onOpenChange={setModalGenerarOpen}
-        size="2xl"
+        size="md"
         placement="center"
+        backdrop="blur"
+        classNames={{
+            base: "bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl",
+            header: "border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6",
+            body: "p-8",
+            footer: "border-t border-slate-100 dark:border-zinc-800/80 px-8 py-6"
+        }}
       >
         <ModalContent>
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                <span className="text-lg font-black text-slate-800 dark:text-zinc-100">Generar Facturas de Ruta</span>
-                <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
+                <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Generar Facturas</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
                   Ruta {ruta.nombre} · Periodo {ruta.periodo_mostrado}
                 </span>
               </ModalHeader>
               <ModalBody className="space-y-4">
-                <div className="rounded-xl border border-emerald-300/70 bg-emerald-50 dark:bg-emerald-900/20 p-3">
-                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5">
+                  <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
                     Se generará la primera facturación para las lecturas pendientes de esta ruta.
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-amber-300/70 bg-amber-50 dark:bg-amber-900/20 p-3">
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                    Después de facturar, las lecturas quedarán cerradas para ese ciclo de facturación.
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
+                  <p className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1.5">
+                    Las lecturas quedarán cerradas para este ciclo.
                   </p>
-                  <p className="text-xs text-amber-700/80 dark:text-amber-300/80 mt-1">
+                  <p className="text-xs font-medium text-amber-600 dark:text-amber-500/80">
                     Si necesitas ajustar montos posteriormente, usa la opción de Recalcular Facturación.
                   </p>
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button variant="light" onPress={onClose}>Cancelar</Button>
+                <Button variant="light" onPress={onClose} className="font-bold text-slate-500">Cancelar</Button>
                 <Button
-                  className="bg-emerald-600 text-white font-bold"
+                  className="bg-emerald-600 text-white font-bold rounded-xl"
                   isLoading={isGenerando}
                   onPress={ejecutarGenerarFacturas}
                 >
@@ -496,51 +493,60 @@ export default function RutaCard({ ruta }) {
         </ModalContent>
       </Modal>
 
+      {/* Modal Recalcular */}
       <Modal
         isOpen={modalRecalculoOpen}
         onOpenChange={setModalRecalculoOpen}
-        size="2xl"
+        size="md"
         placement="center"
+        backdrop="blur"
         scrollBehavior="inside"
+        classNames={{
+            base: "bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl",
+            header: "border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6",
+            body: "p-8",
+            footer: "border-t border-slate-100 dark:border-zinc-800/80 px-8 py-6"
+        }}
       >
         <ModalContent>
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                <span className="text-lg font-black text-slate-800 dark:text-zinc-100">Recalcular Facturación</span>
-                <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
+                <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Recalcular Facturación</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
                   Ruta {ruta.nombre} · Periodo {ruta.periodo_mostrado}
                 </span>
               </ModalHeader>
-              <ModalBody className="space-y-4">
-                <div className="rounded-xl border border-amber-300/70 bg-amber-50 dark:bg-amber-900/20 p-3">
-                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+              <ModalBody className="space-y-6">
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
+                  <p className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1.5">
                     Se recalcularán únicamente facturas sin pagos registrados.
                   </p>
-                  <p className="text-xs text-amber-700/80 dark:text-amber-300/80 mt-1">
+                  <p className="text-xs font-medium text-amber-600 dark:text-amber-500/80">
                     Las facturas con pagos se conservarán y aparecerán en el resultado como fallidas por seguridad contable.
                   </p>
                 </div>
 
-                <div>
-                  <label className="block text-xs uppercase tracking-wider font-bold text-slate-600 dark:text-zinc-300 mb-2">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-zinc-400 ml-1">
                     Motivo del recálculo
                   </label>
+                  {/* Token 4: Invisible Input */}
                   <textarea
                     value={motivoRecalculo}
                     onChange={(e) => setMotivoRecalculo(e.target.value)}
                     rows={3}
-                    placeholder="Describe por qué necesitas recalcular esta facturación"
-                    className="w-full rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    placeholder="Describe por qué necesitas recalcular esta facturación..."
+                    className="w-full bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 dark:text-zinc-100 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none shadow-none"
                   />
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button variant="light" onPress={onClose}>
+                <Button variant="light" onPress={onClose} className="font-bold text-slate-500">
                   Cancelar
                 </Button>
                 <Button
-                  className="bg-amber-600 text-white font-bold"
+                  className="bg-amber-500 text-white font-bold rounded-xl"
                   isLoading={isGenerando}
                   onPress={ejecutarRecalculoFacturas}
                 >
@@ -552,112 +558,119 @@ export default function RutaCard({ ruta }) {
         </ModalContent>
       </Modal>
 
+      {/* Modal Resultado */}
       <Modal
         isOpen={modalResultadoOpen}
         onOpenChange={setModalResultadoOpen}
         size="4xl"
         placement="center"
+        backdrop="blur"
         scrollBehavior="inside"
+        classNames={{
+            base: "bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-2xl",
+            header: "border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6",
+            body: "p-8",
+            footer: "border-t border-slate-100 dark:border-zinc-800/80 px-8 py-6"
+        }}
       >
         <ModalContent>
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                <span className="text-lg font-black text-slate-800 dark:text-zinc-100">Resultado de Facturación</span>
-                <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
+                <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Resultado de Facturación</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
                   Ruta {ruta.nombre} · Periodo {ruta.periodo_mostrado}
                 </span>
               </ModalHeader>
-              <ModalBody className="space-y-4">
+              <ModalBody className="space-y-6">
                 {!ultimoResultadoFacturacion ? (
-                  <div className="rounded-xl border border-slate-200 dark:border-zinc-700 p-4 text-sm text-slate-600 dark:text-zinc-300">
-                    {tieneFacturacionEnPeriodo
-                      ? 'Ya existe facturación en este período, pero aún no hay un resultado guardado en esta sesión.'
-                      : 'No hay un resultado reciente para mostrar. Aún no se ha realizado facturación en este período.'}
+                  <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 p-6 text-center">
+                    <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">
+                      {tieneFacturacionEnPeriodo
+                        ? 'Ya existe facturación en este período, pero aún no hay un resultado guardado en esta sesión.'
+                        : 'No hay un resultado reciente para mostrar. Aún no se ha realizado facturación en este período.'}
+                    </p>
                   </div>
                 ) : (
                   <>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Chip
-                        size="sm"
-                        className={esResultadoRecalculo
-                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'}
-                      >
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className={`px-2.5 py-1 rounded-md font-bold tracking-widest text-[10px] uppercase ${esResultadoRecalculo ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
                         {etiquetaTipoProceso}
-                      </Chip>
+                      </div>
                       {savedAtLabel && (
-                        <span className="text-xs text-slate-500 dark:text-zinc-400">
-                          Última ejecución: {savedAtLabel}
+                        <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                          Ejecución: {savedAtLabel}
                         </span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 p-3 bg-emerald-50 dark:bg-emerald-900/20">
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-700 dark:text-emerald-300">Generadas</p>
-                        <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300">{totalGeneradas}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {/* KPIs con Regla de Tintes */}
+                      <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-emerald-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-1">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-emerald-700 dark:text-emerald-400">Generadas</p>
+                        <p className="text-3xl font-black text-emerald-700 dark:text-emerald-400">{totalGeneradas}</p>
                       </div>
-                      <div className="rounded-xl border border-blue-200 dark:border-blue-800 p-3 bg-blue-50 dark:bg-blue-900/20">
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-blue-700 dark:text-blue-300">Recalculadas</p>
-                        <p className="text-2xl font-black text-blue-700 dark:text-blue-300">{totalRecalculadas}</p>
+                      <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-blue-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-1">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-400">Recalculadas</p>
+                        <p className="text-3xl font-black text-blue-700 dark:text-blue-400">{totalRecalculadas}</p>
                       </div>
-                      <div className="rounded-xl border border-red-200 dark:border-red-800 p-3 bg-red-50 dark:bg-red-900/20">
-                        <p className="text-[11px] uppercase tracking-wider font-bold text-red-700 dark:text-red-300">Fallidas</p>
-                        <p className="text-2xl font-black text-red-700 dark:text-red-300">{totalFallidas}</p>
+                      <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-red-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-1">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-red-700 dark:text-red-400">Fallidas</p>
+                        <p className="text-3xl font-black text-red-700 dark:text-red-400">{totalFallidas}</p>
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 dark:border-zinc-700 overflow-hidden">
-                      <div className="max-h-80 overflow-y-auto">
-                        <table className="w-full text-sm">
-                          <thead className="bg-slate-100 dark:bg-zinc-800 sticky top-0 z-10">
+                    <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-950">
+                      <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+                        <table className="w-full text-sm text-left">
+                          <thead className="bg-slate-50 dark:bg-zinc-900/50 border-b border-slate-200 dark:border-zinc-800 sticky top-0 z-10">
                             <tr>
-                              <th className="text-left px-3 py-2 font-bold text-slate-600 dark:text-zinc-300">Cliente</th>
-                              <th className="text-left px-3 py-2 font-bold text-slate-600 dark:text-zinc-300">Medidor</th>
-                              <th className="text-left px-3 py-2 font-bold text-slate-600 dark:text-zinc-300">Factura</th>
-                              <th className="text-left px-3 py-2 font-bold text-slate-600 dark:text-zinc-300">Totales</th>
-                              <th className="text-left px-3 py-2 font-bold text-slate-600 dark:text-zinc-300">Estado</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Cliente</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Medidor</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Factura</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Totales</th>
+                              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Estado</th>
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
                             {detallesFacturacion.length === 0 ? (
                               <tr>
-                                <td colSpan={5} className="px-3 py-6 text-center text-slate-500 dark:text-zinc-400">
+                                <td colSpan={5} className="px-5 py-8 text-center text-sm font-bold text-slate-400 dark:text-zinc-500">
                                   No se devolvieron detalles para este proceso.
                                 </td>
                               </tr>
                             ) : (
                               detallesFacturacion.map((item, idx) => (
-                                <tr key={idx} className="border-t border-slate-100 dark:border-zinc-800">
-                                  <td className="px-3 py-2 text-slate-700 dark:text-zinc-200">
+                                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
+                                  <td className="px-5 py-4 font-bold text-slate-800 dark:text-zinc-100">
                                     {item.cliente_nombre || 'Sin cliente'}
                                   </td>
-                                  <td className="px-3 py-2 text-slate-700 dark:text-zinc-200 font-mono">
+                                  <td className="px-5 py-4 font-medium text-slate-500 dark:text-zinc-400 font-mono">
                                     {item.medidor_numero || 'S/N'}
                                   </td>
-                                  <td className="px-3 py-2 text-slate-700 dark:text-zinc-200">
+                                  <td className="px-5 py-4 font-bold text-slate-700 dark:text-zinc-300">
                                     {item.factura_id ? `#${item.factura_id}` : 'Nueva'}
                                   </td>
-                                  <td className="px-3 py-2 text-slate-700 dark:text-zinc-200">
+                                  <td className="px-5 py-4 font-medium text-slate-700 dark:text-zinc-300">
                                     {item.total_nuevo !== undefined ? (
-                                      <span>
-                                        ${Number(item.total_anterior || 0).toFixed(2)} {'->'} ${Number(item.total_nuevo || 0).toFixed(2)}
+                                      <span className="flex items-center gap-2">
+                                        <span className="line-through opacity-60">${Number(item.total_anterior || 0).toFixed(2)}</span> 
+                                        <span className="font-black text-amber-600 dark:text-amber-400">${Number(item.total_nuevo || 0).toFixed(2)}</span>
                                       </span>
                                     ) : (
-                                      <span>${Number(item.total || 0).toFixed(2)}</span>
+                                      <span className="font-black text-slate-800 dark:text-zinc-100">${Number(item.total || 0).toFixed(2)}</span>
                                     )}
                                   </td>
-                                  <td className="px-3 py-2">
+                                  <td className="px-5 py-4">
                                     {item.estado === 'fallida' ? (
-                                      <Chip size="sm" className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">Fallida</Chip>
+                                      <div className="inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-red-500/10 text-red-600 dark:text-red-400">Fallida</div>
                                     ) : item.estado === 'recalculada' ? (
-                                      <Chip size="sm" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Recalculada</Chip>
+                                      <div className="inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-600 dark:text-blue-400">Recalculada</div>
                                     ) : (
-                                      <Chip size="sm" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">Generada</Chip>
+                                      <div className="inline-flex px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Generada</div>
                                     )}
                                     {item.error && (
-                                      <p className="text-xs text-red-600 dark:text-red-400 mt-1 max-w-[280px]">{item.error}</p>
+                                      <p className="text-[10px] font-bold text-red-500/80 mt-1.5 max-w-[200px] leading-tight">{item.error}</p>
                                     )}
                                   </td>
                                 </tr>
@@ -671,13 +684,13 @@ export default function RutaCard({ ruta }) {
                 )}
               </ModalBody>
               <ModalFooter>
-                <Button variant="light" onPress={onClose}>Cerrar</Button>
+                <Button variant="light" onPress={onClose} className="font-bold text-slate-500">Cerrar Visualizador</Button>
               </ModalFooter>
             </>
           )}
         </ModalContent>
       </Modal>
-    </Card>
+    </div>
   );
 }
 

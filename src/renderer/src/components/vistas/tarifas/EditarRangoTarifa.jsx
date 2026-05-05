@@ -2,6 +2,7 @@ import {
   Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure
 } from "@nextui-org/react";
 import { useState, useEffect } from "react";
+import { HiPlus } from "react-icons/hi";
 
 export default function EditarRangosTarifa({ tarifaId, rangosIniciales = [], onGuardado }) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
@@ -82,86 +83,142 @@ export default function EditarRangosTarifa({ tarifaId, rangosIniciales = [], onG
     }
   };
 
+  // Clases compartidas para los inputs (Token 4 adaptado para HTML nativo)
+  const inputClasses = "w-full bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500 transition-all duration-200 shadow-none h-11 px-3 text-sm font-medium text-slate-800 dark:text-zinc-100";
+
   return (
     <>
-      <Button color="primary" onPress={onOpen} className="ml-2 px-8 py-2">
-        Editar
+      <Button 
+        onPress={onOpen} 
+        variant="flat"
+        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl px-6"
+      >
+        Editar Rangos
       </Button>
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="lg" scrollBehavior="inside" backdrop="transparent">
+      <Modal 
+        isOpen={isOpen} 
+        onOpenChange={onOpenChange} 
+        size="2xl" 
+        scrollBehavior="inside"
+        /* Token 2: Modal Premium SaaS */
+        classNames={{
+          backdrop: "bg-slate-900/40 backdrop-blur-sm",
+          base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+          header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8 flex flex-col gap-1",
+          body: "px-8 py-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent",
+          footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+          closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4"
+        }}
+      >
         <ModalContent>
-          {() => (
+          {(onClose) => (
             <>
-              <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
-                Editar Rangos
+              <ModalHeader>
+                {/* Token 3: Textos Principales */}
+                <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                  Editar Estructura de Precios
+                </h2>
+                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+                  Configura los bloques de consumo y sus valores asociados
+                </p>
               </ModalHeader>
-              <ModalBody className="bg-gray-200 dark:bg-gray-800">
-                {success && <div className="p-3 text-sm text-green-700 bg-green-100 rounded-lg">{success}</div>}
-                {error && <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
+              
+              <ModalBody>
+                {/* Regla de tintes para alertas */}
+                {success && (
+                  <div className="p-4 mb-2 text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                    {success}
+                  </div>
+                )}
+                {error && (
+                  <div className="p-4 mb-2 text-sm font-bold text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    {error}
+                  </div>
+                )}
 
-                <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-600 ">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Consumo mínimo</th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Consumo máximo</th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">Precio ($/m³)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {rangos.map((rango, index) => (
-                      <tr key={rango.id || index}>
-                        <td className="px-4 py-2">
-                          <input
-                            type="number"
-                            className="input-style w-full"
-                            value={rango.consumo_min}
-                            onChange={e => handleChange(index, "consumo_min", e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input
-                            type="number"
-                            className="input-style w-full"
-                            value={rango.consumo_max}
-                            onChange={e => handleChange(index, "consumo_max", e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <input
-                            type="number"
-                            className="input-style w-full"
-                            value={rango.precio_por_m3}
-                            onChange={e => handleChange(index, "precio_por_m3", e.target.value)}
-                          />
-                        </td>
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr>
+                        {/* Token 6: Cabeceras de tabla */}
+                        <th className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3 px-2 w-1/3">
+                          Min. (m³)
+                        </th>
+                        <th className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3 px-2 w-1/3">
+                          Máx. (m³)
+                        </th>
+                        <th className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3 px-2 w-1/3">
+                          Precio ($/m³)
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rangos.map((rango, index) => (
+                        <tr key={rango.id || index}>
+                          {/* Token 6: Filas de tabla (Adaptado para inputs) */}
+                          <td className="border-b border-slate-100 dark:border-zinc-800/50 py-3 px-2">
+                            <input
+                              type="number"
+                              className={inputClasses}
+                              placeholder="0"
+                              value={rango.consumo_min}
+                              onChange={e => handleChange(index, "consumo_min", e.target.value)}
+                            />
+                          </td>
+                          <td className="border-b border-slate-100 dark:border-zinc-800/50 py-3 px-2">
+                            <input
+                              type="number"
+                              className={inputClasses}
+                              placeholder="Ej. 10"
+                              value={rango.consumo_max}
+                              onChange={e => handleChange(index, "consumo_max", e.target.value)}
+                            />
+                          </td>
+                          <td className="border-b border-slate-100 dark:border-zinc-800/50 py-3 px-2">
+                            <input
+                              type="number"
+                              step="0.01"
+                              className={inputClasses}
+                              placeholder="0.00"
+                              value={rango.precio_por_m3}
+                              onChange={e => handleChange(index, "precio_por_m3", e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
                 <div className="mt-4">
-                  <Button onClick={agregarRango} color="secondary" className="text-white bg-green-600">
-                    + Agregar Rango
+                  {/* Regla de Tintes: Botón secundario suave */}
+                  <Button 
+                    onPress={agregarRango} 
+                    variant="flat" 
+                    className="w-full font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl h-11"
+                    startContent={<HiPlus className="text-lg" />}
+                  >
+                    Agregar Nuevo Rango
                   </Button>
                 </div>
               </ModalBody>
 
-              <ModalFooter className="bg-gray-300 dark:bg-gray-700">
+              <ModalFooter>
                 <Button
-                  color="primary"
-                  onClick={handleGuardar}
-                  isDisabled={isSaving}
-                  className="bg-blue-700 text-white"
-                >
-                  {isSaving ? "Guardando..." : "Guardar Cambios"}
-                </Button>
-                <Button
-                  color="danger"
                   variant="light"
                   onPress={onClose}
-                  className="bg-red-700 text-white"
+                  className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
                 >
                   Cancelar
+                </Button>
+                {/* Token 4: Botón Primario (SaaS) */}
+                <Button
+                  isLoading={isSaving}
+                  onPress={handleGuardar}
+                  className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm"
+                >
+                  {isSaving ? "Guardando..." : "Guardar Cambios"}
                 </Button>
               </ModalFooter>
             </>
@@ -171,4 +228,3 @@ export default function EditarRangosTarifa({ tarifaId, rangosIniciales = [], onG
     </>
   );
 }
-

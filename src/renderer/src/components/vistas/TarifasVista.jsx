@@ -1,13 +1,30 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Card, CardBody, Pagination, Skeleton, Tabs, Tab } from "@nextui-org/react";
+import { 
+  Button, 
+  Skeleton, 
+  Tabs, 
+  Tab, 
+  Chip,
+  Select,
+  SelectItem,
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Pagination
+} from "@nextui-org/react";
 import { 
   HiSearch, 
   HiCurrencyDollar, 
   HiCalendar, 
   HiTrendingUp,
   HiOutlineDocumentReport,
-  HiX
+  HiX,
+  HiCalculator,
+  HiExclamationCircle
 } from "react-icons/hi";
 import { useTarifas } from "../../context/TarifasContext";
 import RegistrarTarifa from "./tarifas/RegistrarTarifa";
@@ -25,6 +42,16 @@ export default function Tarifas() {
   const [consumoCalculadora, setConsumoCalculadora] = useState("");
   const [resultadoCalculo, setResultadoCalculo] = useState(null);
   const [errorCalculo, setErrorCalculo] = useState("");
+  
+  // Estado para la pestaña activa
+  const [selectedTab, setSelectedTab] = useState(() => {
+    return localStorage.getItem("tarifas_activeTab") || "tarifas";
+  });
+
+  const handleTabChange = (key) => {
+    setSelectedTab(key);
+    localStorage.setItem("tarifas_activeTab", key);
+  };
 
   // Debounce para búsqueda
   useEffect(() => {
@@ -110,7 +137,7 @@ export default function Tarifas() {
 
     const consumo = Number(consumoCalculadora);
     if (consumoCalculadora === "" || Number.isNaN(consumo)) {
-      setErrorCalculo("Ingresa un consumo valido.");
+      setErrorCalculo("Ingresa un consumo válido.");
       return;
     }
 
@@ -122,7 +149,7 @@ export default function Tarifas() {
     }
   };
 
-  // ESTADO DE CARGA INICIAL (Si no hay tarifas y está cargando)
+  // ESTADO DE CARGA INICIAL
   if (loading && !tarifas.length && !search) {
     return (
       <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
@@ -146,233 +173,212 @@ export default function Tarifas() {
   }
 
   return (
-    // CONTENEDOR PRINCIPAL: Padding exterior fluido
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
-
-      {/* CONTENEDOR DE LA VISTA: 'w-full' para ocupar todo el espacio disponible */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8">
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8 animate-in fade-in duration-500">
 
         {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-          
-          {/* Título de la vista */}
-          <div className="flex gap-4 items-center shrink-0">
-            {/* Identidad Emerald (Verde Financiero) */}
+        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8 border-b border-slate-100 dark:border-zinc-800/80 pb-6">
+          <div className="flex gap-4 items-start shrink-0">
             <div className="p-3.5 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
               <TarifaIcon className="w-8 h-8" />
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 pt-0.5">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
+                <h1 className="text-3xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
                   Gestión de Tarifas
                 </h1>
-                {/* Loader Sutil de actualización */}
                 {loading && (
                   <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-600 rounded-full animate-spin"></div>
                 )}
               </div>
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-lg leading-relaxed">
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-lg leading-relaxed mt-1">
                 Administra, configura rangos de consumo y mantén al día las estructuras de cobro.
               </p>
             </div>
           </div>
 
-          {/* Tarjetas de Estadísticas (KPIs) - Se alinean a la derecha */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full xl:w-auto shrink-0">
-            
-            {/* KPI: Total Tarifas */}
-            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
-              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
-                <HiOutlineDocumentReport className="w-4 h-4" />
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-transform hover:-translate-y-1 min-w-[120px]">
+              <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 dark:text-zinc-500">
+                <div className="p-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiOutlineDocumentReport className="w-4 h-4" /></div>
                 <span className="text-[10px] font-bold uppercase tracking-widest">Total Tarifas</span>
               </div>
-              <p className="text-2xl font-black text-blue-600 dark:text-blue-400 leading-none">
-                {estadisticas.total}
-              </p>
+              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.total}</p>
             </div>
 
-            {/* KPI: Vigentes */}
-            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
-              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
-                <HiCalendar className="w-4 h-4" />
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-transform hover:-translate-y-1 min-w-[120px]">
+              <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 dark:text-zinc-500">
+                <div className="p-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><HiCalendar className="w-4 h-4" /></div>
                 <span className="text-[10px] font-bold uppercase tracking-widest">Vigentes</span>
               </div>
-              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none">
-                {estadisticas.vigentes}
-              </p>
+              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.vigentes}</p>
             </div>
 
-            {/* KPI: Precio Promedio (Rango 1) */}
-            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
-              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
-                <HiTrendingUp className="w-4 h-4" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Precio Base Prom.</span>
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-transform hover:-translate-y-1 min-w-[120px]">
+              <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 dark:text-zinc-500">
+                <div className="p-1 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400"><HiTrendingUp className="w-4 h-4" /></div>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Base Prom.</span>
               </div>
-              <p className="text-2xl font-black text-purple-600 dark:text-purple-400 leading-none">
-                ${estadisticas.promedioRango1.toFixed(2)}
-              </p>
+              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">${estadisticas.promedioRango1.toFixed(2)}</p>
             </div>
 
-            {/* KPI: Próximas a Vencer */}
-            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors">
-              <div className="flex items-center gap-1.5 mb-2 text-slate-400 dark:text-zinc-500">
-                <HiCalendar className="w-4 h-4 text-orange-500" />
+            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-transform hover:-translate-y-1 min-w-[120px]">
+              <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 dark:text-zinc-500">
+                <div className="p-1 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400"><HiCalendar className="w-4 h-4" /></div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-orange-600 dark:text-orange-400">Por Vencer</span>
               </div>
-              <p className="text-2xl font-black text-orange-500 dark:text-orange-400 leading-none">
-                {estadisticas.proximasAVencer}
-              </p>
+              <p className="text-2xl font-black text-orange-600 dark:text-orange-400 leading-none">{estadisticas.proximasAVencer}</p>
             </div>
           </div>
         </div>
 
-        <Tabs
-          aria-label="Secciones de tarifas"
-          color="success"
-          variant="underlined"
-          classNames={{
-            tabList: "gap-6 w-full relative rounded-none p-0 border-b border-slate-200 dark:border-zinc-800",
-            cursor: "w-full bg-emerald-500",
-            tab: "max-w-fit px-0 h-12",
-            tabContent: "group-data-[selected=true]:text-emerald-600 dark:group-data-[selected=true]:text-emerald-400 font-bold"
-          }}
-        >
-          <Tab
-            key="tarifas"
-            title={
-              <div className="flex items-center gap-2">
-                <HiCurrencyDollar className="w-4 h-4" />
-                <span>Tarifas</span>
-              </div>
-            }
+        {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
+        <div className="flex flex-col w-full flex-1">
+          <Tabs
+            aria-label="Secciones de tarifas"
+            selectedKey={selectedTab}
+            onSelectionChange={handleTabChange}
+            variant="underlined"
+            classNames={{
+              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
+              tabList: "gap-6 w-full relative rounded-none p-0",
+              cursor: "w-full bg-emerald-600 dark:bg-emerald-500 h-[2px]",
+              tab: "max-w-fit px-0 h-12",
+              tabContent: "group-data-[selected=true]:text-emerald-600 dark:group-data-[selected=true]:text-emerald-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors"
+            }}
           >
-            <div className="pt-5 space-y-6">
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50 dark:bg-zinc-900/30 p-2 sm:p-3 rounded-2xl border border-slate-100 dark:border-zinc-800/80">
-                <div className="w-full sm:max-w-md relative group">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors">
-                    <HiSearch className="w-5 h-5" />
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Buscar tarifas..."
-                    value={search}
-                    onChange={(e) => {
-                      setSearch(e.target.value);
-                      setPaginaActual(1);
-                    }}
-                    className="w-full h-11 pl-11 pr-10 text-sm font-medium rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-slate-700 dark:text-zinc-200 placeholder:text-slate-400 shadow-sm"
-                  />
-                  {search && (
-                    <button
-                      onClick={() => setSearch("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800"
-                    >
-                      <HiX className="w-4 h-4" />
-                    </button>
+            {/* ── TAB 1: LISTA DE TARIFAS ── */}
+            <Tab
+              key="tarifas"
+              title={
+                <div className="flex items-center gap-2">
+                  <HiCurrencyDollar className="text-lg" />
+                  <span>Tarifas</span>
+                </div>
+              }
+            >
+              <div className="animate-in fade-in duration-500 h-full flex flex-col">
+                
+                {/* Controles de Búsqueda y Registro */}
+                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white dark:bg-zinc-950 mb-8">
+                  <div className="w-full sm:max-w-md relative flex items-center">
+                    <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
+                      <HiSearch className="w-5 h-5" />
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Buscar tarifas..."
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setPaginaActual(1);
+                      }}
+                      className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none h-[52px]"
+                    />
+                    {search && (
+                      <button
+                        onClick={() => setSearch("")}
+                        className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                      >
+                        <HiX className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="w-full sm:w-auto shrink-0">
+                    <RegistrarTarifa />
+                  </div>
+                </div>
+
+                {/* Grid de Tarifas */}
+                <div className="flex-1 flex flex-col">
+                  {tarifasPaginadas.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6 mb-8">
+                        {tarifasPaginadas.map((tarifa) => (
+                          <TarifaCard key={tarifa.id} tarifa={tarifa} />
+                        ))}
+                      </div>
+
+                      {/* Paginación */}
+                      {totalPaginas > 1 && (
+                        <div className="flex justify-center mt-auto py-6 border-t border-slate-100 dark:border-zinc-800/50">
+                          <Pagination
+                            total={totalPaginas}
+                            page={paginaActual}
+                            onChange={setPaginaActual}
+                            showControls
+                            color="default"
+                            variant="flat"
+                            classNames={{
+                              cursor: "bg-emerald-600 text-white font-bold shadow-md",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* Empty State Canónico */
+                    <div className="border border-dashed border-slate-200 dark:border-zinc-800 rounded-[2rem] p-12 text-center flex flex-col items-center justify-center min-h-[300px] bg-slate-50/50 dark:bg-zinc-900/30">
+                      <div className="w-16 h-16 rounded-full bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm flex items-center justify-center mb-4">
+                        <HiCurrencyDollar className="text-3xl text-slate-400 dark:text-zinc-500" />
+                      </div>
+                      <h3 className="text-lg font-black tracking-tight text-slate-700 dark:text-zinc-200 mb-1">
+                        No se encontraron tarifas
+                      </h3>
+                      <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
+                        {search ? `No hay resultados para "${search}".` : "Aún no hay tarifas registradas en el sistema."}
+                      </p>
+                    </div>
                   )}
                 </div>
+              </div>
+            </Tab>
 
-                <div className="w-full sm:w-auto shrink-0">
-                  <RegistrarTarifa />
+            {/* ── TAB 2: CALCULADORA ── */}
+            <Tab
+              key="calculadora"
+              title={
+                <div className="flex items-center gap-2">
+                  <HiCalculator className="text-lg" />
+                  <span>Calculadora</span>
                 </div>
-              </div>
-
-              <div className="flex-1 flex flex-col">
-                {tarifasPaginadas.length > 0 ? (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
-                      {tarifasPaginadas.map((tarifa) => (
-                        <TarifaCard key={tarifa.id} tarifa={tarifa} />
-                      ))}
-                    </div>
-
-                    {totalPaginas > 1 && (
-                      <div className="flex justify-center mt-auto pb-4">
-                        <Pagination
-                          total={totalPaginas}
-                          page={paginaActual}
-                          onChange={setPaginaActual}
-                          color="primary"
-                          showControls
-                          classNames={{
-                            wrapper: "gap-2 overflow-visible h-10 rounded-2xl border-none shadow-sm bg-white dark:bg-zinc-900 px-2",
-                            item: "w-8 h-8 text-sm font-bold rounded-xl bg-transparent text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800",
-                            cursor: "bg-emerald-600 shadow-md shadow-emerald-500/30 text-white font-bold rounded-xl",
-                            prev: "rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400",
-                            next: "rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400",
-                          }}
-                        />
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-3xl bg-slate-50/50 dark:bg-zinc-900/20">
-                    <div className="p-4 bg-white dark:bg-zinc-900 rounded-full shadow-sm border border-slate-100 dark:border-zinc-800 mb-4">
-                      <HiCurrencyDollar className="w-10 h-10 text-slate-300 dark:text-zinc-600" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-200 mb-1">
-                      No se encontraron tarifas
+              }
+            >
+              <div className="animate-in fade-in duration-500 flex justify-center py-4">
+                <div className="w-full max-w-5xl bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-[2rem] p-6 sm:p-10 flex flex-col gap-8 shadow-sm">
+                  
+                  <div className="flex flex-col gap-1.5 border-b border-slate-200 dark:border-zinc-800 pb-6">
+                    <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                      Simulador de Cobro
                     </h3>
-                    <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mb-6 max-w-sm text-center">
-                      {search
-                        ? `No hay resultados para "${search}". Intenta con otras palabras.`
-                        : "Aún no hay tarifas registradas en el sistema."}
-                    </p>
-                    {search && (
-                      <Button
-                        color="primary"
-                        variant="flat"
-                        startContent={<HiSearch className="w-4 h-4" />}
-                        onPress={() => setSearch("")}
-                        className="font-bold bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-                      >
-                        Limpiar búsqueda
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </Tab>
-
-          <Tab
-            key="calculadora"
-            title={
-              <div className="flex items-center gap-2">
-                <HiTrendingUp className="w-4 h-4" />
-                <span>Calculadora</span>
-              </div>
-            }
-          >
-            <div className="pt-5">
-              <Card className="border border-emerald-200 dark:border-emerald-900/40 shadow-sm">
-                <CardBody className="p-5 space-y-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100">Calculadora de Cobro</h3>
-                    <p className="text-sm text-slate-500 dark:text-zinc-400">
-                      Selecciona una tarifa e ingresa el consumo para ver el desglose con la misma logica del calculo de deuda/factura.
+                    <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+                      Selecciona una tarifa e ingresa el consumo para ver el desglose exacto aplicando la lógica oficial.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Tarifa</label>
-                      <select
-                        value={tarifaCalculadoraId}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+                    <div className="lg:col-span-5 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">Tarifa a Simular</label>
+                      <Select
+                        aria-label="Selecciona una tarifa"
+                        placeholder="Selecciona de la lista..."
+                        selectedKeys={tarifaCalculadoraId ? [tarifaCalculadoraId] : []}
                         onChange={(e) => setTarifaCalculadoraId(e.target.value)}
-                        className="h-11 px-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-medium"
+                        variant="flat"
+                        classNames={{
+                          trigger: "bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 h-[52px]",
+                          value: "font-bold text-slate-700 dark:text-zinc-200"
+                        }}
                       >
-                        <option value="">Selecciona una tarifa de la lista actual</option>
                         {tarifas.map((tarifa) => (
-                          <option key={tarifa.id} value={tarifa.id}>
-                            {tarifa.nombre}
-                          </option>
+                          <SelectItem key={tarifa.id} value={tarifa.id}>{tarifa.nombre}</SelectItem>
                         ))}
-                      </select>
+                      </Select>
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Consumo (m3)</label>
+                    <div className="lg:col-span-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">Consumo (m³)</label>
                       <input
                         type="number"
                         min="0"
@@ -380,89 +386,100 @@ export default function Tarifas() {
                         value={consumoCalculadora}
                         onChange={(e) => setConsumoCalculadora(e.target.value)}
                         placeholder="Ej. 25"
-                        className="h-11 px-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-medium"
+                        className="w-full px-4 text-sm font-bold bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 shadow-sm h-[52px] outline-none text-slate-800 dark:text-zinc-100"
                       />
                     </div>
 
-                    <Button
-                      color="success"
-                      onPress={handleCalcularTarifa}
-                      className="font-bold h-11"
-                    >
-                      Calcular desglose
-                    </Button>
+                    <div className="lg:col-span-3">
+                      <Button
+                        onPress={handleCalcularTarifa}
+                        className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-[52px] shadow-sm transition-transform active:scale-95"
+                      >
+                        Calcular Desglose
+                      </Button>
+                    </div>
                   </div>
 
                   {errorCalculo && (
-                    <div className="text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-3">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm font-bold animate-in fade-in">
+                      <HiExclamationCircle className="w-5 h-5 shrink-0" />
                       {errorCalculo}
                     </div>
                   )}
 
                   {resultadoCalculo && (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="rounded-xl border border-slate-200 dark:border-zinc-700 p-3 bg-slate-50 dark:bg-zinc-900/40">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Consumo ingresado</p>
-                          <p className="text-xl font-black text-slate-800 dark:text-zinc-100">{resultadoCalculo.consumo_ingresado} m3</p>
+                    <div className="flex flex-col gap-6 pt-6 border-t border-slate-200 dark:border-zinc-800 animate-in slide-in-from-top-4">
+                      
+                      {/* KPIs de Resultados */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 p-6 bg-white dark:bg-zinc-950 flex flex-col gap-1 shadow-sm">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo Ingresado</p>
+                          <p className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{resultadoCalculo.consumo_ingresado} <span className="text-sm text-slate-400">m³</span></p>
                         </div>
-                        <div className="rounded-xl border border-slate-200 dark:border-zinc-700 p-3 bg-slate-50 dark:bg-zinc-900/40">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Consumo facturable</p>
-                          <p className="text-xl font-black text-blue-600 dark:text-blue-400">{resultadoCalculo.consumo_facturable} m3</p>
+                        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 p-6 bg-white dark:bg-zinc-950 flex flex-col gap-1 shadow-sm">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo Facturable</p>
+                          <p className="text-2xl font-black tracking-tight text-blue-600 dark:text-blue-400">{resultadoCalculo.consumo_facturable} <span className="text-sm text-blue-400/70">m³</span></p>
                         </div>
-                        <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 p-3 bg-emerald-50 dark:bg-emerald-900/20">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Total calculado</p>
-                          <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300">${resultadoCalculo.total.toFixed(2)}</p>
+                        <div className="rounded-2xl border border-emerald-500/30 p-6 bg-emerald-500/10 flex flex-col gap-1">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-500">Total Calculado</p>
+                          <p className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">${resultadoCalculo.total.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         </div>
                       </div>
 
-                      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800">
-                        <table className="w-full text-sm">
-                          <thead className="bg-slate-100 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-300">
-                            <tr>
-                              <th className="text-left px-3 py-2 font-bold">Rango</th>
-                              <th className="text-left px-3 py-2 font-bold">Tipo</th>
-                              <th className="text-right px-3 py-2 font-bold">Metros</th>
-                              <th className="text-right px-3 py-2 font-bold">Precio</th>
-                              <th className="text-right px-3 py-2 font-bold">Subtotal</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {resultadoCalculo.detalle.map((item, index) => (
-                              <tr key={`${item.consumo_min}-${item.consumo_max}-${index}`} className="border-t border-slate-100 dark:border-zinc-800">
-                                <td className="px-3 py-2 font-medium text-slate-700 dark:text-zinc-200">
+                      {/* Tabla de Desglose Standard SaaS */}
+                      <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-950">
+                        <Table
+                          aria-label="Desglose del cálculo"
+                          removeWrapper
+                          classNames={{
+                            th: "bg-slate-50 dark:bg-zinc-900/50 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4 px-6",
+                            td: "py-4 px-6 border-b border-slate-100 dark:border-zinc-800/50",
+                            tr: "hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
+                          }}
+                        >
+                          <TableHeader>
+                            <TableColumn>RANGO</TableColumn>
+                            <TableColumn>TIPO DE COBRO</TableColumn>
+                            <TableColumn align="end">METROS (m³)</TableColumn>
+                            <TableColumn align="end">PRECIO/m³</TableColumn>
+                            <TableColumn align="end">SUBTOTAL</TableColumn>
+                          </TableHeader>
+                          <TableBody items={resultadoCalculo.detalle}>
+                            {(item) => (
+                              <TableRow key={`${item.consumo_min}-${item.consumo_max}`}>
+                                <TableCell className="font-bold text-sm text-slate-800 dark:text-zinc-100">
                                   {item.consumo_min}{item.consumo_max != null ? ` - ${item.consumo_max}` : "+"}
-                                </td>
-                                <td className="px-3 py-2 text-slate-500 dark:text-zinc-400">
-                                  {item.tipo === "base_fija" ? "Base fija" : "Cobro por tramo"}
-                                </td>
-                                <td className="px-3 py-2 text-right text-slate-700 dark:text-zinc-200">
+                                </TableCell>
+                                <TableCell>
+                                  <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md">
+                                    {item.tipo === "base_fija" ? "Base fija" : "Cobro por tramo"}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="font-mono text-sm text-slate-600 dark:text-zinc-300">
                                   {item.metros == null ? "-" : item.metros}
-                                </td>
-                                <td className="px-3 py-2 text-right text-slate-700 dark:text-zinc-200">
-                                  ${item.precio_por_m3.toFixed(2)}
-                                </td>
-                                <td className="px-3 py-2 text-right font-bold text-slate-800 dark:text-zinc-100">
-                                  ${item.subtotal.toFixed(2)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                </TableCell>
+                                <TableCell className="font-mono text-sm text-slate-600 dark:text-zinc-300">
+                                  ${item.precio_por_m3.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                                <TableCell className="font-mono font-black text-base text-slate-800 dark:text-zinc-100">
+                                  ${item.subtotal.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
                       </div>
+
                     </div>
                   )}
-                </CardBody>
-              </Card>
-            </div>
-          </Tab>
-        </Tabs>
-
+                </div>
+              </div>
+            </Tab>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
 }
-
-
 
 

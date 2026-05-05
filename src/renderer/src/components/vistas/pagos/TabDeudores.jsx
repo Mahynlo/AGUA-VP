@@ -1,10 +1,6 @@
 import { useState, useMemo } from "react";
 import {
-  Card,
-  CardBody,
-  CardHeader,
   Button,
-  Chip,
   Select,
   SelectItem,
   User,
@@ -12,11 +8,22 @@ import {
   Tooltip,
   Progress,
   Spinner,
-  Skeleton
+  Skeleton,
+  Chip
 } from "@nextui-org/react";
-import { FlechaReturnIcon } from "../../../IconsApp/IconsAppSystem";
-import { SearchIcon } from "../../../IconsApp/IconsSidebar";
-import { HiExclamation, HiBan, HiFilter, HiCog, HiCheckCircle, HiRefresh, HiDocumentText, HiClipboardList, HiX } from "react-icons/hi";
+import { 
+  HiExclamation, 
+  HiBan, 
+  HiFilter, 
+  HiCog, 
+  HiCheckCircle, 
+  HiRefresh, 
+  HiDocumentText, 
+  HiClipboardList, 
+  HiX,
+  HiSearch,
+  HiArrowLeft
+} from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useDeudores } from "../../../context/DeudoresContext";
 
@@ -26,34 +33,44 @@ import ModalRealizarCorte from "./modals/ModalRealizarCorte";
 import ModalCrearConvenio from "./modals/ModalCrearConvenio";
 import ModalParcialidadesConvenio from "./ModalParcialidadesConvenio";
 
-// Componente LoadingSkeleton premium
+// Componente LoadingSkeleton premium (Token 8)
 const LoadingSkeleton = () => (
   <div className="space-y-6 w-full animate-in fade-in">
-    <Card className="border-none shadow-sm rounded-2xl">
-      <CardBody className="p-6 space-y-4">
-        <div className="flex justify-between">
-          <Skeleton className="h-10 w-48 rounded-xl" />
-          <div className="flex gap-2">
-              <Skeleton className="h-10 w-32 rounded-xl" />
-              <Skeleton className="h-10 w-32 rounded-xl" />
-          </div>
+    <div className="flex justify-between items-center pb-4">
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-12 w-12 rounded-2xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-48 rounded-md" />
+          <Skeleton className="h-3 w-32 rounded-md" />
         </div>
+      </div>
+      <div className="flex gap-2">
+        <Skeleton className="h-11 w-24 rounded-xl" />
+        <Skeleton className="h-11 w-32 rounded-xl" />
+      </div>
+    </div>
+    <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
+      <div className="p-6 border-b border-slate-100 dark:border-zinc-800">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Skeleton className="h-11 w-full rounded-xl" />
-          <Skeleton className="h-11 w-full rounded-xl" />
-          <Skeleton className="h-11 w-full rounded-xl" />
-          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-[52px] w-full rounded-xl" />
+          <Skeleton className="h-[52px] w-full rounded-xl" />
+          <Skeleton className="h-[52px] w-full rounded-xl" />
+          <Skeleton className="h-[52px] w-full rounded-xl" />
         </div>
-      </CardBody>
-    </Card>
-    <Card className="border-none shadow-sm rounded-2xl">
-      <CardBody className="p-0">
-          <Skeleton className="h-12 w-full rounded-none border-b border-gray-100" />
-          {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-none border-b border-gray-50" />
-          ))}
-      </CardBody>
-    </Card>
+      </div>
+      <div className="bg-white dark:bg-zinc-950">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-24 w-full border-b border-slate-100 dark:border-zinc-800/50 flex items-center px-6 gap-4">
+             <Skeleton className="h-10 w-10 rounded-full" />
+             <div className="space-y-2 flex-1">
+               <Skeleton className="h-4 w-1/4 rounded-md" />
+               <Skeleton className="h-3 w-1/3 rounded-md" />
+             </div>
+             <Skeleton className="h-10 w-32 rounded-xl" />
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 );
 
@@ -193,77 +210,78 @@ const TabDeudores = () => {
   };
 
   const selectClassNames = {
-    trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors h-11",
+    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
     value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
   };
 
-  if (!candidatos.length && loading) { // Solo si es la primera carga real
+  if (!candidatos.length && loading) { 
     return <LoadingSkeleton />;
   }
 
   return (
-    <div className="space-y-6 w-full animate-in fade-in duration-300">
+    <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500">
 
-      {/* ── 1. HEADER Y FILTROS ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
-        <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-red-500/10 dark:bg-red-500/20 rounded-xl">
-              <HiExclamation className="w-6 h-6 text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight">
-                    Cartera Vencida y Cortes
-                </h3>
-                {loading && (
-                    <Spinner size="sm" color="danger" className="w-4 h-4 ml-1" />
-                )}
-              </div>
-              <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
-                  Gestión de morosidad y convenios
-              </p>
-            </div>
+      {/* ── 1. HEADER ── */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-red-500/10 text-red-600 dark:text-red-400 rounded-2xl shrink-0">
+            <HiExclamation className="w-6 h-6" />
           </div>
-
-          <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
-            <Button
-              color="default"
-              variant="flat"
-              onPress={() => navigate(-1)}
-              className="bg-slate-100 dark:bg-zinc-800 font-bold text-slate-600 dark:text-zinc-300"
-              startContent={<FlechaReturnIcon className="w-5 h-5" />}
-              isIconOnly
-              title="Volver"
-            />
-            <Button
-              color="primary"
-              variant="flat"
-              className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold"
-              onPress={fetchDeudores}
-              startContent={!loading && <HiRefresh className="text-lg" />}
-              isLoading={loading}
-            >
-              Recargar
-            </Button>
-            <Button
-              color="primary"
-              className="font-bold shadow-md shadow-blue-500/30"
-              onPress={() => setShowConfigModal(true)}
-              startContent={<HiCog className="text-lg" />}
-            >
-              Configuración
-            </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+                  Cartera Vencida y Cortes
+              </h3>
+              {loading && candidatos.length > 0 && (
+                  <Spinner size="sm" color="danger" className="w-4 h-4 ml-1" />
+              )}
+            </div>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+                Gestión de morosidad, suspensiones y convenios
+            </p>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardBody className="p-6 bg-slate-50/50 dark:bg-black/10">
+        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+          <Button
+            variant="flat"
+            onPress={() => navigate(-1)}
+            className="bg-slate-100/70 hover:bg-slate-200 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-[44px] px-4 min-w-0 shadow-sm"
+            startContent={<HiArrowLeft className="w-4 h-4" />}
+            title="Volver"
+          >
+            <span className="hidden sm:inline">Volver</span>
+          </Button>
+          <Button
+            variant="flat"
+            className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-bold rounded-xl h-[44px] px-5"
+            onPress={fetchDeudores}
+            startContent={!loading && <HiRefresh className="text-lg" />}
+            isLoading={loading}
+          >
+            Recargar
+          </Button>
+          <Button
+            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[44px] shadow-sm"
+            onPress={() => setShowConfigModal(true)}
+            startContent={<HiCog className="text-lg" />}
+          >
+            Configuración
+          </Button>
+        </div>
+      </div>
+
+      {/* ── 2. CONTENEDOR PRINCIPAL: Filtros y Lista ── */}
+      <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-hidden flex flex-col">
+        
+        {/* Filtros */}
+        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
             
             {/* Buscador */}
             <div className="lg:col-span-5 relative w-full flex items-center">
-              <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
-                <SearchIcon className="w-5 h-5" />
+              <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+                <HiSearch className="w-5 h-5" />
               </span>
               <input
                 placeholder="Buscar cliente o dirección..."
@@ -272,12 +290,12 @@ const TabDeudores = () => {
                     setSearch(e.target.value);
                     setCurrentPage(1);
                 }}
-                className="w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 shadow-sm h-11"
+                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 shadow-none h-[52px]"
               />
               {search && (
                 <button
                   onClick={() => setSearch("")}
-                  className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                  className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
                 >
                   <HiX className="w-4 h-4" />
                 </button>
@@ -295,13 +313,13 @@ const TabDeudores = () => {
                     }}
                     startContent={<HiExclamation className="text-slate-400" />}
                     aria-label="Filtrar por Gravedad"
-                    variant="bordered"
+                    variant="flat"
                     classNames={selectClassNames}
                 >
                     <SelectItem key="All" value="All">Todas</SelectItem>
-                    <SelectItem key="Crítico" value="Crítico" className="text-red-600 font-medium">Críticos (+90 días)</SelectItem>
-                    <SelectItem key="Moderado" value="Moderado" className="text-orange-500 font-medium">Moderados (+30 días)</SelectItem>
-                    <SelectItem key="Leve" value="Leve" className="text-emerald-600 font-medium">Leves</SelectItem>
+                    <SelectItem key="Crítico" value="Crítico" className="text-red-600 dark:text-red-400 font-bold">Críticos (+90 días)</SelectItem>
+                    <SelectItem key="Moderado" value="Moderado" className="text-orange-500 dark:text-orange-400 font-bold">Moderados (+30 días)</SelectItem>
+                    <SelectItem key="Leve" value="Leve" className="text-emerald-600 dark:text-emerald-400 font-bold">Leves</SelectItem>
                 </Select>
             </div>
 
@@ -316,7 +334,7 @@ const TabDeudores = () => {
                     }}
                     startContent={<HiFilter className="text-slate-400" />}
                     aria-label="Filtrar por Estado"
-                    variant="bordered"
+                    variant="flat"
                     classNames={selectClassNames}
                 >
                     <SelectItem key="All" value="All">Todos</SelectItem>
@@ -333,47 +351,43 @@ const TabDeudores = () => {
                         variant="flat" 
                         color="default"
                         onPress={clearFilters}
-                        className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm h-11 min-w-0"
+                        className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-[52px] rounded-xl min-w-0"
                         isIconOnly
                         title="Limpiar filtros"
                     >
                         <HiFilter className="text-slate-400 text-lg" />
                     </Button>
                 ) : (
-                    <div className="w-full h-11"></div> 
+                    <div className="w-full h-[52px]"></div> 
                 )}
             </div>
 
           </div>
-        </CardBody>
-      </Card>
+        </div>
 
-      {/* ── 2. LISTA DE DEUDORES (Vista de Filas) ── */}
-      <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
-        
-        {/* Cabecera interna de tabla */}
-        <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4">
-            <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">
-                Mostrando <span className="text-red-600 dark:text-red-400">{paginatedData.length}</span> de <span className="text-slate-800 dark:text-zinc-200">{filteredData.length}</span> deudores
-                {filteredData.length !== candidatos.length && ` (filtrado de ${candidatos.length})`}
+        {/* Sub-Header de Paginación */}
+        <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+                Mostrando <span className="text-red-600 dark:text-red-400">{paginatedData.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{filteredData.length}</span> deudores
+                {filteredData.length !== candidatos.length && ` (filtrado)`}
             </span>
 
             <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:block">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
                     Filas por página:
                 </span>
                 <Select
                     size="sm"
                     aria-label="Por página"
                     className="w-24"
-                    variant="bordered"
+                    variant="flat"
                     selectedKeys={[rowsPerPage.toString()]}
                     onSelectionChange={(keys) => {
                         setRowsPerPage(Number(Array.from(keys)[0]));
                         setCurrentPage(1);
                     }}
                     classNames={{
-                        trigger: "bg-slate-50 dark:bg-zinc-800/50 border-slate-200 dark:border-zinc-700 shadow-sm rounded-lg",
+                        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-none h-[36px]",
                         value: "font-bold text-slate-700 dark:text-zinc-300"
                     }}
                 >
@@ -386,10 +400,11 @@ const TabDeudores = () => {
             </div>
         </div>
 
-        <CardBody className="p-0">
+        {/* Lista de Filas */}
+        <div className="bg-white dark:bg-zinc-950 flex flex-col w-full">
             {paginatedData.length === 0 ? (
                 <div className="text-center py-16 flex flex-col items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-zinc-800/50 flex items-center justify-center mb-4 border border-slate-100 dark:border-zinc-700">
                         <HiClipboardList className="text-3xl text-slate-400 dark:text-zinc-500" />
                     </div>
                     <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">
@@ -405,7 +420,7 @@ const TabDeudores = () => {
                         <div 
                             key={item.id} 
                             className={`relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-5 border-b border-slate-100 dark:border-zinc-800/50 transition-colors
-                            ${item.isCortado ? 'bg-slate-50/50 dark:bg-zinc-800/20' : 'hover:bg-slate-50/30 dark:hover:bg-zinc-800/10'}`}
+                            ${item.isCortado ? 'bg-slate-50/50 dark:bg-zinc-800/20' : 'hover:bg-slate-50/80 dark:hover:bg-zinc-900/30'}`}
                         >
                             {/* Barra indicadora lateral */}
                             <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-md ${getRowBorderColor(item)} opacity-80`}></div>
@@ -415,7 +430,7 @@ const TabDeudores = () => {
                                 <User
                                     name={
                                         <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                            <span className={`font-bold text-sm truncate max-w-[180px] sm:max-w-[250px] ${item.isCortado ? 'text-slate-500 dark:text-zinc-400 line-through decoration-slate-400/50' : 'text-slate-800 dark:text-zinc-100'}`}>
+                                            <span className={`font-black text-sm truncate max-w-[180px] sm:max-w-[250px] ${item.isCortado ? 'text-slate-500 dark:text-zinc-500 line-through decoration-slate-400/50' : 'text-slate-800 dark:text-zinc-100'}`}>
                                                 {item.cliente_nombre}
                                             </span>
                                         </div>
@@ -432,7 +447,7 @@ const TabDeudores = () => {
                                                     </Chip>
                                                 )}
                                                 {item.tiene_convenio && (
-                                                    <Chip size="sm" className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-widest px-1 h-5 border border-emerald-200 dark:border-emerald-800/50">
+                                                    <Chip size="sm" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-widest px-1 h-5 border border-emerald-500/20">
                                                         CONVENIO
                                                     </Chip>
                                                 )}
@@ -442,12 +457,12 @@ const TabDeudores = () => {
                                     avatarProps={{
                                         radius: "md",
                                         size: "sm",
-                                        className: `font-bold text-sm ${
-                                            item.isCortado ? "bg-slate-200 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500" :
-                                            item.tiene_convenio ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400" :
-                                            item.colorGravedad === 'danger' ? "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400" : 
-                                            item.colorGravedad === 'warning' ? "bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400" : 
-                                            "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
+                                        className: `font-bold text-sm shadow-sm border border-slate-200 dark:border-zinc-700 ${
+                                            item.isCortado ? "bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500" :
+                                            item.tiene_convenio ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400" :
+                                            item.colorGravedad === 'danger' ? "bg-red-500/10 text-red-600 dark:bg-red-900/20 dark:text-red-400" : 
+                                            item.colorGravedad === 'warning' ? "bg-orange-500/10 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400" : 
+                                            "bg-blue-500/10 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
                                         }`,
                                         name: item.cliente_nombre?.charAt(0) || "?"
                                     }}
@@ -455,14 +470,14 @@ const TabDeudores = () => {
                             </div>
 
                             {/* 2. Información de Deuda y Tiempo */}
-                            <div className="flex flex-row gap-6 lg:w-1/3 justify-start sm:justify-center w-full pl-12 lg:pl-0">
+                            <div className="flex flex-row gap-8 lg:w-1/3 justify-start sm:justify-center w-full pl-12 lg:pl-0">
                                 
                                 {/* Monto */}
                                 <div className="flex flex-col items-start min-w-[100px]">
                                     <span className="text-[9px] uppercase font-bold tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
                                         {item.tiene_convenio ? "Saldo Convenio" : "Deuda Total"}
                                     </span>
-                                    <span className={`text-xl font-black tracking-tight ${item.tiene_convenio ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-zinc-100'}`}>
+                                    <span className={`text-xl font-black tracking-tight ${item.tiene_convenio ? 'text-emerald-600 dark:text-emerald-400' : item.colorGravedad === 'danger' ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-zinc-100'}`}>
                                         ${item.tiene_convenio ? item.convenio?.saldo_restante?.toLocaleString("es-MX", {minimumFractionDigits: 2}) : item.saldo_pendiente?.toLocaleString("es-MX", {minimumFractionDigits: 2})}
                                     </span>
                                     {item.tiene_convenio && (
@@ -473,13 +488,13 @@ const TabDeudores = () => {
                                 </div>
 
                                 {/* Tiempo de Retraso con Barra */}
-                                <div className="flex flex-col w-full max-w-[140px]">
+                                <div className="flex flex-col w-full max-w-[140px] pt-1">
                                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1.5">
                                         <span className={
                                             item.tiene_convenio ? 'text-emerald-600 dark:text-emerald-400' :
                                             item.isCortado ? 'text-slate-500 dark:text-zinc-400' :
                                             item.colorGravedad === 'danger' ? 'text-red-600 dark:text-red-400' :
-                                            item.colorGravedad === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'
+                                            item.colorGravedad === 'warning' ? 'text-orange-500 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400'
                                         }>
                                             {item.dias_retraso} días
                                         </span>
@@ -488,13 +503,13 @@ const TabDeudores = () => {
                                     <Progress
                                         size="sm"
                                         value={item.dias_retraso > 120 ? 100 : (item.dias_retraso / 120) * 100}
-                                        color={item.tiene_convenio ? "success" : (item.isCortado ? "default" : item.colorGravedad === 'danger' ? 'danger' : item.colorGravedad === 'warning' ? 'warning' : 'primary')}
+                                        color={item.tiene_convenio ? "success" : (item.isCortado ? "default" : item.colorGravedad === 'danger' ? 'danger' : item.colorGravedad === 'warning' ? 'warning' : 'success')}
                                         aria-label="Gravedad de deuda"
                                         className="h-1.5"
                                         classNames={{ track: "bg-slate-100 dark:bg-zinc-800" }}
                                     />
-                                    <span className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 mt-1.5 truncate">
-                                        Sugerido: <span className="font-bold text-slate-700 dark:text-zinc-300">{item.accion_sugerida}</span>
+                                    <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-2 truncate">
+                                        Sugerido: <span className="text-slate-700 dark:text-zinc-300">{item.accion_sugerida}</span>
                                     </span>
                                 </div>
                             </div>
@@ -516,7 +531,7 @@ const TabDeudores = () => {
                                     >
                                         <Button
                                             size="sm"
-                                            className="font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100"
+                                            className="font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg h-9 px-3"
                                             variant="flat"
                                             startContent={<HiDocumentText />}
                                             onPress={() => {
@@ -531,9 +546,8 @@ const TabDeudores = () => {
                                     <Tooltip content="Crear Convenio de Pago" classNames={{content: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl font-medium text-xs"}}>
                                         <Button
                                             size="sm"
-                                            color="primary"
                                             variant="flat"
-                                            className="font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100"
+                                            className="font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg h-9 px-3"
                                             startContent={<HiDocumentText />}
                                             onPress={() => {
                                                 setSelectedDeudor(item);
@@ -553,8 +567,7 @@ const TabDeudores = () => {
                                         <Button 
                                             size="sm" 
                                             variant="flat" 
-                                            color="success" 
-                                            className="font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 shadow-sm"
+                                            className="font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg h-9 px-3"
                                             onPress={() => handleReconectar(item)}
                                             startContent={<HiCheckCircle className="text-lg" />}
                                         >
@@ -566,8 +579,7 @@ const TabDeudores = () => {
                                         <Button
                                             size="sm"
                                             variant="flat"
-                                            color="danger"
-                                            className="font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 shadow-sm"
+                                            className="font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg h-9 px-3"
                                             startContent={<HiBan className="text-lg" />}
                                             onPress={() => {
                                                 if (item.isCortado) {
@@ -589,24 +601,24 @@ const TabDeudores = () => {
                 </div>
             )}
 
-            {/* Paginación */}
+            {/* Paginación Inferior */}
             {totalPages > 1 && (
-                <div className="flex justify-center p-4 bg-slate-50/50 dark:bg-zinc-900">
+                <div className="flex justify-center p-4 bg-slate-50/60 dark:bg-zinc-900/40 border-t border-slate-100 dark:border-zinc-800">
                     <Pagination
                         total={totalPages}
                         page={currentPage}
                         onChange={setCurrentPage}
                         showControls
-                        color="primary"
-                        variant="light"
+                        color="default"
+                        variant="flat"
                         classNames={{
-                            cursor: "bg-blue-600 text-white font-bold shadow-md",
+                            cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold shadow-sm",
                         }}
                     />
                 </div>
             )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       {/* MODALS */}
       <ModalConfiguracionCortes isOpen={showConfigModal} onClose={() => setShowConfigModal(false)} />

@@ -8,30 +8,40 @@ tags: ["cliente", "modificar", "editar", "actualizar"]
 
 # Modificar Datos de un Cliente
 
-Para actualizar la información de un cliente existente, sigue estos pasos:
+Modificar un cliente sirve para corregir datos que cambiaron con el tiempo o que fueron capturados con error.
+
+## Pasos
 
 1. Dirígete a la **tabla de clientes**.  
 2. Selecciona el cliente que deseas modificar.  
 3. Identifica el botón con el **icono de lápiz ✏️** y presiónalo.  
 4. Se abrirá un **modal de edición** que mostrará los datos actuales del cliente.  
 
-En este formulario puedes editar, corregir o eliminar la información existente en los siguientes campos:
+En esa ventana podrá cambiar los datos visibles del cliente.
 
 ### Información Personal
-- **Nombre completo** → Modifica nombre y apellidos.  
-- **Correo electrónico** → Actualiza a una dirección válida.  
-- **Teléfono** → Número de 10 dígitos.  
-- **Pueblo** → Cambia la localidad seleccionada, si es necesario.  
-- **Tarifa** → Ajusta la tarifa asignada al cliente.  
-- **Dirección de residencia** → Edita la dirección completa, incluyendo:  
-  - Calle  
-  - Número  
-  - Colonia  
-  - Referencias adicionales  
+- **Nombre completo**: cambie nombres o apellidos si es necesario.
+- **Correo electrónico**: actualice el correo si cambió.
+- **Teléfono**: corrija el número o reemplácelo.
+- **Pueblo**: cambie la localidad si el cliente se mudó o si hubo un error.
+- **Tarifa**: ajuste la tarifa cuando corresponda.
+- **Dirección de residencia**: modifique calle, número, colonia y referencias.
+
+### Medidor asignado
+
+Desde este mismo modal también puede revisar el medidor del cliente.
+
+- Si el cliente ya tiene un medidor, aparecerá en la sección de gestión.
+- Si necesita cambiarlo, primero libere el actual y después asigne el nuevo.
+- Si solo desea conservarlo, no hace falta tocar esa parte.
+- La reasignación y la liberación se guardan junto con el resto de los cambios para que el historial quede consistente.
+- Si únicamente corrige datos personales o la tarifa, puede dejar el medidor como está.
 
 ---
 
 ### Confirmación de cambios
-Una vez realizados los ajustes, presiona el botón **Actualizar Clinte**.  
-Si la operación es exitosa, el sistema mostrará una **notificación de confirmación** y los cambios se reflejarán automáticamente en la tabla de clientes.
+
+Cuando termine, presione **Actualizar Cliente**. Si la información se guardó bien, verá el aviso de confirmación y la tabla se actualizará.
+
+> Revise con cuidado antes de guardar, sobre todo nombre, dirección y medidor, porque son los datos que más se consultan después.
 
