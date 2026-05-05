@@ -1,46 +1,43 @@
 ---
-titulo: "Liberar Medidor"
+titulo: "Eliminar Cliente"
 seccion: "clientes"
 orden: 5
-descripcion: "Proceso para liberar un medidor asignado a un cliente en el sistema"
-tags: ["cliente", "medidor", "liberar", "desasignar"]
+descripcion: "Aprende cómo eliminar un cliente del sistema"
+tags: ["cliente", "eliminar", "baja", "borrar"]
 ---
 
-# Liberar un Medidor de un Cliente
+# Eliminar Cliente
 
-La función **Liberar Medidor** permite desasignar un medidor de un cliente.  
-Este proceso es útil en casos como:
+Eliminar un cliente significa quitar su registro del sistema cuando ya no debe permanecer guardado.
 
-- El cliente **vende la propiedad**.  
-- El cliente ya **no reside en la vivienda**.  
-- El nombre del propietario cambia, pero el nuevo dueño ya cuenta con un registro en el sistema.  
+## Antes de eliminar
 
-En lugar de eliminar al cliente, basta con **liberar el medidor** para poder asignarlo a otro cliente existente.
+Revise bien que se trate del cliente correcto, porque esta acción no se puede deshacer.
 
----
+Este proceso solo debe usarse cuando el registro ya no es necesario. Si lo único que cambió fue el medidor, use la opción de liberarlo o cambiarlo en lugar de borrar al cliente.
 
-## Pasos para liberar un medidor
+## Pasos
 
-1. Dirígete a la **tabla de clientes**.  
-2. Selecciona el cliente al que deseas liberar un medidor.  
-3. Haz clic en el botón con el **icono de lápiz ✏️**.  
-4. Se abrirá un **modal de edición**, donde se mostrarán los datos actuales del cliente.  
+1. Abra la **tabla de clientes**.
+2. Busque al cliente que desea eliminar.
+3. Presione el botón de **editar**.
+4. Baje hasta la sección de **Zona de Peligro**.
+5. Marque la casilla de confirmación.
+6. Presione **Eliminar Cliente**.
 
-Dentro de este modal encontrarás el apartado **Gestión de Medidor**, que incluye:
+El sistema le pedirá una confirmación adicional antes de borrar el registro.
 
-- **Medidores asignados** → Lista de los medidores actualmente vinculados al cliente.  
-- Cada medidor muestra su **identificador o número de serie**.  
-- Junto al medidor encontrarás el botón **Liberar**.  
+## Cuándo usarlo
 
----
+- Cuando el registro fue creado por error.
+- Cuando el cliente ya no debe permanecer en el padrón.
+- Cuando usted está seguro de que no necesita conservar esa información.
 
-## Confirmación de liberación
-
-- Al presionar el botón **Liberar**, este cambiará de color y mostrará la etiqueta **Liberado**.  
-- Para confirmar los cambios, presiona **Actualizar Cliente**.  
-- Una vez guardado, el medidor quedará disponible para ser asignado a otro cliente.  
+> Si la persona seguirá apareciendo en reportes históricos, no la elimine sin revisar antes el contexto del cobro.
 
 ---
 
-✅ Con este proceso, se asegura que los medidores puedan reutilizarse de forma ordenada sin necesidad de eliminar registros de clientes.
+## Recomendación
+
+Antes de borrar, verifique que no tenga información pendiente de consulta. En la mayoría de los casos, si el cliente solo cambió de medidor o de domicilio, es mejor editar su ficha que eliminarla.
 

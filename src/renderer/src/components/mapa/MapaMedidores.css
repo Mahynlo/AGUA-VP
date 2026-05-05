@@ -1,127 +1,112 @@
 /* Estilos personalizados unificados para todos los componentes de mapa */
 
 /* =================================================================
-   1. CONTENEDOR PRINCIPAL
+   1. CONTENEDOR PRINCIPAL Y CAPAS
    ================================================================= */
 .leaflet-container {
-  background-color: #f3f4f6; /* Gris claro suave */
+  background-color: #f3f4f6;
   font-family: inherit;
   z-index: 0;
 }
 
-/* Modo Oscuro Global */
 .dark .leaflet-container {
-  background-color: #18181b; /* zinc-900 */
+  background-color: #18181b;
 }
 
-/* Filtro para invertir colores del mapa base en modo oscuro */
-/* Esto hace que el mapa se vea "dark mode" automáticamente sin cambiar de proveedor */
+/* 🔥 OPTIMIZACIÓN: Aceleración por hardware para filtros pesados */
 .dark .leaflet-tile-layer {
   filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+  will-change: filter;
+  transform: translateZ(0); /* Fuerza el renderizado en la GPU */
 }
 
 /* =================================================================
    2. POPUPS (Estilo Glassmorphism Adaptable)
    ================================================================= */
-
-/* Contenedor del Popup (Burbuja) */
 .custom-popup .leaflet-popup-content-wrapper {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  transform: translateZ(0); /* 🔥 OPTIMIZACIÓN: Previene lag al mover el mapa con el popup abierto */
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   padding: 0;
   border: 1px solid rgba(0,0,0,0.05);
-  color: #1f2937; /* Texto base oscuro */
+  color: #1f2937;
 }
 
-/* Flecha del Popup */
 .custom-popup .leaflet-popup-tip {
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 /* --- MODO OSCURO POPUP --- */
-/* Usamos .dark global para afectar al popup */
 .dark .custom-popup .leaflet-popup-content-wrapper {
-  background: rgba(39, 39, 42, 0.95); /* zinc-800 */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #f3f4f6; /* Texto base claro */
+  background: rgba(39, 39, 42, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
 .dark .custom-popup .leaflet-popup-tip {
-  background: rgba(39, 39, 42, 0.95); /* zinc-800 */
+  background: rgba(39, 39, 42, 0.95);
 }
 
-/* Contenido interno del popup */
 .custom-popup .leaflet-popup-content {
   margin: 0;
   min-width: 260px;
   line-height: 1.5;
+  user-select: text; /* Movido aquí desde la sección 5 */
+  cursor: auto;
 }
 
-/* Botón de cerrar */
 .custom-popup .leaflet-popup-close-button {
   color: #9ca3af !important;
   font-size: 18px !important;
   top: 8px !important;
   right: 8px !important;
-  transition: color 0.2s;
+  transition: color 0.2s ease; /* 🔥 Añadido 'ease' para suavidad */
 }
 
 .custom-popup .leaflet-popup-close-button:hover {
-  color: #ef4444 !important; /* Rojo al hover */
+  color: #ef4444 !important;
 }
 
 /* =================================================================
    3. TEXTOS INTERNOS DEL POPUP (Overrides de Tailwind)
    ================================================================= */
-/*
-   Leaflet renderiza el popup fuera del árbol normal de React a veces,
-   por lo que las clases 'dark:' de Tailwind dentro del HTML del popup
-   pueden fallar si no heredan el '.dark' del body.
-   Estos estilos fuerzan los colores correctos.
-*/
-
-/* Títulos y textos principales en modo oscuro */
+/* 🔥 OPTIMIZACIÓN: Selectores agrupados para evaluación más rápida del navegador */
 .dark .custom-popup h3,
 .dark .custom-popup .text-gray-900,
 .dark .custom-popup .text-gray-800 {
   color: #ffffff !important;
 }
 
-/* Textos secundarios */
 .dark .custom-popup p,
 .dark .custom-popup span,
 .dark .custom-popup .text-gray-600,
 .dark .custom-popup .text-gray-500 {
-  color: #d1d5db !important; /* gray-300 */
+  color: #d1d5db !important;
 }
 
-/* Fondos de secciones internas en modo oscuro */
 .dark .custom-popup .bg-white\/95 {
-  background-color: transparent !important; /* El wrapper ya tiene color */
+  background-color: transparent !important;
 }
 
-/* Iconos y acentos (ajuste de brillo para fondo oscuro) */
 .dark .custom-popup .text-blue-600 { color: #60a5fa !important; }
 .dark .custom-popup .text-green-600 { color: #4ade80 !important; }
 .dark .custom-popup .text-red-600 { color: #f87171 !important; }
 .dark .custom-popup .text-purple-600 { color: #c084fc !important; }
 .dark .custom-popup .text-orange-600 { color: #fb923c !important; }
 
-/* Fondos de iconos (burbujas de color) */
+/* Agrupados fondos de iconos */
 .dark .custom-popup .bg-blue-50,
 .dark .custom-popup .bg-blue-100 { background-color: rgba(59, 130, 246, 0.2) !important; }
-
 .dark .custom-popup .bg-purple-50 { background-color: rgba(147, 51, 234, 0.2) !important; }
 .dark .custom-popup .bg-orange-50 { background-color: rgba(234, 88, 12, 0.2) !important; }
 .dark .custom-popup .bg-green-50 { background-color: rgba(22, 163, 74, 0.2) !important; }
 .dark .custom-popup .bg-gray-50 { background-color: rgba(255, 255, 255, 0.05) !important; }
 
-/* Bordes */
 .dark .custom-popup .border-gray-100,
 .dark .custom-popup .border-gray-200 {
   border-color: rgba(255, 255, 255, 0.1) !important;
@@ -146,9 +131,8 @@
   color: #3b82f6 !important;
 }
 
-/* Modo Oscuro Controles */
 .dark .leaflet-control-zoom a {
-  background-color: #27272a !important; /* zinc-800 */
+  background-color: #27272a !important;
   color: #e5e7eb !important;
   border-color: #3f3f46 !important;
 }
@@ -168,21 +152,16 @@
 }
 
 /* =================================================================
-   5. INTERACCIÓN (Sin romper marcadores)
+   5. INTERACCIÓN Y MARCADORES
    ================================================================= */
-/* Solo cambiamos el filtro visual al hacer hover, NO la posición/transform */
 .leaflet-marker-icon {
-  transition: filter 0.2s ease, z-index 0.1s;
+  transition: filter 0.2s ease;
+  will-change: filter; /* 🔥 OPTIMIZACIÓN: Advierte al navegador que esto cambiará */
 }
 
 .leaflet-marker-icon:hover {
   filter: brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-  z-index: 1000 !important;
-  cursor: pointer;
-}
-
-/* Selección de texto permitida dentro del popup */
-.leaflet-popup-content {
-  user-select: text;
-  cursor: auto;
+  /* 🔥 OPTIMIZACIÓN: Se eliminó transiciones forzadas en z-index */
+  /* Leaflet usa 'z-index-offset' en JS nativamente al hacer hover. 
+     Forzar un z-index arbitrario en CSS dispara cálculos de layout (Reflow) innecesarios. */
 }

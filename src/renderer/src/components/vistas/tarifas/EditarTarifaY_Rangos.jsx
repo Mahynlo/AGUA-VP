@@ -9,7 +9,7 @@ import {
   Tabs,
   Tab
 } from "@nextui-org/react";
-import { HiCurrencyDollar, HiCalendar, HiDocumentText, HiPencil, HiTrash, HiPlus, HiCheck, HiX } from "react-icons/hi";
+import { HiCurrencyDollar, HiCalendar, HiPencil, HiTrash, HiPlus } from "react-icons/hi";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import { useTarifas } from "../../../context/TarifasContext";
@@ -207,7 +207,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
       const response = await window.tarifasApp.updateRangosTarifa({
         id: tarifa.id,
         rangos: parsedRangos.map(r => ({
-          id: rangos[r.index - 1].id || null, // Mantenemos el ID original si existe
+          id: rangos[r.index - 1].id || null, 
           consumo_min: r.consumo_min,
           consumo_max: r.consumo_max,
           precio_por_m3: r.precio_por_m3,
@@ -265,35 +265,28 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
     setRangos(rangos.filter((_, index) => index !== indexToRemove));
   };
 
-  // Clases para inputs
-  const inputClasses = (hasError) => `
-    w-full text-sm font-medium rounded-xl transition-all duration-200 resize-none
-    border focus:outline-none focus:ring-2 px-4 py-2.5 bg-white dark:bg-zinc-900
+  // Clases centralizadas (Token 4)
+  const getInputClasses = (hasError) => `
+    w-full text-sm font-medium rounded-xl transition-all duration-200 resize-none px-3 h-11
     ${hasError 
-      ? 'border-red-300 dark:border-red-800 focus:ring-red-500/50 focus:border-red-500' 
-      : 'border-slate-200 dark:border-zinc-700 focus:ring-blue-500/50 focus:border-blue-500 dark:text-zinc-100 hover:border-blue-300 dark:hover:border-zinc-500'
+      ? 'bg-red-50/50 dark:bg-red-900/10 border border-red-300 dark:border-red-800/50 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-red-900 dark:text-red-200' 
+      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:border-slate-400 dark:focus:border-zinc-500 text-slate-800 dark:text-zinc-100'
     }
+    focus:outline-none shadow-none
   `;
 
-  // Clases para inputs de tabla (más compactos)
-  const tableInputClasses = `
-    w-full text-sm font-medium rounded-xl transition-all duration-200 resize-none
-    border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900/50
-    focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-950
-    px-3 py-2 text-slate-800 dark:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800 text-center
-  `;
+  const labelClasses = "block mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400";
 
   return (
     <>
       <Button 
-        color="primary" 
         variant="flat" 
         onPress={onOpen} 
         isDisabled={!canModificarTarifas}
-        startContent={<HiPencil className="w-4 h-4" />}
-        className="font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40"
+        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl px-4 min-w-0"
+        title="Editar"
       >
-        Editar
+        <HiPencil className="w-4 h-4" />
       </Button>
 
       <Modal 
@@ -304,268 +297,271 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
         scrollBehavior="inside"
         isDismissable={false}
         isKeyboardDismissDisabled={true}
-        backdrop="blur"
-        placement="center"
+        /* Token 2: Modal Premium SaaS */
         classNames={{
-          base: "bg-white dark:bg-zinc-900 shadow-2xl",
-          backdrop: "bg-zinc-900/50 backdrop-blur-sm",
-          header: "border-b border-slate-100 dark:border-zinc-800",
-          footer: "border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900",
-          closeButton: "hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 text-slate-400 dark:text-zinc-500 transition-colors z-50",
+          backdrop: "bg-slate-900/40 backdrop-blur-sm",
+          base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+          header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8 flex flex-col gap-1",
+          body: "px-8 py-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent",
+          footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+          closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4"
         }}
       >
         <ModalContent>
           {(onClose) => (
             <>
               {/* ── HEADER ── */}
-              <ModalHeader className="flex flex-col gap-1">
-                <div className="flex items-center gap-3.5">
-                    <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
-                        <HiPencil className="w-7 h-7" />
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                        <h2 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
-                            Editar Tarifa
-                        </h2>
-                        <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                            Modificación de parámetros
-                        </p>
-                    </div>
+              <ModalHeader>
+                <div className="flex items-center gap-4">
+                  {/* Regla de tintes */}
+                  <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+                    <HiPencil className="w-6 h-6" />
+                  </div>
+                  <div>
+                    {/* Token 3 */}
+                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                      Editar Tarifa
+                    </h2>
+                    <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+                      Modificación de parámetros y estructura de precios
+                    </p>
+                  </div>
                 </div>
               </ModalHeader>
 
               {/* ── BODY CON TABS ── */}
-              <ModalBody>
+              <ModalBody className="px-0 sm:px-0">
+                {/* Token 7: Tabs */}
                 <Tabs
                   selectedKey={tab}
                   onSelectionChange={setTab}
                   variant="underlined"
                   aria-label="Opciones de Edición"
                   classNames={{
-                    base: "w-full border-b border-slate-200 dark:border-zinc-800 px-6 pt-2 bg-white dark:bg-zinc-950",
-                    tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
-                    cursor: "w-full bg-blue-500",
+                    base: "w-full px-8",
+                    tabList: "gap-6 w-full relative rounded-none p-0 border-b border-slate-200 dark:border-zinc-800",
+                    cursor: "w-full bg-slate-800 dark:bg-zinc-200 h-[2px]",
                     tab: "max-w-fit px-0 h-12",
-                    tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm"
+                    tabContent: "group-data-[selected=true]:text-slate-800 dark:group-data-[selected=true]:text-zinc-100 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors"
                   }}
                 >
                   {/* TAB 1: DATOS DE TARIFA */}
                   <Tab key="tarifa" title="Datos Generales">
-                    <div className="p-6 sm:p-8 space-y-6">
-                        <form 
-                            id="form-editar-tarifa" 
-                            onSubmit={(e) => { e.preventDefault(); handleGuardarTarifa(); }}
-                            className="flex flex-col gap-6"
-                        >
-                            {/* Información General */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-2">
-                                    <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-slate-500">1</span>
-                                    <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                                        Información General
-                                    </h3>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 gap-4 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm">
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 mb-1.5 block">
-                                            Nombre de la Tarifa <span className="text-red-500">*</span>
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                                                <HiCurrencyDollar className="w-5 h-5" />
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={nombre}
-                                                onChange={(e) => { setNombre(e.target.value); limpiarError('nombre'); }}
-                                                className={`${inputClasses(mostrarErrores && erroresCampos.nombre)} pl-10`}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 mb-1.5 block">
-                                            Descripción <span className="text-red-500">*</span>
-                                        </label>
-                                        <textarea
-                                            value={descripcion}
-                                            onChange={(e) => { setDescripcion(e.target.value); limpiarError('descripcion'); }}
-                                            rows={3}
-                                            className={inputClasses(mostrarErrores && erroresCampos.descripcion)}
-                                        />
-                                    </div>
-                                </div>
+                    <div className="px-8 py-4">
+                      <form 
+                        id="form-editar-tarifa" 
+                        onSubmit={(e) => { e.preventDefault(); handleGuardarTarifa(); }}
+                        className="flex flex-col gap-8"
+                      >
+                        {/* Información General */}
+                        <div className="space-y-5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-md bg-slate-500/10 text-slate-500 flex items-center justify-center text-[10px] font-bold">1</span>
+                            <h3 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                              Información General
+                            </h3>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 gap-5 pl-7">
+                            <div>
+                              <label className={labelClasses}>
+                                Nombre de la Tarifa <span className="text-red-500">*</span>
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                  <HiCurrencyDollar className="w-5 h-5" />
+                                </span>
+                                <input
+                                  type="text"
+                                  value={nombre}
+                                  onChange={(e) => { setNombre(e.target.value); limpiarError('nombre'); }}
+                                  className={`${getInputClasses(mostrarErrores && erroresCampos.nombre)} pl-10`}
+                                />
+                              </div>
                             </div>
 
-                            {/* Vigencia */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-2">
-                                    <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-slate-500">2</span>
-                                    <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                                        Período de Vigencia
-                                    </h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm">
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 mb-1.5 block">
-                                            Fecha de Inicio <span className="text-red-500">*</span>
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                                                <HiCalendar className="w-5 h-5" />
-                                            </span>
-                                            <input
-                                                type="date"
-                                                value={fechaInicio}
-                                                onChange={(e) => { setFechaInicio(e.target.value); limpiarError('fechaInicio'); }}
-                                                className={`${inputClasses(mostrarErrores && erroresCampos.fechaInicio)} pl-10`}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-slate-600 dark:text-zinc-400 mb-1.5 block">
-                                            Fecha de Fin <span className="font-normal text-slate-400">(Opcional)</span>
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                                                <HiCalendar className="w-5 h-5" />
-                                            </span>
-                                            <input
-                                                type="date"
-                                                value={fechaFin}
-                                                onChange={(e) => setFechaFin(e.target.value)}
-                                                className={`${inputClasses(false)} pl-10`}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
+                            <div>
+                              <label className={labelClasses}>
+                                Descripción <span className="text-red-500">*</span>
+                              </label>
+                              <textarea
+                                value={descripcion}
+                                onChange={(e) => { setDescripcion(e.target.value); limpiarError('descripcion'); }}
+                                rows={3}
+                                className={`${getInputClasses(mostrarErrores && erroresCampos.descripcion)} py-3 h-auto`}
+                              />
                             </div>
-                        </form>
+                          </div>
+                        </div>
+
+                        {/* Vigencia */}
+                        <div className="space-y-5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-md bg-slate-500/10 text-slate-500 flex items-center justify-center text-[10px] font-bold">2</span>
+                            <h3 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                              Período de Vigencia
+                            </h3>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pl-7">
+                            <div>
+                              <label className={labelClasses}>
+                                Fecha de Inicio <span className="text-red-500">*</span>
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                  <HiCalendar className="w-5 h-5" />
+                                </span>
+                                <input
+                                  type="date"
+                                  value={fechaInicio}
+                                  onChange={(e) => { setFechaInicio(e.target.value); limpiarError('fechaInicio'); }}
+                                  className={`${getInputClasses(mostrarErrores && erroresCampos.fechaInicio)} pl-10`}
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className={labelClasses}>
+                                Fecha de Fin <span className="font-normal text-slate-400 lowercase">(Opcional)</span>
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                  <HiCalendar className="w-5 h-5" />
+                                </span>
+                                <input
+                                  type="date"
+                                  value={fechaFin}
+                                  onChange={(e) => setFechaFin(e.target.value)}
+                                  className={`${getInputClasses(false)} pl-10`}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </form>
                     </div>
                   </Tab>
 
                   {/* TAB 2: RANGOS */}
                   <Tab key="rangos" title="Bloques de Consumo">
-                    <div className="p-6 sm:p-8 space-y-6">
-                        <form 
-                            id="form-editar-rangos" 
-                            onSubmit={(e) => { e.preventDefault(); handleGuardarRangos(); }}
-                            className="flex flex-col gap-6"
-                        >
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-zinc-800/50 pb-2">
-                                    <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-slate-500">1</span>
-                                    <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                                        Configuración de Rangos
-                                    </h3>
-                                </div>
-                                
-                                {/* Tabla Moderna */}
-                                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left border-collapse">
-                                            <thead className="bg-slate-50 dark:bg-zinc-800/50 border-b border-slate-200 dark:border-zinc-800">
-                                                <tr>
-                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-12">#</th>
-                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Mínimo (m³)</th>
-                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Máximo (m³)</th>
-                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Precio ($/m³)</th>
-                                                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-12"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
-                                                {rangos.map((r, index) => (
-                                                    <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                                                        <td className="px-4 py-3 text-center">
-                                                            <span className="text-xs font-bold text-slate-400 dark:text-zinc-500">{index + 1}</span>
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <input
-                                                                type="number" min="0" step="0.01"
-                                                                value={r.consumo_min}
-                                                                onChange={(e) => handleChangeRango(index, "consumo_min", e.target.value)}
-                                                                className={tableInputClasses}
-                                                                required
-                                                            />
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <input
-                                                                type="number" min="0" step="0.01"
-                                                                value={r.consumo_max}
-                                                                onChange={(e) => handleChangeRango(index, "consumo_max", e.target.value)}
-                                                                className={tableInputClasses}
-                                                                required
-                                                            />
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <div className="relative">
-                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
-                                                                <input
-                                                                    type="number" min="0" step="0.01"
-                                                                    value={r.precio_por_m3}
-                                                                    onChange={(e) => handleChangeRango(index, "precio_por_m3", e.target.value)}
-                                                                    className={`${tableInputClasses} pl-7`}
-                                                                    required
-                                                                />
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            {rangos.length > 1 && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => eliminarRango(index)}
-                                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                                >
-                                                                    <HiTrash className="w-4 h-4" />
-                                                                </button>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className="p-3 bg-slate-50 dark:bg-zinc-800/30 border-t border-slate-100 dark:border-zinc-800">
-                                        <Button
-                                            type="button" onClick={agregarRango} variant="flat"
-                                            className="w-full font-bold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700 dark:hover:bg-zinc-800 shadow-sm"
-                                            startContent={<HiPlus className="w-4 h-4 text-blue-500" />}
+                    <div className="px-8 py-4">
+                      <form 
+                        id="form-editar-rangos" 
+                        onSubmit={(e) => { e.preventDefault(); handleGuardarRangos(); }}
+                        className="flex flex-col gap-6"
+                      >
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-md bg-slate-500/10 text-slate-500 flex items-center justify-center text-[10px] font-bold">1</span>
+                            <h3 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                              Estructura de Precios
+                            </h3>
+                          </div>
+                          
+                          {/* Token 6: Tabla Limpia SaaS */}
+                          <div className="w-full overflow-x-auto pl-7">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr>
+                                  <th className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3 px-2 w-12 text-center">#</th>
+                                  <th className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3 px-2">Mín. (m³)</th>
+                                  <th className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3 px-2">Máx. (m³)</th>
+                                  <th className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3 px-2">Precio ($/m³)</th>
+                                  <th className="bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3 px-2 w-12"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {rangos.map((r, index) => (
+                                  <tr key={index} className="hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
+                                    <td className="border-b border-slate-100 dark:border-zinc-800/50 py-3 px-2 text-center">
+                                      <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500">{index + 1}</span>
+                                    </td>
+                                    <td className="border-b border-slate-100 dark:border-zinc-800/50 py-3 px-2">
+                                      <input
+                                        type="number" min="0" step="0.01"
+                                        value={r.consumo_min}
+                                        onChange={(e) => handleChangeRango(index, "consumo_min", e.target.value)}
+                                        className={getInputClasses(false)}
+                                        required
+                                      />
+                                    </td>
+                                    <td className="border-b border-slate-100 dark:border-zinc-800/50 py-3 px-2">
+                                      <input
+                                        type="number" min="0" step="0.01"
+                                        value={r.consumo_max}
+                                        onChange={(e) => handleChangeRango(index, "consumo_max", e.target.value)}
+                                        className={getInputClasses(false)}
+                                        required
+                                      />
+                                    </td>
+                                    <td className="border-b border-slate-100 dark:border-zinc-800/50 py-3 px-2">
+                                      <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                                        <input
+                                          type="number" min="0" step="0.01"
+                                          value={r.precio_por_m3}
+                                          onChange={(e) => handleChangeRango(index, "precio_por_m3", e.target.value)}
+                                          className={`${getInputClasses(false)} pl-7`}
+                                          required
+                                        />
+                                      </div>
+                                    </td>
+                                    <td className="border-b border-slate-100 dark:border-zinc-800/50 py-3 px-2 text-center">
+                                      {rangos.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => eliminarRango(index)}
+                                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-500/10 rounded-lg transition-colors"
                                         >
-                                            Añadir Nuevo Rango
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
+                                          <HiTrash className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div className="pt-2 pl-7">
+                            {/* Regla de tintes: Botón de acción secundaria */}
+                            <Button
+                              type="button" 
+                              onClick={agregarRango} 
+                              variant="flat"
+                              className="w-full font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl h-11"
+                              startContent={<HiPlus className="text-lg" />}
+                            >
+                              Agregar Nuevo Rango
+                            </Button>
+                          </div>
+                        </div>
+                      </form>
                     </div>
                   </Tab>
                 </Tabs>
               </ModalBody>
 
               {/* ── FOOTER ── */}
-              <ModalFooter className="flex justify-end gap-3">
+              <ModalFooter>
                 <Button
-                    variant="flat"
-                    onPress={handleCloseModal}
-                    isDisabled={isSaving}
-                    startContent={<HiX className="text-lg" />}
-                    className="font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 h-11 px-6"
+                  variant="light"
+                  onPress={handleCloseModal}
+                  isDisabled={isSaving}
+                  className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6"
                 >
-                    Cancelar
+                  Cancelar
                 </Button>
+                {/* Token 4: Botón Primario */}
                 <Button
-                    color="primary"
-                    type="submit"
-                    form={tab === "tarifa" ? "form-editar-tarifa" : "form-editar-rangos"}
-                    isDisabled={isSaving}
-                    isLoading={isSaving}
-                    startContent={!isSaving && <HiCheck className="text-lg" />}
-                    className="font-bold shadow-md shadow-blue-500/30 h-11 px-8"
+                  type="submit"
+                  form={tab === "tarifa" ? "form-editar-tarifa" : "form-editar-rangos"}
+                  isDisabled={isSaving}
+                  isLoading={isSaving}
+                  className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm"
                 >
-                    {isSaving ? "Guardando..." : "Guardar Cambios"}
+                  {isSaving ? "Guardando..." : "Guardar Cambios"}
                 </Button>
               </ModalFooter>
             </>

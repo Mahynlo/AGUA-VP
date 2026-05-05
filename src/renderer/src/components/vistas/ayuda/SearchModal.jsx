@@ -41,7 +41,7 @@ const SearchModal = React.memo(({
       backdrop="blur"
       classNames={{
         wrapper: "z-[100000]",
-        backdrop: "z-[99999] bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm",
+        backdrop: "z-[99999] bg-slate-900/40 dark:bg-black/60",
         base: "bg-white dark:bg-zinc-950 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-zinc-800 max-h-[90vh]",
         header: "border-b border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50 px-6 py-5",
         body: "p-0",
@@ -70,7 +70,7 @@ const SearchModal = React.memo(({
             
             <ModalBody>
               {/* ── CAMPO DE BÚSQUEDA FLOTANTE (NATIVO PERSONALIZADO) ── */}
-              <div className="sticky top-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md p-5 border-b border-slate-100 dark:border-zinc-800/50 shadow-sm">
+              <div className="sticky top-0 z-20 bg-white dark:bg-zinc-950 p-5 border-b border-slate-100 dark:border-zinc-800/50 shadow-sm">
                 
                 <div className="relative w-full flex items-center group">
                   {/* Ícono izquierdo (Lupa o Spinner) */}

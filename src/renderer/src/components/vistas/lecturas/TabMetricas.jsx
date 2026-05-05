@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Button,
-  Card,
   Chip,
   Progress,
   Select,
@@ -23,7 +22,6 @@ import {
   HiPrinter,
   HiTrendingDown,
   HiTrendingUp,
-  HiBeaker,
 } from "react-icons/hi";
 import ReactApexChart from "react-apexcharts";
 
@@ -180,6 +178,7 @@ export default function TabMetricas() {
           stacked: false,
           toolbar: { show: false },
           background: "transparent",
+          fontFamily: "inherit",
         },
         stroke: {
           width: [0, 3],
@@ -188,25 +187,31 @@ export default function TabMetricas() {
         colors: ["#0ea5e9", "#6366f1"],
         xaxis: {
           categories: consumoMensual.map((r) => formatearPeriodo(r.periodo)),
-          labels: { style: { colors: "currentColor" } },
+          labels: { style: { colors: "#94a3b8", fontSize: "10px", fontWeight: 700, cssClass: "uppercase tracking-widest" } },
+          axisBorder: { show: false },
+          axisTicks: { show: false },
         },
         yaxis: [
           {
-            title: { text: "m3" },
-            labels: { style: { colors: "currentColor" } },
+            title: { text: "m³", style: { color: "#94a3b8", fontSize: "10px", fontWeight: 700 } },
+            labels: { style: { colors: "#94a3b8", fontSize: "12px", fontWeight: 500 } },
           },
           {
             opposite: true,
-            title: { text: "Recibos" },
-            labels: { style: { colors: "currentColor" } },
+            title: { text: "Recibos", style: { color: "#94a3b8", fontSize: "10px", fontWeight: 700 } },
+            labels: { style: { colors: "#94a3b8", fontSize: "12px", fontWeight: 500 } },
           },
         ],
         dataLabels: { enabled: false },
         legend: {
           position: "top",
-          labels: { colors: "currentColor" },
+          fontWeight: 600,
+          labels: { colors: "#94a3b8" },
         },
-        grid: { borderColor: "#d4d4d8" },
+        grid: { 
+          borderColor: "rgba(148, 163, 184, 0.2)",
+          strokeDashArray: 4,
+        },
       },
     };
   }, [consumoMensual]);
@@ -219,15 +224,18 @@ export default function TabMetricas() {
         chart: {
           type: "donut",
           background: "transparent",
+          fontFamily: "inherit",
         },
         labels: topRutas.map((r) => r.ruta_nombre),
         colors: ["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#6366f1", "#14b8a6", "#f97316", "#a855f7"],
         legend: {
           position: "bottom",
-          labels: { colors: "currentColor" },
+          fontWeight: 500,
+          labels: { colors: "#94a3b8" },
         },
         dataLabels: {
           enabled: true,
+          style: { fontSize: "12px", fontWeight: "bold" },
           formatter: (val) => `${Math.round(val)}%`,
         },
         stroke: { show: false },
@@ -242,15 +250,18 @@ export default function TabMetricas() {
         chart: {
           type: "donut",
           background: "transparent",
+          fontFamily: "inherit",
         },
         labels: estadisticasRutas.distribucionPorEstado.map((d) => d.name),
         colors: estadisticasRutas.distribucionPorEstado.map((d) => d.color),
         legend: {
           position: "bottom",
-          labels: { colors: "currentColor" },
+          fontWeight: 500,
+          labels: { colors: "#94a3b8" },
         },
         dataLabels: {
           enabled: true,
+          style: { fontSize: "12px", fontWeight: "bold" },
           formatter: (val) => `${Math.round(val)}%`,
         },
         stroke: { show: false },
@@ -331,180 +342,225 @@ export default function TabMetricas() {
     }
   };
 
+  // Token 4: Selects Invisibles (Adaptados)
   const selectClasses = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none",
+    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px] focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500",
+    value: "font-medium text-slate-800 dark:text-zinc-100 text-sm",
   };
 
   return (
-    <div className="w-full space-y-6">
-      <Card className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 print:mb-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl p-3 print:hidden">
-              <HiChartBar className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Métricas Unificadas de Lecturas</h3>
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Consumo de agua potable y rendimiento operativo por rutas</p>
-            </div>
+    /* Token 1: Contenedor Raíz Libre */
+    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 animate-in fade-in duration-500 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0">
+      
+      {/* ── HEADER SECTION ── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 print:mb-4">
+        <div className="flex items-center gap-4">
+          {/* Regla de Tintes */}
+          <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0 print:hidden">
+            <HiChartBar className="w-7 h-7" />
           </div>
-
-          <div className="w-full sm:w-auto flex items-center gap-2 print:hidden">
-            <Chip color="default" variant="bordered" className="border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-medium rounded-xl" startContent={<HiClock className="w-3.5 h-3.5" />}>
-              {etiquetaFiltro}
-            </Chip>
+          <div className="flex flex-col gap-0.5">
+            {/* Token 3: Textos Principales */}
+            <h3 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
+              Métricas Unificadas de Lecturas
+            </h3>
+            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">
+              Consumo de agua potable y rendimiento operativo por rutas
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8 print:hidden">
-          <div className="lg:col-span-3">
-            <Select
-              label="Vista"
-              selectedKeys={[vista]}
-              onChange={(e) => setVista(e.target.value || "consumo")}
-              size="sm"
-              variant="flat"
-              classNames={selectClasses}
-            >
-              <SelectItem key="consumo" value="consumo">Consumo de agua</SelectItem>
-              <SelectItem key="rutas" value="rutas">Rutas y distribución</SelectItem>
-            </Select>
-          </div>
+        <div className="w-full sm:w-auto flex items-center gap-2 print:hidden">
+          <Chip color="default" variant="bordered" className="border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-bold tracking-widest uppercase text-[10px] rounded-lg px-2" startContent={<HiClock className="w-4 h-4" />}>
+            {etiquetaFiltro}
+          </Chip>
+        </div>
+      </div>
 
-          <div className="lg:col-span-3">
-            <Select
-              label="Rango"
-              selectedKeys={[tipoFiltro]}
-              onChange={(e) => setTipoFiltro(e.target.value || "ultimos_meses")}
-              size="sm"
-              variant="flat"
-              classNames={selectClasses}
-            >
-              <SelectItem key="ultimos_meses" value="ultimos_meses">Últimos meses</SelectItem>
-              <SelectItem key="periodo" value="periodo">Período específico</SelectItem>
-            </Select>
-          </div>
+      {/* ── FILTER CONTROLS ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 items-end print:hidden">
+        <div className="lg:col-span-3 flex flex-col gap-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+            Vista del Reporte
+          </label>
+          <Select
+            selectedKeys={[vista]}
+            onChange={(e) => setVista(e.target.value || "consumo")}
+            variant="bordered"
+            aria-label="Vista"
+            classNames={selectClasses}
+          >
+            <SelectItem key="consumo" value="consumo">Consumo de agua</SelectItem>
+            <SelectItem key="rutas" value="rutas">Rutas y distribución</SelectItem>
+          </Select>
+        </div>
 
-          <div className="lg:col-span-4">
-            {tipoFiltro === "periodo" ? (
+        <div className="lg:col-span-3 flex flex-col gap-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+            Tipo de Rango
+          </label>
+          <Select
+            selectedKeys={[tipoFiltro]}
+            onChange={(e) => setTipoFiltro(e.target.value || "ultimos_meses")}
+            variant="bordered"
+            aria-label="Rango"
+            classNames={selectClasses}
+          >
+            <SelectItem key="ultimos_meses" value="ultimos_meses">Últimos meses</SelectItem>
+            <SelectItem key="periodo" value="periodo">Período específico</SelectItem>
+          </Select>
+        </div>
+
+        <div className="lg:col-span-4 flex flex-col gap-1.5">
+          {tipoFiltro === "periodo" ? (
+            <>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+                Seleccionar Período
+              </label>
               <SelectorPeriodoAvanzado
                 value={periodo}
                 onChange={setPeriodo}
-                label="Período"
                 placeholder="Seleccionar período"
+                className="h-[52px] w-full"
               />
-            ) : (
+            </>
+          ) : (
+            <>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+                Seleccionar Cantidad
+              </label>
               <Select
-                label="Últimos meses"
                 selectedKeys={[ultimosMeses]}
                 onChange={(e) => setUltimosMeses(e.target.value || "3")}
-                size="sm"
-                variant="flat"
+                variant="bordered"
+                aria-label="Últimos meses"
                 classNames={selectClasses}
               >
                 <SelectItem key="3" value="3">Últimos 3 meses</SelectItem>
                 <SelectItem key="6" value="6">Últimos 6 meses</SelectItem>
                 <SelectItem key="12" value="12">Últimos 12 meses</SelectItem>
               </Select>
-            )}
-          </div>
-
-          <div className="lg:col-span-2 flex items-end">
-            <Button
-              color="primary"
-              className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl"
-              onPress={handlePrint}
-              isLoading={loadingImprimir}
-              isDisabled={!reporteConsumo || loadingConsumo || loadingImprimir}
-              startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
-            >
-              {loadingImprimir ? "Preparando..." : "Imprimir"}
-            </Button>
-          </div>
+            </>
+          )}
         </div>
-      </Card>
+
+        <div className="lg:col-span-2 flex items-end h-[52px]">
+          {/* Token 4: Botón Primario */}
+          <Button
+            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-full shadow-sm transition-transform active:scale-95"
+            onPress={handlePrint}
+            isLoading={loadingImprimir}
+            isDisabled={!reporteConsumo || loadingConsumo || loadingImprimir}
+            startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
+          >
+            {loadingImprimir ? "Preparando..." : "Imprimir"}
+          </Button>
+        </div>
+      </div>
 
       {errorConsumo && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-900/50 p-4 mb-8 print:hidden">
-          <p className="text-sm font-medium text-red-700 dark:text-red-400">{errorConsumo}</p>
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 mb-8 print:hidden flex items-center gap-3">
+          <div className="p-2 bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg">
+            <HiTrendingDown className="w-5 h-5" />
+          </div>
+          <p className="text-sm font-bold text-red-700 dark:text-red-400">{errorConsumo}</p>
         </div>
       )}
 
       {loadingConsumo && !reporteConsumo ? (
-        <div className="flex items-center justify-center py-20 print:hidden">
-          <Spinner size="lg" color="default" label="Generando métricas de consumo..." classNames={{ label: "text-slate-500 text-sm font-medium mt-4" }} />
+        <div className="flex flex-col items-center justify-center py-20 gap-4 print:hidden">
+          <Spinner size="lg" color="default" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 animate-pulse">
+            Generando métricas de consumo...
+          </span>
         </div>
       ) : (
         <>
+          {/* ── VISTA: CONSUMO ── */}
           {vista === "consumo" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-8 print:grid-cols-5 print:gap-2">
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Recibos</p>
-                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.total_recibos)}</p>
+              
+              {/* KPIs Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-10 print:grid-cols-5 print:gap-2">
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Recibos</p>
+                  <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.total_recibos)}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Agua consumida</p>
-                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.consumo_total_m3, 2)} m3</p>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Agua consumida</p>
+                  <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 flex items-baseline gap-1">
+                    {formatearNumero(resumenConsumo.consumo_total_m3, 2)} <span className="text-sm font-bold text-slate-400">m³</span>
+                  </p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Promedio por recibo</p>
-                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.consumo_promedio_m3, 2)} m3</p>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Promedio por recibo</p>
+                  <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 flex items-baseline gap-1">
+                    {formatearNumero(resumenConsumo.consumo_promedio_m3, 2)} <span className="text-sm font-bold text-slate-400">m³</span>
+                  </p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Clientes analizados</p>
-                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.total_clientes)}</p>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Clientes analizados</p>
+                  <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.total_clientes)}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Promedio por cliente</p>
-                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(resumenConsumo.promedio_consumo_por_cliente_m3, 2)} m3</p>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Promedio por cliente</p>
+                  <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 flex items-baseline gap-1">
+                    {formatearNumero(resumenConsumo.promedio_consumo_por_cliente_m3, 2)} <span className="text-sm font-bold text-slate-400">m³</span>
+                  </p>
                 </div>
               </div>
 
+              {/* Charts & Highlights Grid */}
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div className="xl:col-span-2 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4">Tendencia de consumo y recibos</p>
+                
+                {/* Tendencia Chart */}
+                <div className="xl:col-span-2 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0 print:mb-6">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-6">Tendencia de consumo y recibos</p>
                   {consumoMensual.length > 0 ? (
                     <ReactApexChart options={chartConsumoMensual.options} series={chartConsumoMensual.series} type="line" height={330} />
                   ) : (
-                    <div className="h-[300px] flex items-center justify-center text-sm text-slate-500 dark:text-zinc-400">Sin datos para el rango seleccionado.</div>
+                    <div className="h-[300px] flex items-center justify-center text-sm font-bold text-slate-400 dark:text-zinc-600">Sin datos para el rango seleccionado.</div>
                   )}
                 </div>
 
+                {/* Highlights Column */}
                 <div className="grid grid-cols-1 gap-4">
-                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600"><HiTrendingUp className="w-4 h-4" /></div>
+                  {/* Mayor Consumo */}
+                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col justify-center transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><HiTrendingUp className="w-5 h-5" /></div>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Mayor consumo</span>
                     </div>
                     {topConsumidor ? (
                       <>
-                        <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{topConsumidor.cliente_nombre}</p>
-                        <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">{formatearNumero(topConsumidor.consumo_total_m3, 2)} m3 en {formatearNumero(topConsumidor.recibos)} recibos</p>
+                        <p className="text-base font-black text-slate-800 dark:text-zinc-100 truncate mb-1">{topConsumidor.cliente_nombre}</p>
+                        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400"><span className="font-bold text-slate-700 dark:text-zinc-300">{formatearNumero(topConsumidor.consumo_total_m3, 2)} m³</span> en {formatearNumero(topConsumidor.recibos)} recibos</p>
                       </>
                     ) : (
-                      <p className="text-sm text-slate-500 dark:text-zinc-400">Sin datos disponibles.</p>
+                      <p className="text-sm font-medium text-slate-400 dark:text-zinc-600">Sin datos disponibles.</p>
                     )}
                   </div>
 
-                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-1.5 rounded-lg bg-red-500/10 text-red-600"><HiTrendingDown className="w-4 h-4" /></div>
+                  {/* Menor Consumo */}
+                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col justify-center transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiTrendingDown className="w-5 h-5" /></div>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Menor consumo</span>
                     </div>
                     {menorConsumidor ? (
                       <>
-                        <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{menorConsumidor.cliente_nombre}</p>
-                        <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">{formatearNumero(menorConsumidor.consumo_total_m3, 2)} m3 en {formatearNumero(menorConsumidor.recibos)} recibos</p>
+                        <p className="text-base font-black text-slate-800 dark:text-zinc-100 truncate mb-1">{menorConsumidor.cliente_nombre}</p>
+                        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400"><span className="font-bold text-slate-700 dark:text-zinc-300">{formatearNumero(menorConsumidor.consumo_total_m3, 2)} m³</span> en {formatearNumero(menorConsumidor.recibos)} recibos</p>
                       </>
                     ) : (
-                      <p className="text-sm text-slate-500 dark:text-zinc-400">Sin datos disponibles.</p>
+                      <p className="text-sm font-medium text-slate-400 dark:text-zinc-600">Sin datos disponibles.</p>
                     )}
                   </div>
 
-                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 rounded-lg bg-slate-500/10 text-slate-600 dark:text-zinc-300"><HiMap className="w-4 h-4" /></div>
+                  {/* Rutas con consumo */}
+                  <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 flex flex-col justify-center transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400"><HiMap className="w-5 h-5" /></div>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Rutas con consumo</span>
                     </div>
                     <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(distribucionRutasConsumo.length)}</p>
@@ -512,51 +568,61 @@ export default function TabMetricas() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                  <div className="flex items-center justify-between mb-4">
+              {/* Tables Grid */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2">
+                
+                {/* Tabla 1: Top Consumidores */}
+                <div className="bg-white dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0">
+                  <div className="flex items-center justify-between mb-6">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Top consumidores</p>
-                    <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold" startContent={<HiFire className="w-3 h-3" />}>{topConsumidores.length}</Chip>
+                    <div className="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-bold text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                      <HiFire className="w-3 h-3" />
+                      {topConsumidores.length}
+                    </div>
                   </div>
-                  <Table aria-label="Top consumidores" removeWrapper className="max-h-[340px] overflow-auto" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-3" }}>
+                  <Table aria-label="Top consumidores" removeWrapper className="max-h-[340px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4", tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors" }}>
                     <TableHeader>
                       <TableColumn>Cliente</TableColumn>
                       <TableColumn>Localidad</TableColumn>
                       <TableColumn>Recibos</TableColumn>
-                      <TableColumn>Consumo m3</TableColumn>
+                      <TableColumn align="end">Consumo (m³)</TableColumn>
                     </TableHeader>
                     <TableBody emptyContent="Sin datos" items={topConsumidores}>
                       {(item) => (
                         <TableRow key={item.cliente_id}>
-                          <TableCell className="font-semibold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
+                          <TableCell className="font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
                           <TableCell>{item.localidad || "-"}</TableCell>
                           <TableCell>{formatearNumero(item.recibos)}</TableCell>
-                          <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
+                          <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                  <div className="flex items-center justify-between mb-4">
+                {/* Tabla 2: Menor Consumo */}
+                <div className="bg-white dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0">
+                  <div className="flex items-center justify-between mb-6">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Menor consumo</p>
-                    <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold" startContent={<HiTrendingDown className="w-3 h-3" />}>{menorConsumo.length}</Chip>
+                    <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                      <HiTrendingDown className="w-3 h-3" />
+                      {menorConsumo.length}
+                    </div>
                   </div>
-                  <Table aria-label="Menor consumo" removeWrapper className="max-h-[340px] overflow-auto" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-3" }}>
+                  <Table aria-label="Menor consumo" removeWrapper className="max-h-[340px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4", tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors" }}>
                     <TableHeader>
                       <TableColumn>Cliente</TableColumn>
                       <TableColumn>Localidad</TableColumn>
                       <TableColumn>Recibos</TableColumn>
-                      <TableColumn>Consumo m3</TableColumn>
+                      <TableColumn align="end">Consumo (m³)</TableColumn>
                     </TableHeader>
                     <TableBody emptyContent="Sin datos" items={menorConsumo}>
                       {(item) => (
                         <TableRow key={item.cliente_id}>
-                          <TableCell className="font-semibold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
+                          <TableCell className="font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
                           <TableCell>{item.localidad || "-"}</TableCell>
                           <TableCell>{formatearNumero(item.recibos)}</TableCell>
-                          <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
+                          <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
                         </TableRow>
                       )}
                     </TableBody>
@@ -566,75 +632,85 @@ export default function TabMetricas() {
             </div>
           )}
 
+          {/* ── VISTA: RUTAS ── */}
           {vista === "rutas" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8 print:grid-cols-4 print:gap-2">
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Rutas activas</p>
-                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(estadisticasRutas.totalRutas)}</p>
+              
+              {/* KPIs Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-10 print:grid-cols-4 print:gap-2">
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Rutas activas</p>
+                  <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(estadisticasRutas.totalRutas)}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Rutas completadas</p>
-                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(estadisticasRutas.rutasCompletadas)}</p>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Rutas completadas</p>
+                  <p className="text-2xl lg:text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{formatearNumero(estadisticasRutas.rutasCompletadas)}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">En progreso</p>
-                  <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(estadisticasRutas.rutasEnProgreso)}</p>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">En progreso</p>
+                  <p className="text-2xl lg:text-3xl font-black tracking-tight text-amber-500 dark:text-amber-400">{formatearNumero(estadisticasRutas.rutasEnProgreso)}</p>
                 </div>
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Avance operativo</p>
-                  <div className="flex items-center gap-3 mb-2">
-                    <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{estadisticasRutas.promedioCompletado}%</p>
-                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600"><HiCheckCircle className="w-4 h-4" /></div>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col justify-center">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Avance operativo</p>
+                    <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiCheckCircle className="w-4 h-4" /></div>
                   </div>
-                  <Progress
-                    value={estadisticasRutas.promedioCompletado}
-                    className="h-2"
-                    classNames={{ track: "bg-slate-200 dark:bg-zinc-800", indicator: "bg-slate-800 dark:bg-zinc-200 rounded-full" }}
-                    aria-label="Avance operativo"
-                  />
+                  <div className="flex items-center gap-3">
+                    <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 w-16">{estadisticasRutas.promedioCompletado}%</p>
+                    <Progress
+                      value={estadisticasRutas.promedioCompletado}
+                      className="h-2 flex-1"
+                      classNames={{ track: "bg-slate-200 dark:bg-zinc-800", indicator: "bg-slate-800 dark:bg-zinc-200 rounded-full" }}
+                      aria-label="Avance operativo"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4">Distribución operativa de rutas</p>
+              {/* Charts Grid */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2">
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-6">Distribución operativa de rutas</p>
                   {estadisticasRutas.totalRutas > 0 ? (
                     <ReactApexChart options={chartEstadosRutas.options} series={chartEstadosRutas.series} type="donut" height={320} />
                   ) : (
-                    <div className="h-[300px] flex items-center justify-center text-sm text-slate-500 dark:text-zinc-400">No hay rutas disponibles.</div>
+                    <div className="h-[300px] flex items-center justify-center text-sm font-bold text-slate-400 dark:text-zinc-600">No hay rutas disponibles.</div>
                   )}
                 </div>
 
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4">Distribución de consumo por ruta</p>
+                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-6">Distribución de consumo por ruta</p>
                   {distribucionRutasConsumo.length > 0 ? (
                     <ReactApexChart options={chartDistribucionRutas.options} series={chartDistribucionRutas.series} type="donut" height={320} />
                   ) : (
-                    <div className="h-[300px] flex items-center justify-center text-sm text-slate-500 dark:text-zinc-400">Sin consumo facturado para el rango seleccionado.</div>
+                    <div className="h-[300px] flex items-center justify-center text-sm font-bold text-slate-400 dark:text-zinc-600">Sin consumo facturado para el rango seleccionado.</div>
                   )}
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                <div className="flex items-center justify-between mb-4">
+              {/* Table */}
+              <div className="bg-white dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0 mt-6">
+                <div className="flex items-center justify-between mb-6">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo por ruta</p>
-                  <Chip size="sm" variant="flat" className="bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold" startContent={<HiMap className="w-3 h-3" />}>{distribucionRutasConsumo.length}</Chip>
+                  <div className="bg-slate-500/10 text-slate-600 dark:text-zinc-300 font-bold text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                    <HiMap className="w-3 h-3" />
+                    {distribucionRutasConsumo.length}
+                  </div>
                 </div>
-                <Table aria-label="Consumo por ruta" removeWrapper className="max-h-[360px] overflow-auto" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-3" }}>
+                <Table aria-label="Consumo por ruta" removeWrapper className="max-h-[360px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4", tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors" }}>
                   <TableHeader>
                     <TableColumn>Ruta</TableColumn>
                     <TableColumn>Recibos</TableColumn>
-                    <TableColumn>Consumo total (m3)</TableColumn>
-                    <TableColumn>Promedio (m3)</TableColumn>
+                    <TableColumn align="end">Consumo total (m³)</TableColumn>
+                    <TableColumn align="end">Promedio (m³)</TableColumn>
                   </TableHeader>
                   <TableBody emptyContent="Sin datos" items={distribucionRutasConsumo}>
                     {(item) => (
                       <TableRow key={`${item.ruta_id}-${item.ruta_nombre}`}>
-                        <TableCell className="font-semibold text-slate-800 dark:text-zinc-100">{item.ruta_nombre}</TableCell>
+                        <TableCell className="font-bold text-slate-800 dark:text-zinc-100">{item.ruta_nombre}</TableCell>
                         <TableCell>{formatearNumero(item.recibos)}</TableCell>
-                        <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
-                        <TableCell>{formatearNumero(item.consumo_promedio_m3, 2)}</TableCell>
+                        <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
+                        <TableCell className="font-bold text-right">{formatearNumero(item.consumo_promedio_m3, 2)}</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -645,6 +721,7 @@ export default function TabMetricas() {
         </>
       )}
 
+      {/* Modal de Impresión */}
       {pdfUrl && modoPdf === "imprimir" && (
         <ModalImprimir
           pdfUrl={pdfUrl}

@@ -73,7 +73,6 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
 
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
-      // setGeneralError("Por favor corrige los errores antes de continuar.");
       return;
     }
 
@@ -126,15 +125,16 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
   // ─── Render ────────────────────────────────────────────────────────
   return (
     <>
+      {/* Token 4: Botón Maestro Disparador */}
       <Button
-        color="default"
         onPress={onOpen}
-        startContent={<HiUser className="w-5 h-5" />}
-        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
+        startContent={<HiUser className="text-lg" />}
+        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[52px] shadow-sm transition-transform active:scale-95"
       >
         Nuevo Usuario
       </Button>
 
+      {/* Token 2: Modal Base Premium SaaS */}
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
@@ -144,36 +144,39 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
         isDismissable={!isUpdating}
         isKeyboardDismissDisabled={isUpdating}
         classNames={{
-          wrapper: "items-start p-1 sm:p-2 pt-16 sm:pt-20 overflow-y-hidden",
-          backdrop: "bg-slate-900/40 backdrop-blur-sm",
-          base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] max-h-[calc(100dvh-4.25rem)] sm:max-h-[calc(100dvh-5.25rem)]",
-          header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
-          body: "px-8 py-6 flex-1 min-h-0",
-          footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
-          closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4"
+          backdrop: "bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm",
+          base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+          header: "border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6",
+          body: "px-8 py-8 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent",
+          footer: "border-t border-slate-100 dark:border-zinc-800/80 px-8 py-6",
+          closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-6 right-6 rounded-xl transition-colors"
         }}
         onClose={handleClose}
       >
-        <ModalContent className="h-full">
+        <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
-                    <HiUser className="w-6 h-6" />
+              {/* ── HEADER DEL MODAL ── */}
+              <ModalHeader className="flex flex-col gap-1 shrink-0">
+                <div className="flex items-center gap-4">
+                  {/* Regla de Tintes: Púrpura Corporativo para Admin/Usuarios */}
+                  <div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl shrink-0">
+                    <HiUser className="w-7 h-7" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                  <div className="flex flex-col gap-0.5">
+                    {/* Token 3: Textos Principales */}
+                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
                       Registrar Usuario
-                    </span>
-                    <span className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+                    </h2>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mt-1">
                       Crear un nuevo acceso al sistema
-                    </span>
+                    </p>
                   </div>
                 </div>
               </ModalHeader>
 
-              <ModalBody className="space-y-4 custom-scrollbar">
+              {/* ── CUERPO DEL MODAL ── */}
+              <ModalBody className="space-y-2">
                 <FeedbackMessages
                   error={generalError}
                   success={success}
@@ -187,7 +190,7 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
                     e.preventDefault();
                     handleRegistro();
                   }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4 pt-2"
                 >
                   <CustomInput
                     label="Nombre Completo"
@@ -197,7 +200,7 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
                       setNombre(e.target.value);
                       if (fieldErrors.nombre) setFieldErrors({ ...fieldErrors, nombre: null });
                     }}
-                    icon={<HiBadgeCheck className="w-5 h-5 text-gray-400" />}
+                    icon={<HiBadgeCheck className="w-5 h-5 text-slate-400 dark:text-zinc-500" />}
                     isInvalid={!!fieldErrors.nombre}
                     errorMessage={fieldErrors.nombre}
                     required
@@ -212,7 +215,7 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
                       setUsername(e.target.value);
                       if (fieldErrors.username) setFieldErrors({ ...fieldErrors, username: null });
                     }}
-                    icon={<HiUser className="w-5 h-5 text-gray-400" />}
+                    icon={<HiUser className="w-5 h-5 text-slate-400 dark:text-zinc-500" />}
                     isInvalid={!!fieldErrors.username}
                     errorMessage={fieldErrors.username}
                     required
@@ -227,7 +230,7 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
                       setCorreo(e.target.value);
                       if (fieldErrors.correo) setFieldErrors({ ...fieldErrors, correo: null });
                     }}
-                    icon={<HiMail className="w-5 h-5 text-gray-400" />}
+                    icon={<HiMail className="w-5 h-5 text-slate-400 dark:text-zinc-500" />}
                     isInvalid={!!fieldErrors.correo}
                     errorMessage={fieldErrors.correo}
                     required
@@ -242,7 +245,7 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
                       setContrasena(e.target.value);
                       if (fieldErrors.contrasena) setFieldErrors({ ...fieldErrors, contrasena: null });
                     }}
-                    icon={<HiLockClosed className="w-5 h-5 text-gray-400" />}
+                    icon={<HiLockClosed className="w-5 h-5 text-slate-400 dark:text-zinc-500" />}
                     isInvalid={!!fieldErrors.contrasena}
                     errorMessage={fieldErrors.contrasena}
                     required
@@ -251,59 +254,58 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
                   <CustomInput
                     label="Confirmar Contraseña"
                     type="password"
-                    placeholder="••••••"
+                    placeholder="••••••••"
                     value={confirmarContrasena}
                     onChange={(e) => {
                       setConfirmarContrasena(e.target.value);
                       if (fieldErrors.confirmarContrasena) setFieldErrors({ ...fieldErrors, confirmarContrasena: null });
                     }}
-                    icon={<HiLockClosed className="w-5 h-5 text-gray-400" />}
+                    icon={<HiLockClosed className="w-5 h-5 text-slate-400 dark:text-zinc-500" />}
                     isInvalid={!!fieldErrors.confirmarContrasena}
                     errorMessage={fieldErrors.confirmarContrasena}
                     required
                   />
 
-                  <div className="md:col-span-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5 block">
+                  <div className="md:col-span-2 flex flex-col gap-1.5 mt-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
                       Rol / Permisos <span className="text-red-500">*</span>
                     </label>
                     <Select
                       selectedKeys={[rol]}
                       onChange={(e) => setRol(e.target.value)}
                       placeholder="Selecciona el rol"
-                      startContent={<HiShieldCheck className="text-slate-400 dark:text-zinc-500 text-lg" />}
-                      classNames={{
-                        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
-                        value: "text-sm font-medium text-slate-700 dark:text-zinc-200",
-                        listboxWrapper: "bg-white dark:bg-zinc-950"
-                      }}
+                      startContent={<HiShieldCheck className="text-slate-400 dark:text-zinc-500 text-lg mr-1" />}
                       className="w-full"
+                      classNames={{
+                        trigger: "h-11 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all focus:ring-2 focus:ring-purple-500/20 shadow-none",
+                        value: "font-bold text-sm text-slate-700 dark:text-zinc-200",
+                      }}
                     >
-                      <SelectItem key="operador" value="operador">Operador (Básico)</SelectItem>
-                      <SelectItem key="administrador" value="administrador">Administrador (Gestión)</SelectItem>
-                      <SelectItem key="superadmin" value="superadmin">Superadmin (Acceso Total)</SelectItem>
+                      <SelectItem key="operador" value="operador" className="font-semibold text-slate-700 dark:text-zinc-200">Operador (Básico)</SelectItem>
+                      <SelectItem key="administrador" value="administrador" className="font-semibold text-slate-700 dark:text-zinc-200">Administrador (Gestión)</SelectItem>
+                      <SelectItem key="superadmin" value="superadmin" className="font-semibold text-slate-700 dark:text-zinc-200">Superadmin (Acceso Total)</SelectItem>
                     </Select>
-                    <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">Define el nivel de acceso al sistema.</p>
+                    <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 ml-1 mt-0.5">Define el nivel de acceso base al sistema.</p>
                   </div>
 
                 </form>
               </ModalBody>
 
-              <ModalFooter>
+              {/* ── FOOTER Y ACCIONES ── */}
+              <ModalFooter className="flex justify-end gap-3">
                 <Button
-                  color="default"
-                  variant="flat"
+                  variant="light"
                   onPress={handleClose}
                   isDisabled={isUpdating}
-                  className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800"
+                  className="font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl h-11 px-6"
                 >
                   Cancelar
                 </Button>
+                {/* Token 4: Botón Maestro de Acción */}
                 <Button
-                  color="default"
                   onPress={handleRegistro}
                   isLoading={isUpdating}
-                  className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
+                  className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 h-11 shadow-sm transition-transform active:scale-95"
                 >
                   {isUpdating ? "Registrando..." : "Confirmar Registro"}
                 </Button>

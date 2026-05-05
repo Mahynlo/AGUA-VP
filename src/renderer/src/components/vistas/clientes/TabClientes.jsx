@@ -4,9 +4,6 @@ import {
     SelectItem,
     Pagination,
     Button,
-    Card,
-    CardBody,
-    CardHeader,
     Table,
     TableHeader,
     TableColumn,
@@ -18,17 +15,68 @@ import {
     Dropdown,
     DropdownTrigger,
     DropdownMenu,
-    DropdownItem
+    DropdownItem,
+    Skeleton
 } from "@nextui-org/react";
 import React from "react";
-import { HiEye, HiTrash, HiPhone, HiMail, HiLocationMarker, HiDownload, HiUsers, HiSearch, HiX, HiFilter } from "react-icons/hi";
+import { 
+    HiEye, 
+    HiTrash, 
+    HiPhone, 
+    HiMail, 
+    HiLocationMarker, 
+    HiDownload, 
+    HiUsers, 
+    HiSearch, 
+    HiX, 
+    HiFilter 
+} from "react-icons/hi";
 import RegistrarClientes from "./RegistrarCliente";
 import EditarClientes from "./EditarCliente";
 import ModalDetalleCliente from "./ModalDetalleCliente";
 import { useTabClientes } from "../../../hooks/useTabClientes";
 import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
-import LoadingSkeleton from "./components/LoadingSkeleton";
+
+// Componente LoadingSkeleton Premium (Token 8)
+const LoadingSkeleton = () => (
+    <div className="w-full animate-in fade-in flex flex-col gap-6">
+        <div className="flex justify-between items-center pb-4">
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-12 w-12 rounded-2xl" />
+                <div className="space-y-2">
+                    <Skeleton className="h-6 w-48 rounded-md" />
+                    <Skeleton className="h-3 w-32 rounded-md" />
+                </div>
+            </div>
+            <div className="flex gap-2">
+                <Skeleton className="h-11 w-24 rounded-xl" />
+                <Skeleton className="h-11 w-32 rounded-xl" />
+            </div>
+        </div>
+        <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-zinc-800">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Skeleton className="h-[52px] w-full rounded-xl lg:col-span-2" />
+                    <Skeleton className="h-[52px] w-full rounded-xl" />
+                    <Skeleton className="h-[52px] w-full rounded-xl" />
+                </div>
+            </div>
+            <div className="bg-white dark:bg-zinc-950">
+                {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="h-20 w-full border-b border-slate-100 dark:border-zinc-800/50 flex items-center px-6 gap-4">
+                        <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                        <div className="space-y-2 flex-1">
+                            <Skeleton className="h-4 w-1/4 rounded-md" />
+                            <Skeleton className="h-3 w-1/3 rounded-md" />
+                        </div>
+                        <Skeleton className="h-10 w-32 rounded-xl shrink-0" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
 
 export function TabClientes() {
     const {
@@ -62,7 +110,7 @@ export function TabClientes() {
     const [isDetailOpen, setIsDetailOpen] = React.useState(false);
 
     if (initialLoading) {
-        return <LoadingSkeleton tipo="tabla" />;
+        return <LoadingSkeleton />;
     }
 
     const handleAction = (action, cliente) => {
@@ -81,99 +129,102 @@ export function TabClientes() {
         }
     };
 
-    // Clases estandarizadas para selects
+    // Clases estandarizadas para Inputs Invisibles
     const selectClassNames = {
-        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
+        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px] focus:ring-2 focus:ring-amber-500/20 focus:outline-none",
         value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
     };
 
     return (
-        <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6">
+        <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500">
 
-            {/* ── SECCIÓN 1: FILTROS Y ACCIONES ── */}
-            <Card className="border-none shadow-none bg-transparent rounded-2xl border border-slate-200 dark:border-zinc-800">
-                <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl">
-                            <HiUsers className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                                    Directorio de Clientes
-                                </h3>
-                                {loading && !initialLoading && (
-                                    <Spinner size="sm" color="default" className="w-4 h-4 ml-1" />
-                                )}
-                            </div>
-                            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-                                Gestión y búsqueda general
-                            </p>
-                        </div>
+            {/* ── 1. HEADER Y ACCIONES ── */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-amber-500/10 dark:bg-amber-900/30 rounded-2xl shrink-0">
+                        <HiUsers className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                     </div>
-
-                    {/* Acciones Principales (Registrar y Exportar) */}
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <Dropdown>
-                            <DropdownTrigger>
-                                <Button
-                                    variant="flat"
-                                    className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm flex-1 sm:flex-none"
-                                    startContent={<HiDownload className="text-lg" />}
-                                >
-                                    Exportar
-                                </Button>
-                            </DropdownTrigger>
-                            <DropdownMenu aria-label="Opciones de exportación" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
-                                <DropdownItem
-                                    key="csv"
-                                    startContent={<span className="text-xl">📄</span>}
-                                    className="hover:bg-slate-50 dark:hover:bg-zinc-800"
-                                    onPress={async () => {
-                                        const success = await exportData(filteredData, `Clientes_${new Date().toISOString().split('T')[0]}`, 'csv');
-                                        if (success) setSuccess("Archivo CSV generado exitosamente");
-                                    }}
-                                >
-                                    <span className="font-semibold text-slate-700 dark:text-zinc-200">Exportar CSV</span>
-                                </DropdownItem>
-                                <DropdownItem
-                                    key="excel"
-                                    startContent={<span className="text-xl">📊</span>}
-                                    className="hover:bg-slate-50 dark:hover:bg-zinc-800"
-                                    onPress={async () => {
-                                        const success = await exportData(filteredData, `Clientes_${new Date().toISOString().split('T')[0]}`, 'xlsx');
-                                        if (success) setSuccess("Archivo Excel generado exitosamente");
-                                    }}
-                                >
-                                    <span className="font-semibold text-slate-700 dark:text-zinc-200">Exportar Excel (.xlsx)</span>
-                                </DropdownItem>
-                            </DropdownMenu>
-                        </Dropdown>
-
-                        <div className="flex-1 sm:flex-none">
-                            <RegistrarClientes />
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+                                Directorio de Clientes
+                            </h3>
+                            {loading && !initialLoading && (
+                                <Spinner size="sm" color="warning" className="w-4 h-4 ml-1" />
+                            )}
                         </div>
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">
+                            Gestión y búsqueda general
+                        </p>
                     </div>
-                </CardHeader>
+                </div>
 
-                <CardBody className="p-6">
+                <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+                    <Dropdown>
+                        <DropdownTrigger>
+                            <Button
+                                variant="flat"
+                                className="font-bold bg-amber-500/10 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl h-11 px-5 shadow-sm"
+                                startContent={<HiDownload className="text-lg" />}
+                            >
+                                Exportar
+                            </Button>
+                        </DropdownTrigger>
+                        <DropdownMenu aria-label="Opciones de exportación" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl">
+                            <DropdownItem
+                                key="csv"
+                                startContent={<span className="text-xl">📄</span>}
+                                className="hover:bg-slate-50 dark:hover:bg-zinc-800"
+                                onPress={async () => {
+                                    const success = await exportData(filteredData, `Clientes_${new Date().toISOString().split('T')[0]}`, 'csv');
+                                    if (success) setSuccess("Archivo CSV generado exitosamente");
+                                }}
+                            >
+                                <span className="font-semibold text-slate-700 dark:text-zinc-200">Exportar CSV</span>
+                            </DropdownItem>
+                            <DropdownItem
+                                key="excel"
+                                startContent={<span className="text-xl">📊</span>}
+                                className="hover:bg-slate-50 dark:hover:bg-zinc-800"
+                                onPress={async () => {
+                                    const success = await exportData(filteredData, `Clientes_${new Date().toISOString().split('T')[0]}`, 'xlsx');
+                                    if (success) setSuccess("Archivo Excel generado exitosamente");
+                                }}
+                            >
+                                <span className="font-semibold text-slate-700 dark:text-zinc-200">Exportar Excel (.xlsx)</span>
+                            </DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>
+
+                    {/* El botón maestro viene dentro de este componente */}
+                    <div className="flex-1 sm:flex-none">
+                        <RegistrarClientes />
+                    </div>
+                </div>
+            </div>
+
+            {/* ── 2. CONTENEDOR PRINCIPAL: Filtros y Tabla ── */}
+            <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-hidden flex flex-col">
+                
+                {/* Filtros */}
+                <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
                         
                         {/* Buscador */}
                         <div className="lg:col-span-6 relative w-full flex items-center">
-                            <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+                            <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
                                 <HiSearch className="w-5 h-5" />
                             </span>
                             <input
                                 placeholder="Buscar por nombre, dirección, tel., correo o predio..."
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                className="w-full pl-10 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 shadow-none h-[52px]"
+                                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-none h-[52px]"
                             />
                             {search && (
                                 <button
                                     onClick={() => handleSearch("")}
-                                    className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                                    className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
                                 >
                                     <HiX className="w-4 h-4" />
                                 </button>
@@ -225,28 +276,23 @@ export function TabClientes() {
                             {hasActiveFilters ? (
                                 <Button 
                                     variant="flat" 
-                                    color="default"
                                     onPress={clearFilters}
-                                    className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-[52px] rounded-xl"
-                                    startContent={<HiFilter className="text-slate-400" />}
+                                    className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl"
+                                    startContent={<HiFilter className="text-lg" />}
                                 >
                                     Limpiar
                                 </Button>
                             ) : (
-                                <div className="w-full h-[52px]"></div> // Espaciador para mantener grid
+                                <div className="w-full h-[52px]"></div> // Espaciador
                             )}
                         </div>
-
                     </div>
-                </CardBody>
-            </Card>
+                </div>
 
-            {/* ── SECCIÓN 2: TABLA DE DATOS ── */}
-            <Card className="border-none shadow-none bg-transparent rounded-2xl border border-slate-200 dark:border-zinc-800">
-                {/* Cabecera interna de tabla */}
+                {/* Sub-Header Paginación */}
                 <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                        Mostrando <span className="text-slate-700 dark:text-zinc-200">{paginatedData.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{totalItems}</span> clientes
+                        Mostrando <span className="text-amber-600 dark:text-amber-400">{paginatedData.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{totalItems}</span> clientes
                     </span>
 
                     <div className="flex items-center gap-2">
@@ -263,7 +309,7 @@ export function TabClientes() {
                                 handleRowsPerPageChange(Array.from(keys)[0]);
                             }}
                             classNames={{
-                                trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-none h-[40px]",
+                                trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-none h-[36px]",
                                 value: "font-bold text-slate-700 dark:text-zinc-300"
                             }}
                         >
@@ -276,16 +322,17 @@ export function TabClientes() {
                     </div>
                 </div>
 
-                <CardBody className="p-0">
+                {/* Tabla */}
+                <div className="bg-white dark:bg-zinc-950 flex flex-col w-full overflow-x-auto">
                     <Table
                         aria-label="Tabla de clientes"
-                        removeWrapper // Quita la sombra y fondo por defecto de NextUI
+                        removeWrapper
                         classNames={{
                             base: "min-h-[400px]",
                             table: "min-w-full",
-                            th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4",
-                            td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4",
-                            tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
+                            th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4 px-6",
+                            td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4 px-6",
+                            tr: "hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
                         }}
                     >
                         <TableHeader>
@@ -300,12 +347,15 @@ export function TabClientes() {
                                 loading ? (
                                     <div className="flex flex-col items-center justify-center gap-3 py-12">
                                         <Spinner size="lg" color="default" />
-                                        <span className="text-sm font-bold text-slate-500 animate-pulse">Cargando directorio...</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 animate-pulse">Cargando directorio...</span>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center gap-2 py-12 text-slate-400 dark:text-zinc-500">
-                                        <HiUsers className="w-12 h-12 opacity-20 mb-2" />
-                                        <p className="font-bold">No se encontraron clientes</p>
+                                    <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-400 dark:text-zinc-500">
+                                        <HiUsers className="w-12 h-12 opacity-20 mb-3" />
+                                        <p className="font-bold text-sm text-slate-600 dark:text-zinc-300">No se encontraron clientes</p>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mt-1 max-w-[250px] text-center">
+                                            Intenta ajustar los filtros de búsqueda.
+                                        </p>
                                     </div>
                                 )
                             }
@@ -319,25 +369,25 @@ export function TabClientes() {
                                             avatarProps={{
                                                 name: cliente.nombre?.charAt(0) || "C",
                                                 size: "sm",
-                                                className: "bg-slate-200/70 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 font-bold"
+                                                className: "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 font-bold border border-slate-200 dark:border-zinc-700 shadow-sm shrink-0"
                                             }}
                                         />
                                     </TableCell>
 
                                     <TableCell>
                                         <div className="space-y-1.5">
-                                            {cliente.telefono && (
+                                            {cliente.telefono ? (
                                                 <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-300">
-                                                    <HiPhone className="w-3.5 h-3.5 text-slate-400" />
+                                                    <HiPhone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                                     <span>{cliente.telefono}</span>
                                                 </div>
-                                            )}
-                                            {cliente.email && (
+                                            ) : null}
+                                            {cliente.email ? (
                                                 <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-zinc-300">
-                                                    <HiMail className="w-3.5 h-3.5 text-slate-400" />
-                                                    <span>{cliente.email}</span>
+                                                    <HiMail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                    <span className="truncate max-w-[150px] block">{cliente.email}</span>
                                                 </div>
-                                            )}
+                                            ) : null}
                                             {!cliente.telefono && !cliente.email && (
                                                 <span className="text-xs font-medium text-slate-400 italic">Sin contacto</span>
                                             )}
@@ -345,13 +395,13 @@ export function TabClientes() {
                                     </TableCell>
 
                                     <TableCell>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 max-w-[200px]">
                                             <div className="flex items-center gap-1.5">
-                                                <HiLocationMarker className="w-4 h-4 text-slate-400" />
-                                                <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">{cliente.ciudad}</span>
+                                                <HiLocationMarker className="w-4 h-4 text-slate-400 shrink-0" />
+                                                <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 truncate">{cliente.ciudad || "S/C"}</span>
                                             </div>
                                             {cliente.direccion && (
-                                                <div className="text-[11px] font-medium text-slate-500 max-w-[200px] truncate ml-5">
+                                                <div className="text-[10px] font-medium text-slate-500 truncate ml-5">
                                                     {cliente.direccion}
                                                 </div>
                                             )}
@@ -375,7 +425,7 @@ export function TabClientes() {
                                                 isIconOnly
                                                 size="sm"
                                                 variant="flat"
-                                                className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
+                                                className="bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors rounded-lg"
                                                 onClick={() => handleAction("view", cliente)}
                                                 title="Ver Detalle"
                                             >
@@ -388,7 +438,7 @@ export function TabClientes() {
                                                 isIconOnly
                                                 size="sm"
                                                 variant="flat"
-                                                className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                                                className="bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 rounded-lg transition-colors"
                                                 onClick={() => handleAction("delete", cliente)}
                                                 title="Eliminar"
                                             >
@@ -400,25 +450,25 @@ export function TabClientes() {
                             ))}
                         </TableBody>
                     </Table>
+                </div>
 
-                    {/* Paginación Inferior */}
-                    {totalPages > 1 && (
-                        <div className="flex justify-center p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900">
-                            <Pagination
-                                total={totalPages}
-                                page={currentPage}
-                                onChange={setCurrentPage}
-                                showControls
-                                color="default"
-                                variant="flat"
-                                classNames={{
-                                    cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold",
-                                }}
-                            />
-                        </div>
-                    )}
-                </CardBody>
-            </Card>
+                {/* Paginación Inferior */}
+                {totalPages > 1 && (
+                    <div className="flex justify-center p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/60 dark:bg-zinc-900/40">
+                        <Pagination
+                            total={totalPages}
+                            page={currentPage}
+                            onChange={setCurrentPage}
+                            showControls
+                            color="default"
+                            variant="flat"
+                            classNames={{
+                                cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold shadow-sm",
+                            }}
+                        />
+                    </div>
+                )}
+            </div>
 
             {/* Modal de Detalle */}
             <ModalDetalleCliente
@@ -429,3 +479,4 @@ export function TabClientes() {
         </div>
     );
 }
+

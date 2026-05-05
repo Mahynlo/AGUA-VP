@@ -8,27 +8,25 @@ tags: ["cliente", "registro", "nuevo"]
 
 # Registrar Cliente
 
-Para registrar un nuevo cliente, presiona el botón **Registrar Cliente**.  
-Al hacerlo, se abrirá un **modal** con el formulario titulado **Registrar Nuevo Cliente**, en el cual deberás ingresar la siguiente información:
+Para registrar un nuevo cliente, presione el botón **Registrar Cliente**. Al hacerlo se abrirá una ventana con el formulario de alta.
+
+En ese formulario escriba los datos con calma, revisando que el nombre, teléfono y dirección estén correctos desde el inicio. Así evita correcciones después.
 
 ### Información Personal
-- **Nombre completo** → Escribe el nombre y apellidos del cliente.  
-- **Correo electrónico** → Ingrese una dirección de correo válida.  
-- **Teléfono** → Número de 10 dígitos.  
-- **Pueblo** → Selecciona uno de los pueblos disponibles en el sistema.  
-- **Tarifa** → Escoge una de las tarifas habilitadas para el cliente.  
-- **Dirección de residencia** → Ingresa la dirección completa, incluyendo:
-  - Calle  
-  - Número  
-  - Colonia  
-  - Referencias adicionales  
+- **Nombre completo**: escriba el nombre tal como desea verlo en la lista.
+- **Correo electrónico**: agregue un correo válido si desea dejar un contacto adicional.
+- **Teléfono**: capture un número de 10 dígitos.
+- **Pueblo**: seleccione el pueblo donde vive el cliente.
+- **Tarifa**: elija la tarifa que se usará para el cobro.
+- **Dirección de residencia**: escriba la ubicación completa con calle, número, colonia y referencias.
 
-> ⚠️ Este campo es de texto libre, por lo que se recomienda proporcionar la información lo más detallada y precisa posible.
+> Consejo: la dirección debe escribirse lo más clara posible para que después sea fácil ubicar al cliente.
 
 ---
 
 ### Confirmación del registro
-Una vez completado el formulario, presiona el botón **Registrar Cliente**.  
-Si el registro se realiza correctamente, aparecerá una **notificación emergente en verde** indicando que el proceso fue exitoso.  
-Automáticamente, la información del nuevo cliente se reflejará en la tabla de clientes registrados.
+
+Cuando termine, presione **Registrar Cliente**. Si todo está correcto, el sistema mostrará una confirmación y el nuevo cliente aparecerá en la tabla de inmediato.
+
+Si falta un dato importante, el sistema le avisará para corregirlo antes de guardar.
 

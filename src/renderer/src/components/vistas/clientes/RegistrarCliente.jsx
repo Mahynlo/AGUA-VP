@@ -60,17 +60,19 @@ export default function RegistrarClientes({ onSuccess, onError }) {
 
     return (
         <>
+            {/* Token 4: Botón Maestro Disparador */}
             <Button
                 aria-label="Registrar Cliente"
                 variant="solid"
                 startContent={<HiPlus className="text-lg" />}
-                className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
+                className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[52px] shadow-sm transition-transform active:scale-95"
                 onPress={onOpen}
                 isDisabled={!canCrearClientes}
             >
                 Nuevo Cliente
             </Button>
 
+            {/* Token 2: Modal Base Premium SaaS */}
             <Modal
                 isOpen={isOpen}
                 onOpenChange={onOpenChange}
@@ -81,42 +83,44 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                 isKeyboardDismissDisabled={true}
                 placement="center"
                 classNames={{
-                    backdrop: "bg-slate-900/40 backdrop-blur-sm",
+                    backdrop: "bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm",
                     base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
-                    header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
-                    body: "px-8 py-6",
-                    footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
-                    closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4",
+                    header: "border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6",
+                    body: "px-8 py-8 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent",
+                    footer: "border-t border-slate-100 dark:border-zinc-800/80 px-8 py-6",
+                    closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-6 right-6 rounded-xl transition-colors",
                 }}
             >
                 <ModalContent>
                     {() => (
                         <>
-                            {/* HEADER */}
+                            {/* ── HEADER DEL MODAL ── */}
                             <ModalHeader className="flex flex-col gap-1 shrink-0">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0">
+                                    {/* Regla de Tintes: Azul Corporativo para Clientes */}
+                                    <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
                                         <HiUser className="w-7 h-7" />
                                     </div>
-                                    <div className="flex flex-col">
-                                        <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+                                    <div className="flex flex-col gap-0.5">
+                                        {/* Token 3: Textos Principales */}
+                                        <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
                                             Registrar Nuevo Cliente
                                         </h2>
-                                        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mt-1">
                                             Datos Personales, Dirección y Tarifa
                                         </p>
                                     </div>
                                 </div>
                             </ModalHeader>
 
-                            {/* BODY */}
-                            <ModalBody className="custom-scrollbar">
+                            {/* ── CUERPO DEL MODAL (FORMULARIO) ── */}
+                            <ModalBody>
                                 <form 
                                     id="form-registro-cliente" 
                                     onSubmit={(e) => { e.preventDefault(); handleRegistroCliente(); }} 
-                                    className="flex flex-col gap-6"
+                                    className="flex flex-col gap-8" // Aumentado el gap para que respiren las secciones
                                 >
-                                    {/* Información Personal (Se asume que ya tiene su propia Card interna) */}
+                                    {/* Información Personal (Se asume que los subcomponentes ya aplican Token 4 para inputs) */}
                                     <SeccionPersonal
                                         formData={formData}
                                         erroresCampos={erroresCampos}
@@ -125,7 +129,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                         limpiarError={limpiarError}
                                     />
 
-                                    {/* Dirección (Se asume que ya tiene su propia Card interna) */}
+                                    {/* Dirección */}
                                     <SeccionDireccion
                                         formData={formData}
                                         erroresCampos={erroresCampos}
@@ -134,7 +138,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                         limpiarError={limpiarError}
                                     />
 
-                                    {/* Tarifa (Se asume que ya tiene su propia Card interna) */}
+                                    {/* Tarifa */}
                                     <SeccionTarifa
                                         formData={formData}
                                         erroresCampos={erroresCampos}
@@ -146,26 +150,24 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                                 </form>
                             </ModalBody>
 
-                            {/* FOOTER */}
-                            <ModalFooter>
+                            {/* ── FOOTER Y ACCIONES ── */}
+                            <ModalFooter className="flex justify-end gap-3">
                                 <Button
-                                    color="default"
-                                    variant="flat"
+                                    variant="light"
                                     onPress={handleCloseModal}
                                     isDisabled={isUpdating}
-                                    startContent={<HiX className="text-lg" />}
-                                    className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-6"
+                                    className="font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl h-11 px-6"
                                 >
                                     Cancelar
                                 </Button>
+                                {/* Token 4: Botón Maestro de Acción */}
                                 <Button
-                                    color="default"
                                     type="submit"
                                     form="form-registro-cliente"
                                     isDisabled={isUpdating || !canCrearClientes}
                                     isLoading={isUpdating}
                                     startContent={!isUpdating && <HiCheck className="text-lg" />}
-                                    className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
+                                    className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 h-11 shadow-sm transition-transform active:scale-95"
                                 >
                                     {isUpdating ? "Registrando..." : "Guardar Cliente"}
                                 </Button>

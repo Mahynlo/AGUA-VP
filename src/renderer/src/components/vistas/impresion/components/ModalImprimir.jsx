@@ -143,7 +143,6 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
                 setSuccess('El archivo PDF fue guardado correctamente.', 'Guardar PDF');
                 notifyOS('PDF guardado', 'El archivo fue guardado correctamente.', 'success');
             }
-            // result.canceled → el usuario cerró el diálogo, no se muestra nada
         } catch (err) {
             console.error('Error al guardar PDF:', err);
             setError('No se pudo guardar el archivo PDF.', 'Guardar PDF');
@@ -152,112 +151,108 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
 
     if (!pdfUrl) return null;
 
-    const isDark = effectiveTheme === 'dark';
-
-    // ── Estilos reutilizados ─────────────────────────────────
-    const segmentActive = 'bg-blue-500 text-white';
-    const segmentInactive = isDark
-        ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
-        : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700';
-    const segmentBase = 'flex-1 py-1.5 text-xs font-bold transition-colors focus:outline-none';
-
-    const labelCls = `text-xs font-bold uppercase tracking-wider block mb-2 ${isDark ? 'text-zinc-400' : 'text-slate-500'}`;
-    const segmentWrap = `flex rounded-xl overflow-hidden border ${isDark ? 'border-zinc-700' : 'border-slate-200'}`;
+    // ── Estilos SaaS Premium ─────────────────────────────────
+    const labelCls = "text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 block mb-1.5 ml-1";
+    
+    // Select e Inputs (Token 4)
+    const inputCls = "w-full bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500 transition-all duration-200 shadow-none h-11 px-3 text-sm font-medium text-slate-800 dark:text-zinc-100 outline-none";
+    
+    // Segmented Controls (Corregidos con Regla de Tintes para mayor contraste)
+    const segmentWrap = "flex rounded-xl p-1 gap-1 border border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/80";
+    const segmentBase = "flex-1 py-2 text-[11px] uppercase tracking-wider font-bold transition-all duration-200 focus:outline-none flex items-center justify-center gap-1.5 rounded-lg";
+    const segmentActive = "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 shadow-sm ring-1 ring-blue-500/30";
+    const segmentInactive = "text-slate-500 dark:text-zinc-400 hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 hover:text-slate-700 dark:hover:text-zinc-200";
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-900/70 dark:bg-black/85 p-4 sm:p-6 lg:p-8">
-            <div className={`w-full max-w-7xl h-full max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl ring-1 ring-white/10 ${
-                isDark ? 'bg-zinc-900' : 'bg-slate-50'
-            }`}>
+        /* Token 2: Modal Backdrop */
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 sm:p-6 lg:p-8 animate-in fade-in duration-200">
+            
+            {/* Token 2: Modal Base */}
+            <div className="w-full max-w-7xl h-full max-h-[90vh] rounded-[2rem] flex flex-col overflow-hidden shadow-2xl bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800">
 
                 {/* ── Header ───────────────────────────────── */}
-                <div className={`flex items-center justify-between px-4 py-3 shrink-0 border-b ${
-                    isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-slate-200'
-                }`}>
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between px-8 pt-6 pb-4 shrink-0 border-b border-slate-100 dark:border-zinc-800/50">
+                    <div className="flex items-center gap-4">
                         {onVolver && (
                             <Button
-                                isIconOnly variant="light" size="sm" onPress={onVolver}
-                                className="text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                                isIconOnly variant="flat" size="sm" onPress={onVolver}
+                                className="bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 rounded-lg h-9 w-9 shrink-0"
                                 title="Volver a vista previa"
                             >
-                                <HiArrowLeft className="w-5 h-5" />
+                                <HiArrowLeft className="w-4 h-4" />
                             </Button>
                         )}
-                        <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl">
-                            <HiPrinter className="w-5 h-5" />
+                        {/* Regla de tintes */}
+                        <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+                            <HiPrinter className="w-6 h-6" />
                         </div>
-                        <div>
-                            <h2 className={`text-base font-bold leading-tight ${isDark ? 'text-zinc-100' : 'text-slate-800'}`}>
+                        <div className="flex flex-col gap-0.5">
+                            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
                                 Imprimir Documento
                             </h2>
                             {numPages > 0 && (
-                                <p className={`text-xs font-medium uppercase tracking-wider mt-0.5 ${isDark ? 'text-zinc-500' : 'text-slate-500'}`}>
-                                    {numPages} {numPages === 1 ? 'Página' : 'Páginas'}
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                                    {numPages} {numPages === 1 ? 'Página a imprimir' : 'Páginas a imprimir'}
                                 </p>
                             )}
                         </div>
                     </div>
 
                     <Button
-                        isIconOnly variant="light" color="danger" size="sm" onPress={onClose}
-                        className="hover:bg-red-50 dark:hover:bg-red-900/20"
+                        isIconOnly variant="light" size="md" onPress={onClose}
+                        className="hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 rounded-xl"
                     >
-                        <HiX className="text-lg" />
+                        <HiX className="text-xl" />
                     </Button>
                 </div>
 
                 {/* ── Body: panel + visor ───────────────────── */}
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex flex-col sm:flex-row overflow-hidden bg-slate-50/30 dark:bg-black/10">
 
-                    {/* Panel de opciones (izquierda) */}
-                    <div className={`w-72 shrink-0 flex flex-col border-r ${
-                        isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-slate-200'
-                    }`}>
-                        <div className="p-5 space-y-5 flex-1 overflow-y-auto">
+                    {/* Panel de opciones (Izquierda) */}
+                    <div className="w-full sm:w-80 shrink-0 flex flex-col border-b sm:border-b-0 sm:border-r border-slate-100 dark:border-zinc-800/50 bg-white dark:bg-zinc-950">
+                        <div className="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent">
 
                             {/* Impresora */}
                             <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className={labelCls} style={{ marginBottom: 0 }}>Impresora</span>
+                                <div className="flex items-center justify-between mb-1.5 ml-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Impresora</span>
+                                    {/* Regla de tintes para botón icon */}
                                     <button
                                         onClick={loadPrinters}
                                         disabled={loadingPrinters}
-                                        title="Actualizar lista de impresoras"
-                                        className={`p-1 rounded-md transition-colors focus:outline-none ${
-                                            isDark
-                                                ? 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700'
-                                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-                                        }`}
+                                        title="Actualizar lista"
+                                        className="p-1 rounded-md text-blue-500 hover:bg-blue-500/10 dark:hover:bg-blue-900/20 transition-colors focus:outline-none"
                                     >
                                         <HiRefresh className={`w-3.5 h-3.5 ${loadingPrinters ? 'animate-spin' : ''}`} />
                                     </button>
                                 </div>
 
                                 {loadingPrinters ? (
-                                    <div className={`flex items-center gap-2 text-xs py-2 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400 dark:text-zinc-500 h-11 px-3 border border-slate-200 dark:border-zinc-800 rounded-xl">
                                         <Spinner size="sm" color="default" /> Cargando impresoras...
                                     </div>
                                 ) : printers.length === 0 ? (
-                                    <p className="text-xs text-red-500 dark:text-red-400 py-1">
-                                        No se encontraron impresoras instaladas.
-                                    </p>
+                                    <div className="text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/20 dark:text-red-400 rounded-xl h-11 flex items-center px-3">
+                                        No se encontraron impresoras.
+                                    </div>
                                 ) : (
-                                    <select
-                                        value={selectedPrinter}
-                                        onChange={e => setSelectedPrinter(e.target.value)}
-                                        className={`w-full rounded-xl px-3 py-2 text-sm font-medium border outline-none cursor-pointer transition-colors ${
-                                            isDark
-                                                ? 'bg-zinc-800 border-zinc-700 text-zinc-100 focus:border-blue-500'
-                                                : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500'
-                                        }`}
-                                    >
-                                        {printers.map(p => (
-                                            <option key={p.name} value={p.name}>
-                                                {p.displayName || p.name}{p.isDefault ? ' ★' : ''}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            value={selectedPrinter}
+                                            onChange={e => setSelectedPrinter(e.target.value)}
+                                            className={inputCls + " appearance-none"}
+                                        >
+                                            {printers.map(p => (
+                                                <option key={p.name} value={p.name}>
+                                                    {p.displayName || p.name}{p.isDefault ? ' (Predeterminada)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
 
@@ -287,13 +282,13 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
                                 <div className={segmentWrap}>
                                     <button
                                         onClick={() => setLandscape(true)}
-                                        className={`${segmentBase} flex items-center justify-center gap-1.5 py-2 ${landscape ? segmentActive : segmentInactive}`}
+                                        className={`${segmentBase} ${landscape ? segmentActive : segmentInactive}`}
                                     >
                                         <IconHorizontal /> Horizontal
                                     </button>
                                     <button
                                         onClick={() => setLandscape(false)}
-                                        className={`${segmentBase} flex items-center justify-center gap-1.5 py-2 ${!landscape ? segmentActive : segmentInactive}`}
+                                        className={`${segmentBase} ${!landscape ? segmentActive : segmentInactive}`}
                                     >
                                         <IconVertical /> Vertical
                                     </button>
@@ -302,84 +297,75 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
 
                             {/* Copias */}
                             <div>
-                                <span className={labelCls}>Copias</span>
+                                <span className={labelCls}>Cantidad de Copias</span>
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => setCopies(c => Math.max(1, c - 1))}
-                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-base font-bold transition-colors focus:outline-none ${
-                                            isDark
-                                                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:bg-slate-300'
-                                        }`}
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black transition-colors focus:outline-none bg-slate-100/70 text-slate-600 hover:bg-slate-200 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:bg-zinc-800"
                                     >
                                         −
                                     </button>
-                                    <span className={`w-10 text-center text-sm font-bold tabular-nums ${isDark ? 'text-zinc-100' : 'text-slate-800'}`}>
-                                        {copies}
-                                    </span>
+                                    <input 
+                                        type="number" 
+                                        value={copies} 
+                                        readOnly 
+                                        className="w-16 h-10 text-center text-base font-black tabular-nums bg-transparent border-none outline-none text-slate-800 dark:text-zinc-100"
+                                    />
                                     <button
                                         onClick={() => setCopies(c => Math.min(99, c + 1))}
-                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-base font-bold transition-colors focus:outline-none ${
-                                            isDark
-                                                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 active:bg-zinc-600'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:bg-slate-300'
-                                        }`}
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black transition-colors focus:outline-none bg-slate-100/70 text-slate-600 hover:bg-slate-200 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:bg-zinc-800"
                                     >
                                         +
                                     </button>
                                 </div>
                             </div>
+
                         </div>
 
-                        {/* Acciones */}
-                        <div className={`p-4 space-y-2 border-t shrink-0 ${isDark ? 'border-zinc-800' : 'border-slate-100'}`}>
+                        {/* ── Acciones (Footer del sidebar) ── */}
+                        <div className="p-6 pt-4 border-t border-slate-100 dark:border-zinc-800/50 space-y-3 bg-white dark:bg-zinc-950 shrink-0">
                             {printError && (
-                                <p className="text-xs text-red-500 dark:text-red-400 pb-1">{printError}</p>
+                                <div className="p-3 mb-2 rounded-xl bg-red-500/10 border border-red-500/20 text-[11px] font-bold text-red-600 dark:text-red-400 leading-tight">
+                                    {printError}
+                                </div>
                             )}
 
-                            {/* Imprimir directo (sin diálogo) */}
+                            {/* Token 4: Botón Primario */}
                             <Button
-                                color="primary"
-                                className="w-full font-bold shadow-md shadow-blue-500/20"
                                 onPress={handlePrint}
                                 isLoading={isPrinting}
                                 isDisabled={isPrinting || !printUrl || printers.length === 0}
                                 startContent={!isPrinting && <HiPrinter className="text-lg" />}
+                                className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-[52px] shadow-sm"
                             >
-                                {isPrinting ? 'Imprimiendo...' : 'Imprimir'}
+                                {isPrinting ? 'Imprimiendo...' : 'Imprimir Ahora'}
                             </Button>
 
-                            {/* Diálogo del sistema operativo */}
-                            <Button
-                                variant="flat"
-                                size="sm"
-                                className={`w-full font-bold ${
-                                    isDark ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }`}
-                                onPress={handlePrintOS}
-                                isDisabled={isPrinting || !printUrl}
-                                startContent={<HiPrinter className="text-sm opacity-60" />}
-                            >
-                                Diálogo del sistema
-                            </Button>
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Botones Secundarios */}
+                                <Button
+                                    variant="flat"
+                                    onPress={handlePrintOS}
+                                    isDisabled={isPrinting || !printUrl}
+                                    className="font-bold bg-slate-100/70 text-slate-700 hover:bg-slate-200 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-xl h-11"
+                                >
+                                    Dialogo OS
+                                </Button>
 
-                            {/* Guardar PDF */}
-                            <Button
-                                variant="flat"
-                                size="sm"
-                                className={`w-full font-bold ${
-                                    isDark ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }`}
-                                onPress={handleSavePdf}
-                                startContent={<HiDownload className="text-sm" />}
-                            >
-                                Guardar PDF
-                            </Button>
+                                <Button
+                                    variant="flat"
+                                    onPress={handleSavePdf}
+                                    startContent={<HiDownload className="text-sm opacity-70" />}
+                                    className="font-bold bg-slate-100/70 text-slate-700 hover:bg-slate-200 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-xl h-11"
+                                >
+                                    Guardar
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Visor PDF (derecha) */}
-                    <div className={`flex-1 overflow-hidden ${isDark ? 'bg-zinc-950' : 'bg-slate-100'}`}>
+                    {/* Visor PDF (Derecha) */}
+                    <div className="flex-1 overflow-hidden relative">
                         <Worker workerUrl={pdfjsWorker}>
                             <Viewer
                                 fileUrl={pdfUrl}
@@ -393,18 +379,18 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
                 </div>
             </div>
 
-            {/* Ajuste visual del visor para que haga match con el tema de la app */}
+            {/* Ajuste visual del visor PDF para incrustarlo en la UI SaaS */}
             <style>{`
                 .rpv-open__input-wrapper { display: none !important; }
                 .rpv-core__viewer--dark {
-                    --rpv-core__theme-bg-body: #09090b !important;
-                    --rpv-core__theme-bg-toolbar: #18181b !important;
-                    --rpv-core__theme-border-color: #27272a !important;
+                    --rpv-core__theme-bg-body: transparent !important;
+                    --rpv-core__theme-bg-toolbar: transparent !important;
+                    --rpv-core__theme-border-color: rgba(39, 39, 42, 0.5) !important; /* border-zinc-800/50 */
                 }
                 .rpv-core__viewer--light {
-                    --rpv-core__theme-bg-body: #f8fafc !important;
-                    --rpv-core__theme-bg-toolbar: #ffffff !important;
-                    --rpv-core__theme-border-color: #e2e8f0 !important;
+                    --rpv-core__theme-bg-body: transparent !important;
+                    --rpv-core__theme-bg-toolbar: transparent !important;
+                    --rpv-core__theme-border-color: rgba(241, 245, 249, 0.5) !important; /* border-slate-100/50 */
                 }
             `}</style>
         </div>

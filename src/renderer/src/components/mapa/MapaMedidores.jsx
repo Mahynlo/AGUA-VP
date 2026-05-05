@@ -9,16 +9,12 @@ import { useLeafletSetup } from './useLeafletSetup';
 import OfflineTileLayer from './OfflineTileLayer';
 
 // 1. Componente invisible para ajustar tamaño e inicializar
-const MapResizer = ({ useMap, onMapReady, setMapInstance }) => {
+const MapResizer = React.memo(({ useMap, onMapReady, setMapInstance }) => {
   const map = useMap();
   useEffect(() => {
-    // 1. Guardar instancia del mapa
     if (setMapInstance) setMapInstance(map);
 
-    // 2. Avisar que el mapa está listo
     if (onMapReady) {
-      console.log("MapResizer: Signaling Map Ready");
-      // Pequeño delay para asegurar renderizado visual
       const timer = setTimeout(() => {
         onMapReady(false);
         map.invalidateSize();
@@ -29,10 +25,12 @@ const MapResizer = ({ useMap, onMapReady, setMapInstance }) => {
     }
   }, [map, onMapReady, setMapInstance]);
   return null;
-};
+});
+
+MapResizer.displayName = 'MapResizer';
 
 // 2. Componente del Mapa (Lógica interna)
-const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady, setMapError, selectedMedidor }) => {
+const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, selectedMedidor }) => {
   const { mapLibrary: MapLibrary, mapError: libError } = useLeafletSetup();
   const [mapInstance, setMapInstance] = useState(null);
   const markerRefs = React.useRef({});
@@ -41,15 +39,8 @@ const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady,
     if (libError && setMapError) setMapError(true);
   }, [libError, setMapError]);
 
-  // Limpiar refs de markers que ya no están en el array
-  useEffect(() => {
-    const currentIds = new Set(medidores.map(m => m.id));
-    Object.keys(markerRefs.current).forEach(id => {
-      if (!currentIds.has(Number(id))) {
-        delete markerRefs.current[id];
-      }
-    });
-  }, [medidores]);
+  // 🔥 OPTIMIZACIÓN: Se eliminó el useEffect que iteraba todo el objeto markerRefs con un Set.
+  // La limpieza ahora se maneja automáticamente en el callback de cada ref (ver abajo).
 
   // Efecto para mover el mapa cuando cambia el medidor seleccionado
   useEffect(() => {
@@ -57,33 +48,26 @@ const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady,
       const marker = markerRefs.current[selectedMedidor.id];
       const { latitud, longitud } = selectedMedidor;
 
-      // 0. Asegurar que el mapa conoce su tamaño real (sin bloquear el render)
       requestAnimationFrame(() => {
         mapInstance.invalidateSize();
-
-        // 1. Mover el mapa (flyTo natural, sin forzar duración)
-        // Leaflet calculará la duración basada en la distancia (physics-based)
         mapInstance.flyTo([latitud, longitud], 18, {
           animate: true,
           easeLinearity: 0.25
         });
       });
 
-      // 2. Abrir el popup
       marker.openPopup();
     }
   }, [selectedMedidor, mapInstance]);
 
   const customIcon = useMemo(() => {
-    if (MapLibrary?.L) {
-      return new MapLibrary.L.Icon({
-        iconUrl: MarkerMap,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      });
-    }
-    return null;
+    if (!MapLibrary?.L) return null;
+    return new MapLibrary.L.Icon({
+      iconUrl: MarkerMap,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32],
+    });
   }, [MapLibrary]);
 
   // Renderizado de marcadores
@@ -97,11 +81,16 @@ const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady,
         position={[medidor.latitud, medidor.longitud]}
         icon={customIcon}
         ref={(element) => {
-          if (element) markerRefs.current[medidor.id] = element;
+          // 🔥 OPTIMIZACIÓN: React pasa null cuando el elemento se desmonta. 
+          // Limpiamos la memoria aquí mismo en O(1) en lugar de O(N).
+          if (element) {
+            markerRefs.current[medidor.id] = element;
+          } else {
+            delete markerRefs.current[medidor.id];
+          }
         }}
       >
         <Popup className="custom-popup">
-          {/* ... (Popup content remains same) ... */}
           <div className="p-4 min-w-[280px] bg-white/95 rounded-t-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full shadow-lg">
@@ -193,7 +182,7 @@ const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady,
           setTimeout(() => onMapReady(false), 500);
         }}
       >
-        <MapResizer useMap={useMap} />
+        <MapResizer useMap={useMap} onMapReady={onMapReady} setMapInstance={setMapInstance} />
 
         <LayersControl position="bottomright">
           <LayersControl.BaseLayer checked name="🌐 Mapa Calles">
@@ -207,20 +196,20 @@ const LeafletMap = React.memo(({ position, municipioData, medidores, onMapReady,
           </LayersControl.BaseLayer>
         </LayersControl>
 
-        {municipioData && (
-          <GeoJSON data={municipioData} style={MUNICIPIO_STYLE} />
-        )}
+        {/* 🔥 OPTIMIZACIÓN: Consumimos el JSON directamente, sin pasarlo por props ni estado */}
+        <GeoJSON data={municipiojson} style={MUNICIPIO_STYLE} />
 
         {MarkersRendered}
       </MapContainer>
     </div>
   );
 }, (prev, next) => {
+  // 🔥 OPTIMIZACIÓN: Comparación más estricta y rápida al tener menos props.
   return (
     prev.position[0] === next.position[0] &&
+    prev.position[1] === next.position[1] &&
     prev.medidores === next.medidores &&
-    prev.municipioData === next.municipioData &&
-    prev.selectedMedidor === next.selectedMedidor // Important: Re-render if selection changes
+    prev.selectedMedidor === next.selectedMedidor
   );
 });
 
@@ -229,19 +218,24 @@ LeafletMap.displayName = 'LeafletMap';
 const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
-  const [municipioData, setMunicipioData] = useState(null);
 
-  const position = MAP_DEFAULT_CENTER;
+  // 🔥 OPTIMIZACIÓN: Eliminamos el estado municipioData y su useEffect asociado.
+  // Evitamos un re-renderizado en frío del componente padre.
 
   const estadisticas = useMemo(() => {
-    if (!medidores) return { total: 0, activos: 0, asignados: 0 };
-    const total = medidores.length;
-    const activos = medidores.filter(m => m.estado_medidor === "Activo").length;
-    const asignados = medidores.filter(m => m.cliente_id).length;
-    return { total, activos, asignados };
+    if (!medidores || medidores.length === 0) return { total: 0, activos: 0, asignados: 0 };
+    
+    // 🔥 OPTIMIZACIÓN: Recorremos el array 1 sola vez (reduce) en vez de 2 veces (filter + filter).
+    return medidores.reduce(
+      (acc, m) => {
+        if (m.estado_medidor === "Activo") acc.activos++;
+        if (m.cliente_id) acc.asignados++;
+        return acc;
+      },
+      { total: medidores.length, activos: 0, asignados: 0 }
+    );
   }, [medidores]);
 
-  // Safety Timeout: Force loading to false if map hangs
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -249,11 +243,6 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    setMunicipioData(municipiojson);
-  }, []);
-
-  // Renderizado de error
   if (mapError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-lg border border-red-200">
@@ -268,16 +257,12 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
 
   return (
     <div className="relative w-full h-full rounded-lg overflow-hidden shadow-lg border border-gray-200 isolate">
-
-      {/* LOADING OVERLAY - Se muestra SOBRE el mapa, no EN LUGAR DEL mapa */}
       {isLoading && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center">
-          {/* Fondo con efecto de ondas */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 animate-pulse">
             <div className="absolute inset-0 bg-white/40 backdrop-blur-sm"></div>
           </div>
 
-          {/* Contenido de loading (Tus estilos originales) */}
           <div className="relative z-10 p-8">
             <Card className="max-w-md mx-auto bg-white/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 shadow-2xl">
               <CardBody className="p-8 text-center">
@@ -300,7 +285,6 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
                   </p>
                 </div>
 
-                {/* Mini estadísticas */}
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="bg-white/40 backdrop-blur-sm rounded-lg p-2">
                     <div className="font-medium text-green-600">Activos</div>
@@ -317,7 +301,6 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
         </div>
       )}
 
-      {/* Indicador Flotante (Se oculta durante carga para no ensuciar) */}
       {!isLoading && (
         <div className="absolute top-4 right-4 z-[400]">
           <Card className="bg-white/80 backdrop-blur-xl backdrop-saturate-150 border border-white/40 shadow-xl">
@@ -332,12 +315,10 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
         </div>
       )}
 
-      {/* El Mapa se renderiza siempre para que pueda inicializarse */}
       <LeafletMap
-        position={position}
-        municipioData={municipioData}
+        position={MAP_DEFAULT_CENTER}
         medidores={medidores}
-        onMapReady={setIsLoading} // Pasamos la función para apagar el loading
+        onMapReady={setIsLoading}
         setMapError={setMapError}
         selectedMedidor={selectedMedidor}
       />

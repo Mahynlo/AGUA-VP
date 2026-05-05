@@ -84,14 +84,18 @@ export default function EditarTarifa({ tarifa, onTarifaEditada }) {
     }
   };
 
+  // Clases compartidas para los inputs (Token 4)
+  const inputClasses = "w-full bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500 transition-all duration-200 shadow-none px-3 text-sm font-medium text-slate-800 dark:text-zinc-100";
+  const labelClasses = "block mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400";
+
   return (
     <>
       <Button
-        color="secondary"
-        className="ml-2 min-w-[50px] px-8 py-2"
+        variant="flat"
+        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl px-6 ml-2"
         onPress={onOpen}
       >
-        Editar
+        Editar Configuración
       </Button>
 
       <Modal
@@ -101,100 +105,114 @@ export default function EditarTarifa({ tarifa, onTarifaEditada }) {
         scrollBehavior="inside"
         isDismissable={false}
         isKeyboardDismissDisabled={true}
-        backdrop="blur"
+        /* Token 2: Modal Premium SaaS */
         classNames={{
-          backdrop: "bg-gradient-to-t mt-18 ml-24 from-zinc-900 to-zinc-900/10 backdrop-opacity-20",
-          header: "dark:border-b border-b border-gray-400 dark:border-[#6879bd]",
-          footer: "dark:border-t border-t border-gray-400 dark:border-[#6879bd]",
+          backdrop: "bg-slate-900/40 backdrop-blur-sm",
+          base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
+          header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8 flex flex-col gap-1",
+          body: "px-8 py-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent",
+          footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
+          closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4"
         }}
       >
         <ModalContent>
-          {() => (
+          {(onClose) => (
             <>
-              <ModalHeader className="text-2xl font-bold text-gray-900 bg-gray-300 dark:bg-gray-700 dark:text-white">
-                Editar Tarifa
+              <ModalHeader>
+                {/* Token 3: Textos Principales */}
+                <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                  Editar Tarifa
+                </h2>
+                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+                  Modifica los datos generales y la vigencia
+                </p>
               </ModalHeader>
-              <ModalBody className="bg-gray-200 dark:bg-gray-800">
+              
+              <ModalBody>
+                {/* Regla de tintes para alertas */}
                 {success && (
-                  <div className="p-3 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-900 dark:text-green-300">
+                  <div className="p-4 mb-2 text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
                     {success}
                   </div>
                 )}
                 {error && (
-                  <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300">
+                  <div className="p-4 mb-2 text-sm font-bold text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
                     {error}
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="grid gap-4">
+                <form id="form-editar-tarifa" onSubmit={handleSubmit} className="grid gap-5">
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                      Nombre de la Tarifa
+                    <label className={labelClasses}>
+                      Nombre de la Tarifa <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      className="bg-gray-50 border rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
+                      className={`${inputClasses} h-11`}
                       value={nombre}
                       onChange={(e) => setNombre(e.target.value)}
                       required
+                      placeholder="Ej. Residencial, Comercial..."
                     />
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
+                    <label className={labelClasses}>
                       Descripción
                     </label>
                     <textarea
-                      className="bg-gray-50 border h-32 rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white resize-none"
+                      className={`${inputClasses} py-3 h-32 resize-none`}
                       value={descripcion}
                       onChange={(e) => setDescripcion(e.target.value)}
+                      placeholder="Detalles adicionales sobre esta tarifa..."
                     />
                   </div>
 
-                  <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                      Fecha de Inicio
-                    </label>
-                    <input
-                      type="date"
-                      className="bg-gray-50 border rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
-                      value={fechaInicio}
-                      onChange={(e) => setFechaInicio(e.target.value)}
-                      required
-                    />
-                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClasses}>
+                        Fecha de Inicio <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        className={`${inputClasses} h-11`}
+                        value={fechaInicio}
+                        onChange={(e) => setFechaInicio(e.target.value)}
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
-                      Fecha de Fin (opcional)
-                    </label>
-                    <input
-                      type="date"
-                      className="bg-gray-50 border rounded-xl dark:border-gray-600 text-gray-900 text-sm block w-full p-2.5 dark:bg-neutral-800 dark:text-white"
-                      value={fechaFin}
-                      onChange={(e) => setFechaFin(e.target.value)}
-                    />
+                    <div>
+                      <label className={labelClasses}>
+                        Fecha de Fin <span className="text-slate-400 font-normal lowercase">(Opcional)</span>
+                      </label>
+                      <input
+                        type="date"
+                        className={`${inputClasses} h-11`}
+                        value={fechaFin}
+                        onChange={(e) => setFechaFin(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </form>
               </ModalBody>
 
-              <ModalFooter className="bg-gray-300 dark:bg-gray-700">
+              <ModalFooter>
                 <Button
-                  color="primary"
-                  type="submit"
-                  onClick={handleSubmit}
-                  isDisabled={isSaving}
-                  className="bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-xl text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700"
-                >
-                  {isSaving ? "Guardando..." : "Guardar Cambios"}
-                </Button>
-                <Button
-                  color="danger"
                   variant="light"
                   onPress={onClose}
-                  className="bg-red-700 hover:bg-red-800 text-white font-medium rounded-xl text-sm px-5 py-2.5"
+                  className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6"
                 >
                   Cancelar
+                </Button>
+                {/* Token 4: Botón Primario */}
+                <Button
+                  type="submit"
+                  form="form-editar-tarifa" // Vinculado al form mediante ID para accesibilidad y evitar onClick redundant
+                  isLoading={isSaving}
+                  className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm"
+                >
+                  {isSaving ? "Guardando..." : "Guardar Cambios"}
                 </Button>
               </ModalFooter>
             </>

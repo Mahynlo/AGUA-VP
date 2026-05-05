@@ -37,7 +37,7 @@ export function DashboardProvider({ children }) {
     useEffect(() => {
         fetchDashboardStats();
 
-        // Escuchar evento de reconexión y evento personalizado 'dashboard-update'
+        // Escuchar evento de reconexión y eventos de actualización
         const handleUpdate = () => {
             console.log("🔄 Actualizando dashboard por evento...");
             fetchDashboardStats();
@@ -45,10 +45,12 @@ export function DashboardProvider({ children }) {
 
         window.addEventListener('connection-restored', handleUpdate);
         window.addEventListener('dashboard-update', handleUpdate);
+        window.addEventListener('token-refreshed', handleUpdate);
 
         return () => {
             window.removeEventListener('connection-restored', handleUpdate);
             window.removeEventListener('dashboard-update', handleUpdate);
+            window.removeEventListener('token-refreshed', handleUpdate);
         };
     }, [fetchDashboardStats]);
 

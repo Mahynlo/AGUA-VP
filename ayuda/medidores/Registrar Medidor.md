@@ -8,46 +8,55 @@ tags: ["medidor", "registro", "instalación"]
 
 # Registrar Medidor
 
-Para registrar un nuevo medidor, presiona el botón **Registrar Medidor**.  
-Esto abrirá un **modal** con un formulario dividido en diferentes apartados:
+Para registrar un nuevo medidor, presione **Registrar Medidor**. Se abrirá una ventana con el formulario de alta.
+
+Complete los datos con cuidado, especialmente el número de serie y la ubicación, para que después sea fácil identificarlo.
 
 ---
 
 ### 📌 Datos del Medidor
-En este apartado deberás ingresar la información principal del dispositivo:  
+En este apartado ingrese la información principal del dispositivo:
 
-**Número de serie** → Identificador único del medidor.  
-El número inicia con un prefijo según el pueblo:  
+**Número de serie**: identificador único del medidor.
+El número inicia con un prefijo según el pueblo:
   - **NG** → Pueblo Nacori Grande
-  - **MP** → Pueblo Matape  
-  - **AD** → Pueblo Adivino  
-El resto puede estar conformado por números o letras, y sirve para identificar el **pueblo de instalación**.  
+  - **MP** → Pueblo Matape
+  - **AD** → Pueblo Adivino
+El resto puede estar conformado por números o letras y ayuda a reconocer el lugar de instalación.
 
-**Fecha de instalación** → Selecciona en el calendario la fecha en la que se instaló el medidor.  
+**Fecha de instalación**: seleccione el día en que se colocó.
 
-**Comentarios de ubicación** → Campo de texto libre donde se debe describir claramente la ubicación del medidor, incluyendo:  
-   - Dirección exacta.  
-   - Referencias adicionales que faciliten su localización.  
+**Comentarios de ubicación**: escriba una referencia clara del lugar, por ejemplo calle, número, colonia o punto de referencia.
+
+**Lectura base**: si ya conoce el punto de partida del equipo, puede registrarlo desde aquí para que el cálculo posterior sea correcto.
+
+**Capacidad máxima**: use este valor como referencia del límite del medidor.
+
+**Estado del medidor**: normalmente inicia como activo, aunque puede quedar sin instalar o inactivo si todavía no está en servicio.
 
 ---
 
 ### 👥 Asignación de Cliente *(opcional)*
-Este apartado permite vincular el medidor a un cliente existente.  
+Este apartado permite vincular el medidor a un cliente existente.
 
-- Se puede **buscar por nombre de cliente**.  
-- El sistema mostrará el **pueblo de la residencia principal** del cliente.  
-- **No es obligatorio** asignar un cliente al momento del registro; el medidor puede quedar sin asignación inicial.  
+- Puede buscar por nombre del cliente.
+- El sistema mostrará su pueblo principal.
+- Si todavía no sabe a qué cliente se asignará, puede dejarlo sin asignación.
+- Si el medidor todavía no se usará en una vivienda, también puede registrarlo sin cliente y asignarlo después.
 
 ---
 
 ### 🌍 Ubicación Geográfica
-El sistema permite registrar la ubicación del medidor de dos formas:  
+El sistema permite registrar la ubicación del medidor de dos formas:
 
-1. **Mapa interactivo** → Haz clic en el mapa para colocar el marcador de ubicación.  
-2. **Coordenadas manuales** → Ingresa la **latitud** y **longitud** directamente en los campos correspondientes.  
+1. **Mapa interactivo**: haga clic para marcar la ubicación.
+2. **Coordenadas manuales**: escriba la latitud y la longitud si ya las conoce.
 
 ---
 
-✅ Una vez completados los datos, presiona el botón **Registrar Medidor**.  
-Si el registro es exitoso, aparecerá una notificación de confirmación y el medidor se añadirá automáticamente a la lista del sistema.
+## Confirmación
+
+Cuando termine, presione **Registrar Medidor**. Si todo está completo, verá la confirmación y el medidor aparecerá en la lista.
+
+> Un buen registro inicial evita confusiones al momento de capturar lecturas o asignarlo a un cliente.
 
