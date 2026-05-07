@@ -246,11 +246,11 @@ export default function RegistrarMedidor() {
                                     </div>
                                 </div>
                             </ModalHeader>
-                            
+
                             {/* BODY */}
                             <ModalBody className="custom-scrollbar">
                                 <form id="form-registro-medidor" onSubmit={(e) => { e.preventDefault(); handleRegistroMedidor(); }} className="flex flex-col gap-6">
-                                    
+
                                     {/* 1. Información del Medidor (AZUL) */}
                                     <Card className="shadow-none bg-sky-500/10 rounded-2xl border border-sky-200/70 dark:border-sky-900/40">
                                         <CardBody className="p-5 sm:p-6 space-y-6">
@@ -258,7 +258,7 @@ export default function RegistrarMedidor() {
                                                 <HiHashtag className="w-5 h-5 text-sky-500" />
                                                 Datos del Equipo
                                             </h3>
-                                            
+
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 {/* Número de Serie Compuesto */}
                                                 <div>
@@ -362,22 +362,23 @@ export default function RegistrarMedidor() {
                                     </Card>
 
                                     {/* 2. Asignación de Cliente (ÍNDIGO) */}
-                                    <Card className="shadow-none bg-indigo-500/10 rounded-2xl border border-indigo-200/70 dark:border-indigo-900/40">
-                                        <CardBody className="p-5 sm:p-6">
-                                            <h3 className="font-bold text-base text-indigo-900 dark:text-indigo-300 flex items-center gap-2 mb-2 border-b border-indigo-100 dark:border-indigo-900/30 pb-3">
+                                    <Card className="shadow-none bg-indigo-500/10 rounded-2xl border border-indigo-200/70 dark:border-indigo-900/40 flex flex-col min-h-[380px]">
+                                        <CardBody className="p-6 sm:p-8 flex flex-col flex-1">
+                                            <h3 className="font-bold text-base text-indigo-900 dark:text-indigo-300 flex items-center gap-2 mb-2 border-b border-indigo-100 dark:border-indigo-900/30 pb-4">
                                                 <HiUser className="w-5 h-5 text-indigo-500" />
                                                 Asignación de Cliente <span className="text-xs font-medium text-indigo-500/60 dark:text-indigo-400/60 normal-case">(Opcional)</span>
                                             </h3>
-                                            <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 mb-4">
+                                            <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 mb-6">
                                                 Selecciona el cliente propietario del inmueble donde se instalará este equipo.
                                             </p>
-                                            
-                                            <div className="bg-slate-50/80 dark:bg-zinc-950/40 p-4 rounded-xl border border-indigo-200/60 dark:border-zinc-800 shadow-none">
+
+                                            {/* Contenedor del buscador: flex-1 permite que se estire para llenar el espacio extra */}
+                                            <div className="bg-slate-50/80 dark:bg-zinc-950/40 sm:p-2 rounded-xl border border-indigo-200/60 dark:border-zinc-800 shadow-none flex flex-col flex-1 ">
                                                 <BuscarCliente onClienteSeleccionado={handleClienteSeleccionado} />
-                                                
+
                                                 {clienteIdBusqueda && (
-                                                    <div className="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-2 animate-in fade-in">
-                                                        <HiCheck className="text-emerald-600 dark:text-emerald-400 text-lg shrink-0" />
+                                                    <div className="mt-6 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-3 animate-in fade-in">
+                                                        <HiCheck className="text-emerald-600 dark:text-emerald-400 text-xl shrink-0" />
                                                         <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
                                                             Cliente vinculado exitosamente (ID: {clienteIdBusqueda})
                                                         </p>
@@ -411,7 +412,7 @@ export default function RegistrarMedidor() {
 
                                 </form>
                             </ModalBody>
-                            
+
                             {/* FOOTER */}
                             <ModalFooter>
                                 <Button

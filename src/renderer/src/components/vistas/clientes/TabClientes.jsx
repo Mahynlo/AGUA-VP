@@ -97,11 +97,13 @@ export function TabClientes() {
         handleSearch,
         handleCityFilterChange,
         handleStatusFilterChange,
+        handleOrderByChange,
         handleRowsPerPageChange,
         clearFilters,
         hasActiveFilters,
         setCurrentPage,
-        getStatusColor
+        getStatusColor,
+        orderBy
     } = useTabClientes();
 
     const { setSuccess, setError } = useFeedback();
@@ -211,7 +213,7 @@ export function TabClientes() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
                         
                         {/* Buscador */}
-                        <div className="lg:col-span-6 relative w-full flex items-center">
+                        <div className="lg:col-span-5 relative w-full flex items-center">
                             <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
                                 <HiSearch className="w-5 h-5" />
                             </span>
@@ -272,7 +274,24 @@ export function TabClientes() {
                         </div>
 
                         {/* Botón Limpiar Filtros */}
-                        <div className="lg:col-span-2 flex justify-end">
+                        <div className="lg:col-span-2">
+                            <Select
+                                placeholder="Ordenar por"
+                                selectedKeys={[orderBy]}
+                                onSelectionChange={(keys) => {
+                                    const value = Array.from(keys)[0] || "numero_predio";
+                                    handleOrderByChange(value);
+                                }}
+                                aria-label="Ordenar clientes"
+                                variant="flat"
+                                classNames={selectClassNames}
+                            >
+                                <SelectItem key="numero_predio" value="numero_predio">N° de predio</SelectItem>
+                                <SelectItem key="nombre" value="nombre">Nombre (A-Z)</SelectItem>
+                            </Select>
+                        </div>
+
+                        <div className="lg:col-span-1 flex justify-end">
                             {hasActiveFilters ? (
                                 <Button 
                                     variant="flat" 
