@@ -8,6 +8,7 @@ export const useTabClientes = () => {
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [orderBy, setOrderBy] = useState("numero_predio");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   
@@ -32,9 +33,10 @@ export const useTabClientes = () => {
           limit: FETCH_LIMIT,
           search: debouncedSearch,
           ciudad: cityFilter === "All" ? "" : cityFilter,
-          estado: statusFilter === "All" ? "" : statusFilter
+          estado: statusFilter === "All" ? "" : statusFilter,
+          orderBy
       });
-    }, [debouncedSearch, cityFilter, statusFilter, apiPage, fetchClientes]); // rowsPerPage no está porque solo afecta apiPage
+    }, [debouncedSearch, cityFilter, statusFilter, orderBy, apiPage, fetchClientes]); // rowsPerPage no está porque solo afecta apiPage
 
   // Obtener listas únicas para filtros
   const ciudades = useMemo(() => {
@@ -81,6 +83,11 @@ export const useTabClientes = () => {
     setCurrentPage(1);
   };
 
+  const handleOrderByChange = (value) => {
+    setOrderBy(value);
+    setCurrentPage(1);
+  };
+
   const handleRowsPerPageChange = (value) => {
     setRowsPerPage(Number(value));
     setCurrentPage(1);
@@ -90,10 +97,11 @@ export const useTabClientes = () => {
     setSearch("");
     setCityFilter("All");
     setStatusFilter("All");
+    setOrderBy("numero_predio");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = search.trim() !== "" || cityFilter !== "All" || statusFilter !== "All";
+  const hasActiveFilters = search.trim() !== "" || cityFilter !== "All" || statusFilter !== "All" || orderBy !== "numero_predio";
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -113,6 +121,7 @@ export const useTabClientes = () => {
     search,
     cityFilter,
     statusFilter,
+    orderBy,
     ciudades,
     estados,
     currentPage,
@@ -122,6 +131,7 @@ export const useTabClientes = () => {
     handleSearch,
     handleCityFilterChange,
     handleStatusFilterChange,
+    handleOrderByChange,
     handleRowsPerPageChange,
     clearFilters,
     hasActiveFilters,
