@@ -26,15 +26,14 @@ const SelectorPeriodoAvanzado = ({
   label = "Período",
   placeholder = "Seleccionar período",
   startYear = 2020,
-  size = "sm",
   isDisabled = false,
-  className = "",
+  className = "w-full h-full", // Estandarizado para heredar del contenedor padre
 }) => {
   const currentYear = String(new Date().getFullYear());
   const [isOpen, setIsOpen] = useState(false);
   const [yearFilter, setYearFilter] = useState(currentYear);
 
-  // Keep year filter in sync when controlled value changes from outside
+  // Mantiene el filtro de año sincronizado cuando el valor controlado cambia desde afuera
   useEffect(() => {
     if (value) {
       const yr = value.split("-")[0];
@@ -67,6 +66,12 @@ const SelectorPeriodoAvanzado = ({
     if (yr && yr !== yearFilter) setYearFilter(yr);
   };
 
+  // Clases estandarizadas para los selects internos
+  const selectClassNames = {
+    trigger: "bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none",
+    value: "font-bold text-slate-700 dark:text-zinc-200 text-sm"
+  };
+
   return (
     <div className={className}>
       <Popover
@@ -74,65 +79,77 @@ const SelectorPeriodoAvanzado = ({
         isOpen={isOpen}
         onOpenChange={setIsOpen}
         shouldCloseOnBlur
+        classNames={{
+          content: "p-0 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden"
+        }}
       >
         <PopoverTrigger>
-          <Button
-            variant="bordered"
-            size={size}
-            isDisabled={isDisabled}
-            className="w-full justify-between border-default-300 dark:border-default-100/20 hover:border-primary data-[hover=true]:border-primary"
-            startContent={<HiCalendar className="text-primary shrink-0" />}
-            endContent={
-              <HiChevronDown
-                className={`text-default-400 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-              />
-            }
+          <button
+            type="button"
+            disabled={isDisabled}
+            className={`w-full h-full flex items-center justify-between px-4 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-none ${
+              isDisabled 
+                ? "opacity-50 cursor-not-allowed" 
+                : "hover:border-slate-300 dark:hover:border-zinc-700 cursor-pointer"
+            } ${isOpen ? "border-blue-500 dark:border-blue-500" : ""}`}
           >
-            <span className="truncate text-left flex-1 text-sm font-medium">
-              {periodoActualLabel}
-            </span>
-          </Button>
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <HiCalendar className={`shrink-0 text-lg ${isOpen ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-zinc-500"}`} />
+              <span className={`truncate text-sm ${value ? "font-bold text-slate-700 dark:text-zinc-200" : "font-medium text-slate-500 dark:text-zinc-400"}`}>
+                {periodoActualLabel}
+              </span>
+            </div>
+            <HiChevronDown
+              className={`text-slate-400 dark:text-zinc-500 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-blue-500" : ""}`}
+            />
+          </button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-[290px] p-0 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center gap-2 px-3 py-2.5 bg-default-100 dark:bg-default-50/10 border-b border-default-200 dark:border-default-100/10">
-            <HiCalendar className="text-primary w-4 h-4 shrink-0" />
-            <p className="text-xs font-semibold text-default-600 uppercase tracking-wide flex-1">
-              {label}
-            </p>
+        <PopoverContent className="w-[300px]">
+          {/* Header del Popover */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/30">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-blue-500/10 rounded-lg">
+                <HiCalendar className="text-blue-600 dark:text-blue-400 w-4 h-4" />
+              </div>
+              <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
+                {label}
+              </p>
+            </div>
             {esPeriodoActual && (
-              <Chip size="sm" color="success" variant="flat" className="text-[10px] h-5 px-1.5">
+              <Chip size="sm" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-widest px-1 h-5">
                 Actual
               </Chip>
             )}
           </div>
 
-          <div className="p-3 space-y-2.5">
-            {/* Año */}
+          <div className="p-5 flex flex-col gap-4">
+            {/* Filtro de Año */}
             <Select
-              label="Año"
+              label={<span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Año fiscal</span>}
+              labelPlacement="outside"
               placeholder="Seleccionar año"
               selectedKeys={[yearFilter]}
               onSelectionChange={(keys) => {
                 const selected = Array.from(keys)[0];
                 if (selected) setYearFilter(selected);
               }}
-              size="sm"
               isDisabled={isDisabled}
-              variant="bordered"
+              variant="flat"
               disallowEmptySelection
+              classNames={selectClassNames}
             >
               {years.map((year) => (
-                <SelectItem key={year} value={year}>
+                <SelectItem key={year} value={year} className="font-semibold">
                   {year}
                 </SelectItem>
               ))}
             </Select>
 
-            {/* Período */}
+            {/* Selector de Período (Mes) */}
             <Select
-              label={label}
+              label={<span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Mes facturado</span>}
+              labelPlacement="outside"
               placeholder={placeholder}
               selectedKeys={value ? [value] : []}
               onSelectionChange={(keys) => {
@@ -142,40 +159,35 @@ const SelectorPeriodoAvanzado = ({
                   setIsOpen(false);
                 }
               }}
-              startContent={<HiCalendar className="text-default-400" />}
-              size="sm"
               isDisabled={isDisabled}
               disallowEmptySelection
-              variant="bordered"
+              variant="flat"
+              classNames={selectClassNames}
             >
               {periodosFiltrados.map((periodo) => (
-                <SelectItem key={periodo.value} value={periodo.value}>
+                <SelectItem key={periodo.value} value={periodo.value} className="font-semibold">
                   {periodo.label}
                 </SelectItem>
               ))}
             </Select>
 
-            {/* Navegación */}
-            <div className="flex items-center gap-2 pt-0.5">
+            {/* Navegación Rápida */}
+            <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-zinc-800/80 mt-1">
               <Button
-                size="sm"
                 variant="flat"
-                color="default"
-                startContent={<HiChevronLeft className="w-3.5 h-3.5" />}
+                startContent={<HiChevronLeft className="w-4 h-4" />}
                 onPress={() => handleNavegar(periodoAnterior)}
                 isDisabled={isDisabled || !periodoAnterior}
-                className="flex-1 text-xs"
+                className="flex-1 font-bold text-xs bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl"
               >
                 Anterior
               </Button>
               <Button
-                size="sm"
                 variant="flat"
-                color="default"
-                endContent={<HiChevronRight className="w-3.5 h-3.5" />}
+                endContent={<HiChevronRight className="w-4 h-4" />}
                 onPress={() => handleNavegar(periodoSiguiente)}
                 isDisabled={isDisabled || !periodoSiguiente}
-                className="flex-1 text-xs"
+                className="flex-1 font-bold text-xs bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl"
               >
                 Siguiente
               </Button>
