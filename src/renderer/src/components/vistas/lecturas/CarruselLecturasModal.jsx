@@ -106,6 +106,7 @@ const LecturaInput = React.memo(React.forwardRef(
             ref={ref}
             type="number"
             min="0"
+              max={capacidadMaxima}
             step="0.01"
             value={value}
             onChange={onChange}
@@ -135,6 +136,9 @@ const LecturaInput = React.memo(React.forwardRef(
                 )}
             </div>
         </div>
+        <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mt-2">
+          Máximo permitido por medidor: {Number(capacidadMaxima).toLocaleString('es-MX', { maximumFractionDigits: 4 })} m³
+        </p>
         {error && <p className="text-xs font-bold text-red-500 mt-2 flex items-center gap-1"><HiExclamation /> {error}</p>}
       </div>
 
@@ -329,6 +333,11 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
   const errorLecturaActual = puntoActual ? (erroresLectura[puntoActual.medidor_id] || "") : "";
   const lecturaAnteriorPunto = puntoActual ? (puntoActual.lectura_anterior_disponible ?? null) : null;
   const capMaxPunto = puntoActual ? (puntoActual.capacidad_maxima ?? 99999) : 99999;
+  const capMaxPuntoNum = useMemo(() => {
+    const n = Number(capMaxPunto);
+    return Number.isFinite(n) && n > 0 ? n : 99999;
+  }, [capMaxPunto]);
+  const maxEnterosCapacidad = useMemo(() => String(Math.trunc(capMaxPuntoNum)).length, [capMaxPuntoNum]);
   
   const isLecturaCompletada = useMemo(() => {
     if (!puntoActual) return false;
@@ -390,18 +399,34 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
   const handleLecturaChange = useCallback((e) => {
     if (!puntoActual) return;
     const medidorId = puntoActual.medidor_id;
-    let value = e.target.value;
-    
-    if (value !== '' && (parseFloat(value) < 0 || value.includes('-'))) {
-      value = value.replace('-', '');
-      if (parseFloat(value) < 0) value = '0';
+    let value = String(e.target.value || "").replace(',', '.');
+
+    // Permitir solo números y un punto decimal
+    value = value.replace(/[^\d.]/g, '');
+    const firstDot = value.indexOf('.');
+    if (firstDot !== -1) {
+      value = value.slice(0, firstDot + 1) + value.slice(firstDot + 1).replace(/\./g, '');
+    }
+
+    let [entero = "", decimal = ""] = value.split('.');
+    if (entero.length > maxEnterosCapacidad) {
+      entero = entero.slice(0, maxEnterosCapacidad);
+    }
+    if (decimal.length > 4) {
+      decimal = decimal.slice(0, 4);
+    }
+
+    value = decimal !== "" ? `${entero}.${decimal}` : entero;
+
+    if (value !== "" && !Number.isNaN(Number(value)) && Number(value) > capMaxPuntoNum) {
+      value = String(capMaxPuntoNum);
     }
     
     setLecturas(prev => ({ ...prev, [medidorId]: value }));
     if (erroresLectura[medidorId]) {
       setErroresLectura(prev => ({ ...prev, [medidorId]: "" }));
     }
-  }, [puntoActual, erroresLectura]);
+  }, [puntoActual, erroresLectura, capMaxPuntoNum, maxEnterosCapacidad]);
 
   const handleGuardarLectura = useCallback(async (forceVueltaCero = false) => {
     if (!puntoActual) return;
@@ -424,6 +449,10 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     const lecturaNum = parseFloat(lectura);
     if (isNaN(lecturaNum) || lecturaNum < 0) {
       setErroresLectura(prev => ({ ...prev, [medidorId]: "La lectura no puede ser negativa" }));
+      return;
+    }
+    if (lecturaNum > capMaxPuntoNum) {
+      setErroresLectura(prev => ({ ...prev, [medidorId]: `La lectura no puede exceder ${capMaxPuntoNum.toLocaleString('es-MX', { maximumFractionDigits: 4 })} m³` }));
       return;
     }
 
@@ -487,7 +516,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [puntoActual, lecturas, vueltasCero, rutaId, periodoMostrado, user.id, obtenerFechaActual, setSuccess, setError, currentIndex, total, actualizarRutas, canTomarLecturas]);
+  }, [puntoActual, lecturas, vueltasCero, rutaId, periodoMostrado, user.id, obtenerFechaActual, setSuccess, setError, currentIndex, total, actualizarRutas, canTomarLecturas, capMaxPuntoNum]);
 
   const handleConfirmarVueltaCero = useCallback(async () => {
     if (!puntoActual) return;
@@ -514,15 +543,29 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
       setErroresLectura(prev => ({ ...prev, [medidorId]: "La lectura no puede ser negativa" }));
       return;
     }
+    if (nuevaLectura > capMaxPuntoNum) {
+      setErroresLectura(prev => ({ ...prev, [medidorId]: `La lectura no puede exceder ${capMaxPuntoNum.toLocaleString('es-MX', { maximumFractionDigits: 4 })} m³` }));
+      return;
+    }
 
     const lecturaAnteriorCalculo = infoAnterior?.lectura_anterior ?? puntoActual.ultima_lectura_anterior ?? null;
+    const fuConRollover = infoAnterior?.vuelta_cero === true;
 
     setIsSubmitting(true);
     try {
       const tokensession = localStorage.getItem("token");
-      const nuevoConsumo = lecturaAnteriorCalculo !== null
-        ? Math.max(0, nuevaLectura - lecturaAnteriorCalculo)
-        : nuevaLectura;
+      let nuevoConsumo;
+      if (lecturaAnteriorCalculo !== null) {
+        if (fuConRollover) {
+          // Si fue con rollover, aplicar la fórmula: (capacidad - anterior) + nueva
+          nuevoConsumo = parseFloat(((capMaxPuntoNum - lecturaAnteriorCalculo) + nuevaLectura).toFixed(4));
+        } else {
+          // Resta normal
+          nuevoConsumo = Math.max(0, parseFloat((nuevaLectura - lecturaAnteriorCalculo).toFixed(4)));
+        }
+      } else {
+        nuevoConsumo = nuevaLectura;
+      }
 
       const response = await window.api.modificarLectura(
         lecturaId,
@@ -553,7 +596,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [puntoActual, lecturas, lecturasRegistradas, setSuccess, setError, canModificarLecturas]);
+  }, [puntoActual, lecturas, lecturasRegistradas, setSuccess, setError, canModificarLecturas, capMaxPuntoNum]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < total - 1) {

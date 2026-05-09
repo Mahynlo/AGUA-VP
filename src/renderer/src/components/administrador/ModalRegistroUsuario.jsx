@@ -16,9 +16,11 @@ import { CustomInput } from "../ui/FormComponents";
 
 // Changed Import: Use UsuariosContext instead of AuthContext
 import { useUsuarios } from "../../context/UsuariosContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ModalRegistrarUsuario({ onUserRegistered }) {
   const { createUser } = useUsuarios();
+  const { user } = useAuth();
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
   // ─── State ──────────────────────────────────────────────────────────
@@ -71,6 +73,12 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
       newErrors.confirmarContrasena = "Las contraseñas no coinciden";
     }
 
+    // Validar permisos de rol
+    const rolesPermitidosPorUsuario = getRolesDisponibles();
+    if (!rolesPermitidosPorUsuario.includes(rol)) {
+      newErrors.rol = "No tienes permiso para registrar este rol";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
       return;
@@ -120,6 +128,27 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
   const handleClose = () => {
     limpiarCampos();
     onClose();
+  }
+
+  // Obtener roles disponibles según el rol del usuario actual
+  const getRolesDisponibles = () => {
+    if (!user) return ["operador"];
+    
+    switch(user.rol) {
+      case "superadmin":
+        return ["operador", "administrador", "superadmin"];
+      case "administrador":
+        return ["operador", "administrador"];
+      default:
+        return ["operador"];
+    }
+  };
+
+  const rolesDisponibles = getRolesDisponibles();
+
+  // Resetear rol a "operador" si el usuario cambia y el rol actual no es permitido
+  if (!rolesDisponibles.includes(rol)) {
+    setRol("operador");
   }
 
   // ─── Render ────────────────────────────────────────────────────────
@@ -281,9 +310,15 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
                         value: "font-bold text-sm text-slate-700 dark:text-zinc-200",
                       }}
                     >
-                      <SelectItem key="operador" value="operador" className="font-semibold text-slate-700 dark:text-zinc-200">Operador (Básico)</SelectItem>
-                      <SelectItem key="administrador" value="administrador" className="font-semibold text-slate-700 dark:text-zinc-200">Administrador (Gestión)</SelectItem>
-                      <SelectItem key="superadmin" value="superadmin" className="font-semibold text-slate-700 dark:text-zinc-200">Superadmin (Acceso Total)</SelectItem>
+                      {rolesDisponibles.includes("operador") && (
+                        <SelectItem key="operador" value="operador" className="font-semibold text-slate-700 dark:text-zinc-200">Operador (Básico)</SelectItem>
+                      )}
+                      {rolesDisponibles.includes("administrador") && (
+                        <SelectItem key="administrador" value="administrador" className="font-semibold text-slate-700 dark:text-zinc-200">Administrador (Gestión)</SelectItem>
+                      )}
+                      {rolesDisponibles.includes("superadmin") && (
+                        <SelectItem key="superadmin" value="superadmin" className="font-semibold text-slate-700 dark:text-zinc-200">Superadmin (Acceso Total)</SelectItem>
+                      )}
                     </Select>
                     <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 ml-1 mt-0.5">Define el nivel de acceso base al sistema.</p>
                   </div>

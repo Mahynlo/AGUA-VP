@@ -3,7 +3,7 @@
   "version": "1.2.628",
   "description": "Aguas de Villa Pesquerira",
   "main": "./out/main/index.js",
-  "author": "example.com",
+  "author": "Malcom Navarro",
   "homepage": "https://electron-vite.org",
   "scripts": {
     "format": "prettier --write .",
