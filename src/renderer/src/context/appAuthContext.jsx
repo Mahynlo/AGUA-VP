@@ -10,7 +10,18 @@ export const AuthAppProvider = ({ children }) => {
 
     const verificarToken = async () => {
         try {
-            const res = await window.authApp.ensureToken("Mi App en Producción");
+            const status = await window.api.checkServerStatus();
+            if (status?.success) {
+                const tokenLocal = await window.authApp.leerToken();
+                if (tokenLocal?.success && tokenLocal.token) {
+                    setToken(tokenLocal.token);
+                }
+                setModalAbierto(false);
+                setError(null);
+                return;
+            }
+
+            const res = await window.authApp.registrarApp("Mi App en Producción");
             if (res?.success && res.token) {
                 setToken(res.token);
                 setModalAbierto(false);
@@ -20,7 +31,7 @@ export const AuthAppProvider = ({ children }) => {
 
             // Si no pudo garantizar token, forzar modal de registro.
             setModalAbierto(true);
-            setError(res?.message || "No se pudo validar el token de aplicación.");
+            setError(status?.message || res?.message || "No se pudo validar el token de aplicación.");
         } catch (err) {
             setModalAbierto(true);
             setError("Error al validar el token de aplicación.");
@@ -30,7 +41,7 @@ export const AuthAppProvider = ({ children }) => {
 
     const registrarApp = async () => {
         try {
-            const res = await window.authApp.recoverOrRegister("Mi App en Producción");
+            const res = await window.authApp.registrarApp("Mi App en Producción");
             if (res?.success && res.token) { //si la respuesta es exitosa y contiene un token
                 setToken(res.token);
                 setModalAbierto(false);

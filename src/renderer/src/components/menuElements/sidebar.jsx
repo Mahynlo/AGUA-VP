@@ -122,6 +122,7 @@ function SidebarApp() {
           </span>
         </Link>
 
+        {/*
         <Link to="/resibos/historial" className={itemClass("/resibos/historial")} title="Historial">
           <ActiveIndicator path="/resibos/historial" />
           <HistorialResibosIcon className={getIconClass("/resibos/historial")} />
@@ -129,6 +130,7 @@ function SidebarApp() {
             Historial
           </span>
         </Link>
+         */}
 
         {/* Separador sutil ajustado al nuevo fondo oscuro */}
         <div className="w-10 h-px bg-slate-200 dark:bg-zinc-700/50 my-2"></div>

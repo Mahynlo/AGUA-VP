@@ -7,7 +7,8 @@ import {
   borrarToken,
   leerId,
   ensureAppToken,
-  recuperarORegistrarTokenApp
+  recuperarORegistrarTokenApp,
+  recuperarORegistrarTokenForzado
 } from '../../appConfig/authApp'; // Ajusta la ruta si es necesario
 
 const URL_BASE_API_AGUAVP = (import.meta.env.VITE_URL_BASE_API_AGUAVP || 'http://localhost:3000').replace(/\/$/, '');
@@ -96,7 +97,7 @@ export default function IpcHandlersAuthApp() {
           isAppKeyErrorMessage(firstTry.data?.error || firstTry.data?.message || firstTry.rawBody);
 
         if (shouldRetryAppKey) {
-          const recovered = await recuperarORegistrarTokenApp('Electron App');
+          const recovered = await recuperarORegistrarTokenForzado('Electron App');
           if (recovered?.success && recovered.token) {
             const secondTry = await requestServerStatusWithToken(recovered.token);
             if (secondTry.response.ok) {

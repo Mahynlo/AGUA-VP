@@ -1,4 +1,4 @@
-import { ensureFreshAppToken, recuperarORegistrarTokenApp } from '../../appConfig/authApp';
+import { ensureFreshAppToken, recuperarORegistrarTokenForzado } from '../../appConfig/authApp';
 
 function hasAppKeyError(value) {
   if (!value) return false;
@@ -34,7 +34,7 @@ export async function runWithAppKeyFlow(operation, options = {}) {
     const firstResult = await operation();
 
     if (retryOnAppKeyError && hasAppKeyError(firstResult)) {
-      const recovered = await recuperarORegistrarTokenApp(appName);
+      const recovered = await recuperarORegistrarTokenForzado(appName);
       if (recovered?.success) {
         return await operation();
       }
@@ -44,7 +44,7 @@ export async function runWithAppKeyFlow(operation, options = {}) {
     return firstResult;
   } catch (error) {
     if (retryOnAppKeyError && hasAppKeyError(error?.message || error)) {
-      const recovered = await recuperarORegistrarTokenApp(appName);
+      const recovered = await recuperarORegistrarTokenForzado(appName);
       if (recovered?.success) {
         try {
           return await operation();
