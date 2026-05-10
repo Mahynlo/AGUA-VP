@@ -81,6 +81,12 @@ export function borrarToken() {
   return null;
 }
 
+// Fuerza un re-registro de la app borrando el token local antes de registrar.
+export async function forzarRegistroApp(nombre = "Electron App") {
+  borrarToken();
+  return await registrarApp(nombre);
+}
+
 // 🔁 Función que registra la app al iniciar y guarda el token
 export async function registrarApp(nombre = "Electron App") {
  
@@ -173,9 +179,10 @@ export async function ensureAppToken(nombre = "Electron App") {
 }
 
 // Flujo resiliente: intenta recuperar token; si no se puede, re-registra la app.
-export async function recuperarORegistrarTokenApp(nombre = "Electron App") {
+export async function recuperarORegistrarTokenApp(nombre = "Electron App", opciones = {}) {
+  const { forzarRegistro = false } = opciones || {};
   const actual = leerToken();
-  if (actual) {
+  if (actual && !forzarRegistro) {
     return { success: true, token: actual, source: "cache" };
   }
 
@@ -189,9 +196,9 @@ export async function recuperarORegistrarTokenApp(nombre = "Electron App") {
       return { success: true, token: recuperado.token, source: "recover" };
     }
 
-    const registro = await registrarApp(nombre);
+    const registro = forzarRegistro ? await forzarRegistroApp(nombre) : await registrarApp(nombre);
     if (registro?.success && registro.token) {
-      return { success: true, token: registro.token, source: "register" };
+      return { success: true, token: registro.token, source: forzarRegistro ? "re-register" : "register" };
     }
 
     return { success: false, message: registro?.message || recuperado?.message || "No se pudo obtener token de app" };
@@ -226,5 +233,9 @@ export async function ensureFreshAppToken(nombre = "Electron App", refreshThresh
   }
 
   return ensured;
+}
+
+export async function recuperarORegistrarTokenForzado(nombre = "Electron App") {
+  return await recuperarORegistrarTokenApp(nombre, { forzarRegistro: true });
 }
 
