@@ -1,6 +1,5 @@
 
 import { ipcMain, BrowserWindow, app, shell, dialog } from 'electron';
-import Store from 'electron-store';
 import path from 'path';
 import fs from 'fs';
 import { pathToFileURL, fileURLToPath } from 'url';
@@ -9,115 +8,6 @@ import { pathToFileURL, fileURLToPath } from 'url';
 export default function IpcHandlers () {
     
     console.log("🔧 Registrando handlers IPC principales...");
-  // Ventana compartida para generación/preview/impresión de PDFs
-  let sharedPrintWindow = null;
-  const printQueue = [];
-  let isProcessingPrint = false;
-  const pdfTempRegistry = new Map();
-  const PDF_TTL_MS = 2 * 60 * 60 * 1000;
-  let pdfCleanupInterval = null;
-
-  const createSharedPrintWindow = (preloadPath) => {
-    if (sharedPrintWindow && !sharedPrintWindow.isDestroyed()) return sharedPrintWindow;
-    sharedPrintWindow = new BrowserWindow({
-      show: false,
-      backgroundColor: '#ffffff',
-      webPreferences: {
-        sandbox: false,
-        nodeIntegration: false,
-        contextIsolation: true,
-        cache: false,
-        plugins: false,
-        webSecurity: true,
-        enableRemoteModule: false,
-        preload: preloadPath
-      }
-    });
-
-    // Liberar referencia al cerrarse
-    sharedPrintWindow.on('closed', () => { sharedPrintWindow = null; });
-    return sharedPrintWindow;
-  };
-
-  const ensurePdfCleanup = () => {
-    if (pdfCleanupInterval) return;
-    pdfCleanupInterval = setInterval(() => {
-      const now = Date.now();
-      for (const [pdfPath, createdAt] of pdfTempRegistry.entries()) {
-        if (now - createdAt > PDF_TTL_MS) {
-          fs.unlink(pdfPath, (err) => {
-            if (!err) pdfTempRegistry.delete(pdfPath);
-          });
-        }
-      }
-    }, 30 * 60 * 1000);
-  };
-
-  const registerTempPdf = (pdfPath) => {
-    pdfTempRegistry.set(pdfPath, Date.now());
-    ensurePdfCleanup();
-  };
-
-  const waitForRenderReady = async (win, timeoutMs = 2500) => {
-    const start = Date.now();
-    while (Date.now() - start < timeoutMs) {
-      try {
-        const ready = await win.webContents.executeJavaScript(
-          'window.__PDF_READY === true || document.readyState === "complete"',
-          true
-        );
-        if (ready) return true;
-      } catch (e) {
-        // Ignore transient errors while loading
-      }
-      await new Promise((r) => setTimeout(r, 250));
-    }
-    return false;
-  };
-
-  const enqueuePrintJob = (job) => {
-    return new Promise((resolve, reject) => {
-      printQueue.push({ ...job, resolve, reject });
-      processNextPrintJob();
-    });
-  };
-
-  const processNextPrintJob = async () => {
-    if (isProcessingPrint || printQueue.length === 0) return;
-    isProcessingPrint = true;
-    const job = printQueue.shift();
-
-    const win = createSharedPrintWindow(path.join(__dirname, '../preload/index.js'));
-    try {
-      try { await win.webContents.session.clearCache(); } catch (e) { console.warn('clearCache failed', e); }
-
-      await win.loadURL(job.url);
-
-      try {
-        await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
-        await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
-      } catch (e) {
-        console.warn('Error forcing light mode in print window', e);
-      }
-
-      await waitForRenderReady(win, job.readyTimeoutMs || 2500);
-
-      if (job.type === 'pdf') {
-        const data = await win.webContents.printToPDF(job.printOptions);
-        job.resolve(data);
-      } else if (job.type === 'print') {
-        win.webContents.print(job.printOptions, (success, failureReason) => {
-          if (!success) job.reject(new Error(failureReason || 'Print failed'));
-          else job.resolve('shown print dialog');
-        });
-      }
-    } catch (error) {
-      job.reject(error);
-    } finally {
-      isProcessingPrint = false;
-      processNextPrintJob();
-    }
-  };
     
     // vista previa de la impresion 
     
@@ -138,15 +28,12 @@ export default function IpcHandlers () {
     };
 
     // === ZOOM HANDLERS ===
-    const store = new Store();
-
     ipcMain.handle('zoom-in', (event) => {
         const win = BrowserWindow.fromWebContents(event.sender);
         if (win) {
             const current = win.webContents.getZoomFactor();
             const newFactor = Math.min(current + 0.1, 3.0);
             win.webContents.setZoomFactor(newFactor);
-        try { store.set('zoom-factor', newFactor); } catch (e) { console.warn('zoom store set failed', e); }
             win.webContents.send('zoom-changed', newFactor); // Notificar cambio
             return newFactor;
         }
@@ -159,7 +46,6 @@ export default function IpcHandlers () {
             const current = win.webContents.getZoomFactor();
             const newFactor = Math.max(current - 0.1, 0.5);
             win.webContents.setZoomFactor(newFactor);
-        try { store.set('zoom-factor', newFactor); } catch (e) { console.warn('zoom store set failed', e); }
             win.webContents.send('zoom-changed', newFactor); // Notificar cambio
             return newFactor;
         }
@@ -170,7 +56,6 @@ export default function IpcHandlers () {
         const win = BrowserWindow.fromWebContents(event.sender);
         if (win) {
             win.webContents.setZoomFactor(1.0);
-        try { store.set('zoom-factor', 1.0); } catch (e) { console.warn('zoom store set failed', e); }
             win.webContents.send('zoom-changed', 1.0); // Notificar cambio
             return 1.0;
         }
@@ -213,26 +98,79 @@ export default function IpcHandlers () {
           resolve('Error: Modo impresión no autorizado'); // Resolvemos para no romper el flujo, pero con error
           return;
         }
+        
+        let win = new BrowserWindow({
+          show: false,
+          backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
+          webPreferences: {
+            sandbox: false,
+            nodeIntegration: false,
+            contextIsolation: true,
+            cache: false,
+            webSecurity: app.isPackaged || !url.includes('localhost'),
+            allowRunningInsecureContent: !app.isPackaged && url.includes('localhost'),
+            preload: path.join(__dirname, '../preload/index.js')
+          }
+        });
+      
+        win.loadURL(url);
+      
+        win.webContents.on('did-finish-load', async () => {
+          console.log('Print window loaded successfully');
+          
+          // FORZAR MODO CLARO (Hack para evitar borde negro en preview)
+          try {
+             await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+          } catch (e) {
+             console.error('Error forcing light mode:', e);
+          }
 
-        // Si options.silent es true, aseguramos que se envíe así
-        if (options.silent) {
-          printOptions.silent = true;
-        }
+          // Pequeño delay para asegurar que la página esté completamente renderizada
+          setTimeout(() => {
+            // Si options.silent es true, aseguramos que se envíe así
+            if (options.silent) {
+                printOptions.silent = true;
+            }
 
-        // Normalizar pageSize (Electron requiere Capitalized)
-        if (printOptions.pageSize) {
-          const size = printOptions.pageSize.toLowerCase();
-          if (size === 'letter') printOptions.pageSize = 'Letter';
-          else if (size === 'legal') printOptions.pageSize = 'Legal';
-          else if (size === 'a4') printOptions.pageSize = 'A4';
-        }
+            // Normalizar pageSize (Electron requiere Capitalized)
+            if (printOptions.pageSize) {
+                const size = printOptions.pageSize.toLowerCase();
+                if (size === 'letter') printOptions.pageSize = 'Letter';
+                else if (size === 'legal') printOptions.pageSize = 'Legal';
+                else if (size === 'a4') printOptions.pageSize = 'A4';
+            }
 
-        enqueuePrintJob({
-          type: 'print',
-          url,
-          printOptions,
-          readyTimeoutMs: options.readyTimeoutMs
-        }).then(resolve).catch(reject);
+            win.webContents.print(printOptions, (success, failureReason) => {
+              console.log('Print Initiated in Main...');
+              if (!success) {
+                console.error('Print failed:', failureReason);
+                reject('Print failed: ' + failureReason);
+              } else {
+                console.log('Print successful');
+                resolve('shown print dialog'); 
+              }
+              // Cerrar ventana oculta tras imprimir (opcional, pero buena práctica si es silent)
+              if (printOptions.silent) {
+                   win.close();
+              }
+            });
+          }, 1000); // 1 segundo de delay
+        });
+
+        win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+          console.error('Failed to load URL for printing:', errorCode, errorDescription, validatedURL);
+          reject(`Failed to load: ${errorDescription}`);
+        });
+
+        // Filtrar algunos logs de console para reducir ruido
+        win.webContents.on('console-message', (event, level, message) => {
+          if (!message.includes('React DevTools') && 
+              !message.includes('Electron Security Warning') &&
+              !message.includes('[vite]')) {
+            console.log('Print window console:', level, message);
+          }
+        });
       });
     });
      
@@ -281,31 +219,85 @@ export default function IpcHandlers () {
      //handle preview
     ipcMain.handle('previewComponent', (event, url) => {
       console.log('Preview from URL:', url);
+      
       return new Promise((resolve, reject) => {
-        if (!url.includes('print=true')) {
-          resolve({ success: false, error: 'Modo impresion no autorizado' });
-          return;
-        }
-        enqueuePrintJob({
-          type: 'pdf',
-          url,
-          printOptions,
-          readyTimeoutMs: 4000
-        }).then(async (data) => {
-          try {
-            const pdfPath = path.join(app.getPath('temp'), `preview_recibos_${Date.now()}.pdf`);
-            console.log('PDF generado en:', pdfPath);
-            await fs.promises.writeFile(pdfPath, data);
-            registerTempPdf(pdfPath);
-            resolve({ success: true, path: pathToFileURL(pdfPath).href });
-          } catch (err) {
-            console.error('Error guardando PDF temporal:', err);
-            reject(err);
+        let win = new BrowserWindow({ 
+          title: 'Preview', 
+          show: false, 
+          backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
+          autoHideMenuBar: true,
+          webPreferences: {
+            sandbox: false,
+            nodeIntegration: false,
+            contextIsolation: true,
+            cache: false,
+            plugins: true, // NECESARIO para que el visor de PDF funcione en Production
+            webSecurity: false, // NECESARIO para cargar file:/// desde una ventana creada
+            allowRunningInsecureContent: true,
+            preload: path.join(__dirname, '../preload/index.js')
           }
-        }).catch((error) => {
-          console.error('Error generating PDF:', error);
-          reject(error);
         });
+      
+        // Usar directamente la URL de la aplicación React en lugar del archivo HTML estático
+        win.loadURL(url);
+
+        win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+          console.error('Failed to load URL for preview:', errorCode, errorDescription, validatedURL);
+          reject(`Failed to load: ${errorDescription}`);
+        });
+
+        // Filtrar algunos logs de console para reducir ruido
+        win.webContents.on('console-message', (event, level, message) => {
+          if (!message.includes('React DevTools') && 
+              !message.includes('Electron Security Warning') &&
+              !message.includes('[vite]')) {
+            console.log('Preview window console:', level, message);
+          }
+        });
+      
+        win.webContents.once('did-finish-load', async () => {
+          // FORZAR MODO CLARO PARA PDF
+          try {
+             await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+          } catch(e) {}
+
+          // Si es la carga inicial de React, generar PDF
+          // Pequeño delay asegurando renderizado completo
+          setTimeout(() => {
+            win.webContents.printToPDF(printOptions).then(async (data) => {
+              try {
+                  // GUARDAR PDF EN DISCO (Evita error ERR_INVALID_URL por longitud de Data URI)
+                  const pdfPath = path.join(app.getPath('temp'), `preview_recibos_${Date.now()}.pdf`);
+                  console.log('PDF generado en:', pdfPath);
+                  
+                  // OPTIMIZACIÓN DE MEMORIA (Modo Efímero):
+                  // 1. Guardar PDF
+                  await fs.promises.writeFile(pdfPath, data);
+                  
+                  // 2. Destruir la ventana de generación inmediatamente
+                  win.close();
+
+                  // 3. Retornar la ruta del archivo para que el render (Modal) lo muestre
+                  resolve({ success: true, path: pathToFileURL(pdfPath).href });
+
+              } catch (err) {
+                  console.error('Error guardando PDF temporal:', err);
+                  // Solo mostrar ventana si falló la apertura externa (fallback)
+                  win.show();
+              }
+             })
+
+
+             .catch((error) => {
+              console.error('Error generating PDF:', error);
+              // Si falla el PDF, mostrar lo que haya (fallback)
+              win.show();
+              reject(error);
+             });
+          }, 4000); // 4s delay: asegura que isPrintMode omita PantallaCarga y que las gráficas carguen
+        });
+
       });
     });
 
@@ -345,46 +337,132 @@ export default function IpcHandlers () {
       console.log('App packaged:', app.isPackaged);
       console.log('Process platform:', process.platform);
       
-      enqueuePrintJob({
-        type: 'print',
-        url,
-        printOptions: printOptionsReporte,
-        readyTimeoutMs: 3000
-      }).then(() => {
-        console.log('Print report successful');
-      }).catch((error) => {
-        console.error('Print report failed:', error);
+      let win = new BrowserWindow({ 
+        show: false,
+        backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          // Deshabilitar cache para evitar problemas de carga
+          cache: false,
+          // Solo deshabilitar webSecurity en desarrollo para localhost
+          webSecurity: app.isPackaged || !url.includes('localhost'),
+          // No permitir contenido inseguro en producción
+          allowRunningInsecureContent: !app.isPackaged && url.includes('localhost')
+        }
+      });
+     
+      win.loadURL(url);
+     
+      win.webContents.on('did-finish-load', async () => {
+        console.log('Print report window loaded successfully');
+        
+        // FORZAR MODO CLARO (Hack para evitar borde negro en preview)
+        try {
+           await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+           await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+        } catch (e) {
+           console.error('Error forcing light mode in report:', e);
+        }
+
+        // Pequeño delay para asegurar que la página esté completamente renderizada
+        setTimeout(() => {
+          win.webContents.print(printOptionsReporte, (success, failureReason) => {
+            console.log('Print Report Initiated in Main...');
+            if (!success) {
+              console.error('Print report failed:', failureReason);
+            } else {
+              console.log('Print report successful');
+            }
+          });
+        }, 1000); // 1 segundo de delay
+      });
+
+      win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+        console.error('Failed to load URL for report printing:', errorCode, errorDescription, validatedURL);
+      });
+
+      // Filtrar algunos logs de console para reducir ruido
+      win.webContents.on('console-message', (event, level, message) => {
+        if (!message.includes('React DevTools') && 
+            !message.includes('Electron Security Warning') &&
+            !message.includes('[vite]')) {
+          console.log('Print report window console:', level, message);
+        }
       });
 
       return 'mostrando diálogo de impresión de reporte';
     });
      
     //handle preview report - Optimizado igual que previewComponent
-    ipcMain.handle('previewReport', async (event, url) => {
+    ipcMain.handle('previewReport', (event, url) => {
       console.log('=== PREVIEW REPORT DEBUG ===');
       console.log('Preview report from URL:', url);
       console.log('App packaged:', app.isPackaged);
       
-      if (!url.includes('print=true')) {
-        return { success: false, error: 'Modo impresion no autorizado' };
-      }
+      let win = new BrowserWindow({ 
+        title: 'Preview Report', 
+        show: false, 
+        backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
+        autoHideMenuBar: true,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          // Deshabilitar cache para evitar problemas de carga
+          cache: false,
+          // Solo deshabilitar webSecurity en desarrollo para localhost
+          webSecurity: app.isPackaged || !url.includes('localhost'),
+          // No permitir contenido inseguro en producción
+          allowRunningInsecureContent: !app.isPackaged && url.includes('localhost')
+        }
+      });
+      
+      win.loadURL(url);
+      
+      win.webContents.on('did-finish-load', async () => {
+          // FORZAR MODO CLARO
+          try {
+             await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+          } catch(e) {}
+      });
 
-      try {
-        const data = await enqueuePrintJob({
-          type: 'pdf',
-          url,
-          printOptions: printOptionsReporte,
-          readyTimeoutMs: 3000
-        });
+      win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+        console.error('Failed to load URL for report preview:', errorCode, errorDescription, validatedURL);
+      });
 
-        const pdfPath = path.join(app.getPath('temp'), `preview_report_${Date.now()}.pdf`);
-        await fs.promises.writeFile(pdfPath, data);
-        registerTempPdf(pdfPath);
-        return { success: true, path: pathToFileURL(pdfPath).href };
-      } catch (error) {
-        console.error('Error generating report PDF:', error);
-        return { success: false, error: error.message || 'Error generating report PDF' };
-      }
+      // Filtrar algunos logs de console para reducir ruido
+      win.webContents.on('console-message', (event, level, message) => {
+        if (!message.includes('React DevTools') && 
+            !message.includes('Electron Security Warning') &&
+            !message.includes('[vite]')) {
+          console.log('Preview report window console:', level, message);
+        }
+      });
+     
+      win.webContents.once('did-finish-load', () => {
+        console.log('Preview report window loaded successfully');
+        // Pequeño delay para asegurar que la página esté completamente renderizada
+        setTimeout(() => {
+          win.webContents.printToPDF(printOptionsReporte).then((data) => {
+            let buf = Buffer.from(data);
+            var data = buf.toString('base64');
+            let url = 'data:application/pdf;base64,' + data;
+        
+            win.webContents.on('ready-to-show', () => {
+             win.show();
+             win.setTitle('Preview Report');
+            });
+          
+            win.webContents.on('closed', () => win = null);
+            win.loadURL(url);
+           })
+           .catch((error) => {
+            console.error('Error generating report PDF:', error);
+           });
+        }, 1000); // 1 segundo de delay
+      });
+      return 'mostrando diálogo de previsualizacion de reporte';
     });
     
     // =====================================
@@ -700,34 +778,6 @@ export default function IpcHandlers () {
             return { success: false, error: error.message };
         }
     });
-
-      // ============================================================
-      // BORRAR PDF TEMPORAL — libera espacio cuando se cierra el modal
-      // ============================================================
-      ipcMain.handle('delete-temp-pdf', async (event, fileUrl) => {
-        if (!fileUrl) return { success: false, error: 'No file URL provided' };
-
-        let sourcePath;
-        try {
-          sourcePath = fileURLToPath(fileUrl);
-        } catch {
-          sourcePath = fileUrl.replace(/^file:\/\/\//, '');
-        }
-
-        if (!fs.existsSync(sourcePath)) {
-          pdfTempRegistry.delete(sourcePath);
-          return { success: false, error: 'Archivo no encontrado' };
-        }
-
-        try {
-          await fs.promises.unlink(sourcePath);
-          pdfTempRegistry.delete(sourcePath);
-          return { success: true };
-        } catch (error) {
-          console.error('Error borrando PDF temporal:', error);
-          return { success: false, error: error.message };
-        }
-      });
 
     // ============================================================
     // SELECCIONAR IMÁGENES DE LOGIN — multi-selección, devuelve array base64

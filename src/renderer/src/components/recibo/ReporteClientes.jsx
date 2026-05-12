@@ -33,7 +33,6 @@ const ReporteClientesCompleto = () => {
     const [searchParams] = useSearchParams();
     const [clientes, setClientes] = useState([]);
     const [isReady, setIsReady] = useState(false);
-    const isPrintMode = searchParams.get('print') === 'true';
 
     // Parámetros de configuración
     const ordenarPor = searchParams.get('ordenarPor') || 'numero_predio';
@@ -89,13 +88,6 @@ const ReporteClientesCompleto = () => {
 
         cargarDatos();
     }, [searchParams]);
-
-    useEffect(() => {
-        if (!isPrintMode || !isReady) return;
-        setTimeout(() => {
-            window.__PDF_READY = true;
-        }, 0);
-    }, [isPrintMode, isReady]);
 
     // --- 2. PROCESAMIENTO DE DATOS (Agrupaciones y Estadísticas) ---
     const reporte = useMemo(() => {

@@ -99,8 +99,6 @@ const Recibo = ({ facturaData = null }) => {
     const { logoSrc } = useAppLogo();
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
-    const [isReady, setIsReady] = useState(false);
-    const isPrintMode = searchParams.get('print') === 'true';
 
     // Hooks personalizados
     const { anuncio } = useAnuncioRecibo();
@@ -116,10 +114,7 @@ const Recibo = ({ facturaData = null }) => {
     });
     useEffect(() => {
         const cargarDatos = async () => {
-            if (facturaData) {
-                setIsReady(true);
-                return;
-            }
+            if (facturaData) return;
 
             const dataKey = searchParams.get('dataKey');
             const facturasParam = searchParams.get('facturas'); // Fallback para compatibilidad
@@ -130,7 +125,6 @@ const Recibo = ({ facturaData = null }) => {
                     const storedDataStr = await window.api.getPrintData(dataKey);
                     if (storedDataStr) {
                         setPaginasRecibos(JSON.parse(storedDataStr));
-                        setIsReady(true);
                         return; // Éxito
                     }
                 } catch (e) {
@@ -143,7 +137,6 @@ const Recibo = ({ facturaData = null }) => {
                     try {
                         setPaginasRecibos(JSON.parse(storedDataLocal));
                         localStorage.removeItem(dataKey);
-                        setIsReady(true);
                     } catch (e) {
                         console.error("Error parsing localStorage data", e);
                     }
@@ -152,7 +145,6 @@ const Recibo = ({ facturaData = null }) => {
                 try {
                     const facturas = JSON.parse(decodeURIComponent(facturasParam));
                     setPaginasRecibos(facturas);
-                    setIsReady(true);
                 } catch (error) {
                     console.error('Error al parsear facturas:', error);
                     // Datos de prueba en caso de error
@@ -171,7 +163,6 @@ const Recibo = ({ facturaData = null }) => {
                         tarifa_nombre: "Tarifa Domestica",
                         ruta: { nombre: "13/4" }
                     }]]);
-                    setIsReady(true);
                 }
             } else {
                 // Datos por defecto si no hay params
@@ -190,21 +181,11 @@ const Recibo = ({ facturaData = null }) => {
                     tarifa_nombre: "Tarifa Domestica",
                     ruta: { nombre: "13/4" }
                 }]]);
-                setIsReady(true);
             }
-
-            setIsReady(true);
         };
 
         cargarDatos();
     }, [searchParams, facturaData]);
-
-    useEffect(() => {
-        if (!isPrintMode || !isReady) return;
-        setTimeout(() => {
-            window.__PDF_READY = true;
-        }, 0);
-    }, [isPrintMode, isReady]);
 
     const renderRecibo = (factura, numeroRecibo) => {
         if (!factura) return null;

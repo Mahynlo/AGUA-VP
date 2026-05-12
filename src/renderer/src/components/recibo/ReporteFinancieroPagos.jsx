@@ -41,7 +41,6 @@ const ReporteFinancieroPagos = () => {
   const [data, setData] = useState(null);
   const [isReady, setIsReady] = useState(false);
   const { logoSrc } = useAppLogo();
-  const isPrintMode = searchParams.get('print') === 'true';
 
   useEffect(() => {
     const cargar = async () => {
@@ -74,13 +73,6 @@ const ReporteFinancieroPagos = () => {
 
     cargar();
   }, [searchParams]);
-
-  useEffect(() => {
-    if (!isPrintMode || !isReady) return;
-    setTimeout(() => {
-      window.__PDF_READY = true;
-    }, 0);
-  }, [isPrintMode, isReady]);
 
   const resumen = data?.resumen || {};
   const filtro = data?.filtro_aplicado || {};
