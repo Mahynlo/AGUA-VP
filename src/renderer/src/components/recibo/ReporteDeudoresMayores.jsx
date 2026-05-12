@@ -139,6 +139,7 @@ const ReporteDeudoresMayores = () => {
   const [payload, setPayload] = useState([]);
   const [isReady, setIsReady] = useState(false);
   const { logoSrc } = useAppLogo();
+  const isPrintMode = searchParams.get('print') === 'true';
 
   useEffect(() => {
     const load = async () => {
@@ -202,6 +203,13 @@ const ReporteDeudoresMayores = () => {
 
     load();
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!isPrintMode || !isReady) return;
+    setTimeout(() => {
+      window.__PDF_READY = true;
+    }, 0);
+  }, [isPrintMode, isReady]);
 
   const rows = useMemo(() => {
     return getRawRows(payload)
