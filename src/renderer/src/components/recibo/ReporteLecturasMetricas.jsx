@@ -146,6 +146,7 @@ const ReporteLecturasMetricas = () => {
   const { logoSrc } = useAppLogo();
   const [data, setData] = useState(null);
   const [ready, setReady] = useState(false);
+  const isPrintMode = searchParams.get('print') === 'true';
 
   useEffect(() => {
     const load = async () => {
@@ -170,6 +171,13 @@ const ReporteLecturasMetricas = () => {
 
     load();
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!isPrintMode || !ready) return;
+    setTimeout(() => {
+      window.__PDF_READY = true;
+    }, 0);
+  }, [isPrintMode, ready]);
 
   const consumo = data?.consumo || {};
   const rutas = data?.rutas || {};

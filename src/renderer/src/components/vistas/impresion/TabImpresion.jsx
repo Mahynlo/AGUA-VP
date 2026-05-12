@@ -41,7 +41,14 @@ const TabImpresion = () => {
     setModoPdf,
   } = useImpresionRecibos();
 
-  const handleClosePdf = () => {
+  const handleClosePdf = async () => {
+    if (pdfUrl) {
+      try {
+        await window.api.deleteTempPdf(pdfUrl);
+      } catch (err) {
+        console.error('Error borrando PDF temporal:', err);
+      }
+    }
     setPdfUrl(null);
     setPrintUrl(null);
     setModoPdf(null);

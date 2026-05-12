@@ -286,6 +286,7 @@ const ReporteLecturas = () => {
     const [data, setData]     = useState([]);
     const [mes, setMes]       = useState('');
     const [isReady, setIsReady] = useState(false);
+    const isPrintMode = searchParams.get('print') === 'true';
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -319,6 +320,13 @@ const ReporteLecturas = () => {
         };
         cargarDatos();
     }, [searchParams]);
+
+    useEffect(() => {
+        if (!isPrintMode || !isReady) return;
+        setTimeout(() => {
+            window.__PDF_READY = true;
+        }, 0);
+    }, [isPrintMode, isReady]);
 
     if (!isReady) return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#6b7280', backgroundColor: '#f8fafc' }}>

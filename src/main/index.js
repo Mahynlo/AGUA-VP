@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
+import Store from 'electron-store';
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -117,6 +118,21 @@ function createWindow() {
 
   // Inicializar el gestor de actualizaciones
   initUpdateManager(mainWindow);
+
+  // Restaurar zoom guardado (si existe)
+  try {
+    const store = new Store();
+    const storedZoom = Number(store.get('zoom-factor', 1));
+    if (storedZoom && !Number.isNaN(storedZoom) && mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.setZoomFactor(storedZoom);
+      // Notificar renderer del valor inicial
+      mainWindow.webContents.once('did-finish-load', () => {
+        mainWindow.webContents.send('zoom-changed', storedZoom);
+      });
+    }
+  } catch (e) {
+    console.warn('No se pudo restaurar zoom guardado:', e);
+  }
 }
 
 
