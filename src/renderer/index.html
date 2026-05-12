@@ -8,10 +8,12 @@
   <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self';
                img-src 'self' data: blob: https://*.tile.openstreetmap.org https://mt0.google.com https://mt1.google.com https://mt2.google.com https://mt3.google.com https://cdnjs.cloudflare.com;
-               style-src 'self' 'unsafe-inline';
-               script-src 'self' blob:;
-               connect-src 'self' file: blob: https://*.tile.openstreetmap.org;
-               worker-src 'self' blob:;
+               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+               style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com;
+               font-src 'self' data: https://fonts.gstatic.com;
+               script-src 'self' blob: 'unsafe-eval' 'wasm-unsafe-eval';
+               connect-src 'self' file: blob: https://*.tile.openstreetmap.org https://cdn.jsdelivr.net;
+               worker-src 'self' blob: https://cdn.jsdelivr.net;
                frame-src 'self' file: blob: data:;">
 
 

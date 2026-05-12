@@ -2,14 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { HiX, HiPrinter, HiDownload, HiArrowLeft, HiRefresh } from 'react-icons/hi';
 import { Button, Spinner } from '@nextui-org/react';
 
-// ── react-pdf-viewer ────────────────────────────────────────
-import { Worker, Viewer, SpecialZoomLevel } from '@react-pdf-viewer/core';
-import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-
-import '@react-pdf-viewer/core/lib/styles/index.css';
-import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.js?url';
+// ── embedpdf viewer ─────────────────────────────────────────
+import { PDFViewer } from '@embedpdf/react-pdf-viewer';
 import { useTheme } from '@renderer/theme/useTheme';
 import { useFeedback } from '@renderer/context/FeedbackContext';
 
@@ -53,7 +47,6 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
     const [pageSize, setPageSize] = useState('Letter');
     const [isPrinting, setIsPrinting] = useState(false);
     const [printError, setPrintError] = useState(null);
-    const [numPages, setNumPages] = useState(0);
 
     // ── Feedback ─────────────────────────────────────────────
     const { setSuccess, setError } = useFeedback();
@@ -66,11 +59,6 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
         }
         return theme;
     }, [theme]);
-
-    // Plugin de layout — llamado directamente porque usa React.useMemo internamente
-    const defaultLayoutPluginInstance = defaultLayoutPlugin({
-        sidebarTabs: () => [],
-    });
 
     // ── Cargar impresoras ────────────────────────────────────
     const loadPrinters = async () => {
@@ -190,11 +178,6 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
                             <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
                                 Imprimir Documento
                             </h2>
-                            {numPages > 0 && (
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
-                                    {numPages} {numPages === 1 ? 'Página a imprimir' : 'Páginas a imprimir'}
-                                </p>
-                            )}
                         </div>
                     </div>
 
@@ -366,33 +349,25 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, onVolver }) => {
 
                     {/* Visor PDF (Derecha) */}
                     <div className="flex-1 overflow-hidden relative">
-                        <Worker workerUrl={pdfjsWorker}>
-                            <Viewer
-                                fileUrl={pdfUrl}
-                                defaultScale={SpecialZoomLevel.PageFit}
-                                onDocumentLoad={e => setNumPages(e.doc.numPages)}
-                                plugins={[defaultLayoutPluginInstance]}
-                                theme={effectiveTheme}
-                            />
-                        </Worker>
+                        <PDFViewer
+                            config={{
+                                src: pdfUrl,
+                                theme: { preference: effectiveTheme },
+                                i18n: { defaultLocale: 'es' },
+                                disabledCategories: [
+                                    'annotation',
+                                    'form',
+                                    'redaction',
+                                    'document-print',
+                                    'document-export',
+                                    'insert'
+                                ]
+                            }}
+                            style={{ width: '100%', height: '100%' }}
+                        />
                     </div>
                 </div>
             </div>
-
-            {/* Ajuste visual del visor PDF para incrustarlo en la UI SaaS */}
-            <style>{`
-                .rpv-open__input-wrapper { display: none !important; }
-                .rpv-core__viewer--dark {
-                    --rpv-core__theme-bg-body: transparent !important;
-                    --rpv-core__theme-bg-toolbar: transparent !important;
-                    --rpv-core__theme-border-color: rgba(39, 39, 42, 0.5) !important; /* border-zinc-800/50 */
-                }
-                .rpv-core__viewer--light {
-                    --rpv-core__theme-bg-body: transparent !important;
-                    --rpv-core__theme-bg-toolbar: transparent !important;
-                    --rpv-core__theme-border-color: rgba(241, 245, 249, 0.5) !important; /* border-slate-100/50 */
-                }
-            `}</style>
         </div>
     );
 };
