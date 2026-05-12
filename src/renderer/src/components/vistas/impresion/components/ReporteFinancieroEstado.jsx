@@ -46,19 +46,6 @@ const ReporteFinancieroEstado = () => {
   const [modoPdf, setModoPdf] = useState(null);
   const [loadingImprimir, setLoadingImprimir] = useState(false);
 
-  const handleClosePdf = useCallback(async () => {
-    if (pdfUrl) {
-      try {
-        await window.api.deleteTempPdf(pdfUrl);
-      } catch (err) {
-        console.error('Error borrando PDF temporal:', err);
-      }
-    }
-    setPdfUrl(null);
-    setPrintUrl(null);
-    setModoPdf(null);
-  }, [pdfUrl]);
-
   const opcionesAnio = useMemo(() => {
     const catalogo = generarCatalogoPeriodos({ startYear: 2020 });
     return [...new Set(catalogo.map((item) => item.year))];
@@ -550,7 +537,7 @@ const ReporteFinancieroEstado = () => {
         <ModalImprimir
           pdfUrl={pdfUrl}
           printUrl={printUrl}
-          onClose={handleClosePdf}
+          onClose={() => { setPdfUrl(null); setPrintUrl(null); setModoPdf(null); }}
           onVolver={() => setModoPdf("vista-previa")}
         />
       )}

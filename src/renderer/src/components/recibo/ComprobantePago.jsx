@@ -331,7 +331,6 @@ const ComprobantePago = () => {
     const [searchParams] = useSearchParams();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const isPrintMode = searchParams.get('print') === 'true';
 
     useEffect(() => {
         const cargarDatos = async () => {
@@ -354,13 +353,6 @@ const ComprobantePago = () => {
         };
         cargarDatos();
     }, [searchParams]);
-
-    useEffect(() => {
-        if (!isPrintMode || loading) return;
-        setTimeout(() => {
-            window.__PDF_READY = true;
-        }, 0);
-    }, [isPrintMode, loading]);
 
     if (loading) {
         return (

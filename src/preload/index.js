@@ -183,7 +183,6 @@ const api = {
   // Exportar archivos nativamente
   saveFile: (data) => ipcRenderer.invoke('save-file-dialog', data),
   savePdf: (fileUrl) => ipcRenderer.invoke('save-pdf', fileUrl),
-  deleteTempPdf: (fileUrl) => ipcRenderer.invoke('delete-temp-pdf', fileUrl),
 
   // Logo e imágenes personalizables
   selectLogo: () => ipcRenderer.invoke('select-logo'),

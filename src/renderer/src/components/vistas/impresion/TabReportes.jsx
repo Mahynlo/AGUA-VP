@@ -23,19 +23,6 @@ const TabReportes = () => {
   const [modoPdf, setModoPdf] = useState(null);   // 'vista-previa' | 'imprimir' | null
   const [loadingImprimir, setLoadingImprimir] = useState(false);
 
-  const handleClosePdf = async () => {
-    if (pdfUrl) {
-      try {
-        await window.api.deleteTempPdf(pdfUrl);
-      } catch (err) {
-        console.error('Error borrando PDF temporal:', err);
-      }
-    }
-    setPdfUrl(null);
-    setPrintUrl(null);
-    setModoPdf(null);
-  };
-
   // --- LECTURAS: Opciones de impresión ---
   const [ordenLecturas, setOrdenLecturas] = useState("numero_predio"); 
   const [ciudadLecturas, setCiudadLecturas] = useState("todas"); 
@@ -593,7 +580,7 @@ const TabReportes = () => {
         <ModalVistaPrevia
           pdfUrl={pdfUrl}
           printUrl={printUrl}
-          onClose={handleClosePdf}
+          onClose={() => { setPdfUrl(null); setPrintUrl(null); setModoPdf(null); }}
           onImprimir={() => setModoPdf('imprimir')}
         />
       )}
@@ -602,7 +589,7 @@ const TabReportes = () => {
         <ModalImprimir
           pdfUrl={pdfUrl}
           printUrl={printUrl}
-          onClose={handleClosePdf}
+          onClose={() => { setPdfUrl(null); setPrintUrl(null); setModoPdf(null); }}
           onVolver={() => setModoPdf('vista-previa')}
         />
       )}
