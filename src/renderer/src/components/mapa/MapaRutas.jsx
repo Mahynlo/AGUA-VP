@@ -133,6 +133,11 @@ export default function MapaRutas({
     return conexiones;
   }, [rutaCalculada, dibujar, readOnly]);
 
+  const rutaPolyline = useMemo(() => {
+    if (!dibujar || !rutaCalculada?.ruta?.length) return null;
+    return rutaCalculada.ruta.map(([lat, lng]) => [lat, lng]);
+  }, [rutaCalculada, dibujar]);
+
   const medidoresEnRutaIds = useMemo(() => new Set(puntosRuta.map((p) => p.id)), [puntosRuta]);
 
   const handleToggleMedidor = useCallback((medidor, enRuta) => {
@@ -235,6 +240,7 @@ export default function MapaRutas({
         center={MAP_DEFAULT_CENTER}
         zoom={15}
         scrollWheelZoom={true}
+        preferCanvas={true}
         style={{ height: "100%", width: "100%" }}
         className="leaflet-container h-full w-full bg-gray-50 dark:bg-neutral-900"
       >
@@ -254,8 +260,8 @@ export default function MapaRutas({
           </LayersControl.BaseLayer>
         </LayersControl>
 
-        {dibujar && rutaCalculada?.ruta?.length >= 2 && (
-          <Polyline positions={rutaCalculada.ruta.map(([lat, lng]) => [lat, lng])} pathOptions={{ color: "#3b82f6", weight: 5, opacity: 0.85, lineCap: "round", lineJoin: "round" }} />
+        {rutaPolyline && rutaPolyline.length >= 2 && (
+          <Polyline positions={rutaPolyline} pathOptions={{ color: "#3b82f6", weight: 5, opacity: 0.85, lineCap: "round", lineJoin: "round" }} />
         )}
         {conexionesExtremos.map(({ key, from, to }) => (
           <Polyline key={key} positions={[from, to]} pathOptions={{ color: "#10b981", dashArray: "8, 8", weight: 3, opacity: 0.8 }} />

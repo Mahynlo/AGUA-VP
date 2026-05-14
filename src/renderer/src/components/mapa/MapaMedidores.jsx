@@ -175,11 +175,11 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
         zoom={13}
         scrollWheelZoom={true}
         zoomControl={true}
+        preferCanvas={true}
         className="h-full w-full leaflet-container"
         style={{ height: "100%", width: "100%", borderRadius: "0.5rem", background: "transparent" }}
         whenReady={(map) => {
           setMapInstance(map.target);
-          setTimeout(() => onMapReady(false), 500);
         }}
       >
         <MapResizer useMap={useMap} onMapReady={onMapReady} setMapInstance={setMapInstance} />
@@ -197,7 +197,7 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
         </LayersControl>
 
         {/* 🔥 OPTIMIZACIÓN: Consumimos el JSON directamente, sin pasarlo por props ni estado */}
-        <GeoJSON data={municipiojson} style={MUNICIPIO_STYLE} />
+        <GeoJSON data={municipiojson} style={MUNICIPIO_STYLE} interactive={false} />
 
         {MarkersRendered}
       </MapContainer>
