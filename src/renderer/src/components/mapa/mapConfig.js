@@ -9,6 +9,9 @@ export const MAP_DEFAULT_CENTER = [29.1180777, -109.9669819];
 export const TILE_LAYER = {
   url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution: '&copy; OpenStreetMap contributors',
+  updateWhenIdle: true,
+  updateWhenZooming: false,
+  keepBuffer: 2,
 };
 
 /** TileLayer satelital puro (Google Maps) */
@@ -17,6 +20,9 @@ export const SATELLITE_LAYER = {
   attribution: '&copy; Google Maps',
   subdomains: '0123',
   maxZoom: 20,
+  updateWhenIdle: true,
+  updateWhenZooming: false,
+  keepBuffer: 2,
 };
 
 /** TileLayer híbrido: satélite + calles/etiquetas (Google Maps) */
@@ -25,6 +31,9 @@ export const HYBRID_LAYER = {
   attribution: '&copy; Google Maps',
   subdomains: '0123',
   maxZoom: 20,
+  updateWhenIdle: true,
+  updateWhenZooming: false,
+  keepBuffer: 2,
 };
 
 /** Estilo GeoJSON del límite municipal (con relleno sutil) */

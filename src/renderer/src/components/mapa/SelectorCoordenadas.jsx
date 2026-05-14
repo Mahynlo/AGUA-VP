@@ -108,6 +108,7 @@ export default function SelectorCoordenadas({
           center={position || MAP_DEFAULT_CENTER}
           zoom={15}
           scrollWheelZoom={true}
+          preferCanvas={true}
           className="h-full w-full bg-gray-100" // Fondo gris mientras carga
           style={{ height: "100%", width: "100%", zIndex: 0 }}
         >
@@ -125,7 +126,7 @@ export default function SelectorCoordenadas({
           </LayersControl>
 
           {/* Capa del Municipio SIN RELLENO */}
-          <GeoJSON data={municipiojson} style={MUNICIPIO_STYLE_NO_FILL} />
+          <GeoJSON data={municipiojson} style={MUNICIPIO_STYLE_NO_FILL} interactive={false} />
 
           <LocationMarker
             position={position}

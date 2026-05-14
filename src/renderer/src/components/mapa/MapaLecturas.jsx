@@ -38,6 +38,7 @@ const LeafletMap = React.memo(({ position, municipioData, lat, lng, cliente, set
         zoom={16}
         scrollWheelZoom={true}
         zoomControl={true}
+        preferCanvas={true}
         style={{ height: "100%", width: "100%", borderRadius: "0.5rem" }}
         className="leaflet-container"
         whenReady={() => {
@@ -57,9 +58,7 @@ const LeafletMap = React.memo(({ position, municipioData, lat, lng, cliente, set
         </LayersControl>
 
         {/* Delimitación de zona de cobertura */}
-        {municipioData && (
-          <GeoJSON data={municipioData} style={MUNICIPIO_STYLE} />
-        )}
+        <GeoJSON data={municipiojson} style={MUNICIPIO_STYLE} interactive={false} />
 
         {/* Marcador del medidor */}
         {lat && lng && (
@@ -128,7 +127,6 @@ LeafletMap.displayName = 'LeafletMap';
 const MapaLecturas = ({ lat, lng, cliente }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
-  const [municipioData, setMunicipioData] = useState(null);
 
   // Memoizar la posición para evitar re-renders innecesarios
   const position = useMemo(() => [lat || 29.567, lng || -109.456], [lat, lng]);
@@ -139,10 +137,6 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Cargar datos del municipio una sola vez
-  useEffect(() => {
-    setMunicipioData(municipiojson);
-  }, []);
 
   // Si hay error, mostrar mapa fallback
   if (mapError) {
@@ -257,7 +251,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
 
       <LeafletMap 
         position={position}
-        municipioData={municipioData}
+        municipioData={municipiojson}
         lat={lat}
         lng={lng}
         cliente={cliente}
