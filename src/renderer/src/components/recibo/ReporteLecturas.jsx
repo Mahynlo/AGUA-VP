@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppLogo } from '../../context/LogoContext';
+import { useNotifyPrintReady } from '../../hooks/useNotifyPrintReady';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -286,6 +287,8 @@ const ReporteLecturas = () => {
     const [data, setData]     = useState([]);
     const [mes, setMes]       = useState('');
     const [isReady, setIsReady] = useState(false);
+
+    useNotifyPrintReady(isReady);
 
     useEffect(() => {
         const cargarDatos = async () => {

@@ -5,6 +5,7 @@ import { InfoResibosIcon, ValanzaResibosIcon } from '../../IconsApp/IconsResibos
 import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import useAnuncioRecibo from '../../hooks/useAnuncioRecibo';
+import { useNotifyPrintReady } from '../../hooks/useNotifyPrintReady';
 import useEquivalenciaConsumo from '../../hooks/useEquivalenciaConsumo';
 import { nowHermosilloDateStr } from '../../utils/diasHabiles';
 
@@ -36,6 +37,8 @@ const formatearFechaAmigable = (value) => {
 const Recibo = ({ facturaData = null }) => {
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
+
+    useNotifyPrintReady(paginasRecibos.length > 0);
 
     // Hook para el anuncio personalizado
     const { anuncio } = useAnuncioRecibo();

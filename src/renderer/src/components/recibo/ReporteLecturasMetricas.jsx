@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppLogo } from "../../context/LogoContext";
+import { useNotifyPrintReady } from "../../hooks/useNotifyPrintReady";
 
 const fmt = (n, dec = 0) => Number(n || 0).toLocaleString("es-MX", {
   minimumFractionDigits: dec,
@@ -146,6 +147,8 @@ const ReporteLecturasMetricas = () => {
   const { logoSrc } = useAppLogo();
   const [data, setData] = useState(null);
   const [ready, setReady] = useState(false);
+
+  useNotifyPrintReady(ready);
 
   useEffect(() => {
     const load = async () => {

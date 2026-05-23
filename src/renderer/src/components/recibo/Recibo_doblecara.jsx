@@ -4,6 +4,7 @@ import { InfoResibosIcon, ValanzaResibosIcon } from '../../IconsApp/IconsResibos
 import { useSearchParams } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import useAnuncioRecibo from '../../hooks/useAnuncioRecibo';
+import { useNotifyPrintReady } from '../../hooks/useNotifyPrintReady';
 import useEquivalenciaConsumo from '../../hooks/useEquivalenciaConsumo';
 import { nowHermosilloDateStr } from '../../utils/diasHabiles';
 
@@ -107,6 +108,8 @@ const Recibo = ({ facturaData = null }) => {
     const { logoSrc } = useAppLogo();
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
+
+    useNotifyPrintReady(paginasRecibos.length > 0);
 
     const { anuncio } = useAnuncioRecibo();
     const { obtenerFraseEquivalencia } = useEquivalenciaConsumo();
