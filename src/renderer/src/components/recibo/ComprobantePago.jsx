@@ -7,6 +7,7 @@
 import { useAppLogo } from '../../context/LogoContext';
 import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useNotifyPrintReady } from '../../hooks/useNotifyPrintReady';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -331,6 +332,8 @@ const ComprobantePago = () => {
     const [searchParams] = useSearchParams();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    useNotifyPrintReady(!loading);
 
     useEffect(() => {
         const cargarDatos = async () => {

@@ -3,6 +3,7 @@ import BarChartRecibo from '../charts/BarChartResibo';
 import { InfoResibosIcon, ValanzaResibosIcon } from '../../IconsApp/IconsResibos';
 import { useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useNotifyPrintReady } from '../../hooks/useNotifyPrintReady';
 import useAnuncioRecibo from '../../hooks/useAnuncioRecibo';
 import useEquivalenciaConsumo from '../../hooks/useEquivalenciaConsumo';
 import { nowHermosilloDateStr, siguienteDiaHabil } from '../../utils/diasHabiles';
@@ -99,6 +100,8 @@ const Recibo = ({ facturaData = null }) => {
     const { logoSrc } = useAppLogo();
     const [searchParams] = useSearchParams();
     const [paginasRecibos, setPaginasRecibos] = useState([]);
+
+    useNotifyPrintReady(paginasRecibos.length > 0);
 
     // Hooks personalizados
     const { anuncio } = useAnuncioRecibo();

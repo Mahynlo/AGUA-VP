@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { HiX, HiPrinter, HiDownload, HiArrowLeft, HiRefresh, HiDocumentText } from 'react-icons/hi';
 import { Button, Spinner } from '@nextui-org/react';
 import { PDFViewer } from '@embedpdf/react-pdf-viewer';
@@ -42,6 +42,12 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
 
     const { setSuccess, setError } = useFeedback();
     const { theme } = useTheme();
+
+    // Limpia el archivo temporal y la caché de ventana al cerrar el modal
+    const handleClose = useCallback(() => {
+        if (pdfUrl) window.api?.deleteTempPdf?.(pdfUrl);
+        onClose();
+    }, [pdfUrl, onClose]);
     const effectiveTheme = useMemo(() => {
         if (theme === 'system') {
             return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -73,10 +79,10 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
     }, [showPrint]);
 
     useEffect(() => {
-        const handleKeyDown = (e) => { if (e.key === 'Escape') onClose(); };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onClose]);
+        const onKeyDown = (e) => { if (e.key === 'Escape') handleClose(); };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [handleClose]);
 
     const handlePrint = async () => {
         if (!printUrl || isPrinting) return;
@@ -87,7 +93,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
             const msg = `Enviado a "${selectedPrinter || 'impresora predeterminada'}" — ${copies} ${copies === 1 ? 'copia' : 'copias'}`;
             setSuccess(msg, 'Impresión exitosa');
             notifyOS('Impresión enviada', msg, 'success');
-            onClose();
+            handleClose();
         } catch (err) {
             console.error('Error al imprimir:', err);
             const errMsg = typeof err === 'string' ? err : 'No se pudo enviar el trabajo a la impresora.';
@@ -103,7 +109,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
         setIsPrinting(true);
         try {
             await window.api.printComponent(printUrl, () => {});
-            onClose();
+            handleClose();
         } catch (err) {
             console.error('Error al imprimir con diálogo:', err);
             setError('No se pudo abrir el diálogo de impresión.', 'Error de impresión');
@@ -199,7 +205,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
                             </>
                         )}
                         <Button
-                            isIconOnly variant="light" size="md" onPress={onClose}
+                            isIconOnly variant="light" size="md" onPress={handleClose}
                             className="hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 rounded-xl"
                         >
                             <HiX className="text-xl" />

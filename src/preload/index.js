@@ -192,6 +192,12 @@ const api = {
   getPrinters: () => ipcRenderer.invoke('getPrinters'),
   printSilent: (url, config) => ipcRenderer.invoke('print-silent', url, config),
 
+  // Señal de renderizado completo (llamada desde routes de impresión)
+  notifyPrintReady: () => ipcRenderer.send('print-ready'),
+
+  // Limpieza del PDF temporal al cerrar el modal de impresión
+  deleteTempPdf: (fileUrl) => ipcRenderer.invoke('delete-temp-pdf', fileUrl),
+
   // Servidor embebido (estado, backup manual)
   serverStatus: () => ipcRenderer.invoke('server:status'),
   serverBackup: () => ipcRenderer.invoke('server:backup'),

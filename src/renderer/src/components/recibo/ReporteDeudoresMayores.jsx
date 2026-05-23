@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAppLogo } from "../../context/LogoContext";
+import { useNotifyPrintReady } from "../../hooks/useNotifyPrintReady";
 
 const money = (value) =>
   new Intl.NumberFormat("es-MX", {
@@ -138,6 +139,8 @@ const ReporteDeudoresMayores = () => {
   const [searchParams] = useSearchParams();
   const [payload, setPayload] = useState([]);
   const [isReady, setIsReady] = useState(false);
+
+  useNotifyPrintReady(isReady);
   const { logoSrc } = useAppLogo();
 
   useEffect(() => {

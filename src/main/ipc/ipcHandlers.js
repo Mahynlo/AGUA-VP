@@ -4,13 +4,73 @@ import path from 'path';
 import fs from 'fs';
 import { pathToFileURL, fileURLToPath } from 'url';
 
+const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+const ROUTE_NOMBRES = {
+  'recibo':                    'recibos',
+  'recibo_oficial':            'recibos_oficial',
+  'recibo_doblecara':          'recibos_doblecara',
+  'comprobante-pago':          'comprobante_pago',
+  'reporteclientes':           'reporte_clientes',
+  'reportelecturas':           'reporte_lecturas',
+  'reportedeudoresmayores':    'reporte_deudores_mayores',
+  'reportefinanciero':         'reporte_financiero',
+  'reportelecturasmetricas':   'reporte_metricas_lecturas',
+};
+
+const buildPdfFilename = (url) => {
+  try {
+    const hashMatch = url.match(/#\/([^?#]+)(?:\?([^#]*))?/);
+    if (!hashMatch) return `aguavp_doc_${Date.now()}`;
+
+    const route = hashMatch[1].toLowerCase();
+    const params = new URLSearchParams(hashMatch[2] || '');
+    const docName = ROUTE_NOMBRES[route] || route.replace(/[^a-z0-9]/g, '_');
+
+    const periodoRaw = params.get('periodo') || params.get('mes') || params.get('periodoInicio');
+    if (periodoRaw) {
+      const m = String(periodoRaw).match(/^(\d{4})-(\d{2})$/);
+      if (m) {
+        const mes = MESES_ES[parseInt(m[2]) - 1] || m[2];
+        return `aguavp_${docName}_${mes}_${m[1]}`;
+      }
+    }
+
+    return `aguavp_${docName}_${Date.now()}`;
+  } catch (e) {
+    return `aguavp_doc_${Date.now()}`;
+  }
+};
+
 
 export default function IpcHandlers () {
     
     console.log("🔧 Registrando handlers IPC principales...");
-    
-    // vista previa de la impresion 
-    
+
+
+    // Limpiar PDFs temporales de sesiones anteriores (> 1 hora de antigüedad)
+    try {
+        const tempDir = app.getPath('temp');
+        fs.readdir(tempDir, (err, files) => {
+            if (err) return;
+            const oneHourAgo = Date.now() - 60 * 60 * 1000;
+            (files || [])
+                .filter(f => (f.startsWith('aguavp_') || f.startsWith('preview_recibos_')) && f.endsWith('.pdf'))
+                .forEach(async f => {
+                    try {
+                        const fp = path.join(tempDir, f);
+                        const stats = await fs.promises.stat(fp);
+                        if (stats.mtimeMs < oneHourAgo) {
+                            await fs.promises.unlink(fp);
+                            console.log('Temp PDF antiguo eliminado:', f);
+                        }
+                    } catch (e) {}
+                });
+        });
+    } catch (e) {}
+
+    // vista previa de la impresion
+
     const printOptions = {
       silent: false, // Para mostrar el diálogo de impresión 
       printBackground: true, // Para imprimir el fondo 
@@ -219,85 +279,81 @@ export default function IpcHandlers () {
      //handle preview
     ipcMain.handle('previewComponent', (event, url) => {
       console.log('Preview from URL:', url);
-      
+
       return new Promise((resolve, reject) => {
-        let win = new BrowserWindow({ 
-          title: 'Preview', 
-          show: false, 
-          backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
+        let win = new BrowserWindow({
+          title: 'Preview',
+          show: false,
+          backgroundColor: '#ffffff',
           autoHideMenuBar: true,
           webPreferences: {
             sandbox: false,
             nodeIntegration: false,
             contextIsolation: true,
             cache: false,
-            plugins: true, // NECESARIO para que el visor de PDF funcione en Production
-            webSecurity: false, // NECESARIO para cargar file:/// desde una ventana creada
+            plugins: true,
+            webSecurity: false,
             allowRunningInsecureContent: true,
             preload: path.join(__dirname, '../preload/index.js')
           }
         });
-      
-        // Usar directamente la URL de la aplicación React en lugar del archivo HTML estático
+
         win.loadURL(url);
 
-        win.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-          console.error('Failed to load URL for preview:', errorCode, errorDescription, validatedURL);
+        win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+          console.error('Failed to load URL for preview:', errorCode, errorDescription);
+          try { win.close(); } catch (e) {}
           reject(`Failed to load: ${errorDescription}`);
         });
 
-        // Filtrar algunos logs de console para reducir ruido
         win.webContents.on('console-message', (event, level, message) => {
-          if (!message.includes('React DevTools') && 
+          if (!message.includes('React DevTools') &&
               !message.includes('Electron Security Warning') &&
               !message.includes('[vite]')) {
             console.log('Preview window console:', level, message);
           }
         });
-      
+
         win.webContents.once('did-finish-load', async () => {
-          // FORZAR MODO CLARO PARA PDF
           try {
-             await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
-             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
-          } catch(e) {}
+            await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
+            await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
+          } catch (e) {}
 
-          // Si es la carga inicial de React, generar PDF
-          // Pequeño delay asegurando renderizado completo
-          setTimeout(() => {
-            win.webContents.printToPDF(printOptions).then(async (data) => {
-              try {
-                  // GUARDAR PDF EN DISCO (Evita error ERR_INVALID_URL por longitud de Data URI)
-                  const pdfPath = path.join(app.getPath('temp'), `preview_recibos_${Date.now()}.pdf`);
-                  console.log('PDF generado en:', pdfPath);
-                  
-                  // OPTIMIZACIÓN DE MEMORIA (Modo Efímero):
-                  // 1. Guardar PDF
-                  await fs.promises.writeFile(pdfPath, data);
-                  
-                  // 2. Destruir la ventana de generación inmediatamente
-                  win.close();
+          let captured = false;
 
-                  // 3. Retornar la ruta del archivo para que el render (Modal) lo muestre
-                  resolve({ success: true, path: pathToFileURL(pdfPath).href });
+          const capturePdf = async () => {
+            if (captured) return;
+            captured = true;
+            clearTimeout(fallbackTimer);
 
-              } catch (err) {
-                  console.error('Error guardando PDF temporal:', err);
-                  // Solo mostrar ventana si falló la apertura externa (fallback)
-                  win.show();
-              }
-             })
+            try {
+              const data = await win.webContents.printToPDF(printOptions);
+              const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`);
+              console.log('PDF generado en:', pdfPath);
+              await fs.promises.writeFile(pdfPath, data);
 
+              try { win.close(); } catch (e) {}
+              resolve({ success: true, path: pathToFileURL(pdfPath).href });
+            } catch (err) {
+              console.error('Error generando PDF temporal:', err);
+              try { win.close(); } catch (e) {}
+              reject(err);
+            }
+          };
 
-             .catch((error) => {
-              console.error('Error generating PDF:', error);
-              // Si falla el PDF, mostrar lo que haya (fallback)
-              win.show();
-              reject(error);
-             });
-          }, 4000); // 4s delay: asegura que isPrintMode omita PantallaCarga y que las gráficas carguen
+          // Esperar la señal del componente React cuando terminó de renderizar
+          win.webContents.ipc.once('print-ready', () => {
+            console.log('Señal print-ready recibida');
+            capturePdf();
+          });
+
+          // Fallback: si la señal no llega (datos no cargaron, etc.), proceder a los 7s
+          const fallbackTimer = setTimeout(() => {
+            console.log('Usando fallback timer para PDF (señal no recibida)');
+            capturePdf();
+          }, 7000);
         });
-
       });
     });
 
@@ -762,7 +818,7 @@ export default function IpcHandlers () {
 
         const { canceled, filePath } = await dialog.showSaveDialog(win, {
             title: 'Guardar PDF',
-            defaultPath: path.join(app.getPath('downloads'), `documento_${Date.now()}.pdf`),
+            defaultPath: path.join(app.getPath('downloads'), path.basename(sourcePath)),
             filters: [{ name: 'Archivos PDF', extensions: ['pdf'] }]
         });
 
@@ -825,6 +881,19 @@ export default function IpcHandlers () {
     ipcMain.handle('print-silent', (event, url, config = {}) => {
       const { printer = '', landscape = true, copies = 1, pageSize = 'Letter' } = config;
 
+      const sizeMap = { letter: 'Letter', legal: 'Legal', a4: 'A4' };
+      const normalizedSize = sizeMap[(pageSize || 'Letter').toLowerCase()] || 'Letter';
+      const printConfig = {
+        silent: true,
+        printBackground: true,
+        color: true,
+        deviceName: printer,
+        landscape: !!landscape,
+        copies: Math.max(1, parseInt(copies) || 1),
+        pageSize: normalizedSize,
+        margins: { marginType: 'printableArea' }
+      };
+
       return new Promise((resolve, reject) => {
         let win = new BrowserWindow({
           show: false,
@@ -848,20 +917,13 @@ export default function IpcHandlers () {
             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
           } catch (e) {}
 
-          const sizeMap = { letter: 'Letter', legal: 'Legal', a4: 'A4' };
-          const normalizedSize = sizeMap[(pageSize || 'Letter').toLowerCase()] || 'Letter';
+          let printed = false;
 
-          setTimeout(() => {
-            win.webContents.print({
-              silent: true,
-              printBackground: true,
-              color: true,
-              deviceName: printer,
-              landscape: !!landscape,
-              copies: Math.max(1, parseInt(copies) || 1),
-              pageSize: normalizedSize,
-              margins: { marginType: 'printableArea' }
-            }, (success, failureReason) => {
+          const doPrint = () => {
+            if (printed) return;
+            printed = true;
+            clearTimeout(fallbackTimer);
+            win.webContents.print(printConfig, (success, failureReason) => {
               try { win.close(); } catch (e) {}
               if (success) resolve({ success: true });
               else {
@@ -869,7 +931,19 @@ export default function IpcHandlers () {
                 reject(failureReason || 'Print failed');
               }
             });
-          }, 1000);
+          };
+
+          // Esperar señal real del componente React (incluye buffer de gráficas)
+          win.webContents.ipc.once('print-ready', () => {
+            console.log('print-silent: señal print-ready recibida');
+            doPrint();
+          });
+
+          // Fallback: si la señal no llega, imprimir a los 7s
+          const fallbackTimer = setTimeout(() => {
+            console.log('print-silent: usando fallback timer');
+            doPrint();
+          }, 7000);
         });
 
         win.webContents.on('did-fail-load', (e, code, desc) => {
@@ -881,7 +955,18 @@ export default function IpcHandlers () {
     });
 
     console.log("✅ Handlers de documentación registrados");
-    
+
+    // Elimina el PDF temporal al cerrar el modal.
+    ipcMain.handle('delete-temp-pdf', async (event, fileUrl) => {
+        try {
+            const filePath = fileURLToPath(fileUrl);
+            await fs.promises.unlink(filePath);
+            console.log('Temp PDF eliminado:', filePath);
+        } catch (e) {
+            // El archivo puede no existir si ya fue borrado — no es error
+        }
+    });
+
 }
 
 
