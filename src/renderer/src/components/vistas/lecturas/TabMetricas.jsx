@@ -722,7 +722,7 @@ export default function TabMetricas() {
       )}
 
       {/* Modal de Impresión */}
-      {pdfUrl && modoPdf === "imprimir" && (
+      {pdfUrl && modoPdf && (
         <ModalImprimir
           pdfUrl={pdfUrl}
           printUrl={printUrl}
@@ -731,7 +731,7 @@ export default function TabMetricas() {
             setPrintUrl(null);
             setModoPdf(null);
           }}
-          onVolver={() => setModoPdf("vista-previa")}
+          initialMode="print"
         />
       )}
     </div>

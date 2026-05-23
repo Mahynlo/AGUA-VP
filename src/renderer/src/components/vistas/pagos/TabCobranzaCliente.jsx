@@ -1101,7 +1101,7 @@ const TabCobranzaCliente = () => {
         onPagoRegistrado={refrescarCobranzaTrasPagoRapido}
       />
 
-      {pdfUrl && modoPdf === "imprimir" && (
+      {pdfUrl && modoPdf && (
         <ModalImprimir
           pdfUrl={pdfUrl}
           printUrl={printUrl}
@@ -1110,6 +1110,7 @@ const TabCobranzaCliente = () => {
             setPrintUrl(null);
             setModoPdf(null);
           }}
+          initialMode="print"
         />
       )}
     </div>

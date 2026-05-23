@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Button, Select, SelectItem, Divider } from "@nextui-org/react";
 import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport } from "react-icons/hi";
 import ListadoLecturas from "./components/ListadoLecturas";
-import ModalVistaPrevia from "./components/ModalVistaPrevia";
 import ModalImprimir from "./components/ModalImprimir";
 import { useReportes } from "../../../context/ReportesContext";
 import { exportData } from "../../../utils/exportUtils";
@@ -576,21 +575,12 @@ const TabReportes = () => {
       </div>
 
       {/* MODALES DE IMPRESIÓN */}
-      {pdfUrl && modoPdf === 'vista-previa' && (
-        <ModalVistaPrevia
-          pdfUrl={pdfUrl}
-          printUrl={printUrl}
-          onClose={() => { setPdfUrl(null); setPrintUrl(null); setModoPdf(null); }}
-          onImprimir={() => setModoPdf('imprimir')}
-        />
-      )}
-
-      {pdfUrl && modoPdf === 'imprimir' && (
+      {pdfUrl && modoPdf && (
         <ModalImprimir
           pdfUrl={pdfUrl}
           printUrl={printUrl}
           onClose={() => { setPdfUrl(null); setPrintUrl(null); setModoPdf(null); }}
-          onVolver={() => setModoPdf('vista-previa')}
+          initialMode={modoPdf === 'imprimir' ? 'print' : 'preview'}
         />
       )}
     </div>

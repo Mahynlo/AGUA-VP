@@ -21,7 +21,6 @@ import {
   HiDocumentText,
   HiMap
 } from "react-icons/hi";
-import ModalVistaPrevia from "../impresion/components/ModalVistaPrevia";
 import ModalImprimir from "../impresion/components/ModalImprimir";
 
 const ModalDetallePago = ({
@@ -404,23 +403,12 @@ const ModalDetallePago = ({
         </ModalContent>
       </Modal>
 
-      {/* Modal de impresión del comprobante */}
-      {comprobanteUrl && modoPdf === 'imprimir' && (
+      {comprobanteUrl && modoPdf && (
         <ModalImprimir
           pdfUrl={comprobanteUrl}
           printUrl={comprobantePrintUrl}
           onClose={() => { setComprobanteUrl(null); setComprobantePrintUrl(null); setModoPdf(null); }}
-          onVolver={() => setModoPdf('vista-previa')}
-        />
-      )}
-
-      {/* Vista previa del comprobante (accesible desde ModalImprimir → Volver) */}
-      {comprobanteUrl && modoPdf === 'vista-previa' && (
-        <ModalVistaPrevia
-          pdfUrl={comprobanteUrl}
-          printUrl={comprobantePrintUrl}
-          onClose={() => { setComprobanteUrl(null); setComprobantePrintUrl(null); setModoPdf(null); }}
-          onImprimir={() => setModoPdf('imprimir')}
+          initialMode={modoPdf === 'imprimir' ? 'print' : 'preview'}
         />
       )}
     </>
