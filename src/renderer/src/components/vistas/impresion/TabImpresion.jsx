@@ -5,7 +5,6 @@ import { Link } from "react-router-dom";
 import useImpresionRecibos from "../../../hooks/useImpresionRecibos";
 import ClientesList from "./components/ClientesList";
 import AccionesImpresion from "./components/AccionesImpresion";
-import ModalVistaPrevia from "./components/ModalVistaPrevia";
 import ModalImprimir from "./components/ModalImprimir";
 
 /**
@@ -167,22 +166,12 @@ const TabImpresion = () => {
       </div>
 
       {/* MODAL DE VISTA PREVIA */}
-      {pdfUrl && modoPdf === 'vista-previa' && (
-        <ModalVistaPrevia
-          pdfUrl={pdfUrl}
-          printUrl={printUrl}
-          onClose={handleClosePdf}
-          onImprimir={() => setModoPdf('imprimir')}
-        />
-      )}
-
-      {/* MODAL DE IMPRESIÓN (estilo navegador) */}
-      {pdfUrl && modoPdf === 'imprimir' && (
+      {pdfUrl && modoPdf && (
         <ModalImprimir
           pdfUrl={pdfUrl}
           printUrl={printUrl}
           onClose={handleClosePdf}
-          onVolver={() => setModoPdf('vista-previa')}
+          initialMode={modoPdf === 'imprimir' ? 'print' : 'preview'}
         />
       )}
 
