@@ -152,7 +152,26 @@
 }
 
 /* =================================================================
-   5. INTERACCIÓN Y MARCADORES
+   5. CLUSTERS DE MARCADORES
+   ================================================================= */
+.aguavp-cluster {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
+}
+
+.dark .aguavp-cluster {
+  border-color: #27272a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* =================================================================
+   6. INTERACCIÓN Y MARCADORES
    ================================================================= */
 .leaflet-marker-icon {
   transition: filter 0.2s ease;

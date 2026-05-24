@@ -128,6 +128,11 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [mapError, setMapError] = useState(false);
 
+  const gridColors = useMemo(
+    () => Array.from({ length: 64 }, () => Math.random() > 0.7),
+    []
+  );
+
   // Memoizar la posición para evitar re-renders innecesarios
   const position = useMemo(() => [lat || 29.567, lng || -109.456], [lat, lng]);
 
@@ -145,8 +150,8 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
         {/* Fondo de mapa estático */}
         <div className="absolute inset-0 opacity-30">
           <div className="grid grid-cols-8 h-full">
-            {Array.from({ length: 64 }, (_, i) => (
-              <div key={i} className={`border border-gray-300 dark:border-gray-600 ${Math.random() > 0.7 ? 'bg-green-200 dark:bg-green-800' : 'bg-blue-100 dark:bg-blue-900'}`} />
+            {gridColors.map((isGreen, i) => (
+              <div key={i} className={`border border-gray-300 dark:border-gray-600 ${isGreen ? 'bg-green-200 dark:bg-green-800' : 'bg-blue-100 dark:bg-blue-900'}`} />
             ))}
           </div>
         </div>
@@ -168,7 +173,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
 
         {/* Información del cliente overlay */}
         <div className="absolute top-4 left-4 z-10">
-          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
             <CardBody className="p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -185,7 +190,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
 
         {/* Información de ubicación */}
         <div className="absolute bottom-4 left-4 z-10">
-          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
             <CardBody className="p-3">
               <div className="flex items-center gap-2 text-xs">
                 <Chip size="sm" color="warning" variant="flat">
@@ -204,7 +209,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
 
         {/* Información detallada */}
         <div className="absolute bottom-4 right-4 z-10">
-          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg max-w-xs">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg max-w-xs">
             <CardBody className="p-3">
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
@@ -262,7 +267,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
       {/* Información de ubicación */}
       {!isLoading && (
         <div className="absolute bottom-4 left-4 z-[1000]">
-          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
             <CardBody className="p-3">
               <div className="flex items-center gap-2 text-xs">
                 <Chip size="sm" color="success" variant="flat">
@@ -283,7 +288,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
       {/* Información del cliente overlay */}
       {!isLoading && (
         <div className="absolute top-4 right-4 z-[1000]">
-          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
             <CardBody className="p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>

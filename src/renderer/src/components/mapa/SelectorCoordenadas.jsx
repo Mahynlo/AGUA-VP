@@ -37,12 +37,12 @@ const LocationMarker = ({ position, onSelect, icon }) => {
   return position ? <Marker position={position} icon={icon} /> : null;
 };
 
-// 3. Componente para mover el mapa suavemente
+// 3. Componente para mover el mapa al cambiar coordenadas
 const MapUpdater = ({ center }) => {
   const map = useMap();
   useEffect(() => {
     if (center) {
-      map.flyTo(center, map.getZoom(), { duration: 1.5 });
+      map.setView(center, map.getZoom());
     }
   }, [center, map]);
   return null;
@@ -138,7 +138,7 @@ export default function SelectorCoordenadas({
         </MapContainer>
 
         {/* Badge de coordenadas */}
-        <div className="absolute top-3 right-3 z-[400] bg-white/90 dark:bg-black/80 backdrop-blur px-3 py-1 rounded-full text-xs font-mono border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="absolute top-3 right-3 z-[400] bg-white dark:bg-gray-900 px-3 py-1 rounded-full text-xs font-mono border border-gray-200 dark:border-gray-700 shadow-sm">
           {position ? `${position[0].toFixed(5)}, ${position[1].toFixed(5)}` : "Selecciona un punto"}
         </div>
       </div>
