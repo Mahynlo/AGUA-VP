@@ -39,6 +39,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
     const [pageSize, setPageSize] = useState('Letter');
     const [isPrinting, setIsPrinting] = useState(false);
     const [printError, setPrintError] = useState(null);
+    const [printSuccess, setPrintSuccess] = useState(null);
 
     const { setSuccess, setError } = useFeedback();
     const { theme } = useTheme();
@@ -88,18 +89,20 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
         if (!printUrl || isPrinting) return;
         setIsPrinting(true);
         setPrintError(null);
+        setPrintSuccess(null);
         try {
             await window.api.printSilent(printUrl, { printer: selectedPrinter, landscape, copies, pageSize });
             const msg = `Enviado a "${selectedPrinter || 'impresora predeterminada'}" — ${copies} ${copies === 1 ? 'copia' : 'copias'}`;
+            setPrintSuccess(msg);
             setSuccess(msg, 'Impresión exitosa');
             notifyOS('Impresión enviada', msg, 'success');
-            handleClose();
         } catch (err) {
             console.error('Error al imprimir:', err);
             const errMsg = typeof err === 'string' ? err : 'No se pudo enviar el trabajo a la impresora.';
-            setPrintError('Error al imprimir. Intente con el diálogo del sistema.');
+            setPrintError(errMsg);
             setError(errMsg, 'Error de impresión');
             notifyOS('Error de impresión', errMsg, 'error');
+        } finally {
             setIsPrinting(false);
         }
     };
@@ -247,7 +250,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
                                         <div className="relative">
                                             <select
                                                 value={selectedPrinter}
-                                                onChange={e => setSelectedPrinter(e.target.value)}
+                                                onChange={e => { setSelectedPrinter(e.target.value); setPrintSuccess(null); setPrintError(null); }}
                                                 className={inputCls + " appearance-none"}
                                             >
                                                 {printers.map(p => (
@@ -325,6 +328,12 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
 
                             {/* Footer del panel de opciones */}
                             <div className="p-6 pt-4 border-t border-slate-100 dark:border-zinc-800/50 space-y-3 bg-white dark:bg-zinc-950 shrink-0">
+                                {printSuccess && (
+                                    <div className="p-3 mb-2 rounded-xl bg-green-500/10 border border-green-500/20 text-[11px] font-bold text-green-700 dark:text-green-400 leading-tight flex items-start gap-2">
+                                        <span className="text-base leading-none mt-px">✓</span>
+                                        <span>{printSuccess}</span>
+                                    </div>
+                                )}
                                 {printError && (
                                     <div className="p-3 mb-2 rounded-xl bg-red-500/10 border border-red-500/20 text-[11px] font-bold text-red-600 dark:text-red-400 leading-tight">
                                         {printError}
