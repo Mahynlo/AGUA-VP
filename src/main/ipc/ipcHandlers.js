@@ -955,6 +955,7 @@ export default function IpcHandlers () {
     // ============================================================
     ipcMain.handle('print-silent', (event, url, config = {}) => {
       const { printer = '', landscape = true, copies = 1, pageSize = 'Letter' } = config;
+      console.log('print-silent config:', { printer, landscape, copies, pageSize, url: url.substring(0, 80) });
 
       const sizeMap = { letter: 'Letter', legal: 'Legal', a4: 'A4' };
       const normalizedSize = sizeMap[(pageSize || 'Letter').toLowerCase()] || 'Letter';
@@ -962,7 +963,7 @@ export default function IpcHandlers () {
         silent: true,
         printBackground: true,
         color: true,
-        deviceName: printer,
+        ...(printer ? { deviceName: printer } : {}),
         landscape: !!landscape,
         copies: Math.max(1, parseInt(copies) || 1),
         pageSize: normalizedSize,
@@ -1002,7 +1003,7 @@ export default function IpcHandlers () {
               try { win.close(); } catch (e) {}
               if (success) resolve({ success: true });
               else {
-                console.error('Silent print failed:', failureReason);
+                console.error('Silent print failed:', failureReason, '| printConfig:', JSON.stringify(printConfig));
                 reject(failureReason || 'Print failed');
               }
             });
