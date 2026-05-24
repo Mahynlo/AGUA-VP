@@ -1,12 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { Button, Pagination, Progress } from "@nextui-org/react";
-import { Select, SelectItem } from "@nextui-org/react";
-import { 
-  HiMap, 
-  HiFilter, 
-  HiX, 
-  HiCheckCircle, 
-  HiClock, 
+import {
+  HiMap,
+  HiFilter,
+  HiX,
+  HiCheckCircle,
+  HiClock,
   HiChartPie,
   HiSearch,
   HiArrowLeft
@@ -23,6 +21,22 @@ import { useRutas } from "../../../context/RutasContext";
 import { useTabRutas } from "../../../hooks/useTabRutas";
 import { prefijoDominante, imgPorPrefijo } from "../../../utils/rutaUtils";
 import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
+
+const selectClass = "h-[52px] w-full px-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-none appearance-none cursor-pointer";
+
+const SimplePagination = ({ total, page, onChange }) => {
+  if (total <= 1) return null;
+  const pages = Array.from({ length: total }, (_, i) => i + 1);
+  return (
+    <div className="flex items-center gap-1">
+      <button onClick={() => onChange(page - 1)} disabled={page === 1} className="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400">‹</button>
+      {pages.map(p => (
+        <button key={p} onClick={() => onChange(p)} className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${p === page ? "bg-slate-800 text-white dark:bg-zinc-200 dark:text-zinc-900 shadow-sm" : "hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400"}`}>{p}</button>
+      ))}
+      <button onClick={() => onChange(page + 1)} disabled={page === total} className="w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400">›</button>
+    </div>
+  );
+};
 
 export default function TabRutas() {
   const navigate = useNavigate();
@@ -41,12 +55,6 @@ export default function TabRutas() {
   }
 
   const hasActiveFilters = search || filtro !== "todos" || filtroPueblo !== "todos";
-
-  // Clases estandarizadas para Inputs Invisibles
-  const selectClassNames = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px] focus:ring-2 focus:ring-blue-500/20 focus:outline-none",
-    value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
-  };
 
   return (
     <div className="h-full flex flex-col gap-6 w-full animate-in fade-in duration-500">
@@ -74,15 +82,14 @@ export default function TabRutas() {
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
-          <Button
-            variant="flat"
-            onPress={() => navigate(-1)}
-            className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 min-w-0 shadow-sm"
-            startContent={<HiArrowLeft className="w-4 h-4" />}
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 min-w-0 shadow-sm flex items-center gap-2 hover:bg-slate-200 dark:hover:bg-zinc-800"
             title="Volver"
           >
+            <HiArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Volver</span>
-          </Button>
+          </button>
           <div className="flex-1 sm:flex-none">
             <ModalRegistrarRuta />
           </div>
@@ -126,16 +133,12 @@ export default function TabRutas() {
             </span>
           </div>
           {estadisticas.totalLecturas > 0 ? (
-            <Progress
-              value={estadisticas.porcentajeProgreso}
-              color="primary"
-              className="h-2"
-              classNames={{
-                track: "bg-slate-200 dark:bg-slate-800",
-                indicator: "bg-blue-600 dark:bg-blue-500 rounded-full",
-              }}
-              aria-label="Progreso general"
-            />
+            <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-600 dark:bg-blue-500 rounded-full transition-all"
+                style={{ width: `${estadisticas.porcentajeProgreso}%` }}
+              />
+            </div>
           ) : (
             <div className="h-2 bg-slate-200 dark:bg-zinc-800 rounded-full w-full" />
           )}
@@ -148,11 +151,11 @@ export default function TabRutas() {
 
       {/* ── 3. CONTENEDOR PRINCIPAL: Filtros y Grid ── */}
       <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-hidden flex flex-col flex-1">
-        
+
         {/* Filtros */}
         <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
-            
+
             {/* Buscador */}
             <div className="lg:col-span-5 relative w-full flex items-center">
               <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
@@ -190,47 +193,41 @@ export default function TabRutas() {
 
             {/* Filtro Ubicación */}
             <div className="lg:col-span-2">
-              <Select
-                placeholder="Ubicación"
-                selectedKeys={[filtroPueblo]}
+              <select
+                value={filtroPueblo}
                 onChange={(e) => setPueblo(e.target.value)}
-                variant="flat"
                 aria-label="Filtrar por ubicación"
-                classNames={selectClassNames}
+                className={selectClass}
               >
-                <SelectItem key="todos" value="todos">Todas</SelectItem>
-                <SelectItem key="ng" value="ng">Nácori</SelectItem>
-                <SelectItem key="mp" value="mp">Matapé</SelectItem>
-                <SelectItem key="ad" value="ad">Adivino</SelectItem>
-              </Select>
+                <option value="todos">Todas</option>
+                <option value="ng">Nácori</option>
+                <option value="mp">Matapé</option>
+                <option value="ad">Adivino</option>
+              </select>
             </div>
 
             {/* Filtro Estado */}
             <div className="lg:col-span-2 flex gap-3">
-              <Select
-                placeholder="Estado"
-                selectedKeys={[filtro]}
+              <select
+                value={filtro}
                 onChange={(e) => setFiltro(e.target.value)}
-                variant="flat"
                 aria-label="Filtrar por estado"
-                classNames={selectClassNames}
+                className={selectClass}
               >
-                <SelectItem key="todos" value="todos">Todos</SelectItem>
-                <SelectItem key="completas" value="completas">Completas</SelectItem>
-                <SelectItem key="incompletas" value="incompletas">Pendientes</SelectItem>
-              </Select>
+                <option value="todos">Todos</option>
+                <option value="completas">Completas</option>
+                <option value="incompletas">Pendientes</option>
+              </select>
 
               {/* Botón Limpiar */}
               <div className={`transition-all duration-300 overflow-hidden shrink-0 ${hasActiveFilters ? 'w-[52px] opacity-100' : 'w-0 opacity-0'}`}>
-                <Button 
-                  isIconOnly
-                  variant="flat" 
-                  onPress={limpiarFiltros}
-                  className="bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 h-[52px] w-[52px] rounded-xl shadow-none"
+                <button
+                  onClick={limpiarFiltros}
+                  className="bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 h-[52px] w-[52px] rounded-xl shadow-none flex items-center justify-center"
                   title="Limpiar filtros"
                 >
                   <HiFilter className="text-xl" />
-                </Button>
+                </button>
               </div>
             </div>
 
@@ -256,16 +253,10 @@ export default function TabRutas() {
               {/* Paginación Inferior */}
               {totalPaginas > 1 && (
                 <div className="flex justify-center mt-12 mb-4">
-                  <Pagination
+                  <SimplePagination
                     total={totalPaginas}
                     page={paginaActual}
                     onChange={setPagina}
-                    color="default"
-                    variant="flat"
-                    showControls
-                    classNames={{
-                      cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-zinc-900 font-bold shadow-sm",
-                    }}
                   />
                 </div>
               )}
@@ -283,13 +274,13 @@ export default function TabRutas() {
                     Ajusta los filtros de búsqueda o cambia el período seleccionado para ver más resultados.
                 </p>
                 {hasActiveFilters && (
-                    <Button
-                        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-xl px-6"
-                        startContent={<HiFilter className="text-lg" />}
-                        onPress={limpiarFiltros}
+                    <button
+                        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-xl px-6 py-2 flex items-center gap-2"
+                        onClick={limpiarFiltros}
                     >
+                        <HiFilter className="text-lg" />
                         Limpiar filtros
-                    </Button>
+                    </button>
                 )}
             </div>
           )}
@@ -298,7 +289,3 @@ export default function TabRutas() {
     </div>
   );
 }
-
-
-
-

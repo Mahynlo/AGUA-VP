@@ -6,16 +6,15 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Button, Chip, Spinner } from "@nextui-org/react";
-import { 
-    HiSearch, 
-    HiX, 
-    HiPlus, 
-    HiChevronDown, 
-    HiChevronUp, 
-    HiMenu, 
-    HiLocationMarker, 
-    HiMap, 
+import {
+    HiSearch,
+    HiX,
+    HiPlus,
+    HiChevronDown,
+    HiChevronUp,
+    HiMenu,
+    HiLocationMarker,
+    HiMap,
     HiInformationCircle,
     HiExclamationCircle
 } from "react-icons/hi";
@@ -27,7 +26,7 @@ import { useMedidores } from "../../../context/MedidoresContext";
 ───────────────────────────────────────────────────────────────────────────── */
 
 const norm = (str) =>
-  (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  (str || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 function reconstruirLista(puntosRuta, allMedidores, allClientes) {
   const seenClientes = new Set();
@@ -89,7 +88,7 @@ export default function PanelGestionRuta({
   const { allMedidores } = useMedidores();
 
   const [listaItems, setListaItems] = useState([]);
-  const [modoOrden, setModoOrden] = useState("personalizado"); 
+  const [modoOrden, setModoOrden] = useState("personalizado");
   const [busqueda, setBusqueda] = useState("");
   const [resultados, setResultados] = useState([]);
   const [isBuscando, setIsBuscando] = useState(false);
@@ -273,22 +272,22 @@ export default function PanelGestionRuta({
         .filter((c) => !yaEnLista.has(c.id))
         .filter((c) => !ciudad || norm(c.ciudad) === norm(ciudad))
         .filter((c) => allMedidores.some((m) => m.cliente_id === c.id && m.latitud && m.longitud));
-      
+
       const sinConflicto = candidatos.filter((c) =>
         allMedidores
           .filter((m) => m.cliente_id === c.id && m.latitud && m.longitud)
           .every((m) => !m.ruta_id)
       );
-      
+
       const omitidos = candidatos.length - sinConflicto.length;
       if (sinConflicto.length === 0) {
         if (omitidos > 0) setOmitidosAviso(omitidos);
         setShowCiudadMenu(false);
         return;
       }
-      
+
       if (omitidos > 0) setOmitidosAviso(omitidos);
-      
+
       const nuevos = sinConflicto.map((c) => ({
         key: `c-${c.id}`,
         clienteId: c.id,
@@ -297,7 +296,7 @@ export default function PanelGestionRuta({
           (m) => m.cliente_id === c.id && m.latitud && m.longitud
         ),
       }));
-      
+
       setListaItems((prev) => {
         const merged = [...prev, ...nuevos];
         if (modoOrden === "numero_predio") {
@@ -359,27 +358,19 @@ export default function PanelGestionRuta({
       {/* ── Buscador y Agregar en masa ── */}
       <div className="shrink-0 flex flex-col gap-3 px-4 sm:px-5">
         <div className="flex gap-2">
-            <Button
-                size="sm"
-                variant="flat"
-                color="primary"
+            <button
                 onClick={() => agregarTodos("")}
-                className="flex-1 font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100"
-                startContent={<HiPlus className="w-4 h-4" />}
+                className="flex-1 font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1.5 border border-blue-200/50 dark:border-blue-800/50"
             >
-                Añadir Todos
-            </Button>
+                <HiPlus className="w-4 h-4" />Añadir Todos
+            </button>
             <div className="relative">
-                <Button
-                    size="sm"
-                    variant="flat"
-                    color="default"
+                <button
                     onClick={() => setShowCiudadMenu((v) => !v)}
-                    className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200"
-                    endContent={<HiChevronDown className="w-4 h-4" />}
+                    className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1.5"
                 >
-                    Por Ciudad
-                </Button>
+                    <span>Por Ciudad</span><HiChevronDown className="w-4 h-4" />
+                </button>
                 {showCiudadMenu && (
                     <div className="absolute z-50 right-0 mt-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl overflow-hidden min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
                     {ciudadesDisponibles.length === 0 ? (
@@ -404,7 +395,11 @@ export default function PanelGestionRuta({
         <div className="relative">
             <div className="relative flex items-center">
                 <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
-                    {isBuscando ? <Spinner size="sm" color="primary" /> : <HiSearch className="w-4 h-4" />}
+                    {isBuscando ? (
+                      <div className="w-4 h-4 border-2 border-blue-300/30 border-t-blue-500 rounded-full animate-spin" />
+                    ) : (
+                      <HiSearch className="w-4 h-4" />
+                    )}
                 </span>
                 <input
                     type="text"
@@ -432,7 +427,7 @@ export default function PanelGestionRuta({
                             const cnt = medsCliente.length;
                             const rutasConflicto = [...new Set(medsCliente.filter((m) => m.ruta_id).map((m) => m.ruta_nombre).filter(Boolean))];
                             const tieneConflicto = rutasConflicto.length > 0;
-                            
+
                             return (
                                 <button
                                     key={cliente.id}
@@ -465,7 +460,7 @@ export default function PanelGestionRuta({
                     </div>
                 </div>
             )}
-            
+
             {/* Mensaje Sin Resultados */}
             {busqueda.trim() && !isBuscando && resultados.length === 0 && (
                 <div className="absolute z-50 w-full mt-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-lg p-4 text-center">
@@ -495,9 +490,9 @@ export default function PanelGestionRuta({
       <div className="flex items-center justify-between shrink-0 px-4 sm:px-5 mt-2">
         <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
           Puntos de la Ruta
-          <Chip size="sm" color="default" className="text-[10px] font-black h-5 px-1 bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300">
+          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300">
             {listaItems.length}
-          </Chip>
+          </span>
           {totalMedidores > 0 && (
             <span className="text-[10px] text-slate-400 dark:text-zinc-500 lowercase font-medium">({totalMedidores} meds)</span>
           )}
@@ -646,30 +641,30 @@ export default function PanelGestionRuta({
 
       {/* ── Acciones Finales (Calcular y Reiniciar) ── */}
       <div className="flex gap-3 shrink-0 px-4 sm:px-5 pb-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
-        <Button
-          color="primary"
-          variant={rutaCalculada ? "flat" : "solid"}
+        <button
           onClick={handleDibujarRuta}
-          className={`flex-1 font-bold ${!rutaCalculada ? 'shadow-md shadow-blue-500/30' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'}`}
-          isDisabled={totalMedidores < 2 || isSaving}
-          startContent={<HiMap className="text-lg" />}
+          disabled={totalMedidores < 2 || isSaving}
+          className={`flex-1 font-bold flex items-center justify-center gap-2 px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
+            rutaCalculada
+              ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'
+              : 'bg-blue-600 text-white shadow-md shadow-blue-500/30 hover:bg-blue-700'
+          }`}
         >
+          <HiMap className="text-lg" />
           {rutaCalculada ? "Recalcular Ruta" : "Calcular Ruta"}
           {rutaCalculada?.distancia_total_km && (
             <span className="ml-1 text-[10px] font-black bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded-md">
               {rutaCalculada.distancia_total_km.toFixed(1)} km
             </span>
           )}
-        </Button>
-        <Button
-          color="danger"
-          variant="flat"
+        </button>
+        <button
           onClick={handleReiniciar}
-          isDisabled={isSaving}
-          className="font-bold px-6"
+          disabled={isSaving}
+          className="font-bold px-6 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 border border-red-200/50 dark:border-red-800/50 disabled:opacity-50"
         >
           Reiniciar
-        </Button>
+        </button>
       </div>
     </div>
   );

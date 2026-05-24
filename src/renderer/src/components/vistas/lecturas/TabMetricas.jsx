@@ -1,19 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Button,
-  Chip,
-  Progress,
-  Select,
-  SelectItem,
-  Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@nextui-org/react";
-import {
   HiChartBar,
   HiCheckCircle,
   HiClock,
@@ -37,6 +23,8 @@ const formatearNumero = (valor, decimales = 0) => {
     maximumFractionDigits: decimales,
   });
 };
+
+const selectClasses = "h-[52px] w-full px-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:border-slate-400 dark:focus:border-zinc-500 shadow-none appearance-none cursor-pointer transition-all duration-200";
 
 export default function TabMetricas() {
   const { rutas, initialLoading } = useRutas();
@@ -208,7 +196,7 @@ export default function TabMetricas() {
           fontWeight: 600,
           labels: { colors: "#94a3b8" },
         },
-        grid: { 
+        grid: {
           borderColor: "rgba(148, 163, 184, 0.2)",
           strokeDashArray: 4,
         },
@@ -342,25 +330,16 @@ export default function TabMetricas() {
     }
   };
 
-  // Token 4: Selects Invisibles (Adaptados)
-  const selectClasses = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px] focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500",
-    value: "font-medium text-slate-800 dark:text-zinc-100 text-sm",
-  };
-
   return (
-    /* Token 1: Contenedor Raíz Libre */
     <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 animate-in fade-in duration-500 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0">
-      
+
       {/* ── HEADER SECTION ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 print:mb-4">
         <div className="flex items-center gap-4">
-          {/* Regla de Tintes */}
           <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0 print:hidden">
             <HiChartBar className="w-7 h-7" />
           </div>
           <div className="flex flex-col gap-0.5">
-            {/* Token 3: Textos Principales */}
             <h3 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
               Métricas Unificadas de Lecturas
             </h3>
@@ -371,9 +350,10 @@ export default function TabMetricas() {
         </div>
 
         <div className="w-full sm:w-auto flex items-center gap-2 print:hidden">
-          <Chip color="default" variant="bordered" className="border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-bold tracking-widest uppercase text-[10px] rounded-lg px-2" startContent={<HiClock className="w-4 h-4" />}>
+          <span className="inline-flex items-center gap-1.5 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-bold tracking-widest uppercase text-[10px] rounded-lg px-2 py-1">
+            <HiClock className="w-4 h-4" />
             {etiquetaFiltro}
-          </Chip>
+          </span>
         </div>
       </div>
 
@@ -383,32 +363,30 @@ export default function TabMetricas() {
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
             Vista del Reporte
           </label>
-          <Select
-            selectedKeys={[vista]}
+          <select
+            value={vista}
             onChange={(e) => setVista(e.target.value || "consumo")}
-            variant="bordered"
             aria-label="Vista"
-            classNames={selectClasses}
+            className={selectClasses}
           >
-            <SelectItem key="consumo" value="consumo">Consumo de agua</SelectItem>
-            <SelectItem key="rutas" value="rutas">Rutas y distribución</SelectItem>
-          </Select>
+            <option value="consumo">Consumo de agua</option>
+            <option value="rutas">Rutas y distribución</option>
+          </select>
         </div>
 
         <div className="lg:col-span-3 flex flex-col gap-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
             Tipo de Rango
           </label>
-          <Select
-            selectedKeys={[tipoFiltro]}
+          <select
+            value={tipoFiltro}
             onChange={(e) => setTipoFiltro(e.target.value || "ultimos_meses")}
-            variant="bordered"
             aria-label="Rango"
-            classNames={selectClasses}
+            className={selectClasses}
           >
-            <SelectItem key="ultimos_meses" value="ultimos_meses">Últimos meses</SelectItem>
-            <SelectItem key="periodo" value="periodo">Período específico</SelectItem>
-          </Select>
+            <option value="ultimos_meses">Últimos meses</option>
+            <option value="periodo">Período específico</option>
+          </select>
         </div>
 
         <div className="lg:col-span-4 flex flex-col gap-1.5">
@@ -429,32 +407,32 @@ export default function TabMetricas() {
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
                 Seleccionar Cantidad
               </label>
-              <Select
-                selectedKeys={[ultimosMeses]}
+              <select
+                value={ultimosMeses}
                 onChange={(e) => setUltimosMeses(e.target.value || "3")}
-                variant="bordered"
                 aria-label="Últimos meses"
-                classNames={selectClasses}
+                className={selectClasses}
               >
-                <SelectItem key="3" value="3">Últimos 3 meses</SelectItem>
-                <SelectItem key="6" value="6">Últimos 6 meses</SelectItem>
-                <SelectItem key="12" value="12">Últimos 12 meses</SelectItem>
-              </Select>
+                <option value="3">Últimos 3 meses</option>
+                <option value="6">Últimos 6 meses</option>
+                <option value="12">Últimos 12 meses</option>
+              </select>
             </>
           )}
         </div>
 
         <div className="lg:col-span-2 flex items-end h-[52px]">
-          {/* Token 4: Botón Primario */}
-          <Button
-            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-full shadow-sm transition-transform active:scale-95"
-            onPress={handlePrint}
-            isLoading={loadingImprimir}
-            isDisabled={!reporteConsumo || loadingConsumo || loadingImprimir}
-            startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
+          <button
+            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-full shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handlePrint}
+            disabled={!reporteConsumo || loadingConsumo || loadingImprimir}
           >
-            {loadingImprimir ? "Preparando..." : "Imprimir"}
-          </Button>
+            {loadingImprimir ? (
+              <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Preparando...</>
+            ) : (
+              <><HiPrinter className="text-lg" />Imprimir</>
+            )}
+          </button>
         </div>
       </div>
 
@@ -469,7 +447,7 @@ export default function TabMetricas() {
 
       {loadingConsumo && !reporteConsumo ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4 print:hidden">
-          <Spinner size="lg" color="default" />
+          <div className="w-10 h-10 border-4 border-slate-200 dark:border-zinc-700 border-t-slate-600 dark:border-t-zinc-300 rounded-full animate-spin" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 animate-pulse">
             Generando métricas de consumo...
           </span>
@@ -479,7 +457,7 @@ export default function TabMetricas() {
           {/* ── VISTA: CONSUMO ── */}
           {vista === "consumo" && (
             <div className="space-y-6">
-              
+
               {/* KPIs Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-10 print:grid-cols-5 print:gap-2">
                 <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
@@ -512,7 +490,7 @@ export default function TabMetricas() {
 
               {/* Charts & Highlights Grid */}
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                
+
                 {/* Tendencia Chart */}
                 <div className="xl:col-span-2 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0 print:mb-6">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-6">Tendencia de consumo y recibos</p>
@@ -570,7 +548,7 @@ export default function TabMetricas() {
 
               {/* Tables Grid */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2">
-                
+
                 {/* Tabla 1: Top Consumidores */}
                 <div className="bg-white dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-0">
                   <div className="flex items-center justify-between mb-6">
@@ -580,24 +558,32 @@ export default function TabMetricas() {
                       {topConsumidores.length}
                     </div>
                   </div>
-                  <Table aria-label="Top consumidores" removeWrapper className="max-h-[340px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4", tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors" }}>
-                    <TableHeader>
-                      <TableColumn>Cliente</TableColumn>
-                      <TableColumn>Localidad</TableColumn>
-                      <TableColumn>Recibos</TableColumn>
-                      <TableColumn align="end">Consumo (m³)</TableColumn>
-                    </TableHeader>
-                    <TableBody emptyContent="Sin datos" items={topConsumidores}>
-                      {(item) => (
-                        <TableRow key={item.cliente_id}>
-                          <TableCell className="font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
-                          <TableCell>{item.localidad || "-"}</TableCell>
-                          <TableCell>{formatearNumero(item.recibos)}</TableCell>
-                          <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <div className="max-h-[340px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-slate-50 dark:bg-zinc-900/50 border-b border-slate-200 dark:border-zinc-800 sticky top-0 z-10">
+                        <tr>
+                          <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Cliente</th>
+                          <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Localidad</th>
+                          <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Recibos</th>
+                          <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 text-right">Consumo (m³)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                        {topConsumidores.length === 0 ? (
+                          <tr><td colSpan={4} className="px-5 py-8 text-center text-sm font-bold text-slate-400 dark:text-zinc-500">Sin datos</td></tr>
+                        ) : (
+                          topConsumidores.map((item) => (
+                            <tr key={item.cliente_id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
+                              <td className="px-5 py-4 font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</td>
+                              <td className="px-5 py-4 font-medium text-slate-600 dark:text-zinc-300">{item.localidad || "-"}</td>
+                              <td className="px-5 py-4 font-medium text-slate-600 dark:text-zinc-300">{formatearNumero(item.recibos)}</td>
+                              <td className="px-5 py-4 font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 {/* Tabla 2: Menor Consumo */}
@@ -609,24 +595,32 @@ export default function TabMetricas() {
                       {menorConsumo.length}
                     </div>
                   </div>
-                  <Table aria-label="Menor consumo" removeWrapper className="max-h-[340px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4", tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors" }}>
-                    <TableHeader>
-                      <TableColumn>Cliente</TableColumn>
-                      <TableColumn>Localidad</TableColumn>
-                      <TableColumn>Recibos</TableColumn>
-                      <TableColumn align="end">Consumo (m³)</TableColumn>
-                    </TableHeader>
-                    <TableBody emptyContent="Sin datos" items={menorConsumo}>
-                      {(item) => (
-                        <TableRow key={item.cliente_id}>
-                          <TableCell className="font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
-                          <TableCell>{item.localidad || "-"}</TableCell>
-                          <TableCell>{formatearNumero(item.recibos)}</TableCell>
-                          <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <div className="max-h-[340px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-slate-50 dark:bg-zinc-900/50 border-b border-slate-200 dark:border-zinc-800 sticky top-0 z-10">
+                        <tr>
+                          <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Cliente</th>
+                          <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Localidad</th>
+                          <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Recibos</th>
+                          <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 text-right">Consumo (m³)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                        {menorConsumo.length === 0 ? (
+                          <tr><td colSpan={4} className="px-5 py-8 text-center text-sm font-bold text-slate-400 dark:text-zinc-500">Sin datos</td></tr>
+                        ) : (
+                          menorConsumo.map((item) => (
+                            <tr key={item.cliente_id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
+                              <td className="px-5 py-4 font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</td>
+                              <td className="px-5 py-4 font-medium text-slate-600 dark:text-zinc-300">{item.localidad || "-"}</td>
+                              <td className="px-5 py-4 font-medium text-slate-600 dark:text-zinc-300">{formatearNumero(item.recibos)}</td>
+                              <td className="px-5 py-4 font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -635,7 +629,7 @@ export default function TabMetricas() {
           {/* ── VISTA: RUTAS ── */}
           {vista === "rutas" && (
             <div className="space-y-6">
-              
+
               {/* KPIs Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-10 print:grid-cols-4 print:gap-2">
                 <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
@@ -657,12 +651,12 @@ export default function TabMetricas() {
                   </div>
                   <div className="flex items-center gap-3">
                     <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 w-16">{estadisticasRutas.promedioCompletado}%</p>
-                    <Progress
-                      value={estadisticasRutas.promedioCompletado}
-                      className="h-2 flex-1"
-                      classNames={{ track: "bg-slate-200 dark:bg-zinc-800", indicator: "bg-slate-800 dark:bg-zinc-200 rounded-full" }}
-                      aria-label="Avance operativo"
-                    />
+                    <div className="flex-1 h-2 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-slate-800 dark:bg-zinc-200 rounded-full transition-all"
+                        style={{ width: `${estadisticasRutas.promedioCompletado}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -697,24 +691,32 @@ export default function TabMetricas() {
                     {distribucionRutasConsumo.length}
                   </div>
                 </div>
-                <Table aria-label="Consumo por ruta" removeWrapper className="max-h-[360px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2" classNames={{ th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3", td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4", tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors" }}>
-                  <TableHeader>
-                    <TableColumn>Ruta</TableColumn>
-                    <TableColumn>Recibos</TableColumn>
-                    <TableColumn align="end">Consumo total (m³)</TableColumn>
-                    <TableColumn align="end">Promedio (m³)</TableColumn>
-                  </TableHeader>
-                  <TableBody emptyContent="Sin datos" items={distribucionRutasConsumo}>
-                    {(item) => (
-                      <TableRow key={`${item.ruta_id}-${item.ruta_nombre}`}>
-                        <TableCell className="font-bold text-slate-800 dark:text-zinc-100">{item.ruta_nombre}</TableCell>
-                        <TableCell>{formatearNumero(item.recibos)}</TableCell>
-                        <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</TableCell>
-                        <TableCell className="font-bold text-right">{formatearNumero(item.consumo_promedio_m3, 2)}</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                <div className="max-h-[360px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50 dark:bg-zinc-900/50 border-b border-slate-200 dark:border-zinc-800 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Ruta</th>
+                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Recibos</th>
+                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 text-right">Consumo total (m³)</th>
+                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 text-right">Promedio (m³)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                      {distribucionRutasConsumo.length === 0 ? (
+                        <tr><td colSpan={4} className="px-5 py-8 text-center text-sm font-bold text-slate-400 dark:text-zinc-500">Sin datos</td></tr>
+                      ) : (
+                        distribucionRutasConsumo.map((item) => (
+                          <tr key={`${item.ruta_id}-${item.ruta_nombre}`} className="hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
+                            <td className="px-5 py-4 font-bold text-slate-800 dark:text-zinc-100">{item.ruta_nombre}</td>
+                            <td className="px-5 py-4 font-medium text-slate-600 dark:text-zinc-300">{formatearNumero(item.recibos)}</td>
+                            <td className="px-5 py-4 font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{formatearNumero(item.consumo_total_m3, 2)}</td>
+                            <td className="px-5 py-4 font-bold text-right text-slate-600 dark:text-zinc-300">{formatearNumero(item.consumo_promedio_m3, 2)}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
