@@ -16,6 +16,7 @@ asarUnpack: # archivos que no se empaquetarán en el archivo asar
   - grafos/**
   - node_modules/better-sqlite3/**
   - node_modules/@aguavp/api-server/src/database/migrations/**
+  - node_modules/pdf-to-printer/**
 win:
   executableName: Agua-vp
 nsis:

@@ -86,12 +86,12 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
     }, [handleClose]);
 
     const handlePrint = async () => {
-        if (!printUrl || isPrinting) return;
+        if (!pdfUrl || isPrinting) return;
         setIsPrinting(true);
         setPrintError(null);
         setPrintSuccess(null);
         try {
-            await window.api.printSilent(printUrl, { printer: selectedPrinter, landscape, copies, pageSize });
+            await window.api.printSilent(pdfUrl, { printer: selectedPrinter, landscape, copies, pageSize });
             const msg = `Enviado a "${selectedPrinter || 'impresora predeterminada'}" — ${copies} ${copies === 1 ? 'copia' : 'copias'}`;
             setPrintSuccess(msg);
             setSuccess(msg, 'Impresión exitosa');
@@ -342,7 +342,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) =
                                 <Button
                                     onPress={handlePrint}
                                     isLoading={isPrinting}
-                                    isDisabled={isPrinting || !printUrl || printers.length === 0}
+                                    isDisabled={isPrinting || !pdfUrl || printers.length === 0}
                                     startContent={!isPrinting && <HiPrinter className="text-lg" />}
                                     className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-[52px] shadow-sm"
                                 >
