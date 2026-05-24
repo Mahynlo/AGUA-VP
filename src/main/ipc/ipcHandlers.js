@@ -330,7 +330,7 @@ export default function IpcHandlers () {
             clearTimeout(fallbackTimer);
 
             try {
-              const data = await win.webContents.printToPDF(printOptions);
+              const data = await win.webContents.printToPDF({ ...printOptions, scaleFactor: 100});
               const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`);
               console.log('PDF generado en:', pdfPath);
               await fs.promises.writeFile(pdfPath, data);
