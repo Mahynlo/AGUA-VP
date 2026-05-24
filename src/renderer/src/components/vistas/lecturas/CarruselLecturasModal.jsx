@@ -1,29 +1,15 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { Modal } from "flowbite-react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  useDisclosure,
-  Card,
-  CardBody,
-  CardHeader,
-  Chip,
-  Progress,
-  Spinner,
-} from "@nextui-org/react";
-import { 
-  HiLocationMarker, 
-  HiUser, 
-  HiCalendar, 
-  HiHashtag, 
-  HiMap, 
-  HiPhone, 
-  HiCalculator, 
-  HiArrowLeft, 
-  HiArrowRight, 
+  HiLocationMarker,
+  HiUser,
+  HiCalendar,
+  HiHashtag,
+  HiMap,
+  HiPhone,
+  HiCalculator,
+  HiArrowLeft,
+  HiArrowRight,
   HiCheck,
   HiSearch,
   HiX,
@@ -35,6 +21,20 @@ import { useRutas } from "../../../context/RutasContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { useAuth } from "../../../context/AuthContext";
 import { usePermissions } from "../../../context/PermissionsContext";
+
+const largeModalTheme = {
+    root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+    content: {
+        base: "relative h-full w-full p-1 sm:p-2 pt-16 sm:pt-20",
+        inner: "relative flex h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] flex-col rounded-[2rem] bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-[1300px] w-full"
+    },
+    header: {
+        base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8 shrink-0",
+        close: { base: "absolute top-4 right-4 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors z-50", icon: "h-5 w-5" }
+    },
+    body: { base: "px-8 py-6 flex-1 min-h-0 overflow-y-auto custom-scrollbar" },
+    footer: { base: "flex items-center justify-between gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 shrink-0" }
+};
 
 // Componente separado para el input de lectura (UI Premium)
 const LecturaInput = React.memo(React.forwardRef(
@@ -53,7 +53,7 @@ const LecturaInput = React.memo(React.forwardRef(
     if (isNaN(actual) || value === "" || lecturaAnterior === null || lecturaAnterior === undefined) return null;
     const anterior = parseFloat(lecturaAnterior);
     return parseFloat(((capacidadMaxima - anterior) + actual).toFixed(4));
-  }, [value, lecturaAnterior]);
+  }, [value, lecturaAnterior, capacidadMaxima]);
 
   const valorMenorQueAnterior =
     lecturaAnterior !== null && lecturaAnterior !== undefined &&
@@ -120,9 +120,9 @@ const LecturaInput = React.memo(React.forwardRef(
             className={`
                 w-full pl-14 pr-16 py-4 text-3xl font-black rounded-2xl transition-all duration-200 focus:outline-none focus:ring-4
                 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white placeholder-slate-300 dark:placeholder-zinc-600
-                ${error 
+                ${error
                     ? 'border-2 border-red-500 focus:ring-red-500/20 focus:border-red-500 bg-red-50 dark:bg-red-900/10'
-                    : valorMenorQueAnterior 
+                    : valorMenorQueAnterior
                         ? 'border-2 border-orange-400 focus:ring-orange-500/20 focus:border-orange-500 bg-orange-50 dark:bg-orange-900/10'
                     : 'border-2 border-slate-200 dark:border-zinc-800 focus:ring-slate-400/20 focus:border-slate-300 hover:border-slate-300 dark:hover:border-zinc-700'
                 }
@@ -130,7 +130,7 @@ const LecturaInput = React.memo(React.forwardRef(
             />
             <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center">
                 {isLoading ? (
-                  <Spinner size="sm" color="default" />
+                  <div className="w-4 h-4 border-2 border-slate-200/30 border-t-slate-400 rounded-full animate-spin" />
                 ) : (
                     <span className="text-slate-400 font-bold">m³</span>
                 )}
@@ -151,7 +151,7 @@ const LecturaInput = React.memo(React.forwardRef(
             </div>
             <p className="font-bold text-orange-800 dark:text-orange-300 text-sm">Alerta: La lectura es menor que la anterior</p>
           </div>
-          
+
           <div className="flex justify-between items-center bg-white dark:bg-zinc-900 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Mes Anterior</p>
@@ -179,39 +179,41 @@ const LecturaInput = React.memo(React.forwardRef(
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button
-              color="default"
-              variant="solid"
-              className="flex-1 font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm"
-              onPress={onConfirmarVueltaCero}
-              isLoading={isLoading}
-              startContent={!isLoading && <HiCheck />}
+            <button
+              onClick={onConfirmarVueltaCero}
+              disabled={isLoading}
+              className="flex-1 font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-11 flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
             >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <HiCheck />
+              )}
               Confirmar Vuelta a Cero
-            </Button>
-            <Button
-              color="default"
-              variant="flat"
-              className="flex-1 font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl"
-              onPress={onCorregirLectura}
-              isDisabled={isLoading}
+            </button>
+            <button
+              onClick={onCorregirLectura}
+              disabled={isLoading}
+              className="flex-1 font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl h-11 flex items-center justify-center gap-2 disabled:opacity-60"
             >
               Corregir Error
-            </Button>
+            </button>
           </div>
         </div>
       ) : (
         <div className="pt-2">
-          <Button
-            color="default"
-            onPress={onSave}
-            isLoading={isLoading}
-            isDisabled={!value || value.toString().trim() === ""}
-            className="w-full font-bold text-base h-12 bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm"
-            endContent={!isLoading && <HiArrowRight className="text-lg" />}
+          <button
+            onClick={onSave}
+            disabled={!value || String(value).trim() === "" || isLoading}
+            className="w-full font-bold text-base h-12 bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
           >
+            {isLoading ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <HiArrowRight className="text-lg" />
+            )}
             Guardar y Siguiente
-          </Button>
+          </button>
         </div>
       )}
     </div>
@@ -221,21 +223,21 @@ const LecturaInput = React.memo(React.forwardRef(
 // Componente separado para el mapa
 const MapaContainer = React.memo(({ lat, lng, cliente, ciudad }) => {
   return (
-    <Card className="w-full h-full border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl overflow-hidden flex flex-col min-h-[350px] sm:min-h-[400px]">
-      <CardHeader className="pb-3 pt-4 px-5 flex items-center gap-3 border-b border-slate-200 dark:border-zinc-700/50 shrink-0">
+    <div className="w-full h-full border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl overflow-hidden flex flex-col min-h-[350px] sm:min-h-[400px]">
+      <div className="pb-3 pt-4 px-5 flex items-center gap-3 border-b border-slate-200 dark:border-zinc-700/50 shrink-0">
         <div className="p-2 bg-sky-500/10 rounded-xl text-sky-600 dark:text-sky-400">
             <HiMap className="w-5 h-5" />
         </div>
         <h4 className="font-bold text-slate-800 dark:text-zinc-100 leading-none">Mapa de Ubicación</h4>
-      </CardHeader>
-      <CardBody className="p-0 relative flex-1 min-h-0">
-          <MapaLecturas 
-            lat={lat} 
-            lng={lng} 
+      </div>
+      <div className="p-0 relative flex-1 min-h-0">
+          <MapaLecturas
+            lat={lat}
+            lng={lng}
             cliente={cliente}
           />
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 }, (prevProps, nextProps) => {
   return (
@@ -245,7 +247,7 @@ const MapaContainer = React.memo(({ lat, lng, cliente, ciudad }) => {
   );
 });
 
-const norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 // InfoRow (Premium UI)
 const InfoRow = ({ label, value, icon: Icon, colorClass, valueClass = "" }) => (
@@ -267,7 +269,10 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
   const { can } = usePermissions();
   const canTomarLecturas = can("lecturas.tomar");
   const canModificarLecturas = can("lecturas.modificar");
-  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [isOpen, setIsOpen] = useState(false);
+  const handleClose = useCallback(() => setIsOpen(false), []);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lecturas, setLecturas] = useState({});
   const [ruta, setRuta] = useState(null);
@@ -338,7 +343,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     return Number.isFinite(n) && n > 0 ? n : 99999;
   }, [capMaxPunto]);
   const maxEnterosCapacidad = useMemo(() => String(Math.trunc(capMaxPuntoNum)).length, [capMaxPuntoNum]);
-  
+
   const isLecturaCompletada = useMemo(() => {
     if (!puntoActual) return false;
     return lecturasGuardadas.has(puntoActual.numero_serie);
@@ -421,7 +426,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     if (value !== "" && !Number.isNaN(Number(value)) && Number(value) > capMaxPuntoNum) {
       value = String(capMaxPuntoNum);
     }
-    
+
     setLecturas(prev => ({ ...prev, [medidorId]: value }));
     if (erroresLectura[medidorId]) {
       setErroresLectura(prev => ({ ...prev, [medidorId]: "" }));
@@ -557,10 +562,8 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
       let nuevoConsumo;
       if (lecturaAnteriorCalculo !== null) {
         if (fuConRollover) {
-          // Si fue con rollover, aplicar la fórmula: (capacidad - anterior) + nueva
           nuevoConsumo = parseFloat(((capMaxPuntoNum - lecturaAnteriorCalculo) + nuevaLectura).toFixed(4));
         } else {
-          // Resta normal
           nuevoConsumo = Math.max(0, parseFloat((nuevaLectura - lecturaAnteriorCalculo).toFixed(4)));
         }
       } else {
@@ -631,7 +634,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
           setShowSearch(false);
           setBusqueda("");
         } else {
-          onClose();
+          handleClose();
         }
       } else if (e.key === 'ArrowRight' && !showSearch) {
         e.preventDefault();
@@ -643,7 +646,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleNext, handlePrev, onClose, showSearch]);
+  }, [isOpen, handleNext, handlePrev, handleClose, showSearch]);
 
   const handleFinalizarRuta = useCallback(() => {
     if (!hasValidData) return;
@@ -656,419 +659,386 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
     setSuccess(`Ruta ${ruta.nombre} finalizada.`, "Toma de Lecturas");
     actualizarRutas(periodoMostrado).catch(console.error);
-    onClose();
-  }, [hasValidData, ruta, lecturasGuardadas, setError, setSuccess, onClose, actualizarRutas, periodoMostrado]);
+    handleClose();
+  }, [hasValidData, ruta, lecturasGuardadas, setError, setSuccess, handleClose, actualizarRutas, periodoMostrado]);
 
   if (!hasValidData) {
     return (
-      <Button 
-        color="default" 
-        onPress={onOpen}
-        isDisabled={true}
-        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
-        startContent={<HiMap className="text-lg" />}
+      <button
+        disabled
+        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11 flex items-center gap-2 opacity-50 cursor-not-allowed w-full justify-center"
       >
-        {loading || ruta === null ? <div className="flex items-center gap-2"><Spinner size="sm" color="default"/>Cargando...</div> : "Sin medidores"}
-      </Button>
+        <HiMap className="text-lg" />
+        {loading || ruta === null ? (
+          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Cargando...</>
+        ) : "Sin medidores"}
+      </button>
     );
   }
 
   return (
     <>
-      <Button 
-        color="default" 
-        onPress={onOpen}
-        isDisabled={!canTomarLecturas}
-        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
-        startContent={<HiMap className="text-lg" />}
+      <button
+        onClick={() => setIsOpen(true)}
+        disabled={!canTomarLecturas}
+        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
       >
+        <HiMap className="text-lg" />
         Tomar Lecturas
-      </Button>
+      </button>
 
       <Modal
-        isOpen={isOpen}
-        onOpenChange={(open) => { if (!open) onClose(); }}
-        size="5xl"
-        isDismissible={false}
-        scrollBehavior="inside"
-        isKeyboardDismissDisabled={true}
-        backdrop="blur"
-        classNames={{
-          wrapper: "items-start p-1 sm:p-2 pt-16 sm:pt-20 overflow-y-hidden",
-          backdrop: "bg-slate-900/40 backdrop-blur-sm",
-          base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] max-h-[calc(100dvh-4.25rem)] sm:max-h-[calc(100dvh-5.25rem)] w-full max-w-[1300px]", 
-          header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
-          body: "px-8 py-6 flex-1 min-h-0",
-          footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
-          closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4 z-50",
-        }}
+        show={isOpen}
+        onClose={handleClose}
+        dismissible={false}
+        theme={largeModalTheme}
+        size="7xl"
+        className="mt-0"
       >
-        <ModalContent className="h-full">
-          {(onClose) => (
-            <>
-              {/* Header con búsqueda integrada */}
-              <ModalHeader className="flex gap-4 items-center overflow-visible shrink-0">
-                <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0 hidden sm:flex">
-                  <HiLocationMarker className="w-6 h-6" />
+        <Modal.Header>
+          <div className="flex gap-4 items-center overflow-visible w-full">
+            <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0 hidden sm:flex">
+              <HiLocationMarker className="w-6 h-6" />
+            </div>
+
+            {/* Título o barra de búsqueda */}
+            {showSearch ? (
+              <div className="flex-1 relative animate-in fade-in zoom-in-95 duration-200">
+                <div className="relative flex items-center">
+                  <HiSearch className="absolute left-4 w-5 h-5 text-slate-500 pointer-events-none" />
+                  <input
+                    ref={searchInputRef}
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Buscar cliente, medidor o #orden..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") { setShowSearch(false); setBusqueda(""); }
+                      if (e.key === "ArrowLeft" || e.key === "ArrowRight") e.stopPropagation();
+                    }}
+                    className="w-full pl-12 pr-4 py-3 text-sm font-medium border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-400/20 shadow-none transition-all"
+                  />
                 </div>
 
-                {/* Título o barra de búsqueda */}
-                {showSearch ? (
-                  <div className="flex-1 relative animate-in fade-in zoom-in-95 duration-200">
-                    <div className="relative flex items-center">
-                      <HiSearch className="absolute left-4 w-5 h-5 text-slate-500 pointer-events-none" />
-                      <input
-                        ref={searchInputRef}
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                        placeholder="Buscar cliente, medidor o #orden..."
-                        onKeyDown={(e) => {
-                          if (e.key === "Escape") { setShowSearch(false); setBusqueda(""); }
-                          if (e.key === "ArrowLeft" || e.key === "ArrowRight") e.stopPropagation();
-                        }}
-                        className="w-full pl-12 pr-4 py-3 text-sm font-medium border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-400/20 shadow-none transition-all"
-                      />
-                    </div>
-
-                    {/* Dropdown de resultados */}
-                    {busqueda.trim() && (
-                      <div className="absolute top-full left-0 right-0 mt-2 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
-                        {resultadosBusqueda.length > 0 ? (
-                          <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                            {resultadosBusqueda.map((punto) => {
-                              const hecho = lecturasGuardadas.has(punto.numero_serie);
-                              return (
-                                <button
-                                  key={punto.medidor_id}
-                                  onClick={() => handleJumpTo(punto.idx)}
-                                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-700/50 border-b border-slate-100 dark:border-zinc-700/50 last:border-0 text-left transition-colors"
-                                >
-                                  <span className="text-xs font-black text-slate-400 dark:text-zinc-500 w-8 text-center shrink-0 bg-slate-100 dark:bg-zinc-800 py-1 rounded-md">
-                                    #{punto.orden ?? punto.idx + 1}
-                                  </span>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate leading-tight mb-0.5">
-                                      {punto.cliente_nombre || "Cliente"}
-                                    </p>
-                                    <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 truncate">
-                                      <span className="font-mono text-sky-700 dark:text-sky-400 mr-2">{punto.numero_serie}</span>
-                                      {punto.ubicacion ? ` ${punto.ubicacion}` : ""}
-                                    </p>
-                                  </div>
-                                  {hecho ? (
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
-                                      <HiCheck className="text-sm" /> Hecho
-                                    </span>
-                                  ) : (
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-orange-500 dark:text-orange-400 shrink-0 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
-                                        Pendiente
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="p-6 text-center">
-                            <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">Sin resultados</p>
-                            <p className="text-xs text-slate-400 mt-1">Verifica el nombre o número de serie.</p>
-                          </div>
-                        )}
+                {/* Dropdown de resultados */}
+                {busqueda.trim() && (
+                  <div className="absolute top-full left-0 right-0 mt-2 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
+                    {resultadosBusqueda.length > 0 ? (
+                      <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                        {resultadosBusqueda.map((punto) => {
+                          const hecho = lecturasGuardadas.has(punto.numero_serie);
+                          return (
+                            <button
+                              key={punto.medidor_id}
+                              onClick={() => handleJumpTo(punto.idx)}
+                              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-700/50 border-b border-slate-100 dark:border-zinc-700/50 last:border-0 text-left transition-colors"
+                            >
+                              <span className="text-xs font-black text-slate-400 dark:text-zinc-500 w-8 text-center shrink-0 bg-slate-100 dark:bg-zinc-800 py-1 rounded-md">
+                                #{punto.orden ?? punto.idx + 1}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate leading-tight mb-0.5">
+                                  {punto.cliente_nombre || "Cliente"}
+                                </p>
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 truncate">
+                                  <span className="font-mono text-sky-700 dark:text-sky-400 mr-2">{punto.numero_serie}</span>
+                                  {punto.ubicacion ? ` ${punto.ubicacion}` : ""}
+                                </p>
+                              </div>
+                              {hecho ? (
+                                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
+                                  <HiCheck className="text-sm" /> Hecho
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-black uppercase tracking-wider text-orange-500 dark:text-orange-400 shrink-0 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
+                                    Pendiente
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center">
+                        <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">Sin resultados</p>
+                        <p className="text-xs text-slate-400 mt-1">Verifica el nombre o número de serie.</p>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="flex-1 min-w-0 animate-in fade-in duration-200">
-                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                        Toma de Lecturas
-                    </h2>
-                    <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1 truncate">
-                      {ruta.nombre} <span className="opacity-50 mx-1">•</span> {ruta.descripcion}
-                    </p>
-                  </div>
                 )}
+              </div>
+            ) : (
+              <div className="flex-1 min-w-0 animate-in fade-in duration-200">
+                <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+                    Toma de Lecturas
+                </h2>
+                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1 truncate">
+                  {ruta.nombre} <span className="opacity-50 mx-1">•</span> {ruta.descripcion}
+                </p>
+              </div>
+            )}
 
-                {/* Botón lupa */}
-                <button
-                  onClick={handleToggleSearch}
-                  title={showSearch ? "Cerrar búsqueda" : "Buscar cliente / medidor"}
-                  className={`shrink-0 p-2.5 rounded-xl transition-all duration-200 ${
-                      showSearch 
-                        ? 'bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100' 
-                        : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {showSearch ? <HiX className="w-5 h-5" /> : <HiSearch className="w-5 h-5" />}
-                </button>
+            {/* Botón lupa */}
+            <button
+              onClick={handleToggleSearch}
+              title={showSearch ? "Cerrar búsqueda" : "Buscar cliente / medidor"}
+              className={`shrink-0 p-2.5 rounded-xl transition-all duration-200 ${
+                  showSearch
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100'
+                    : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800'
+              }`}
+            >
+              {showSearch ? <HiX className="w-5 h-5" /> : <HiSearch className="w-5 h-5" />}
+            </button>
 
-                <div className="flex flex-col items-end justify-center shrink-0 w-24 sm:w-32 border-l border-slate-200 dark:border-zinc-700/50 pl-2 sm:pl-4 ml-1 sm:ml-2">
-                  <div className="flex justify-between w-full items-end mb-1.5">
-                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avance</span>
-                    <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-zinc-100">
-                        {currentIndex + 1} <span className="text-[10px] sm:text-xs font-medium text-slate-400">/ {total}</span>
-                    </span>
-                  </div>
-                  <Progress
-                    size="sm"
-                    value={(lecturasGuardadas.size / total) * 100}
-                    color="success"
-                    className="w-full h-1.5"
-                    classNames={{ track: "bg-slate-200 dark:bg-zinc-800", indicator: "rounded-full" }}
-                    aria-label="Progreso"
-                  />
-                </div>
-              </ModalHeader>
+            <div className="flex flex-col items-end justify-center shrink-0 w-24 sm:w-32 border-l border-slate-200 dark:border-zinc-700/50 pl-2 sm:pl-4 ml-1 sm:ml-2">
+              <div className="flex justify-between w-full items-end mb-1.5">
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avance</span>
+                <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-zinc-100">
+                    {currentIndex + 1} <span className="text-[10px] sm:text-xs font-medium text-slate-400">/ {total}</span>
+                </span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 rounded-full transition-all"
+                  style={{ width: `${(lecturasGuardadas.size / total) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </Modal.Header>
 
-              <ModalBody className="bg-slate-50/40 dark:bg-zinc-950/40 overflow-y-auto custom-scrollbar">
-                {/* CAMBIO AQUI: En móviles es flex-col, en escritorio es un grid de 2 columnas */}
-                <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 lg:gap-8 lg:h-full">
-                  
-                  {/* Columna Izquierda: Datos y Formulario */}
-                  {/* CAMBIO AQUI: lg:h-full permite que en móvil tome su tamaño natural */}
-                  <div className="flex flex-col gap-4 sm:gap-6 lg:h-full lg:min-h-0">
-                    
-                    {/* Tarjeta de Información Completa */}
-                    <Card className="border-none shadow-none bg-white dark:bg-zinc-900/50 rounded-2xl shrink-0 border border-slate-200 dark:border-zinc-800">
-                      <CardHeader className="pb-0 pt-4 sm:pt-5 px-4 sm:px-5 flex-col items-start border-b border-slate-100 dark:border-zinc-800/50 pb-3 sm:pb-4">
-                        <div className="flex justify-between w-full items-start">
-                            <div className="flex items-center gap-2 sm:gap-3 mb-1">
-                                <div className="p-1.5 sm:p-2 bg-sky-500/10 rounded-xl text-sky-600 dark:text-sky-400 hidden sm:block">
-                                    <HiUser className="text-lg" />
-                                </div>
-                                <h4 className="font-bold text-base sm:text-lg text-slate-800 dark:text-zinc-100">Información del Cliente</h4>
+        <Modal.Body>
+          <div className="bg-slate-50/40 dark:bg-zinc-950/40">
+            <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 lg:gap-8 lg:h-full">
+
+              {/* Columna Izquierda: Datos y Formulario */}
+              <div className="flex flex-col gap-4 sm:gap-6 lg:h-full lg:min-h-0">
+
+                {/* Tarjeta de Información Completa */}
+                <div className="border-none shadow-none bg-white dark:bg-zinc-900/50 rounded-2xl shrink-0 border border-slate-200 dark:border-zinc-800">
+                  <div className="pb-3 pt-4 sm:pt-5 px-4 sm:px-5 border-b border-slate-100 dark:border-zinc-800/50">
+                    <div className="flex justify-between w-full items-start">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                            <div className="p-1.5 sm:p-2 bg-sky-500/10 rounded-xl text-sky-600 dark:text-sky-400 hidden sm:block">
+                                <HiUser className="text-lg" />
                             </div>
-                            {isLecturaCompletada && (
-                                <Chip color="success" variant="flat" size="sm" startContent={<HiCheck />} className="font-bold uppercase tracking-wider text-[9px] sm:text-[10px] px-1 h-5 sm:h-6">
-                                    Registrado
-                                </Chip>
-                            )}
+                            <h4 className="font-bold text-base sm:text-lg text-slate-800 dark:text-zinc-100">Información del Cliente</h4>
                         </div>
-                      </CardHeader>
-                      <CardBody className="p-4 sm:p-5">
-                        <div className="flex flex-col gap-1">
-                            <InfoRow label="Cliente Titular" value={puntoActual?.cliente_nombre} icon={HiUser} colorClass="text-sky-600 dark:text-sky-400" />
-                            <InfoRow label="Dirección Física" value={puntoActual?.cliente_direccion} icon={HiLocationMarker} colorClass="text-violet-600 dark:text-violet-400" valueClass="truncate max-w-[180px] sm:max-w-[250px]" />
-                            <InfoRow label="Número Teléfono" value={puntoActual?.cliente_telefono} icon={HiPhone} colorClass="text-emerald-600 dark:text-emerald-400" />
-                            <InfoRow label="Serie de Medidor" value={puntoActual?.numero_serie} icon={HiHashtag} colorClass="text-amber-600 dark:text-amber-400" valueClass="font-mono text-sky-700 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-200/70 dark:border-sky-900/40" />
-                            <InfoRow label="Ubicación Medidor" value={puntoActual?.ubicacion} icon={HiMap} colorClass="text-indigo-600 dark:text-indigo-400" />
-                            <InfoRow label="Fecha Lectura" value={new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })} icon={HiCalendar} colorClass="text-teal-600 dark:text-teal-400" valueClass="capitalize" />
-                        </div>
-                      </CardBody>
-                    </Card>
-
-                    {/* Área de Lectura (Formulario) */}
-                    <div className="flex-1 flex flex-col justify-end mt-2 sm:mt-4">
-                        {isLecturaCompletada && !modoRectificar[puntoActual?.medidor_id] ? (
-                            <Card className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-200 dark:border-emerald-800/50 shadow-none rounded-2xl animate-in zoom-in-95 duration-300">
-                                <CardBody className="flex flex-col gap-4 p-4 sm:p-6">
-                                    {/* Encabezado */}
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 sm:p-2.5 bg-emerald-500 text-white rounded-full shadow-md shadow-emerald-500/30">
-                                            <HiCheck className="text-lg sm:text-xl" />
-                                        </div>
-                                        <h4 className="text-lg sm:text-xl font-black text-emerald-800 dark:text-emerald-400 tracking-tight">Lectura Guardada</h4>
-                                    </div>
-
-                                    {/* Detalles numéricos */}
-                                    {lecturasRegistradas[puntoActual?.medidor_id] ? (
-                                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                                            <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
-                                                <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
-                                                <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
-                                                    {lecturasRegistradas[puntoActual.medidor_id].lectura_anterior !== null
-                                                        ? `${Number(lecturasRegistradas[puntoActual.medidor_id].lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                                                        : '0.00'}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
-                                                <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
-                                                <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
-                                                    {Number(lecturasRegistradas[puntoActual.medidor_id].lectura_actual).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
-                                                <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
-                                                <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
-                                                    +{Number(lecturasRegistradas[puntoActual.medidor_id].consumo_m3 ?? 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                                                </span>
-                                            </div>
-                                            {lecturasRegistradas[puntoActual.medidor_id].vuelta_cero && (
-                                                <div className="col-span-3 text-center text-[10px] sm:text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider bg-orange-100 dark:bg-orange-900/30 py-1.5 rounded-lg mt-1">
-                                                    ⚠ Vuelta a cero aplicada
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        // Lectura de sesión anterior
-                                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                                            <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
-                                                <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
-                                                <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
-                                                    {puntoActual?.ultima_lectura_anterior !== null && puntoActual?.ultima_lectura_anterior !== undefined
-                                                        ? `${Number(puntoActual.ultima_lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                                                        : '0.00'}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
-                                                <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
-                                                <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
-                                                    {puntoActual?.lectura_anterior_disponible !== null && puntoActual?.lectura_anterior_disponible !== undefined
-                                                        ? `${Number(puntoActual.lectura_anterior_disponible).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                                                        : '0.00'}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
-                                                <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
-                                                <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
-                                                    {puntoActual?.lectura_anterior_disponible !== null && puntoActual?.ultima_lectura_anterior !== null
-                                                        ? `+${Math.max(0, Number(puntoActual.lectura_anterior_disponible) - Number(puntoActual.ultima_lectura_anterior)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                                                        : '0.00'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Botón rectificar */}
-                                    <div className="pt-2 border-t border-emerald-200/50 dark:border-emerald-900/30">
-                                        <Button
-                                            size="sm"
-                                            variant="flat"
-                                          color="default"
-                                          className="w-full font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300"
-                                            startContent={<HiPencil className="text-lg" />}
-                                            onPress={() => {
-                                                const med = puntoActual.medidor_id;
-                                                setModoRectificar(prev => ({ ...prev, [med]: true }));
-                                                const lectActual = lecturasRegistradas[med]?.lectura_actual ?? puntoActual.lectura_anterior_disponible;
-                                                if (lectActual !== undefined && lectActual !== null) {
-                                                    setLecturas(prev => ({ ...prev, [med]: String(lectActual) }));
-                                                }
-                                            }}
-                                        >
-                                            Editar / Rectificar Lectura
-                                        </Button>
-                                    </div>
-                                </CardBody>
-                            </Card>
-                        ) : (
-                            <div className="space-y-4">
-                                {modoRectificar[puntoActual?.medidor_id] && (
-                                    <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700/50 rounded-xl p-3 animate-in slide-in-from-top-2">
-                                        <div className="flex items-center gap-2">
-                                            <HiPencil className="text-orange-600 dark:text-orange-400 text-lg" />
-                                            <span className="text-xs sm:text-sm font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">Modo Edición Activado</span>
-                                        </div>
-                                        <Button
-                                            size="sm"
-                                            variant="flat"
-                                            color="default"
-                                          className="bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 font-bold shadow-none"
-                                            startContent={<HiX />}
-                                            onPress={() => setModoRectificar(prev => { const n = { ...prev }; delete n[puntoActual.medidor_id]; return n; })}
-                                        >
-                                            Cancelar
-                                        </Button>
-                                    </div>
-                                )}
-                                <LecturaInput
-                                    ref={lecturaInputRef}
-                                    value={lecturaActual}
-                                    onChange={handleLecturaChange}
-                                    clienteId={puntoActual?.medidor_id}
-                                    onSave={modoRectificar[puntoActual?.medidor_id] ? handleRectificarGuardar : handleGuardarLectura}
-                                    isLoading={isSubmitting}
-                                    error={errorLecturaActual}
-                                    autoFocus={true}
-                                    lecturaAnterior={
-                                        modoRectificar[puntoActual?.medidor_id] && puntoActual?.medidor_id in lecturasRegistradas
-                                            ? lecturasRegistradas[puntoActual.medidor_id].lectura_anterior
-                                            : modoRectificar[puntoActual?.medidor_id]
-                                                ? (puntoActual?.ultima_lectura_anterior ?? null)
-                                                : lecturaAnteriorPunto
-                                    }
-                                    capacidadMaxima={capMaxPunto}
-                                    onConfirmarVueltaCero={modoRectificar[puntoActual?.medidor_id] ? undefined : handleConfirmarVueltaCero}
-                                    onCorregirLectura={modoRectificar[puntoActual?.medidor_id] ? undefined : handleCorregirLectura}
-                                />
-                            </div>
+                        {isLecturaCompletada && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                <HiCheck className="text-xs" />Registrado
+                            </span>
                         )}
                     </div>
                   </div>
-
-                  {/* Columna Derecha: Mapa */}
-                  {/* CAMBIO AQUI: w-full y min-h para que en móvil no se aplaste, y lg:h-full para escritorio */}
-                  <div className="w-full min-h-[350px] sm:min-h-[400px] lg:h-full lg:min-h-0 pb-2">
-                    {mapaProps && (
-                        <MapaContainer
-                            lat={mapaProps.lat}
-                            lng={mapaProps.lng}
-                            cliente={mapaProps.cliente}
-                            ciudad={ruta?.nombre || ""}
-                        />
-                    )}
+                  <div className="p-4 sm:p-5">
+                    <div className="flex flex-col gap-1">
+                        <InfoRow label="Cliente Titular" value={puntoActual?.cliente_nombre} icon={HiUser} colorClass="text-sky-600 dark:text-sky-400" />
+                        <InfoRow label="Dirección Física" value={puntoActual?.cliente_direccion} icon={HiLocationMarker} colorClass="text-violet-600 dark:text-violet-400" valueClass="truncate max-w-[180px] sm:max-w-[250px]" />
+                        <InfoRow label="Número Teléfono" value={puntoActual?.cliente_telefono} icon={HiPhone} colorClass="text-emerald-600 dark:text-emerald-400" />
+                        <InfoRow label="Serie de Medidor" value={puntoActual?.numero_serie} icon={HiHashtag} colorClass="text-amber-600 dark:text-amber-400" valueClass="font-mono text-sky-700 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-200/70 dark:border-sky-900/40" />
+                        <InfoRow label="Ubicación Medidor" value={puntoActual?.ubicacion} icon={HiMap} colorClass="text-indigo-600 dark:text-indigo-400" />
+                        <InfoRow label="Fecha Lectura" value={new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })} icon={HiCalendar} colorClass="text-teal-600 dark:text-teal-400" valueClass="capitalize" />
+                    </div>
                   </div>
                 </div>
-              </ModalBody>
 
-                <ModalFooter className="flex w-full justify-between items-center rounded-b-xl z-20">
-                    <Button 
-                        variant="flat" 
-                        color="default"
-                    className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-800 shadow-none px-4 sm:px-6"
-                        isDisabled={currentIndex === 0} 
-                        onPress={handlePrev}
-                        startContent={<HiArrowLeft className="text-lg" />}
-                    >
-                        <span className="hidden sm:inline">Anterior</span>
-                    </Button>
+                {/* Área de Lectura (Formulario) */}
+                <div className="flex-1 flex flex-col justify-end mt-2 sm:mt-4">
+                    {isLecturaCompletada && !modoRectificar[puntoActual?.medidor_id] ? (
+                        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-200 dark:border-emerald-800/50 rounded-2xl animate-in zoom-in-95 duration-300">
+                            <div className="flex flex-col gap-4 p-4 sm:p-6">
+                                {/* Encabezado */}
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 sm:p-2.5 bg-emerald-500 text-white rounded-full shadow-md shadow-emerald-500/30">
+                                        <HiCheck className="text-lg sm:text-xl" />
+                                    </div>
+                                    <h4 className="text-lg sm:text-xl font-black text-emerald-800 dark:text-emerald-400 tracking-tight">Lectura Guardada</h4>
+                                </div>
 
-                    <div className="flex flex-col items-center justify-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 hidden sm:block">
-                            Secuencia de Ruta
-                        </span>
-                        <div className="flex gap-1.5 self-center">
-                            {Array.from({ length: Math.min(total, 7) }).map((_, i) => {
-                                let idx = i;
-                                if (total > 7 && currentIndex > 3) idx = currentIndex - 3 + i;
-                                if (idx >= total) return null;
-                                
-                                const isCurrent = idx === currentIndex;
-                                const isSaved = lecturasGuardadas.has(ruta.puntos[idx]?.numero_serie);
-                                
-                                return (
-                                    <div key={idx} className={`h-2 rounded-full transition-all duration-300 ${
-                                        isCurrent ? 'w-6 bg-blue-500 shadow-sm shadow-blue-500/50' :
-                                        isSaved ? 'w-2 bg-emerald-400' : 'w-2 bg-slate-200 dark:bg-zinc-700'
-                                    }`} />
-                                );
-                            })}
+                                {/* Detalles numéricos */}
+                                {lecturasRegistradas[puntoActual?.medidor_id] ? (
+                                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
+                                            <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
+                                                {lecturasRegistradas[puntoActual.medidor_id].lectura_anterior !== null
+                                                    ? `${Number(lecturasRegistradas[puntoActual.medidor_id].lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+                                                    : '0.00'}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
+                                            <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
+                                                {Number(lecturasRegistradas[puntoActual.medidor_id].lectura_actual).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
+                                            <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
+                                                +{Number(lecturasRegistradas[puntoActual.medidor_id].consumo_m3 ?? 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                        {lecturasRegistradas[puntoActual.medidor_id].vuelta_cero && (
+                                            <div className="col-span-3 text-center text-[10px] sm:text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider bg-orange-100 dark:bg-orange-900/30 py-1.5 rounded-lg mt-1">
+                                                ⚠ Vuelta a cero aplicada
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // Lectura de sesión anterior
+                                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
+                                            <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
+                                                {puntoActual?.ultima_lectura_anterior !== null && puntoActual?.ultima_lectura_anterior !== undefined
+                                                    ? `${Number(puntoActual.ultima_lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+                                                    : '0.00'}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
+                                            <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
+                                                {puntoActual?.lectura_anterior_disponible !== null && puntoActual?.lectura_anterior_disponible !== undefined
+                                                    ? `${Number(puntoActual.lectura_anterior_disponible).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+                                                    : '0.00'}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
+                                            <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
+                                                {puntoActual?.lectura_anterior_disponible !== null && puntoActual?.ultima_lectura_anterior !== null
+                                                    ? `+${Math.max(0, Number(puntoActual.lectura_anterior_disponible) - Number(puntoActual.ultima_lectura_anterior)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+                                                    : '0.00'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Botón rectificar */}
+                                <div className="pt-2 border-t border-emerald-200/50 dark:border-emerald-900/30">
+                                    <button
+                                        onClick={() => {
+                                            const med = puntoActual.medidor_id;
+                                            setModoRectificar(prev => ({ ...prev, [med]: true }));
+                                            const lectActual = lecturasRegistradas[med]?.lectura_actual ?? puntoActual.lectura_anterior_disponible;
+                                            if (lectActual !== undefined && lectActual !== null) {
+                                                setLecturas(prev => ({ ...prev, [med]: String(lectActual) }));
+                                            }
+                                        }}
+                                        className="w-full font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 rounded-lg py-2 text-sm flex items-center justify-center gap-2"
+                                    >
+                                        <HiPencil className="text-lg" />
+                                        Editar / Rectificar Lectura
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
-                    {currentIndex < total - 1 ? (
-                        <Button 
-                        color="default" 
-                        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-4 sm:px-6 shadow-sm"
-                            onPress={handleNext}
-                            endContent={<HiArrowRight className="text-lg" />}
-                        >
-                            <span className="hidden sm:inline">Siguiente</span>
-                        </Button>
                     ) : (
-                        <Button 
-                        color="default" 
-                        className="font-bold bg-emerald-600 text-white dark:bg-emerald-500 dark:text-zinc-950 rounded-xl px-4 sm:px-6 shadow-sm"
-                            onPress={handleFinalizarRuta}
-                            isDisabled={lecturasGuardadas.size !== total}
-                            endContent={<HiCheck className="text-lg" />}
-                        >
-                            <span className="hidden sm:inline">Terminar Ruta</span>
-                        </Button>
+                        <div className="space-y-4">
+                            {modoRectificar[puntoActual?.medidor_id] && (
+                                <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700/50 rounded-xl p-3 animate-in slide-in-from-top-2">
+                                    <div className="flex items-center gap-2">
+                                        <HiPencil className="text-orange-600 dark:text-orange-400 text-lg" />
+                                        <span className="text-xs sm:text-sm font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">Modo Edición Activado</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setModoRectificar(prev => { const n = { ...prev }; delete n[puntoActual.medidor_id]; return n; })}
+                                        className="bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 font-bold shadow-none rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+                                    >
+                                        <HiX /> Cancelar
+                                    </button>
+                                </div>
+                            )}
+                            <LecturaInput
+                                ref={lecturaInputRef}
+                                value={lecturaActual}
+                                onChange={handleLecturaChange}
+                                clienteId={puntoActual?.medidor_id}
+                                onSave={modoRectificar[puntoActual?.medidor_id] ? handleRectificarGuardar : handleGuardarLectura}
+                                isLoading={isSubmitting}
+                                error={errorLecturaActual}
+                                autoFocus={true}
+                                lecturaAnterior={
+                                    modoRectificar[puntoActual?.medidor_id] && puntoActual?.medidor_id in lecturasRegistradas
+                                        ? lecturasRegistradas[puntoActual.medidor_id].lectura_anterior
+                                        : modoRectificar[puntoActual?.medidor_id]
+                                            ? (puntoActual?.ultima_lectura_anterior ?? null)
+                                            : lecturaAnteriorPunto
+                                }
+                                capacidadMaxima={capMaxPunto}
+                                onConfirmarVueltaCero={modoRectificar[puntoActual?.medidor_id] ? undefined : handleConfirmarVueltaCero}
+                                onCorregirLectura={modoRectificar[puntoActual?.medidor_id] ? undefined : handleCorregirLectura}
+                            />
+                        </div>
                     )}
-              </ModalFooter>
-            </>
+                </div>
+              </div>
+
+              {/* Columna Derecha: Mapa */}
+              <div className="w-full min-h-[350px] sm:min-h-[400px] lg:h-full lg:min-h-0 pb-2">
+                {mapaProps && (
+                    <MapaContainer
+                        lat={mapaProps.lat}
+                        lng={mapaProps.lng}
+                        cliente={mapaProps.cliente}
+                        ciudad={ruta?.nombre || ""}
+                    />
+                )}
+              </div>
+            </div>
+          </div>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <button
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
+            className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 disabled:opacity-50"
+          >
+            <HiArrowLeft className="text-lg" /><span className="hidden sm:inline">Anterior</span>
+          </button>
+
+          <div className="flex flex-col items-center justify-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 hidden sm:block">
+                Secuencia de Ruta
+            </span>
+            <div className="flex gap-1.5 self-center">
+              {Array.from({ length: Math.min(total, 7) }).map((_, i) => {
+                  let idx = i;
+                  if (total > 7 && currentIndex > 3) idx = currentIndex - 3 + i;
+                  if (idx >= total) return null;
+
+                  const isCurrent = idx === currentIndex;
+                  const isSaved = lecturasGuardadas.has(ruta.puntos[idx]?.numero_serie);
+
+                  return (
+                      <div key={idx} className={`h-2 rounded-full transition-all duration-300 ${
+                          isCurrent ? 'w-6 bg-blue-500 shadow-sm shadow-blue-500/50' :
+                          isSaved ? 'w-2 bg-emerald-400' : 'w-2 bg-slate-200 dark:bg-zinc-700'
+                      }`} />
+                  );
+              })}
+            </div>
+          </div>
+
+          {currentIndex < total - 1 ? (
+            <button
+              onClick={handleNext}
+              className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 shadow-sm"
+            >
+              <span className="hidden sm:inline">Siguiente</span><HiArrowRight className="text-lg" />
+            </button>
+          ) : (
+            <button
+              onClick={handleFinalizarRuta}
+              disabled={lecturasGuardadas.size !== total}
+              className="font-bold bg-emerald-600 text-white dark:bg-emerald-500 dark:text-zinc-950 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="hidden sm:inline">Terminar Ruta</span><HiCheck className="text-lg" />
+            </button>
           )}
-        </ModalContent>
+        </Modal.Footer>
       </Modal>
     </>
   );
