@@ -199,17 +199,17 @@ const Recibo = ({ facturaData = null }) => {
             <div key={factura.id} className="grid grid-cols-4 grid-rows-8 gap-2 h-[715px] bg-white font-sans text-[10px]">
 
                 {/* --- HEADER (Rojo con logo) --- */}
-                <div className="col-span-4 border-2 border-solid rounded-xl p-2 flex items-center shadow-sm"
+                <div className="col-span-4 border-2 border-solid rounded-xl p-2 flex items-center print:shadow-none shadow-sm"
                     style={{ backgroundColor: ESTILOS.rojoHeader, borderColor: ESTILOS.rojoHeader }}>
-                    <img src={logoSrc} className="h-[80px] mr-2 drop-shadow-sm" alt="Logo Agua" />
+                    <img src={logoSrc} className="h-[80px] mr-2 print:filter-none drop-shadow-sm" alt="Logo Agua" />
                     <div className="text-white">
                         <p className='text-[16px] font-bold uppercase leading-tight'>
                             Cuidemos del Agua
                         </p>
-                        <p className='text-[12px] font-normal opacity-95'>
+                        <p className='text-[12px] font-normal'>
                             Comisión Municipal de Agua Potable y Alcantarillado
                         </p>
-                        <p className='text-[11px] font-light opacity-90'>Villa Pesqueira, Sonora</p>
+                        <p className='text-[11px] font-light'>Villa Pesqueira, Sonora</p>
                     </div>
                 </div>
 
@@ -487,7 +487,7 @@ const Recibo = ({ facturaData = null }) => {
 
                                     {/* Leyenda Izquierda */}
                                     <div className="text-gray-400 font-bold font-mono tracking-widest text-xs uppercase">
-                                        AGUA Villa Pesqueira <span className="font-normal text-[9px] normal-case opacity-70 ml-2">Sistema de Gestión Municipal</span>
+                                        AGUA Villa Pesqueira <span className="font-normal text-[9px] normal-case print:opacity-100 opacity-70 ml-2">Sistema de Gestión Municipal</span>
                                         
                                     </div>
 
