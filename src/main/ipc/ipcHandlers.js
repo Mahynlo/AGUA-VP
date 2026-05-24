@@ -3,6 +3,7 @@ import { ipcMain, BrowserWindow, app, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { pathToFileURL, fileURLToPath } from 'url';
+import ExcelJS from 'exceljs';
 
 const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
@@ -761,6 +762,83 @@ export default function IpcHandlers () {
     
 
     
+    // === GENERACIÓN EXCEL CON EXCELJS ===
+    async function setupHoja(sheet, rows) {
+        if (!rows || rows.length === 0) return;
+        const headers = Object.keys(rows[0]);
+
+        // Detectar tipo de columna: number, date o string
+        const colTypes = {};
+        for (const key of headers) {
+            const vals = rows.map(r => r[key]).filter(v => v !== null && v !== undefined && v !== '');
+            if (vals.length === 0) { colTypes[key] = 'string'; continue; }
+            if (vals.every(v => typeof v === 'number')) { colTypes[key] = 'number'; continue; }
+            if (vals.every(v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v))) { colTypes[key] = 'date'; continue; }
+            colTypes[key] = 'string';
+        }
+
+        // Fila de cabecera con estilo
+        const headerRow = sheet.addRow(headers);
+        headerRow.height = 22;
+        headerRow.eachCell(cell => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+            cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: false };
+            cell.border = { bottom: { style: 'medium', color: { argb: 'FF1D4ED8' } } };
+        });
+
+        // Filas de datos
+        for (const row of rows) {
+            const values = headers.map(h => {
+                const v = row[h];
+                if (colTypes[h] === 'date' && typeof v === 'string') return new Date(v);
+                return v ?? '';
+            });
+            const dataRow = sheet.addRow(values);
+            dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                const key = headers[colNumber - 1];
+                if (colTypes[key] === 'number') cell.numFmt = '#,##0.##';
+                else if (colTypes[key] === 'date') cell.numFmt = 'dd/mm/yyyy';
+                cell.alignment = { vertical: 'middle' };
+            });
+        }
+
+        // Anchos automáticos de columna basados en el contenido
+        sheet.columns.forEach((col, i) => {
+            const header = headers[i];
+            const maxLen = Math.max(
+                header.length,
+                ...rows.map(r => String(r[header] ?? '').length)
+            );
+            col.width = Math.min(maxLen + 4, 55);
+        });
+
+        // Congelar primera fila y activar filtros automáticos
+        sheet.views = [{ state: 'frozen', ySplit: 1, activeCell: 'A2' }];
+        sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+    }
+
+    async function generarExcelBuffer(data) {
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'AguaVP';
+        workbook.created = new Date();
+
+        const isMultiSheet = !Array.isArray(data) && typeof data === 'object';
+
+        if (isMultiSheet) {
+            for (const [sheetName, rows] of Object.entries(data)) {
+                if (!Array.isArray(rows) || rows.length === 0) continue;
+                const sheet = workbook.addWorksheet(sheetName.substring(0, 31));
+                await setupHoja(sheet, rows);
+            }
+        } else {
+            const sheet = workbook.addWorksheet('Datos');
+            await setupHoja(sheet, data);
+        }
+
+        return workbook.xlsx.writeBuffer();
+    }
+
     // === HANDLER DE GUARDADO DE ARCHIVOS ===
     ipcMain.handle('save-file-dialog', async (event, { data, fileName, format }) => {
         const win = BrowserWindow.fromWebContents(event.sender);
@@ -780,17 +858,14 @@ export default function IpcHandlers () {
         }
 
         try {
-            // data viene como Buffer o string base64 dependiendo del formato
             let buffer;
             if (format === 'xlsx') {
-                 // Si viene en base64 (XLSX)
-                 buffer = Buffer.from(data, 'base64');
+                buffer = await generarExcelBuffer(data);
             } else {
-                 // Si viene en string (CSV)
-                 // Agregar BOM para soporte UTF-8 en Excel
-                 buffer = Buffer.concat([Buffer.from('\uFEFF'), Buffer.from(data, 'utf-8')]);
+                // CSV con BOM para soporte UTF-8 en Excel
+                buffer = Buffer.concat([Buffer.from('\uFEFF'), Buffer.from(data, 'utf-8')]);
             }
-            
+
             await fs.promises.writeFile(filePath, buffer);
             return { success: true, filePath };
         } catch (error) {
