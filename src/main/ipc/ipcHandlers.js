@@ -2,6 +2,7 @@
 import { ipcMain, BrowserWindow, app, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import { execFile } from 'child_process';
 import { pathToFileURL, fileURLToPath } from 'url';
 import ExcelJS from 'exceljs';
 
@@ -950,81 +951,75 @@ export default function IpcHandlers () {
     });
 
     // ============================================================
-    // IMPRESIÓN SILENCIOSA — sin diálogo del OS
-    // El usuario elige la impresora y opciones desde la UI React
-    // ============================================================
-    ipcMain.handle('print-silent', (event, url, config = {}) => {
-      const { printer = '', landscape = true, copies = 1, pageSize = 'Letter' } = config;
-      console.log('print-silent config:', { printer, landscape, copies, pageSize });
+    // IMPRESIÓN SILENCIOSA vía SumatraPDF (pdf-to-printer) — sin BrowserWindow, sin React.
+    // Recibe pdfFileUrl (file:///...) y envía el trabajo directo al spooler de Windows.
+    const getSumatraPath = () => {
+      const distDir = app.isPackaged
+        ? path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'pdf-to-printer', 'dist')
+        : path.join(app.getAppPath(), 'node_modules', 'pdf-to-printer', 'dist');
+      const entries = fs.readdirSync(distDir).filter(f => f.startsWith('SumatraPDF') && f.endsWith('.exe'));
+      if (!entries.length) throw new Error('SumatraPDF.exe no encontrado en ' + distDir);
+      return path.join(distDir, entries[0]);
+    };
 
-      const sizeMap = { letter: 'Letter', legal: 'Legal', a4: 'A4' };
-      const normalizedSize = sizeMap[(pageSize || 'Letter').toLowerCase()] || 'Letter';
-      const printConfig = {
-        silent: true,
-        printBackground: true,
-        color: true,
-        ...(printer ? { deviceName: printer } : {}),
-        landscape: !!landscape,
-        copies: Math.max(1, parseInt(copies) || 1),
-        pageSize: normalizedSize,
-        margins: { marginType: 'printableArea' }
-      };
+    ipcMain.handle('print-silent', (event, pdfFileUrl, config = {}) => {
+      const { printer = '', copies = 1, landscape = false, pageSize = 'Letter' } = config;
+      console.log('print-silent (SumatraPDF):', { printer, copies, landscape, pageSize });
+
+      const VIRTUAL_PRINTERS = ['microsoft print to pdf', 'microsoft xps document writer', 'onenote', 'fax'];
+      const isVirtual = VIRTUAL_PRINTERS.some(v => printer.toLowerCase().includes(v));
 
       return new Promise((resolve, reject) => {
-        let win = new BrowserWindow({
-          show: false,
-          backgroundColor: '#ffffff',
-          webPreferences: {
-            sandbox: false,
-            nodeIntegration: false,
-            contextIsolation: true,
-            cache: false,
-            webSecurity: app.isPackaged || !url.includes('localhost'),
-            allowRunningInsecureContent: !app.isPackaged && url.includes('localhost'),
-            preload: path.join(__dirname, '../preload/index.js')
+        let pdfPath;
+        try {
+          pdfPath = fileURLToPath(pdfFileUrl);
+        } catch {
+          pdfPath = decodeURIComponent(pdfFileUrl.replace(/^file:\/\/\//, '')).replace(/\//g, '\\');
+        }
+
+        let sumatraPath;
+        try {
+          sumatraPath = getSumatraPath();
+        } catch (e) {
+          return reject('SumatraPDF no encontrado: ' + e.message);
+        }
+
+        // Configuración de impresión: tamaño, orientación, copias
+        const settings = [
+          `paper=${pageSize.toLowerCase()}`,
+          landscape ? 'landscape' : 'portrait',
+          `copies=${Math.max(1, parseInt(copies) || 1)}`,
+        ].join(',');
+
+        const args = [
+          printer ? `-print-to` : `-print-to-default`,
+          ...(printer ? [printer] : []),
+          `-print-settings`, settings,
+          `-silent`,
+          pdfPath,
+        ];
+
+        execFile(sumatraPath, args, { timeout: 60000 }, (error, stdout, stderr) => {
+          if (!error) {
+            console.log('print-silent: SumatraPDF OK');
+            resolve({ success: true });
+          } else {
+            const exitCode = error.code;
+            const errText = (stderr || '').trim();
+            console.warn('print-silent: SumatraPDF salió con código', exitCode, '| killed:', error.killed, '| stderr:', errText || '(vacío)');
+            if (error.killed || exitCode === null) {
+              reject('La impresora no respondió a tiempo.');
+            } else if (exitCode === 1 && !errText && isVirtual) {
+              // Impresora virtual (PDF, XPS, OneNote): código 1 puede ser cancelación del diálogo
+              reject('El documento no fue guardado. Selecciona una impresora física para imprimir silenciosamente.');
+            } else if (exitCode === 1 && !errText) {
+              // SumatraPDF 3.x sale con código 1 incluso cuando el trabajo se envió correctamente a impresoras físicas
+              console.log('print-silent: código 1 sin stderr → considerado exitoso');
+              resolve({ success: true });
+            } else {
+              reject(errText || error.message || 'Error al imprimir con SumatraPDF');
+            }
           }
-        });
-
-        win.loadURL(url);
-
-        win.webContents.once('did-finish-load', async () => {
-          try {
-            await win.webContents.insertCSS('html, body { color-scheme: light !important; background-color: #ffffff !important; }');
-            await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
-          } catch (e) {}
-
-          let printed = false;
-
-          const doPrint = () => {
-            if (printed) return;
-            printed = true;
-            clearTimeout(fallbackTimer);
-            win.webContents.print(printConfig, (success, failureReason) => {
-              try { win.close(); } catch (e) {}
-              if (success) resolve({ success: true });
-              else {
-                console.error('Silent print failed:', failureReason, '| config:', JSON.stringify(printConfig));
-                reject(failureReason || 'Print failed');
-              }
-            });
-          };
-
-          win.webContents.ipc.once('print-ready', () => {
-            console.log('print-silent: señal print-ready recibida');
-            doPrint();
-          });
-
-          // Reducido de 7s a 3s — la mayoría de documentos renderizan antes
-          const fallbackTimer = setTimeout(() => {
-            console.log('print-silent: usando fallback timer (3s)');
-            doPrint();
-          }, 3000);
-        });
-
-        win.webContents.on('did-fail-load', (e, code, desc) => {
-          console.error('Failed to load for silent print:', desc);
-          try { win.close(); } catch (e) {}
-          reject(`Failed to load: ${desc}`);
         });
       });
     });
