@@ -955,7 +955,7 @@ export default function IpcHandlers () {
     // ============================================================
     ipcMain.handle('print-silent', (event, url, config = {}) => {
       const { printer = '', landscape = true, copies = 1, pageSize = 'Letter' } = config;
-      console.log('print-silent config:', { printer, landscape, copies, pageSize, url: url.substring(0, 80) });
+      console.log('print-silent config:', { printer, landscape, copies, pageSize });
 
       const sizeMap = { letter: 'Letter', legal: 'Legal', a4: 'A4' };
       const normalizedSize = sizeMap[(pageSize || 'Letter').toLowerCase()] || 'Letter';
@@ -1003,23 +1003,22 @@ export default function IpcHandlers () {
               try { win.close(); } catch (e) {}
               if (success) resolve({ success: true });
               else {
-                console.error('Silent print failed:', failureReason, '| printConfig:', JSON.stringify(printConfig));
+                console.error('Silent print failed:', failureReason, '| config:', JSON.stringify(printConfig));
                 reject(failureReason || 'Print failed');
               }
             });
           };
 
-          // Esperar señal real del componente React (incluye buffer de gráficas)
           win.webContents.ipc.once('print-ready', () => {
             console.log('print-silent: señal print-ready recibida');
             doPrint();
           });
 
-          // Fallback: si la señal no llega, imprimir a los 7s
+          // Reducido de 7s a 3s — la mayoría de documentos renderizan antes
           const fallbackTimer = setTimeout(() => {
-            console.log('print-silent: usando fallback timer');
+            console.log('print-silent: usando fallback timer (3s)');
             doPrint();
-          }, 7000);
+          }, 3000);
         });
 
         win.webContents.on('did-fail-load', (e, code, desc) => {
