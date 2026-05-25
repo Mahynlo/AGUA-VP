@@ -1,20 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Select,
-  SelectItem,
-  Checkbox,
-  Spinner,
-  Pagination
-} from "@nextui-org/react";
-import { HiX, HiCreditCard, HiCash, HiDocumentText } from "react-icons/hi";
+import { Modal } from "flowbite-react";
+import { HiX, HiCreditCard, HiCash } from "react-icons/hi";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { useFeedback } from "../../../context/FeedbackContext";
+
+const premiumModalTheme = {
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
+  content: {
+    base: "relative h-full w-full p-4 md:h-auto",
+    inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-6xl w-full"
+  },
+  header: {
+    base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
+    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+  },
+  body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
+  footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
+};
+
+const inputBaseClasses = "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:border-transparent transition-all font-medium text-slate-800 dark:text-zinc-100 h-[52px]";
 
 const MAX_COMENTARIO = 500;
 
@@ -39,7 +43,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
   const [comentarioPagoRapido, setComentarioPagoRapido] = useState("Pago masivo desde modo rapido");
   const [mostrarErrores, setMostrarErrores] = useState(false);
 
-  const filasPagoRapido = 10; // Ajustado para mejor visualización en layout limpio
+  const filasPagoRapido = 10;
 
   const normalizarTexto = (valor) => String(valor || "").toLowerCase().trim();
 
@@ -274,86 +278,72 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
     setError("No se pudo registrar ningún pago en modo rápido.", "Pago rápido");
   };
 
-  // Clases base compartidas
-  const inputBaseClasses = "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 font-medium text-slate-800 dark:text-zinc-100 h-[52px]";
+  const canSubmit = !cargandoFacturasPagoRapido
+    && pagosRapidosAplicables.length > 0
+    && isValidPaymentDate(fechaPagoRapido)
+    && String(comentarioPagoRapido || "").length <= MAX_COMENTARIO;
 
   return (
     <Modal
-      isOpen={isOpen}
+      show={isOpen}
+      size="6xl"
       onClose={handleClose}
-      size="5xl"
-      backdrop="blur"
-      scrollBehavior="inside"
-      isDismissable={!procesandoPagoRapido}
-      classNames={{
-        backdrop: "bg-slate-900/40 backdrop-blur-sm",
-        base: "bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-2xl",
-        header: "border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8",
-        body: "px-8 py-6",
-        footer: "border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8",
-        closeButton: "hover:bg-slate-100 dark:hover:bg-zinc-800 active:bg-slate-200 text-slate-400 p-2 top-4 right-4"
-      }}
+      theme={premiumModalTheme}
+      dismissible={!procesandoPagoRapido}
     >
-      <ModalContent>
-        {/* HEADER */}
-        <ModalHeader className="flex flex-col gap-1">
-          <div className="flex items-center gap-4">
-            <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl p-3">
-              <HiCash className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                Pago Rápido Masivo
-              </h3>
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-                Marca las facturas que <strong className="text-orange-500 dark:text-orange-400">NO</strong> pagaron. El sistema aplicará pago total al resto.
-              </p>
-            </div>
+      <Modal.Header>
+        <div className="flex items-center gap-4">
+          <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl p-3">
+            <HiCash className="w-6 h-6" />
           </div>
-        </ModalHeader>
+          <div>
+            <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+              Pago Rápido Masivo
+            </h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
+              Marca las facturas que <strong className="text-orange-500 dark:text-orange-400">NO</strong> pagaron. El sistema aplicará pago total al resto.
+            </p>
+          </div>
+        </div>
+      </Modal.Header>
 
-        <ModalBody className="space-y-8">
-          
-          {/* KPIs SECTION */}
+      <Modal.Body>
+        <div className="space-y-8">
+          {/* KPIs */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200">
+            <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Total Elegibles</p>
               <p className="text-4xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{facturasElegiblesPagoRapido.length}</p>
             </div>
-            <div className="bg-orange-500/5 dark:bg-orange-900/10 border border-orange-500/20 rounded-2xl p-6 transition-all duration-200">
+            <div className="bg-orange-500/5 dark:bg-orange-900/10 border border-orange-500/20 rounded-2xl p-6">
               <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/80 dark:text-orange-400/80 mb-2">Excluidas (No pagaron)</p>
               <p className="text-4xl font-black tracking-tight text-orange-600 dark:text-orange-400">{facturasNoPagaronValidas.length}</p>
             </div>
-            <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6 transition-all duration-200">
+            <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6">
               <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Se Cobrarán</p>
               <p className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{pagosRapidosAplicables.length}</p>
             </div>
           </div>
 
-          {/* FORMULARIO DE APLICACIÓN */}
+          {/* Formulario */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
                 Método de pago*
               </label>
-              <Select
-                aria-label="Método de pago"
-                placeholder="Seleccionar"
-                selectedKeys={[metodoPagoRapido]}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0];
-                  if (value) setMetodoPagoRapido(value);
-                }}
-                size="lg"
-                variant="flat"
-                classNames={{ trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 transition-all shadow-none h-[52px]" }}
-                startContent={<HiCreditCard className="text-slate-400 w-5 h-5" />}
-              >
-                <SelectItem key="Efectivo" value="Efectivo">Efectivo</SelectItem>
-                <SelectItem key="Transferencia" value="Transferencia">Transferencia</SelectItem>
-                <SelectItem key="Tarjeta" value="Tarjeta">Tarjeta</SelectItem>
-                <SelectItem key="Cheque" value="Cheque">Cheque</SelectItem>
-              </Select>
+              <div className="relative">
+                <HiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <select
+                  value={metodoPagoRapido}
+                  onChange={(e) => setMetodoPagoRapido(e.target.value)}
+                  className={`${inputBaseClasses} pl-10`}
+                >
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Transferencia">Transferencia</option>
+                  <option value="Tarjeta">Tarjeta</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
+              </div>
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
@@ -363,7 +353,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                 type="date"
                 value={fechaPagoRapido}
                 onChange={(e) => setFechaPagoRapido(e.target.value)}
-                className={`${inputBaseClasses} ${mostrarErrores && !isValidPaymentDate(fechaPagoRapido) ? "border-rose-500 focus:ring-rose-500 text-rose-600" : "focus:ring-emerald-500"}`}
+                className={`${inputBaseClasses} ${mostrarErrores && !isValidPaymentDate(fechaPagoRapido) ? "border-rose-500 focus:ring-rose-500" : "focus:ring-emerald-500"}`}
               />
               {mostrarErrores && !isValidPaymentDate(fechaPagoRapido) && (
                 <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-wider">Fecha inválida</p>
@@ -391,13 +381,12 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
 
           <hr className="border-slate-100 dark:border-zinc-800/50" />
 
-          {/* ÁREA DE SELECCIÓN Y BÚSQUEDA */}
+          {/* Área de selección */}
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-              
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 <div className="relative w-full sm:w-[320px]">
-                  <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                     <SearchIcon className="w-5 h-5" />
                   </span>
                   <input
@@ -412,45 +401,43 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                   {searchPagoRapido && (
                     <button
                       onClick={() => { setSearchPagoRapido(""); setPaginaPagoRapido(1); }}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"
                     >
                       <HiX className="w-4 h-4" />
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
-                  <Checkbox
-                    isSelected={soloNoPagaron}
-                    onValueChange={(value) => {
-                      setSoloNoPagaron(value);
+                <label className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={soloNoPagaron}
+                    onChange={(e) => {
+                      setSoloNoPagaron(e.target.checked);
                       setPaginaPagoRapido(1);
                     }}
-                    color="warning"
-                    size="sm"
-                    classNames={{ label: "text-sm font-bold text-slate-600 dark:text-zinc-400" }}
-                  >
-                    Ver solo excluidas
-                  </Checkbox>
-                </div>
+                    className="w-4 h-4 rounded accent-orange-500"
+                  />
+                  <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">Ver solo excluidas</span>
+                </label>
               </div>
 
               <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                <Button size="sm" className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-lg px-4" onPress={marcarTodasNoPagaron}>
+                <button type="button" onClick={marcarTodasNoPagaron} className="px-4 h-9 text-sm font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors">
                   Excluir página
-                </Button>
-                <Button size="sm" className="bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 font-bold rounded-lg px-4" onPress={limpiarNoPagaron}>
+                </button>
+                <button type="button" onClick={limpiarNoPagaron} className="px-4 h-9 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
                   Resetear
-                </Button>
+                </button>
               </div>
             </div>
 
-            {/* LISTA DE FACTURAS */}
+            {/* Lista de facturas */}
             <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
               <div className="max-h-[400px] overflow-auto">
                 {cargandoFacturasPagoRapido ? (
                   <div className="p-12 flex flex-col items-center justify-center gap-4 text-slate-500 dark:text-zinc-400">
-                    <Spinner size="lg" color="default" />
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-600 dark:border-zinc-400" />
                     <p className="text-sm font-bold tracking-wider uppercase">Cargando facturas...</p>
                   </div>
                 ) : facturasFiltradasPagoRapido.length === 0 ? (
@@ -464,12 +451,12 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                       return (
                         <label
                           key={factura.id}
-                          className={`flex items-center justify-between gap-4 p-4 cursor-pointer transition-all ${isExcluded ? 'bg-orange-50/50 dark:bg-orange-900/10 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'hover:bg-slate-50 dark:hover:bg-zinc-900/50'}`}
+                          className={`flex items-center justify-between gap-4 p-4 cursor-pointer transition-all ${isExcluded ? "bg-orange-50/50 dark:bg-orange-900/10 hover:bg-orange-50 dark:hover:bg-orange-900/20" : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"}`}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-xs font-mono font-bold text-slate-400 dark:text-zinc-500">#{factura.id}</span>
-                              <p className={`text-sm font-bold truncate ${isExcluded ? 'text-orange-700 dark:text-orange-400' : 'text-slate-800 dark:text-zinc-100'}`}>
+                              <p className={`text-sm font-bold truncate ${isExcluded ? "text-orange-700 dark:text-orange-400" : "text-slate-800 dark:text-zinc-100"}`}>
                                 {factura.cliente_nombre}
                               </p>
                             </div>
@@ -480,19 +467,20 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                             </p>
                           </div>
                           <div className="flex items-center gap-6 shrink-0">
-                            <p className={`text-base font-black tracking-tight ${isExcluded ? 'text-orange-600/50 dark:text-orange-500/50 line-through' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                            <p className={`text-base font-black tracking-tight ${isExcluded ? "text-orange-600/50 dark:text-orange-500/50 line-through" : "text-emerald-600 dark:text-emerald-400"}`}>
                               ${Number(factura.saldo_pendiente || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                             </p>
-                            <div className="w-[120px] flex justify-end">
-                              <Checkbox
-                                isSelected={isExcluded}
-                                onValueChange={() => toggleFacturaNoPago(factura.id)}
-                                color="warning"
-                                size="md"
-                                classNames={{ label: `text-xs font-bold ${isExcluded ? 'text-orange-600 dark:text-orange-500' : 'text-slate-400'}` }}
-                              >
+                            <div className="w-[120px] flex items-center justify-end gap-2">
+                              <input
+                                type="checkbox"
+                                checked={isExcluded}
+                                onChange={() => toggleFacturaNoPago(factura.id)}
+                                className="w-4 h-4 rounded accent-orange-500"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className={`text-xs font-bold ${isExcluded ? "text-orange-600 dark:text-orange-500" : "text-slate-400"}`}>
                                 {isExcluded ? "Excluida" : "Cobrar"}
-                              </Checkbox>
+                              </span>
                             </div>
                           </div>
                         </label>
@@ -503,46 +491,53 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
               </div>
             </div>
 
-            {/* PAGINATION */}
+            {/* Paginación */}
             {!cargandoFacturasPagoRapido && totalPaginasPagoRapido > 1 && (
-              <div className="flex justify-center pt-4">
-                <Pagination
-                  total={totalPaginasPagoRapido}
-                  page={paginaPagoRapidoActiva}
-                  onChange={setPaginaPagoRapido}
-                  showControls
-                  color="default"
-                  variant="light"
-                  classNames={{ cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold" }}
-                />
+              <div className="flex justify-center items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={paginaPagoRapidoActiva <= 1}
+                  onClick={() => setPaginaPagoRapido((p) => Math.max(1, p - 1))}
+                  className="px-3 h-9 text-sm font-bold rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  ‹ Ant
+                </button>
+                <span className="text-sm font-bold text-slate-600 dark:text-zinc-300">
+                  {paginaPagoRapidoActiva} / {totalPaginasPagoRapido}
+                </span>
+                <button
+                  type="button"
+                  disabled={paginaPagoRapidoActiva >= totalPaginasPagoRapido}
+                  onClick={() => setPaginaPagoRapido((p) => Math.min(totalPaginasPagoRapido, p + 1))}
+                  className="px-3 h-9 text-sm font-bold rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  Sig ›
+                </button>
               </div>
             )}
           </div>
-        </ModalBody>
-        
-        <ModalFooter>
-          <Button 
-            className="font-bold bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6" 
-            onPress={handleClose} 
-            isDisabled={procesandoPagoRapido}
-          >
-            Cancelar
-          </Button>
-          <Button
-            className="font-bold bg-emerald-600 text-white rounded-xl px-8 shadow-sm"
-            onPress={ejecutarPagoRapido}
-            isLoading={procesandoPagoRapido}
-            isDisabled={
-              cargandoFacturasPagoRapido
-              || pagosRapidosAplicables.length === 0
-              || !isValidPaymentDate(fechaPagoRapido)
-              || String(comentarioPagoRapido || "").length > MAX_COMENTARIO
-            }
-          >
-            Aplicar pago a {pagosRapidosAplicables.length} factura(s)
-          </Button>
-        </ModalFooter>
-      </ModalContent>
+        </div>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <button
+          type="button"
+          onClick={handleClose}
+          disabled={procesandoPagoRapido}
+          className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 disabled:opacity-40"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={ejecutarPagoRapido}
+          disabled={!canSubmit || procesandoPagoRapido}
+          className="font-bold bg-emerald-600 text-white rounded-xl px-8 h-11 shadow-sm disabled:opacity-50 flex items-center gap-2 hover:bg-emerald-700 transition-colors"
+        >
+          {procesandoPagoRapido && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+          Aplicar pago a {pagosRapidosAplicables.length} factura(s)
+        </button>
+      </Modal.Footer>
     </Modal>
   );
 };
