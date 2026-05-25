@@ -1,21 +1,12 @@
-/**
- * PanelActualizaciones — Gestión de actualizaciones de la aplicación
- *
- * Características:
- *  - Ver versión actual
- *  - Verificar si hay actualización disponible
- *  - Descargar con barra de progreso
- *  - Instalar (crea backup automático)
- *  - Release notes
- */
-
 import { useState, useEffect, useRef } from "react";
 import {
-  Card, CardBody, CardHeader,
-  Button, Chip, Progress, Divider, Spinner
-} from "@nextui-org/react";
+  HiRefresh, HiDownload, HiLightningBolt, HiCheckCircle,
+  HiExclamationCircle, HiInformationCircle, HiStar, HiCalendar,
+  HiChip
+} from "react-icons/hi";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { formatBytes } from "../../../utils/formatSystem";
+import { MarkdownRenderer } from "../../vistas/ayuda/MarkdownRenderer";
 
 export default function PanelActualizaciones() {
   const { setError } = useFeedback();
@@ -103,150 +94,185 @@ export default function PanelActualizaciones() {
 
   if (cargando) {
     return (
-      <div className="flex justify-center py-12">
-        <Spinner label="Cargando estado de actualizaciones..." />
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <div className="w-10 h-10 rounded-full border-4 border-blue-500/30 border-t-blue-500 animate-spin" />
+        <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+          Cargando estado de actualizaciones...
+        </span>
       </div>
     );
   }
 
+  const pct = status?.downloadProgress?.percent ?? 0;
+
   return (
-    <div className="space-y-4">
-      {/* Versión actual */}
-      <Card>
-        <CardBody className="flex flex-row items-center gap-4">
-          <div className="flex-1">
-            <p className="text-sm text-gray-500">Versión actual</p>
-            <p className="text-2xl font-bold text-primary">
+    <div className="space-y-4 w-full">
+
+      {/* ── VERSIÓN ACTUAL ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-500/10 rounded-2xl shrink-0">
+            <HiChip className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-0.5">
+              Versión actual
+            </p>
+            <p className="text-3xl font-black text-blue-600 dark:text-blue-400 leading-none tracking-tight">
               v{status?.currentVersion || "—"}
             </p>
           </div>
-          {status?.lastCheck && (
-            <div className="text-right">
-              <p className="text-xs text-gray-400">Última verificación</p>
-              <p className="text-sm">
+        </div>
+        {status?.lastCheck && (
+          <div className="flex items-center gap-2 text-right sm:text-right">
+            <HiCalendar className="w-4 h-4 text-slate-400 dark:text-zinc-500 shrink-0" />
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+                Última verificación
+              </p>
+              <p className="text-sm font-semibold text-slate-600 dark:text-zinc-300">
                 {new Date(status.lastCheck).toLocaleString("es-MX")}
               </p>
             </div>
-          )}
-        </CardBody>
-      </Card>
-
-      {/* Acciones principales */}
-      <div className="flex gap-3">
-        {!status?.updateAvailable && !status?.updateDownloaded && (
-          <Button
-            color="primary"
-            onPress={verificar}
-            isLoading={status?.checking}
-          >
-            {status?.checking ? "Verificando..." : "Verificar Actualizaciones"}
-          </Button>
-        )}
-
-        {status?.updateAvailable && !status?.updateDownloaded && !status?.downloading && (
-          <Button color="success" onPress={descargar}>
-            Descargar v{status?.updateInfo?.version}
-          </Button>
-        )}
-
-        {status?.updateDownloaded && (
-          <Button color="warning" onPress={instalar}>
-            Instalar y Reiniciar
-          </Button>
+          </div>
         )}
       </div>
 
-      {/* Error */}
+      {/* ── BOTONES DE ACCIÓN ── */}
+      <div className="flex flex-wrap gap-3">
+        {!status?.updateAvailable && !status?.updateDownloaded && (
+          <button
+            type="button"
+            onClick={verificar}
+            disabled={status?.checking}
+            className="inline-flex items-center gap-2 font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60 rounded-xl px-6 h-11 text-sm shadow-sm transition-all active:scale-95"
+          >
+            <HiRefresh className={`w-4 h-4 ${status?.checking ? "animate-spin" : ""}`} />
+            {status?.checking ? "Verificando..." : "Verificar Actualizaciones"}
+          </button>
+        )}
+
+        {status?.updateAvailable && !status?.updateDownloaded && !status?.downloading && (
+          <button
+            type="button"
+            onClick={descargar}
+            className="inline-flex items-center gap-2 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 h-11 text-sm shadow-sm transition-all active:scale-95"
+          >
+            <HiDownload className="w-4 h-4" />
+            Descargar v{status?.updateInfo?.version}
+          </button>
+        )}
+
+        {status?.updateDownloaded && (
+          <button
+            type="button"
+            onClick={instalar}
+            className="inline-flex items-center gap-2 font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-xl px-6 h-11 text-sm shadow-sm transition-all active:scale-95"
+          >
+            <HiLightningBolt className="w-4 h-4" />
+            Instalar y Reiniciar
+          </button>
+        )}
+      </div>
+
+      {/* ── ERROR ── */}
       {status?.error && (
-        <Card className="border-danger border">
-          <CardBody>
-            <p className="text-sm text-danger font-semibold">Error:</p>
-            <p className="text-sm text-danger">{status.error}</p>
-          </CardBody>
-        </Card>
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+          <HiExclamationCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-red-700 dark:text-red-400">Error</p>
+            <p className="text-sm font-medium text-red-600 dark:text-red-400 mt-0.5">{status.error}</p>
+          </div>
+        </div>
       )}
 
-      {/* Progreso de descarga */}
+      {/* ── PROGRESO DE DESCARGA ── */}
       {status?.downloading && status?.downloadProgress && (
-        <Card>
-          <CardHeader>
-            <h3 className="text-sm font-semibold">Descargando actualización...</h3>
-          </CardHeader>
-          <CardBody className="space-y-2">
-            <Progress
-              aria-label="Progreso de descarga"
-              value={status.downloadProgress.percent || 0}
-              color="primary"
-              showValueLabel
-              className="max-w-full"
+        <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-slate-700 dark:text-zinc-200">Descargando actualización...</p>
+            <span className="text-sm font-black text-blue-600 dark:text-blue-400">{Math.round(pct)}%</span>
+          </div>
+          {/* Barra de progreso nativa */}
+          <div className="w-full h-2.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              style={{ width: `${pct}%` }}
             />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>
-                {formatBytes(status.downloadProgress.transferred)} / {formatBytes(status.downloadProgress.total)}
-              </span>
-              <span>
-                {formatBytes(status.downloadProgress.bytesPerSecond)}/s
-              </span>
-            </div>
-          </CardBody>
-        </Card>
+          </div>
+          <div className="flex justify-between text-xs font-medium text-slate-500 dark:text-zinc-400">
+            <span>
+              {formatBytes(status.downloadProgress.transferred)} / {formatBytes(status.downloadProgress.total)}
+            </span>
+            <span>{formatBytes(status.downloadProgress.bytesPerSecond)}/s</span>
+          </div>
+        </div>
       )}
 
-      {/* Info de actualización disponible */}
+      {/* ── ACTUALIZACIÓN DISPONIBLE: NOTAS DE VERSIÓN ── */}
       {status?.updateInfo && status?.updateAvailable && (
-        <Card className="border-primary border">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Chip color="primary" variant="solid" size="sm">
-                Nueva versión
-              </Chip>
-              <span className="font-bold">v{status.updateInfo.version}</span>
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-900/50 shadow-sm overflow-hidden">
+          {/* Cabecera */}
+          <div className="flex items-center justify-between px-6 py-4 bg-blue-500/5 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30">
+            <div className="flex items-center gap-3">
+              <HiStar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <span className="font-black text-slate-800 dark:text-zinc-100 tracking-tight">
+                Nueva versión disponible
+              </span>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-500 text-white text-xs font-bold">
+                v{status.updateInfo.version}
+              </span>
             </div>
-          </CardHeader>
-          <CardBody className="space-y-2">
             {status.updateInfo.releaseDate && (
-              <p className="text-sm text-gray-500">
-                Publicada: {new Date(status.updateInfo.releaseDate).toLocaleDateString("es-MX")}
+              <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">
+                {new Date(status.updateInfo.releaseDate).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}
+              </span>
+            )}
+          </div>
+
+          {/* Notas de versión en Markdown */}
+          <div className="px-6 py-5 max-h-[420px] overflow-y-auto">
+            {status.updateInfo.releaseNotes ? (
+              <MarkdownRenderer content={
+                typeof status.updateInfo.releaseNotes === "string"
+                  ? status.updateInfo.releaseNotes
+                  : status.updateInfo.releaseNotes.map?.((n) => n.note || "").join("\n\n") || ""
+              } />
+            ) : (
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 italic">
+                Sin notas de versión
               </p>
             )}
-            <Divider />
-            <div>
-              <p className="text-sm font-semibold mb-1">Notas de versión:</p>
-              <div className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg p-3 max-h-[200px] overflow-auto whitespace-pre-wrap">
-                {status.updateInfo.releaseNotes || "Sin notas de versión"}
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Actualización descargada — lista para instalar */}
+      {/* ── ACTUALIZACIÓN DESCARGADA ── */}
       {status?.updateDownloaded && (
-        <Card className="border-warning border">
-          <CardBody>
-            <div className="flex items-center gap-3">
-              <Chip color="warning" variant="flat">Descargada</Chip>
-              <p className="text-sm">
-                La actualización está lista para instalar. Se creará un <strong>backup automático</strong> de la base de datos antes de reiniciar.
-              </p>
-            </div>
-          </CardBody>
-        </Card>
+        <div className="flex items-start gap-3 p-5 rounded-2xl bg-orange-500/10 border border-orange-200 dark:border-orange-900/40">
+          <HiLightningBolt className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-orange-700 dark:text-orange-400">Lista para instalar</p>
+            <p className="text-sm font-medium text-orange-600/80 dark:text-orange-400/80 mt-0.5">
+              La actualización está descargada. Se creará un <strong>backup automático</strong> de la base de datos antes de reiniciar.
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Sin actualización disponible */}
+      {/* ── AL DÍA ── */}
       {novedadMostrada && !status?.updateAvailable && (
-        <Card>
-          <CardBody>
-            <div className="flex items-center gap-3">
-              <Chip color="success" variant="flat">Al día</Chip>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Tu aplicación está actualizada. No hay nuevas versiones disponibles.
-              </p>
-            </div>
-          </CardBody>
-        </Card>
+        <div className="flex items-start gap-3 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-200 dark:border-emerald-900/40">
+          <HiCheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">Aplicación al día</p>
+            <p className="text-sm font-medium text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
+              No hay nuevas versiones disponibles.
+            </p>
+          </div>
+        </div>
       )}
+
     </div>
   );
 }
