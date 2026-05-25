@@ -1,16 +1,4 @@
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Card,
-  CardBody,
-  Select,
-  SelectItem,
-  Chip
-} from "@nextui-org/react";
+import { Modal } from "flowbite-react";
 import { useState, useEffect, useMemo } from "react";
 import ModalVistaPrevia from "../impresion/components/ModalVistaPrevia";
 import ModalPagoIntegradoConvenio from "./ModalPagoIntegradoConvenio";
@@ -25,6 +13,23 @@ import {
   HiDocumentText,
   HiCalculator
 } from "react-icons/hi";
+
+const premiumModalTheme = {
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+  content: {
+    base: "relative h-full w-full p-4 md:h-auto",
+    inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-2xl w-full"
+  },
+  header: {
+    base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
+    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+  },
+  body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
+  footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
+};
+
+const inputClasses = "w-full bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 h-11 text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 transition-all";
+const labelClasses = "block text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-1.5";
 
 const toMoney = (value) => {
   const num = Number(value);
@@ -271,417 +276,434 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
 
   const renderBloqueadoConvenio = () => (
     <>
-      <ModalHeader className="flex items-center gap-3 text-xl font-bold">
-        <div className="p-2 bg-warning-100 dark:bg-warning-900 rounded-lg">
-          <HiExclamation className="w-6 h-6 text-warning-600 dark:text-warning-400" />
+      <Modal.Header >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+            <HiExclamation className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Factura en Convenio de Pago</h3>
+            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">
+              Esta factura no se cobra como pago directo
+            </p>
+          </div>
         </div>
-        <div>
-          <h3>Factura en Convenio de Pago</h3>
-          <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
-            Esta factura no se cobra como pago directo
-          </p>
-        </div>
-      </ModalHeader>
+      </Modal.Header>
 
-      <ModalBody className="space-y-6">
-        <Card className="border-2 border-warning-200 dark:border-warning-800 bg-warning-50 dark:bg-warning-950">
-          <CardBody className="space-y-4">
+      <Modal.Body>
+        <div className="space-y-4">
+          <div className="border-2 border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10 rounded-2xl p-4">
             <div className="flex items-start gap-3">
-              <HiExclamation className="w-6 h-6 text-warning-600 flex-shrink-0 mt-1" />
+              <HiExclamation className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-semibold text-warning-900 dark:text-warning-100 mb-2">
+                <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-1">
                   Esta factura esta incluida en un convenio activo
                 </h4>
-                <p className="text-sm text-warning-800 dark:text-warning-200">
+                <p className="text-sm text-amber-800 dark:text-amber-200/80">
                   Para mantener consistencia de saldos, registra el pago desde Cobro Integrado (consumo del periodo + parcialidades del convenio).
                 </p>
               </div>
             </div>
-          </CardBody>
-        </Card>
+          </div>
 
-        <Card className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
-          <CardBody className="space-y-3">
+          <div className="border border-blue-200 dark:border-blue-800/50 bg-blue-50/30 dark:bg-blue-900/10 rounded-2xl p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs text-blue-700 dark:text-blue-300">Total sugerido</p>
-                <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                <p className="text-xs font-bold text-blue-700/60 dark:text-blue-400/60 uppercase tracking-wider">Total sugerido</p>
+                <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
                   {loadingResumen
                     ? "Calculando..."
                     : `$${toMoney(resumenCobro?.sugerencia_cobro?.total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`}
                 </p>
               </div>
-              <Button
-                color="primary"
-                variant="flat"
-                startContent={<HiCalculator className="w-4 h-4" />}
-                isDisabled={loadingResumen || !resumenCobro}
-                onPress={() => setModalIntegradoOpen(true)}
+              <button
+                type="button"
+                disabled={loadingResumen || !resumenCobro}
+                onClick={() => setModalIntegradoOpen(true)}
+                className="flex items-center gap-2 px-4 h-10 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-sm disabled:opacity-50 hover:bg-blue-700 transition-colors"
               >
+                <HiCalculator className="w-4 h-4" />
                 Cobro Integrado
-              </Button>
+              </button>
             </div>
-            <p className="text-xs text-blue-700/90 dark:text-blue-200/90">
+            <p className="text-xs text-blue-700/70 dark:text-blue-300/70 mt-2">
               Este cobro aplica en una sola operacion la parte de factura y la parte de convenio.
             </p>
-          </CardBody>
-        </Card>
+          </div>
 
-        <Card className="border border-gray-200 dark:border-gray-700">
-          <CardBody>
-            <h5 className="font-medium text-gray-900 dark:text-white mb-3">Informacion de la Factura</h5>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-4">
+            <h5 className="font-semibold text-slate-800 dark:text-zinc-100 mb-3 text-sm">Informacion de la Factura</h5>
+            <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Cliente:</span>
-                <p className="font-medium text-gray-900 dark:text-white">{factura.cliente_nombre}</p>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Cliente</span>
+                <p className="font-medium text-slate-800 dark:text-zinc-100">{factura.cliente_nombre}</p>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Factura #:</span>
-                <p className="font-medium text-gray-900 dark:text-white">{factura.id}</p>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Factura #</span>
+                <p className="font-medium text-slate-800 dark:text-zinc-100">{factura.id}</p>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Saldo:</span>
-                <p className="font-medium text-gray-900 dark:text-white">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Saldo</span>
+                <p className="font-bold text-slate-800 dark:text-zinc-100">
                   ${toMoney(factura.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div>
-                <span className="text-gray-500 dark:text-gray-400">Estado:</span>
-                <Chip color="success" variant="flat" size="sm">En Convenio</Chip>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Estado</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  En Convenio
+                </span>
               </div>
             </div>
-          </CardBody>
-        </Card>
-      </ModalBody>
+          </div>
+        </div>
+      </Modal.Body>
 
-      <ModalFooter>
-        <Button color="default" variant="light" onPress={handleCerrarModal}>Cerrar</Button>
-      </ModalFooter>
+      <Modal.Footer>
+        <button type="button" onClick={handleCerrarModal} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
+          Cerrar
+        </button>
+      </Modal.Footer>
     </>
   );
 
   const renderFormulario = () => (
     <>
-      <ModalHeader className="flex items-center gap-3 text-xl font-bold">
-        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-          <HiCreditCard className="w-6 h-6 text-green-600 dark:text-green-400" />
+      <Modal.Header>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+            <HiCreditCard className="w-6 h-6 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Realizar Pago — Factura #{factura.id}</h3>
+            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">
+              Total a pagar: <span className="font-bold text-slate-800 dark:text-white">${toMoney(factura.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+            </p>
+          </div>
         </div>
-        <div>
-          <h3>Realizar Pago - Factura #{factura.id}</h3>
-          <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
-            Total a pagar: <span className="font-bold text-gray-800 dark:text-white">${toMoney(factura.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
-          </p>
-        </div>
-      </ModalHeader>
+      </Modal.Header>
 
-      <ModalBody className="space-y-6">
-        <Card className="border border-green-200 dark:border-green-800 shadow-sm">
-          <CardBody className="space-y-5">
-            <div className="flex justify-between items-center bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-semibold">Cliente</p>
-                <p className="font-medium text-gray-800 dark:text-gray-200">{factura.cliente_nombre}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500 uppercase font-semibold">Saldo Pendiente</p>
-                <p className="text-xl font-bold text-red-600">${toMoney(formPago.monto).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
-              </div>
+      <Modal.Body>
+        <div className="space-y-5">
+          <div className="flex justify-between items-center bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-200 dark:border-zinc-700/50">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Cliente</p>
+              <p className="font-medium text-slate-800 dark:text-zinc-100">{factura.cliente_nombre}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Saldo Pendiente</p>
+              <p className="text-xl font-black text-red-600 dark:text-red-400">
+                ${toMoney(formPago.monto).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClasses}>Cantidad entregada por el cliente*</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-400 font-semibold text-lg pointer-events-none">$</span>
+              <input
+                type="number"
+                placeholder="0.00"
+                autoFocus
+                value={formPago.cantidad_entregada}
+                onChange={(e) => {
+                  setFormPago({ ...formPago, cantidad_entregada: e.target.value });
+                  limpiarError("cantidad_entregada");
+                }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleConfirmar(); }}
+                min="0"
+                step="0.01"
+                className={`${inputClasses} pl-8 text-2xl font-black h-14 ${mostrarErrores && erroresCampos.cantidad_entregada ? "border-red-500" : ""}`}
+              />
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                Cantidad entregada por el cliente*
-              </label>
-              <div className="relative w-full flex">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-lg">
-                  $
-                </span>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  autoFocus
-                  value={formPago.cantidad_entregada}
-                  onChange={(e) => {
-                    setFormPago({ ...formPago, cantidad_entregada: e.target.value });
+            <div className="flex flex-wrap gap-2 mt-3">
+              {sugerenciasPago.map((montoSugerido) => (
+                <button
+                  key={montoSugerido}
+                  type="button"
+                  onClick={() => {
+                    setFormPago({ ...formPago, cantidad_entregada: montoSugerido.toString() });
                     limpiarError("cantidad_entregada");
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleConfirmar();
-                  }}
-                  min="0"
-                  step="0.01"
-                  className={`border ${mostrarErrores && erroresCampos.cantidad_entregada ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-green-600 focus:border-green-500"} text-gray-800 text-2xl font-bold rounded-xl pl-8 pr-4 py-3 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:border-gray-600 dark:text-white transition-all`}
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2 mt-3">
-                {sugerenciasPago.map((montoSugerido) => (
-                  <button
-                    key={montoSugerido}
-                    type="button"
-                    onClick={() => {
-                      setFormPago({ ...formPago, cantidad_entregada: montoSugerido.toString() });
-                      limpiarError("cantidad_entregada");
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all transform active:scale-95 border ${toMoney(formPago.cantidad_entregada) === montoSugerido
-                      ? "bg-green-600 text-white border-green-600 shadow-md"
-                      : "bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-zinc-700 hover:border-green-400 hover:text-green-600"
-                      }`}
-                  >
-                    <span className="flex items-center gap-1">
-                      <HiCash className={toMoney(formPago.cantidad_entregada) === montoSugerido ? "text-white" : "text-green-500"} />
-                      ${montoSugerido}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {mostrarErrores && erroresCampos.cantidad_entregada && (
-                <p className="text-sm text-red-500 mt-1">Ingrese un monto valido</p>
-              )}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition-all active:scale-95 ${toMoney(formPago.cantidad_entregada) === montoSugerido
+                    ? "bg-green-600 text-white border-green-600 shadow-sm"
+                    : "bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-green-400 hover:text-green-600"
+                    }`}
+                >
+                  <span className="flex items-center gap-1">
+                    <HiCash className={toMoney(formPago.cantidad_entregada) === montoSugerido ? "text-white" : "text-green-500"} />
+                    ${montoSugerido}
+                  </span>
+                </button>
+              ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Metodo de pago*
-                </label>
-                <Select
-                  aria-label="Metodo de pago"
-                  placeholder="Seleccionar"
-                  selectedKeys={formPago.metodo_pago ? [formPago.metodo_pago] : []}
+            {mostrarErrores && erroresCampos.cantidad_entregada && (
+              <p className="text-xs text-red-500 mt-1">Ingrese un monto valido</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClasses}>Metodo de pago*</label>
+              <div className="relative">
+                <HiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <select
+                  value={formPago.metodo_pago}
                   onChange={(e) => {
                     setFormPago({ ...formPago, metodo_pago: e.target.value });
                     limpiarError("metodo_pago");
                   }}
-                  color="primary"
-                  variant="bordered"
-                  startContent={<HiCreditCard className="text-gray-400" />}
-                  className="w-full"
+                  className={`${inputClasses} pl-9 ${mostrarErrores && erroresCampos.metodo_pago ? "border-red-500" : ""}`}
                 >
-                  <SelectItem key="Efectivo" value="Efectivo" startContent={<HiCash />}>Efectivo</SelectItem>
-                  <SelectItem key="Transferencia" value="Transferencia" startContent={<HiCreditCard />}>Transferencia</SelectItem>
-                  <SelectItem key="Tarjeta" value="Tarjeta" startContent={<HiCreditCard />}>Tarjeta</SelectItem>
-                  <SelectItem key="Cheque" value="Cheque" startContent={<HiDocumentText />}>Cheque</SelectItem>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Fecha de pago*
-                </label>
-                <input
-                  type="date"
-                  value={formPago.fecha_pago}
-                  onChange={(e) => {
-                    setFormPago({ ...formPago, fecha_pago: e.target.value });
-                    limpiarError("fecha_pago");
-                  }}
-                  className={`border ${mostrarErrores && erroresCampos.fecha_pago ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"} rounded-xl px-3 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:border-gray-600 dark:text-white`}
-                />
-                {mostrarErrores && erroresCampos.fecha_pago && (
-                  <p className="text-sm text-red-500 mt-1">Ingrese una fecha de pago valida</p>
-                )}
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-                  Comentario (Opcional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nota..."
-                  maxLength={MAX_COMENTARIO}
-                  className={`border ${mostrarErrores && erroresCampos.comentario ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"} rounded-xl px-3 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:border-gray-600 dark:text-white`}
-                  value={formPago.comentario}
-                  onChange={(e) => {
-                    setFormPago({ ...formPago, comentario: e.target.value });
-                    limpiarError("comentario");
-                  }}
-                />
-                <p className={`text-[11px] mt-1 ${mostrarErrores && erroresCampos.comentario ? "text-red-500" : "text-slate-500 dark:text-zinc-400"}`}>
-                  {String(formPago.comentario || "").length}/{MAX_COMENTARIO}
-                </p>
+                  <option value="Efectivo">Efectivo</option>
+                  <option value="Transferencia">Transferencia</option>
+                  <option value="Tarjeta">Tarjeta</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
               </div>
             </div>
 
-            {cambio > 0 && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-3 flex justify-between items-center animate-pulse-once">
-                <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400 font-medium">
-                  <HiExclamation className="w-5 h-5" />
-                  <span>Cambio a entregar:</span>
-                </div>
-                <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                  ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      </ModalBody>
+            <div>
+              <label className={labelClasses}>Fecha de pago*</label>
+              <input
+                type="date"
+                value={formPago.fecha_pago}
+                onChange={(e) => {
+                  setFormPago({ ...formPago, fecha_pago: e.target.value });
+                  limpiarError("fecha_pago");
+                }}
+                className={`${inputClasses} ${mostrarErrores && erroresCampos.fecha_pago ? "border-red-500" : ""}`}
+              />
+              {mostrarErrores && erroresCampos.fecha_pago && (
+                <p className="text-xs text-red-500 mt-1">Ingrese una fecha de pago valida</p>
+              )}
+            </div>
 
-      <ModalFooter>
-        <Button color="danger" variant="light" onPress={handleCerrarModal}>Cancelar</Button>
-        <Button color="primary" onPress={handleConfirmar} className="font-bold px-8" shadow>
+            <div className="md:col-span-2">
+              <label className={labelClasses}>Comentario (Opcional)</label>
+              <input
+                type="text"
+                placeholder="Nota..."
+                maxLength={MAX_COMENTARIO}
+                value={formPago.comentario}
+                onChange={(e) => {
+                  setFormPago({ ...formPago, comentario: e.target.value });
+                  limpiarError("comentario");
+                }}
+                className={`${inputClasses} ${mostrarErrores && erroresCampos.comentario ? "border-red-500" : ""}`}
+              />
+              <p className={`text-[11px] mt-1 ${mostrarErrores && erroresCampos.comentario ? "text-red-500" : "text-slate-500 dark:text-zinc-400"}`}>
+                {String(formPago.comentario || "").length}/{MAX_COMENTARIO}
+              </p>
+            </div>
+          </div>
+
+          {cambio > 0 && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3 flex justify-between items-center">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium">
+                <HiExclamation className="w-5 h-5" />
+                <span>Cambio a entregar:</span>
+              </div>
+              <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
+                ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
+        </div>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <button type="button" onClick={handleCerrarModal} className="font-bold text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl px-6 h-11">
+          Cancelar
+        </button>
+        <button type="button" onClick={handleConfirmar} className="font-bold bg-green-600 text-white rounded-xl px-8 h-11 shadow-sm hover:bg-green-700 transition-colors">
           Cobrar
-        </Button>
-      </ModalFooter>
+        </button>
+      </Modal.Footer>
     </>
   );
 
   const renderConfirmacion = () => (
     <>
-      <ModalHeader className="flex items-center gap-3 text-xl font-bold">
-        <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-          <HiExclamation className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+      <Modal.Header>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+            <HiExclamation className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Confirmar Pago — Factura #{factura.id}</h3>
+            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">
+              Revise los datos antes de procesar el pago
+            </p>
+          </div>
         </div>
-        <div>
-          <h3>Confirmar Pago - Factura #{factura.id}</h3>
-          <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
-            Revise los datos antes de procesar el pago
-          </p>
-        </div>
-      </ModalHeader>
+      </Modal.Header>
 
-      <ModalBody className="space-y-6">
-        <Card className="border border-blue-200 dark:border-blue-800">
-          <CardBody className="space-y-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <HiUser className="w-5 h-5 text-blue-600" />
+      <Modal.Body>
+        <div className="space-y-4">
+          <div className="bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 rounded-2xl p-5">
+            <h4 className="font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-2 mb-4 text-sm">
+              <HiUser className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               Resumen del Pago
-            </h3>
+            </h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cliente</label>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">{factura.cliente_nombre}</p>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Cliente</span>
+                <p className="font-semibold text-slate-800 dark:text-zinc-100">{factura.cliente_nombre}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Saldo Pendiente</label>
-                <p className="text-lg font-bold text-red-600">${toMoney(factura.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Saldo Pendiente</span>
+                <p className="text-lg font-black text-red-600 dark:text-red-400">
+                  ${toMoney(factura.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cantidad Entregada</label>
-                <p className="text-lg font-bold text-green-600">${toMoney(formPago.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Cantidad Entregada</span>
+                <p className="text-lg font-black text-green-600 dark:text-green-400">
+                  ${toMoney(formPago.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Metodo de Pago</label>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">{formPago.metodo_pago}</p>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Metodo de Pago</span>
+                <p className="font-semibold text-slate-800 dark:text-zinc-100">{formPago.metodo_pago}</p>
               </div>
             </div>
 
             {cambio > 0 && (
-              <Card className="border border-warning-200 dark:border-warning-800 bg-warning-50 dark:bg-warning-900/30">
-                <CardBody>
-                  <div className="flex items-center gap-3">
-                    <HiCurrencyDollar className="w-6 h-6 text-warning-600" />
-                    <div>
-                      <p className="text-sm font-semibold text-warning-700 dark:text-warning-300">Cambio a entregar:</p>
-                      <p className="text-xl font-bold text-warning-600 dark:text-warning-400">
-                        ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                      </p>
-                    </div>
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-zinc-700/50">
+                <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3">
+                  <HiCurrencyDollar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <div>
+                    <p className="text-xs font-bold text-amber-700/60 dark:text-amber-400/60 uppercase tracking-wider">Cambio a entregar</p>
+                    <p className="text-lg font-black text-amber-600 dark:text-amber-400">
+                      ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                    </p>
                   </div>
-                </CardBody>
-              </Card>
+                </div>
+              </div>
             )}
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Comentarios</label>
-              <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-zinc-700/50">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Comentarios</span>
+              <p className="text-sm text-slate-800 dark:text-zinc-100 bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-700/50">
                 {formPago.comentario || "Sin comentarios"}
               </p>
             </div>
-          </CardBody>
-        </Card>
-      </ModalBody>
+          </div>
+        </div>
+      </Modal.Body>
 
-      <ModalFooter>
-        <Button color="default" variant="light" onPress={handleVolverFormulario}>Volver al Formulario</Button>
-        <Button color="primary" onPress={handleProcesarPago} className="font-medium">Confirmar y Procesar Pago</Button>
-      </ModalFooter>
+      <Modal.Footer>
+        <button type="button" onClick={handleVolverFormulario} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
+          Volver al Formulario
+        </button>
+        <button type="button" onClick={handleProcesarPago} className="font-bold bg-blue-600 text-white rounded-xl px-8 h-11 shadow-sm hover:bg-blue-700 transition-colors">
+          Confirmar y Procesar Pago
+        </button>
+      </Modal.Footer>
     </>
   );
 
   const renderProcesando = () => (
     <>
-      <ModalHeader className="flex items-center gap-3 text-xl font-bold">
-        <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-          <HiCurrencyDollar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+      <Modal.Header>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+            <HiCurrencyDollar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Procesando Pago...</h3>
+            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">Por favor espere</p>
+          </div>
         </div>
-        <div>
-          <h3>Procesando Pago...</h3>
-          <p className="text-sm font-normal text-gray-500 dark:text-gray-400">Por favor espere</p>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600" />
+          <p className="text-slate-500 dark:text-zinc-400">Procesando el pago...</p>
         </div>
-      </ModalHeader>
-      <ModalBody className="flex flex-col items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">Procesando el pago...</p>
-      </ModalBody>
+      </Modal.Body>
     </>
   );
 
   const renderExito = () => (
     <>
-      <ModalHeader className="flex items-center gap-3 text-xl font-bold">
-        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-          <HiCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+      <Modal.Header>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+            <HiCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Pago Realizado con Exito</h3>
+            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">El pago se proceso correctamente</p>
+          </div>
         </div>
-        <div>
-          <h3>Pago Realizado con Exito</h3>
-          <p className="text-sm font-normal text-gray-500 dark:text-gray-400">El pago se proceso correctamente</p>
-        </div>
-      </ModalHeader>
-      <ModalBody className="space-y-6">
-        <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-xl border border-green-100 dark:border-green-800 flex flex-col items-center text-center">
-          <HiCheck className="w-16 h-16 text-green-500 mb-2" />
-          <h3 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-1">
-            ${toMoney(formPago.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-          </h3>
-          <p className="text-green-600 dark:text-green-300">Monto registrado</p>
-
-          {cambio > 0 && (
-            <div className="mt-4 p-3 bg-white dark:bg-zinc-800 rounded-lg shadow-sm w-full">
-              <p className="text-sm text-gray-500">Cambio Entregado</p>
-              <p className="text-xl font-bold text-gray-800 dark:text-white">
-                ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-              </p>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="space-y-4">
+          <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-2xl border border-green-100 dark:border-green-800/30 flex flex-col items-center text-center">
+            <div className="rounded-full bg-green-500 p-3 mb-3">
+              <HiCheck className="w-8 h-8 text-white" />
             </div>
-          )}
-        </div>
+            <h3 className="text-2xl font-black text-green-700 dark:text-green-400 mb-1">
+              ${toMoney(formPago.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+            </h3>
+            <p className="text-green-600 dark:text-green-300 text-sm">Monto registrado</p>
 
-        <Button
-          color="default"
-          variant="flat"
-          className="w-full font-medium"
-          startContent={generandoComprobante ? null : <HiDocumentText className="w-4 h-4" />}
-          isLoading={generandoComprobante}
-          onPress={handleImprimirComprobante}
-        >
-          {generandoComprobante ? "Generando comprobante..." : "Imprimir Comprobante de Pago"}
-        </Button>
-      </ModalBody>
-      <ModalFooter>
-        <Button color="primary" onPress={handleCerrarModal} className="w-full font-bold">Finalizar</Button>
-      </ModalFooter>
+            {cambio > 0 && (
+              <div className="mt-4 p-3 bg-white dark:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-700/50 w-full">
+                <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Cambio Entregado</p>
+                <p className="text-xl font-black text-slate-800 dark:text-zinc-100">
+                  ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            disabled={generandoComprobante}
+            onClick={handleImprimirComprobante}
+            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50 dark:bg-zinc-800/50 text-slate-700 dark:text-zinc-300 font-bold text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-60"
+          >
+            {generandoComprobante
+              ? <><div className="w-4 h-4 border-2 border-slate-400/30 border-t-slate-600 rounded-full animate-spin" /> Generando comprobante...</>
+              : <><HiDocumentText className="w-4 h-4" /> Imprimir Comprobante de Pago</>
+            }
+          </button>
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <button type="button" onClick={handleCerrarModal} className="w-full font-bold bg-blue-600 text-white rounded-xl px-8 h-11 shadow-sm hover:bg-blue-700 transition-colors">
+          Finalizar
+        </button>
+      </Modal.Footer>
     </>
   );
 
   const renderError = () => (
     <>
-      <ModalBody className="py-8">
-        <div className="flex flex-col items-center text-center space-y-4">
+      <Modal.Body>
+        <div className="flex flex-col items-center text-center space-y-4 py-8">
           <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-            <HiX className="w-10 h-10 text-red-600" />
+            <HiX className="w-10 h-10 text-red-600 dark:text-red-400" />
           </div>
-          <h3 className="text-xl font-bold text-red-600">Error al Procesar</h3>
-          <p className="text-gray-600 dark:text-gray-300">{resultadoPago?.mensaje || "Error inesperado"}</p>
+          <h3 className="text-xl font-bold text-red-600 dark:text-red-400">Error al Procesar</h3>
+          <p className="text-slate-600 dark:text-zinc-300">{resultadoPago?.mensaje || "Error inesperado"}</p>
         </div>
-      </ModalBody>
-      <ModalFooter>
-        <Button color="default" variant="light" onPress={handleReintentar}>Reintentar</Button>
-        <Button color="danger" onPress={handleCerrarModal}>Cerrar</Button>
-      </ModalFooter>
+      </Modal.Body>
+      <Modal.Footer>
+        <button type="button" onClick={handleReintentar} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
+          Reintentar
+        </button>
+        <button type="button" onClick={handleCerrarModal} className="font-bold bg-red-600 text-white rounded-xl px-8 h-11 shadow-sm">
+          Cerrar
+        </button>
+      </Modal.Footer>
     </>
   );
 
@@ -697,19 +719,12 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
   return (
     <>
       <Modal
-        isOpen={isOpen}
+        show={isOpen}
         onClose={estadoPago === "procesando" ? undefined : handleCerrarModal}
-        size="2xl"
-        backdrop="blur"
-        scrollBehavior="inside"
-        isDismissable={estadoPago !== "procesando"}
-        classNames={{
-          backdrop: "bg-black/60 backdrop-blur-sm",
-          modal: "bg-white dark:bg-zinc-900 rounded-xl shadow-2xl",
-          closeButton: "hover:bg-red-600 hover:text-white text-gray-600"
-        }}
+        theme={premiumModalTheme}
+        dismissible={estadoPago !== "procesando"}
       >
-        <ModalContent>{renderContenido()}</ModalContent>
+        {renderContenido()}
       </Modal>
 
       <ModalPagoIntegradoConvenio

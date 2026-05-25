@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from "react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar, Tooltip, Modal, ModalContent, ModalBody, ModalFooter, Button as NextUIButton } from "@nextui-org/react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar, Tooltip } from "@nextui-org/react";
+import { Modal } from "flowbite-react";
 import { VscChromeMinimize, VscChromeMaximize, VscChromeClose } from "react-icons/vsc";
 import { HiOutlineLogout, HiOutlineQuestionMarkCircle, HiOutlineCog, HiOutlineUser, HiMenuAlt2 } from "react-icons/hi";
 
@@ -10,6 +11,23 @@ import { CloseAppModal } from '../../IconsApp/IconsAppSystem';
 
 import { useAppLogo } from '../../context/LogoContext';
 import AvatarPerfil from '../../assets/images/Avatar.png';
+
+const confirmModalTheme = {
+  root: {
+    base: "fixed top-0 right-0 left-0 z-[100002] h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
+    show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" }
+  },
+  content: {
+    base: "relative h-full w-full p-4 md:h-auto",
+    inner: "relative flex max-h-[90dvh] flex-col rounded-3xl bg-white shadow-2xl dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 mx-auto max-w-sm w-full"
+  },
+  header: {
+    base: "hidden",
+    close: { base: "hidden", icon: "hidden" }
+  },
+  body: { base: "px-6 pt-8 pb-2 flex-1 overflow-y-auto" },
+  footer: { base: "flex flex-col gap-2.5 px-6 pb-6 rounded-b-3xl shrink-0" }
+};
 
 function NavbarApp() {
   const { logoSrc } = useAppLogo();
@@ -206,102 +224,80 @@ function NavbarApp() {
         </div>
       </nav>
 
-      {/* ── 1. MODAL: CONFIRMAR CERRAR SESIÓN (NUEVO) ── */}
-      <Modal 
-        isOpen={openLogoutModal} 
-        onOpenChange={setOpenLogoutModal} 
-        size="sm" 
-        hideCloseButton 
-        classNames={{
-            wrapper: "z-[100002]",
-            backdrop: "z-[100001] bg-black/60 backdrop-blur-md",
-            base: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-3 shadow-2xl",
-            body: "py-6 px-4",
-            footer: "flex-col gap-2.5 pt-0 px-4 pb-4"
-        }}
+      {/* ── 1. MODAL: CONFIRMAR CERRAR SESIÓN ── */}
+      <Modal
+        show={openLogoutModal}
+        onClose={() => setOpenLogoutModal(false)}
+        theme={confirmModalTheme}
+        dismissible
       >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalBody className="flex flex-col items-center justify-center text-center">
-                <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-3 shadow-inner">
-                    <HiOutlineLogout className="w-10 h-10 text-orange-600 dark:text-orange-500" />
-                </div>
-                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-tight">
-                  ¿Cerrar Sesión?
-                </h3>
-                <p className="text-[13px] font-medium text-slate-500 dark:text-zinc-400 mt-2.5 leading-relaxed max-w-xs">
-                  Tendrás que volver a ingresar tus credenciales para acceder a tu panel de administración.
-                </p>
-              </ModalBody>
-              <ModalFooter>
-                <NextUIButton 
-                    color="warning" 
-                    className="w-full font-bold h-12 shadow-md shadow-orange-500/20 text-white text-sm" 
-                    onPress={handleLogout}
-                >
-                  Sí, cerrar sesión
-                </NextUIButton>
-                <NextUIButton 
-                    variant="flat" 
-                    className="w-full font-bold h-12 bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 text-sm transition-colors" 
-                    onPress={onClose}
-                >
-                  Cancelar
-                </NextUIButton>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+        <Modal.Body>
+          <div className="flex flex-col items-center text-center">
+            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-4 shadow-inner">
+              <HiOutlineLogout className="w-10 h-10 text-orange-600 dark:text-orange-500" />
+            </div>
+            <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-tight">
+              ¿Cerrar Sesión?
+            </h3>
+            <p className="text-[13px] font-medium text-slate-500 dark:text-zinc-400 mt-2.5 leading-relaxed max-w-xs">
+              Tendrás que volver a ingresar tus credenciales para acceder a tu panel de administración.
+            </p>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full font-bold h-12 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white text-sm shadow-md shadow-orange-500/20 transition-colors"
+          >
+            Sí, cerrar sesión
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpenLogoutModal(false)}
+            className="w-full font-bold h-12 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 text-sm transition-colors"
+          >
+            Cancelar
+          </button>
+        </Modal.Footer>
       </Modal>
 
       {/* ── 2. MODAL: CONFIRMAR CERRAR APLICACIÓN DE ESCRITORIO ── */}
-      <Modal 
-        isOpen={openCloseAppModal} 
-        onOpenChange={setOpenCloseAppModal} 
-        size="sm" 
-        hideCloseButton 
-        classNames={{
-            wrapper: "z-[100002]", 
-            backdrop: "z-[100001] bg-black/60 backdrop-blur-md", 
-            base: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-3 shadow-2xl",
-            body: "py-6 px-4",
-            footer: "flex-col gap-2.5 pt-0 px-4 pb-4"
-        }}
+      <Modal
+        show={openCloseAppModal}
+        onClose={() => setOpenCloseAppModal(false)}
+        theme={confirmModalTheme}
+        dismissible
       >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalBody className="flex flex-col items-center justify-center text-center">
-                <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-3 shadow-inner">
-                    <CloseAppModal className="w-10 h-10 text-red-600 dark:text-red-500" />
-                </div>
-                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-tight">
-                  ¿Cerrar AGUA-VP?
-                </h3>
-                <p className="text-[13px] font-medium text-slate-500 dark:text-zinc-400 mt-2.5 leading-relaxed max-w-xs">
-                  Estás a punto de salir del sistema. Se perderán los cambios que no se hayan guardado.
-                </p>
-              </ModalBody>
-              <ModalFooter>
-                <NextUIButton 
-                    color="danger" 
-                    className="w-full font-bold h-12 shadow-md shadow-red-500/20 text-sm" 
-                    onPress={handleClose}
-                >
-                  Sí, salir del sistema
-                </NextUIButton>
-                <NextUIButton 
-                    variant="flat" 
-                    className="w-full font-bold h-12 bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 text-sm transition-colors" 
-                    onPress={onClose}
-                >
-                  Cancelar
-                </NextUIButton>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+        <Modal.Body>
+          <div className="flex flex-col items-center text-center">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4 shadow-inner">
+              <CloseAppModal className="w-10 h-10 text-red-600 dark:text-red-500" />
+            </div>
+            <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-tight">
+              ¿Cerrar AGUA-VP?
+            </h3>
+            <p className="text-[13px] font-medium text-slate-500 dark:text-zinc-400 mt-2.5 leading-relaxed max-w-xs">
+              Estás a punto de salir del sistema. Se perderán los cambios que no se hayan guardado.
+            </p>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="w-full font-bold h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-sm shadow-md shadow-red-500/20 transition-colors"
+          >
+            Sí, salir del sistema
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpenCloseAppModal(false)}
+            className="w-full font-bold h-12 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 text-sm transition-colors"
+          >
+            Cancelar
+          </button>
+        </Modal.Footer>
       </Modal>
     </>
   );
