@@ -29,11 +29,11 @@ La aplicación corre completamente en la computadora del usuario — no requiere
         ↓
 3. Capturar las lecturas del mes → el sistema calcula el consumo
         ↓
-4. Generar las facturas de la ruta
+4. Generar los Recibos de la ruta
         ↓
 5. Registrar los pagos cuando los clientes acuden a pagar
         ↓
-6. Imprimir recibos y reportes del período
+6. Imprimir recibos de pago y reportes del período
 ```
 
 ---
