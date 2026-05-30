@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { Card, CardBody, Chip } from '@nextui-org/react';
+import { Card, CardBody } from '@nextui-org/react';
 import { HiLocationMarker, HiCog, HiHashtag, HiCheck, HiX, HiWifi } from 'react-icons/hi';
 import MarkerMap from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 import municipiojson from "../../../../public/VillaPesqueira.json";
@@ -37,19 +37,20 @@ function computeClusters(medidores, zoom) {
   });
 }
 
-// Rastrea el zoom actual del mapa y notifica al padre solo cuando cambia.
-const ZoomTracker = React.memo(({ useMap, onZoomChange }) => {
+// Rastrea zoom + límites visibles y notifica al padre cuando termina un movimiento.
+// 'moveend' cubre tanto pan como zoom, así un solo listener basta.
+const ViewTracker = React.memo(({ useMap, onViewChange }) => {
   const map = useMap();
   useEffect(() => {
-    onZoomChange(map.getZoom());
-    const handler = () => onZoomChange(map.getZoom());
-    map.on('zoomend', handler);
-    return () => map.off('zoomend', handler);
-  }, [map, onZoomChange]);
+    const update = () => onViewChange(map.getZoom(), map.getBounds().pad(0.25));
+    update();
+    map.on('moveend', update);
+    return () => map.off('moveend', update);
+  }, [map, onViewChange]);
   return null;
 });
 
-ZoomTracker.displayName = 'ZoomTracker';
+ViewTracker.displayName = 'ViewTracker';
 
 // Componente invisible para ajustar tamaño e inicializar
 const MapResizer = React.memo(({ useMap, onMapReady, setMapInstance }) => {
@@ -77,6 +78,7 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
   const { mapLibrary: MapLibrary, mapError: libError } = useLeafletSetup();
   const [mapInstance, setMapInstance] = useState(null);
   const [zoom, setZoom] = useState(13);
+  const [bounds, setBounds] = useState(null);
   const markerRefs = React.useRef({});
 
   useEffect(() => {
@@ -96,7 +98,29 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
     }
   }, [selectedMedidor, mapInstance]);
 
-  const handleZoomChange = useCallback((z) => setZoom(z), []);
+  const handleViewChange = useCallback((z, b) => {
+    setZoom(z);
+    setBounds(b);
+  }, []);
+
+  // Culling por viewport: solo renderizamos marcadores dentro de los límites visibles
+  // (con 25% de margen). Reduce drásticamente el DOM en equipos sin GPU al hacer zoom.
+  const visibleMedidores = useMemo(() => {
+    if (!medidores?.length) return [];
+    if (!bounds) return medidores; // primer render: zoom 13, ya muy agrupado (barato)
+    const dentro = medidores.filter(
+      (m) =>
+        Number.isFinite(m.latitud) &&
+        Number.isFinite(m.longitud) &&
+        bounds.contains([m.latitud, m.longitud])
+    );
+    // El medidor seleccionado siempre se renderiza, aunque quede fuera de vista.
+    if (selectedMedidor && !dentro.some((m) => m.id === selectedMedidor.id)) {
+      const sel = medidores.find((m) => m.id === selectedMedidor.id);
+      if (sel) dentro.push(sel);
+    }
+    return dentro;
+  }, [medidores, bounds, selectedMedidor]);
 
   const customIcon = useMemo(() => {
     if (!MapLibrary?.L) return null;
@@ -118,10 +142,10 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
     });
   }, [MapLibrary]);
 
-  // Reagrupa los marcadores según el zoom actual
+  // Reagrupa los marcadores visibles según el zoom actual
   const clusters = useMemo(
-    () => (medidores?.length ? computeClusters(medidores, zoom) : []),
-    [medidores, zoom]
+    () => (visibleMedidores.length ? computeClusters(visibleMedidores, zoom) : []),
+    [visibleMedidores, zoom]
   );
 
   const MarkersRendered = useMemo(() => {
@@ -162,14 +186,9 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
                 <h3 className="text-base font-bold text-gray-900 flex-1">
                   Medidor {medidor.numero_serie}
                 </h3>
-                <Chip
-                  size="sm"
-                  color={medidor.estado_medidor === "Activo" ? "success" : "danger"}
-                  variant="solid"
-                  className="font-semibold shadow-sm"
-                >
+                <span className={`text-xs font-semibold px-2 py-1 rounded-md shadow-sm ${medidor.estado_medidor === "Activo" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
                   {medidor.estado_medidor}
-                </Chip>
+                </span>
               </div>
 
               <div className="space-y-3 text-sm">
@@ -246,7 +265,7 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
           setMapInstance(map.target);
         }}
       >
-        <ZoomTracker useMap={useMap} onZoomChange={handleZoomChange} />
+        <ViewTracker useMap={useMap} onViewChange={handleViewChange} />
         <MapResizer useMap={useMap} onMapReady={onMapReady} setMapInstance={setMapInstance} />
 
         <LayersControl position="bottomright">
