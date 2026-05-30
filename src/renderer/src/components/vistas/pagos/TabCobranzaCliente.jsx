@@ -13,7 +13,8 @@ import {
   HiMail,
   HiLocationMarker,
   HiChevronLeft,
-  HiChevronRight
+  HiChevronRight,
+  HiChevronDown
 } from "react-icons/hi";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
@@ -120,6 +121,50 @@ function ClienteUser({ nombre, numeroPredio, id }) {
           {numeroPredio && numeroPredio !== "-" ? `Predio #${numeroPredio} · ID: ${id}` : `ID: ${id}`}
         </span>
       </div>
+    </div>
+  );
+}
+
+// ── BOTÓN IMPRIMIR DEUDORES CON OPCIONES DE ORDEN ─────────────────────────────
+const OPCIONES_ORDEN_DEUDORES = [
+  { key: "mayor", label: "Mayor deudor primero", icon: "💰" },
+  { key: "menor", label: "Menor deudor primero", icon: "🪙" },
+  { key: "predio", label: "Por número de predio", icon: "🏠" },
+];
+
+function ImprimirDeudoresDropdown({ onImprimir, loading }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        disabled={loading}
+        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl px-5 h-[44px] shadow-sm flex items-center gap-2 transition-colors disabled:opacity-60"
+      >
+        {loading ? <LoadingSpinner className="w-4 h-4" /> : <HiPrinter className="text-lg" />}
+        Imprimir Deudores
+        <HiChevronDown className="w-4 h-4 opacity-70" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-20 mt-2 w-60 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden">
+            <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800">
+              Ordenar impresión por
+            </div>
+            {OPCIONES_ORDEN_DEUDORES.map((op) => (
+              <button
+                key={op.key}
+                onClick={() => { onImprimir(op.key); setOpen(false); }}
+                className="w-full px-4 py-3 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left"
+              >
+                <span className="text-lg">{op.icon}</span>
+                {op.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -561,7 +606,14 @@ const TabCobranzaCliente = () => {
     ]);
   };
 
-  const construirPayloadDeudoresMayores = useCallback(() => {
+  const construirPayloadDeudoresMayores = useCallback((orden = "mayor") => {
+    const parsePredio = (predio) => {
+      const onlyDigits = String(predio ?? "").replace(/\D/g, "");
+      if (!onlyDigits) return Number.MAX_SAFE_INTEGER;
+      const num = Number(onlyDigits);
+      return Number.isFinite(num) ? num : Number.MAX_SAFE_INTEGER;
+    };
+
     const deudores = clientesTablaOrdenada
       .filter((cliente) => Number(cliente.deuda_total || 0) > 0)
       .map((cliente) => {
@@ -603,17 +655,27 @@ const TabCobranzaCliente = () => {
           }))
         };
       })
-      .sort((a, b) => Number(b.total_adeudo || 0) - Number(a.total_adeudo || 0));
+      .sort((a, b) => {
+        if (orden === "predio") {
+          const pa = parsePredio(a.numero_predio);
+          const pb = parsePredio(b.numero_predio);
+          if (pa !== pb) return pa - pb;
+          return String(a.numero_predio || "").localeCompare(String(b.numero_predio || ""), "es", { numeric: true, sensitivity: "base" });
+        }
+        if (orden === "menor") return Number(a.total_adeudo || 0) - Number(b.total_adeudo || 0);
+        return Number(b.total_adeudo || 0) - Number(a.total_adeudo || 0); // "mayor"
+      });
 
     return {
       deudores,
+      orden,
       generated_at: new Date().toISOString(),
       fuente: "cobranza_cliente"
     };
   }, [clientesTablaOrdenada]);
 
-  const handleImprimirMayoresDeudores = useCallback(async () => {
-    const payload = construirPayloadDeudoresMayores();
+  const handleImprimirMayoresDeudores = useCallback(async (orden = "mayor") => {
+    const payload = construirPayloadDeudoresMayores(orden);
     if (!payload.deudores.length) {
       setError("No hay deudores con saldo pendiente para imprimir.", "Cobranza");
       return;
@@ -813,14 +875,10 @@ const TabCobranzaCliente = () => {
         </div>
 
         <div className="w-full md:w-auto flex items-center justify-end gap-3">
-          <button
-            onClick={handleImprimirMayoresDeudores}
-            disabled={loadingImprimirDeudores}
-            className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl px-5 h-[44px] shadow-sm flex items-center gap-2 transition-colors disabled:opacity-60"
-          >
-            {loadingImprimirDeudores ? <LoadingSpinner className="w-4 h-4" /> : <HiPrinter className="text-lg" />}
-            Imprimir Deudores
-          </button>
+          <ImprimirDeudoresDropdown
+            onImprimir={handleImprimirMayoresDeudores}
+            loading={loadingImprimirDeudores}
+          />
 
           <button
             onClick={abrirModalSeleccionPeriodoRapido}

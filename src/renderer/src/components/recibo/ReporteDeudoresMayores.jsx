@@ -206,12 +206,45 @@ const ReporteDeudoresMayores = () => {
     load();
   }, [searchParams]);
 
+  // Orden solicitado desde Cobranza ("mayor" | "menor" | "predio"). Por defecto "mayor".
+  const orden = useMemo(() => {
+    if (payload && !Array.isArray(payload) && typeof payload === "object" && payload.orden) {
+      return payload.orden;
+    }
+    return "mayor";
+  }, [payload]);
+
   const rows = useMemo(() => {
+    const parsePredio = (p) => {
+      const digits = String(p ?? "").replace(/\D/g, "");
+      if (!digits) return Number.MAX_SAFE_INTEGER;
+      const n = Number(digits);
+      return Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
+    };
+
     return getRawRows(payload)
       .map(normalizeRow)
       .filter((r) => r.totalAdeudo > 0 || r.recibosConDeuda > 0 || r.meses.length > 0)
-      .sort((a, b) => b.totalAdeudo - a.totalAdeudo || b.recibosConDeuda - a.recibosConDeuda || a.nombreCliente.localeCompare(b.nombreCliente));
-  }, [payload]);
+      .sort((a, b) => {
+        if (orden === "predio") {
+          const pa = parsePredio(a.noPredio);
+          const pb = parsePredio(b.noPredio);
+          if (pa !== pb) return pa - pb;
+          return String(a.noPredio).localeCompare(String(b.noPredio), "es", { numeric: true, sensitivity: "base" });
+        }
+        if (orden === "menor") {
+          return a.totalAdeudo - b.totalAdeudo || a.recibosConDeuda - b.recibosConDeuda || a.nombreCliente.localeCompare(b.nombreCliente);
+        }
+        // "mayor" (por defecto)
+        return b.totalAdeudo - a.totalAdeudo || b.recibosConDeuda - a.recibosConDeuda || a.nombreCliente.localeCompare(b.nombreCliente);
+      });
+  }, [payload, orden]);
+
+  const ordenLabel = useMemo(() => ({
+    mayor: "Mayor deudor primero",
+    menor: "Menor deudor primero",
+    predio: "Por número de predio",
+  })[orden] || "Mayor deudor primero", [orden]);
 
   const totalAdeudoGeneral = useMemo(
     () => rows.reduce((acc, r) => acc + Number(r.totalAdeudo || 0), 0),
@@ -299,8 +332,9 @@ const ReporteDeudoresMayores = () => {
               <div style={{ fontWeight: 800, fontSize: "14px", color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Cartera Vencida Prioritaria
               </div>
-              <div style={{ fontSize: "10px", color: "#6b7280" }}>
-                Total adeudo: <span style={{ fontWeight: 800, color: "#1f2937" }}>{money(totalAdeudoGeneral)}</span>
+              <div style={{ fontSize: "10px", color: "#6b7280", display: "flex", gap: "16px", alignItems: "center" }}>
+                <span>Orden: <span style={{ fontWeight: 700, color: "#1f2937" }}>{ordenLabel}</span></span>
+                <span>Total adeudo: <span style={{ fontWeight: 800, color: "#1f2937" }}>{money(totalAdeudoGeneral)}</span></span>
               </div>
             </div>
           </div>
