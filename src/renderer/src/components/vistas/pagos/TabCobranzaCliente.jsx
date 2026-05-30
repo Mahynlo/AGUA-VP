@@ -1,32 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Button,
-  Select,
-  SelectItem,
-  Pagination,
-  Chip,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Spinner,
-  User
-} from "@nextui-org/react";
-import { 
-  HiCash, 
-  HiUserGroup, 
-  HiDocumentText, 
-  HiCalculator, 
-  HiEye, 
-  HiFilter, 
-  HiX, 
+  HiCash,
+  HiUserGroup,
+  HiDocumentText,
+  HiCalculator,
+  HiEye,
+  HiFilter,
+  HiX,
   HiPrinter,
   HiSearch,
   HiPhone,
   HiMail,
-  HiLocationMarker
+  HiLocationMarker,
+  HiChevronLeft,
+  HiChevronRight
 } from "react-icons/hi";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
@@ -52,6 +39,90 @@ const sortFacturasFIFO = (facturas = []) => {
     return Number(a.id) - Number(b.id);
   });
 };
+
+// ── ESTILOS COMPARTIDOS ───────────────────────────────────────────────────────
+const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none appearance-none cursor-pointer";
+
+// ── SPINNER CSS PURO (sin librería) ───────────────────────────────────────────
+function LoadingSpinner({ className = "w-4 h-4" }) {
+  return (
+    <div className={`${className} border-2 border-slate-300 dark:border-zinc-600 border-t-emerald-500 rounded-full animate-spin`} />
+  );
+}
+
+// ── PAGINACIÓN SIMPLE (sin librería) ──────────────────────────────────────────
+function SimplePagination({ currentPage, totalPages, onChange }) {
+  if (totalPages <= 1) return null;
+
+  const pages = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push("...");
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (currentPage < totalPages - 2) pages.push("...");
+    pages.push(totalPages);
+  }
+
+  const base = "h-9 min-w-[36px] px-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center";
+  const active = "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 shadow-sm";
+  const inactive = "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700";
+  const disabled = "opacity-40 cursor-not-allowed";
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={() => onChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`${base} ${currentPage === 1 ? `${inactive} ${disabled}` : inactive}`}
+      >
+        <HiChevronLeft className="w-4 h-4" />
+      </button>
+      {pages.map((page, i) =>
+        page === "..." ? (
+          <span key={`e${i}`} className="px-1 text-slate-400 text-sm select-none">…</span>
+        ) : (
+          <button
+            key={page}
+            onClick={() => onChange(page)}
+            className={`${base} ${page === currentPage ? active : inactive}`}
+          >
+            {page}
+          </button>
+        )
+      )}
+      <button
+        onClick={() => onChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`${base} ${currentPage === totalPages ? `${inactive} ${disabled}` : inactive}`}
+      >
+        <HiChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+// ── AVATAR + NOMBRE (reemplaza User de NextUI) ────────────────────────────────
+function ClienteUser({ nombre, numeroPredio, id }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-sm flex items-center justify-center shrink-0">
+        <span className="text-sm font-bold text-slate-600 dark:text-zinc-300">
+          {nombre?.charAt(0)?.toUpperCase() || "C"}
+        </span>
+      </div>
+      <div className="flex flex-col">
+        <span className="font-bold text-sm text-slate-800 dark:text-zinc-100 leading-tight">{nombre}</span>
+        <span className="font-medium text-[11px] text-slate-500">
+          {numeroPredio && numeroPredio !== "-" ? `Predio #${numeroPredio} · ID: ${id}` : `ID: ${id}`}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const TabCobranzaCliente = () => {
   const { fetchClientes } = useClientes();
@@ -724,11 +795,6 @@ const TabCobranzaCliente = () => {
   const isLoading = loadingClientes || loadingFacturas || loadingPagos || loadingPagosHistorial;
   const hasActiveFilters = search || rowsPerPage !== 10 || filtroRanking !== "deuda_desc";
 
-  const selectClassNames = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
-    value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
-  };
-
   return (
     <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500">
       
@@ -747,22 +813,22 @@ const TabCobranzaCliente = () => {
         </div>
 
         <div className="w-full md:w-auto flex items-center justify-end gap-3">
-          <Button
-            className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl px-5 h-[44px] shadow-sm"
-            startContent={<HiPrinter className="text-lg" />}
-            onPress={handleImprimirMayoresDeudores}
-            isLoading={loadingImprimirDeudores}
+          <button
+            onClick={handleImprimirMayoresDeudores}
+            disabled={loadingImprimirDeudores}
+            className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl px-5 h-[44px] shadow-sm flex items-center gap-2 transition-colors disabled:opacity-60"
           >
+            {loadingImprimirDeudores ? <LoadingSpinner className="w-4 h-4" /> : <HiPrinter className="text-lg" />}
             Imprimir Deudores
-          </Button>
+          </button>
 
-          <Button
-            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[44px] shadow-sm"
-            startContent={<HiCalculator className="text-lg" />}
-            onPress={abrirModalSeleccionPeriodoRapido}
+          <button
+            onClick={abrirModalSeleccionPeriodoRapido}
+            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-800 dark:hover:bg-zinc-100"
           >
+            <HiCalculator className="text-lg" />
             Modo Rápido
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -829,58 +895,35 @@ const TabCobranzaCliente = () => {
               )}
             </div>
 
-            <div className="lg:col-span-3">
-              <Select
+            <div className="lg:col-span-5">
+              <select
+                value={filtroRanking}
+                onChange={(e) => setFiltroRanking(e.target.value)}
                 aria-label="Ranking de clientes"
-                selectedKeys={[filtroRanking]}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] || "deuda_desc";
-                  setFiltroRanking(String(value));
-                }}
-                variant="flat"
-                classNames={selectClassNames}
+                className={SELECT_CLS}
               >
-                <SelectItem key="deuda_desc" value="deuda_desc">Más deuda primero</SelectItem>
-                <SelectItem key="deuda_asc" value="deuda_asc">Menos deuda primero</SelectItem>
-                <SelectItem key="vencidas_desc" value="vencidas_desc">Más facturas vencidas</SelectItem>
-                <SelectItem key="pagadas_desc" value="pagadas_desc">Más facturas pagadas</SelectItem>
-                <SelectItem key="predio_asc" value="predio_asc">Número de predio</SelectItem>
-                <SelectItem key="nombre_asc" value="nombre_asc">Orden alfabético</SelectItem>
-              </Select>
-            </div>
-
-            <div className="lg:col-span-2">
-              <Select
-                aria-label="Clientes por página"
-                selectedKeys={[String(rowsPerPage)]}
-                onSelectionChange={(keys) => {
-                  const value = Number(Array.from(keys)[0] || 10);
-                  setRowsPerPage(value);
-                }}
-                variant="flat"
-                classNames={selectClassNames}
-              >
-                <SelectItem key="10" value="10">10 clientes</SelectItem>
-                <SelectItem key="20" value="20">20 clientes</SelectItem>
-                <SelectItem key="30" value="30">30 clientes</SelectItem>
-                <SelectItem key="50" value="50">50 clientes</SelectItem>
-              </Select>
+                <option value="deuda_desc">Más deuda primero</option>
+                <option value="deuda_asc">Menos deuda primero</option>
+                <option value="vencidas_desc">Más facturas vencidas</option>
+                <option value="pagadas_desc">Más facturas pagadas</option>
+                <option value="predio_asc">Número de predio</option>
+                <option value="nombre_asc">Orden alfabético</option>
+              </select>
             </div>
 
             <div className="lg:col-span-2 flex justify-end">
               {hasActiveFilters ? (
-                <Button
-                  variant="flat"
-                  onPress={() => {
+                <button
+                  onClick={() => {
                     setSearch("");
                     setRowsPerPage(10);
                     setFiltroRanking("deuda_desc");
                   }}
-                  className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl"
-                  startContent={<HiFilter className="text-lg" />}
+                  className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors"
                 >
+                  <HiFilter className="text-lg" />
                   Limpiar
-                </Button>
+                </button>
               ) : (
                 <div className="w-full h-[52px]" />
               )}
@@ -888,158 +931,165 @@ const TabCobranzaCliente = () => {
           </div>
         </div>
 
-        {/* Sub-Header Paginación */}
+        {/* Sub-header paginación */}
         <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-            Mostrando <span className="text-slate-700 dark:text-zinc-200">{clientesTablaOrdenada.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{clientesPagination.total || 0}</span> clientes
+            Mostrando <span className="text-slate-700 dark:text-zinc-200">{clientesTablaPaginada.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{clientesPagination.total || 0}</span> clientes
           </span>
-        </div>
-
-        {/* Tabla */}
-        <div className="w-full overflow-x-auto bg-white dark:bg-zinc-950">
-          <Table
-            aria-label="Clientes para cobranza"
-            removeWrapper
-            classNames={{
-              base: "min-h-[420px]",
-              table: "min-w-full",
-              th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4 px-6",
-              td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4 px-6",
-              tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
-            }}
-          >
-            <TableHeader>
-              <TableColumn>CLIENTE</TableColumn>
-              <TableColumn>CONTACTO</TableColumn>
-              <TableColumn>FACTURAS (HISTORIAL)</TableColumn>
-              <TableColumn>PENDIENTES</TableColumn>
-              <TableColumn>DEUDA TOTAL</TableColumn>
-              <TableColumn align="end">ACCIONES</TableColumn>
-            </TableHeader>
-            <TableBody
-              items={clientesTablaPaginada}
-              isLoading={isLoading}
-              loadingContent={<Spinner color="default" />}
-              emptyContent={
-                <div className="flex flex-col items-center justify-center gap-2 py-12 text-slate-400 dark:text-zinc-500">
-                  <HiUserGroup className="w-12 h-12 opacity-20 mb-2" />
-                  <p className="font-bold">No hay clientes para el filtro seleccionado</p>
-                </div>
-              }
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
+              Filas por página:
+            </span>
+            <select
+              value={String(rowsPerPage)}
+              onChange={(e) => setRowsPerPage(Number(e.target.value))}
+              aria-label="Clientes por página"
+              className="h-[36px] px-3 text-sm font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-none appearance-none cursor-pointer w-20"
             >
-              {(cliente) => (
-                <TableRow key={cliente.cliente_id}>
-                  <TableCell>
-                    <User
-                      name={<span className="font-bold text-sm text-slate-800 dark:text-zinc-100">{cliente.cliente_nombre}</span>}
-                      description={<span className="font-medium text-[11px] text-slate-500">{cliente.numero_predio ? `Predio #${cliente.numero_predio} · ID: ${cliente.cliente_id}` : `ID: ${cliente.cliente_id}`}</span>}
-                      avatarProps={{
-                        name: cliente.cliente_nombre?.charAt(0) || "C",
-                        size: "sm",
-                        className: "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold border border-slate-200 dark:border-zinc-700 shadow-sm"
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1.5 text-xs text-slate-600 dark:text-zinc-300 max-w-[220px]">
-                      {cliente.telefono ? (
-                        <div className="flex items-center gap-2 font-semibold">
-                          <HiPhone className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{cliente.telefono}</span>
-                        </div>
-                      ) : null}
-                      {cliente.correo && cliente.correo !== "-" ? (
-                        <div className="flex items-center gap-2">
-                          <HiMail className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="truncate">{cliente.correo}</span>
-                        </div>
-                      ) : null}
-                      {cliente.direccion && cliente.direccion !== "-" ? (
-                        <div className="flex items-center gap-2">
-                          <HiLocationMarker className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate text-slate-500 dark:text-zinc-400">{cliente.direccion}</span>
-                        </div>
-                      ) : null}
-                      {!cliente.telefono && (!cliente.correo || cliente.correo === "-") && (!cliente.direccion || cliente.direccion === "-") && (
-                        <span className="italic text-slate-400">Sin contacto</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1.5">
-                      <Chip size="sm" variant="flat" className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold text-[10px] uppercase tracking-widest px-1">
-                        {cliente.total_facturas} en total
-                      </Chip>
-                      <div className="flex gap-3 text-[10px] font-bold uppercase tracking-widest mt-1">
-                        <span className="text-emerald-600 dark:text-emerald-400">PAGADAS: {cliente.facturas_pagadas}</span>
-                        <span className="text-rose-600 dark:text-rose-400">VENCIDAS: {cliente.facturas_vencidas}</span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1.5 items-start">
-                      <Chip 
-                        size="sm" 
-                        variant="flat" 
-                        className={`font-bold text-[10px] uppercase tracking-widest px-1 h-6 ${cliente.facturas_pendientes > 0 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}
-                      >
-                        {cliente.facturas_pendientes} Pendientes
-                      </Chip>
-                      <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
-                        {cliente.factura_mas_antigua_pendiente ? `Más Antigua: #${cliente.factura_mas_antigua_pendiente.id}` : "Sin deuda pendiente"}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`font-black text-lg ${cliente.deuda_total > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                      ${cliente.deuda_total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="flat"
-                        className="bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors rounded-lg"
-                        onPress={() => abrirDetalleCliente(cliente)}
-                        title="Ver Detalle"
-                      >
-                        <HiEye className="w-4 h-4" />
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="flat"
-                        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 font-bold rounded-lg px-3"
-                        startContent={<HiCalculator className="w-4 h-4" />}
-                        onPress={() => abrirModalCobro(cliente)}
-                        isDisabled={cliente.deuda_total <= 0}
-                      >
-                        Cobrar
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              {["10", "20", "30", "50"].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Paginación Inferior */}
+        {/* Tabla nativa */}
+        <div className="w-full overflow-x-auto bg-white dark:bg-zinc-950">
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-zinc-800">
+                {["CLIENTE", "CONTACTO", "FACTURAS (HISTORIAL)", "PENDIENTES", "DEUDA TOTAL", "ACCIONES"].map((col, i, arr) => (
+                  <th
+                    key={col}
+                    className={`py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-transparent whitespace-nowrap ${i === arr.length - 1 ? "text-right" : "text-left"}`}
+                  >
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading && clientesTablaPaginada.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <LoadingSpinner className="w-8 h-8" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 animate-pulse">
+                        Cargando cobranza...
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : clientesTablaPaginada.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <HiUserGroup className="w-12 h-12 opacity-20 mb-2 text-slate-400 dark:text-zinc-500" />
+                      <p className="font-bold text-sm text-slate-600 dark:text-zinc-300">No hay clientes para el filtro seleccionado</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                clientesTablaPaginada.map((cliente) => (
+                  <tr
+                    key={cliente.cliente_id}
+                    className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors"
+                  >
+                    <td className="py-4 px-6">
+                      <ClienteUser
+                        nombre={cliente.cliente_nombre}
+                        numeroPredio={cliente.numero_predio}
+                        id={cliente.cliente_id}
+                      />
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="space-y-1.5 text-xs text-slate-600 dark:text-zinc-300 max-w-[220px]">
+                        {cliente.telefono && cliente.telefono !== "-" ? (
+                          <div className="flex items-center gap-2 font-semibold">
+                            <HiPhone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{cliente.telefono}</span>
+                          </div>
+                        ) : null}
+                        {cliente.correo && cliente.correo !== "-" ? (
+                          <div className="flex items-center gap-2">
+                            <HiMail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate">{cliente.correo}</span>
+                          </div>
+                        ) : null}
+                        {cliente.direccion && cliente.direccion !== "-" ? (
+                          <div className="flex items-center gap-2">
+                            <HiLocationMarker className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate text-slate-500 dark:text-zinc-400">{cliente.direccion}</span>
+                          </div>
+                        ) : null}
+                        {(!cliente.telefono || cliente.telefono === "-") && (!cliente.correo || cliente.correo === "-") && (!cliente.direccion || cliente.direccion === "-") && (
+                          <span className="italic text-slate-400">Sin contacto</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="inline-flex items-center w-fit bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-md">
+                          {cliente.total_facturas} en total
+                        </span>
+                        <div className="flex gap-3 text-[10px] font-bold uppercase tracking-widest mt-1">
+                          <span className="text-emerald-600 dark:text-emerald-400">PAGADAS: {cliente.facturas_pagadas}</span>
+                          <span className="text-rose-600 dark:text-rose-400">VENCIDAS: {cliente.facturas_vencidas}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-1.5 items-start">
+                        <span className={`inline-flex items-center font-bold text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-md ${cliente.facturas_pendientes > 0 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}>
+                          {cliente.facturas_pendientes} Pendientes
+                        </span>
+                        <div className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
+                          {cliente.factura_mas_antigua_pendiente ? `Más Antigua: #${cliente.factura_mas_antigua_pendiente.id}` : "Sin deuda pendiente"}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`font-black text-lg ${cliente.deuda_total > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                        ${cliente.deuda_total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => abrirDetalleCliente(cliente)}
+                          title="Ver Detalle"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors"
+                        >
+                          <HiEye className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => abrirModalCobro(cliente)}
+                          disabled={cliente.deuda_total <= 0}
+                          className="h-8 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 font-bold rounded-lg px-3 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <HiCalculator className="w-4 h-4" />
+                          Cobrar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Paginación inferior */}
         {totalPages > 1 && (
           <div className="flex justify-between items-center px-6 py-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-900/40">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
               Página {clientesPagination.page || currentPage} de {Math.max(1, clientesPagination.totalPages || 1)}
             </span>
-            <Pagination
-              total={Math.max(1, clientesPagination.totalPages || 1)}
-              page={currentPage}
+            <SimplePagination
+              currentPage={currentPage}
+              totalPages={Math.max(1, clientesPagination.totalPages || 1)}
               onChange={setCurrentPage}
-              showControls
-              color="default"
-              variant="flat"
-              classNames={{ cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold shadow-sm" }}
             />
           </div>
         )}
