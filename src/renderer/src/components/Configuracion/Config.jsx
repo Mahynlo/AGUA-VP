@@ -39,14 +39,15 @@ export function Config() {
         }
     }, [isOpen]);
 
-    // Escuchar cambios globales (Keyboard Shortcuts)
+    // Escuchar cambios globales (atajos de teclado / menú)
     useEffect(() => {
-        // Suscribirse a cambios
-        if (window.api.onZoomLevelChanged) {
-            window.api.onZoomLevelChanged((newLevel) => {
-                setZoomLevel(Math.round(newLevel * 100));
-            });
-        }
+        if (!window.api.onZoomLevelChanged) return;
+        const unsubscribe = window.api.onZoomLevelChanged((newLevel) => {
+            setZoomLevel(Math.round(newLevel * 100));
+        });
+        return () => {
+            if (typeof unsubscribe === "function") unsubscribe();
+        };
     }, []);
 
     const handleZoomIn = async () => {
