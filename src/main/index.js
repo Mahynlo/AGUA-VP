@@ -9,6 +9,7 @@ import initUpdateManager from './managers/updateManager.js'
 import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
 import { startApiServer, stopApiServer } from './managers/apiManager.js'
 import { setupWindowState } from './windowState.js'
+import { zoomIn, zoomOut, zoomReset, restoreZoom } from './managers/zoomManager.js'
 import contextMenu from 'electron-context-menu';
 
 // Configurar menú contextual en Español
@@ -38,10 +39,12 @@ const createMenu = () => {
         { role: 'reload' },
         { role: 'forceReload' },
         { type: 'separator' },
-        { role: 'resetZoom', accelerator: 'CommandOrControl+0' },
-        { role: 'zoomIn', accelerator: 'CommandOrControl+Plus' }, // Algunos teclados requieren Shift
-        { label: 'Zoom In (Alt)', accelerator: 'CommandOrControl+=', role: 'zoomIn' }, // Alternativa sin Shift
-        { role: 'zoomOut', accelerator: 'CommandOrControl+-' },
+        // Usamos click + zoomManager (en vez de los roles nativos) para compartir
+        // límites (50%–300%), persistencia y notificación con el panel de Configuración.
+        { label: 'Restablecer Zoom', accelerator: 'CommandOrControl+0', click: (_, win) => zoomReset(win || BrowserWindow.getFocusedWindow()) },
+        { label: 'Acercar', accelerator: 'CommandOrControl+Plus', click: (_, win) => zoomIn(win || BrowserWindow.getFocusedWindow()) }, // Algunos teclados requieren Shift
+        { label: 'Acercar (Alt)', accelerator: 'CommandOrControl+=', click: (_, win) => zoomIn(win || BrowserWindow.getFocusedWindow()) }, // Alternativa sin Shift
+        { label: 'Alejar', accelerator: 'CommandOrControl+-', click: (_, win) => zoomOut(win || BrowserWindow.getFocusedWindow()) },
         { type: 'separator' },
         { role: 'togglefullscreen' }
       ]
@@ -100,6 +103,12 @@ function createWindow() {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
+  })
+
+  // Restaurar la escala visual guardada tras cada carga (Electron reinicia
+  // el zoom a 100% en cada navegación/recarga).
+  mainWindow.webContents.on('did-finish-load', () => {
+    restoreZoom(mainWindow);
   })
 
   // HMR for renderer base on electron-vite cli.

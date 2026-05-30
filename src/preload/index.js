@@ -178,7 +178,12 @@ const api = {
   zoomOut: () => ipcRenderer.invoke('zoom-out'),
   zoomReset: () => ipcRenderer.invoke('zoom-reset'),
   getZoomLevel: () => ipcRenderer.invoke('get-zoom-level'),
-  onZoomLevelChanged: (callback) => ipcRenderer.on('zoom-changed', (event, level) => callback(level)),
+  onZoomLevelChanged: (callback) => {
+    const listener = (event, level) => callback(level);
+    ipcRenderer.on('zoom-changed', listener);
+    // Devolver función para desuscribirse y evitar fugas / listeners duplicados.
+    return () => ipcRenderer.removeListener('zoom-changed', listener);
+  },
 
   // Exportar archivos nativamente
   saveFile: (data) => ipcRenderer.invoke('save-file-dialog', data),

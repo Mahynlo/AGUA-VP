@@ -5,6 +5,7 @@ import fs from 'fs';
 import { execFile } from 'child_process';
 import { pathToFileURL, fileURLToPath } from 'url';
 import ExcelJS from 'exceljs';
+import { zoomIn, zoomOut, zoomReset, getZoom } from '../managers/zoomManager.js';
 
 const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
@@ -90,44 +91,15 @@ export default function IpcHandlers () {
     };
 
     // === ZOOM HANDLERS ===
-    ipcMain.handle('zoom-in', (event) => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        if (win) {
-            const current = win.webContents.getZoomFactor();
-            const newFactor = Math.min(current + 0.1, 3.0);
-            win.webContents.setZoomFactor(newFactor);
-            win.webContents.send('zoom-changed', newFactor); // Notificar cambio
-            return newFactor;
-        }
-        return 1;
-    });
+    // La lógica (clamp, persistencia y notificación) vive en zoomManager,
+    // compartida con los atajos de teclado del menú nativo.
+    ipcMain.handle('zoom-in', (event) => zoomIn(BrowserWindow.fromWebContents(event.sender)));
 
-    ipcMain.handle('zoom-out', (event) => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        if (win) {
-            const current = win.webContents.getZoomFactor();
-            const newFactor = Math.max(current - 0.1, 0.5);
-            win.webContents.setZoomFactor(newFactor);
-            win.webContents.send('zoom-changed', newFactor); // Notificar cambio
-            return newFactor;
-        }
-        return 1;
-    });
+    ipcMain.handle('zoom-out', (event) => zoomOut(BrowserWindow.fromWebContents(event.sender)));
 
-    ipcMain.handle('zoom-reset', (event) => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        if (win) {
-            win.webContents.setZoomFactor(1.0);
-            win.webContents.send('zoom-changed', 1.0); // Notificar cambio
-            return 1.0;
-        }
-        return 1;
-    });
+    ipcMain.handle('zoom-reset', (event) => zoomReset(BrowserWindow.fromWebContents(event.sender)));
 
-    ipcMain.handle('get-zoom-level', (event) => {
-        const win = BrowserWindow.fromWebContents(event.sender);
-        return win ? win.webContents.getZoomFactor() : 1;
-    });
+    ipcMain.handle('get-zoom-level', (event) => getZoom(BrowserWindow.fromWebContents(event.sender)));
 
     ipcMain.handle('get-app-version', () => {
         return app.getVersion();
