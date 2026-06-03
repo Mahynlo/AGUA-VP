@@ -1,6 +1,6 @@
 {
   "name": "aguavp",
-  "version": "1.2.687",
+  "version": "1.2.688",
   "description": "Sistema de gestion de Agua Potable",
   "main": "./out/main/index.js",
   "author": "AguaVP-MHNL",
