@@ -57,7 +57,7 @@ const ClientesList = ({
               color={todosSeleccionados ? "default" : "primary"}
               variant={todosSeleccionados ? "flat" : "solid"}
               onPress={onToggleTodos}
-              className={`font-bold ${todosSeleccionados ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300' : 'shadow-md shadow-blue-500/30 text-white'}`}
+              className={`font-bold ${todosSeleccionados ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300' : 'shadow-sm text-white'}`}
             >
               {todosSeleccionados ? 'Deseleccionar' : 'Seleccionar Todos'}
             </Button>
@@ -171,13 +171,13 @@ const ClientesList = ({
 
                     {/* Right: Chips de Montos */}
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <Chip color="success" variant="flat" size="sm" className="font-black text-emerald-700 dark:text-emerald-400 px-1 bg-emerald-50 dark:bg-emerald-900/20">
+                      <Chip color="success" variant="flat" size="sm" className="font-black text-emerald-700 dark:text-emerald-400 px-1 bg-emerald-500/10">
                         ${factura.total?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                       </Chip>
                       
                       {factura.saldo_pendiente > 0 && (
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded-md">
-                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                           Adeudo: ${factura.saldo_pendiente?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                         </div>
                       )}

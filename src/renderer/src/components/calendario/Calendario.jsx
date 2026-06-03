@@ -1,19 +1,90 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardBody, Button, Chip } from "@nextui-org/react";
 import { HiChevronLeft, HiChevronRight, HiCalendar, HiClock } from "react-icons/hi";
 import { useTarifas } from "../../context/TarifasContext";
-import { useFacturas } from "../../context/FacturasContext";
 import { obtenerFeriadosMexico, esDiaHabil } from "../../utils/diasHabiles";
+import { formatearPeriodo } from "../../utils/periodoUtils";
 
 const CalendarComponent = () => {
     const [selectedDate, setSelectedDate] = useState("");
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [diasGracia, setDiasGracia] = useState(0);
+    // Fechas clave por período (incluye períodos anteriores), no solo el actual.
+    const [facturasPeriodos, setFacturasPeriodos] = useState([]);
     const { tarifas } = useTarifas();
-    const { facturas } = useFacturas();
+
+    // Cuántos meses hacia atrás se cargan en el calendario.
+    const MESES_HISTORIAL = 12;
+
+    // Días de gracia configurados para cortes (vencimiento + gracia = inicio de corte)
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token || !window.api?.deudores?.fetchConfiguracion) return;
+        window.api.deudores
+            .fetchConfiguracion(token)
+            .then((cfg) => {
+                if (cfg && Number.isFinite(Number(cfg.dias_gracia))) {
+                    setDiasGracia(Number(cfg.dias_gracia));
+                }
+            })
+            .catch(() => { /* config opcional: si falla, corte = vencimiento */ });
+    }, []);
+
+    // Carga las fechas clave (emisión, lectura, vencimiento) de los últimos
+    // MESES_HISTORIAL períodos. Pide 1 factura por período como representante y
+    // usa pagination.total para el conteo, manteniendo la transferencia mínima.
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token || !window.api?.fetchFacturas) return;
+        let cancelado = false;
+
+        const cargar = async () => {
+            const base = new Date();
+            const periodos = [];
+            for (let i = 0; i < MESES_HISTORIAL; i++) {
+                const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+                periodos.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+            }
+
+            const resultados = await Promise.all(
+                periodos.map(async (periodo) => {
+                    try {
+                        const resp = await window.api.fetchFacturas(token, { periodo, page: 1, limit: 1 });
+                        const lista = Array.isArray(resp) ? resp : (resp?.facturas || []);
+                        if (!lista.length) return null;
+                        const f = lista[0];
+                        return {
+                            periodo,
+                            count: resp?.pagination?.total ?? lista.length,
+                            fechaEmision: f.fecha_emision,
+                            fechaLectura: f.fecha_lectura,
+                            fechaVencimiento: f.fecha_vencimiento,
+                        };
+                    } catch {
+                        return null;
+                    }
+                })
+            );
+
+            if (!cancelado) setFacturasPeriodos(resultados.filter(Boolean));
+        };
+
+        cargar();
+        return () => { cancelado = true; };
+    }, []);
 
     const extractIsoDate = (value) => {
         if (!value || typeof value !== "string") return null;
         return value.length >= 10 ? value.substring(0, 10) : null;
+    };
+
+    // Suma días a una fecha ISO (YYYY-MM-DD) y devuelve otra fecha ISO
+    const addDaysIso = (iso, days) => {
+        if (!iso) return null;
+        const [y, m, d] = iso.split("-").map(Number);
+        const dt = new Date(y, m - 1, d);
+        dt.setDate(dt.getDate() + days);
+        return formatDateString(dt);
     };
 
     const handleDateChange = (dateString) => {
@@ -23,46 +94,53 @@ const CalendarComponent = () => {
     const events = useMemo(() => {
         const evts = {};
 
-        const upsertGroupedEvent = (fecha, tipo, eventFactory) => {
+        const pushEvent = (fecha, evento) => {
+            if (!fecha) return;
             if (!evts[fecha]) evts[fecha] = [];
-            const existing = evts[fecha].find(e => e.tipo === tipo);
-            if (existing) {
-                existing.count += 1;
-                existing.title = `${existing.count} ${existing.labelBase}`;
-                return;
-            }
-            evts[fecha].push(eventFactory());
+            evts[fecha].push(evento);
         };
 
-        // Emisiones de facturas agrupadas por fecha
-        facturas.forEach((f) => {
-            const fechaEmision = extractIsoDate(f.fecha_emision);
-            if (!fechaEmision) return;
+        // Fechas clave del ciclo de facturación por período (incluye anteriores):
+        // emisión, toma de lectura, vencimiento de recibos e inicio de corte.
+        facturasPeriodos.forEach((info) => {
+            const etiqueta = formatearPeriodo(info.periodo) || info.periodo;
+            const plural = info.count === 1 ? 'recibo' : 'recibos';
 
-            upsertGroupedEvent(fechaEmision, 'emision', () => ({
-                title: '1 factura emitida',
-                descripcion: 'Fecha de emisión de facturas',
+            // Emisión de recibos del período
+            pushEvent(extractIsoDate(info.fechaEmision), {
+                title: `Emisión de recibos — ${etiqueta}`,
+                descripcion: `${info.count} ${plural} emitidos en el período.`,
                 tipo: 'emision',
                 color: 'secondary',
-                count: 1,
-                labelBase: 'facturas emitidas',
-            }));
-        });
+            });
 
-        // Vencimientos de facturas pendientes agrupados por fecha
-        facturas.forEach((f) => {
-            if (f.fecha_vencimiento && f.saldo_pendiente > 0 && f.estado !== "Pagado") {
-                const fecha = extractIsoDate(f.fecha_vencimiento);
-                if (!fecha) return;
+            // Toma de lectura del período
+            pushEvent(extractIsoDate(info.fechaLectura), {
+                title: `Toma de lectura — ${etiqueta}`,
+                descripcion: `Lectura de medidores del período. ${info.count} ${plural} en este ciclo.`,
+                tipo: 'lectura',
+                color: 'success',
+            });
 
-                upsertGroupedEvent(fecha, 'vencimiento', () => ({
-                    title: '1 recibo por vencer',
-                    descripcion: 'Fecha límite de pago del período actual',
+            // Vencimiento de los recibos del período
+            const fechaVencimiento = extractIsoDate(info.fechaVencimiento);
+            if (fechaVencimiento) {
+                pushEvent(fechaVencimiento, {
+                    title: `Vencimiento de recibos — ${etiqueta}`,
+                    descripcion: `Fecha límite de pago de los ${info.count} ${plural} del período.`,
                     tipo: 'vencimiento',
                     color: 'primary',
-                    count: 1,
-                    labelBase: 'recibos por vencer',
-                }));
+                });
+
+                // Inicio de corte = vencimiento + días de gracia
+                pushEvent(addDaysIso(fechaVencimiento, diasGracia), {
+                    title: `Inicio de corte — ${etiqueta}`,
+                    descripcion: diasGracia > 0
+                        ? `Inicia el proceso de corte para recibos no pagados (vencimiento + ${diasGracia} día${diasGracia === 1 ? '' : 's'} de gracia).`
+                        : 'Inicia el proceso de corte para los recibos no pagados del período.',
+                    tipo: 'corte',
+                    color: 'danger',
+                });
             }
         });
 
@@ -110,7 +188,7 @@ const CalendarComponent = () => {
         });
 
         return evts;
-    }, [facturas, tarifas, currentMonth]);
+    }, [facturasPeriodos, tarifas, currentMonth, diasGracia]);
 
     const selectedDateEvents = useMemo(() => {
         if (!selectedDate) return [];
@@ -230,7 +308,7 @@ const CalendarComponent = () => {
                                 Calendario General
                             </h2>
                             <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
-                                Emisiones, vencimientos y días hábiles
+                                Lecturas, vencimientos, cortes y días hábiles
                             </p>
                         </div>
                     </div>
@@ -314,8 +392,11 @@ const CalendarComponent = () => {
                                                     className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${
                                                         isSelected
                                                             ? "bg-white/90"
-                                                            : evt.color === 'danger' ? "bg-red-500"
-                                                            : evt.color === 'primary' ? "bg-blue-500"
+                                                            : evt.tipo === 'feriado' ? "bg-red-500"
+                                                            : evt.tipo === 'corte' ? "bg-rose-600"
+                                                            : evt.tipo === 'vencimiento' ? "bg-blue-500"
+                                                            : evt.tipo === 'lectura' ? "bg-teal-500"
+                                                            : evt.tipo === 'emision' ? "bg-violet-500"
                                                             : "bg-orange-500"
                                                     }`}
                                                 ></span>
@@ -334,7 +415,7 @@ const CalendarComponent = () => {
 
             {/* ---------------- PANEL DE EVENTOS LATERAL ---------------- */}
             {/* CAMBIO CLAVE: En móviles le damos min-h fijo, en desktop (lg) recupera el h-full */}
-            <Card className="w-full min-h-[300px] lg:min-h-0 lg:w-72 xl:w-80 lg:h-full border-none bg-white dark:bg-zinc-900 shadow-sm border border-slate-200 dark:border-zinc-800 rounded-2xl flex-shrink-0">
+            <Card className="w-full min-h-[300px] lg:min-h-0 lg:w-72 xl:w-80 border-none bg-white dark:bg-zinc-900 shadow-sm border border-slate-200 dark:border-zinc-800 rounded-2xl flex-shrink-0">
                 <CardBody className="p-4 sm:p-5 h-full flex flex-col">
                     
                     <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-zinc-800 flex-shrink-0">
@@ -356,7 +437,7 @@ const CalendarComponent = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                    <div className="overflow-y-auto pr-1 space-y-3 custom-scrollbar min-h-[180px] max-h-[420px]">
                         {selectedDate && selectedDateEvents.length > 0 ? (
                             selectedDateEvents.map((event, index) => (
                                 <div 
@@ -365,15 +446,19 @@ const CalendarComponent = () => {
                                         p-3 sm:p-4 rounded-xl border transition-all duration-200
                                         ${event.tipo === 'feriado'
                                             ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'
-                                            : event.tipo === 'vencimiento'
-                                                ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30'
-                                                : event.tipo === 'emision'
-                                                    ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/30'
-                                                    : event.tipo === 'habil'
-                                                        ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
-                                                        : event.tipo === 'inhabil'
-                                                            ? 'bg-slate-100/80 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700'
-                                                            : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'
+                                            : event.tipo === 'corte'
+                                                ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30'
+                                                : event.tipo === 'vencimiento'
+                                                    ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30'
+                                                    : event.tipo === 'lectura'
+                                                        ? 'bg-teal-50/50 dark:bg-teal-900/10 border-teal-100 dark:border-teal-900/30'
+                                                        : event.tipo === 'emision'
+                                                            ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/30'
+                                                            : event.tipo === 'habil'
+                                                                ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
+                                                                : event.tipo === 'inhabil'
+                                                                    ? 'bg-slate-100/80 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700'
+                                                                    : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'
                                         }
                                     `}
                                 >
@@ -384,6 +469,8 @@ const CalendarComponent = () => {
                                     </div>
                                     <Chip size="sm" color={event.color} variant="flat" className="h-4 px-1 text-[9px] font-semibold uppercase mb-2">
                                         {event.tipo === 'vencimiento' ? 'Vencimiento'
+                                            : event.tipo === 'corte' ? 'Corte'
+                                            : event.tipo === 'lectura' ? 'Lectura'
                                             : event.tipo === 'feriado' ? 'Feriado'
                                             : event.tipo === 'emision' ? 'Emisión'
                                             : event.tipo === 'habil' ? 'Hábil'

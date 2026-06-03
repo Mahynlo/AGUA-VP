@@ -20,21 +20,23 @@ const TabReportes = () => {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [printUrl, setPrintUrl] = useState(null);
   const [modoPdf, setModoPdf] = useState(null);   // 'vista-previa' | 'imprimir' | null
-  const [loadingImprimir, setLoadingImprimir] = useState(false);
+
+  // Acción en curso — cubre TODA la operación async de cada botón.
+  // 'preview-lecturas' | 'print-lecturas' | 'preview-padron' | 'print-padron' | 'export' | null
+  const [accion, setAccion] = useState(null);
+  const procesando = accion !== null;
 
   // --- LECTURAS: Opciones de impresión ---
-  const [ordenLecturas, setOrdenLecturas] = useState("numero_predio"); 
-  const [ciudadLecturas, setCiudadLecturas] = useState("todas"); 
+  const [ordenLecturas, setOrdenLecturas] = useState("numero_predio");
+  const [ciudadLecturas, setCiudadLecturas] = useState("todas");
 
   // --- PADRÓN GENERAL ---
-  const [ordenPadron, setOrdenPadron] = useState("numero_predio"); 
-  const [agrupacion, setAgrupacion] = useState("ciudad"); 
-  const [loadingPadron, setLoadingPadron] = useState(false);
+  const [ordenPadron, setOrdenPadron] = useState("numero_predio");
+  const [agrupacion, setAgrupacion] = useState("ciudad");
 
   // --- EXPORTAR DATOS ---
-  const [modoExport, setModoExport] = useState("clientes"); 
-  const [formatoExport, setFormatoExport] = useState("xlsx"); 
-  const [loadingExport, setLoadingExport] = useState(false);
+  const [modoExport, setModoExport] = useState("clientes");
+  const [formatoExport, setFormatoExport] = useState("xlsx");
 
   React.useEffect(() => {
     if (periodo) {
@@ -73,7 +75,6 @@ const TabReportes = () => {
 
   // --- FUNCIONES PADRÓN GENERAL ---
   const getUrlPadron = async () => {
-    setLoadingPadron(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error("No hay token de sesión");
@@ -102,15 +103,14 @@ const TabReportes = () => {
       console.error("Error al preparar Padrón General:", err);
       alert("Error al cargar datos de clientes");
       return null;
-    } finally {
-      setLoadingPadron(false);
     }
   };
 
   const handlePreviewPadron = async () => {
-    const url = await getUrlPadron();
-    if (!url) return;
+    setAccion('preview-padron');
     try {
+      const url = await getUrlPadron();
+      if (!url) return;
       const response = await window.api.previewComponent(url);
       if (response && response.success && response.path) {
         setPrintUrl(url);
@@ -120,14 +120,16 @@ const TabReportes = () => {
     } catch (err) {
       console.error("Error generating padron preview:", err);
       alert("Error al generar vista previa del padrón");
+    } finally {
+      setAccion(null);
     }
   };
 
   const handlePrintPadron = async () => {
-    const url = await getUrlPadron();
-    if (!url) return;
-    setLoadingImprimir(true);
+    setAccion('print-padron');
     try {
+      const url = await getUrlPadron();
+      if (!url) return;
       const response = await window.api.previewComponent(url);
       if (response && response.success && response.path) {
         setPrintUrl(url);
@@ -138,7 +140,7 @@ const TabReportes = () => {
       console.error("Error preparing padron print:", err);
       alert("Error al preparar la impresión del padrón");
     } finally {
-      setLoadingImprimir(false);
+      setAccion(null);
     }
   };
 
@@ -164,7 +166,7 @@ const TabReportes = () => {
   };
 
   const handleExportar = async () => {
-    setLoadingExport(true);
+    setAccion('export');
     try {
       const token = localStorage.getItem('token');
       const today = new Date().toISOString().split('T')[0];
@@ -240,12 +242,13 @@ const TabReportes = () => {
       console.error("Error al exportar datos:", err);
       alert("Error al exportar datos. Revisa la consola para más detalles.");
     } finally {
-      setLoadingExport(false);
+      setAccion(null);
     }
   };
 
   const handlePreviewLecturas = async () => {
     if (lecturasData.length === 0) return;
+    setAccion('preview-lecturas');
     try {
       const url = await getUrlLecturas();
       const response = await window.api.previewComponent(url);
@@ -257,12 +260,14 @@ const TabReportes = () => {
     } catch (err) {
       console.error("Error generating preview:", err);
       alert("Error al generar vista previa");
+    } finally {
+      setAccion(null);
     }
   };
 
   const handlePrintLecturas = async () => {
     if (lecturasData.length === 0) return;
-    setLoadingImprimir(true);
+    setAccion('print-lecturas');
     try {
       const url = await getUrlLecturas();
       const response = await window.api.previewComponent(url);
@@ -275,7 +280,7 @@ const TabReportes = () => {
       console.error("Error preparing print:", err);
       alert("Error al preparar la impresión");
     } finally {
-      setLoadingImprimir(false);
+      setAccion(null);
     }
   };
 
@@ -404,22 +409,22 @@ const TabReportes = () => {
                   <Button
                     className="w-full font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 h-[52px] rounded-xl shadow-none"
                     onPress={handlePreviewLecturas}
-                    isLoading={loadingLecturas}
-                    isDisabled={loadingLecturas}
-                    startContent={!loadingLecturas && <HiEye className="text-lg" />}
+                    isLoading={accion === 'preview-lecturas'}
+                    isDisabled={procesando || loadingLecturas}
+                    startContent={accion !== 'preview-lecturas' && <HiEye className="text-lg" />}
                   >
-                    {loadingLecturas ? 'Generando...' : 'Vista Previa (PDF)'}
+                    {accion === 'preview-lecturas' ? 'Generando...' : 'Vista Previa (PDF)'}
                   </Button>
 
                   {/* Token 4: Botón Primario */}
                   <Button
                     className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm h-[52px]"
                     onPress={handlePrintLecturas}
-                    isLoading={loadingImprimir}
-                    isDisabled={loadingLecturas || loadingImprimir}
-                    startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
+                    isLoading={accion === 'print-lecturas'}
+                    isDisabled={procesando || loadingLecturas}
+                    startContent={accion !== 'print-lecturas' && <HiPrinter className="text-lg" />}
                   >
-                    {loadingImprimir ? 'Preparando...' : 'Imprimir'}
+                    {accion === 'print-lecturas' ? 'Preparando...' : 'Imprimir'}
                   </Button>
                 </div>
               ) : (
@@ -488,21 +493,21 @@ const TabReportes = () => {
           <Button
             className="w-full font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 h-[52px] rounded-xl shadow-none"
             onPress={handlePreviewPadron}
-            isLoading={loadingPadron}
-            isDisabled={loadingPadron}
-            startContent={!loadingPadron && <HiEye className="text-lg" />}
+            isLoading={accion === 'preview-padron'}
+            isDisabled={procesando}
+            startContent={accion !== 'preview-padron' && <HiEye className="text-lg" />}
           >
-            Vista Previa
+            {accion === 'preview-padron' ? 'Generando...' : 'Vista Previa'}
           </Button>
 
           <Button
             className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm h-[52px]"
             onPress={handlePrintPadron}
-            isLoading={loadingPadron || loadingImprimir}
-            isDisabled={loadingPadron || loadingImprimir}
-            startContent={!(loadingPadron || loadingImprimir) && <HiPrinter className="text-lg" />}
+            isLoading={accion === 'print-padron'}
+            isDisabled={procesando}
+            startContent={accion !== 'print-padron' && <HiPrinter className="text-lg" />}
           >
-            {loadingImprimir ? 'Preparando...' : 'Imprimir Padrón'}
+            {accion === 'print-padron' ? 'Preparando...' : 'Imprimir Padrón'}
           </Button>
         </div>
       </div>
@@ -554,11 +559,11 @@ const TabReportes = () => {
           <Button
             className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm h-[52px]"
             onPress={handleExportar}
-            isLoading={loadingExport}
-            isDisabled={loadingExport}
-            startContent={!loadingExport && <HiDownload className="text-lg" />}
+            isLoading={accion === 'export'}
+            isDisabled={procesando}
+            startContent={accion !== 'export' && <HiDownload className="text-lg" />}
           >
-            Generar Archivo
+            {accion === 'export' ? 'Generando...' : 'Generar Archivo'}
           </Button>
         </div>
 

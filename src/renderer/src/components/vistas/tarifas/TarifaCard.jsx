@@ -7,24 +7,53 @@ export default function TarifaCard({ tarifa }) {
   const tieneRangos = (tarifa.rangos?.length ?? 0) > 0;
 
   const hoy = new Date();
-  const fechaFin = new Date(tarifa.fecha_fin);
-  const fechaInicio = new Date(tarifa.fecha_inicio);
-  const esVigente = hoy >= fechaInicio && hoy <= fechaFin;
+  const fechaInicio = tarifa.fecha_inicio ? new Date(tarifa.fecha_inicio) : null;
+  const fechaFin = tarifa.fecha_fin ? new Date(tarifa.fecha_fin) : null;
 
-  const treintaDias = new Date();
-  treintaDias.setDate(treintaDias.getDate() + 30);
-  const vencePronto = fechaFin <= treintaDias && fechaFin >= hoy;
+  // Estado de la tarifa segun su periodo de vigencia.
+  // Casos: sin vencimiento (fecha_fin nula), programada (aun no inicia),
+  // vencida, por vencer (<=30 dias) o vigente.
+  const getEstado = () => {
+    if (fechaInicio && hoy < fechaInicio) return "programada";
+    if (!fechaFin) return "sin_vencimiento";
+    if (hoy > fechaFin) return "vencida";
+
+    const treintaDias = new Date();
+    treintaDias.setDate(treintaDias.getDate() + 30);
+    if (fechaFin <= treintaDias) return "por_vencer";
+
+    return "vigente";
+  };
+
+  const estado = getEstado();
+  const vencePronto = estado === "por_vencer";
 
   const getStatusStyles = () => {
-    if (!esVigente) return "bg-red-500/10 text-red-600 dark:text-red-400";
-    if (vencePronto) return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
-    return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+    switch (estado) {
+      case "vencida":
+        return "bg-red-500/10 text-red-600 dark:text-red-400";
+      case "por_vencer":
+        return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
+      case "programada":
+        return "bg-sky-500/10 text-sky-600 dark:text-sky-400";
+      default: // vigente | sin_vencimiento
+        return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+    }
   };
 
   const getStatusText = () => {
-    if (!esVigente) return "Vencida";
-    if (vencePronto) return "Por vencer";
-    return "Vigente";
+    switch (estado) {
+      case "vencida":
+        return "Vencida";
+      case "por_vencer":
+        return "Por vencer";
+      case "programada":
+        return "Programada";
+      case "sin_vencimiento":
+        return "Sin vencimiento";
+      default:
+        return "Vigente";
+    }
   };
 
   return (
