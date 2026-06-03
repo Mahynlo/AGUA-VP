@@ -117,7 +117,7 @@ const ListadoLecturas = ({
                     {loading ? (
                         <div className="flex flex-col justify-center items-center h-40 gap-4">
                             <Spinner size="md" color="primary" />
-                            <p className="text-sm font-bold text-slate-500 dark:text-zinc-400 animate-pulse">Cargando padrón...</p>
+                            <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">Cargando padrón...</p>
                         </div>
                     ) : 
                     
@@ -180,7 +180,7 @@ const ListadoLecturas = ({
                                             <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-widest">
                                                 Lec. Anterior
                                             </span>
-                                            <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg text-blue-700 dark:text-blue-400 font-mono font-bold text-sm">
+                                            <div className="flex items-center gap-1.5 bg-blue-500/10 px-2 py-1 rounded-lg text-blue-700 dark:text-blue-400 font-mono font-bold text-sm">
                                                 <IoWaterOutline className="text-blue-500" />
                                                 {lecturaAteriorValor}
                                             </div>
