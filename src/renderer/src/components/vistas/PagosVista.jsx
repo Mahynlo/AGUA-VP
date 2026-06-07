@@ -15,7 +15,7 @@ import { Tabs, Tab } from "@nextui-org/react";
 import TabFacturas from "./pagos/TabFacturas";
 import TabPagos from "./pagos/TabPagos";
 import TabEstadisticas from "./pagos/TabEstadisticas";
-import TabDeudores from "./pagos/TabDeudores";
+// import TabDeudores from "./pagos/TabDeudores"; // oculto temporalmente (sin probar)
 import TabCobranzaCliente from "./pagos/TabCobranzaCliente";
 import { useFacturas } from "../../context/FacturasContext";
 import { usePagos } from "../../context/PagosContext";
@@ -24,7 +24,9 @@ import { useDeudores } from "../../context/DeudoresContext";
 const PagosVista = () => {
   // Estado para la pestaña activa
   const [selectedTab, setSelectedTab] = useState(() => {
-    return localStorage.getItem("pagos_activeTab") || "cobranza";
+    const saved = localStorage.getItem("pagos_activeTab");
+    // El tab "deudores" está oculto temporalmente; si quedó guardado, caer a "cobranza".
+    return saved && saved !== "deudores" ? saved : "cobranza";
   });
 
   // Consumir contextos
@@ -268,7 +270,9 @@ const PagosVista = () => {
               </div>
             </Tab>
 
-            {/* TAB: DEUDORES */}
+            {/* TAB: DEUDORES — oculto temporalmente (implementación sin probar por completo).
+                Para reactivarlo: descomentar este bloque y quitar el guard de "deudores"
+                en el useState de selectedTab.
             <Tab
               key="deudores"
               title={
@@ -282,6 +286,7 @@ const PagosVista = () => {
                 <TabDeudores />
               </div>
             </Tab>
+            */}
 
             {/* TAB: FACTURAS */}
             <Tab

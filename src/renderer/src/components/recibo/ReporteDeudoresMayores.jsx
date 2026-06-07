@@ -269,10 +269,20 @@ const ReporteDeudoresMayores = () => {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           thead { display: table-header-group; }
           tr { page-break-inside: avoid; }
-          .reporte-deudores-wrap { width: 100% !important; max-width: 100% !important; }
+          .reporte-deudores-wrap { width: 100% !important; max-width: 100% !important; padding-bottom: 42px !important; }
           .reporte-deudores-table { width: 100% !important; table-layout: fixed !important; }
           .reporte-deudores-table th,
           .reporte-deudores-table td { box-sizing: border-box; overflow-wrap: anywhere; }
+          /* Pie fijo: se repite al final de CADA hoja impresa. */
+          .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            margin-top: 0 !important;
+            padding: 6px 4px;
+          }
         }
       `}</style>
 
@@ -421,6 +431,7 @@ const ReporteDeudoresMayores = () => {
           </table>
 
           <div
+            className="page-footer"
             style={{
               marginTop: "12px",
               paddingTop: "8px",
@@ -429,6 +440,7 @@ const ReporteDeudoresMayores = () => {
               justifyContent: "space-between",
               fontSize: "9px",
               color: "#9ca3af",
+              background: "#ffffff",
             }}
           >
             <span>Sistema AguaVP — Comisaría de Agua Potable Villa Pesqueira</span>

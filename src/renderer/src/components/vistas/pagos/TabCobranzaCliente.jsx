@@ -21,6 +21,7 @@ import { usePagos } from "../../../context/PagosContext";
 import { useFeedback } from "../../../context/FeedbackContext";
 import ModalPagoDistribuidoCliente from "./ModalPagoDistribuidoCliente";
 import ModalPagoRapido from "./ModalPagoRapido";
+import ModalLiquidacionTotal from "./ModalLiquidacionTotal";
 import ModalDetalleCobranzaCliente from "./ModalDetalleCobranzaCliente";
 import ModalSeleccionPeriodoRapido from "./ModalSeleccionPeriodoRapido";
 import ModalImprimir from "../impresion/components/ModalImprimir";
@@ -189,6 +190,7 @@ const TabCobranzaCliente = () => {
   const [filtroRanking, setFiltroRanking] = useState("deuda_desc");
   const [modalSeleccionPeriodoRapido, setModalSeleccionPeriodoRapido] = useState(false);
   const [modalPagoRapidoOpen, setModalPagoRapidoOpen] = useState(false);
+  const [modalLiquidacionTotalOpen, setModalLiquidacionTotalOpen] = useState(false);
   const [periodoPagoRapido, setPeriodoPagoRapido] = useState(obtenerPeriodoActual());
   const [pdfUrl, setPdfUrl] = useState(null);
   const [printUrl, setPrintUrl] = useState(null);
@@ -597,6 +599,11 @@ const TabCobranzaCliente = () => {
     setModalPagoRapidoOpen(true);
   };
 
+  const clientesConDeuda = useMemo(
+    () => clientesTablaOrdenada.filter((cliente) => toMoney(cliente.deuda_total) > 0),
+    [clientesTablaOrdenada]
+  );
+
   const refrescarCobranzaTrasPagoRapido = async () => {
     await Promise.all([
       cargarFacturasHistorial(),
@@ -691,7 +698,7 @@ const TabCobranzaCliente = () => {
         ? `${href.split("#")[0]}#/reporteDeudoresMayores?${params}`
         : `${origin}/#/reporteDeudoresMayores?${params}`;
 
-      const response = await window.api.previewComponent(url);
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response?.success && response?.path) {
         setPrintUrl(url);
         setPdfUrl(response.path);
@@ -879,6 +886,15 @@ const TabCobranzaCliente = () => {
             onImprimir={handleImprimirMayoresDeudores}
             loading={loadingImprimirDeudores}
           />
+
+          <button
+            onClick={() => setModalLiquidacionTotalOpen(true)}
+            disabled={clientesConDeuda.length === 0}
+            className="font-bold bg-emerald-600 text-white rounded-xl px-6 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <HiCash className="text-lg" />
+            Liquidación Total
+          </button>
 
           <button
             onClick={abrirModalSeleccionPeriodoRapido}
@@ -1207,6 +1223,13 @@ const TabCobranzaCliente = () => {
         onClose={() => setModalPagoRapidoOpen(false)}
         periodo={periodoPagoRapido}
         onPagoRegistrado={refrescarCobranzaTrasPagoRapido}
+      />
+
+      <ModalLiquidacionTotal
+        isOpen={modalLiquidacionTotalOpen}
+        onClose={() => setModalLiquidacionTotalOpen(false)}
+        clientesConDeuda={clientesConDeuda}
+        onLiquidacionRegistrada={refrescarCobranzaTrasPagoRapido}
       />
 
       {pdfUrl && modoPdf && (

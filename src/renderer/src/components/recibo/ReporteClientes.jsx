@@ -236,19 +236,26 @@ const ReporteClientesCompleto = () => {
                         .no-break { break-inside: avoid; page-break-inside: avoid; }
                         .salto-pagina { break-before: page; }
 
-                        /* FOOTER AL FINAL DEL DOCUMENTO */
+                        /* FOOTER FIJO: se repite al final de CADA hoja impresa. */
                         .doc-footer {
+                            position: fixed;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
                             display: flex !important;
                             justify-content: space-between;
                             align-items: center;
-                            padding: 0.4cm 0;
+                            padding: 0.18cm 0.8cm;
                             border-top: 1px solid #e5e7eb !important;
                             font-size: 7pt !important;
                             color: #9ca3af !important;
-                            margin-top: 1.5cm;
+                            background-color: #ffffff !important;
+                            margin-top: 0 !important;
                             break-inside: avoid;
                             page-break-inside: avoid;
                         }
+                        /* Reserva espacio para que el contenido no quede tapado por el pie fijo. */
+                        .reporte-clientes-doc { padding-bottom: 1.4cm !important; }
                     }
 
                     @media screen {
@@ -257,7 +264,7 @@ const ReporteClientesCompleto = () => {
                 `}
             </style>
 
-            <div className="min-h-screen bg-white p-8 font-sans text-gray-800">
+            <div className="reporte-clientes-doc min-h-screen bg-white p-8 font-sans text-gray-800">
 
                 {/* === HEADER CON LOGO (igual a ReporteLecturas) === */}
                 <div

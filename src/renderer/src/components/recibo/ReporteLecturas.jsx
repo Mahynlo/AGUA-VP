@@ -347,6 +347,17 @@ const ReporteLecturas = () => {
                     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
                     thead { display: table-header-group; }
                     tr    { page-break-inside: avoid; }
+                    /* Pie fijo: se repite al final de CADA hoja impresa. */
+                    .page-footer {
+                        position: fixed;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        background: #ffffff;
+                        margin-top: 0 !important;
+                        padding: 6px 4px;
+                    }
+                    .reporte-lecturas-hoja { padding-bottom: 42px !important; }
                 }
             `}</style>
 
@@ -354,7 +365,7 @@ const ReporteLecturas = () => {
             <div className="bg-slate-50 dark:bg-black/20 min-h-screen py-8 px-4 flex justify-center print:p-0 print:bg-white print:block">
                 
                 {/* LA HOJA DE PAPEL */}
-                <div className="w-full max-w-[900px] bg-white rounded-2xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none print:max-w-none"
+                <div className="reporte-lecturas-hoja w-full max-w-[900px] bg-white rounded-2xl shadow-2xl overflow-hidden print:shadow-none print:rounded-none print:max-w-none"
                      style={{
                          padding: '24px',
                          fontFamily: "'Segoe UI', Arial, sans-serif",
@@ -380,8 +391,8 @@ const ReporteLecturas = () => {
                         </div>
                     )}
 
-                    {/* Footer */}
-                    <div style={{
+                    {/* Footer (fijo al pie de cada hoja en impresión) */}
+                    <div className="page-footer" style={{
                         marginTop: '16px',
                         paddingTop: '10px',
                         borderTop: '1px dashed #d1d5db',
@@ -389,6 +400,7 @@ const ReporteLecturas = () => {
                         justifyContent: 'space-between',
                         fontSize: '9px',
                         color: '#9ca3af',
+                        background: '#ffffff',
                     }}>
                         <span>Sistema AguaVP — Comisaría de Agua Potable Villa Pesqueira</span>
                         <span style={{ fontWeight: 600, color: '#374151' }}>{totalRegistros} tomas de lectura listadas</span>

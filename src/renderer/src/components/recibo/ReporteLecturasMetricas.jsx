@@ -136,10 +136,22 @@ const ReporteLecturasMetricas = () => {
           .no-break { page-break-inside: avoid; break-inside: avoid; }
           thead { display: table-header-group; }
           tr { page-break-inside: avoid; }
+          /* Pie fijo: se repite al final de CADA hoja impresa. */
+          .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            margin-top: 0 !important;
+            padding: 6px 4px;
+          }
+          .report-body { padding-bottom: 42px; }
         }
       `}</style>
 
       <div
+        className="report-body"
         style={{
           maxWidth: "920px",
           margin: "0 auto",
@@ -197,52 +209,34 @@ const ReporteLecturasMetricas = () => {
               borderRadius: "0 0 8px 8px",
               padding: "7px 12px",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              flexDirection: "column",
+              gap: "6px",
             }}
           >
-            <div style={{ fontSize: "13px", color: "#1e3a8a", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Metricas de Lecturas y Rutas
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontSize: "13px", color: "#1e3a8a", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Metricas de Lecturas y Rutas
+              </div>
+              <div>
+                <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
+                  Filtro aplicado
+                </div>
+                <div style={{ fontSize: "11px", fontWeight: 800, color: "#1f2937", textTransform: "uppercase" }}>
+                  {filtro.etiqueta || "General"}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
+                  Periodo principal
+                </div>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>
+                  {periodoPrincipal}
+                </div>
+              </div>
             </div>
             <div style={{ fontSize: "10px", color: "#475569", fontWeight: 600 }}>
-              Tendencia mensual, consumo por ruta y rendimiento operativo
+              {rangoFiltro} · Tendencia mensual, consumo por ruta y rendimiento operativo
             </div>
-          </div>
-        </div>
-
-        {/* ── FILTRO APLICADO ── */}
-        <div
-          className="no-break"
-          style={{
-            marginTop: "10px",
-            border: "1px solid #dbeafe",
-            borderRadius: "8px",
-            padding: "9px 10px",
-            background: "#f8fafc",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "8px",
-          }}
-        >
-          <div>
-            <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
-              Filtro aplicado
-            </div>
-            <div style={{ fontSize: "11px", fontWeight: 800, color: "#1f2937", textTransform: "uppercase" }}>
-              {filtro.etiqueta || "General"}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
-              Rango
-            </div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>{rangoFiltro}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
-              Periodo principal
-            </div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>{periodoPrincipal}</div>
           </div>
         </div>
 
@@ -493,8 +487,9 @@ const ReporteLecturasMetricas = () => {
           )}
         </div>
 
-        {/* ── FOOTER ── */}
+        {/* ── FOOTER (fijo al pie de cada hoja en impresión) ── */}
         <div
+          className="page-footer"
           style={{
             marginTop: "16px",
             borderTop: "1px solid #e5e7eb",
@@ -503,6 +498,7 @@ const ReporteLecturasMetricas = () => {
             color: "#6b7280",
             display: "flex",
             justifyContent: "space-between",
+            background: "#ffffff",
           }}
         >
           <span>Generado: {new Date().toLocaleString("es-MX")}</span>

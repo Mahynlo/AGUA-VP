@@ -251,8 +251,8 @@ export default function IpcHandlers () {
      });
 
      //handle preview
-    ipcMain.handle('previewComponent', (event, url) => {
-      console.log('Preview from URL:', url);
+    ipcMain.handle('previewComponent', (event, url, options = {}) => {
+      console.log('Preview from URL:', url, 'options:', options);
 
       return new Promise((resolve, reject) => {
         let win = new BrowserWindow({
@@ -302,7 +302,23 @@ export default function IpcHandlers () {
             clearTimeout(fallbackTimer);
 
             try {
-              const data = await win.webContents.printToPDF({ ...printOptions, scaleFactor: 100});
+              const pdfOptions = { ...printOptions, scaleFactor: 100 };
+
+              // Número de página por hoja (opcional, vía footer nativo de Chromium).
+              // Solo se activa cuando el renderer lo pide explícitamente.
+              if (options && options.pageNumbers) {
+                pdfOptions.displayHeaderFooter = true;
+                // Header vacío para que no aparezca el título/URL por defecto.
+                pdfOptions.headerTemplate = '<span></span>';
+                pdfOptions.footerTemplate =
+                  '<div style="width:100%; font-size:8px; color:#6b7280; text-align:center; padding:0 10mm;">' +
+                  'Página <span class="pageNumber"></span> de <span class="totalPages"></span>' +
+                  '</div>';
+                // Márgenes explícitos para reservar espacio al footer nativo (en pulgadas).
+                pdfOptions.margins = { top: 0.3, bottom: 0.55, left: 0.3, right: 0.3 };
+              }
+
+              const data = await win.webContents.printToPDF(pdfOptions);
               const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`);
               console.log('PDF generado en:', pdfPath);
               await fs.promises.writeFile(pdfPath, data);

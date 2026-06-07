@@ -196,6 +196,64 @@ const ReporteFinancieroEstado = () => {
     };
   }, [series, isDark]);
 
+  const chartCaja = useMemo(() => {
+    const caja = series.recaudacion_por_mes_pago || [];
+    const categories = caja.map((m) => formatearMesCorto(m.periodo));
+
+    return {
+      options: {
+        chart: {
+          type: "bar",
+          toolbar: { show: false },
+          background: "transparent",
+          fontFamily: "inherit",
+          foreColor: isDark ? "#71717a" : "#94a3b8",
+        },
+        theme: { mode: isDark ? "dark" : "light" },
+        grid: {
+          borderColor: isDark ? "#27272a" : "#f1f5f9",
+          strokeDashArray: 4,
+        },
+        plotOptions: {
+          bar: { horizontal: false, borderRadius: 4, columnWidth: "45%" },
+        },
+        dataLabels: { enabled: false },
+        xaxis: {
+          categories,
+          labels: {
+            style: {
+              colors: isDark ? "#71717a" : "#94a3b8",
+              fontSize: "10px",
+              fontWeight: 700,
+              cssClass: "uppercase tracking-widest",
+            },
+          },
+          axisBorder: { show: false },
+          axisTicks: { show: false },
+        },
+        yaxis: {
+          labels: {
+            style: { colors: isDark ? "#71717a" : "#94a3b8", fontSize: "12px", fontWeight: 500 },
+            formatter: (val) => `$${Number(val).toLocaleString("es-MX")}`,
+          },
+        },
+        legend: { show: false },
+        tooltip: {
+          theme: isDark ? "dark" : "light",
+          y: {
+            formatter: (val, opts) => {
+              const idx = opts?.dataPointIndex;
+              const trx = caja[idx]?.transacciones;
+              return `${moneda(val)}${trx != null ? ` · ${trx} recibo(s) pagado(s)` : ""}`;
+            },
+          },
+        },
+        colors: ["#14b8a6"],
+      },
+      series: [{ name: "Recaudado (caja)", data: caja.map((m) => Number(m.recaudado || 0)) }],
+    };
+  }, [series, isDark]);
+
   const chartMetodos = useMemo(() => {
     const metodos = series.metodos_pago || [];
     return {
@@ -236,7 +294,7 @@ const ReporteFinancieroEstado = () => {
 
     setLoadingImprimir(true);
     try {
-      const response = await window.api.previewComponent(url);
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response && response.success && response.path) {
         setPrintUrl(url);
         setPdfUrl(response.path);
@@ -449,6 +507,32 @@ const ReporteFinancieroEstado = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* ── RECAUDACIÓN POR MES DE PAGO (CAJA) ── */}
+          <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 print:border-none print:bg-transparent print:p-0 print:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Recaudación por mes de pago</p>
+                  <span className="bg-teal-500/10 text-teal-600 dark:text-teal-400 font-bold text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-md">Caja real</span>
+                </div>
+                <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">
+                  Dinero que entró cada mes según la fecha de pago, sin importar de qué periodo era la deuda. Muestra el año completo, independiente del filtro.
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Total en caja (año)</p>
+                <p className="text-2xl font-black tracking-tight text-teal-600 dark:text-teal-400">{moneda(resumen.total_recaudado_caja)}</p>
+              </div>
+            </div>
+            {(series.recaudacion_por_mes_pago || []).length > 0 ? (
+              <Chart options={chartCaja.options} series={chartCaja.series} type="bar" height={300} />
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-sm font-bold text-slate-400 dark:text-zinc-600">
+                Sin pagos registrados en el rango seleccionado.
+              </div>
+            )}
           </div>
 
           {/* ── TABLES SECTION ── */}
