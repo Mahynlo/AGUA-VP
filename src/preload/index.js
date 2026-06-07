@@ -153,8 +153,11 @@ const api = {
     let response = await ipcRenderer.invoke('printComponent', url);
     callback(response);  // Aquí pasas el resultado de la operación al callback
   },
-  previewComponent: async (url) => {
-    return await ipcRenderer.invoke('previewComponent', url);
+  previewComponent: async (url, options = {}) => {
+    // Solo se aceptan opciones como objeto plano. Llamadas antiguas que pasan un
+    // callback como 2º argumento no deben romper el IPC (una función no es clonable).
+    const safeOptions = options && typeof options === 'object' ? options : {};
+    return await ipcRenderer.invoke('previewComponent', url, safeOptions);
   },
 
   printReport: async (url, callback) => {

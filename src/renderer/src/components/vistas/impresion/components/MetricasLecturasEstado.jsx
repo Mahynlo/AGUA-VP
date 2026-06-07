@@ -397,7 +397,7 @@ const MetricasLecturasEstado = () => {
 
     setLoadingImprimir(true);
     try {
-      const response = await window.api.previewComponent(url);
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response && response.success && response.path) {
         setPrintUrl(url);
         setPdfUrl(response.path);

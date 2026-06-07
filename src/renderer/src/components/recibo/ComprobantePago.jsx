@@ -31,16 +31,23 @@ const METODO_ICONO = {
     default:  '📄'
 };
 
-// ─── Subcomponente: Fila de tabla informativa ──────────────────────────────
-const Fila = ({ label, value, bold }) => (
+// ─── Subcomponentes ─────────────────────────────────────────────────────────
+const InfoRow = ({ label, value, bold }) => (
     <tr>
-        <td style={{ color: '#64748b', paddingBottom: '6px', paddingRight: '12px', whiteSpace: 'nowrap', verticalAlign: 'top', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-            {label}:
+        <td style={{ color: '#64748b', padding: '3px 12px 3px 0', whiteSpace: 'nowrap', verticalAlign: 'top', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>
+            {label}
         </td>
-        <td style={{ fontWeight: bold ? 800 : 600, paddingBottom: '6px', color: '#0f172a', wordBreak: 'break-word', fontSize: '13px' }}>
+        <td style={{ fontWeight: bold ? 800 : 600, padding: '3px 0', color: '#0f172a', wordBreak: 'break-word', fontSize: '12px', textAlign: 'right' }}>
             {value}
         </td>
     </tr>
+);
+
+const TotalRow = ({ label, value, color = '#0f172a', strong, sub }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: sub ? '3px 0' : '5px 0', fontSize: sub ? '11px' : '12px' }}>
+        <span style={{ color: '#64748b', fontWeight: 600 }}>{label}</span>
+        <span style={{ fontWeight: strong ? 800 : 700, color, fontFamily: 'monospace' }}>{value}</span>
+    </div>
 );
 
 // ─── Comprobante individual ────────────────────────────────────────────────
@@ -51,221 +58,205 @@ const Comprobante = ({ data }) => {
 
     const { folio_pago, factura, pago, cambio, operador, fecha_hora_emision, es_pago_parcial, historial_pagos } = data;
     const icono = METODO_ICONO[pago?.metodo_pago] || METODO_ICONO.default;
-    const saldoRestante = factura?.saldo_restante ?? 0;
+    const saldoRestante = Number(factura?.saldo_restante ?? 0);
+    const totalFactura = Number(factura?.total ?? 0);
+    const estadoColor = es_pago_parcial ? '#b45309' : '#15803d';
+    const estadoBg = es_pago_parcial ? '#fffbeb' : '#f0fdf4';
+    const estadoBorder = es_pago_parcial ? '#fde68a' : '#bbf7d0';
 
     return (
-        <div 
-            className="w-full max-w-[720px] mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 print:shadow-none print:rounded-none print:border-none print:max-w-none"
+        <div
+            className="w-full max-w-[760px] mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 print:shadow-none print:rounded-none print:border-none print:max-w-none"
             style={{
                 fontFamily: "'Segoe UI', Arial, sans-serif",
                 color: '#0f172a',
                 pageBreakInside: 'avoid',
             }}
         >
-            {/* ── Header ── */}
+            {/* ── Header azul (igual a los demás reportes) ── */}
             <div style={{
-                backgroundColor: '#b91c1c', // Rojo institucional sólido y limpio
-                color: '#fff',
-                padding: '20px 24px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '16px',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%)',
+                color: '#fff',
+                padding: '14px 20px',
+                borderRadius: '8px 8px 0 0',
             }}>
-                <img src={logoSrc} alt="Escudo" style={{ height: '56px', width: '56px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
-                <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 800, fontSize: '16px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                        COMISARÍA DE AGUA POTABLE
-                    </div>
-                    <div style={{ fontSize: '12px', opacity: 0.9, marginTop: '2px', letterSpacing: '0.02em' }}>
-                        Villa Pesqueira, Sonora
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <img src={logoSrc} alt="Escudo" style={{ height: '72px', width: '72px', objectFit: 'contain', flexShrink: 0 }} />
+                    <div>
+                        <div style={{ fontSize: '16px', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                            Comisión Municipal de Agua Potable y Alcantarillado
+                        </div>
+                        <div style={{ fontSize: '11px', opacity: 0.88, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            Villa Pesqueira, Sonora — Comprobante de pago
+                        </div>
                     </div>
                 </div>
                 <div style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'rgba(255,255,255,0.15)',
+                    border: '1px solid rgba(255,255,255,0.35)',
                     borderRadius: '8px',
-                    padding: '8px 16px',
+                    padding: '8px 14px',
                     textAlign: 'center',
                     flexShrink: 0,
-                    backdropFilter: 'blur(4px)'
                 }}>
-                    <div style={{ fontSize: '9px', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>
-                        Comprobante
-                    </div>
-                    <div style={{ fontWeight: 800, fontSize: '18px', letterSpacing: '0.05em', marginTop: '2px' }}>
-                        #{String(folio_pago || '—').padStart(6, '0')}
-                    </div>
+                    <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8 }}>Folio</div>
+                    <div style={{ fontWeight: 800, fontSize: '16px', marginTop: '2px' }}>#{String(folio_pago || '—').padStart(6, '0')}</div>
                 </div>
             </div>
 
-            {/* ── Sello PAGADO / PARCIAL ── */}
+            {/* ── Banda azul con título + estado + fecha ── */}
             <div style={{
-                background: es_pago_parcial ? '#fffbeb' : '#f0fdf4',
-                borderBottom: es_pago_parcial ? '1px solid #fde68a' : '1px solid #bbf7d0',
-                padding: '10px 24px',
+                background: '#f0f9ff',
+                borderLeft: '4px solid #1e40af',
+                borderRight: '1px solid #bfdbfe',
+                borderBottom: '1px solid #bfdbfe',
+                borderRadius: '0 0 8px 8px',
+                padding: '8px 16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                justifyContent: 'space-between',
             }}>
-                <span style={{ fontSize: '16px' }}>{es_pago_parcial ? '⚠️' : '✅'}</span>
-                <span style={{ fontWeight: 800, color: es_pago_parcial ? '#b45309' : '#15803d', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {es_pago_parcial ? 'PAGO PARCIAL REGISTRADO' : 'Pago Registrado Exitosamente'}
-                </span>
-                {es_pago_parcial && (
-                    <span style={{ fontSize: '11px', color: '#92400e', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px', padding: '2px 8px', fontWeight: 700, marginLeft: '8px' }}>
-                        Saldo pendiente: {fmt(saldoRestante)}
+                <div style={{ fontSize: '13px', color: '#1e3a8a', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Comprobante de Pago
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{
+                        background: estadoBg,
+                        border: `1px solid ${estadoBorder}`,
+                        color: estadoColor,
+                        fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+                        padding: '3px 10px', borderRadius: '999px',
+                    }}>
+                        {es_pago_parcial ? '● Pago parcial' : '● Pagado'}
                     </span>
-                )}
-                <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: '11px', fontWeight: 600 }}>
-                    {fmtFecha(fecha_hora_emision)}
-                </span>
+                    <span style={{ color: '#64748b', fontSize: '10px', fontWeight: 600 }}>{fmtFecha(fecha_hora_emision)}</span>
+                </div>
             </div>
 
-            {/* ── Body ── */}
-            <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-
-                {/* Columna 1: Datos del cliente */}
-                <div>
-                    <div style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>
-                        Datos del Cliente
+            {/* ── Datos cliente / comprobante (estilo factura) ── */}
+            <div style={{ padding: '20px 24px 8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{ background: '#1e3a8a', color: '#fff', padding: '6px 12px', fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Cliente
                     </div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <tbody>
-                            <Fila label="Nombre"    value={factura?.cliente_nombre || '—'} bold />
-                            <Fila label="Dirección" value={factura?.direccion_cliente || 'Domicilio conocido'} />
-                            <Fila label="Localidad" value={factura?.cliente_ciudad || 'Villa Pesqueira'} />
-                            <Fila label="N° Medidor" value={factura?.medidor_serie || '—'} />
-                            <Fila label="Tarifa"    value={factura?.tarifa_nombre || '—'} />
-                        </tbody>
-                    </table>
+                    <div style={{ padding: '10px 12px' }}>
+                        <div style={{ fontWeight: 800, fontSize: '14px', color: '#0f172a' }}>{factura?.cliente_nombre || '—'}</div>
+                        <div style={{ borderTop: '1px solid #f1f5f9', margin: '6px 0' }} />
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <tbody>
+                                <InfoRow label="Dirección" value={factura?.direccion_cliente || 'Domicilio conocido'} />
+                                <InfoRow label="Localidad" value={factura?.cliente_ciudad || 'Villa Pesqueira'} />
+                                <InfoRow label="N° Medidor" value={factura?.medidor_serie || '—'} />
+                                <InfoRow label="Tarifa" value={factura?.tarifa_nombre || '—'} />
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                {/* Columna 2: Datos de la factura */}
-                <div>
-                    <div style={{ fontSize: '10px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>
-                        {es_pago_parcial ? 'Factura (Abono Parcial)' : 'Factura Pagada'}
+                <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{ background: '#1e3a8a', color: '#fff', padding: '6px 12px', fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Datos del comprobante
                     </div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <tbody>
-                            <Fila label="Folio Factura" value={`#${factura?.id || '—'}`} />
-                            <Fila label="Período"       value={factura?.periodo || '—'} />
-                            <Fila label="Consumo"       value={`${factura?.consumo_m3 ?? '—'} m³`} />
-                            <Fila label="Total Factura" value={fmt(factura?.total)} />
-                            {es_pago_parcial && (
-                                <Fila label="Saldo restante" value={fmt(saldoRestante)} bold />
-                            )}
-                        </tbody>
-                    </table>
+                    <div style={{ padding: '10px 12px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <tbody>
+                                <InfoRow label="Folio comprobante" value={`#${String(folio_pago || '—').padStart(6, '0')}`} bold />
+                                <InfoRow label="Folio factura" value={`#${factura?.id || '—'}`} />
+                                <InfoRow label="Período" value={factura?.periodo || '—'} />
+                                <InfoRow label="Fecha de pago" value={pago?.fecha_pago || '—'} />
+                                <InfoRow label="Método" value={`${icono} ${pago?.metodo_pago || '—'}`} />
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-
             </div>
 
-            {/* ── Resumen del pago ── */}
-            <div style={{
-                margin: '0 24px 20px',
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                overflow: 'hidden',
-            }}>
-                <div style={{
-                    background: '#0f172a', // Slate 900
-                    color: '#fff',
-                    padding: '8px 16px',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                }}>
-                    Detalle del Pago
-                </div>
-                <div style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                        <span style={{ color: '#64748b', fontWeight: 600 }}>Método de pago</span>
-                        <span style={{ fontWeight: 700 }}>{icono} {pago?.metodo_pago || '—'}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                        <span style={{ color: '#64748b', fontWeight: 600 }}>Fecha de operación</span>
-                        <span style={{ fontWeight: 600 }}>{pago?.fecha_pago || '—'}</span>
-                    </div>
-                    <div style={{ borderTop: '1px dashed #cbd5e1', margin: '12px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                        <span style={{ color: '#64748b', fontWeight: 600 }}>{es_pago_parcial ? 'Abono aplicado' : 'Saldo pagado'}</span>
-                        <span style={{ fontWeight: 800, color: es_pago_parcial ? '#b45309' : '#15803d' }}>{fmt(pago?.monto)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-                        <span style={{ color: '#64748b', fontWeight: 600 }}>Cantidad recibida</span>
-                        <span style={{ fontWeight: 700 }}>{fmt(pago?.cantidad_entregada)}</span>
-                    </div>
-                    {cambio > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#fef9c3', borderRadius: '8px', marginTop: '8px' }}>
-                            <span style={{ fontWeight: 700, color: '#a16207' }}>Cambio entregado</span>
-                            <span style={{ fontWeight: 800, color: '#a16207' }}>{fmt(cambio)}</span>
-                        </div>
-                    )}
-                    {es_pago_parcial && saldoRestante > 0 && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', marginTop: '8px' }}>
-                            <span style={{ fontWeight: 700, color: '#b45309' }}>Saldo pendiente actual</span>
-                            <span style={{ fontWeight: 800, color: '#b45309' }}>{fmt(saldoRestante)}</span>
-                        </div>
-                    )}
-                    {pago?.comentario && (
-                        <div style={{ marginTop: '12px', fontSize: '11px', color: '#64748b', background: '#f1f5f9', padding: '8px', borderRadius: '6px', fontStyle: 'italic' }}>
-                            <strong>Nota:</strong> {pago.comentario}
-                        </div>
+            {/* ── Tabla de conceptos (factura real) ── */}
+            <div style={{ padding: '8px 24px 0' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                    <thead>
+                        <tr>
+                            <th style={{ background: '#1e3a8a', color: '#fff', padding: '7px 10px', textAlign: 'left', fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Concepto</th>
+                            <th style={{ background: '#1e3a8a', color: '#fff', padding: '7px 10px', textAlign: 'center', fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Período</th>
+                            <th style={{ background: '#1e3a8a', color: '#fff', padding: '7px 10px', textAlign: 'center', fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Consumo</th>
+                            <th style={{ background: '#1e3a8a', color: '#fff', padding: '7px 10px', textAlign: 'right', fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Importe</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ padding: '9px 10px', borderBottom: '1px solid #f1f5f9', fontWeight: 700 }}>
+                                Servicio de agua potable
+                                <div style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 600, marginTop: '2px' }}>Factura #{factura?.id || '—'}</div>
+                            </td>
+                            <td style={{ padding: '9px 10px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', fontFamily: 'monospace', fontWeight: 700 }}>{factura?.periodo || '—'}</td>
+                            <td style={{ padding: '9px 10px', borderBottom: '1px solid #f1f5f9', textAlign: 'center', fontFamily: 'monospace' }}>{factura?.consumo_m3 ?? '—'} m³</td>
+                            <td style={{ padding: '9px 10px', borderBottom: '1px solid #f1f5f9', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700 }}>{fmt(totalFactura)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            {/* ── Totales (alineados a la derecha, estilo factura) ── */}
+            <div style={{ padding: '14px 24px 4px', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ width: '300px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 14px' }}>
+                    <TotalRow label="Total de la factura" value={fmt(totalFactura)} />
+                    <TotalRow label={es_pago_parcial ? 'Abono aplicado' : 'Importe pagado'} value={fmt(pago?.monto)} color={estadoColor} strong />
+                    <TotalRow label="Cantidad recibida" value={fmt(pago?.cantidad_entregada)} sub />
+                    {cambio > 0 && <TotalRow label="Cambio entregado" value={fmt(cambio)} color="#a16207" sub />}
+                    <div style={{ borderTop: '1px dashed #cbd5e1', margin: '8px 0' }} />
+                    {es_pago_parcial ? (
+                        <TotalRow label="Saldo pendiente" value={fmt(saldoRestante)} color="#b45309" strong />
+                    ) : (
+                        <TotalRow label="Saldo pendiente" value={fmt(0)} color="#15803d" strong />
                     )}
                 </div>
             </div>
 
             {/* ── Monto total destacado ── */}
             <div style={{
-                margin: '0 24px 24px',
+                margin: '8px 24px 20px',
                 background: es_pago_parcial
                     ? 'linear-gradient(135deg, #d97706, #b45309)'
                     : 'linear-gradient(135deg, #15803d, #166534)',
-                borderRadius: '12px',
-                padding: '16px 24px',
+                borderRadius: '10px',
+                padding: '14px 22px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 color: '#fff',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
             }}>
-                <div>
-                    <div style={{ fontWeight: 800, fontSize: '13px', letterSpacing: '0.05em', opacity: 0.9 }}>
-                        {es_pago_parcial ? 'ABONO PARCIAL' : 'TOTAL PAGADO'}
-                    </div>
+                <div style={{ fontWeight: 800, fontSize: '13px', letterSpacing: '0.06em' }}>
+                    {es_pago_parcial ? 'ABONO PARCIAL' : 'TOTAL PAGADO'}
                 </div>
-                <span style={{ fontWeight: 900, fontSize: '28px', letterSpacing: '0.02em' }}>
+                <span style={{ fontWeight: 900, fontSize: '26px', letterSpacing: '0.02em' }}>
                     {fmt(pago?.monto)}
                 </span>
             </div>
 
+            {/* ── Nota ── */}
+            {pago?.comentario && (
+                <div style={{ margin: '0 24px 16px', fontSize: '11px', color: '#64748b', background: '#f1f5f9', padding: '8px 12px', borderRadius: '6px', fontStyle: 'italic' }}>
+                    <strong>Nota:</strong> {pago.comentario}
+                </div>
+            )}
+
             {/* ── Historial de pagos (si hay más de uno) ── */}
             {historial_pagos && historial_pagos.length > 0 && (
-                <div style={{ margin: '0 24px 24px' }}>
-                    <div style={{
-                        background: '#f1f5f9',
-                        color: '#475569',
-                        padding: '8px 16px',
-                        fontSize: '10px',
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.1em',
-                        borderRadius: '8px 8px 0 0',
-                        border: '1px solid #e2e8f0',
-                        borderBottom: 'none'
-                    }}>
-                        Historial de Pagos — Factura #{factura?.id}
+                <div style={{ margin: '0 24px 20px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 800, color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+                        Historial de pagos — Factura #{factura?.id}
                     </div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', border: '1px solid #e2e8f0', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
                         <thead>
-                            <tr style={{ background: '#f8fafc' }}>
-                                <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>#</th>
-                                <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Fecha</th>
-                                <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Método</th>
-                                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Monto</th>
-                                <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Estado</th>
+                            <tr>
+                                <th style={{ background: '#1e3a8a', color: '#fff', padding: '6px 10px', textAlign: 'left', fontWeight: 800, textTransform: 'uppercase' }}>#</th>
+                                <th style={{ background: '#1e3a8a', color: '#fff', padding: '6px 10px', textAlign: 'left', fontWeight: 800, textTransform: 'uppercase' }}>Fecha</th>
+                                <th style={{ background: '#1e3a8a', color: '#fff', padding: '6px 10px', textAlign: 'left', fontWeight: 800, textTransform: 'uppercase' }}>Método</th>
+                                <th style={{ background: '#1e3a8a', color: '#fff', padding: '6px 10px', textAlign: 'right', fontWeight: 800, textTransform: 'uppercase' }}>Monto</th>
+                                <th style={{ background: '#1e3a8a', color: '#fff', padding: '6px 10px', textAlign: 'center', fontWeight: 800, textTransform: 'uppercase' }}>Estado</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -273,14 +264,14 @@ const Comprobante = ({ data }) => {
                                 const esCurrent = p.id == folio_pago;
                                 return (
                                     <tr key={i} style={{ background: esCurrent ? '#f0fdf4' : '#fff', borderTop: '1px solid #f1f5f9' }}>
-                                        <td style={{ padding: '8px 12px', color: '#94a3b8', fontFamily: 'monospace', fontWeight: 600 }}>#{p.id || i + 1}</td>
-                                        <td style={{ padding: '8px 12px', color: '#475569', fontWeight: 500 }}>{p.fecha_pago ? new Date(p.fecha_pago).toLocaleDateString('es-MX') : '—'}</td>
-                                        <td style={{ padding: '8px 12px', color: '#475569', fontWeight: 500 }}>{p.metodo_pago || '—'}</td>
-                                        <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: esCurrent ? 800 : 600, color: esCurrent ? '#15803d' : '#0f172a' }}>{fmt(p.monto)}</td>
-                                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                                        <td style={{ padding: '6px 10px', color: '#94a3b8', fontFamily: 'monospace', fontWeight: 600 }}>#{p.id || i + 1}</td>
+                                        <td style={{ padding: '6px 10px', color: '#475569', fontWeight: 500 }}>{p.fecha_pago ? new Date(p.fecha_pago).toLocaleDateString('es-MX') : '—'}</td>
+                                        <td style={{ padding: '6px 10px', color: '#475569', fontWeight: 500 }}>{p.metodo_pago || '—'}</td>
+                                        <td style={{ padding: '6px 10px', textAlign: 'right', fontFamily: 'monospace', fontWeight: esCurrent ? 800 : 600, color: esCurrent ? '#15803d' : '#0f172a' }}>{fmt(p.monto)}</td>
+                                        <td style={{ padding: '6px 10px', textAlign: 'center' }}>
                                             {esCurrent
-                                                ? <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '9px', padding: '2px 8px', borderRadius: '999px', fontWeight: 800, textTransform: 'uppercase' }}>Este pago</span>
-                                                : <span style={{ background: '#f1f5f9', color: '#64748b', fontSize: '9px', padding: '2px 8px', borderRadius: '999px', fontWeight: 700, textTransform: 'uppercase' }}>Anterior</span>
+                                                ? <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '8px', padding: '2px 8px', borderRadius: '999px', fontWeight: 800, textTransform: 'uppercase' }}>Este pago</span>
+                                                : <span style={{ background: '#f1f5f9', color: '#64748b', fontSize: '8px', padding: '2px 8px', borderRadius: '999px', fontWeight: 700, textTransform: 'uppercase' }}>Anterior</span>
                                             }
                                         </td>
                                     </tr>
@@ -293,7 +284,7 @@ const Comprobante = ({ data }) => {
 
             {/* ── Footer ── */}
             <div style={{
-                padding: '16px 24px',
+                padding: '14px 24px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-end',
@@ -304,11 +295,11 @@ const Comprobante = ({ data }) => {
             }}>
                 <div>
                     <div style={{ fontWeight: 500 }}>Atendido por: <strong style={{ color: '#0f172a', fontWeight: 800 }}>{operador || '—'}</strong></div>
-                    <div style={{ marginTop: '4px', fontWeight: 500 }}>Sistema AguaVP — {new Date().getFullYear()}</div>
+                    <div style={{ marginTop: '4px', fontWeight: 500 }}>Sistema AguaVP — Comprobante oficial · {new Date().getFullYear()}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                     <div style={{
-                        width: '140px',
+                        width: '160px',
                         borderTop: '1px solid #94a3b8',
                         paddingTop: '6px',
                         textAlign: 'center',

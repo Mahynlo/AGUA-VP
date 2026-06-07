@@ -39,7 +39,7 @@ const registerPagos = async (pago, token_session) => {
             return { success: false, message: data.error || "Error al registrar pago(ipcmain)" };
         }
 
-        return { success: true, message: data.mensaje, pagoID: data.pago_id };
+        return { success: true, message: data.mensaje, pagoID: data.pago_id, monto_aplicado: data.monto_aplicado, cambio: data.cambio };
     } catch (error) {
         console.error("Error al registrar pago(ipcmain):", error);
         return { success: false, message: "Hubo un error al registrar el pago(ipcmain)." };

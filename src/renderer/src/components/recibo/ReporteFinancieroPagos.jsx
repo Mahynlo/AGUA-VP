@@ -26,17 +26,6 @@ const formatMonthYearLong = (periodoMes) => {
   return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
-const formatDateLabel = (raw) => {
-  if (!raw) return "-";
-  if (/^\d{4}-\d{2}$/.test(raw)) return formatMonthYearLong(raw);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const [anio, mes, dia] = raw.split("-");
-    const fecha = new Date(Number(anio), Number(mes) - 1, Number(dia));
-    return fecha.toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
-  }
-  return raw;
-};
-
 const ReporteFinancieroPagos = () => {
   const [searchParams] = useSearchParams();
   const [data, setData] = useState(null);
@@ -82,6 +71,11 @@ const ReporteFinancieroPagos = () => {
   const series = data?.series || {};
 
   const recaudacionMensual = useMemo(() => series.recaudacion_mensual || [], [series]);
+  const recaudacionCaja = useMemo(() => series.recaudacion_por_mes_pago || [], [series]);
+  const totalRecaudadoCaja = useMemo(
+    () => recaudacionCaja.reduce((acc, row) => acc + Number(row.recaudado || 0), 0),
+    [recaudacionCaja]
+  );
   const metodosPago = useMemo(() => series.metodos_pago || [], [series]);
   const maxMensual = useMemo(() => {
     return recaudacionMensual.reduce((acc, row) => {
@@ -109,15 +103,6 @@ const ReporteFinancieroPagos = () => {
       .sort((a, b) => b.total - a.total);
   }, [metodosPago, totalMetodosPago]);
 
-  const rangoFiltro = useMemo(() => {
-    const inicio = formatDateLabel(filtro.fecha_inicio);
-    const fin = formatDateLabel(filtro.fecha_fin);
-    if (inicio !== "-" && fin !== "-") return `${inicio} a ${fin}`;
-    if (inicio !== "-") return inicio;
-    if (fin !== "-") return fin;
-    return "Sin rango";
-  }, [filtro.fecha_inicio, filtro.fecha_fin]);
-
   if (!isReady) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -136,10 +121,22 @@ const ReporteFinancieroPagos = () => {
           .no-break { page-break-inside: avoid; break-inside: avoid; }
           thead { display: table-header-group; }
           tr { page-break-inside: avoid; }
+          /* Pie fijo: se repite al final de CADA hoja impresa. */
+          .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            padding: 6px 12px;
+            margin-top: 0;
+          }
+          /* Reserva espacio para que el contenido no quede tapado por el pie fijo. */
+          .report-body { padding-bottom: 42px; }
         }
       `}</style>
 
-      <div style={{
+      <div className="report-body" style={{
         maxWidth: "920px",
         margin: "0 auto",
         padding: "18px",
@@ -189,51 +186,36 @@ const ReporteFinancieroPagos = () => {
             borderRadius: "0 0 8px 8px",
             padding: "7px 12px",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between"
+            flexDirection: "column",
+            gap: "6px"
           }}>
-            <div style={{ fontSize: "13px", color: "#1e3a8a", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Estado Financiero de Pagos
-            </div>
-            <div style={{ fontSize: "10px", color: "#475569", fontWeight: 600 }}>
-              Tendencia mensual, metodos de pago y desglose de recaudacion
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontSize: "13px", color: "#1e3a8a", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Estado Financiero de Pagos
+              </div>
+
+              <div>
+                <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
+                  Filtro aplicado
+                </div>
+                <div style={{ fontSize: "11px", fontWeight: 800, color: "#1f2937", textTransform: "uppercase" }}>
+                  {filtro.etiqueta || "General"}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
+                  Periodo principal
+                </div>
+                <div style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>
+                  {formatMonthYearLong(filtro.periodo || filtro.periodo_mes || "")}
+                </div>
+              </div>
             </div>
           </div>
+
         </div>
 
-        <div className="no-break" style={{
-          marginTop: "10px",
-          border: "1px solid #dbeafe",
-          borderRadius: "8px",
-          padding: "9px 10px",
-          background: "#f8fafc",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: "8px"
-        }}>
-          <div>
-            <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
-              Filtro aplicado
-            </div>
-            <div style={{ fontSize: "11px", fontWeight: 800, color: "#1f2937", textTransform: "uppercase" }}>
-              {filtro.etiqueta || "General"}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
-              Rango
-            </div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>{rangoFiltro}</div>
-          </div>
-          <div>
-            <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
-              Periodo principal
-            </div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>
-              {formatMonthYearLong(filtro.periodo || filtro.periodo_mes || "")}
-            </div>
-          </div>
-        </div>
+
 
         <div className="no-break" style={{
           marginTop: "12px",
@@ -405,7 +387,43 @@ const ReporteFinancieroPagos = () => {
           )}
         </div>
 
-        <div style={{ marginTop: "16px", borderTop: "1px solid #e5e7eb", paddingTop: "8px", fontSize: "9px", color: "#6b7280", display: "flex", justifyContent: "space-between" }}>
+        <div className="no-break" style={{ border: "1px solid #ccfbf1", borderRadius: "8px", padding: "10px", background: "#f0fdfa", marginTop: "12px" }}>
+          <h3 style={{ margin: "0 0 4px", fontSize: "11px", color: "#0f766e", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Recaudacion por mes (Recibos pagados)
+          </h3>
+          <div style={{ fontSize: "9px", color: "#6b7280", marginBottom: "8px" }}>
+            Dinero que entro cada mes segun la fecha de pago, sin importar el periodo de la deuda.
+          </div>
+          {recaudacionCaja.length === 0 ? (
+            <div style={{ fontSize: "10px", color: "#6b7280" }}>Sin pagos registrados en este filtro.</div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px", background: "white" }}>
+              <thead>
+                <tr>
+                  <th style={{ background: "#0f766e", color: "white", padding: "6px", textAlign: "left" }}>Mes de pago</th>
+                  <th style={{ background: "#0f766e", color: "white", padding: "6px", textAlign: "right" }}>Recibos pagados</th>
+                  <th style={{ background: "#0f766e", color: "white", padding: "6px", textAlign: "right" }}>Recaudado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recaudacionCaja.map((row, idx) => (
+                  <tr key={`caja-${row.periodo}-${idx}`}>
+                    <td style={{ border: "1px solid #e5e7eb", padding: "5px", textTransform: "capitalize" }}>{formatMonthYearLong(row.periodo)}</td>
+                    <td style={{ border: "1px solid #e5e7eb", padding: "5px", textAlign: "right" }}>{row.transacciones || 0}</td>
+                    <td style={{ border: "1px solid #e5e7eb", padding: "5px", textAlign: "right", fontWeight: 700 }}>{money(row.recaudado)}</td>
+                  </tr>
+                ))}
+                <tr>
+                  <td style={{ border: "1px solid #e5e7eb", padding: "6px", fontWeight: 800, textTransform: "uppercase", background: "#ccfbf1" }}>Total</td>
+                  <td style={{ border: "1px solid #e5e7eb", padding: "6px", background: "#ccfbf1" }}></td>
+                  <td style={{ border: "1px solid #e5e7eb", padding: "6px", textAlign: "right", fontWeight: 800, background: "#ccfbf1" }}>{money(totalRecaudadoCaja)}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div className="page-footer" style={{ marginTop: "16px", borderTop: "1px solid #e5e7eb", paddingTop: "8px", fontSize: "9px", color: "#6b7280", display: "flex", justifyContent: "space-between" }}>
           <span>Generado: {new Date().toLocaleString("es-MX")}</span>
           <span>AGUA VP · Reporte Financiero</span>
         </div>

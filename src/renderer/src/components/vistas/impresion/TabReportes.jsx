@@ -111,7 +111,7 @@ const TabReportes = () => {
     try {
       const url = await getUrlPadron();
       if (!url) return;
-      const response = await window.api.previewComponent(url);
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response && response.success && response.path) {
         setPrintUrl(url);
         setPdfUrl(response.path);
@@ -130,7 +130,7 @@ const TabReportes = () => {
     try {
       const url = await getUrlPadron();
       if (!url) return;
-      const response = await window.api.previewComponent(url);
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response && response.success && response.path) {
         setPrintUrl(url);
         setPdfUrl(response.path);
@@ -251,7 +251,7 @@ const TabReportes = () => {
     setAccion('preview-lecturas');
     try {
       const url = await getUrlLecturas();
-      const response = await window.api.previewComponent(url);
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response && response.success && response.path) {
         setPrintUrl(url);
         setPdfUrl(response.path);
@@ -270,7 +270,7 @@ const TabReportes = () => {
     setAccion('print-lecturas');
     try {
       const url = await getUrlLecturas();
-      const response = await window.api.previewComponent(url);
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response && response.success && response.path) {
         setPrintUrl(url);
         setPdfUrl(response.path);

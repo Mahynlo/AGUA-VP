@@ -3,6 +3,7 @@ import { Modal } from "flowbite-react";
 import { HiX, HiCreditCard, HiCash, HiExclamationCircle, HiArrowLeft, HiShieldCheck } from "react-icons/hi";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { useFeedback } from "../../../context/FeedbackContext";
+import { usePagos } from "../../../context/PagosContext";
 
 const premiumModalTheme = {
   root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
@@ -22,13 +23,11 @@ const inputBaseClasses = "bg-slate-100/70 dark:bg-zinc-900/80 border border-slat
 
 const MAX_COMENTARIO = 500;
 const LIST_PAGE = 20; // Tamaño de "ventana" de la lista (render incremental / scroll infinito)
-const STORAGE_KEY_BASE = "aguavp:pago-rapido:seleccion"; // selección "no pagaron" persistida por periodo
+const STORAGE_KEY = "aguavp:liquidacion-total:seleccion"; // selección "sigue debiendo" persistida
 
-const keyFor = (periodo) => `${STORAGE_KEY_BASE}:${periodo || "actual"}`;
-
-const cargarSeleccionGuardada = (periodo) => {
+const cargarSeleccionGuardada = () => {
   try {
-    const raw = localStorage.getItem(keyFor(periodo));
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -38,9 +37,9 @@ const cargarSeleccionGuardada = (periodo) => {
   }
 };
 
-const limpiarSeleccionGuardada = (periodo) => {
+const limpiarSeleccionGuardada = () => {
   try {
-    localStorage.removeItem(keyFor(periodo));
+    localStorage.removeItem(STORAGE_KEY);
   } catch {
     /* noop */
   }
@@ -77,297 +76,245 @@ const parsePredio = (predio) => {
   return Number.isFinite(num) ? num : Number.MAX_SAFE_INTEGER;
 };
 
-const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
+// Deuda que el backend SÍ puede liquidar vía pago distribuido. Replica el filtro
+// de pagosService.registrarPagoDistribuido: saldo > 0, estado != 'Pagado' y SIN
+// convenio. Las facturas en convenio NO se tocan aquí (se gestionan aparte).
+const calcularDeudaLiquidable = (cliente) => {
+  const facturas = Array.isArray(cliente?.facturas) ? cliente.facturas : null;
+  if (!facturas) return toMoney(cliente?.deuda_total); // fallback defensivo
+  return facturas.reduce((acc, f) => {
+    const saldo = toMoney(f?.saldo_pendiente);
+    const estado = String(f?.estado || "").toLowerCase();
+    const esConvenio = estado === "en convenio" || !!f?.convenio_id;
+    if (saldo > 0 && estado !== "pagado" && !esConvenio) {
+      return toMoney(acc + saldo);
+    }
+    return acc;
+  }, 0);
+};
+
+/**
+ * Liquidación total por cliente: muestra la lista de clientes con deuda
+ * (la misma que se imprime en "Imprimir Deudores"), permite marcar los que
+ * SIGUEN debiendo y liquida la deuda total completa del resto vía pago
+ * distribuido FIFO (atómico por cliente en el backend).
+ */
+const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiquidacionRegistrada }) => {
   const { setSuccess, setError } = useFeedback();
+  const { registrarPagoDistribuido } = usePagos();
 
   const [fase, setFase] = useState("seleccion"); // "seleccion" | "confirmacion"
   const [confirmacionFinal, setConfirmacionFinal] = useState(false); // gate "¿completamente seguro?"
-  const [procesandoPagoRapido, setProcesandoPagoRapido] = useState(false);
-  const [facturasNoPagaron, setFacturasNoPagaron] = useState([]);
-  const [facturasPagoRapido, setFacturasPagoRapido] = useState([]);
-  const [cargandoFacturasPagoRapido, setCargandoFacturasPagoRapido] = useState(false);
-  const [searchPagoRapido, setSearchPagoRapido] = useState("");
-  const [soloNoPagaron, setSoloNoPagaron] = useState(false);
+  const [procesando, setProcesando] = useState(false);
+  const [clientesSiguenDebiendo, setClientesSiguenDebiendo] = useState(cargarSeleccionGuardada);
+  const [search, setSearch] = useState("");
+  const [soloExcluidos, setSoloExcluidos] = useState(false);
   const [ordenLista, setOrdenLista] = useState("predio"); // base: número de predio
   const [confSearch, setConfSearch] = useState(""); // búsqueda en la vista de revisión
   const [confOrden, setConfOrden] = useState("predio"); // orden en la vista de revisión
   const [visibleCount, setVisibleCount] = useState(LIST_PAGE);
-  const [metodoPagoRapido, setMetodoPagoRapido] = useState("Efectivo");
-  const [fechaPagoRapido, setFechaPagoRapido] = useState(new Date().toISOString().split("T")[0]);
-  const [comentarioPagoRapido, setComentarioPagoRapido] = useState("Pago masivo desde modo rapido");
+  const [metodoPago, setMetodoPago] = useState("Efectivo");
+  const [fechaPago, setFechaPago] = useState(new Date().toISOString().split("T")[0]);
+  const [comentario, setComentario] = useState("Liquidación total desde cobranza");
   const [mostrarErrores, setMostrarErrores] = useState(false);
 
   const listRef = useRef(null);
 
-  const facturasElegiblesPagoRapido = useMemo(() => {
-    return facturasPagoRapido.filter((factura) => {
-      const saldo = Number(factura.saldo_pendiente || 0);
-      const esConvenio = factura.estado === "En Convenio" || !!factura.convenio_id;
-      return saldo > 0 && factura.estado !== "Pagado" && !esConvenio;
-    });
-  }, [facturasPagoRapido]);
-
-  const idsElegiblesSet = useMemo(
-    () => new Set(facturasElegiblesPagoRapido.map((f) => f.id)),
-    [facturasElegiblesPagoRapido]
+  // Solo son elegibles los clientes con deuda LIQUIDABLE (no-convenio) > 0.
+  // Se les adjunta deuda_liquidable (lo que realmente se aplicará) y la parte
+  // no liquidable (convenio) para mostrarla con transparencia.
+  const clientesElegibles = useMemo(
+    () =>
+      (clientesConDeuda || [])
+        .map((c) => {
+          const deudaLiquidable = calcularDeudaLiquidable(c);
+          return {
+            ...c,
+            deuda_liquidable: deudaLiquidable,
+            deuda_no_liquidable: toMoney(toMoney(c.deuda_total) - deudaLiquidable)
+          };
+        })
+        .filter((c) => c.deuda_liquidable > 0),
+    [clientesConDeuda]
   );
 
-  const facturasNoPagaronValidas = useMemo(
-    () => facturasNoPagaron.filter((id) => idsElegiblesSet.has(id)),
-    [facturasNoPagaron, idsElegiblesSet]
+  // Reinicia solo la UI efímera. La selección NO se toca aquí: persiste entre
+  // aperturas/cierres del modal y reinicios de la app (ver STORAGE_KEY).
+  const resetEstadoUI = () => {
+    setFase("seleccion");
+    setConfirmacionFinal(false);
+    setSearch("");
+    setSoloExcluidos(false);
+    setOrdenLista("predio");
+    setConfSearch("");
+    setConfOrden("predio");
+    setVisibleCount(LIST_PAGE);
+    setMetodoPago("Efectivo");
+    setFechaPago(new Date().toISOString().split("T")[0]);
+    setComentario("Liquidación total desde cobranza");
+    setMostrarErrores(false);
+  };
+
+  useEffect(() => {
+    if (isOpen) resetEstadoUI();
+  }, [isOpen]);
+
+  // Guarda la selección "sigue debiendo" en localStorage en cada cambio para que
+  // sobreviva al cierre del modal y de la app. Solo se borra al liquidar con éxito.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(clientesSiguenDebiendo));
+    } catch {
+      /* noop */
+    }
+  }, [clientesSiguenDebiendo]);
+
+  const elegiblesSet = useMemo(
+    () => new Set(clientesElegibles.map((c) => c.cliente_id)),
+    [clientesElegibles]
   );
 
-  const noPagaronSet = useMemo(() => new Set(facturasNoPagaronValidas), [facturasNoPagaronValidas]);
+  const siguenDebiendoValidos = useMemo(
+    () => clientesSiguenDebiendo.filter((id) => elegiblesSet.has(id)),
+    [clientesSiguenDebiendo, elegiblesSet]
+  );
 
-  const facturasFiltradasPagoRapido = useMemo(() => {
-    const termino = normalizarTexto(searchPagoRapido);
-    let base = facturasElegiblesPagoRapido;
+  const excluidosSet = useMemo(() => new Set(siguenDebiendoValidos), [siguenDebiendoValidos]);
 
-    if (soloNoPagaron) {
-      base = base.filter((factura) => noPagaronSet.has(factura.id));
+  const clientesAplicables = useMemo(
+    () => clientesElegibles.filter((c) => !excluidosSet.has(c.cliente_id)),
+    [clientesElegibles, excluidosSet]
+  );
+
+  const totalAplicar = useMemo(
+    () => clientesAplicables.reduce((acc, c) => toMoney(acc + toMoney(c.deuda_liquidable)), 0),
+    [clientesAplicables]
+  );
+
+  // Vista de revisión: búsqueda + orden sobre los clientes que SÍ se liquidarán
+  // (no cambia lo que se envía, solo cómo se muestra para revisar).
+  const clientesAplicablesVista = useMemo(() => {
+    const termino = normalizarTexto(confSearch);
+    let base = clientesAplicables;
+    if (termino) {
+      base = base.filter((c) =>
+        [c.cliente_nombre, c.numero_predio, c.cliente_id].map(normalizarTexto).join(" ").includes(termino)
+      );
+    }
+    const ordenada = [...base];
+    switch (confOrden) {
+      case "deuda_desc":
+        ordenada.sort((a, b) => toMoney(b.deuda_liquidable) - toMoney(a.deuda_liquidable));
+        break;
+      case "deuda_asc":
+        ordenada.sort((a, b) => toMoney(a.deuda_liquidable) - toMoney(b.deuda_liquidable));
+        break;
+      case "predio":
+      default:
+        ordenada.sort((a, b) => {
+          const pa = parsePredio(a.numero_predio);
+          const pb = parsePredio(b.numero_predio);
+          if (pa !== pb) return pa - pb;
+          return String(a.numero_predio || "").localeCompare(String(b.numero_predio || ""), "es", { numeric: true, sensitivity: "base" });
+        });
+        break;
+    }
+    return ordenada;
+  }, [clientesAplicables, confSearch, confOrden]);
+
+  const clientesFiltrados = useMemo(() => {
+    const termino = normalizarTexto(search);
+    let base = clientesElegibles;
+
+    if (soloExcluidos) {
+      base = base.filter((c) => excluidosSet.has(c.cliente_id));
     }
 
     if (termino) {
-      base = base.filter((factura) => {
-        const textoBusqueda = [
-          factura.cliente_nombre,
-          factura.direccion_cliente,
-          factura.medidor_numero_serie,
-          factura?.medidor?.numero_serie,
-          factura?.medidor?.ubicacion,
-          factura.cliente_numero_predio,
-          factura.id
-        ]
+      base = base.filter((c) => {
+        const texto = [c.cliente_nombre, c.numero_predio, c.direccion, c.telefono, c.correo, c.cliente_id]
           .map((v) => normalizarTexto(v))
           .join(" ");
-
-        return textoBusqueda.includes(termino);
+        return texto.includes(termino);
       });
     }
 
     const ordenada = [...base];
     switch (ordenLista) {
       case "deuda_desc":
-        ordenada.sort((a, b) => toMoney(b.saldo_pendiente) - toMoney(a.saldo_pendiente));
+        ordenada.sort((a, b) => toMoney(b.deuda_liquidable) - toMoney(a.deuda_liquidable));
         break;
       case "deuda_asc":
-        ordenada.sort((a, b) => toMoney(a.saldo_pendiente) - toMoney(b.saldo_pendiente));
+        ordenada.sort((a, b) => toMoney(a.deuda_liquidable) - toMoney(b.deuda_liquidable));
         break;
       case "predio":
       default:
         ordenada.sort((a, b) => {
-          const pa = parsePredio(a.cliente_numero_predio);
-          const pb = parsePredio(b.cliente_numero_predio);
+          const pa = parsePredio(a.numero_predio);
+          const pb = parsePredio(b.numero_predio);
           if (pa !== pb) return pa - pb;
-          return String(a.cliente_numero_predio || "").localeCompare(String(b.cliente_numero_predio || ""), "es", { numeric: true, sensitivity: "base" });
+          return String(a.numero_predio || "").localeCompare(String(b.numero_predio || ""), "es", { numeric: true, sensitivity: "base" });
         });
         break;
     }
     return ordenada;
-  }, [facturasElegiblesPagoRapido, searchPagoRapido, soloNoPagaron, noPagaronSet, ordenLista]);
+  }, [clientesElegibles, search, soloExcluidos, excluidosSet, ordenLista]);
 
-  const idsFiltradosPagoRapido = useMemo(
-    () => facturasFiltradasPagoRapido.map((f) => f.id),
-    [facturasFiltradasPagoRapido]
-  );
-
-  // Facturas a las que SÍ se aplicará pago (las elegibles no excluidas).
-  const pagosRapidosAplicables = useMemo(
-    () => facturasElegiblesPagoRapido.filter((factura) => !noPagaronSet.has(factura.id)),
-    [facturasElegiblesPagoRapido, noPagaronSet]
-  );
-
-  const totalAplicar = useMemo(
-    () => pagosRapidosAplicables.reduce((acc, f) => toMoney(acc + toMoney(f.saldo_pendiente)), 0),
-    [pagosRapidosAplicables]
-  );
-
-  // Vista de revisión: búsqueda + orden sobre las facturas que SÍ se cobrarán
-  // (no cambia lo que se envía, solo cómo se muestra para revisar).
-  const pagosRapidosAplicablesVista = useMemo(() => {
-    const termino = normalizarTexto(confSearch);
-    let base = pagosRapidosAplicables;
-    if (termino) {
-      base = base.filter((f) =>
-        [f.cliente_nombre, f.cliente_numero_predio, f.medidor_numero_serie, f.id]
-          .map(normalizarTexto)
-          .join(" ")
-          .includes(termino)
-      );
-    }
-    const ordenada = [...base];
-    switch (confOrden) {
-      case "deuda_desc":
-        ordenada.sort((a, b) => toMoney(b.saldo_pendiente) - toMoney(a.saldo_pendiente));
-        break;
-      case "deuda_asc":
-        ordenada.sort((a, b) => toMoney(a.saldo_pendiente) - toMoney(b.saldo_pendiente));
-        break;
-      case "predio":
-      default:
-        ordenada.sort((a, b) => {
-          const pa = parsePredio(a.cliente_numero_predio);
-          const pb = parsePredio(b.cliente_numero_predio);
-          if (pa !== pb) return pa - pb;
-          return String(a.cliente_numero_predio || "").localeCompare(String(b.cliente_numero_predio || ""), "es", { numeric: true, sensitivity: "base" });
-        });
-        break;
-    }
-    return ordenada;
-  }, [pagosRapidosAplicables, confSearch, confOrden]);
+  const idsFiltrados = useMemo(() => clientesFiltrados.map((c) => c.cliente_id), [clientesFiltrados]);
 
   // Render incremental: solo se monta una "ventana" de filas; al hacer scroll se agregan más.
-  // Reiniciamos al tope SOLO cuando cambian criterios de filtro o los datos base,
-  // NO al marcar/desmarcar una factura (eso conserva la posición de scroll).
+  // Reiniciamos al tope SOLO cuando cambian los criterios de filtro/orden o los datos base,
+  // NO al marcar/desmarcar un cliente (eso conserva la posición de scroll).
   useEffect(() => {
     setVisibleCount(LIST_PAGE);
     if (listRef.current) listRef.current.scrollTop = 0;
-  }, [searchPagoRapido, soloNoPagaron, ordenLista, facturasPagoRapido]);
+  }, [search, soloExcluidos, ordenLista, clientesElegibles]);
 
   const handleListScroll = useCallback((e) => {
     const el = e.currentTarget;
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 240) {
-      setVisibleCount((c) => (c < facturasFiltradasPagoRapido.length ? c + LIST_PAGE : c));
+      setVisibleCount((c) => (c < clientesFiltrados.length ? c + LIST_PAGE : c));
     }
-  }, [facturasFiltradasPagoRapido.length]);
+  }, [clientesFiltrados.length]);
 
-  const facturasVisibles = useMemo(
-    () => facturasFiltradasPagoRapido.slice(0, visibleCount),
-    [facturasFiltradasPagoRapido, visibleCount]
+  const clientesVisibles = useMemo(
+    () => clientesFiltrados.slice(0, visibleCount),
+    [clientesFiltrados, visibleCount]
   );
 
-  // Reinicia solo la UI efímera. La selección NO se toca aquí.
-  const resetEstadoUI = () => {
-    setFase("seleccion");
-    setConfirmacionFinal(false);
-    setSearchPagoRapido("");
-    setSoloNoPagaron(false);
-    setOrdenLista("predio");
-    setConfSearch("");
-    setConfOrden("predio");
-    setVisibleCount(LIST_PAGE);
-    setMetodoPagoRapido("Efectivo");
-    setFechaPagoRapido(new Date().toISOString().split("T")[0]);
-    setComentarioPagoRapido("Pago masivo desde modo rapido");
-    setMostrarErrores(false);
-  };
-
-  const cargarFacturasPagoRapidoCompleto = async () => {
-    const token_session = localStorage.getItem("token");
-    if (!token_session) {
-      throw new Error("No se encontró token de sesión");
-    }
-
-    setCargandoFacturasPagoRapido(true);
-
-    const limit = 200;
-    let page = 1;
-    let totalPagesApi = 1;
-    const acumuladas = [];
-
-    do {
-      const response = await window.api.fetchFacturas(token_session, {
-        periodo,
-        page,
-        limit,
-        search: "",
-        estado: ""
-      });
-
-      const facturasPagina = Array.isArray(response)
-        ? response
-        : Array.isArray(response?.facturas)
-          ? response.facturas
-          : [];
-
-      acumuladas.push(...facturasPagina);
-
-      if (Array.isArray(response)) {
-        totalPagesApi = 1;
-      } else {
-        totalPagesApi = Number(response?.pagination?.totalPages || 1);
-      }
-
-      page += 1;
-    } while (page <= totalPagesApi && page <= 200);
-
-    const unicas = Array.from(
-      new Map(acumuladas.map((factura) => [factura.id, factura])).values()
+  const toggleSigueDebiendo = (clienteId) => {
+    setClientesSiguenDebiendo((prev) =>
+      prev.includes(clienteId) ? prev.filter((id) => id !== clienteId) : [...prev, clienteId]
     );
-
-    setFacturasPagoRapido(unicas);
-    setCargandoFacturasPagoRapido(false);
   };
 
-  const handleOpen = async () => {
-    resetEstadoUI();
-    // Restaura la selección guardada de este periodo (persistida entre cierres / reinicios).
-    setFacturasNoPagaron(cargarSeleccionGuardada(periodo));
-    try {
-      await cargarFacturasPagoRapidoCompleto();
-    } catch (error) {
-      setError(error.message || "No se pudieron cargar todas las facturas para modo rápido", "Pago rápido");
-      setCargandoFacturasPagoRapido(false);
-    }
+  const marcarPaginaSigueDebiendo = () => {
+    setClientesSiguenDebiendo((prev) => Array.from(new Set([...prev, ...idsFiltrados])));
   };
+
+  const limpiarExcluidos = () => setClientesSiguenDebiendo([]);
 
   const handleClose = () => {
-    if (procesandoPagoRapido) return;
+    if (procesando) return;
     onClose();
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      handleOpen();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, periodo]);
-
-  // Guarda la selección "no pagaron" del periodo en cada cambio para que sobreviva
-  // al cierre del modal y de la app. Solo se borra al registrar con éxito.
-  useEffect(() => {
-    if (!isOpen) return;
-    try {
-      localStorage.setItem(keyFor(periodo), JSON.stringify(facturasNoPagaron));
-    } catch {
-      /* noop */
-    }
-  }, [facturasNoPagaron, periodo, isOpen]);
-
-  const toggleFacturaNoPago = (facturaId) => {
-    setFacturasNoPagaron((prev) => {
-      if (prev.includes(facturaId)) {
-        return prev.filter((id) => id !== facturaId);
-      }
-      return [...prev, facturaId];
-    });
-  };
-
-  const marcarTodasNoPagaron = () => {
-    setFacturasNoPagaron((prev) => Array.from(new Set([...prev, ...idsFiltradosPagoRapido])));
-  };
-
-  const limpiarNoPagaron = () => {
-    setFacturasNoPagaron([]);
   };
 
   const validarFormulario = () => {
     setMostrarErrores(true);
-
-    if (!metodoPagoRapido) {
-      setError("Debe seleccionar un método de pago.", "Pago rápido");
+    if (!metodoPago) {
+      setError("Debe seleccionar un método de pago.", "Liquidación total");
       return false;
     }
-    if (!isValidPaymentDate(fechaPagoRapido)) {
-      setError("Debe ingresar una fecha de pago válida (YYYY-MM-DD).", "Pago rápido");
+    if (!isValidPaymentDate(fechaPago)) {
+      setError("Debe ingresar una fecha de pago válida (YYYY-MM-DD).", "Liquidación total");
       return false;
     }
-    if (String(comentarioPagoRapido || "").length > MAX_COMENTARIO) {
-      setError(`El comentario no puede exceder ${MAX_COMENTARIO} caracteres.`, "Pago rápido");
+    if (String(comentario || "").length > MAX_COMENTARIO) {
+      setError(`El comentario no puede exceder ${MAX_COMENTARIO} caracteres.`, "Liquidación total");
       return false;
     }
-    if (pagosRapidosAplicables.length === 0) {
-      setError("No hay facturas para aplicar pago en este modo.", "Pago rápido");
+    if (clientesAplicables.length === 0) {
+      setError("No hay clientes a liquidar (todos están marcados como deudores).", "Liquidación total");
       return false;
     }
     return true;
@@ -378,93 +325,85 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
     setFase("confirmacion");
   };
 
-  const ejecutarPagoRapido = async () => {
+  const ejecutarLiquidacion = async () => {
     const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
     const token_session = localStorage.getItem("token");
     if (!token_session) {
-      setError("No se encontró token de sesión", "Pago rápido");
+      setError("No se encontró token de sesión", "Liquidación total");
       return;
     }
     const modificadoPor = usuario.id || 1;
 
-    setProcesandoPagoRapido(true);
+    setProcesando(true);
 
     let exitos = 0;
-    let totalCobrado = 0;
+    let totalLiquidado = 0;
     const errores = [];
 
-    for (const factura of pagosRapidosAplicables) {
-      try {
-        const cantidad = Number(factura.saldo_pendiente || 0);
-        if (!Number.isFinite(cantidad) || cantidad <= 0) {
-          continue;
-        }
+    for (const cliente of clientesAplicables) {
+      const cantidad = toMoney(cliente.deuda_liquidable);
+      if (!Number.isFinite(cantidad) || cantidad <= 0) continue;
 
-        const response = await window.api.registerPago({
-          factura_id: factura.id,
-          fecha_pago: fechaPagoRapido,
+      try {
+        const response = await registrarPagoDistribuido({
+          cliente_id: cliente.cliente_id,
+          fecha_pago: fechaPago,
           cantidad_entregada: cantidad,
-          metodo_pago: metodoPagoRapido,
-          comentario: comentarioPagoRapido || null,
+          metodo_pago: metodoPago,
+          comentario: comentario || null,
           modificado_por: modificadoPor
-        }, token_session);
+        });
 
         if (!response?.success) {
-          throw new Error(response?.message || "Error al registrar pago");
+          throw new Error(response?.message || "Error al registrar liquidación");
         }
 
         // Usamos el monto que el backend confirmó haber aplicado (no lo enviado):
         // si el saldo cambió entre la carga y la ejecución, el backend aplica solo
-        // hasta el saldo real. Fallback a `cantidad` por compatibilidad.
-        const aplicado = toMoney(response?.monto_aplicado ?? cantidad);
+        // hasta el saldo real y devuelve el resto como cambio. Fallback a `cantidad`
+        // por si una respuesta antigua no trae el campo.
+        const aplicado = toMoney(response?.data?.monto_aplicado ?? cantidad);
         exitos += 1;
-        totalCobrado = toMoney(totalCobrado + aplicado);
+        totalLiquidado = toMoney(totalLiquidado + aplicado);
       } catch (error) {
-        errores.push(`#${factura.id}`);
+        errores.push(`${cliente.cliente_nombre || `#${cliente.cliente_id}`}`);
       }
     }
 
-    setProcesandoPagoRapido(false);
+    setProcesando(false);
 
-    if (onPagoRegistrado) {
-      await onPagoRegistrado();
+    if (onLiquidacionRegistrada) {
+      await onLiquidacionRegistrada();
     }
 
     if (exitos > 0 && errores.length === 0) {
-      // Éxito total: único punto donde se borra la selección guardada del periodo.
-      setFacturasNoPagaron([]);
-      limpiarSeleccionGuardada(periodo);
-      setSuccess(`Pago rápido aplicado en ${exitos} facturas por $${formatMoney(totalCobrado)}.`);
+      // Éxito total: este es el único punto donde se borra la selección guardada.
+      setClientesSiguenDebiendo([]);
+      limpiarSeleccionGuardada();
+      setSuccess(`Liquidación aplicada a ${exitos} cliente(s) por $${formatMoney(totalLiquidado)}.`, "Liquidación total");
       onClose();
       return;
     }
 
     if (exitos > 0 && errores.length > 0) {
       setError(
-        `Se aplicaron ${exitos} pagos, pero fallaron ${errores.length} facturas (${errores.slice(0, 8).join(", ")}${errores.length > 8 ? "…" : ""}). Las pagadas ya no aparecen; revisa y reintenta las pendientes.`,
-        "Pago rápido"
+        `Se liquidaron ${exitos} cliente(s), pero fallaron ${errores.length} (${errores.slice(0, 5).join(", ")}${errores.length > 5 ? "…" : ""}). Revisa y reintenta solo los pendientes.`,
+        "Liquidación total"
       );
+      // Volvemos a selección para que pueda reintentar; el refresh ya actualizó deudas.
       setConfirmacionFinal(false);
       setFase("seleccion");
-      // Recarga la lista local para que las facturas ya pagadas (saldo 0) salgan
-      // de las elegibles y un reintento no las vuelva a cobrar.
-      try {
-        await cargarFacturasPagoRapidoCompleto();
-      } catch {
-        /* el feedback de error ya se mostró arriba */
-      }
       return;
     }
 
-    setError("No se pudo registrar ningún pago en modo rápido.", "Pago rápido");
+    setError("No se pudo registrar ninguna liquidación.", "Liquidación total");
     setConfirmacionFinal(false);
     setFase("seleccion");
   };
 
-  const canContinuar = !cargandoFacturasPagoRapido
-    && pagosRapidosAplicables.length > 0
-    && isValidPaymentDate(fechaPagoRapido)
-    && String(comentarioPagoRapido || "").length <= MAX_COMENTARIO;
+  const canContinuar = clientesAplicables.length > 0
+    && isValidPaymentDate(fechaPago)
+    && String(comentario || "").length <= MAX_COMENTARIO;
 
   return (
     <Modal
@@ -472,7 +411,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
       size="6xl"
       onClose={handleClose}
       theme={premiumModalTheme}
-      dismissible={!procesandoPagoRapido}
+      dismissible={!procesando}
     >
       <Modal.Header>
         <div className="flex items-center gap-4">
@@ -481,11 +420,11 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
           </div>
           <div>
             <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-              Pago Rápido Masivo
+              Liquidación Total por Cliente
             </h3>
             <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
               {fase === "seleccion" ? (
-                <>Marca las facturas que <strong className="text-orange-500 dark:text-orange-400">NO</strong> pagaron. El sistema aplicará pago total al resto.</>
+                <>Marca los clientes que <strong className="text-orange-500 dark:text-orange-400">SIGUEN debiendo</strong>. Al resto se le liquidará su deuda total completa.</>
               ) : (
                 <>Revisa el resumen antes de aplicar. Esta acción registra pagos reales.</>
               )}
@@ -500,19 +439,19 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
             {/* KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Total Elegibles</p>
-                <p className="text-4xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{facturasElegiblesPagoRapido.length}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Total Deudores</p>
+                <p className="text-4xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{clientesElegibles.length}</p>
               </div>
               <div className="bg-orange-500/5 dark:bg-orange-900/10 border border-orange-500/20 rounded-2xl p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/80 dark:text-orange-400/80 mb-2">Excluidas (No pagaron)</p>
-                <p className="text-4xl font-black tracking-tight text-orange-600 dark:text-orange-400">{facturasNoPagaronValidas.length}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/80 dark:text-orange-400/80 mb-2">Siguen Debiendo</p>
+                <p className="text-4xl font-black tracking-tight text-orange-600 dark:text-orange-400">{siguenDebiendoValidos.length}</p>
               </div>
               <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Se Cobrarán</p>
-                <p className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{pagosRapidosAplicables.length}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Se Liquidan</p>
+                <p className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{clientesAplicables.length}</p>
               </div>
               <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Total a Cobrar</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Total a Aplicar</p>
                 <p className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">${formatMoney(totalAplicar)}</p>
               </div>
             </div>
@@ -526,8 +465,8 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                 <div className="relative">
                   <HiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <select
-                    value={metodoPagoRapido}
-                    onChange={(e) => setMetodoPagoRapido(e.target.value)}
+                    value={metodoPago}
+                    onChange={(e) => setMetodoPago(e.target.value)}
                     className={`${inputBaseClasses} pl-10`}
                   >
                     <option value="Efectivo">Efectivo</option>
@@ -543,11 +482,11 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                 </label>
                 <input
                   type="date"
-                  value={fechaPagoRapido}
-                  onChange={(e) => setFechaPagoRapido(e.target.value)}
-                  className={`${inputBaseClasses} ${mostrarErrores && !isValidPaymentDate(fechaPagoRapido) ? "border-rose-500 focus:ring-rose-500" : "focus:ring-emerald-500"}`}
+                  value={fechaPago}
+                  onChange={(e) => setFechaPago(e.target.value)}
+                  className={`${inputBaseClasses} ${mostrarErrores && !isValidPaymentDate(fechaPago) ? "border-rose-500 focus:ring-rose-500" : "focus:ring-emerald-500"}`}
                 />
-                {mostrarErrores && !isValidPaymentDate(fechaPagoRapido) && (
+                {mostrarErrores && !isValidPaymentDate(fechaPago) && (
                   <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-wider">Fecha inválida</p>
                 )}
               </div>
@@ -557,15 +496,15 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                 </label>
                 <input
                   type="text"
-                  value={comentarioPagoRapido}
-                  onChange={(e) => setComentarioPagoRapido(e.target.value)}
+                  value={comentario}
+                  onChange={(e) => setComentario(e.target.value)}
                   maxLength={MAX_COMENTARIO}
                   placeholder="Nota interna..."
                   className={`${inputBaseClasses} focus:ring-emerald-500`}
                 />
                 <div className="flex justify-end mt-1">
-                  <p className={`text-[10px] font-bold ${String(comentarioPagoRapido || "").length > MAX_COMENTARIO ? "text-rose-500" : "text-slate-400 dark:text-zinc-600"}`}>
-                    {String(comentarioPagoRapido || "").length} / {MAX_COMENTARIO}
+                  <p className={`text-[10px] font-bold ${String(comentario || "").length > MAX_COMENTARIO ? "text-rose-500" : "text-slate-400 dark:text-zinc-600"}`}>
+                    {String(comentario || "").length} / {MAX_COMENTARIO}
                   </p>
                 </div>
               </div>
@@ -583,13 +522,13 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                     </span>
                     <input
                       placeholder="Buscar cliente o predio..."
-                      value={searchPagoRapido}
-                      onChange={(e) => setSearchPagoRapido(e.target.value)}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
                       className="w-full pl-12 pr-10 py-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-sm font-medium text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all shadow-sm"
                     />
-                    {searchPagoRapido && (
+                    {search && (
                       <button
-                        onClick={() => setSearchPagoRapido("")}
+                        onClick={() => setSearch("")}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"
                       >
                         <HiX className="w-4 h-4" />
@@ -611,19 +550,19 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                   <label className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm cursor-pointer select-none">
                     <input
                       type="checkbox"
-                      checked={soloNoPagaron}
-                      onChange={(e) => setSoloNoPagaron(e.target.checked)}
+                      checked={soloExcluidos}
+                      onChange={(e) => setSoloExcluidos(e.target.checked)}
                       className="w-4 h-4 rounded accent-orange-500"
                     />
-                    <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">Ver solo excluidas</span>
+                    <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">Ver solo deudores marcados</span>
                   </label>
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                  <button type="button" onClick={marcarTodasNoPagaron} className="px-4 h-9 text-sm font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors">
-                    Excluir todas
+                  <button type="button" onClick={marcarPaginaSigueDebiendo} className="px-4 h-9 text-sm font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors">
+                    Marcar todos
                   </button>
-                  <button type="button" onClick={limpiarNoPagaron} className="px-4 h-9 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                  <button type="button" onClick={limpiarExcluidos} className="px-4 h-9 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
                     Resetear
                   </button>
                 </div>
@@ -631,67 +570,68 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
 
               <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 flex items-center gap-1.5">
                 <HiShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                Tu selección se guarda automáticamente para este periodo y se conserva aunque cierres el modal o la app; solo se borra al registrar con éxito.
+                Tu selección se guarda automáticamente y se conserva aunque cierres el modal o la app; solo se borra al liquidar con éxito.
               </p>
 
-              {/* Lista de facturas (scroll infinito / render incremental) */}
+              {/* Lista de clientes (scroll infinito / render incremental) */}
               <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
                 <div ref={listRef} onScroll={handleListScroll} className="max-h-[400px] overflow-auto">
-                  {cargandoFacturasPagoRapido ? (
-                    <div className="p-12 flex flex-col items-center justify-center gap-4 text-slate-500 dark:text-zinc-400">
-                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-600 dark:border-zinc-400" />
-                      <p className="text-sm font-bold tracking-wider uppercase">Cargando facturas...</p>
-                    </div>
-                  ) : facturasFiltradasPagoRapido.length === 0 ? (
+                  {clientesFiltrados.length === 0 ? (
                     <div className="p-12 text-center text-sm font-medium text-slate-400 dark:text-zinc-500">
-                      No hay facturas pendientes en los filtros actuales.
+                      No hay clientes con deuda en los filtros actuales.
                     </div>
                   ) : (
                     <div className="divide-y divide-slate-100 dark:divide-zinc-800/50">
-                      {facturasVisibles.map((factura) => {
-                        const isExcluded = noPagaronSet.has(factura.id);
+                      {clientesVisibles.map((cliente) => {
+                        const isExcluded = excluidosSet.has(cliente.cliente_id);
                         return (
                           <label
-                            key={factura.id}
+                            key={cliente.cliente_id}
                             className={`flex items-center justify-between gap-4 p-4 cursor-pointer transition-all ${isExcluded ? "bg-orange-50/50 dark:bg-orange-900/10 hover:bg-orange-50 dark:hover:bg-orange-900/20" : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"}`}
                           >
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-mono font-bold text-slate-400 dark:text-zinc-500">#{factura.id}</span>
+                                <span className="text-xs font-mono font-bold text-slate-400 dark:text-zinc-500">#{cliente.cliente_id}</span>
                                 <p className={`text-sm font-bold truncate ${isExcluded ? "text-orange-700 dark:text-orange-400" : "text-slate-800 dark:text-zinc-100"}`}>
-                                  {factura.cliente_nombre}
+                                  {cliente.cliente_nombre}
                                 </p>
                               </div>
                               <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 truncate flex items-center gap-2">
-                                <span><strong className="text-slate-400 uppercase tracking-wider text-[10px]">Predio</strong> {factura.cliente_numero_predio || "-"}</span>
+                                <span><strong className="text-slate-400 uppercase tracking-wider text-[10px]">Predio</strong> {cliente.numero_predio || "-"}</span>
                                 <span className="text-slate-300">•</span>
-                                <span><strong className="text-slate-400 uppercase tracking-wider text-[10px]">Medidor</strong> {factura.medidor_numero_serie || factura?.medidor?.numero_serie || "-"}</span>
+                                <span><strong className="text-slate-400 uppercase tracking-wider text-[10px]">Pendientes</strong> {cliente.facturas_pendientes ?? "-"}</span>
                               </p>
                             </div>
                             <div className="flex items-center gap-6 shrink-0">
-                              <p className={`text-base font-black tracking-tight ${isExcluded ? "text-orange-600/50 dark:text-orange-500/50 line-through" : "text-emerald-600 dark:text-emerald-400"}`}>
-                                ${formatMoney(factura.saldo_pendiente)}
-                              </p>
-                              <div className="w-[120px] flex items-center justify-end gap-2">
+                              <div className="text-right">
+                                <p className={`text-base font-black tracking-tight ${isExcluded ? "text-orange-600/50 dark:text-orange-500/50 line-through" : "text-emerald-600 dark:text-emerald-400"}`}>
+                                  ${formatMoney(cliente.deuda_liquidable)}
+                                </p>
+                                {cliente.deuda_no_liquidable > 0 && (
+                                  <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400" title="Saldo en convenio: no se liquida con esta herramienta">
+                                    + ${formatMoney(cliente.deuda_no_liquidable)} en convenio
+                                  </p>
+                                )}
+                              </div>
+                              <div className="w-[150px] flex items-center justify-end gap-2">
                                 <input
                                   type="checkbox"
                                   checked={isExcluded}
-                                  onChange={() => toggleFacturaNoPago(factura.id)}
+                                  onChange={() => toggleSigueDebiendo(cliente.cliente_id)}
                                   className="w-4 h-4 rounded accent-orange-500"
                                   onClick={(e) => e.stopPropagation()}
                                 />
                                 <span className={`text-xs font-bold ${isExcluded ? "text-orange-600 dark:text-orange-500" : "text-slate-400"}`}>
-                                  {isExcluded ? "Excluida" : "Cobrar"}
+                                  {isExcluded ? "Sigue debiendo" : "Liquidar"}
                                 </span>
                               </div>
                             </div>
                           </label>
                         );
                       })}
-
-                      {visibleCount < facturasFiltradasPagoRapido.length && (
+                      {visibleCount < clientesFiltrados.length && (
                         <div className="p-4 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                          Desplázate para ver más · {facturasFiltradasPagoRapido.length - visibleCount} restantes
+                          Desplázate para ver más · {clientesFiltrados.length - visibleCount} restantes
                         </div>
                       )}
                     </div>
@@ -699,11 +639,9 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                 </div>
               </div>
 
-              {!cargandoFacturasPagoRapido && (
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 text-center">
-                  Mostrando {Math.min(visibleCount, facturasFiltradasPagoRapido.length)} de {facturasFiltradasPagoRapido.length}
-                </p>
-              )}
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 text-center">
+                Mostrando {Math.min(visibleCount, clientesFiltrados.length)} de {clientesFiltrados.length}
+              </p>
             </div>
           </div>
         ) : (
@@ -712,47 +650,47 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
             <div className="bg-amber-500/5 dark:bg-amber-900/10 border border-amber-500/30 rounded-2xl p-6 flex items-start gap-4">
               <HiExclamationCircle className="w-8 h-8 text-amber-500 shrink-0" />
               <div>
-                <p className="text-base font-bold text-slate-800 dark:text-zinc-100">Confirma el pago masivo</p>
+                <p className="text-base font-bold text-slate-800 dark:text-zinc-100">Confirma la liquidación masiva</p>
                 <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-                  Se registrarán pagos reales que saldan por completo cada factura seleccionada. Esta acción queda en la auditoría a tu nombre.
+                  Se registrarán pagos reales que saldan la deuda total de cada cliente seleccionado (reparto FIFO sobre todas sus facturas pendientes). Esta acción queda en la auditoría a tu nombre.
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6 text-center">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Facturas a cobrar</p>
-                <p className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{pagosRapidosAplicables.length}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Clientes a liquidar</p>
+                <p className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{clientesAplicables.length}</p>
               </div>
               <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6 text-center">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Total a cobrar</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Total a aplicar</p>
                 <p className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">${formatMoney(totalAplicar)}</p>
               </div>
               <div className="bg-orange-500/5 dark:bg-orange-900/10 border border-orange-500/20 rounded-2xl p-6 text-center">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/80 dark:text-orange-400/80 mb-2">Excluidas (No pagaron)</p>
-                <p className="text-4xl font-black tracking-tight text-orange-600 dark:text-orange-400">{facturasNoPagaronValidas.length}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/80 dark:text-orange-400/80 mb-2">Quedan debiendo</p>
+                <p className="text-4xl font-black tracking-tight text-orange-600 dark:text-orange-400">{siguenDebiendoValidos.length}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Método</span>
-                <p className="font-bold text-slate-800 dark:text-zinc-100">{metodoPagoRapido}</p>
+                <p className="font-bold text-slate-800 dark:text-zinc-100">{metodoPago}</p>
               </div>
               <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Fecha de pago</span>
-                <p className="font-bold text-slate-800 dark:text-zinc-100">{fechaPagoRapido}</p>
+                <p className="font-bold text-slate-800 dark:text-zinc-100">{fechaPago}</p>
               </div>
               <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Comentario</span>
-                <p className="font-bold text-slate-800 dark:text-zinc-100 truncate">{comentarioPagoRapido || "—"}</p>
+                <p className="font-bold text-slate-800 dark:text-zinc-100 truncate">{comentario || "—"}</p>
               </div>
             </div>
 
             <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
               <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800/50 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  <HiShieldCheck className="w-4 h-4 text-emerald-500" /> Se cobrarán ({pagosRapidosAplicables.length}{confSearch ? ` · ${pagosRapidosAplicablesVista.length} en vista` : ""})
+                  <HiShieldCheck className="w-4 h-4 text-emerald-500" /> Se liquidarán ({clientesAplicables.length}{confSearch ? ` · ${clientesAplicablesVista.length} en vista` : ""})
                 </span>
                 <div className="flex items-center gap-2">
                   <div className="relative">
@@ -787,18 +725,18 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                 </div>
               </div>
               <div className="max-h-[280px] overflow-auto divide-y divide-slate-100 dark:divide-zinc-800/50">
-                {pagosRapidosAplicablesVista.length === 0 ? (
+                {clientesAplicablesVista.length === 0 ? (
                   <div className="p-8 text-center text-sm font-medium text-slate-400 dark:text-zinc-500">
                     Sin coincidencias para la búsqueda.
                   </div>
-                ) : pagosRapidosAplicablesVista.map((factura) => (
-                  <div key={factura.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                ) : clientesAplicablesVista.map((cliente) => (
+                  <div key={cliente.cliente_id} className="flex items-center justify-between gap-4 px-4 py-3">
                     <div className="min-w-0 flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-slate-400 dark:text-zinc-500">#{factura.id}</span>
-                      <span className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{factura.cliente_nombre}</span>
-                      <span className="text-xs text-slate-400">· Predio {factura.cliente_numero_predio || "-"}</span>
+                      <span className="text-xs font-mono font-bold text-slate-400 dark:text-zinc-500">#{cliente.cliente_id}</span>
+                      <span className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">{cliente.cliente_nombre}</span>
+                      <span className="text-xs text-slate-400">· Predio {cliente.numero_predio || "-"}</span>
                     </div>
-                    <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 shrink-0">${formatMoney(factura.saldo_pendiente)}</span>
+                    <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 shrink-0">${formatMoney(cliente.deuda_liquidable)}</span>
                   </div>
                 ))}
               </div>
@@ -813,7 +751,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
             <button
               type="button"
               onClick={handleClose}
-              disabled={procesandoPagoRapido}
+              disabled={procesando}
               className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 disabled:opacity-40"
             >
               Cancelar
@@ -824,7 +762,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
               disabled={!canContinuar}
               className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 h-11 shadow-sm disabled:opacity-50 hover:bg-slate-800 dark:hover:bg-zinc-100 transition-colors"
             >
-              Revisar y confirmar ({pagosRapidosAplicables.length})
+              Revisar y confirmar ({clientesAplicables.length})
             </button>
           </>
         ) : (
@@ -832,23 +770,23 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
             <>
               <span className="mr-auto text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
                 <HiExclamationCircle className="w-5 h-5 shrink-0" />
-                ¿Estás completamente seguro? Se registrarán {pagosRapidosAplicables.length} pago(s) por ${formatMoney(totalAplicar)}.
+                ¿Estás completamente seguro? Se registrarán {clientesAplicables.length} pago(s) por ${formatMoney(totalAplicar)}.
               </span>
               <button
                 type="button"
                 onClick={() => setConfirmacionFinal(false)}
-                disabled={procesandoPagoRapido}
+                disabled={procesando}
                 className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 disabled:opacity-40"
               >
                 No, revisar
               </button>
               <button
                 type="button"
-                onClick={ejecutarPagoRapido}
-                disabled={procesandoPagoRapido || pagosRapidosAplicables.length === 0}
+                onClick={ejecutarLiquidacion}
+                disabled={procesando || clientesAplicables.length === 0}
                 className="font-bold bg-rose-600 text-white rounded-xl px-8 h-11 shadow-sm disabled:opacity-50 flex items-center gap-2 hover:bg-rose-700 transition-colors"
               >
-                {procesandoPagoRapido && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                {procesando && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                 Sí, registrar ahora
               </button>
             </>
@@ -857,7 +795,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
               <button
                 type="button"
                 onClick={() => { setConfirmacionFinal(false); setFase("seleccion"); }}
-                disabled={procesandoPagoRapido}
+                disabled={procesando}
                 className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 disabled:opacity-40 flex items-center gap-2"
               >
                 <HiArrowLeft className="w-4 h-4" /> Volver
@@ -865,10 +803,10 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
               <button
                 type="button"
                 onClick={() => setConfirmacionFinal(true)}
-                disabled={procesandoPagoRapido || pagosRapidosAplicables.length === 0}
+                disabled={procesando || clientesAplicables.length === 0}
                 className="font-bold bg-emerald-600 text-white rounded-xl px-8 h-11 shadow-sm disabled:opacity-50 flex items-center gap-2 hover:bg-emerald-700 transition-colors"
               >
-                Aplicar pago a {pagosRapidosAplicables.length} factura(s) · ${formatMoney(totalAplicar)}
+                Liquidar {clientesAplicables.length} cliente(s) · ${formatMoney(totalAplicar)}
               </button>
             </>
           )
@@ -878,4 +816,4 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
   );
 };
 
-export default ModalPagoRapido;
+export default ModalLiquidacionTotal;
