@@ -118,3 +118,52 @@ export const fetchClientesEstadisticas = async (token_session, isRetry = false) 
     return null;
   }
 };
+
+export const fetchClientesEliminados = async (token_session, isRetry = false) => {
+  try {
+    const token_app = leerToken();
+    if (!token_app) {
+      console.error("Token app no disponible");
+      return { total: 0, clientes_eliminados: [] };
+    }
+    if (!token_session) {
+      console.error("Token de sesión no disponible");
+      return { total: 0, clientes_eliminados: [] };
+    }
+
+    const baseURL = URL_CLIENTES.replace('/listar', '');
+    const url = `${baseURL}/eliminados`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "x-app-key": `AppKey ${token_app}`,
+        "Authorization": `Bearer ${token_session}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      
+      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
+        console.log("🔄 Token expirado en fetchClientesEliminados, solicitando renovación...");
+        window.dispatchEvent(new CustomEvent('token-expired'));
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const newToken = localStorage.getItem('token');
+        if (newToken && newToken !== token_session) {
+          console.log("✅ Token renovado, reintentando fetchClientesEliminados...");
+          return fetchClientesEliminados(newToken, true);
+        }
+      }
+      
+      throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error al obtener clientes eliminados:", error);
+    return { total: 0, clientes_eliminados: [] };
+  }
+};

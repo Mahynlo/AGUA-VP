@@ -83,6 +83,19 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
             {/* ── BODY ── */}
             <Modal.Body>
                 <div className="flex flex-col gap-6">
+                    {medidor.fecha_eliminacion && (
+                        <div className="p-5 bg-red-500/10 border border-red-200/50 dark:border-red-900/40 rounded-2xl flex flex-col gap-2">
+                            <h4 className="text-xs font-black text-red-800 dark:text-red-400 uppercase tracking-widest">
+                                Medidor Desactivado (En Papelera)
+                            </h4>
+                            <p className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                                <span className="text-slate-400">Motivo:</span> {medidor.razon_eliminacion || "Sin motivo especificado"}
+                            </p>
+                            <p className="text-[10px] font-medium text-slate-500">
+                                <span className="text-slate-400">Fecha de eliminación:</span> {new Date(medidor.fecha_eliminacion).toLocaleString()}
+                            </p>
+                        </div>
+                    )}
 
                     {/* 1. Especificaciones Técnicas */}
                     <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5">

@@ -96,6 +96,34 @@ export default function EditarClientes({ id, isOpen, onClose, onSuccess }) {
         }
     };
 
+    // Manejar eliminación lógica de cliente
+    const handleEliminarCliente = async (clienteId, razon) => {
+        if (!canModificarClientes) {
+            setError("No tienes permisos para eliminar clientes.", "Eliminación de Cliente");
+            return;
+        }
+
+        if (!razon || razon.trim().length < 10) {
+            setError("El motivo de desactivación es requerido y debe tener al menos 10 caracteres.", "Eliminación de Cliente");
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem("token");
+            const response = await window.api.deleteClient({ id: clienteId, razon, token_session: token });
+            if (response.success) {
+                setSuccess?.("Cliente eliminado correctamente.");
+                handleCloseModal();
+                onSuccess?.(); // Recargar la tabla
+            } else {
+                setError(response.message || "Error al eliminar el cliente.", "Eliminar Cliente");
+            }
+        } catch (err) {
+            console.error("Error al eliminar cliente:", err);
+            setError(err.message || "Error al comunicarse con la base de datos.", "Eliminar Cliente");
+        }
+    };
+
     return (
         // 3. Ya no hay botón "Trigger". Solo devolvemos el Modal que es controlado por las Props.
         <Modal
@@ -176,7 +204,7 @@ export default function EditarClientes({ id, isOpen, onClose, onSuccess }) {
                         <InfoRegistro fechaRegistroCliente={fechaRegistroCliente} />
 
                         {/* Eliminar Cliente */}
-                        <SeccionEliminar clienteId={id} />
+                        <SeccionEliminar clienteId={id} onEliminar={handleEliminarCliente} />
                         
                     </form>
                 )}

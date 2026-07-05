@@ -90,6 +90,21 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
             {/* ── CUERPO DEL MODAL ── */}
             <Modal.Body>
                 <div className="flex flex-col gap-10">
+                    {(cliente.estado_cliente === "Eliminado" || cliente.fecha_eliminacion) && (
+                        <div className="p-5 bg-red-500/10 border border-red-200/50 dark:border-red-900/40 rounded-2xl flex flex-col gap-2">
+                            <h4 className="text-xs font-black text-red-800 dark:text-red-400 uppercase tracking-widest">
+                                Registro Desactivado (En Papelera)
+                            </h4>
+                            <p className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                                <span className="text-slate-400">Motivo:</span> {cliente.razon_eliminacion || "Sin motivo especificado"}
+                            </p>
+                            {cliente.fecha_eliminacion && (
+                                <p className="text-[10px] font-medium text-slate-500">
+                                    <span className="text-slate-400">Fecha de eliminación:</span> {new Date(cliente.fecha_eliminacion).toLocaleString()}
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {/* 1. Información Personal */}
                     <div className="flex flex-col gap-5">

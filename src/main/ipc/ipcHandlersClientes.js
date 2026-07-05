@@ -1,10 +1,10 @@
 import { ipcMain} from 'electron';
 
 //Fetch de clientes
-import { fetchClientes, fetchClientesEstadisticas } from '../../fetch/clientes.js';
+import { fetchClientes, fetchClientesEstadisticas, fetchClientesEliminados } from '../../fetch/clientes.js';
 //registro y actualizar
 import { registerClientes } from '../../register/cliente.js'; // Importa la función registerClientes
-import { updateCliente, asignarTarifaCliente } from '../../update/cliente.js'; // Importa la función updateCliente
+import { updateCliente, asignarTarifaCliente, deleteCliente, reactivateCliente, purgeCliente } from '../../update/cliente.js'; // Importa la función updateCliente
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlerClientes () {
@@ -50,5 +50,28 @@ export default function IpcHandlerClientes () {
       }
 
       return await runWithAppKeyFlow(() => registerClientes(cliente, token_session));
+    });
+
+    // 📌 Manejar la eliminación lógica de un cliente
+    ipcMain.handle("delete-cliente", async (event, data) => {
+      const { id, razon, token_session } = data;
+      return await runWithAppKeyFlow(() => deleteCliente({ id, razon }, token_session));
+    });
+
+    // 📌 Manejar la restauración de un cliente
+    ipcMain.handle("reactivate-cliente", async (event, data) => {
+      const { id, token_session } = data;
+      return await runWithAppKeyFlow(() => reactivateCliente(id, token_session));
+    });
+
+    // 📌 Manejar la eliminación física/definitiva de un cliente
+    ipcMain.handle("purge-cliente", async (event, data) => {
+      const { id, token_session } = data;
+      return await runWithAppKeyFlow(() => purgeCliente(id, token_session));
+    });
+
+    // 📌 Manejar listado de clientes eliminados
+    ipcMain.handle("fetch-clientes-eliminados", async (event, token_session) => {
+      return await runWithAppKeyFlow(() => fetchClientesEliminados(token_session), { fallbackValue: { total: 0, clientes_eliminados: [] } });
     });
 }
