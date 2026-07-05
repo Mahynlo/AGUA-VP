@@ -1,7 +1,7 @@
 import { ipcMain} from 'electron';
 import { registerMedidor  } from '../../register/medidor.js'; // Importa la función registerMedidor
-import { fetchMedidores } from '../../fetch/medidores.js';
-import { updateMedidor } from '../../update/medidores.js';
+import { fetchMedidores, fetchMedidoresEliminados } from '../../fetch/medidores.js';
+import { updateMedidor, deleteMedidor, reactivateMedidor, purgeMedidor } from '../../update/medidores.js';
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlersMedidores () {
@@ -44,5 +44,28 @@ export default function IpcHandlersMedidores () {
     ipcMain.handle("update-medidor", async (event, data) => {
         const { id, medidor, token_session } = data;
       return await runWithAppKeyFlow(() => updateMedidor(id, medidor, token_session));
+    });
+
+    // 📌 Manejar la eliminación lógica de un medidor
+    ipcMain.handle("delete-medidor", async (event, data) => {
+      const { id, razon, token_session } = data;
+      return await runWithAppKeyFlow(() => deleteMedidor({ id, razon }, token_session));
+    });
+
+    // 📌 Manejar la restauración de un medidor
+    ipcMain.handle("reactivate-medidor", async (event, data) => {
+      const { id, token_session } = data;
+      return await runWithAppKeyFlow(() => reactivateMedidor(id, token_session));
+    });
+
+    // 📌 Manejar la eliminación física/definitiva de un medidor
+    ipcMain.handle("purge-medidor", async (event, data) => {
+      const { id, token_session } = data;
+      return await runWithAppKeyFlow(() => purgeMedidor(id, token_session));
+    });
+
+    // 📌 Manejar listado de medidores eliminados
+    ipcMain.handle("fetch-medidores-eliminados", async (event, token_session) => {
+      return await runWithAppKeyFlow(() => fetchMedidoresEliminados(token_session), { fallbackValue: { total: 0, medidores_eliminados: [] } });
     });
 }

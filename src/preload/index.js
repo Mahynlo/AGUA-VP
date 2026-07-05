@@ -13,6 +13,10 @@ const api = {
   registerClient: (data) => ipcRenderer.invoke("register-cliente", data),
   updateClient: (data) => ipcRenderer.invoke("update-cliente", data),
   asignarTarifaCliente: (data) => ipcRenderer.invoke("asignar-tarifa-cliente", data),
+  deleteClient: (data) => ipcRenderer.invoke("delete-cliente", data),
+  reactivateClient: (data) => ipcRenderer.invoke("reactivate-cliente", data),
+  purgeClient: (data) => ipcRenderer.invoke("purge-cliente", data),
+  fetchClientesEliminados: (token_session) => ipcRenderer.invoke("fetch-clientes-eliminados", token_session),
 
   //medidores
   fetchMedidores: async (token_session, params) => {
@@ -20,6 +24,10 @@ const api = {
   },
   registerMeter: (data) => ipcRenderer.invoke("register-medidor", data),
   updateMedidor: (data) => ipcRenderer.invoke("update-medidor", data),
+  deleteMedidor: (data) => ipcRenderer.invoke("delete-medidor", data),
+  reactivateMedidor: (data) => ipcRenderer.invoke("reactivate-medidor", data),
+  purgeMedidor: (data) => ipcRenderer.invoke("purge-medidor", data),
+  fetchMedidoresEliminados: (token_session) => ipcRenderer.invoke("fetch-medidores-eliminados", token_session),
   
   
   //login y registro de usuario

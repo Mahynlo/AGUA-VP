@@ -65,4 +65,78 @@ const updateCliente = async (id,nuevosDatos, token_session) => {
   }
 };
 
-export { updateCliente, asignarTarifaCliente };
+const deleteCliente = async (data, token_session) => {
+  const { id, razon } = data;
+  try {
+    const token_app = leerToken();
+    const baseURL = URL_CLIENTES_ACTUALIZAR.replace('/modificar', '');
+    const response = await fetch(`${baseURL}/${id}/eliminar`, {
+      method: "DELETE",
+      headers: {
+        "x-app-key": `AppKey ${token_app}`,
+        "Authorization": `Bearer ${token_session}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ razon }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      return { success: false, message: payload.error || "Error al eliminar cliente" };
+    }
+    return { success: true, message: "Cliente eliminado correctamente", cliente_id: payload.cliente_id };
+  } catch (error) {
+    console.error("Error en deleteCliente:", error);
+    return { success: false, message: "Error de red o del servidor" };
+  }
+};
+
+const reactivateCliente = async (id, token_session) => {
+  try {
+    const token_app = leerToken();
+    const baseURL = URL_CLIENTES_ACTUALIZAR.replace('/modificar', '');
+    const response = await fetch(`${baseURL}/${id}/restaurar`, {
+      method: "PUT",
+      headers: {
+        "x-app-key": `AppKey ${token_app}`,
+        "Authorization": `Bearer ${token_session}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      return { success: false, message: payload.error || "Error al restaurar cliente" };
+    }
+    return { success: true, message: "Cliente restaurado correctamente", cliente_id: payload.cliente_id };
+  } catch (error) {
+    console.error("Error en reactivateCliente:", error);
+    return { success: false, message: "Error de red o del servidor" };
+  }
+};
+
+const purgeCliente = async (id, token_session) => {
+  try {
+    const token_app = leerToken();
+    const baseURL = URL_CLIENTES_ACTUALIZAR.replace('/modificar', '');
+    const response = await fetch(`${baseURL}/${id}/purgar`, {
+      method: "DELETE",
+      headers: {
+        "x-app-key": `AppKey ${token_app}`,
+        "Authorization": `Bearer ${token_session}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      return { success: false, message: payload.error || "Error al eliminar definitivamente" };
+    }
+    return { success: true, message: "Cliente eliminado definitivamente" };
+  } catch (error) {
+    console.error("Error en purgeCliente:", error);
+    return { success: false, message: "Error de red o del servidor" };
+  }
+};
+
+export { updateCliente, asignarTarifaCliente, deleteCliente, reactivateCliente, purgeCliente };
