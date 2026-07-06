@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Tabs, Tab, Chip } from "@nextui-org/react";
 import { HiOutlineShieldCheck } from "react-icons/hi";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   UsuariosAdminIcon,
   MantenimientoIcon,
@@ -14,6 +16,13 @@ import PanelConfiguracion from "./PanelConfiguracion";
 import PanelPersonalizacion from "./PanelPersonalizacion";
 
 export default function Administrador() {
+  const { user } = useAuth();
+
+  // Si el usuario es operador, no tiene acceso a esta sección
+  if (user?.rol === 'operador') {
+    return <Navigate to="/home" replace />;
+  }
+
   // Estado para la pestaña activa, recuperado de localStorage para mejor UX
   const [selectedTab, setSelectedTab] = useState(() => {
     return localStorage.getItem("admin_activeTab") || "usuarios";
