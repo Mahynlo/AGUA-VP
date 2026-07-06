@@ -9,6 +9,7 @@ import {
   HiMenu, 
 } from "react-icons/hi";
 import 'katex/dist/katex.min.css';
+import { normalizarTexto } from "../../utils/textUtils";
 
 // Componentes internos
 import SearchModal from "./ayuda/SearchModal";
@@ -101,19 +102,24 @@ const AyudaVista = () => {
     setFileContents(contenidos);
   };
 
-  const extraerContexto = (content, term, contextLength = 80) => {
+  const extraerContexto = (content, termNorm, contextLength = 80) => {
     const contextos = [];
     const lines = content.split('\n');
-    const regex = new RegExp(term, 'gi');
     
+    if (!termNorm) return [];
+
     lines.forEach((line) => {
-      if (regex.test(line)) {
+      const normLine = normalizarTexto(line);
+      const matchIndex = normLine.indexOf(termNorm);
+      
+      if (matchIndex !== -1) {
         let cleanLine = line.replace(/[*#`]/g, '').trim(); 
-        const matchIndex = cleanLine.toLowerCase().indexOf(term.toLowerCase());
+        const normCleanLine = normalizarTexto(cleanLine);
+        const cleanMatchIndex = normCleanLine.indexOf(termNorm);
         
-        if (matchIndex !== -1) {
-          const start = Math.max(0, matchIndex - contextLength / 2);
-          const end = Math.min(cleanLine.length, matchIndex + term.length + contextLength / 2);
+        if (cleanMatchIndex !== -1) {
+          const start = Math.max(0, cleanMatchIndex - contextLength / 2);
+          const end = Math.min(cleanLine.length, cleanMatchIndex + termNorm.length + contextLength / 2);
           let extracto = cleanLine.substring(start, end);
           if (start > 0) extracto = '...' + extracto;
           if (end < cleanLine.length) extracto = extracto + '...';
@@ -132,7 +138,7 @@ const AyudaVista = () => {
     }
 
     setSearching(true);
-    const termLower = term.toLowerCase();
+    const termNorm = normalizarTexto(term);
     const resultados = [];
 
     Object.entries(sections).forEach(([sectionKey, files]) => {
@@ -142,22 +148,22 @@ const AyudaVista = () => {
         let score = 0;
         const matches = [];
 
-        if (metadata.titulo?.toLowerCase().includes(termLower)) {
+        if (metadata.titulo && normalizarTexto(metadata.titulo).includes(termNorm)) {
           score += 10;
           matches.push({ type: 'titulo', text: metadata.titulo });
         }
-        if (metadata.descripcion?.toLowerCase().includes(termLower)) {
+        if (metadata.descripcion && normalizarTexto(metadata.descripcion).includes(termNorm)) {
           score += 5;
           matches.push({ type: 'descripcion', text: metadata.descripcion });
         }
         
-        const tags = metadata.tags?.filter(t => t.toLowerCase().includes(termLower)) || [];
+        const tags = metadata.tags?.filter(t => normalizarTexto(t).includes(termNorm)) || [];
         if (tags.length > 0) {
           score += tags.length * 3;
           matches.push({ type: 'tags', text: tags.join(', ') });
         }
 
-        const contentMatches = extraerContexto(content, termLower);
+        const contentMatches = extraerContexto(content, termNorm);
         if (contentMatches.length > 0) {
           score += Math.min(contentMatches.length, 20);
           matches.push(...contentMatches.map(ctx => ({ type: 'contenido', text: ctx })));

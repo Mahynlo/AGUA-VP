@@ -26,6 +26,7 @@ import {
 } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useDeudores } from "../../../context/DeudoresContext";
+import { normalizarTexto } from "../../../utils/textUtils";
 
 // Modals
 import ModalConfiguracionCortes from "./modals/ModalConfiguracionCortes";
@@ -170,9 +171,10 @@ const TabDeudores = () => {
   // Filtros de UI
   const filteredData = useMemo(() => {
     return deudoresEnriquecidos.filter(item => {
+      const term = normalizarTexto(search);
       const matchesSearch = search === "" ||
-        item.cliente_nombre?.toLowerCase().includes(search.toLowerCase()) ||
-        item.direccion_cliente?.toLowerCase().includes(search.toLowerCase());
+        (item.cliente_nombre && normalizarTexto(item.cliente_nombre).includes(term)) ||
+        (item.direccion_cliente && normalizarTexto(item.direccion_cliente).includes(term));
 
       const matchesGravedad = filtroGravedad === "All" || item.gravedad === filtroGravedad;
 

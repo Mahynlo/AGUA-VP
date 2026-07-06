@@ -1,4 +1,5 @@
 import { leerToken } from '../appConfig/authApp';
+import { notifyTokenExpired } from './tokenExpiredHelper.js';
 
 const URL_TARIFAS = import.meta.env.VITE_API_FETCH_TARIFAS; // URL del endpoint de tarifas
 
@@ -46,15 +47,8 @@ export const fetchTarifas = async (token_session, params = {}, isRetry = false) 
       const errorBody = await response.text();
       
       // Si es error 401/403 y no es reintento, intentar renovar token
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchTarifas, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchTarifas...");
-          return fetchTarifas(newToken, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);

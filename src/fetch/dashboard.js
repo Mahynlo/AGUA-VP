@@ -1,5 +1,7 @@
 
 import {leerToken} from '../appConfig/authApp'; 
+import { notifyTokenExpired } from './tokenExpiredHelper.js';
+
 // Concatenar URL base con endpoint, validando si el endpoint ya es una URL completa
 const BASE_URL = import.meta.env.VITE_URL_BASE_API_AGUAVP;
 const ENDPOINT = import.meta.env.VITE_API_DASHBOARD_STATS;
@@ -34,15 +36,8 @@ export const fetchDashboardStats = async (token_session, isRetry = false) => {
       const errorBody = await response.text();
       
       // Manejo de expiración de token (401 = token inválido, 403 = sesión expirada)
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchDashboardStats, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchDashboardStats...");
-          return fetchDashboardStats(newToken, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);

@@ -25,6 +25,7 @@ import { useTabClientes } from "../../../hooks/useTabClientes";
 import { useClientes } from "../../../context/ClientesContext";
 import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
+import { normalizarTexto } from "../../../utils/textUtils";
 
 const premiumConfirmModalTheme = {
   root: {
@@ -270,13 +271,16 @@ export function TabClientes() {
         onConfirm: () => {}
     });
 
-    const filteredDeletedClientes = deletedClientes.filter(c => 
-        c.nombre.toLowerCase().includes(searchDeleted.toLowerCase()) ||
-        c.numero_predio.toString().includes(searchDeleted) ||
-        (c.direccion && c.direccion.toLowerCase().includes(searchDeleted.toLowerCase())) ||
-        (c.ciudad && c.ciudad.toLowerCase().includes(searchDeleted.toLowerCase())) ||
-        (c.telefono && c.telefono.includes(searchDeleted))
-    );
+    const filteredDeletedClientes = deletedClientes.filter(c => {
+        const term = normalizarTexto(searchDeleted);
+        return (
+            normalizarTexto(c.nombre).includes(term) ||
+            normalizarTexto(c.numero_predio).includes(term) ||
+            (c.direccion && normalizarTexto(c.direccion).includes(term)) ||
+            (c.ciudad && normalizarTexto(c.ciudad).includes(term)) ||
+            (c.telefono && normalizarTexto(c.telefono).includes(term))
+        );
+    });
 
     const loadDeletedClientes = async () => {
         setLoadingDeleted(true);

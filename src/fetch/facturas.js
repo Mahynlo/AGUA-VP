@@ -1,4 +1,5 @@
 import {leerToken} from '../appConfig/authApp'; // Asegúrate de que la ruta sea correcta
+import { notifyTokenExpired } from './tokenExpiredHelper.js';
 const URL_FACTURAS = import.meta.env.VITE_API_FETCH_FACTURAS; // URL del endpoint de facturas
 
 /**************************************************************************************************************
@@ -41,15 +42,8 @@ export const fetchFacturas = async (token_session, params, isRetry = false) => {
         const errorBody = await response.text();
         
         // Si es error 401/403 y no es reintento, intentar renovar token
-        if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-            console.log("🔄 Token expirado en fetchFacturas, solicitando renovación...");
-            window.dispatchEvent(new CustomEvent('token-expired'));
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const newToken = localStorage.getItem('token');
-            if (newToken && newToken !== token_session) {
-                console.log("✅ Token renovado, reintentando fetchFacturas...");
-                return fetchFacturas(newToken, params, true);
-            }
+        if ((response.status === 401 || response.status === 403) && !isRetry) {
+            notifyTokenExpired();
         }
         
         throw new Error(`Error HTTP ${response.status}: ${errorBody}`);

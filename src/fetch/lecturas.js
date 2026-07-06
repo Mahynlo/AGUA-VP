@@ -1,4 +1,5 @@
 import {leerToken} from '../appConfig/authApp'; // Asegúrate de que la ruta sea correcta
+import { notifyTokenExpired } from './tokenExpiredHelper.js';
 const URL_LECTURAS = import.meta.env.VITE_API_FETCH_LECTURAS; // URL del endpoint de lecturas
 const URL_BASE = import.meta.env.VITE_URL_BASE_API_AGUAVP;
 
@@ -60,15 +61,8 @@ export const fetchLecturas = async (token_session, isRetry = false) => {
       const errorBody = await response.text();
       
       // Si es error 401/403 y no es reintento, intentar renovar token
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchLecturas, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchLecturas...");
-          return fetchLecturas(newToken, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
