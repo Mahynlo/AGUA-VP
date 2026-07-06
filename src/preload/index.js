@@ -42,6 +42,7 @@ const api = {
   updateUser: (data, token) => ipcRenderer.invoke("update-user", data, token),
   deleteUser: (data, token) => ipcRenderer.invoke("delete-user", data, token),
   reactivateUser: (id, token) => ipcRenderer.invoke("reactivate-user", id, token),
+  purgeUser: (id, token) => ipcRenderer.invoke("purge-user", id, token),
   fetchPermissionsCatalog: (token) => ipcRenderer.invoke("fetch-permissions-catalog", token),
   fetchUserPermissions: (id, token) => ipcRenderer.invoke("fetch-user-permissions", id, token),
   fetchMyPermissions: (token) => ipcRenderer.invoke("fetch-my-permissions", token),

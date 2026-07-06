@@ -321,6 +321,11 @@ export default function IpcHandlerUsuario () {
         return await apiRequest(`${API_USERS_URL}/${id}/activar`, "PATCH", token);
     });
 
+    // Eliminar usuario definitivamente (Purga)
+    ipcMain.handle("purge-user", async (event, id, token) => {
+        return await apiRequest(`${API_USERS_URL}/${id}/purgar`, "DELETE", token);
+    });
+
     // Catálogo de permisos
     ipcMain.handle("fetch-permissions-catalog", async (event, token) => {
         return await apiRequest(`${API_USERS_URL}/permissions/catalog`, "GET", token);

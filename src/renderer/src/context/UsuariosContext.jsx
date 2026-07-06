@@ -108,6 +108,26 @@ export const UsuariosProvider = ({ children }) => {
         }
     };
 
+    const purgeUser = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const result = await window.api.purgeUser(id, token);
+            if (result && result.success) {
+                setSuccess("Usuario eliminado definitivamente de la base de datos");
+                await fetchUsuarios();
+                return result;
+            } else {
+                const errorMsg = result?.error || "Error al eliminar definitivamente al usuario";
+                setFeedbackError(errorMsg);
+                throw new Error(errorMsg);
+            }
+        } catch (error) {
+            setFeedbackError(error.message || "Error al eliminar definitivamente al usuario");
+            console.error(error);
+            throw error;
+        }
+    };
+
         const fetchPermissionsCatalog = async () => {
             try {
                 const token = getToken();
@@ -208,6 +228,7 @@ export const UsuariosProvider = ({ children }) => {
                 updateUser,
                 deleteUser,
                 reactivateUser,
+                purgeUser,
                 fetchPermissionsCatalog,
                 fetchUserPermissions,
                 updateUserPermissions,
