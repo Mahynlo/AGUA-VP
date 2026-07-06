@@ -98,6 +98,37 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
     }
   }, [selectedMedidor, mapInstance]);
 
+  // Ajustar la vista del mapa al cambiar los medidores filtrados (por búsqueda/filtros)
+  useEffect(() => {
+    if (!mapInstance || !medidores || medidores.length === 0) return;
+
+    if (medidores.length === 1) {
+      const { latitud, longitud, id } = medidores[0];
+      if (Number.isFinite(latitud) && Number.isFinite(longitud)) {
+        requestAnimationFrame(() => {
+          mapInstance.setView([latitud, longitud], 18);
+        });
+        
+        const timer = setTimeout(() => {
+          if (markerRefs.current[id]) {
+            markerRefs.current[id].openPopup();
+          }
+        }, 400);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      const points = medidores
+        .filter(m => Number.isFinite(m.latitud) && Number.isFinite(m.longitud))
+        .map(m => [m.latitud, m.longitud]);
+
+      if (points.length > 1 && points.length < 100) {
+        requestAnimationFrame(() => {
+          mapInstance.fitBounds(points, { padding: [50, 50], maxZoom: 17 });
+        });
+      }
+    }
+  }, [medidores, mapInstance]);
+
   const handleViewChange = useCallback((z, b) => {
     setZoom(z);
     setBounds(b);
@@ -210,7 +241,10 @@ const LeafletMap = React.memo(({ position, medidores, onMapReady, setMapError, s
                   {medidor.cliente_id ? (
                     <>
                       <HiCheck className="text-green-600 text-lg flex-shrink-0" />
-                      <span className="text-green-700 font-semibold">Asignado a cliente</span>
+                      <span className="text-green-700 font-semibold truncate max-w-[200px]" title={medidor.cliente_nombre}>
+                        {medidor.cliente_nombre || "Asignado a cliente"}
+                        {medidor.numero_predio ? ` (Predio #${medidor.numero_predio})` : ""}
+                      </span>
                     </>
                   ) : (
                     <>
