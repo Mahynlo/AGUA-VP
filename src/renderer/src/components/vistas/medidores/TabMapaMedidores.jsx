@@ -58,6 +58,7 @@ const TabMapaMedidores = () => {
             ubicacionNorm: normalizeText(m.ubicacion),
             ciudadNorm: normalizeText(m.ciudad),
             puebloNorm: normalizeText(m.pueblo),
+            clienteNorm: normalizeText(m.cliente_nombre),
         }));
     }, [allMedidores]);
 
@@ -69,9 +70,9 @@ const TabMapaMedidores = () => {
 
         const out = [];
         for (const item of medidoresIndex) {
-            const { medidor, serieNorm, ubicacionNorm, ciudadNorm, puebloNorm } = item;
+            const { medidor, serieNorm, ubicacionNorm, ciudadNorm, puebloNorm, clienteNorm } = item;
 
-            if (termino && !ubicacionNorm.includes(termino) && !serieNorm.includes(termino)) continue;
+            if (termino && !ubicacionNorm.includes(termino) && !serieNorm.includes(termino) && !clienteNorm.includes(termino)) continue;
             if (filtroEstado !== "todos" && medidor.estado_medidor !== filtroEstado) continue;
             if (filtroAsignacion === "asignados" && !medidor.cliente_id) continue;
             if (filtroAsignacion === "disponibles" && medidor.cliente_id) continue;
@@ -188,7 +189,7 @@ const TabMapaMedidores = () => {
                                     </span>
                                     <input
                                         type="text"
-                                        placeholder="Buscar por serie o ubicación..."
+                                        placeholder="Buscar por serie, ubicación o cliente..."
                                         value={busqueda}
                                         onChange={(e) => setBusqueda(e.target.value)}
                                         className="border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-100 rounded-xl pl-10 pr-4 py-3 w-full bg-slate-100/70 dark:bg-zinc-900/80 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 transition-all duration-200 h-[52px]"
@@ -304,11 +305,17 @@ const TabMapaMedidores = () => {
                                             </div>
 
                                             {medidor.cliente_id ? (
-                                                <div className="flex items-center justify-between p-2 bg-sky-500/10 rounded-lg border border-sky-200/70 dark:border-sky-900/40">
-                                                    <span className="text-xs font-medium text-sky-700 dark:text-sky-400 flex items-center gap-1">
-                                                        <HiUser className="w-3 h-3" /> Cliente:
-                                                    </span>
-                                                    <span className="text-xs font-semibold text-sky-700 dark:text-sky-400">Asignado</span>
+                                                <div className="flex flex-col gap-1 p-2 bg-sky-500/10 rounded-lg border border-sky-200/70 dark:border-sky-900/40">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-medium text-sky-700 dark:text-sky-400 flex items-center gap-1">
+                                                            <HiUser className="w-3 h-3" /> Cliente:
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-sky-700 dark:text-sky-400 uppercase tracking-wider">Asignado</span>
+                                                    </div>
+                                                    <div className="text-xs font-bold text-sky-800 dark:text-sky-300 pl-4 truncate">
+                                                        {medidor.cliente_nombre || "Cliente"}
+                                                        {medidor.numero_predio ? <span className="font-medium text-sky-600/80 dark:text-sky-400/80"> • Predio #{medidor.numero_predio}</span> : ""}
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-zinc-900/60 rounded-lg border border-dashed border-slate-300 dark:border-zinc-700">
