@@ -1,5 +1,6 @@
 
 import {leerToken} from '../appConfig/authApp'; // Asegúrate de que la ruta sea correcta
+import { notifyTokenExpired } from './tokenExpiredHelper.js';
 const URL_CLIENTES = import.meta.env.VITE_API_FETCH_CLIENTES; // URL del endpoint de clientes
 
 /**************************************************************************************************************
@@ -42,15 +43,8 @@ export const fetchClientes = async (token_session, params = {}, isRetry = false)
       const errorBody = await response.text();
       
       // Si es error 401/403 y no es reintento, intentar renovar token
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchClientes, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchClientes...");
-          return fetchClientes(newToken, params, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
@@ -97,15 +91,8 @@ export const fetchClientesEstadisticas = async (token_session, isRetry = false) 
       const errorBody = await response.text();
       
       // Si es error 401/403 y no es reintento, intentar renovar token
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchClientesEstadisticas, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchClientesEstadisticas...");
-          return fetchClientesEstadisticas(newToken, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
@@ -146,15 +133,8 @@ export const fetchClientesEliminados = async (token_session, isRetry = false) =>
     if (!response.ok) {
       const errorBody = await response.text();
       
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchClientesEliminados, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchClientesEliminados...");
-          return fetchClientesEliminados(newToken, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);

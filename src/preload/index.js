@@ -318,6 +318,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   close: () => ipcRenderer.send("close"),
 });
 
-
-
-
+// Escuchar evento de token expirado del proceso principal y despacharlo al window del renderer
+ipcRenderer.on('auth:token-expired', () => {
+  console.warn("🔄 [Preload] Token expirado detectado en el proceso principal. Notificando al renderer...");
+  window.dispatchEvent(new CustomEvent('token-expired'));
+});

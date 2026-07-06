@@ -3,6 +3,7 @@ import { Card, CardBody, CardHeader, Chip, Spinner } from "@nextui-org/react";
 import { HiUsers, HiSearch, HiLocationMarker, HiX } from "react-icons/hi";
 import { IoWaterOutline } from "react-icons/io5";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
+import { normalizarTexto } from "../../../../utils/textUtils";
 
 /**
  * Componente para listar lecturas (Solo lectura)
@@ -33,10 +34,10 @@ const ListadoLecturas = ({
     }, [lecturas]);
 
     const filtrados = itemsPlanos.filter(item => {
-        const term = searchTerm.toLowerCase();
-        const cliente = (item.cliente || item.nombre || "").toLowerCase();
-        const medidor = (item.medidor?.serie || item.medidor || "").toLowerCase();
-        const loc = (item._localidad || "").toLowerCase();
+        const term = normalizarTexto(searchTerm);
+        const cliente = normalizarTexto(item.cliente || item.nombre);
+        const medidor = normalizarTexto(item.medidor?.serie || item.medidor);
+        const loc = normalizarTexto(item._localidad);
         return cliente.includes(term) || medidor.includes(term) || loc.includes(term);
     });
 

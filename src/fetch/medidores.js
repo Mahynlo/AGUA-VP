@@ -1,4 +1,5 @@
 import { leerToken } from '../appConfig/authApp';
+import { notifyTokenExpired } from './tokenExpiredHelper.js';
 const URL_MEDIDORES = import.meta.env.VITE_API_FETCH_MEDIDORES; // URL del endpoint de medidores
 // Asumiendo que VITE_API_FETCH_MEDIDORES apunta a /api/v2/medidores
  
@@ -37,15 +38,8 @@ export const fetchMedidores = async (token_session, params = {}, isRetry = false
       const errorBody = await response.text();
       
       // Si es error 401/403 y no es reintento, intentar renovar token
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchMedidores, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchMedidores...");
-          return fetchMedidores(newToken, params, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);
@@ -87,15 +81,8 @@ export const fetchMedidoresEliminados = async (token_session, isRetry = false) =
     if (!response.ok) {
       const errorBody = await response.text();
       
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchMedidoresEliminados, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchMedidoresEliminados...");
-          return fetchMedidoresEliminados(newToken, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error HTTP ${response.status}: ${errorBody}`);

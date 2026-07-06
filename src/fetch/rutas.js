@@ -1,4 +1,5 @@
 import { leerToken } from '../appConfig/authApp';
+import { notifyTokenExpired } from './tokenExpiredHelper.js';
 
 export const fetchRutas = async (token_session, periodo, isRetry = false) => {
   try {
@@ -44,15 +45,8 @@ export const fetchRutas = async (token_session, periodo, isRetry = false) => {
       const errorBody = await response.text();
       
       // Si es error 401/403 y no es reintento, intentar renovar token
-      if ((response.status === 401 || response.status === 403) && !isRetry && typeof window !== 'undefined') {
-        console.log("🔄 Token expirado en fetchRutas, solicitando renovación...");
-        window.dispatchEvent(new CustomEvent('token-expired'));
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const newToken = localStorage.getItem('token');
-        if (newToken && newToken !== token_session) {
-          console.log("✅ Token renovado, reintentando fetchRutas...");
-          return fetchRutas(newToken, periodo, true);
-        }
+      if ((response.status === 401 || response.status === 403) && !isRetry) {
+        notifyTokenExpired();
       }
       
       throw new Error(`Error al obtener rutas: ${errorBody}`);

@@ -7,6 +7,7 @@ import {
 import { useTabMedidores } from "../../../hooks/useTabMedidores";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { Modal, Button } from "flowbite-react";
+import { normalizarTexto } from "../../../utils/textUtils";
 
 const premiumModalTheme = {
     root: {
@@ -193,12 +194,15 @@ const TabInventarioMedidores = () => {
     const [loadingDeleted, setLoadingDeleted] = useState(false);
     const [searchDeleted, setSearchDeleted] = useState("");
 
-    const filteredDeletedMedidores = deletedMedidores.filter(m => 
-        m.numero_serie.toLowerCase().includes(searchDeleted.toLowerCase()) ||
-        (m.marca && m.marca.toLowerCase().includes(searchDeleted.toLowerCase())) ||
-        (m.modelo && m.modelo.toLowerCase().includes(searchDeleted.toLowerCase())) ||
-        (m.razon_eliminacion && m.razon_eliminacion.toLowerCase().includes(searchDeleted.toLowerCase()))
-    );
+    const filteredDeletedMedidores = deletedMedidores.filter(m => {
+        const term = normalizarTexto(searchDeleted);
+        return (
+            normalizarTexto(m.numero_serie).includes(term) ||
+            (m.marca && normalizarTexto(m.marca).includes(term)) ||
+            (m.modelo && normalizarTexto(m.modelo).includes(term)) ||
+            (m.razon_eliminacion && normalizarTexto(m.razon_eliminacion).includes(term))
+        );
+    });
 
     // Deletion dialog states
     const [isDeleteReasonOpen, setIsDeleteReasonOpen] = useState(false);

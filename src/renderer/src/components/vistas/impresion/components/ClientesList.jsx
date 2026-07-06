@@ -3,6 +3,7 @@ import { Card, CardBody, CardHeader, Chip, Checkbox, Button } from "@nextui-org/
 import { HiUsers, HiSearch, HiX, HiLocationMarker } from "react-icons/hi";
 import { IoWaterOutline } from "react-icons/io5";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
+import { normalizarTexto } from "../../../../utils/textUtils";
 
 /**
  * Componente para lista de clientes con checkboxes
@@ -19,10 +20,13 @@ const ClientesList = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const clientesFiltrados = clientes.filter(c =>
-    c.cliente_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.direccion_cliente.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const clientesFiltrados = clientes.filter(c => {
+    const term = normalizarTexto(searchTerm);
+    return (
+      normalizarTexto(c.cliente_nombre).includes(term) ||
+      normalizarTexto(c.direccion_cliente).includes(term)
+    );
+  });
 
   const todosSeleccionados = clientes.length > 0 && clientesSeleccionados.size === clientes.length;
 
