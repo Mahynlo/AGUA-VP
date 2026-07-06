@@ -230,15 +230,122 @@ export default function PanelActualizaciones() {
             )}
           </div>
 
-          {/* Notas de versión en Markdown */}
+          {/* Notas de versión en Markdown u HTML */}
           <div className="px-6 py-5 max-h-[420px] overflow-y-auto">
-            {status.updateInfo.releaseNotes ? (
-              <MarkdownRenderer content={
-                typeof status.updateInfo.releaseNotes === "string"
-                  ? status.updateInfo.releaseNotes
-                  : status.updateInfo.releaseNotes.map?.((n) => n.note || "").join("\n\n") || ""
-              } />
-            ) : (
+            {status.updateInfo.releaseNotes ? (() => {
+              const notesText = typeof status.updateInfo.releaseNotes === "string"
+                ? status.updateInfo.releaseNotes
+                : status.updateInfo.releaseNotes.map?.((n) => n.note || "").join("\n\n") || "";
+
+              const isHTML = /<[a-z][\s\S]*>/i.test(notesText);
+
+              if (isHTML) {
+                return (
+                  <>
+                    <style>{`
+                      .html-release-notes h1 {
+                        font-size: 1.5rem;
+                        font-weight: 900;
+                        color: rgb(15 23 42);
+                        margin-top: 1.5rem;
+                        margin-bottom: 1rem;
+                      }
+                      .html-release-notes h2 {
+                        font-size: 1.25rem;
+                        font-weight: 800;
+                        color: rgb(30 41 59);
+                        margin-top: 2rem;
+                        margin-bottom: 0.8rem;
+                        border-bottom: 1px solid rgb(226 232 240);
+                        padding-bottom: 0.4rem;
+                      }
+                      .html-release-notes h3 {
+                        font-size: 1.125rem;
+                        font-weight: 700;
+                        margin-top: 1.5rem;
+                        margin-bottom: 0.6rem;
+                      }
+                      .html-release-notes p {
+                        margin-bottom: 1rem;
+                        line-height: 1.6;
+                        font-size: 0.875rem;
+                      }
+                      .html-release-notes ul {
+                        list-style-type: disc;
+                        margin-bottom: 1.25rem;
+                        padding-left: 1.25rem;
+                      }
+                      .html-release-notes ol {
+                        list-style-type: decimal;
+                        margin-bottom: 1.25rem;
+                        padding-left: 1.25rem;
+                      }
+                      .html-release-notes li {
+                        margin-bottom: 0.4rem;
+                        font-size: 0.875rem;
+                      }
+                      .html-release-notes strong {
+                        font-weight: 700;
+                      }
+                      .html-release-notes code {
+                        font-family: monospace;
+                        font-size: 0.8rem;
+                        background-color: rgb(241 245 249);
+                        padding: 0.1rem 0.3rem;
+                        border-radius: 0.25rem;
+                        font-weight: 700;
+                      }
+                      .html-release-notes pre {
+                        background-color: rgb(15 23 42);
+                        color: rgb(248 250 252);
+                        padding: 1rem;
+                        border-radius: 0.75rem;
+                        overflow-x: auto;
+                        margin-bottom: 1.25rem;
+                      }
+                      .html-release-notes pre code {
+                        background-color: transparent;
+                        color: inherit;
+                        font-weight: normal;
+                        padding: 0;
+                      }
+                      .html-release-notes a {
+                        color: rgb(37 99 235);
+                        font-weight: 700;
+                        text-decoration: underline;
+                      }
+                      .dark .html-release-notes h1 {
+                        color: rgb(255 255 255);
+                      }
+                      .dark .html-release-notes h2 {
+                        color: rgb(244 244 245);
+                        border-color: rgb(39 39 42);
+                      }
+                      .dark .html-release-notes h3 {
+                        color: rgb(244 244 245);
+                      }
+                      .dark .html-release-notes p, .dark .html-release-notes li {
+                        color: rgb(161 161 170);
+                      }
+                      .dark .html-release-notes code {
+                        background-color: rgb(39 39 42);
+                        color: rgb(228 228 231);
+                        border-color: rgb(63 63 70);
+                      }
+                      .dark .html-release-notes pre {
+                        background-color: rgb(0 0 0);
+                      }
+                    `}</style>
+                    <div 
+                      className="html-release-notes text-slate-700 dark:text-zinc-300"
+                      dangerouslySetInnerHTML={{ __html: notesText }}
+                    />
+                  </>
+                );
+              }
+
+              return <MarkdownRenderer content={notesText} />;
+            })() : (
               <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 italic">
                 Sin notas de versión
               </p>
