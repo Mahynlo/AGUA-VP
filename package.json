@@ -1,10 +1,10 @@
 {
   "name": "aguavp",
-  "version": "1.2.689",
+  "version": "1.2.696",
   "description": "Sistema de gestion de Agua Potable",
   "main": "./out/main/index.js",
   "author": "AguaVP-MHNL",
-  "homepage": "https://electron-vite.org",
+  "homepage": "https://github.com/Mahynlo/AGUA-VP",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
