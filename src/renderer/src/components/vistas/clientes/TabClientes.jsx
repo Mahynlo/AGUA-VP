@@ -42,6 +42,20 @@ const premiumConfirmModalTheme = {
   body: { base: "pt-10 pb-6 px-6 flex-1 overflow-y-auto bg-transparent" }
 };
 
+const normalizarClientesParaExport = (lista) => {
+    return lista.map((c, index) => ({
+        "No.": index + 1,
+        "Nombre": c.nombre || "",
+        "Número de Predio": c.numero_predio || "",
+        "Ciudad": c.ciudad || "",
+        "Dirección": c.direccion || "",
+        "Teléfono": c.telefono || "",
+        "Correo": c.email || c.correo || "",
+        "Tarifa": c.tarifa_nombre || c.tarifa || "Sin Tarifa",
+        "Estado": c.estado_cliente || c.estado || "Activo"
+    }));
+};
+
 // ── SKELETON DE CARGA (animate-pulse nativo, sin librerías) ───────────────────
 const LoadingSkeleton = () => (
     <div className="w-full flex flex-col gap-6">
@@ -249,7 +263,7 @@ export function TabClientes() {
     } = useTabClientes();
 
     const { setSuccess, setError } = useFeedback();
-    const { actualizarClientes } = useClientes();
+    const { actualizarClientes, allClientes } = useClientes();
 
     const [selectedCliente, setSelectedCliente] = React.useState(null);
     const [isDetailOpen, setIsDetailOpen] = React.useState(false);
@@ -270,6 +284,44 @@ export function TabClientes() {
         color: "amber",
         onConfirm: () => {}
     });
+
+    // Estado para exportación premium
+    const [exportModal, setExportModal] = React.useState({
+        isOpen: false,
+        format: "csv"
+    });
+
+    const handleExecuteExport = async (type) => {
+        setExportModal(prev => ({ ...prev, isOpen: false }));
+        try {
+            let dataToExport = [];
+            let prefix = "";
+            if (type === "page") {
+                dataToExport = paginatedData;
+                prefix = "Pagina_";
+            } else if (type === "filtered") {
+                dataToExport = filteredData;
+                prefix = "Filtrados_";
+            } else {
+                dataToExport = allClientes;
+                prefix = "Todos_";
+            }
+
+            const normalizedData = normalizarClientesParaExport(dataToExport);
+            const format = exportModal.format;
+            const filename = `Clientes_${prefix}${new Date().toISOString().split("T")[0]}`;
+            
+            const ok = await exportData(normalizedData, filename, format);
+            if (ok) {
+                setSuccess("Clientes exportados correctamente");
+            } else {
+                setError("Error al exportar clientes", "Exportación");
+            }
+        } catch (err) {
+            console.error("Error al exportar clientes:", err);
+            setError("Error al exportar clientes", "Exportación");
+        }
+    };
 
     const filteredDeletedClientes = deletedClientes.filter(c => {
         const term = normalizarTexto(searchDeleted);
@@ -395,14 +447,8 @@ export function TabClientes() {
 
                 <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
                     <ExportDropdown
-                        onExportCSV={async () => {
-                            const ok = await exportData(filteredData, `Clientes_${new Date().toISOString().split("T")[0]}`, "csv");
-                            if (ok) setSuccess("Archivo CSV generado exitosamente");
-                        }}
-                        onExportExcel={async () => {
-                            const ok = await exportData(filteredData, `Clientes_${new Date().toISOString().split("T")[0]}`, "xlsx");
-                            if (ok) setSuccess("Archivo Excel generado exitosamente");
-                        }}
+                        onExportCSV={() => setExportModal({ isOpen: true, format: "csv" })}
+                        onExportExcel={() => setExportModal({ isOpen: true, format: "xlsx" })}
                     />
                     <div className="flex-1 sm:flex-none">
                         <RegistrarClientes />
@@ -844,6 +890,78 @@ export function TabClientes() {
                             <Button
                                 color="gray"
                                 onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                                className="font-bold text-slate-500"
+                            >
+                                Cancelar
+                            </Button>
+                        </div>
+                    </div>
+                </Modal.Body>
+            </Modal>
+
+            {/* Modal de Configuración de Exportación */}
+            <Modal
+                show={exportModal.isOpen}
+                onClose={() => setExportModal(prev => ({ ...prev, isOpen: false }))}
+                size="md"
+                popup
+                theme={premiumConfirmModalTheme}
+            >
+                <Modal.Header />
+                <Modal.Body>
+                    <div className="p-2">
+                        <div className="flex items-center gap-3 mb-4 justify-center">
+                            <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl">
+                                <HiDownload className="w-8 h-8" />
+                            </div>
+                        </div>
+                        <h3 className="mb-2 text-center text-lg font-black text-slate-800 dark:text-zinc-100">
+                            Opciones de Exportación ({exportModal.format.toUpperCase()})
+                        </h3>
+                        <p className="mb-6 text-center text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed">
+                            Selecciona el conjunto de datos que deseas descargar en tu archivo.
+                        </p>
+
+                        <div className="flex flex-col gap-3 mb-6">
+                            {/* Opción 1: Página Actual */}
+                            <button
+                                type="button"
+                                onClick={() => handleExecuteExport("page")}
+                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-amber-500 dark:hover:border-amber-500 bg-slate-50/50 hover:bg-amber-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                            >
+                                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                                    <span>Página actual (tabla)</span>
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500/10 text-amber-600 rounded-md">
+                                        {paginatedData.length} registros
+                                    </span>
+                                </span>
+                                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                    Exporta únicamente los registros visibles actualmente en esta página de la tabla.
+                                </span>
+                            </button>
+
+                            {/* Opción 3: Todos */}
+                            <button
+                                type="button"
+                                onClick={() => handleExecuteExport("all")}
+                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-amber-500 dark:hover:border-amber-500 bg-slate-50/50 hover:bg-amber-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                            >
+                                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                                    <span>Todos los registros</span>
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 rounded-md">
+                                        {allClientes.length} registros
+                                    </span>
+                                </span>
+                                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                    Exporta la totalidad de la base de datos de clientes en el sistema.
+                                </span>
+                            </button>
+                        </div>
+
+                        <div className="flex justify-center gap-3">
+                            <Button
+                                color="gray"
+                                onClick={() => setExportModal(prev => ({ ...prev, isOpen: false }))}
                                 className="font-bold text-slate-500"
                             >
                                 Cancelar
