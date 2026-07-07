@@ -28,14 +28,32 @@ import {
   HiBan,
   HiArrowLeft,
   HiFolder,
-  HiRefresh
+  HiRefresh,
+  HiExclamationCircle,
+  HiDesktopComputer
 } from "react-icons/hi";
+import { Modal as FlowbiteModal, Button as FlowbiteButton } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
 import ModalRegistrarUsuario from "./ModalRegistroUsuario";
 import ModalSesionesUsuario from "./ModalSesionesUsuario";
 import ModalPermisosUsuario from "./ModalPermisosUsuario";
 import { useUsuarios } from "../../context/UsuariosContext";
 import { useAuth } from "../../context/AuthContext";
+
+const premiumConfirmModalTheme = {
+  root: {
+    show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" }
+  },
+  content: {
+    base: "relative h-full w-full p-4 md:h-auto",
+    inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-md w-full"
+  },
+  header: {
+    base: "hidden",
+    close: { base: "hidden", icon: "hidden" }
+  },
+  body: { base: "pt-10 pb-6 px-6 flex-1 overflow-y-auto bg-transparent" }
+};
 
 // Componente LoadingSkeleton premium
 const LoadingSkeleton = () => (
@@ -71,6 +89,15 @@ const GestionUsuarios = () => {
   const [isSessionsModalOpen, setIsSessionsModalOpen] = useState(false);
   const [selectedUserForPermissions, setSelectedUserForPermissions] = useState(null);
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+
+  // Estado para confirmación premium
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    color: "amber",
+    onConfirm: () => {}
+  });
 
   // Estados para Papelera
   const [showDeleted, setShowDeleted] = useState(false);
@@ -152,11 +179,21 @@ const GestionUsuarios = () => {
     setPageDeleted(1);
   }, [searchDeleted, rowsPerPageDeleted]);
 
-  const handlePurge = async (usuario) => {
-    if (!confirm(`¿Estás seguro de eliminar DEFINITIVAMENTE al usuario @${usuario.username}? Esta acción no se puede deshacer y borrará físicamente su cuenta de la base de datos.`)) return;
-    try {
-      await purgeUser(usuario.id);
-    } catch (error) {}
+  const handlePurge = (usuario) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "¿Eliminar definitivamente al usuario?",
+      message: `¿Estás seguro de eliminar DEFINITIVAMENTE al usuario @${usuario.username}? Esta acción no se puede deshacer y borrará físicamente su cuenta de la base de datos.`,
+      color: "failure",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await purgeUser(usuario.id);
+        } catch (error) {
+          console.error("Error al eliminar definitivamente al usuario:", error);
+        }
+      }
+    });
   };
 
   // Paginación
@@ -193,18 +230,38 @@ const GestionUsuarios = () => {
     }
   };
 
-  const handleEliminar = async (usuario) => {
-    if (!confirm(`¿Estás seguro de desactivar al usuario ${usuario.username}?`)) return;
-    try {
-      await deleteUser(usuario.id, "Desactivación desde panel");
-    } catch (error) {}
+  const handleEliminar = (usuario) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "¿Desactivar usuario?",
+      message: `¿Estás seguro de desactivar al usuario @${usuario.username}? El usuario ya no podrá acceder al sistema hasta que sea reactivado.`,
+      color: "failure",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await deleteUser(usuario.id, "Desactivación desde panel");
+        } catch (error) {
+          console.error("Error al desactivar usuario:", error);
+        }
+      }
+    });
   };
 
-  const handleReactivar = async (usuario) => {
-    if (!confirm(`¿Reactivar al usuario ${usuario.username}?`)) return;
-    try {
-      await reactivateUser(usuario.id);
-    } catch (error) {}
+  const handleReactivar = (usuario) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "¿Reactivar usuario?",
+      message: `¿Deseas reactivar al usuario @${usuario.username}? Esto restaurará su acceso al sistema de inmediato.`,
+      color: "success",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await reactivateUser(usuario.id);
+        } catch (error) {
+          console.error("Error al reactivar usuario:", error);
+        }
+      }
+    });
   };
 
   const handleOpenSessions = (usuario) => {
@@ -553,7 +610,7 @@ const GestionUsuarios = () => {
                                   className="bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 rounded-lg transition-colors"
                                   onPress={() => handleOpenSessions(usuario)}
                                 >
-                                  <HiShieldCheck className="w-4 h-4" />
+                                  <HiDesktopComputer className="w-4 h-4" />
                                 </Button>
                               </Tooltip>
 
@@ -566,7 +623,7 @@ const GestionUsuarios = () => {
                                     isDisabled={isSelf} 
                                     onPress={() => !isSelf && handleEliminar(usuario)}
                                 >
-                                  <HiBan className="w-4 h-4" />
+                                  <HiTrash className="w-4 h-4" />
                                 </Button>
                               </Tooltip>
                             </div>
@@ -805,6 +862,44 @@ const GestionUsuarios = () => {
         onClose={() => setIsPermissionsModalOpen(false)}
         usuario={selectedUserForPermissions}
       />
+
+      {/* Modal de Confirmación Premium */}
+      <FlowbiteModal
+        show={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        size="md"
+        popup
+        theme={premiumConfirmModalTheme}
+      >
+        <FlowbiteModal.Header />
+        <FlowbiteModal.Body>
+          <div className="text-center p-2">
+            <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-red-500"}`} />
+            <h3 className="mb-4 text-base font-black text-slate-800 dark:text-zinc-100">
+              {confirmModal.title}
+            </h3>
+            <p className="mb-6 text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed">
+              {confirmModal.message}
+            </p>
+            <div className="flex justify-center gap-3">
+              <FlowbiteButton
+                color={confirmModal.color === "success" ? "success" : "failure"}
+                onClick={confirmModal.onConfirm}
+                className="font-bold"
+              >
+                Sí, confirmar
+              </FlowbiteButton>
+              <FlowbiteButton
+                color="gray"
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                className="font-bold text-slate-500"
+              >
+                Cancelar
+              </FlowbiteButton>
+            </div>
+          </div>
+        </FlowbiteModal.Body>
+      </FlowbiteModal>
     </div>
   );
 };

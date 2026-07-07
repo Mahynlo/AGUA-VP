@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { HiEye, HiEyeOff } from "react-icons/hi";
 
 // Componente de Input Personalizado con Validaciones
 export const CustomInput = ({
@@ -19,12 +20,17 @@ export const CustomInput = ({
     required,
     className
 }) => {
+    const [showPassword, setShowPassword] = useState(false);
+
     // Definir colores de borde y foco según estado
     const getBorderClass = () => {
         if (isInvalid) return "border-red-500 focus:ring-red-500 focus:border-red-500";
         if (isValid) return "border-green-500 focus:ring-green-500 focus:border-green-500";
         return `border-gray-300 focus:ring-${color}-600 focus:border-${color}-500`;
     };
+
+    const isPasswordType = type === "password";
+    const inputType = isPasswordType ? (showPassword ? "text" : "password") : type;
 
     return (
         <div className={className}>
@@ -38,19 +44,28 @@ export const CustomInput = ({
                     </span>
                 )}
                 <input
-                    type={type}
+                    type={inputType}
                     value={value}
                     onChange={onChange}
                     placeholder={placeholder}
                     min={min}
                     max={max}
-                    className={`border text-gray-600 rounded-xl ${icon ? 'pl-12' : 'pl-4'} ${suffix ? 'pr-10' : 'pr-4'} py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all ${getBorderClass()}`}
+                    className={`border text-gray-600 rounded-xl ${icon ? 'pl-12' : 'pl-4'} ${suffix || isPasswordType ? 'pr-10' : 'pr-4'} py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all ${getBorderClass()}`}
                 />
-                {suffix && (
+                {isPasswordType ? (
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none"
+                        title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    >
+                        {showPassword ? <HiEyeOff className="w-5 h-5" /> : <HiEye className="w-5 h-5" />}
+                    </button>
+                ) : suffix ? (
                     <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium text-sm pointer-events-none">
                         {suffix}
                     </span>
-                )}
+                ) : null}
             </div>
             {isInvalid && errorMessage && (
                 <p className="text-xs text-red-500 mt-1 font-medium">{errorMessage}</p>
