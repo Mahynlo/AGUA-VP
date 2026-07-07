@@ -42,6 +42,25 @@ const premiumConfirmModalTheme = {
   body: { base: "pt-10 pb-6 px-6 flex-1 overflow-y-auto bg-transparent" }
 };
 
+const normalizarMedidoresParaExport = (lista) => {
+    return lista.map((m, index) => ({
+        "No.": index + 1,
+        "Número de Serie": m.numero_serie || "",
+        "Marca": m.marca || "",
+        "Modelo": m.modelo || "",
+        "Ubicación": m.ubicacion || "",
+        "Latitud": m.latitud || "",
+        "Longitud": m.longitud || "",
+        "Fecha de Instalación": m.fecha_instalacion ? new Date(m.fecha_instalacion).toLocaleDateString("es-MX") : "No registrada",
+        "Lectura Base": m.lectura_base || 0,
+        "Capacidad Máxima (m³)": m.capacidad_maxima ?? 99999,
+        "Estado Medidor": m.estado_medidor || "",
+        "Estado Servicio": m.estado_servicio || "",
+        "Cliente Asignado": m.cliente_nombre || "No Asignado",
+        "Predio del Cliente": m.numero_predio || ""
+    }));
+};
+
 import RegistrarMedidor from "./RegistrarMedidores";
 import ModalDetalleMedidor from "./ModalDetalleMedidor";
 import ModalEditarMedidor from "./ModalEditarMedidor";
@@ -176,13 +195,13 @@ const TabInventarioMedidores = () => {
         statusFilter, handleStatusFilterChange,
         locationFilter, locationOptions, handleLocationFilterChange,
         currentPage, setCurrentPage, rowsPerPage, handleRowsPerPageChange,
-        totalPages, totalItems, getStatusColor, filteredData, clearFilters, hasActiveFilters
+        totalPages, totalItems, getStatusColor, medidores, clearFilters, hasActiveFilters
     } = useTabMedidores();
 
     const { setSuccess, setError } = useFeedback();
     const { can } = usePermissions();
     const canModificarMedidores = can("medidores.modificar");
-    const { actualizarMedidores } = useMedidores();
+    const { actualizarMedidores, allMedidores } = useMedidores();
 
     const [selectedMedidor, setSelectedMedidor] = useState(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
@@ -217,6 +236,44 @@ const TabInventarioMedidores = () => {
         color: "indigo",
         onConfirm: () => {}
     });
+
+    // Estado para exportación premium
+    const [exportModal, setExportModal] = useState({
+        isOpen: false,
+        format: "csv"
+    });
+
+    const handleExecuteExport = async (type) => {
+        setExportModal(prev => ({ ...prev, isOpen: false }));
+        try {
+            let rawData = [];
+            let prefix = "";
+            if (type === "page") {
+                rawData = paginatedData;
+                prefix = "Pagina_";
+            } else if (type === "filtered") {
+                rawData = medidores || paginatedData;
+                prefix = "Filtrados_";
+            } else {
+                rawData = allMedidores;
+                prefix = "Todos_";
+            }
+
+            const normalizedData = normalizarMedidoresParaExport(rawData);
+            const format = exportModal.format;
+            const filename = `Inventario_Medidores_${prefix}${new Date().toISOString().split("T")[0]}`;
+            
+            const ok = await exportData(normalizedData, filename, format);
+            if (ok) {
+                setSuccess("Medidores exportados correctamente");
+            } else {
+                setError("Error al exportar medidores", "Exportación");
+            }
+        } catch (err) {
+            console.error("Error al exportar medidores:", err);
+            setError("Error al exportar medidores", "Exportación");
+        }
+    };
 
     const loadDeletedMedidores = async () => {
         setLoadingDeleted(true);
@@ -346,14 +403,8 @@ const TabInventarioMedidores = () => {
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
                     <ExportDropdown
-                        onExportCSV={async () => {
-                            const ok = await exportData(filteredData || paginatedData, `Inventario_Medidores_${new Date().toISOString().split("T")[0]}`, "csv");
-                            if (ok) setSuccess("Archivo CSV generado exitosamente");
-                        }}
-                        onExportExcel={async () => {
-                            const ok = await exportData(filteredData || paginatedData, `Inventario_Medidores_${new Date().toISOString().split("T")[0]}`, "xlsx");
-                            if (ok) setSuccess("Archivo Excel generado exitosamente");
-                        }}
+                        onExportCSV={() => setExportModal({ isOpen: true, format: "csv" })}
+                        onExportExcel={() => setExportModal({ isOpen: true, format: "xlsx" })}
                     />
                     <div className="flex-1 sm:flex-none">
                         <RegistrarMedidor />
@@ -760,6 +811,78 @@ const TabInventarioMedidores = () => {
                             <Button
                                 color="gray"
                                 onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                                className="font-bold text-slate-500"
+                            >
+                                Cancelar
+                            </Button>
+                        </div>
+                    </div>
+                </Modal.Body>
+            </Modal>
+
+            {/* Modal de Configuración de Exportación */}
+            <Modal
+                show={exportModal.isOpen}
+                onClose={() => setExportModal(prev => ({ ...prev, isOpen: false }))}
+                size="md"
+                popup
+                theme={premiumConfirmModalTheme}
+            >
+                <Modal.Header />
+                <Modal.Body>
+                    <div className="p-2">
+                        <div className="flex items-center gap-3 mb-4 justify-center">
+                            <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                                <HiDownload className="w-8 h-8" />
+                            </div>
+                        </div>
+                        <h3 className="mb-2 text-center text-lg font-black text-slate-800 dark:text-zinc-100">
+                            Opciones de Exportación ({exportModal.format.toUpperCase()})
+                        </h3>
+                        <p className="mb-6 text-center text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed">
+                            Selecciona el conjunto de datos que deseas descargar en tu archivo.
+                        </p>
+
+                        <div className="flex flex-col gap-3 mb-6">
+                            {/* Opción 1: Página Actual */}
+                            <button
+                                type="button"
+                                onClick={() => handleExecuteExport("page")}
+                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50/50 hover:bg-indigo-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                            >
+                                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                                    <span>Página actual (tabla)</span>
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-500/10 text-indigo-600 rounded-md">
+                                        {(paginatedData || []).length} registros
+                                    </span>
+                                </span>
+                                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                    Exporta únicamente los registros visibles actualmente en esta página de la tabla.
+                                </span>
+                            </button>
+
+                            {/* Opción 2: Todos */}
+                            <button
+                                type="button"
+                                onClick={() => handleExecuteExport("all")}
+                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50/50 hover:bg-indigo-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                            >
+                                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                                    <span>Todos los registros</span>
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 rounded-md">
+                                        {(allMedidores || []).length} registros
+                                    </span>
+                                </span>
+                                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                    Exporta la totalidad del inventario de medidores en el sistema.
+                                </span>
+                            </button>
+                        </div>
+
+                        <div className="flex justify-center gap-3">
+                            <Button
+                                color="gray"
+                                onClick={() => setExportModal(prev => ({ ...prev, isOpen: false }))}
                                 className="font-bold text-slate-500"
                             >
                                 Cancelar

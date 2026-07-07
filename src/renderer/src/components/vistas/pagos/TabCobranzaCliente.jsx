@@ -14,8 +14,11 @@ import {
   HiLocationMarker,
   HiChevronLeft,
   HiChevronRight,
-  HiChevronDown
+  HiChevronDown,
+  HiDownload,
+  HiExclamationCircle
 } from "react-icons/hi";
+import { Modal, Button } from "flowbite-react";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
 import { useFeedback } from "../../../context/FeedbackContext";
@@ -26,6 +29,7 @@ import ModalDetalleCobranzaCliente from "./ModalDetalleCobranzaCliente";
 import ModalSeleccionPeriodoRapido from "./ModalSeleccionPeriodoRapido";
 import ModalImprimir from "../impresion/components/ModalImprimir";
 import { formatearPeriodo, obtenerPeriodoActual } from "../../../utils/periodoUtils";
+import { exportData } from "../../../utils/exportUtils";
 
 const toMoney = (value) => {
   const num = Number(value);
@@ -44,6 +48,38 @@ const sortFacturasFIFO = (facturas = []) => {
 
 // ── ESTILOS COMPARTIDOS ───────────────────────────────────────────────────────
 const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none appearance-none cursor-pointer";
+
+const premiumConfirmModalTheme = {
+  root: {
+    show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" }
+  },
+  content: {
+    base: "relative h-full w-full p-4 md:h-auto",
+    inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-md w-full"
+  },
+  header: {
+    base: "hidden",
+    close: { base: "hidden", icon: "hidden" }
+  },
+  body: { base: "pt-10 pb-6 px-6 flex-1 overflow-y-auto bg-transparent" }
+};
+
+const normalizarCobranzaParaExport = (lista) => {
+    return lista.map((item, index) => ({
+        "No.": index + 1,
+        "Número de Predio": item.numero_predio || "-",
+        "Cliente": item.cliente_nombre || "",
+        "Dirección": item.direccion || "-",
+        "Teléfono": item.telefono || "-",
+        "Correo": item.correo || "-",
+        "Deuda Total ($)": toMoney(item.deuda_total),
+        "Facturas Pagadas": item.facturas_pagadas || 0,
+        "Facturas Pendientes": item.facturas_pendientes || 0,
+        "Facturas Vencidas": item.facturas_vencidas || 0,
+        "Total Facturas": item.total_facturas || 0,
+        "Estado Cliente": item.estado_cliente || "Activo"
+    }));
+};
 
 // ── SPINNER CSS PURO (sin librería) ───────────────────────────────────────────
 function LoadingSpinner({ className = "w-4 h-4" }) {
@@ -126,6 +162,44 @@ function ClienteUser({ nombre, numeroPredio, id }) {
   );
 }
 
+// ── DROPDOWN DE EXPORTAR (estado local, sin librería) ─────────────────────────
+function ExportDropdown({ onExportCSV, onExportExcel }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-[44px] px-5 shadow-sm flex items-center gap-2 transition-colors border border-emerald-500/10"
+      >
+        <HiDownload className="text-lg" />
+        Exportar
+        <HiChevronDown className="w-4 h-4 opacity-70" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-20 mt-2 w-56 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+            <button
+              onClick={() => { onExportCSV(); setOpen(false); }}
+              className="w-full px-4 py-3 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left"
+            >
+              <span className="text-lg">📄</span>
+              Exportar a CSV
+            </button>
+            <button
+              onClick={() => { onExportExcel(); setOpen(false); }}
+              className="w-full px-4 py-3 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-t border-slate-100 dark:border-zinc-800/80"
+            >
+              <span className="text-lg">📊</span>
+              Exportar a Excel (.xlsx)
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── BOTÓN IMPRIMIR DEUDORES CON OPCIONES DE ORDEN ─────────────────────────────
 const OPCIONES_ORDEN_DEUDORES = [
   { key: "mayor", label: "Mayor deudor primero", icon: "💰" },
@@ -171,7 +245,7 @@ function ImprimirDeudoresDropdown({ onImprimir, loading }) {
 }
 
 const TabCobranzaCliente = () => {
-  const { fetchClientes } = useClientes();
+  const { fetchClientes, allClientes } = useClientes();
   const { registrarPagoDistribuido, loading: loadingPagos, fetchPagos } = usePagos();
   const { setSuccess, setError } = useFeedback();
 
@@ -200,6 +274,44 @@ const TabCobranzaCliente = () => {
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [clienteDetalle, setClienteDetalle] = useState(null);
   const [facturaSeleccionadaDetalle, setFacturaSeleccionadaDetalle] = useState(null);
+
+  // Estado para exportación premium
+  const [exportModal, setExportModal] = useState({
+      isOpen: false,
+      format: "csv"
+  });
+
+    const handleExecuteExport = async (type) => {
+      setExportModal(prev => ({ ...prev, isOpen: false }));
+      try {
+          let rawData = [];
+          let prefix = "";
+          if (type === "page") {
+              rawData = clientesTablaPaginada;
+              prefix = "Pagina_";
+          } else if (type === "filtered") {
+              rawData = clientesTablaOrdenada;
+              prefix = "Filtrados_";
+          } else {
+              rawData = allClientesTabla;
+              prefix = "Todos_";
+          }
+
+          const normalizedData = normalizarCobranzaParaExport(rawData);
+          const format = exportModal.format;
+          const filename = `Cobranza_Clientes_${prefix}${new Date().toISOString().split("T")[0]}`;
+          
+          const ok = await exportData(normalizedData, filename, format);
+          if (ok) {
+              setSuccess("Reporte de cobranza exportado correctamente");
+          } else {
+              setError("Error al exportar cobranza", "Exportación");
+          }
+      } catch (err) {
+          console.error("Error al exportar cobranza:", err);
+          setError("Error al exportar cobranza", "Exportación");
+      }
+  };
   const [pagoSeleccionadoDetalle, setPagoSeleccionadoDetalle] = useState(null);
   const [anioFiltroDetalle, setAnioFiltroDetalle] = useState("all");
   const [periodoFiltroDetalle, setPeriodoFiltroDetalle] = useState("all");
@@ -387,6 +499,32 @@ const TabCobranzaCliente = () => {
       };
     });
   }, [clientes, facturasPorCliente]);
+
+  const allClientesTabla = useMemo(() => {
+    return (allClientes || []).map((cliente) => {
+      const facturasCliente = sortFacturasFIFO(facturasPorCliente.get(Number(cliente.id)) || []);
+      const deudaTotal = facturasCliente.reduce((acc, f) => toMoney(acc + f.saldo_pendiente), 0);
+      const facturasPendientes = facturasCliente.filter((f) => toMoney(f.saldo_pendiente) > 0 && String(f.estado || "").toLowerCase() !== "pagado").length;
+      const facturaMasAntiguaPendiente = facturasCliente.find((f) => toMoney(f.saldo_pendiente) > 0 && String(f.estado || "").toLowerCase() !== "pagado");
+
+      return {
+        cliente_id: Number(cliente.id),
+        cliente_nombre: cliente.nombre,
+        numero_predio: cliente.numero_predio || "-",
+        direccion: cliente.direccion || "-",
+        telefono: cliente.telefono || "-",
+        correo: cliente.correo || "-",
+        estado_cliente: cliente.estado_cliente || "Activo",
+        deuda_total: deudaTotal,
+        total_facturas: facturasCliente.length,
+        facturas_pendientes: facturasPendientes,
+        facturas_pagadas: facturasCliente.filter((f) => String(f.estado || "").toLowerCase().includes("pagad") || toMoney(f.saldo_pendiente) <= 0).length,
+        facturas_vencidas: facturasCliente.filter((f) => String(f.estado || "").toLowerCase().includes("vencid")).length,
+        factura_mas_antigua_pendiente: facturaMasAntiguaPendiente || null,
+        facturas: facturasCliente
+      };
+    });
+  }, [allClientes, facturasPorCliente]);
 
   const clientesTablaOrdenada = useMemo(() => {
     const data = [...clientesTabla];
@@ -882,6 +1020,11 @@ const TabCobranzaCliente = () => {
         </div>
 
         <div className="w-full md:w-auto flex items-center justify-end gap-3">
+          <ExportDropdown
+            onExportCSV={() => setExportModal({ isOpen: true, format: "csv" })}
+            onExportExcel={() => setExportModal({ isOpen: true, format: "xlsx" })}
+          />
+
           <ImprimirDeudoresDropdown
             onImprimir={handleImprimirMayoresDeudores}
             loading={loadingImprimirDeudores}
@@ -1231,6 +1374,78 @@ const TabCobranzaCliente = () => {
         clientesConDeuda={clientesConDeuda}
         onLiquidacionRegistrada={refrescarCobranzaTrasPagoRapido}
       />
+
+      {/* Modal de Configuración de Exportación */}
+      <Modal
+        show={exportModal.isOpen}
+        onClose={() => setExportModal(prev => ({ ...prev, isOpen: false }))}
+        size="md"
+        popup
+        theme={premiumConfirmModalTheme}
+      >
+        <Modal.Header />
+        <Modal.Body>
+          <div className="p-2">
+            <div className="flex items-center gap-3 mb-4 justify-center">
+              <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                <HiDownload className="w-8 h-8" />
+              </div>
+            </div>
+            <h3 className="mb-2 text-center text-lg font-black text-slate-800 dark:text-zinc-100">
+              Opciones de Exportación ({exportModal.format.toUpperCase()})
+            </h3>
+            <p className="mb-6 text-center text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed">
+              Selecciona el conjunto de datos que deseas descargar en tu archivo.
+            </p>
+
+            <div className="flex flex-col gap-3 mb-6">
+              {/* Opción 1: Página Actual */}
+              <button
+                type="button"
+                onClick={() => handleExecuteExport("page")}
+                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500 dark:hover:border-emerald-500 bg-slate-50/50 hover:bg-emerald-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+              >
+                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                  <span>Página actual (tabla)</span>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-600 rounded-md">
+                    {clientesTablaPaginada.length} registros
+                  </span>
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                  Exporta únicamente los registros visibles actualmente en esta página de la tabla.
+                </span>
+              </button>
+
+              {/* Opción 2: Todos */}
+              <button
+                type="button"
+                onClick={() => handleExecuteExport("all")}
+                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500 dark:hover:border-emerald-500 bg-slate-50/50 hover:bg-emerald-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+              >
+                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                  <span>Todos los deudores / clientes</span>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 rounded-md">
+                    {allClientesTabla.length} registros
+                  </span>
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                  Exporta la totalidad de los deudores/clientes de la base de datos sin aplicar filtros.
+                </span>
+              </button>
+            </div>
+
+            <div className="flex justify-center gap-3">
+              <Button
+                color="gray"
+                onClick={() => setExportModal(prev => ({ ...prev, isOpen: false }))}
+                className="font-bold text-slate-500"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </Modal.Body>
+      </Modal>
 
       {pdfUrl && modoPdf && (
         <ModalImprimir

@@ -145,10 +145,6 @@ const TabReportes = () => {
   };
 
   // ─── EXPORTAR DATOS ──────────────────────────────────────────────────────────
-  const CLIENTES_EXCLUDE = ['id', 'tarifa_id', 'modificado_por'];
-  const MEDIDORES_EXCLUDE = ['id', 'cliente_id', 'fecha_creacion'];
-  const MEDIDOR_SUFFIX_FIELDS = ['numero_serie', 'marca', 'modelo', 'ubicacion', 'fecha_instalacion', 'estado_medidor', 'latitud', 'longitud'];
-
   const buildSerieRutaMap = async (token) => {
     const map = {};
     try {
@@ -171,45 +167,50 @@ const TabReportes = () => {
       const token = localStorage.getItem('token');
       const today = new Date().toISOString().split('T')[0];
 
-      const limpiarCliente = (c) => {
-        const row = {};
-        Object.keys(c).forEach(k => { if (!CLIENTES_EXCLUDE.includes(k)) row[k] = c[k]; });
-        return row;
-      };
-
-      const limpiarMedidor = (m, rutaMap) => {
-        const row = {};
-        Object.keys(m).forEach(k => {
-          if (!MEDIDORES_EXCLUDE.includes(k)) row[k] = m[k];
-        });
-        row['ruta'] = rutaMap[m.numero_serie] || '';
-        return row;
-      };
-
-      const limpiarMedidorConSufijo = (m) => {
-        const row = {};
-        Object.keys(m).forEach(k => {
-          if (MEDIDORES_EXCLUDE.includes(k)) return;
-          const newKey = MEDIDOR_SUFFIX_FIELDS.includes(k) ? `${k}_medidor` : k;
-          row[newKey] = m[k];
-        });
-        return row;
-      };
-
       if (modoExport === 'clientes') {
         const resp = await window.api.fetchClientes(token);
         const clientes = resp?.data || (Array.isArray(resp) ? resp : []);
         if (!clientes.length) { alert("No hay clientes para exportar"); return; }
-        await exportData(clientes.map(limpiarCliente), `Clientes_${today}`, formatoExport);
+        
+        const rows = clientes.map((c, index) => ({
+          "No.": index + 1,
+          "Nombre": c.nombre || "",
+          "Número de Predio": c.numero_predio || "",
+          "Ciudad": c.ciudad || "",
+          "Dirección": c.direccion || "",
+          "Teléfono": c.telefono || "",
+          "Correo": c.email || c.correo || "",
+          "Tarifa": c.tarifa_nombre || c.tarifa || "Sin Tarifa",
+          "Estado": c.estado_cliente || c.estado || "Activo"
+        }));
+        await exportData(rows, `Clientes_${today}`, formatoExport);
 
       } else if (modoExport === 'medidores') {
         const resp = await window.api.fetchMedidores(token);
         const medidores = resp?.data || (Array.isArray(resp) ? resp : []);
         if (!medidores.length) { alert("No hay medidores para exportar"); return; }
         const rutaMap = await buildSerieRutaMap(token);
-        await exportData(medidores.map(m => limpiarMedidor(m, rutaMap)), `Medidores_${today}`, formatoExport);
+        
+        const rows = medidores.map((m, index) => ({
+          "No.": index + 1,
+          "Número de Serie": m.numero_serie || "",
+          "Ruta": rutaMap[m.numero_serie] || "Sin Ruta",
+          "Marca": m.marca || "",
+          "Modelo": m.modelo || "",
+          "Ubicación": m.ubicacion || "",
+          "Latitud": m.latitud || "",
+          "Longitud": m.longitud || "",
+          "Fecha de Instalación": m.fecha_instalacion ? new Date(m.fecha_instalacion).toLocaleDateString("es-MX") : "No registrada",
+          "Lectura Base": m.lectura_base || 0,
+          "Capacidad Máxima (m³)": m.capacidad_maxima ?? 99999,
+          "Estado Medidor": m.estado_medidor || "",
+          "Estado Servicio": m.estado_servicio || "",
+          "Cliente Asignado": m.cliente_nombre || "No Asignado",
+          "Predio del Cliente": m.numero_predio || ""
+        }));
+        await exportData(rows, `Medidores_${today}`, formatoExport);
 
-      } else {
+      } else if (modoExport === 'combinado') {
         const [clientesResp, medidoresResp] = await Promise.all([
           window.api.fetchClientes(token),
           window.api.fetchMedidores(token)
@@ -222,21 +223,123 @@ const TabReportes = () => {
         const medidorByClienteId = {};
         medidores.forEach(m => { if (m.cliente_id) medidorByClienteId[m.cliente_id] = m; });
 
-        const rows = clientes.map(c => {
-          const clienteRow = limpiarCliente(c);
+        const rows = clientes.map((c, index) => {
           const m = medidorByClienteId[c.id];
+          const row = {
+            "No.": index + 1,
+            "Nombre": c.nombre || "",
+            "Número de Predio": c.numero_predio || "",
+            "Ciudad": c.ciudad || "",
+            "Dirección": c.direccion || "",
+            "Teléfono": c.telefono || "",
+            "Correo": c.email || c.correo || "",
+            "Tarifa": c.tarifa_nombre || c.tarifa || "Sin Tarifa",
+            "Estado Cliente": c.estado_cliente || c.estado || "Activo"
+          };
+
           if (m) {
-            const medidorRow = limpiarMedidorConSufijo(m);
-            medidorRow['ruta'] = rutaMap[m.numero_serie] || '';
-            return { ...clienteRow, ...medidorRow };
+            row["Número de Serie_medidor"] = m.numero_serie || "";
+            row["Ruta_medidor"] = rutaMap[m.numero_serie] || "Sin Ruta";
+            row["Marca_medidor"] = m.marca || "";
+            row["Modelo_medidor"] = m.modelo || "";
+            row["Ubicación_medidor"] = m.ubicacion || "";
+            row["Latitud_medidor"] = m.latitud || "";
+            row["Longitud_medidor"] = m.longitud || "";
+            row["Fecha de Instalación_medidor"] = m.fecha_instalacion ? new Date(m.fecha_instalacion).toLocaleDateString("es-MX") : "No registrada";
+            row["Lectura Base_medidor"] = m.lectura_base || 0;
+            row["Capacidad Máxima (m³)_medidor"] = m.capacidad_maxima ?? 99999;
+            row["Estado Medidor_medidor"] = m.estado_medidor || "";
+            row["Estado Servicio_medidor"] = m.estado_servicio || "";
+          } else {
+            row["Número de Serie_medidor"] = "Sin medidor";
+            row["Ruta_medidor"] = "";
+            row["Marca_medidor"] = "";
+            row["Modelo_medidor"] = "";
+            row["Ubicación_medidor"] = "";
+            row["Latitud_medidor"] = "";
+            row["Longitud_medidor"] = "";
+            row["Fecha de Instalación_medidor"] = "";
+            row["Lectura Base_medidor"] = "";
+            row["Capacidad Máxima (m³)_medidor"] = "";
+            row["Estado Medidor_medidor"] = "";
+            row["Estado Servicio_medidor"] = "";
           }
-          const emptyMedidor = {};
-          MEDIDOR_SUFFIX_FIELDS.forEach(k => { emptyMedidor[`${k}_medidor`] = ''; });
-          emptyMedidor['ruta'] = '';
-          return { ...clienteRow, ...emptyMedidor };
+          return row;
         });
 
         await exportData(rows, `Clientes_Medidores_${today}`, formatoExport);
+
+      } else if (modoExport === 'cobranza') {
+        const resp = await window.api.fetchClientes(token);
+        const clientes = resp?.data || (Array.isArray(resp) ? resp : []);
+        if (!clientes.length) { alert("No hay clientes para generar cobranza"); return; }
+
+        // Fetch all bills
+        let pageF = 1;
+        let totalPagesF = 1;
+        const facturasHistorial = [];
+        while (pageF <= totalPagesF) {
+          const response = await window.api.fetchFacturas(token, { page: pageF, limit: 200, search: "", estado: "" });
+          if (response?.facturas && Array.isArray(response.facturas)) {
+            facturasHistorial.push(...response.facturas);
+            totalPagesF = response?.pagination?.totalPages || 1;
+            pageF += 1;
+          } else if (Array.isArray(response)) {
+            facturasHistorial.push(...response);
+            break;
+          } else {
+            break;
+          }
+        }
+
+        const facturasPorCliente = new Map();
+        facturasHistorial.forEach((factura) => {
+          const clienteId = Number(factura.cliente_id);
+          if (!facturasPorCliente.has(clienteId)) {
+            facturasPorCliente.set(clienteId, []);
+          }
+          facturasPorCliente.get(clienteId).push(factura);
+        });
+
+        const sortFacturasFIFO = (facturas = []) => {
+          return [...facturas].sort((a, b) => {
+            const dateA = new Date(a.fecha_emision || a.fecha_creacion || 0).getTime();
+            const dateB = new Date(b.fecha_emision || b.fecha_creacion || 0).getTime();
+            if (dateA !== dateB) return dateA - dateB;
+            return Number(a.id) - Number(b.id);
+          });
+        };
+
+        const toMoney = (value) => {
+          const num = Number(value);
+          if (!Number.isFinite(num)) return 0;
+          return Math.round(num * 100) / 100;
+        };
+
+        const rows = clientes.map((c, index) => {
+          const facturasCliente = sortFacturasFIFO(facturasPorCliente.get(Number(c.id)) || []);
+          const deudaTotal = facturasCliente.reduce((acc, f) => toMoney(acc + f.saldo_pendiente), 0);
+          const facturasPendientes = facturasCliente.filter((f) => toMoney(f.saldo_pendiente) > 0 && String(f.estado || "").toLowerCase() !== "pagado").length;
+          const facturasPagadas = facturasCliente.filter((f) => String(f.estado || "").toLowerCase().includes("pagad") || toMoney(f.saldo_pendiente) <= 0).length;
+          const facturasVencidas = facturasCliente.filter((f) => String(f.estado || "").toLowerCase().includes("vencid")).length;
+
+          return {
+            "No.": index + 1,
+            "Número de Predio": c.numero_predio || "-",
+            "Cliente": c.nombre || "",
+            "Dirección": c.direccion || "-",
+            "Teléfono": c.telefono || "-",
+            "Correo": c.correo || c.email || "-",
+            "Deuda Total ($)": deudaTotal,
+            "Facturas Pagadas": facturasPagadas,
+            "Facturas Pendientes": facturasPendientes,
+            "Facturas Vencidas": facturasVencidas,
+            "Total Facturas": facturasCliente.length,
+            "Estado Cliente": c.estado_cliente || c.estado || "Activo"
+          };
+        });
+
+        await exportData(rows, `Cobranza_Clientes_${today}`, formatoExport);
       }
     } catch (err) {
       console.error("Error al exportar datos:", err);
@@ -543,6 +646,7 @@ const TabReportes = () => {
             <SelectItem key="clientes" value="clientes">Solo Padrón de Clientes</SelectItem>
             <SelectItem key="medidores" value="medidores">Solo Equipos (Medidores)</SelectItem>
             <SelectItem key="combinado" value="combinado">Relación Clientes + Medidores</SelectItem>
+            <SelectItem key="cobranza" value="cobranza">Reporte de Cobranza por Cliente</SelectItem>
           </Select>
 
           <Select
