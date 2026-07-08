@@ -267,12 +267,17 @@ const ReporteDeudoresMayores = () => {
           html, body { width: 100%; }
           body { margin: 0; padding: 0; background: white; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          
+          /* Esenciales para el salto de página y el footer maestro */
           thead { display: table-header-group; }
+          tfoot { display: table-footer-group; }
           tr { page-break-inside: avoid; }
-          .reporte-deudores-wrap { width: 100% !important; max-width: 100% !important; padding-bottom: 42px !important; }
+          
+          .reporte-deudores-wrap { width: 100% !important; max-width: 100% !important; }
           .reporte-deudores-table { width: 100% !important; table-layout: fixed !important; }
           .reporte-deudores-table th,
           .reporte-deudores-table td { box-sizing: border-box; overflow-wrap: anywhere; }
+          
           /* Pie fijo: se repite al final de CADA hoja impresa. */
           .page-footer {
             position: fixed;
@@ -291,149 +296,171 @@ const ReporteDeudoresMayores = () => {
           className="reporte-deudores-wrap w-full max-w-[980px] bg-white rounded-2xl shadow-2xl overflow-hidden p-6 print:p-0 print:shadow-none print:rounded-none print:max-w-none"
           style={{ fontFamily: "'Segoe UI', Arial, sans-serif", color: "#111827" }}
         >
-          <div style={{ marginBottom: "14px" }}>
-            <div
-              style={{
-                background: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%)",
-                color: "#fff",
-                padding: "14px 20px",
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-                borderRadius: "8px 8px 0 0",
-              }}
-            >
-              <img src={logoSrc} alt="Escudo" style={{ height: "76px", width: "76px", objectFit: "contain", flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                  Comisión Municipal de Agua Potable y Alcantarillado
-                </div>
-                <div style={{ fontSize: "11px", opacity: 0.88, marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                  Villa Pesqueira, Sonora — Reporte de mayores deudores
-                </div>
-              </div>
-              <div
-                style={{
-                  background: "rgba(255,255,255,0.15)",
-                  border: "1px solid rgba(255,255,255,0.35)",
-                  borderRadius: "8px",
-                  padding: "8px 14px",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.8 }}>Deudores</div>
-                <div style={{ fontWeight: 800, fontSize: "14px", marginTop: "2px" }}>{rows.length}</div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "#f0f9ff",
-                borderLeft: "4px solid #1e40af",
-                borderRight: "1px solid #bfdbfe",
-                borderBottom: "1px solid #bfdbfe",
-                padding: "8px 20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderRadius: "0 0 6px 6px",
-              }}
-            >
-              <div style={{ fontWeight: 800, fontSize: "14px", color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Cartera Vencida Prioritaria
-              </div>
-              <div style={{ fontSize: "10px", color: "#6b7280", display: "flex", gap: "16px", alignItems: "center" }}>
-                <span>Orden: <span style={{ fontWeight: 700, color: "#1f2937" }}>{ordenLabel}</span></span>
-                <span>Total adeudo: <span style={{ fontWeight: 800, color: "#1f2937" }}>{money(totalAdeudoGeneral)}</span></span>
-              </div>
-            </div>
-          </div>
-
-          <table className="reporte-deudores-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "9.5px" }}>
-            <colgroup>
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "27%" }} />
-              <col style={{ width: "11%" }} />
-              <col style={{ width: "28%" }} />
-              <col style={{ width: "13%" }} />
-              <col style={{ width: "12%" }} />
-            </colgroup>
-            <thead>
-              <tr>
-                {["No. Predio", "Nombre del Cliente", "Medidor", "Meses de Deuda", "Total Adeudo", "Abono/Pago"].map((title, idx) => (
-                  <th
-                    key={title}
-                    style={{
-                      padding: "7px 6px",
-                      background: "#1e3a8a",
-                      color: "#fff",
-                      fontSize: "9px",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      textAlign: idx === 4 ? "right" : idx === 5 ? "center" : idx === 3 ? "center" : "left",
-                      borderRight: idx === 5 ? "none" : "1px solid rgba(255,255,255,0.18)",
-                    }}
-                  >
-                    {title}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+          
+          {/* TABLA MAESTRA PARA CONTROLAR EL FLUJO DE IMPRESIÓN */}
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ padding: "20px", textAlign: "center", color: "#6b7280", border: "1px solid #e5e7eb" }}>
-                    No hay deudores para mostrar en este reporte.
-                  </td>
-                </tr>
-              )}
+              <tr>
+                <td>
+                  {/* --- INICIO DEL CONTENIDO ORIGINAL --- */}
+                  <div style={{ marginBottom: "14px" }}>
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%)",
+                        color: "#fff",
+                        padding: "14px 20px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "14px",
+                        borderRadius: "8px 8px 0 0",
+                      }}
+                    >
+                      <img src={logoSrc} alt="Escudo" style={{ height: "76px", width: "76px", objectFit: "contain", flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                          Comisión Municipal de Agua Potable y Alcantarillado
+                        </div>
+                        <div style={{ fontSize: "11px", opacity: 0.88, marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                          Villa Pesqueira, Sonora — Reporte de mayores deudores
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          background: "rgba(255,255,255,0.15)",
+                          border: "1px solid rgba(255,255,255,0.35)",
+                          borderRadius: "8px",
+                          padding: "8px 14px",
+                          textAlign: "center",
+                        }}
+                      >
+                        <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.8 }}>Deudores</div>
+                        <div style={{ fontWeight: 800, fontSize: "14px", marginTop: "2px" }}>{rows.length}</div>
+                      </div>
+                    </div>
 
-              {rows.map((r, idx) => {
-                const even = idx % 2 === 0;
-                const bg = even ? "#ffffff" : "#f8fafc";
-                const td = {
-                  padding: "6px 6px",
-                  borderRight: "1px solid #e5e7eb",
-                  borderBottom: "1px solid #e5e7eb",
-                  verticalAlign: "top",
-                  background: bg,
-                };
+                    <div
+                      style={{
+                        background: "#f0f9ff",
+                        borderLeft: "4px solid #1e40af",
+                        borderRight: "1px solid #bfdbfe",
+                        borderBottom: "1px solid #bfdbfe",
+                        padding: "8px 20px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        borderRadius: "0 0 6px 6px",
+                      }}
+                    >
+                      <div style={{ fontWeight: 800, fontSize: "14px", color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                        Cartera Vencida Prioritaria
+                      </div>
+                      <div style={{ fontSize: "10px", color: "#6b7280", display: "flex", gap: "16px", alignItems: "center" }}>
+                        <span>Orden: <span style={{ fontWeight: 700, color: "#1f2937" }}>{ordenLabel}</span></span>
+                        <span>Total adeudo: <span style={{ fontWeight: 800, color: "#1f2937" }}>{money(totalAdeudoGeneral)}</span></span>
+                      </div>
+                    </div>
+                  </div>
 
-                return (
-                  <tr key={r.id}>
-                    <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.noPredio || "—"}</td>
-                    <td style={td}>
-                      <div style={{ fontWeight: 700, textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {r.nombreCliente}
-                      </div>
-                      <div style={{ marginTop: "3px", fontSize: "9px", color: "#475569", fontWeight: 700 }}>
-                        Recibos con deuda: {r.recibosConDeuda}
-                      </div>
-                    </td>
-                    <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.medidor || "S/N"}</td>
-                    <td style={{ ...td, textAlign: "center" }}>
-                      <span style={{ fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.04em" }}>
-                        {r.meses.length ? r.meses.join(", ") : "—"}
-                      </span>
-                    </td>
-                    <td style={{ ...td, textAlign: "right", fontWeight: 800, color: "#991b1b" }}>{money(r.totalAdeudo)}</td>
-                    <td style={{ ...td, textAlign: "center", borderRight: "none" }}>
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ width: "11px", height: "11px", border: "1.5px solid #64748b", borderRadius: "2px", display: "inline-block" }} />
-                        <span style={{ display: "inline-block", width: "38px", borderBottom: "1px solid #94a3b8", height: "12px" }} />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                  <table className="reporte-deudores-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "9.5px" }}>
+                    <colgroup>
+                      <col style={{ width: "9%" }} />
+                      <col style={{ width: "27%" }} />
+                      <col style={{ width: "11%" }} />
+                      <col style={{ width: "28%" }} />
+                      <col style={{ width: "13%" }} />
+                      <col style={{ width: "12%" }} />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        {["No. Predio", "Nombre del Cliente", "Medidor", "Meses de Deuda", "Total Adeudo", "Abono/Pago"].map((title, idx) => (
+                          <th
+                            key={title}
+                            style={{
+                              padding: "7px 6px",
+                              background: "#1e3a8a",
+                              color: "#fff",
+                              fontSize: "9px",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                              textAlign: idx === 4 ? "right" : idx === 5 ? "center" : idx === 3 ? "center" : "left",
+                              borderRight: idx === 5 ? "none" : "1px solid rgba(255,255,255,0.18)",
+                            }}
+                          >
+                            {title}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.length === 0 && (
+                        <tr>
+                          <td colSpan={6} style={{ padding: "20px", textAlign: "center", color: "#6b7280", border: "1px solid #e5e7eb" }}>
+                            No hay deudores para mostrar en este reporte.
+                          </td>
+                        </tr>
+                      )}
+
+                      {rows.map((r, idx) => {
+                        const even = idx % 2 === 0;
+                        const bg = even ? "#ffffff" : "#f8fafc";
+                        const td = {
+                          padding: "6px 6px",
+                          borderRight: "1px solid #e5e7eb",
+                          borderBottom: "1px solid #e5e7eb",
+                          verticalAlign: "top",
+                          background: bg,
+                        };
+
+                        return (
+                          <tr key={r.id}>
+                            <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.noPredio || "—"}</td>
+                            <td style={td}>
+                              <div style={{ fontWeight: 700, textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {r.nombreCliente}
+                              </div>
+                              <div style={{ marginTop: "3px", fontSize: "9px", color: "#475569", fontWeight: 700 }}>
+                                Recibos con deuda: {r.recibosConDeuda}
+                              </div>
+                            </td>
+                            <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.medidor || "S/N"}</td>
+                            <td style={{ ...td, textAlign: "center" }}>
+                              <span style={{ fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.04em" }}>
+                                {r.meses.length ? r.meses.join(", ") : "—"}
+                              </span>
+                            </td>
+                            <td style={{ ...td, textAlign: "right", fontWeight: 800, color: "#991b1b" }}>{money(r.totalAdeudo)}</td>
+                            <td style={{ ...td, textAlign: "center", borderRight: "none" }}>
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                <span style={{ width: "11px", height: "11px", border: "1.5px solid #64748b", borderRadius: "2px", display: "inline-block" }} />
+                                <span style={{ display: "inline-block", width: "38px", borderBottom: "1px solid #94a3b8", height: "12px" }} />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {/* --- FIN DEL CONTENIDO ORIGINAL --- */}
+                </td>
+              </tr>
             </tbody>
+
+            {/* FOOTER INVISIBLE PARA RESERVAR EL ESPACIO */}
+            <tfoot>
+              <tr>
+                <td>
+                  <div style={{ height: "25px" }}></div>
+                </td>
+              </tr>
+            </tfoot>
           </table>
 
+          {/* FOOTER FIJO ORIGINAL (Flotando sobre la reserva) */}
           <div
             className="page-footer"
             style={{
-              marginTop: "12px",
+              marginTop: "8px",
               paddingTop: "8px",
               borderTop: "1px dashed #d1d5db",
               display: "flex",

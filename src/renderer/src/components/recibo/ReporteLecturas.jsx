@@ -345,8 +345,15 @@ const ReporteLecturas = () => {
                     @page { size: letter portrait; margin: 10mm; }
                     body { margin: 0; padding: 0; background: white; }
                     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    
+                    /* Mantiene los encabezados de tabla al inicio de cada hoja */
                     thead { display: table-header-group; }
+                    
+                    /* Asegura que el espacio en blanco se repita al final de cada hoja */
+                    tfoot { display: table-footer-group; }
+                    
                     tr    { page-break-inside: avoid; }
+                    
                     /* Pie fijo: se repite al final de CADA hoja impresa. */
                     .page-footer {
                         position: fixed;
@@ -357,7 +364,6 @@ const ReporteLecturas = () => {
                         margin-top: 0 !important;
                         padding: 6px 4px;
                     }
-                    .reporte-lecturas-hoja { padding-bottom: 42px !important; }
                 }
             `}</style>
 
@@ -372,29 +378,49 @@ const ReporteLecturas = () => {
                          color: '#111827',
                      }}>
                     
-                    <PageHeader mes={mes} totalRegistros={totalRegistros} />
+                    {/* TABLA MAESTRA PARA CONTROLAR EL FLUJO DE IMPRESIÓN */}
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    {/* CONTENIDO PRINCIPAL */}
+                                    <PageHeader mes={mes} totalRegistros={totalRegistros} />
 
-                    {/* Tablas */}
-                    {isGrouped ? (
-                        (() => {
-                            let offset = 0;
-                            return data.map((grupo, gIdx) => {
-                                const el = <GrupoSection key={gIdx} grupo={grupo} offset={offset} ordenarPor={ordenarPor} />;
-                                offset += grupo.clientes?.length || 0;
-                                return el;
-                            });
-                        })()
-                    ) : (
-                        <div style={{ marginBottom: '20px' }}>
-                            <DataTable items={sortLecturasItems(data, ordenarPor)} offset={0} ordenarPor={ordenarPor} />
-                            <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
-                        </div>
-                    )}
+                                    {/* Tablas */}
+                                    {isGrouped ? (
+                                        (() => {
+                                            let offset = 0;
+                                            return data.map((grupo, gIdx) => {
+                                                const el = <GrupoSection key={gIdx} grupo={grupo} offset={offset} ordenarPor={ordenarPor} />;
+                                                offset += grupo.clientes?.length || 0;
+                                                return el;
+                                            });
+                                        })()
+                                    ) : (
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <DataTable items={sortLecturasItems(data, ordenarPor)} offset={0} ordenarPor={ordenarPor} />
+                                            <div style={{ height: '2px', background: '#1e3a8a', borderRadius: '0 0 4px 4px' }} />
+                                        </div>
+                                    )}
+                                </td>
+                            </tr>
+                        </tbody>
 
-                    {/* Footer (fijo al pie de cada hoja en impresión) */}
+                        {/* FOOTER INVISIBLE PARA RESERVAR ESPACIO EXACTO */}
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    {/* Altura ajustada a 25px para permitir que quepa la fila 18 */}
+                                    <div style={{ height: '25px' }}></div> 
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    {/* Footer (fijo al pie de cada hoja flotando sobre el espacio del tfoot) */}
                     <div className="page-footer" style={{
-                        marginTop: '16px',
-                        paddingTop: '10px',
+                        marginTop: '8px', /* Márgenes reducidos */
+                        paddingTop: '8px',
                         borderTop: '1px dashed #d1d5db',
                         display: 'flex',
                         justifyContent: 'space-between',
