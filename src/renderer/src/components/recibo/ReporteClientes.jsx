@@ -146,41 +146,41 @@ const ReporteClientesCompleto = () => {
 
     // --- TABLA REUTILIZABLE ---
     const TablaClientes = ({ listaClientes, mostrarCiudad = false, mostrarTarifa = true }) => (
-        <table className="w-full text-left text-xs border-collapse border border-gray-200">
-            <thead className="bg-gray-50 text-gray-500">
+        <table className="w-full text-left text-xs border-collapse border border-gray-200" style={{ fontSize: '10px' }}>
+            <thead>
                 <tr>
-                    <th className="p-2 border-b w-20 text-center">N° Predio</th>
-                    <th className="p-2 border-b">Nombre del Cliente</th>
-                    <th className="p-2 border-b">Dirección</th>
+                    <th className="th-print-bg text-center" style={{ padding: '7px 6px', background: '#1e3a8a', color: '#fff', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid rgba(255,255,255,0.18)', width: '80px' }}>N° Predio</th>
+                    <th className="th-print-bg" style={{ padding: '7px 6px', background: '#1e3a8a', color: '#fff', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid rgba(255,255,255,0.18)' }}>Nombre del Cliente</th>
+                    <th className="th-print-bg" style={{ padding: '7px 6px', background: '#1e3a8a', color: '#fff', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid rgba(255,255,255,0.18)' }}>Dirección</th>
                     {mostrarCiudad && (
-                        <th className="p-2 border-b w-28">Ciudad</th>
+                        <th className="th-print-bg" style={{ padding: '7px 6px', background: '#1e3a8a', color: '#fff', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid rgba(255,255,255,0.18)', width: '110px' }}>Ciudad</th>
                     )}
                     {mostrarTarifa && (
-                        <th className="p-2 border-b w-24">Tarifa</th>
+                        <th className="th-print-bg" style={{ padding: '7px 6px', background: '#1e3a8a', color: '#fff', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderRight: '1px solid rgba(255,255,255,0.18)', width: '96px' }}>Tarifa</th>
                     )}
-                    <th className="p-2 border-b w-20 text-center">Estado</th>
+                    <th className="th-print-bg text-center" style={{ padding: '7px 6px', background: '#1e3a8a', color: '#fff', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', width: '80px' }}>Estado</th>
                 </tr>
             </thead>
             <tbody>
                 {listaClientes.map((cliente) => (
-                    <tr key={cliente.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="p-2 text-center font-mono font-bold text-gray-700">
+                    <tr key={cliente.id} className="border-b border-gray-100 hover:bg-gray-50" style={{ pageBreakInside: 'avoid' }}>
+                        <td className="p-2 text-center font-mono font-bold text-gray-700" style={{ borderRight: '1px solid #e5e7eb', verticalAlign: 'middle' }}>
                             {cliente.numero_predio || "-"}
                         </td>
-                        <td className="p-2 font-bold text-gray-700">{cliente.nombre}</td>
-                        <td className="p-2 text-gray-500 truncate max-w-[200px]">{cliente.direccion}</td>
+                        <td className="p-2 font-bold text-gray-700" style={{ borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', textTransform: 'uppercase' }}>{cliente.nombre}</td>
+                        <td className="p-2 text-gray-500 truncate max-w-[200px]" style={{ borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', fontSize: '9px' }}>{cliente.direccion}</td>
                         {mostrarCiudad && (
-                            <td className="p-2 text-gray-600 text-xs">{cliente.ciudad || "-"}</td>
+                            <td className="p-2 text-gray-600 text-xs" style={{ borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', textTransform: 'uppercase', fontSize: '9px' }}>{cliente.ciudad || "-"}</td>
                         )}
                         {mostrarTarifa && (
-                            <td className="p-2 text-gray-600">{cliente.tarifa_nombre || cliente.tarifa || "-"}</td>
+                            <td className="p-2 text-gray-600" style={{ borderRight: '1px solid #e5e7eb', verticalAlign: 'middle', fontSize: '9px' }}>{cliente.tarifa_nombre || cliente.tarifa || "-"}</td>
                         )}
-                        <td className="p-2 text-center">
+                        <td className="p-2 text-center" style={{ verticalAlign: 'middle' }}>
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${cliente.estado_cliente === 'Activo'
                                 ? 'text-green-700 bg-green-50'
                                 : 'text-red-700 bg-red-50'
                                 }`}>
-                                {cliente.estado_cliente?.toUpperCase().substring(0, 1)}
+                                {cliente.estado_cliente?.toUpperCase()}
                             </span>
                         </td>
                     </tr>
@@ -229,12 +229,19 @@ const ReporteClientesCompleto = () => {
                         .bg-gray-100 { background-color: #f3f4f6 !important; }
                         .bg-blue-600 { background-color: #2563eb !important; color: white !important; }
                         .bg-purple-600 { background-color: #9333ea !important; color: white !important; }
-                        .page-header-bg { background-color: #1e3a5f !important; color: white !important; }
-                        .page-header-bg * { color: white !important; }
+                        .th-print-bg { background-color: #1e3a8a !important; color: white !important; }
+                        .th-print-bg * { color: white !important; }
+                        .page-header-unificado { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%) !important; color: white !important; }
+                        .page-header-unificado * { color: white !important; }
                         
                         /* UTILIDADES DE PAGINACIÓN */
                         .no-break { break-inside: avoid; page-break-inside: avoid; }
                         .salto-pagina { break-before: page; }
+
+                        /* REGLAS MAESTRAS DE TABLA */
+                        thead { display: table-header-group; }
+                        tfoot { display: table-footer-group; }
+                        tr { page-break-inside: avoid; }
 
                         /* FOOTER FIJO: se repite al final de CADA hoja impresa. */
                         .doc-footer {
@@ -254,8 +261,6 @@ const ReporteClientesCompleto = () => {
                             break-inside: avoid;
                             page-break-inside: avoid;
                         }
-                        /* Reserva espacio para que el contenido no quede tapado por el pie fijo. */
-                        .reporte-clientes-doc { padding-bottom: 1.4cm !important; }
                     }
 
                     @media screen {
@@ -265,182 +270,215 @@ const ReporteClientesCompleto = () => {
             </style>
 
             <div className="reporte-clientes-doc min-h-screen bg-white p-8 font-sans text-gray-800">
-
-                {/* === HEADER CON LOGO (igual a ReporteLecturas) === */}
-                <div
-                    className="page-header-bg no-break"
-                    style={{
-                        background: '#1e3a5f',
-                        WebkitPrintColorAdjust: 'exact',
-                        printColorAdjust: 'exact',
-                        borderRadius: '8px',
-                        padding: '16px 24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '24px',
-                        color: 'white'
-                    }}
-                >
-                    {/* Logo + Título */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <img
-                            src={logoSrc}
-                            alt="Escudo"
-                            style={{ height: '56px', width: '56px', objectFit: 'contain', flexShrink: 0, filter: 'brightness(0) invert(1)' }}
-                        />
-                        <div>
-                            <h1 style={{ fontSize: '1.4rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.02em', color: 'white', margin: 0 }}>
-                                Padrón General de Clientes
-                            </h1>
-                            <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '4px' }}>
-                                Agua Potable · Villa Pesqueira, Sonora
-                            </p>
-                        </div>
-                    </div>
-                    {/* Metadata */}
-                    <div style={{ textAlign: 'right', fontSize: '0.75rem' }}>
-                        <div style={{ color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.1em' }}>Fecha de Corte</div>
-                        <div style={{ fontWeight: '700', fontSize: '1rem', color: 'white' }}>{getFecha()}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.65rem', marginTop: '4px' }}>
-                            {ordenarPor === "nombre" ? "Nombre" : "N° de Predio"} • {getDescripcionAgrupacion()}
-                        </div>
-                    </div>
-                </div>
-
-                {/* === SECCIÓN 1: RESUMEN EJECUTIVO (KPIs) === */}
-                <div className="grid grid-cols-3 gap-6 mb-8 no-break">
-                    <div className="p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
-                        <p className="text-xs font-bold text-blue-500 uppercase">Total Padrón</p>
-                        <p className="text-3xl font-black text-blue-900">{reporte.total}</p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-xl border-l-4 border-green-600">
-                        <p className="text-xs font-bold text-green-600 uppercase">Usuarios Activos</p>
-                        <p className="text-3xl font-black text-green-900">{reporte.activos}</p>
-                        <p className="text-[10px] text-green-600 font-bold mt-1">
-                            {((reporte.activos / reporte.total) * 100).toFixed(1)}% del total
-                        </p>
-                    </div>
-                    <div className="p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
-                        <p className="text-xs font-bold text-red-500 uppercase">Inactivos / Bajas</p>
-                        <p className="text-3xl font-black text-red-900">{reporte.inactivos}</p>
-                    </div>
-                </div>
-
-                {/* === SECCIÓN 2: GRÁFICAS DE DISTRIBUCIÓN (CSS PRINT-SAFE) === */}
-                <div className="grid grid-cols-2 gap-8 mb-8 no-break">
-
-                    {/* Gráfica por Ciudad */}
-                    <div className="border border-gray-200 rounded-xl p-5">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 flex items-center gap-2 border-b pb-2">
-                            <LocationIcon /> Distribución por Zona
-                        </h3>
-                        <div className="space-y-3">
-                            {reporte.statsCiudad.map((ciudad, idx) => (
-                                <div key={idx}>
-                                    <div className="flex justify-between text-xs mb-1 font-bold text-gray-700">
-                                        <span>{ciudad.nombre}</span>
-                                        <span>{ciudad.cantidad} ({ciudad.porcentaje.toFixed(1)}%)</span>
-                                    </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                                        <div
-                                            className="bg-blue-600 h-full rounded-full print:bg-blue-600"
-                                            style={{ width: `${ciudad.porcentaje}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Gráfica por Tarifa */}
-                    <div className="border border-gray-200 rounded-xl p-5">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 flex items-center gap-2 border-b pb-2">
-                            <ChartIcon /> Tipos de Tarifa
-                        </h3>
-                        <div className="space-y-4 pt-2">
-                            {reporte.statsTarifa.map((t, idx) => (
-                                <div key={idx} className="flex items-center gap-3">
-                                    <div className="w-24 text-xs font-bold text-gray-600 text-right">{t.nombre}</div>
-                                    <div className="flex-1 bg-gray-100 h-6 rounded overflow-hidden relative">
-                                        <div
-                                            className="bg-purple-600 h-full flex items-center px-2 text-[10px] text-white font-bold whitespace-nowrap"
-                                            style={{ width: `${Math.max(t.porcentaje, 10)}%` }}
-                                        >
-                                            {t.cantidad}
+                
+                {/* TABLA MAESTRA PARA CONTROLAR EL FLUJO DE IMPRESIÓN */}
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <tbody>
+                        <tr>
+                            <td>
+                                {/* === HEADER CON LOGO (Estilo unificado con los demás reportes) === */}
+                                <div style={{ marginBottom: '18px' }} className="no-break">
+                                    {/* Franja principal */}
+                                    <div className="page-header-unificado" style={{
+                                        background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%)',
+                                        color: '#fff',
+                                        padding: '14px 20px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '16px',
+                                        borderRadius: '8px 8px 0 0',
+                                    }}>
+                                        <img src={logoSrc} alt="Escudo" style={{ height: '76px', width: '76px', objectFit: 'contain', flexShrink: 0 }} />
+                                        
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 800, fontSize: '17px', letterSpacing: '0.04em', textTransform: 'uppercase', color: '#fff' }}>
+                                                Comisión Municipal de Agua Potable y Alcantarillado
+                                            </div>
+                                            <div style={{ fontSize: '12px', opacity: 0.85, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#fff' }}>
+                                                Villa Pesqueira, Sonora — Padrón General de Clientes
+                                            </div>
+                                        </div>
+                                        <div style={{
+                                            background: 'rgba(255,255,255,0.15)',
+                                            border: '1px solid rgba(255,255,255,0.35)',
+                                            borderRadius: '8px',
+                                            padding: '8px 16px',
+                                            textAlign: 'center',
+                                            flexShrink: 0,
+                                        }}>
+                                            <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8, color: '#fff' }}>Usuarios</div>
+                                            <div style={{ fontWeight: 800, fontSize: '14px', marginTop: '2px', color: '#fff' }}>
+                                                {reporte.total}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="w-10 text-xs text-gray-400">{t.porcentaje.toFixed(0)}%</div>
+                                    {/* Barra de título */}
+                                    <div style={{
+                                        background: '#f0f9ff',
+                                        borderLeft: '4px solid #1e40af',
+                                        borderRight: '1px solid #bfdbfe',
+                                        borderBottom: '1px solid #bfdbfe',
+                                        padding: '8px 20px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        borderRadius: '0 0 6px 6px',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <span style={{ fontWeight: 800, fontSize: '14px', color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                Catálogo de Usuarios
+                                            </span>
+                                            <span style={{
+                                                background: '#1e40af', color: '#fff',
+                                                fontSize: '10px', fontWeight: 700,
+                                                padding: '2px 10px', borderRadius: '999px',
+                                            }}>
+                                                {ordenarPor === "nombre" ? "Nombre" : "N° de Predio"} • {getDescripcionAgrupacion()}
+                                            </span>
+                                        </div>
+                                        <div style={{ textAlign: 'right', fontSize: '10px', color: '#6b7280' }}>
+                                            <div style={{ fontWeight: 600, color: '#374151' }}>Fecha de emisión</div>
+                                            <div style={{ textTransform: 'capitalize' }}>{getFecha()}</div>
+                                        </div>
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
 
-                {/* === SECCIÓN 3: LISTADO DETALLADO === */}
-                <div className="mt-8">
-                    {agrupar === "ciudad" ? (
-                        <>
-                            {/* MODO AGRUPADO POR CIUDAD */}
-                            <h2 className="text-lg font-bold text-gray-900 mb-4 uppercase border-l-4 border-gray-800 pl-3">
-                                Detalle de Usuarios por Zona
-                            </h2>
+                                {/* === SECCIÓN 1: RESUMEN EJECUTIVO (KPIs) === */}
+                                <div className="grid grid-cols-3 gap-6 mb-8 no-break">
+                                    <div className="p-4 bg-blue-50 rounded-xl border-l-4 border-blue-600">
+                                        <p className="text-xs font-bold text-blue-500 uppercase">Total Padrón</p>
+                                        <p className="text-3xl font-black text-blue-900">{reporte.total}</p>
+                                    </div>
+                                    <div className="p-4 bg-green-50 rounded-xl border-l-4 border-green-600">
+                                        <p className="text-xs font-bold text-green-600 uppercase">Usuarios Activos</p>
+                                        <p className="text-3xl font-black text-green-900">{reporte.activos}</p>
+                                        <p className="text-[10px] text-green-600 font-bold mt-1">
+                                            {((reporte.activos / reporte.total) * 100).toFixed(1)}% del total
+                                        </p>
+                                    </div>
+                                    <div className="p-4 bg-red-50 rounded-xl border-l-4 border-red-500">
+                                        <p className="text-xs font-bold text-red-500 uppercase">Inactivos / Bajas</p>
+                                        <p className="text-3xl font-black text-red-900">{reporte.inactivos}</p>
+                                    </div>
+                                </div>
 
-                            {Object.entries(reporte.porCiudad).map(([ciudad, listaClientes], index) => (
-                                <div key={index} className="mb-8">
-                                    {/* Cabecera de Grupo — no-break para que no se separe del inicio de tabla */}
-                                    <div className="bg-gray-100 p-2 rounded-t-lg flex justify-between items-center border border-gray-200 border-b-0 no-break">
-                                        <h3 className="font-bold text-sm text-blue-900 flex items-center gap-2">
-                                            <LocationIcon /> {ciudad}
+                                {/* === SECCIÓN 2: GRÁFICAS DE DISTRIBUCIÓN === */}
+                                <div className="grid grid-cols-2 gap-8 mb-8 no-break">
+                                    {/* Gráfica por Ciudad */}
+                                    <div className="border border-gray-200 rounded-xl p-5">
+                                        <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 flex items-center gap-2 border-b pb-2">
+                                            <LocationIcon /> Distribución por Zona
                                         </h3>
-                                        <span className="bg-white px-2 py-0.5 rounded text-xs font-bold text-gray-600 border border-gray-200">
-                                            {listaClientes.length} usuarios
-                                        </span>
+                                        <div className="space-y-3">
+                                            {reporte.statsCiudad.map((ciudad, idx) => (
+                                                <div key={idx}>
+                                                    <div className="flex justify-between text-xs mb-1 font-bold text-gray-700">
+                                                        <span>{ciudad.nombre}</span>
+                                                        <span>{ciudad.cantidad} ({ciudad.porcentaje.toFixed(1)}%)</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                                        <div
+                                                            className="bg-blue-600 h-full rounded-full print:bg-blue-600"
+                                                            style={{ width: `${ciudad.porcentaje}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
 
-                                    {/* Tabla del Grupo — no mostrar ciudad (ya está en cabecera), sí tarifa */}
-                                    <TablaClientes listaClientes={listaClientes} mostrarCiudad={false} mostrarTarifa={true} />
-                                </div>
-                            ))}
-                        </>
-                    ) : agrupar === "tarifa" ? (
-                        <>
-                            {/* MODO AGRUPADO POR TARIFA */}
-                            <h2 className="text-lg font-bold text-gray-900 mb-4 uppercase border-l-4 border-gray-800 pl-3">
-                                Detalle de Usuarios por Tarifa
-                            </h2>
-
-                            {Object.entries(reporte.porTarifa).map(([tarifa, listaClientes], index) => (
-                                <div key={index} className="mb-8">
-                                    {/* Cabecera de Grupo — no-break para que no se separe del inicio de tabla */}
-                                    <div className="bg-gray-100 p-2 rounded-t-lg flex justify-between items-center border border-gray-200 border-b-0 no-break">
-                                        <h3 className="font-bold text-sm text-blue-900 flex items-center gap-2">
-                                            <TagIcon /> {tarifa}
+                                    {/* Gráfica por Tarifa */}
+                                    <div className="border border-gray-200 rounded-xl p-5">
+                                        <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 flex items-center gap-2 border-b pb-2">
+                                            <ChartIcon /> Tipos de Tarifa
                                         </h3>
-                                        <span className="bg-white px-2 py-0.5 rounded text-xs font-bold text-gray-600 border border-gray-200">
-                                            {listaClientes.length} usuarios
-                                        </span>
+                                        <div className="space-y-4 pt-2">
+                                            {reporte.statsTarifa.map((t, idx) => (
+                                                <div key={idx} className="flex items-center gap-3">
+                                                    <div className="w-24 text-xs font-bold text-gray-600 text-right">{t.nombre}</div>
+                                                    <div className="flex-1 bg-gray-100 h-6 rounded overflow-hidden relative">
+                                                        <div
+                                                            className="bg-purple-600 h-full flex items-center px-2 text-[10px] text-white font-bold whitespace-nowrap"
+                                                            style={{ width: `${Math.max(t.porcentaje, 10)}%` }}
+                                                        >
+                                                            {t.cantidad}
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-10 text-xs text-gray-400">{t.porcentaje.toFixed(0)}%</div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-
-                                    {/* Tabla del Grupo — mostrar ciudad (sirve para identificar), no tarifa (ya en cabecera) */}
-                                    <TablaClientes listaClientes={listaClientes} mostrarCiudad={true} mostrarTarifa={false} />
                                 </div>
-                            ))}
-                        </>
-                    ) : (
-                        <>
-                            {/* MODO LISTA CORRIDA */}
-                            <h2 className="text-lg font-bold text-gray-900 mb-4 uppercase border-l-4 border-gray-800 pl-3">
-                                Listado General — {reporte.total} Usuarios
-                            </h2>
 
-                            {/* Lista corrida: mostrar ciudad y tarifa para diferenciar */}
-                            <TablaClientes listaClientes={reporte.clientesOrdenados} mostrarCiudad={true} mostrarTarifa={true} />
-                        </>
-                    )}
-                </div>
+                                {/* === SECCIÓN 3: LISTADO DETALLADO === */}
+                                <div className="mt-8">
+                                    {agrupar === "ciudad" ? (
+                                        <>
+                                            {/* MODO AGRUPADO POR CIUDAD */}
+                                            <h2 className="text-lg font-bold text-gray-900 mb-4 uppercase border-l-4 border-gray-800 pl-3">
+                                                Detalle de Usuarios por Zona
+                                            </h2>
+                                            {Object.entries(reporte.porCiudad).map(([ciudad, listaClientes], index) => (
+                                                <div key={index} className="mb-8">
+                                                    <div className="bg-gray-100 p-2 rounded-t-lg flex justify-between items-center border border-gray-200 border-b-0 no-break">
+                                                        <h3 className="font-bold text-sm text-blue-900 flex items-center gap-2">
+                                                            <LocationIcon /> {ciudad}
+                                                        </h3>
+                                                        <span className="bg-white px-2 py-0.5 rounded text-xs font-bold text-gray-600 border border-gray-200">
+                                                            {listaClientes.length} usuarios
+                                                        </span>
+                                                    </div>
+                                                    <TablaClientes listaClientes={listaClientes} mostrarCiudad={false} mostrarTarifa={true} />
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : agrupar === "tarifa" ? (
+                                        <>
+                                            {/* MODO AGRUPADO POR TARIFA */}
+                                            <h2 className="text-lg font-bold text-gray-900 mb-4 uppercase border-l-4 border-gray-800 pl-3">
+                                                Detalle de Usuarios por Tarifa
+                                            </h2>
+                                            {Object.entries(reporte.porTarifa).map(([tarifa, listaClientes], index) => (
+                                                <div key={index} className="mb-8">
+                                                    <div className="bg-gray-100 p-2 rounded-t-lg flex justify-between items-center border border-gray-200 border-b-0 no-break">
+                                                        <h3 className="font-bold text-sm text-blue-900 flex items-center gap-2">
+                                                            <TagIcon /> {tarifa}
+                                                        </h3>
+                                                        <span className="bg-white px-2 py-0.5 rounded text-xs font-bold text-gray-600 border border-gray-200">
+                                                            {listaClientes.length} usuarios
+                                                        </span>
+                                                    </div>
+                                                    <TablaClientes listaClientes={listaClientes} mostrarCiudad={true} mostrarTarifa={false} />
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        <>
+                                            {/* MODO LISTA CORRIDA */}
+                                            <h2 className="text-lg font-bold text-gray-900 mb-4 uppercase border-l-4 border-gray-800 pl-3">
+                                                Listado General — {reporte.total} Usuarios
+                                            </h2>
+                                            <TablaClientes listaClientes={reporte.clientesOrdenados} mostrarCiudad={true} mostrarTarifa={true} />
+                                        </>
+                                    )}
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                    
+                    {/* FOOTER INVISIBLE PARA RESERVAR EL ESPACIO */}
+                    <tfoot>
+                        <tr>
+                            <td>
+                                {/* 45px es un buen colchón considerando que este footer es un poco más grueso por los paddings */}
+                                <div style={{ height: "45px" }}></div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
 
-                {/* FOOTER AL FINAL DEL DOCUMENTO */}
+                {/* FOOTER FIJO AL FINAL DEL DOCUMENTO */}
                 <div className="doc-footer">
                     <span>Sistema AGUA VP &bull; Padrón General de Clientes</span>
                     <span>Generado el {new Date().toLocaleDateString("es-MX")}</span>
