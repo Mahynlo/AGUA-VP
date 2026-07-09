@@ -18,14 +18,16 @@ import PanelPersonalizacion from "./PanelPersonalizacion";
 export default function Administrador() {
   const { user } = useAuth();
 
-  // Si el usuario es operador, no tiene acceso a esta sección
-  if (user?.rol === 'operador') {
-    return <Navigate to="/home" replace />;
-  }
+  const esOperador = user?.rol === 'operador';
+  const tabInicialPorDefecto = esOperador ? "mantenimiento" : "usuarios";
 
   // Estado para la pestaña activa, recuperado de localStorage para mejor UX
   const [selectedTab, setSelectedTab] = useState(() => {
-    return localStorage.getItem("admin_activeTab") || "usuarios";
+    const guardada = localStorage.getItem("admin_activeTab");
+    if (esOperador && (guardada === "usuarios" || guardada === "configuracion")) {
+      return "mantenimiento";
+    }
+    return guardada || tabInicialPorDefecto;
   });
 
   const handleTabChange = (key) => {
@@ -77,19 +79,21 @@ export default function Administrador() {
             }}
           >
             {/* TAB: USUARIOS */}
-            <Tab
-              key="usuarios"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <UsuariosAdminIcon className="w-5 h-5" />
-                  <span>Usuarios y Permisos</span>
+            {!esOperador && (
+              <Tab
+                key="usuarios"
+                title={
+                  <div className="flex items-center gap-2.5">
+                    <UsuariosAdminIcon className="w-5 h-5" />
+                    <span>Usuarios y Permisos</span>
+                  </div>
+                }
+              >
+                <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+                  <GestionUsuarios />
                 </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <GestionUsuarios />
-              </div>
-            </Tab>
+              </Tab>
+            )}
 
             {/* TAB: MANTENIMIENTO */}
             <Tab
@@ -110,19 +114,21 @@ export default function Administrador() {
             </Tab>
 
             {/* TAB: CONFIGURACIÓN */}
-            <Tab
-              key="configuracion"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <ConfiguracionAdminIcon className="w-5 h-5" />
-                  <span>Configuración Global</span>
+            {!esOperador && (
+              <Tab
+                key="configuracion"
+                title={
+                  <div className="flex items-center gap-2.5">
+                    <ConfiguracionAdminIcon className="w-5 h-5" />
+                    <span>Configuración Global</span>
+                  </div>
+                }
+              >
+                <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+                  <PanelConfiguracion />
                 </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <PanelConfiguracion />
-              </div>
-            </Tab>
+              </Tab>
+            )}
 
             {/* TAB: PERSONALIZACIÓN */}
             <Tab
