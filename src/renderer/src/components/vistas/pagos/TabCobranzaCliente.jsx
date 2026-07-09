@@ -1340,6 +1340,7 @@ const TabCobranzaCliente = () => {
         resumenPagosClienteDetalle={resumenPagosClienteDetalle}
         pagosClienteDetalleFiltrados={pagosClienteDetalleFiltrados}
         pagoDetalleSeleccionado={pagoDetalleSeleccionado}
+        pagosClienteDetalle={pagosClienteDetalle}
         toMoney={toMoney}
         formatFecha={formatFecha}
         formatearPeriodo={formatearPeriodo}

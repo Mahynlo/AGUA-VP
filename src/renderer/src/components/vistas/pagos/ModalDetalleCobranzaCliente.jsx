@@ -5,7 +5,7 @@ const premiumModalTheme = {
   root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
-    inner: "relative flex flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-5xl w-full h-[calc(100dvh-4rem)]"
+    inner: "relative flex flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-6xl w-full h-[calc(100dvh-4rem)]"
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-10 pt-8 pb-6 rounded-t-2xl shrink-0",
@@ -16,6 +16,26 @@ const premiumModalTheme = {
 };
 
 const selectClasses = "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 h-11 text-sm font-bold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 transition-all w-full";
+
+const getEstadoFacturaClass = (estado) => {
+  const est = String(estado || "Pendiente").toLowerCase().trim();
+  if (est.includes("pagad")) {
+    return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+  }
+  if (est.includes("vencid")) {
+    return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20";
+  }
+  if (est.includes("pendient")) {
+    return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+  }
+  if (est.includes("parcial") || est.includes("abono")) {
+    return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20";
+  }
+  if (est.includes("cancelad")) {
+    return "bg-slate-500/10 text-slate-500 dark:text-slate-400 border border-slate-500/20";
+  }
+  return "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20";
+};
 
 const TABS = [
   { key: "facturas", label: "Facturas", icon: HiDocumentText },
@@ -50,12 +70,13 @@ const ModalDetalleCobranzaCliente = ({
   resumenPagosClienteDetalle,
   pagosClienteDetalleFiltrados,
   pagoDetalleSeleccionado,
+  pagosClienteDetalle,
   toMoney,
   formatFecha,
   formatearPeriodo
 }) => {
   return (
-    <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible size="5xl">
+    <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible size="6xl">
       <Modal.Header>
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
@@ -168,7 +189,7 @@ const ModalDetalleCobranzaCliente = ({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-800">
-                      {["FACTURA", "PERIODO", "ESTADO", "TOTAL", "SALDO", "ULT. PAGO", "ACCIONES"].map((col, i) => (
+                      {["FACTURA", "PERIODO", "ESTADO", "TOTAL A PAGAR", "SALDO PENDIENTE", "ULT. PAGO", "ACCIONES"].map((col, i) => (
                         <th key={col} className={`px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-slate-50 dark:bg-zinc-900/50 whitespace-nowrap ${i === 6 ? "text-right" : ""}`}>
                           {col}
                         </th>
@@ -182,14 +203,16 @@ const ModalDetalleCobranzaCliente = ({
                       facturasDetalleFiltradas.map((item) => (
                         <tr key={item.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors">
                           <td className="px-6 py-4 font-black text-slate-800 dark:text-zinc-100">#{item.id}</td>
-                          <td className="px-6 py-4 font-medium text-slate-600 dark:text-zinc-300">{item.periodo || item.mes_facturado || "Sin periodo"}</td>
+                          <td className="px-6 py-4 font-medium text-slate-600 dark:text-zinc-300" style={{ textTransform: 'capitalize' }}>{formatearPeriodo(item.periodo || item.mes_facturado)}</td>
                           <td className="px-6 py-4">
-                            <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest ${item.estado === "Pendiente" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}>
+                            <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest ${getEstadoFacturaClass(item.estado)}`}>
                               {item.estado || "Pendiente"}
                             </span>
                           </td>
                           <td className="px-6 py-4 font-mono text-slate-800 dark:text-zinc-100">${toMoney(item.total).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
-                          <td className="px-6 py-4 font-mono font-bold text-rose-600 dark:text-rose-400">${toMoney(item.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+                          <td className={`px-6 py-4 font-mono font-bold ${toMoney(item.saldo_pendiente) > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                            ${toMoney(item.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                          </td>
                           <td className="px-6 py-4 text-xs text-slate-500">{formatFecha(ultimoPagoPorFactura.get(Number(item.id)))}</td>
                           <td className="px-6 py-4">
                             <div className="flex justify-end">
@@ -218,7 +241,7 @@ const ModalDetalleCobranzaCliente = ({
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
                     {[
                       { label: "Estado", value: facturaDetalleSeleccionada.estado || "Pendiente" },
-                      { label: "Periodo facturado", value: facturaDetalleSeleccionada.periodo || facturaDetalleSeleccionada.mes_facturado || "Sin periodo" },
+                      { label: "Periodo facturado", value: formatearPeriodo(facturaDetalleSeleccionada.periodo || facturaDetalleSeleccionada.mes_facturado) },
                       { label: "Vencimiento", value: formatFecha(facturaDetalleSeleccionada.fecha_vencimiento) },
                       { label: "Consumo", value: `${facturaDetalleSeleccionada.consumo_m3 ?? "-"} m³` },
                       { label: "Lectura", value: formatFecha(facturaDetalleSeleccionada.fecha_lectura) },
@@ -226,7 +249,13 @@ const ModalDetalleCobranzaCliente = ({
                     ].map(({ label, value }) => (
                       <div key={label} className="flex flex-col gap-1">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">{label}</p>
-                        <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">{value}</p>
+                        {label === "Estado" ? (
+                          <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest w-fit mt-0.5 ${getEstadoFacturaClass(value)}`}>
+                            {value}
+                          </span>
+                        ) : (
+                          <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">{value}</p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -250,10 +279,70 @@ const ModalDetalleCobranzaCliente = ({
                       </div>
                       <div className="flex flex-col gap-1">
                         <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Saldo pendiente</p>
-                        <p className="text-xl font-black tracking-tight text-rose-600 dark:text-rose-400">${toMoney(facturaDetalleSeleccionada.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+                        <p className={`text-xl font-black tracking-tight ${toMoney(facturaDetalleSeleccionada.saldo_pendiente) > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                          ${toMoney(facturaDetalleSeleccionada.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                        </p>
                       </div>
                     </div>
                   </div>
+
+                  {/* Auditoría del Registro y Cobro */}
+                  {(() => {
+                    const ultimoPago = pagosClienteDetalle?.find((p) => Number(p.factura_id) === Number(facturaDetalleSeleccionada.id));
+                    const facturador = facturaDetalleSeleccionada.modificado_por_nombre || "Sistema Automático";
+                    const fechaEmision = facturaDetalleSeleccionada.fecha_emision || facturaDetalleSeleccionada.fecha_creacion;
+                    
+                    return (
+                      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Auditoría de Generación */}
+                        <div className="flex flex-col gap-3">
+                          <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                            <HiCog className="w-4 h-4" /> Auditoría de Facturación
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4 bg-slate-100/50 dark:bg-zinc-900/30 p-4 rounded-xl border border-slate-200/50 dark:border-zinc-800/50">
+                            <div className="flex flex-col gap-1">
+                              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Generado Por</p>
+                              <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">{facturador}</p>
+                            </div>
+                            {fechaEmision && (
+                              <div className="flex flex-col gap-1">
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Fecha Registro</p>
+                                <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">{formatFecha(fechaEmision)}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Auditoría de Cobro */}
+                        {ultimoPago && (
+                          <div className="flex flex-col gap-3">
+                            <h4 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                              <HiCash className="w-4 h-4" /> Auditoría de Cobro
+                            </h4>
+                            <div className="grid grid-cols-2 gap-4 bg-emerald-50/30 dark:bg-emerald-950/10 p-4 rounded-xl border border-emerald-200/20 dark:border-emerald-900/20">
+                              <div className="flex flex-col gap-1">
+                                <p className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-500/70 uppercase tracking-widest">Cobrado Por (Cajero)</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-black shrink-0">
+                                    {ultimoPago.modificado_por_nombre ? ultimoPago.modificado_por_nombre.charAt(0).toUpperCase() : "S"}
+                                  </div>
+                                  <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">
+                                    {ultimoPago.modificado_por_nombre || "Sistema Automático"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <p className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-500/70 uppercase tracking-widest">Fecha del Cobro</p>
+                                <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">
+                                  {formatFecha(ultimoPago.fecha_pago || ultimoPago.fecha_creacion)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
