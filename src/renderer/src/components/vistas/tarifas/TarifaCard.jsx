@@ -63,8 +63,8 @@ export default function TarifaCard({ tarifa }) {
       <div className="px-6 pt-6 pb-4">
         <div className="flex justify-between items-start w-full gap-4">
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 truncate">
-              Tarifa {tarifa.nombre}
+            <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 truncate" title={tarifa.nombre}>
+              {tarifa.nombre}
             </h3>
 
             <div className="flex items-center gap-2 mt-2">

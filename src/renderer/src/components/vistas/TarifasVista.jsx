@@ -31,10 +31,12 @@ import RegistrarTarifa from "./tarifas/RegistrarTarifa";
 import TarifaCard from "./tarifas/TarifaCard";
 import { TarifaIcon } from "../../IconsApp/IconsResibos";
 import { calcularTarifaConDesglose } from "../../utils/tarifaCalculadora";
+import useEquivalenciaConsumo from "../../hooks/useEquivalenciaConsumo";
 
 export default function Tarifas() {
   const navigate = useNavigate();
   const { tarifas, pagination, loading, fetchTarifas } = useTarifas();
+  const { probarEquivalencia } = useEquivalenciaConsumo();
   const [search, setSearch] = useState("");
   const [paginaActual, setPaginaActual] = useState(1);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -143,7 +145,11 @@ export default function Tarifas() {
 
     try {
       const resultado = calcularTarifaConDesglose(consumo, tarifaCalculadoraSeleccionada.rangos);
-      setResultadoCalculo(resultado);
+      const equivalenciaFrase = probarEquivalencia ? probarEquivalencia(consumo) : "";
+      setResultadoCalculo({
+        ...resultado,
+        equivalenciaFrase
+      });
     } catch (error) {
       setErrorCalculo(error.message || "No se pudo calcular la tarifa.");
     }
@@ -346,132 +352,169 @@ export default function Tarifas() {
               }
             >
               <div className="animate-in fade-in duration-500 flex justify-center py-4">
-                <div className="w-full max-w-5xl bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-[2rem] p-6 sm:p-10 flex flex-col gap-8 shadow-sm">
+                <div className="w-full bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-[2rem] p-6 sm:p-10 flex flex-col gap-8 shadow-sm">
                   
                   <div className="flex flex-col gap-1.5 border-b border-slate-200 dark:border-zinc-800 pb-6">
-                    <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
-                      Simulador de Cobro
+                    <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 flex items-center gap-2.5">
+                      <HiCalculator className="text-emerald-600 dark:text-emerald-500 text-3xl shrink-0" />
+                      <span>Simulador de Cobro</span>
                     </h3>
                     <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
                       Selecciona una tarifa e ingresa el consumo para ver el desglose exacto aplicando la lógica oficial.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-                    <div className="lg:col-span-5 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">Tarifa a Simular</label>
-                      <Select
-                        aria-label="Selecciona una tarifa"
-                        placeholder="Selecciona de la lista..."
-                        selectedKeys={tarifaCalculadoraId ? [tarifaCalculadoraId] : []}
-                        onChange={(e) => setTarifaCalculadoraId(e.target.value)}
-                        variant="flat"
-                        classNames={{
-                          trigger: "bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 h-[52px]",
-                          value: "font-bold text-slate-700 dark:text-zinc-200"
-                        }}
-                      >
-                        {tarifas.map((tarifa) => (
-                          <SelectItem key={tarifa.id} value={tarifa.id}>{tarifa.nombre}</SelectItem>
-                        ))}
-                      </Select>
-                    </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* COLUMNA IZQUIERDA: Campos de Entrada */}
+                    <div className="lg:col-span-4 flex flex-col gap-6 bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/80 shadow-sm animate-in fade-in">
+                      <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider border-b border-slate-100 dark:border-zinc-800 pb-3 flex items-center gap-2">
+                        <HiCalculator className="w-5 h-5 text-slate-400" /> Parámetros
+                      </h4>
 
-                    <div className="lg:col-span-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">Consumo (m³)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={consumoCalculadora}
-                        onChange={(e) => setConsumoCalculadora(e.target.value)}
-                        placeholder="Ej. 25"
-                        className="w-full px-4 text-sm font-bold bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 shadow-sm h-[52px] outline-none text-slate-800 dark:text-zinc-100"
-                      />
-                    </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">Tarifa a Simular</label>
+                        <Select
+                          aria-label="Selecciona una tarifa"
+                          placeholder="Selecciona de la lista..."
+                          selectedKeys={tarifaCalculadoraId ? [tarifaCalculadoraId] : []}
+                          onChange={(e) => setTarifaCalculadoraId(e.target.value)}
+                          variant="flat"
+                          classNames={{
+                            trigger: "bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 h-[52px]",
+                            value: "font-bold text-slate-700 dark:text-zinc-200"
+                          }}
+                        >
+                          {tarifas.map((tarifa) => (
+                            <SelectItem key={tarifa.id} value={tarifa.id}>{tarifa.nombre}</SelectItem>
+                          ))}
+                        </Select>
+                      </div>
 
-                    <div className="lg:col-span-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">Consumo (m³)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={consumoCalculadora}
+                          onChange={(e) => setConsumoCalculadora(e.target.value)}
+                          placeholder="Ej. 25"
+                          className="w-full px-4 text-sm font-bold bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 shadow-sm h-[52px] outline-none text-slate-800 dark:text-zinc-100"
+                        />
+                      </div>
+
                       <Button
                         onPress={handleCalcularTarifa}
-                        className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-[52px] shadow-sm transition-transform active:scale-95"
+                        className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-[52px] shadow-sm transition-transform active:scale-95 mt-2"
                       >
                         Calcular Desglose
                       </Button>
+
+                      {errorCalculo && (
+                        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold animate-in fade-in">
+                          <HiExclamationCircle className="w-5 h-5 shrink-0" />
+                          {errorCalculo}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* COLUMNA DERECHA: Resultados del Cálculo */}
+                    <div className="lg:col-span-8 flex flex-col gap-6">
+                      {resultadoCalculo ? (
+                        <div className="flex flex-col gap-6 animate-in slide-in-from-top-4 duration-300">
+                          {/* KPIs de Resultados */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-950 flex flex-col gap-1 shadow-sm">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo Ingresado</p>
+                              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{resultadoCalculo.consumo_ingresado} <span className="text-xs text-slate-400">m³</span></p>
+                            </div>
+                            <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-950 flex flex-col gap-1 shadow-sm">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo Facturable</p>
+                              <p className="text-xl font-black tracking-tight text-blue-600 dark:text-blue-400">{resultadoCalculo.consumo_facturable} <span className="text-xs text-blue-400/70">m³</span></p>
+                            </div>
+                            <div className="rounded-2xl border border-emerald-500/30 p-5 bg-emerald-500/10 flex flex-col gap-1">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-500">Total Calculado</p>
+                              <p className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">${resultadoCalculo.total.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            </div>
+                          </div>
+
+                          {/* Equivalencia de Consumo */}
+                          {resultadoCalculo.equivalenciaFrase && (
+                            <div className="flex gap-4 items-start p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20">
+                              <div className="p-2 bg-blue-500/20 rounded-xl text-blue-600 dark:text-blue-400 shrink-0">
+                                <HiOutlineDocumentReport className="w-5 h-5" />
+                              </div>
+                              <div className="flex flex-col gap-0.5 pt-0.5">
+                                <p className="text-[10px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase tracking-widest">
+                                  Equivalencia del Consumo
+                                </p>
+                                <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 italic leading-relaxed">
+                                  "{resultadoCalculo.equivalenciaFrase}"
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Tabla de Desglose Standard SaaS */}
+                          <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 shadow-sm">
+                            <Table
+                              aria-label="Desglose del cálculo"
+                              removeWrapper
+                              classNames={{
+                                th: "bg-slate-50 dark:bg-zinc-900/50 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-3.5 px-5",
+                                td: "py-3.5 px-5 border-b border-slate-100 dark:border-zinc-800/50",
+                                tr: "hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
+                              }}
+                            >
+                              <TableHeader>
+                                <TableColumn>RANGO</TableColumn>
+                                <TableColumn>TIPO DE COBRO</TableColumn>
+                                <TableColumn align="end">METROS (m³)</TableColumn>
+                                <TableColumn align="end">PRECIO/m³</TableColumn>
+                                <TableColumn align="end">SUBTOTAL</TableColumn>
+                              </TableHeader>
+                              <TableBody items={resultadoCalculo.detalle}>
+                                {(item) => (
+                                  <TableRow key={`${item.consumo_min}-${item.consumo_max}`}>
+                                    <TableCell className="font-bold text-sm text-slate-800 dark:text-zinc-100">
+                                      {item.consumo_min}{item.consumo_max != null ? ` - ${item.consumo_max}` : "+"}
+                                    </TableCell>
+                                    <TableCell>
+                                      <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md">
+                                        {item.tipo === "base_fija" ? "Base fija" : "Cobro por tramo"}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="font-mono text-sm text-slate-600 dark:text-zinc-300">
+                                      {item.metros == null ? "-" : item.metros}
+                                    </TableCell>
+                                    <TableCell className="font-mono text-sm text-slate-600 dark:text-zinc-300">
+                                      ${item.precio_por_m3.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </TableCell>
+                                    <TableCell className="font-mono font-black text-base text-slate-800 dark:text-zinc-100">
+                                      ${item.subtotal.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Estado vacío cuando no se ha calculado */
+                        <div className="border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[300px] bg-white dark:bg-zinc-950 shadow-sm animate-in fade-in">
+                          <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 flex items-center justify-center mb-4">
+                            <HiOutlineDocumentReport className="text-xl text-slate-400 dark:text-zinc-500" />
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-200 mb-1">
+                            Simulación en Espera
+                          </h4>
+                          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 max-w-[280px] mx-auto leading-relaxed">
+                            Ingresa los parámetros a la izquierda y presiona "Calcular Desglose" para ver el detalle de cobro.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  {errorCalculo && (
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm font-bold animate-in fade-in">
-                      <HiExclamationCircle className="w-5 h-5 shrink-0" />
-                      {errorCalculo}
-                    </div>
-                  )}
-
-                  {resultadoCalculo && (
-                    <div className="flex flex-col gap-6 pt-6 border-t border-slate-200 dark:border-zinc-800 animate-in slide-in-from-top-4">
-                      
-                      {/* KPIs de Resultados */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 p-6 bg-white dark:bg-zinc-950 flex flex-col gap-1 shadow-sm">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo Ingresado</p>
-                          <p className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{resultadoCalculo.consumo_ingresado} <span className="text-sm text-slate-400">m³</span></p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 p-6 bg-white dark:bg-zinc-950 flex flex-col gap-1 shadow-sm">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo Facturable</p>
-                          <p className="text-2xl font-black tracking-tight text-blue-600 dark:text-blue-400">{resultadoCalculo.consumo_facturable} <span className="text-sm text-blue-400/70">m³</span></p>
-                        </div>
-                        <div className="rounded-2xl border border-emerald-500/30 p-6 bg-emerald-500/10 flex flex-col gap-1">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-500">Total Calculado</p>
-                          <p className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">${resultadoCalculo.total.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                        </div>
-                      </div>
-
-                      {/* Tabla de Desglose Standard SaaS */}
-                      <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-950">
-                        <Table
-                          aria-label="Desglose del cálculo"
-                          removeWrapper
-                          classNames={{
-                            th: "bg-slate-50 dark:bg-zinc-900/50 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4 px-6",
-                            td: "py-4 px-6 border-b border-slate-100 dark:border-zinc-800/50",
-                            tr: "hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
-                          }}
-                        >
-                          <TableHeader>
-                            <TableColumn>RANGO</TableColumn>
-                            <TableColumn>TIPO DE COBRO</TableColumn>
-                            <TableColumn align="end">METROS (m³)</TableColumn>
-                            <TableColumn align="end">PRECIO/m³</TableColumn>
-                            <TableColumn align="end">SUBTOTAL</TableColumn>
-                          </TableHeader>
-                          <TableBody items={resultadoCalculo.detalle}>
-                            {(item) => (
-                              <TableRow key={`${item.consumo_min}-${item.consumo_max}`}>
-                                <TableCell className="font-bold text-sm text-slate-800 dark:text-zinc-100">
-                                  {item.consumo_min}{item.consumo_max != null ? ` - ${item.consumo_max}` : "+"}
-                                </TableCell>
-                                <TableCell>
-                                  <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md">
-                                    {item.tipo === "base_fija" ? "Base fija" : "Cobro por tramo"}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="font-mono text-sm text-slate-600 dark:text-zinc-300">
-                                  {item.metros == null ? "-" : item.metros}
-                                </TableCell>
-                                <TableCell className="font-mono text-sm text-slate-600 dark:text-zinc-300">
-                                  ${item.precio_por_m3.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </TableCell>
-                                <TableCell className="font-mono font-black text-base text-slate-800 dark:text-zinc-100">
-                                  ${item.subtotal.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
-
-                    </div>
-                  )}
                 </div>
               </div>
             </Tab>
