@@ -15,6 +15,48 @@ export default function PanelActualizaciones() {
   const [cargando, setCargando] = useState(true);
   const cleanupRef = useRef(null);
 
+  const [alertasActivas, setAlertasActivas] = useState(true);
+
+  // Efecto para verificar el estado de las alertas en localStorage
+  useEffect(() => {
+    const revisarOmitidas = () => {
+      const tieneOmitidas = Object.keys(localStorage).some(key => key.startsWith("omitir_alertas_update_v"));
+      setAlertasActivas(!tieneOmitidas);
+    };
+    revisarOmitidas();
+    
+    // Escuchar cambios de localStorage locales
+    window.addEventListener("storage", revisarOmitidas);
+    return () => window.removeEventListener("storage", revisarOmitidas);
+  }, []);
+
+  const handleToggleAlertas = (e) => {
+    const checked = e.target.checked;
+    setAlertasActivas(checked);
+    if (checked) {
+      // Activar alertas: Borrar todas las claves de omisión
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith("omitir_alertas_update_v")) {
+          localStorage.removeItem(key);
+        }
+      });
+    } else {
+      // Desactivar alertas: Guardar omisión para la versión actual o la última detectada
+      const versionAOmiter = status?.updateInfo?.version || status?.currentVersion || "global";
+      localStorage.setItem(`omitir_alertas_update_v${versionAOmiter}`, "true");
+    }
+  };
+
+  const simularModalPrueba = () => {
+    const event = new CustomEvent("test-update-modal", {
+      detail: { 
+        version: "2.1.0-simulada", 
+        releaseNotes: "Esta es una actualización de prueba simulada para revisar el diseño del modal." 
+      }
+    });
+    document.dispatchEvent(event);
+  };
+
   // Cargar estado inicial
   useEffect(() => {
     const cargar = async () => {
@@ -136,6 +178,32 @@ export default function PanelActualizaciones() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── CONTROL DE ALERTAS DEL SISTEMA (SWITCH) ── */}
+      <div className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm animate-in fade-in">
+        <div className="flex flex-col gap-0.5">
+          <h4 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
+            Notificaciones de Actualización
+          </h4>
+          <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">
+            Controla si deseas recibir alertas visuales al arrancar la app si se detectan nuevas versiones.
+          </p>
+        </div>
+        <div className="shrink-0 flex items-center">
+          <label className="relative inline-flex items-center cursor-pointer select-none">
+            <input 
+              type="checkbox" 
+              checked={alertasActivas} 
+              onChange={handleToggleAlertas}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <span className="ml-3 text-xs font-bold text-slate-700 dark:text-zinc-300 min-w-[70px]">
+              {alertasActivas ? "Activadas" : "Desactivadas"}
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* ── BOTONES DE ACCIÓN ── */}
@@ -376,6 +444,30 @@ export default function PanelActualizaciones() {
             <p className="text-sm font-medium text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
               No hay nuevas versiones disponibles.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── ENTORNO DE PRUEBAS PARA DESARROLLO ── */}
+      {import.meta.env.DEV && (
+        <div className="p-6 rounded-2xl bg-slate-50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800/80 shadow-none mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex flex-col gap-0.5">
+            <h4 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+              Entorno de Pruebas
+            </h4>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 max-w-xl leading-relaxed">
+              Verifica el comportamiento, el diseño y las animaciones de la ventana emergente simulando la aparición de una nueva versión.
+            </p>
+          </div>
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={simularModalPrueba}
+              className="inline-flex items-center gap-2 font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-xl px-4 h-9 text-xs transition-all active:scale-95"
+            >
+              Simular Alerta de Actualización
+            </button>
           </div>
         </div>
       )}

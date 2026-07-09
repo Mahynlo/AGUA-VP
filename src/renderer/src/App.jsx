@@ -56,6 +56,7 @@ import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
 
 // Modal de bienvenida a la aplicación
 import ModalBienvenida from "./components/appBienvenida/ModalBienvenida";
+import ModalActualizacionDisponible from "./components/administrador/sistema/ModalActualizacionDisponible";
 //cargar datos al iniciar sección en la aplicacion 
 import InitDataLoader from "./context/InitDataLoader";
 
@@ -86,6 +87,7 @@ function App() {
                             <FeedbackMessages position="bottom-right" />
 
                             <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
+                            <ModalActualizacionDisponible /> {/* Modal global para alertar actualizaciones disponibles */}
                           </DeudoresProvider>
                         </UsuariosProvider>
                       </PagosProvider>

@@ -156,7 +156,7 @@ function NavbarApp() {
                       <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Mi Perfil</span>
                     </DropdownItem>
 
-                    {['superadmin', 'administrador'].includes(user?.rol) && (
+                    {['superadmin', 'administrador', 'operador'].includes(user?.rol) && (
                       <DropdownItem
                         key="configurations"
                         startContent={<HiOutlineCog className="text-lg text-slate-400" />}
