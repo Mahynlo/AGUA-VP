@@ -114,6 +114,7 @@ const normalizeRow = (row) => {
 
   const meses = extractMesesDeuda(row);
   const recibosConDeuda = getRecibosConDeuda(row, meses);
+  const ciudad = row.ciudad || row.cliente?.ciudad || "Sin Ciudad";
 
   const totalAdeudo = Number(
     row.total_adeudo ??
@@ -128,6 +129,7 @@ const normalizeRow = (row) => {
     id: row.id || `${noPredio}-${nombreCliente}`,
     noPredio,
     nombreCliente,
+    ciudad,
     medidor,
     meses,
     recibosConDeuda,
@@ -240,6 +242,16 @@ const ReporteDeudoresMayores = () => {
       });
   }, [payload, orden]);
 
+  const deudoresPorCiudad = useMemo(() => {
+    const group = {};
+    rows.forEach((r) => {
+      const ciudad = (r.ciudad || "Sin Ciudad").toUpperCase();
+      if (!group[ciudad]) group[ciudad] = [];
+      group[ciudad].push(r);
+    });
+    return group;
+  }, [rows]);
+
   const ordenLabel = useMemo(() => ({
     mayor: "Mayor deudor primero",
     menor: "Menor deudor primero",
@@ -271,7 +283,7 @@ const ReporteDeudoresMayores = () => {
           /* Esenciales para el salto de página y el footer maestro */
           thead { display: table-header-group; }
           tfoot { display: table-footer-group; }
-          tr { page-break-inside: avoid; }
+          .reporte-deudores-table tbody tr { page-break-inside: avoid; }
           
           .reporte-deudores-wrap { width: 100% !important; max-width: 100% !important; }
           .reporte-deudores-table { width: 100% !important; table-layout: fixed !important; }
@@ -361,86 +373,128 @@ const ReporteDeudoresMayores = () => {
                     </div>
                   </div>
 
-                  <table className="reporte-deudores-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "9.5px" }}>
-                    <colgroup>
-                      <col style={{ width: "9%" }} />
-                      <col style={{ width: "27%" }} />
-                      <col style={{ width: "11%" }} />
-                      <col style={{ width: "28%" }} />
-                      <col style={{ width: "13%" }} />
-                      <col style={{ width: "12%" }} />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        {["No. Predio", "Nombre del Cliente", "Medidor", "Meses de Deuda", "Total Adeudo", "Abono/Pago"].map((title, idx) => (
-                          <th
-                            key={title}
+                  {rows.length === 0 ? (
+                    <div style={{ padding: "20px", textAlign: "center", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
+                      No hay deudores para mostrar en este reporte.
+                    </div>
+                  ) : (
+                    Object.keys(deudoresPorCiudad).map((ciudad) => {
+                      const deudoresCiudad = deudoresPorCiudad[ciudad];
+                      const totalDeudaCiudad = deudoresCiudad.reduce((sum, d) => sum + Number(d.totalAdeudo || 0), 0);
+                      
+                      return (
+                        <div key={ciudad} style={{ marginBottom: "22px" }}>
+                          {/* Cabecera del Pueblo / Ciudad */}
+                          <div
                             style={{
-                              padding: "7px 6px",
-                              background: "#1e3a8a",
-                              color: "#fff",
-                              fontSize: "9px",
-                              fontWeight: 700,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.05em",
-                              textAlign: idx === 4 ? "right" : idx === 5 ? "center" : idx === 3 ? "center" : "left",
-                              borderRight: idx === 5 ? "none" : "1px solid rgba(255,255,255,0.18)",
+                              background: "#f1f5f9",
+                              borderLeft: "4px solid #1e3a8a",
+                              padding: "3px 8px",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              borderRadius: "4px",
+                              marginBottom: "4px"
                             }}
                           >
-                            {title}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.length === 0 && (
-                        <tr>
-                          <td colSpan={6} style={{ padding: "20px", textAlign: "center", color: "#6b7280", border: "1px solid #e5e7eb" }}>
-                            No hay deudores para mostrar en este reporte.
-                          </td>
-                        </tr>
-                      )}
+                            <span style={{ fontWeight: 800, fontSize: "9.5px", color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "4px" }}>
+                              <svg 
+                                viewBox="0 0 24 24" 
+                                width="11" 
+                                height="11" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2.5" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                                style={{ flexShrink: 0 }}
+                              >
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              {ciudad}
+                            </span>
+                            <span style={{ fontSize: "8.5px", fontWeight: 700, color: "#475569" }}>
+                              Deudores: {deudoresCiudad.length} | Cartera Vencida: {money(totalDeudaCiudad)}
+                            </span>
+                          </div>
 
-                      {rows.map((r, idx) => {
-                        const even = idx % 2 === 0;
-                        const bg = even ? "#ffffff" : "#f8fafc";
-                        const td = {
-                          padding: "6px 6px",
-                          borderRight: "1px solid #e5e7eb",
-                          borderBottom: "1px solid #e5e7eb",
-                          verticalAlign: "top",
-                          background: bg,
-                        };
+                          <table className="reporte-deudores-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "9.5px" }}>
+                            <colgroup>
+                              <col style={{ width: "9%" }} />
+                              <col style={{ width: "27%" }} />
+                              <col style={{ width: "11%" }} />
+                              <col style={{ width: "28%" }} />
+                              <col style={{ width: "13%" }} />
+                              <col style={{ width: "12%" }} />
+                            </colgroup>
+                            <thead>
+                              <tr>
+                                {["No. Predio", "Nombre del Cliente", "Medidor", "Meses de Deuda", "Total Adeudo", "Abono/Pago"].map((title, idx) => (
+                                  <th
+                                    key={title}
+                                    style={{
+                                      padding: "6px 5px",
+                                      background: "#1e3a8a",
+                                      color: "#fff",
+                                      fontSize: "8.5px",
+                                      fontWeight: 700,
+                                      textTransform: "uppercase",
+                                      letterSpacing: "0.05em",
+                                      textAlign: idx === 4 ? "right" : idx === 5 ? "center" : idx === 3 ? "center" : "left",
+                                      borderRight: idx === 5 ? "none" : "1px solid rgba(255,255,255,0.18)",
+                                    }}
+                                  >
+                                    {title}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {deudoresCiudad.map((r, idx) => {
+                                const even = idx % 2 === 0;
+                                const bg = even ? "#ffffff" : "#f8fafc";
+                                const td = {
+                                  padding: "6px 6px",
+                                  borderRight: "1px solid #e5e7eb",
+                                  borderBottom: "1px solid #e5e7eb",
+                                  verticalAlign: "top",
+                                  background: bg,
+                                };
 
-                        return (
-                          <tr key={r.id}>
-                            <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.noPredio || "—"}</td>
-                            <td style={td}>
-                              <div style={{ fontWeight: 700, textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {r.nombreCliente}
-                              </div>
-                              <div style={{ marginTop: "3px", fontSize: "9px", color: "#475569", fontWeight: 700 }}>
-                                Recibos con deuda: {r.recibosConDeuda}
-                              </div>
-                            </td>
-                            <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.medidor || "S/N"}</td>
-                            <td style={{ ...td, textAlign: "center" }}>
-                              <span style={{ fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.04em" }}>
-                                {r.meses.length ? r.meses.join(", ") : "—"}
-                              </span>
-                            </td>
-                            <td style={{ ...td, textAlign: "right", fontWeight: 800, color: "#991b1b" }}>{money(r.totalAdeudo)}</td>
-                            <td style={{ ...td, textAlign: "center", borderRight: "none" }}>
-                              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                                <span style={{ width: "11px", height: "11px", border: "1.5px solid #64748b", borderRadius: "2px", display: "inline-block" }} />
-                                <span style={{ display: "inline-block", width: "38px", borderBottom: "1px solid #94a3b8", height: "12px" }} />
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                                return (
+                                  <tr key={r.id}>
+                                    <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.noPredio || "—"}</td>
+                                    <td style={td}>
+                                      <div style={{ fontWeight: 700, textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {r.nombreCliente}
+                                      </div>
+                                      <div style={{ marginTop: "3px", fontSize: "9px", color: "#475569", fontWeight: 700 }}>
+                                        Recibos con deuda: {r.recibosConDeuda}
+                                      </div>
+                                    </td>
+                                    <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.medidor || "S/N"}</td>
+                                    <td style={{ ...td, textAlign: "center" }}>
+                                      <span style={{ fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.04em" }}>
+                                        {r.meses.length ? r.meses.join(", ") : "—"}
+                                      </span>
+                                    </td>
+                                    <td style={{ ...td, textAlign: "right", fontWeight: 800, color: "#991b1b" }}>{money(r.totalAdeudo)}</td>
+                                    <td style={{ ...td, textAlign: "center", borderRight: "none" }}>
+                                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                        <span style={{ width: "11px", height: "11px", border: "1.5px solid #64748b", borderRadius: "2px", display: "inline-block" }} />
+                                        <span style={{ display: "inline-block", width: "38px", borderBottom: "1px solid #94a3b8", height: "12px" }} />
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    })
+                  )}
                   {/* --- FIN DEL CONTENIDO ORIGINAL --- */}
                 </td>
               </tr>

@@ -193,8 +193,22 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
                                 {nombre}
                             </div>
                             {direccion && (
-                                <div style={{ fontSize: '8px', color: '#6b7280', textTransform: 'uppercase', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    📍 {direccion}
+                                <div style={{ fontSize: '8px', color: '#6b7280', textTransform: 'uppercase', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                    <svg 
+                                        viewBox="0 0 24 24" 
+                                        width="9" 
+                                        height="9" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="2.5" 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round"
+                                        style={{ flexShrink: 0 }}
+                                    >
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                        <circle cx="12" cy="10" r="3" />
+                                    </svg>
+                                    {direccion}
                                 </div>
                             )}
                         </td>
