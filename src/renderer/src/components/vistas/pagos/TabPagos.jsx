@@ -191,17 +191,22 @@ const TabPagos = () => {
     search,
     filtroMetodo,
     filtroPeriodo,
+    cityFilter,
+    ciudades,
     currentPage,
     rowsPerPage,
     totalPages,
     totalItems,
+    resumen,
     handleSearch,
     handleMetodoFilterChange,
     handlePeriodoChange,
+    handleCityFilterChange,
     handleRowsPerPageChange,
     setCurrentPage,
     getMetodoColor,
-    actualizarPagos
+    actualizarPagos,
+    setCityFilter
   } = useTabPagos();
 
   const { setSuccess } = useFeedback();
@@ -240,11 +245,12 @@ const TabPagos = () => {
   }
 
   // Detectar si hay filtros activos para el botón de limpiar
-  const hasActiveFilters = search || filtroMetodo !== "All" || filtroPeriodo !== new Date().toISOString().slice(0, 7);
+  const hasActiveFilters = search || filtroMetodo !== "All" || cityFilter !== "All" || filtroPeriodo !== new Date().toISOString().slice(0, 7);
 
   const clearFilters = () => {
     handleSearch("");
     handleMetodoFilterChange(["All"]);
+    setCityFilter("All");
   };
 
   return (
@@ -311,7 +317,7 @@ const TabPagos = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
 
             {/* Buscador */}
-            <div className="lg:col-span-5 relative w-full flex items-center">
+            <div className="lg:col-span-3 relative w-full flex items-center">
               <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
                 <HiSearch className="w-5 h-5" />
               </span>
@@ -346,7 +352,7 @@ const TabPagos = () => {
             </div>
 
             {/* Filtro por método de pago */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-2">
               <select
                 value={filtroMetodo}
                 onChange={(e) => handleMetodoFilterChange([e.target.value])}
@@ -361,8 +367,23 @@ const TabPagos = () => {
               </select>
             </div>
 
+            {/* Filtro por ciudad */}
+            <div className="lg:col-span-2">
+              <select
+                value={cityFilter}
+                onChange={(e) => handleCityFilterChange(e.target.value)}
+                aria-label="Filtrar por ciudad"
+                className={SELECT_CLS}
+              >
+                <option value="All">Todas las ciudades</option>
+                {ciudades.map((ciudad) => (
+                  <option key={ciudad} value={ciudad}>{ciudad}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Limpiar filtros */}
-            <div className="lg:col-span-1 flex justify-end">
+            <div className="lg:col-span-2 flex justify-end">
               {hasActiveFilters ? (
                 <button
                   onClick={clearFilters}

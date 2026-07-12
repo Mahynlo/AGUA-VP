@@ -19,6 +19,7 @@ export function PagosProvider({ children }) {
     periodo: obtenerPeriodoActual(),
     search: "",
     metodo_pago: "",
+    ciudad: "",
     page: 1,
     limit: 60
   });
@@ -57,7 +58,8 @@ export function PagosProvider({ children }) {
         page: finalParams.page,
         limit: finalParams.limit,
         search: finalParams.search,
-        metodo_pago: finalParams.metodo_pago
+        metodo_pago: finalParams.metodo_pago,
+        ciudad: finalParams.ciudad
       };
 
       const data = await window.api.fetchPagos(token_session, queryParams);

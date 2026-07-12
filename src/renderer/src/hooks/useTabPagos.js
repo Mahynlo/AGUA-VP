@@ -1,14 +1,27 @@
 import { useState, useMemo, useEffect } from "react";
 import { usePagos } from "../context/PagosContext";
+import { useClientes } from "../context/ClientesContext";
 import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
 export const useTabPagos = () => {
   // Consumir datos y funciones del contexto
   const { pagos, pagination, loading, initialLoading, fetchPagos, resumen, actualizarPagos, filtros } = usePagos();
+  const { allClientes } = useClientes();
 
   // Estados locales para UI (debounce y paginación visual)
   const [search, setSearch] = useState(filtros?.search || "");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [cityFilter, setCityFilter] = useState(filtros?.ciudad || "All");
+
+  // Obtener la lista de ciudades de todos los clientes en memoria
+  const ciudades = useMemo(() => {
+    const unique = new Set();
+    (allClientes || []).forEach((c) => {
+      const value = (c?.ciudad || "").trim();
+      if (value) unique.add(value);
+    });
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  }, [allClientes]);
   
   // Paginación visual (filas por página)
   // Nota: currentPage DEBE sincronizarse con lo que diga el contexto o resetearse
@@ -36,7 +49,7 @@ export const useTabPagos = () => {
   const apiPage = Math.ceil(((currentPage - 1) * rowsPerPage + 1) / FETCH_LIMIT);
 
   // Efecto principal: Buscar datos
-  // Ahora usamos filtros.periodo y filtros.metodo_pago directamente del contexto o locales si cambiaron
+  // Ahora usamos filtros.periodo, filtros.metodo_pago y filtros.ciudad directamente del contexto o locales si cambiaron
   // PERO: para mantener la lógica de "controlador" aquí, llamaremos a fetchPagos con los valores deseados
   useEffect(() => {
       // Si el contexto ya tiene datos y coinciden con lo que queremos, NO hacer fetch innecesario
@@ -48,9 +61,10 @@ export const useTabPagos = () => {
           search: debouncedSearch,
           // Si no hay filtro en contexto, usar defaults
           periodo: filtros?.periodo, 
-          metodo_pago: filtros?.metodo_pago
+          metodo_pago: filtros?.metodo_pago,
+          ciudad: cityFilter === "All" ? "" : cityFilter
       });
-  }, [debouncedSearch, filtros?.metodo_pago, filtros?.periodo, apiPage, fetchPagos]);
+  }, [debouncedSearch, filtros?.metodo_pago, filtros?.periodo, cityFilter, apiPage, fetchPagos]);
 
   // Handlers
   const handleSearch = (value) => {
@@ -75,6 +89,11 @@ export const useTabPagos = () => {
   // Manejar cambio de filas por página
   const handleRowsPerPageChange = (e) => {
     setRowsPerPage(Number(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const handleCityFilterChange = (value) => {
+    setCityFilter(value);
     setCurrentPage(1);
   };
 
@@ -111,7 +130,8 @@ export const useTabPagos = () => {
       page: apiPage,
       limit: FETCH_LIMIT,
       search: debouncedSearch,
-      metodo_pago: filtros?.metodo_pago
+      metodo_pago: filtros?.metodo_pago,
+      ciudad: cityFilter === "All" ? "" : cityFilter
     });
   };
 
@@ -124,6 +144,8 @@ export const useTabPagos = () => {
     // Exponer valores del contexto para la UI
     filtroMetodo: filtros?.metodo_pago || "All", 
     filtroPeriodo: filtros?.periodo || obtenerPeriodoActual(),
+    cityFilter,
+    ciudades,
     currentPage,
     rowsPerPage,
     totalPages,
@@ -132,9 +154,11 @@ export const useTabPagos = () => {
     handleSearch,
     handleMetodoFilterChange,
     handlePeriodoChange,
+    handleCityFilterChange,
     handleRowsPerPageChange,
     setCurrentPage,
     getMetodoColor,
-    actualizarPagos: refreshPagos // Sobrescribir la del contexto con la local
+    actualizarPagos: refreshPagos, // Sobrescribir la del contexto con la local
+    setCityFilter
   };
 };
