@@ -8,22 +8,25 @@ export const useTabMedidores = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [locationFilter, setLocationFilter] = useState("All");
+  const [cityFilter, setCityFilter] = useState("All");
   
   // Paginación UI
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Debounce para búsqueda
+  // Debounce para búsqueda y filtros
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [debouncedLocation, setDebouncedLocation] = useState(locationFilter);
+  const [debouncedCity, setDebouncedCity] = useState(cityFilter);
 
   useEffect(() => {
       const timer = setTimeout(() => {
           setDebouncedSearch(search);
           setDebouncedLocation(locationFilter);
+          setDebouncedCity(cityFilter);
       }, 500);
       return () => clearTimeout(timer);
-  }, [search, locationFilter]);
+  }, [search, locationFilter, cityFilter]);
 
   const locationOptions = useMemo(() => {
     const unique = new Set();
@@ -33,6 +36,12 @@ export const useTabMedidores = () => {
     });
     return Array.from(unique).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
   }, [allMedidores]);
+
+  const cityOptions = useMemo(() => [
+    { key: "MP-", label: "Matape (MP)" },
+    { key: "NG-", label: "Nacori (NG)" },
+    { key: "AD-", label: "Adivino (AD)" }
+  ], []);
 
   // Constante de buffer (Mínimo Común Múltiplo de 5, 10, 15, 20 para alineación perfecta)
   const FETCH_LIMIT = 60;
@@ -47,9 +56,10 @@ export const useTabMedidores = () => {
           limit: FETCH_LIMIT,
           search: debouncedSearch,
           estado: statusFilter,
-          ubicacion: debouncedLocation || 'All'
+          ubicacion: debouncedLocation || 'All',
+          ciudad: debouncedCity === "All" ? "" : debouncedCity
       });
-  }, [debouncedSearch, statusFilter, debouncedLocation, apiPage, fetchMedidores]);
+  }, [debouncedSearch, statusFilter, debouncedLocation, debouncedCity, apiPage, fetchMedidores]);
 
   // Lógica de Slicing (Cliente) sobre el Buffer (API)
   const paginatedData = useMemo(() => {
@@ -95,6 +105,21 @@ export const useTabMedidores = () => {
     setCurrentPage(1);
   };
 
+  const handleCityFilterChange = (value) => {
+    setCityFilter(value || "All");
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("All");
+    setLocationFilter("All");
+    setCityFilter("All");
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = search.trim() !== "" || statusFilter !== "All" || locationFilter !== "All" || cityFilter !== "All";
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Activo": return "success";
@@ -115,6 +140,8 @@ export const useTabMedidores = () => {
     statusFilter,
     locationFilter,
     locationOptions,
+    cityFilter,
+    cityOptions,
     currentPage,
     rowsPerPage,
     totalPages,
@@ -122,8 +149,11 @@ export const useTabMedidores = () => {
     handleSearch,
     handleStatusFilterChange,
     handleLocationFilterChange,
+    handleCityFilterChange,
     handleRowsPerPageChange,
     setCurrentPage,
-    getStatusColor
+    getStatusColor,
+    clearFilters,
+    hasActiveFilters
   };
 };

@@ -194,6 +194,7 @@ const TabInventarioMedidores = () => {
         paginatedData, loading, initialLoading, search, handleSearch,
         statusFilter, handleStatusFilterChange,
         locationFilter, locationOptions, handleLocationFilterChange,
+        cityFilter, cityOptions, handleCityFilterChange,
         currentPage, setCurrentPage, rowsPerPage, handleRowsPerPageChange,
         totalPages, totalItems, getStatusColor, medidores, clearFilters, hasActiveFilters
     } = useTabMedidores();
@@ -560,7 +561,7 @@ const TabInventarioMedidores = () => {
                 <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
                         {/* Buscador */}
-                        <div className="lg:col-span-6 relative w-full flex items-center">
+                        <div className="lg:col-span-4 relative w-full flex items-center">
                             <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
                                 <HiSearch className="w-5 h-5" />
                             </span>
@@ -594,6 +595,14 @@ const TabInventarioMedidores = () => {
                             <select value={locationFilter} onChange={(e) => handleLocationFilterChange(e.target.value)} aria-label="Filtrar por ubicación" className={SELECT_CLS}>
                                 <option value="All">Todas las ubicaciones</option>
                                 {locationOptions.map(u => <option key={u} value={u}>{u}</option>)}
+                            </select>
+                        </div>
+
+                        {/* Filtro ciudad */}
+                        <div className="lg:col-span-2">
+                            <select value={cityFilter} onChange={(e) => handleCityFilterChange(e.target.value)} aria-label="Filtrar por ciudad" className={SELECT_CLS}>
+                                <option value="All">Todas las ciudades</option>
+                                {cityOptions.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                             </select>
                         </div>
 

@@ -1,16 +1,29 @@
 import { useState, useMemo, useEffect } from "react";
 import { useFacturas } from "../context/FacturasContext";
+import { useClientes } from "../context/ClientesContext";
 import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
 export const useTabFacturas = () =>{
   const { facturas, pagination, loading, initialLoading, fetchFacturas, estadisticas, actualizarFacturas } = useFacturas();
+  const { allClientes } = useClientes();
 
   // Estados de filtros y búsqueda
   const [search, setSearch] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("All");
   const [filtroPeriodo, setFiltroPeriodo] = useState(obtenerPeriodoActual());
+  const [cityFilter, setCityFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Obtener la lista de ciudades de todos los clientes en memoria
+  const ciudades = useMemo(() => {
+    const unique = new Set();
+    (allClientes || []).forEach((c) => {
+      const value = (c?.ciudad || "").trim();
+      if (value) unique.add(value);
+    });
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  }, [allClientes]);
   
   // Debounce search
   const [debouncedSearch, setDebouncedSearch] = useState(search);
@@ -33,9 +46,10 @@ export const useTabFacturas = () =>{
           page: apiPage,
           limit: FETCH_LIMIT,
           search: debouncedSearch,
-          estado: filtroEstado === "All" ? "" : filtroEstado
+          estado: filtroEstado === "All" ? "" : filtroEstado,
+          ciudad: cityFilter === "All" ? "" : cityFilter
       });
-  }, [debouncedSearch, filtroEstado, filtroPeriodo, apiPage, fetchFacturas]);
+  }, [debouncedSearch, filtroEstado, filtroPeriodo, cityFilter, apiPage, fetchFacturas]);
 
   // Estados fijos para filtro
   const estados = ["Pendiente", "Pagado", "Vencido", "En Convenio"];
@@ -80,6 +94,11 @@ export const useTabFacturas = () =>{
     setCurrentPage(1);
   };
 
+  const handleCityFilterChange = (value) => {
+    setCityFilter(value);
+    setCurrentPage(1);
+  };
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "pagado": return "success";
@@ -99,6 +118,8 @@ export const useTabFacturas = () =>{
     search,
     filtroEstado,
     filtroPeriodo,
+    cityFilter,
+    ciudades,
     estados,
     currentPage,
     rowsPerPage,
@@ -108,9 +129,11 @@ export const useTabFacturas = () =>{
     handleSearch,
     handleEstadoFilterChange,
     handlePeriodoChange,
+    handleCityFilterChange,
     handleRowsPerPageChange,
     setCurrentPage,
     getStatusColor,
-    actualizarFacturas
+    actualizarFacturas,
+    setCityFilter
   };
 };

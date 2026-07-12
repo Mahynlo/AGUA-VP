@@ -26,7 +26,7 @@ const largeModalTheme = {
     root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
     content: {
         base: "relative h-full w-full p-1 sm:p-2 pt-16 sm:pt-20",
-        inner: "relative flex h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] flex-col rounded-[2rem] bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-[1300px] w-full"
+        inner: "relative flex h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] flex-col rounded-[2rem] bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-[1600px] w-full"
     },
     header: {
         base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8 shrink-0",
@@ -696,32 +696,43 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
         className="mt-0"
       >
         <Modal.Header>
-          <div className="flex gap-4 items-center overflow-visible w-full">
-            <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0 hidden sm:flex">
-              <HiLocationMarker className="w-6 h-6" />
+          <div className="flex gap-4 items-center overflow-visible w-full justify-between">
+            {/* Lado Izquierdo: Icono + Título del modal */}
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0 hidden sm:flex">
+                <HiLocationMarker className="w-6 h-6" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight truncate">
+                  Toma de Lecturas
+                </h2>
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5 truncate" title={ruta.nombre}>
+                  {ruta.nombre}
+                </p>
+              </div>
             </div>
 
-            {/* Título o barra de búsqueda */}
-            {showSearch ? (
-              <div className="flex-1 relative animate-in fade-in zoom-in-95 duration-200">
+            {/* Centro: Buscador (si está activo, paralelo al título) */}
+            {showSearch && (
+              <div className="flex-1 min-w-[240px] sm:min-w-[380px] md:min-w-[480px] max-w-sm sm:max-w-xl lg:max-w-2xl relative animate-in fade-in zoom-in-95 duration-200 mx-2 sm:mx-4">
                 <div className="relative flex items-center">
                   <HiSearch className="absolute left-4 w-5 h-5 text-slate-500 pointer-events-none" />
                   <input
                     ref={searchInputRef}
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder="Buscar cliente, medidor o #orden..."
+                    placeholder="Buscar cliente, medidor..."
                     onKeyDown={(e) => {
                       if (e.key === "Escape") { setShowSearch(false); setBusqueda(""); }
                       if (e.key === "ArrowLeft" || e.key === "ArrowRight") e.stopPropagation();
                     }}
-                    className="w-full pl-12 pr-4 py-3 text-sm font-medium border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-400/20 shadow-none transition-all"
+                    className="w-full pl-11 pr-4 py-2 text-sm font-medium border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-400/20 shadow-none transition-all h-10"
                   />
                 </div>
 
                 {/* Dropdown de resultados */}
                 {busqueda.trim() && (
-                  <div className="absolute top-full left-0 right-0 mt-2 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 mt-2 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg overflow-hidden w-full">
                     {resultadosBusqueda.length > 0 ? (
                       <div className="max-h-64 overflow-y-auto custom-scrollbar">
                         {resultadosBusqueda.map((punto) => {
@@ -736,10 +747,10 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                                 #{punto.orden ?? punto.idx + 1}
                               </span>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate leading-tight mb-0.5">
+                                <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight mb-0.5 whitespace-normal break-words">
                                   {punto.cliente_nombre || "Cliente"}
                                 </p>
-                                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 truncate">
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 whitespace-normal break-words">
                                   <span className="font-mono text-sky-700 dark:text-sky-400 mr-2">{punto.numero_serie}</span>
                                   {punto.ubicacion ? ` ${punto.ubicacion}` : ""}
                                 </p>
@@ -766,42 +777,36 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="flex-1 min-w-0 animate-in fade-in duration-200">
-                <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                    Toma de Lecturas
-                </h2>
-                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1 truncate">
-                  {ruta.nombre} <span className="opacity-50 mx-1">•</span> {ruta.descripcion}
-                </p>
-              </div>
             )}
 
-            {/* Botón lupa */}
-            <button
-              onClick={handleToggleSearch}
-              title={showSearch ? "Cerrar búsqueda" : "Buscar cliente / medidor"}
-              className={`shrink-0 p-2.5 rounded-xl transition-all duration-200 ${
-                  showSearch
-                    ? 'bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100'
-                    : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800'
-              }`}
-            >
-              {showSearch ? <HiX className="w-5 h-5" /> : <HiSearch className="w-5 h-5" />}
-            </button>
+            {/* Extremo Derecho: Botón lupa + Avance */}
+            <div className="flex items-center gap-3 shrink-0 ml-auto">
+              {/* Botón lupa */}
+              <button
+                onClick={handleToggleSearch}
+                title={showSearch ? "Cerrar búsqueda" : "Buscar cliente / medidor"}
+                className={`shrink-0 p-2.5 rounded-xl transition-all duration-200 ${
+                    showSearch
+                      ? 'bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100'
+                      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800'
+                }`}
+              >
+                {showSearch ? <HiX className="w-5 h-5" /> : <HiSearch className="w-5 h-5" />}
+              </button>
 
-            <div className="flex flex-col items-end justify-center shrink-0 w-24 sm:w-32 border-l border-slate-200 dark:border-zinc-700/50 pl-2 sm:pl-4 ml-1 sm:ml-2">
-              <div className="flex justify-between w-full items-end mb-1.5">
-                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avance</span>
-                <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-zinc-100">
-                    {currentIndex + 1} <span className="text-[10px] sm:text-xs font-medium text-slate-400">/ {total}</span>
-                </span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500 rounded-full transition-all"
-                  style={{ width: `${(lecturasGuardadas.size / total) * 100}%` }}
-                />
+              <div className="flex flex-col items-end justify-center shrink-0 w-24 sm:w-32 border-l border-slate-200 dark:border-zinc-700/50 pl-3">
+                <div className="flex justify-between w-full items-end mb-1">
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avance</span>
+                  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-zinc-100">
+                      {currentIndex + 1} <span className="text-[10px] sm:text-xs font-medium text-slate-400">/ {total}</span>
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all"
+                    style={{ width: `${(lecturasGuardadas.size / total) * 100}%` }}
+                  />
+                </div>
               </div>
             </div>
           </div>

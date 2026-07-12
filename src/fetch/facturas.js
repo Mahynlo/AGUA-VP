@@ -22,6 +22,7 @@ export const fetchFacturas = async (token_session, params, isRetry = false) => {
     if (params.limit) urlParams.append("limit", params.limit);
     if (params.search) urlParams.append("search", params.search);
     if (params.estado) urlParams.append("estado", params.estado);
+    if (params.ciudad) urlParams.append("ciudad", params.ciudad);
     // Evita respuesta cacheada en Electron/Chromium para datos de cobranza.
     urlParams.append("_t", String(Date.now()));
     

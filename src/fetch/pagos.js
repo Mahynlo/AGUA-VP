@@ -31,6 +31,7 @@ export const fetchPagos = async (token_session, params = {}, isRetry = false) =>
         if (params.limit) urlParams.append('limit', params.limit);
         if (params.search) urlParams.append('search', params.search);
         if (params.metodo_pago) urlParams.append('metodo_pago', params.metodo_pago);
+        if (params.ciudad) urlParams.append('ciudad', params.ciudad);
     }
     // Evita respuestas cacheadas justo después de registrar cobros.
     urlParams.append('_t', String(Date.now()));

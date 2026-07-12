@@ -83,6 +83,8 @@ const LoadingSkeleton = () => (
   </div>
 );
 
+const SELECT_CLS = "w-full h-[52px] px-4 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none appearance-none cursor-pointer";
+
 const TabFacturas = () => {
   const navigate = useNavigate();
 
@@ -94,6 +96,8 @@ const TabFacturas = () => {
     search,
     filtroEstado,
     filtroPeriodo,
+    cityFilter,
+    ciudades,
     estados,
     currentPage,
     rowsPerPage,
@@ -102,9 +106,11 @@ const TabFacturas = () => {
     handleSearch,
     handleEstadoFilterChange,
     handlePeriodoChange,
+    handleCityFilterChange,
     handleRowsPerPageChange,
     setCurrentPage,
-    actualizarFacturas
+    actualizarFacturas,
+    setCityFilter
   } = useTabFacturas();
 
   const { registrarPago } = usePagos();
@@ -162,11 +168,12 @@ const TabFacturas = () => {
     await actualizarFacturas();
   };
 
-  const hasActiveFilters = search || filtroEstado !== "All" || filtroPeriodo !== new Date().toISOString().slice(0, 7);
+  const hasActiveFilters = search || filtroEstado !== "All" || cityFilter !== "All" || filtroPeriodo !== new Date().toISOString().slice(0, 7);
 
   const clearFilters = () => {
       handleSearch("");
       handleEstadoFilterChange("All");
+      setCityFilter("All");
       // Resetea el periodo al actual si es necesario (depende de tu hook)
   };
 
@@ -287,7 +294,7 @@ const TabFacturas = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
             
             {/* Buscador */}
-            <div className="lg:col-span-4 relative w-full flex items-center">
+            <div className="lg:col-span-3 relative w-full flex items-center">
               <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
                 <HiSearch className="w-5 h-5" />
               </span>
@@ -322,23 +329,33 @@ const TabFacturas = () => {
             </div>
 
             {/* Filtro por estado */}
-            <div className="lg:col-span-3">
-                <Select
-                    placeholder="Todos los estados"
-                    selectedKeys={filtroEstado !== "All" ? [filtroEstado] : []}
-                    onSelectionChange={(keys) => {
-                        const value = Array.from(keys)[0] || "All";
-                        handleEstadoFilterChange(value);
-                    }}
+            <div className="lg:col-span-2">
+                <select
+                    value={filtroEstado}
+                    onChange={(e) => handleEstadoFilterChange(e.target.value)}
                     aria-label="Filtrar por estado"
-                    variant="flat"
-                    classNames={selectClassNames}
+                    className={SELECT_CLS}
                 >
-                    <SelectItem key="All" value="All">Todos</SelectItem>
+                    <option value="All">Todos los estados</option>
                     {estados.map(estado => (
-                        <SelectItem key={estado} value={estado}>{estado}</SelectItem>
+                        <option key={estado} value={estado}>{estado}</option>
                     ))}
-                </Select>
+                </select>
+            </div>
+
+            {/* Filtro por ciudad */}
+            <div className="lg:col-span-2">
+                <select
+                    value={cityFilter}
+                    onChange={(e) => handleCityFilterChange(e.target.value)}
+                    aria-label="Filtrar por ciudad"
+                    className={SELECT_CLS}
+                >
+                    <option value="All">Todas las ciudades</option>
+                    {ciudades.map(ciudad => (
+                        <option key={ciudad} value={ciudad}>{ciudad}</option>
+                    ))}
+                </select>
             </div>
 
             {/* Botón Limpiar */}

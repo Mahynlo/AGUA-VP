@@ -262,6 +262,18 @@ const TabCobranzaCliente = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filtroRanking, setFiltroRanking] = useState("deuda_desc");
+  const [cityFilter, setCityFilter] = useState("All");
+
+  // Obtener la lista de ciudades de todos los clientes en memoria
+  const ciudades = useMemo(() => {
+    const unique = new Set();
+    (allClientes || []).forEach((c) => {
+      const value = (c?.ciudad || "").trim();
+      if (value) unique.add(value);
+    });
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  }, [allClientes]);
+
   const [modalSeleccionPeriodoRapido, setModalSeleccionPeriodoRapido] = useState(false);
   const [modalPagoRapidoOpen, setModalPagoRapidoOpen] = useState(false);
   const [modalLiquidacionTotalOpen, setModalLiquidacionTotalOpen] = useState(false);
@@ -341,7 +353,8 @@ const TabCobranzaCliente = () => {
         const response = await fetchClientes({
           page,
           limit,
-          search: debouncedSearch
+          search: debouncedSearch,
+          ciudad: cityFilter === "All" ? "" : cityFilter
         });
 
         if (response?.data && Array.isArray(response.data)) {
@@ -363,7 +376,7 @@ const TabCobranzaCliente = () => {
     } finally {
       setLoadingClientes(false);
     }
-  }, [debouncedSearch, fetchClientes, setError]);
+  }, [debouncedSearch, cityFilter, fetchClientes, setError]);
 
   const cargarFacturasHistorial = useCallback(async () => {
     setLoadingFacturas(true);
@@ -447,7 +460,7 @@ const TabCobranzaCliente = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, rowsPerPage, filtroRanking]);
+  }, [debouncedSearch, rowsPerPage, filtroRanking, cityFilter]);
 
   const facturasPorCliente = useMemo(() => {
     const map = new Map();
@@ -1000,7 +1013,7 @@ const TabCobranzaCliente = () => {
   };
 
   const isLoading = loadingClientes || loadingFacturas || loadingPagos || loadingPagosHistorial;
-  const hasActiveFilters = search || rowsPerPage !== 10 || filtroRanking !== "deuda_desc";
+  const hasActiveFilters = search || rowsPerPage !== 10 || filtroRanking !== "deuda_desc" || cityFilter !== "All";
 
   return (
     <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500">
@@ -1092,7 +1105,8 @@ const TabCobranzaCliente = () => {
         {/* Filtros */}
         <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
-            <div className="lg:col-span-5 relative w-full flex items-center">
+            {/* Buscador */}
+            <div className="lg:col-span-4 relative w-full flex items-center">
               <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
                 <HiSearch className="w-5 h-5" />
               </span>
@@ -1112,7 +1126,23 @@ const TabCobranzaCliente = () => {
               )}
             </div>
 
-            <div className="lg:col-span-5">
+            {/* Filtro ciudad */}
+            <div className="lg:col-span-3">
+              <select
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
+                aria-label="Filtrar por ciudad"
+                className={SELECT_CLS}
+              >
+                <option value="All">Todas las ciudades</option>
+                {ciudades.map((ciudad) => (
+                  <option key={ciudad} value={ciudad}>{ciudad}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filtro orden/ranking */}
+            <div className="lg:col-span-3">
               <select
                 value={filtroRanking}
                 onChange={(e) => setFiltroRanking(e.target.value)}
@@ -1128,6 +1158,7 @@ const TabCobranzaCliente = () => {
               </select>
             </div>
 
+            {/* Botón limpiar */}
             <div className="lg:col-span-2 flex justify-end">
               {hasActiveFilters ? (
                 <button
@@ -1135,6 +1166,7 @@ const TabCobranzaCliente = () => {
                     setSearch("");
                     setRowsPerPage(10);
                     setFiltroRanking("deuda_desc");
+                    setCityFilter("All");
                   }}
                   className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors"
                 >
