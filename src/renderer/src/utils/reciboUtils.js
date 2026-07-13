@@ -146,6 +146,7 @@ export const adaptarReciboAPI = (reciboAPI) => {
         cliente_nombre: reciboAPI.datos_cliente.nombre,
         direccion_cliente: reciboAPI.datos_cliente.direccion,
         cliente_ciudad: reciboAPI.datos_cliente.pueblo,
+        numero_predio: reciboAPI.datos_cliente.numero_predio || "",
         
         // Consumo y Medición
         consumo_m3: reciboAPI.informacion_servicio.consumo_mes_m3,
