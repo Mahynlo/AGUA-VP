@@ -1,11 +1,20 @@
 import React, { useState } from "react";
-import { Button, Select, SelectItem, Divider } from "@nextui-org/react";
-import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport } from "react-icons/hi";
+import { Button, Select, SelectItem, Divider, Card, CardHeader, CardBody } from "@nextui-org/react";
+import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog } from "react-icons/hi";
 import ListadoLecturas from "./components/ListadoLecturas";
 import ModalImprimir from "./components/ModalImprimir";
 import { useReportes } from "../../../context/ReportesContext";
 import { exportData } from "../../../utils/exportUtils";
 import { obtenerPeriodoActual } from "../../../utils/periodoUtils";
+
+const formatearPeriodoTexto = (periodoStr) => {
+  if (!periodoStr || !/^\d{4}-\d{2}$/.test(periodoStr)) return periodoStr;
+  const [anio, mes] = periodoStr.split('-');
+  const date = new Date(parseInt(anio, 10), parseInt(mes, 10) - 1, 1);
+  const mesNombre = date.toLocaleDateString('es-MX', { month: 'long' });
+  const mesCapitalizado = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
+  return `${mesCapitalizado} de ${anio}`;
+};
 
 const TabReportes = () => {
   // --- USO DE CONTEXTO ---
@@ -56,13 +65,38 @@ const TabReportes = () => {
     return [];
   }, [lecturasData]);
 
-  const getUrlLecturas = async () => {
-    let dataToSend = lecturasData;
+  const lecturasDataFiltradas = React.useMemo(() => {
+    if (!lecturasData || lecturasData.length === 0) return [];
+    
+    // 1. Filtrar por localidad
+    let filtradas = lecturasData;
     if (ciudadLecturas !== "todas" && lecturasData[0]?.localidad) {
-      dataToSend = lecturasData.filter(g => g.localidad === ciudadLecturas);
+      filtradas = lecturasData.filter(g => g.localidad === ciudadLecturas);
     }
+    
+    // 2. Ordenar clientes dentro de cada localidad
+    return filtradas.map(grupo => {
+      if (!grupo.clientes) return grupo;
+      
+      const clientesOrdenados = [...grupo.clientes].sort((a, b) => {
+        if (ordenLecturas === "numero_predio") {
+          const valA = String(a.numero_predio || "");
+          const valB = String(b.numero_predio || "");
+          return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+        } else {
+          return (a.id || 0) - (b.id || 0);
+        }
+      });
+      
+      return {
+        ...grupo,
+        clientes: clientesOrdenados
+      };
+    });
+  }, [lecturasData, ciudadLecturas, ordenLecturas]);
 
-    const dataKey = await window.api.savePrintData(JSON.stringify(dataToSend));
+  const getUrlLecturas = async () => {
+    const dataKey = await window.api.savePrintData(JSON.stringify(lecturasDataFiltradas));
 
     const { protocol, origin, href } = window.location;
     const params = `mes=${periodo}&dataKey=${dataKey}&ordenarPor=${ordenLecturas}&print=true`;
@@ -436,7 +470,7 @@ const TabReportes = () => {
           {/* COLUMNA IZQUIERDA: Listado */}
           <div className="xl:col-span-2">
             <ListadoLecturas
-              lecturas={lecturasData}
+              lecturas={lecturasDataFiltradas}
               periodo={periodo}
               setPeriodo={setPeriodo}
               loading={loadingLecturas}
@@ -451,84 +485,145 @@ const TabReportes = () => {
               <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 grid grid-cols-2 gap-4 text-center divide-x divide-slate-200 dark:divide-zinc-700">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Periodo</p>
-                  <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{periodo}</p>
+                  <p className="text-sm font-black tracking-tight text-slate-800 dark:text-zinc-100 uppercase">{formatearPeriodoTexto(periodo)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Total Tomas</p>
                   <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
-                    {lecturasData.reduce((acc, g) => acc + (g.clientes ? g.clientes.length : 1), 0)}
+                    {lecturasDataFiltradas.reduce((acc, g) => acc + (g.clientes ? g.clientes.length : 0), 0)}
                   </p>
                 </div>
               </div>
 
               {/* Opciones de impresión de Lecturas */}
               {lecturasData.length > 0 && (
-                <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3">Opciones de Impresión</p>
+                <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                  <CardHeader className="pt-5 px-5 pb-3 border-b border-slate-100 dark:border-zinc-800/50">
+                    <div className="flex items-center gap-2">
+                      <HiCog className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100">
+                        Opciones de Impresión
+                      </h4>
+                    </div>
+                  </CardHeader>
+                  <CardBody className="p-5 flex flex-col gap-4">
+                    {/* Filtro de Ciudad */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                        Filtrar por Ciudad
+                      </label>
+                      <select
+                        value={ciudadLecturas}
+                        onChange={(e) => setCiudadLecturas(e.target.value || "todas")}
+                        className="w-full h-11 px-3 text-sm font-medium rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                      >
+                        <option value="todas">Todas las ciudades</option>
+                        {ciudadesDisponibles.map(ciudad => (
+                          <option key={ciudad} value={ciudad}>{ciudad}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="space-y-4 pt-2">
-                    <Select
-                      aria-label="Ordenar registros por:"
-                      placeholder="Ordenar registros por:"
-                      selectedKeys={[ordenLecturas]}
-                      onChange={(e) => setOrdenLecturas(e.target.value || "numero_predio")}
-                      startContent={<HiSortAscending className="text-slate-400" />}
-                      classNames={selectClassNames}
-                    >
-                      <SelectItem key="numero_predio" value="numero_predio">N° de Predio</SelectItem>
-                      <SelectItem key="id" value="id">ID (Secuencial)</SelectItem>
-                    </Select>
+                    {/* Criterio de Ordenamiento */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                        Criterio de Orden
+                      </label>
+                      <select
+                        value={ordenLecturas}
+                        onChange={(e) => setOrdenLecturas(e.target.value || "numero_predio")}
+                        className="w-full h-11 px-3 text-sm font-medium rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                      >
+                        <option value="numero_predio">Número de Predio</option>
+                        <option value="id">ID (Secuencial)</option>
+                      </select>
+                    </div>
 
-                    <Select
-                      aria-label="Filtrar ciudad:"
-                      placeholder="Filtrar ciudad:"
-                      selectedKeys={[ciudadLecturas]}
-                      onChange={(e) => setCiudadLecturas(e.target.value || "todas")}
-                      startContent={<HiLocationMarker className="text-slate-400" />}
-                      classNames={selectClassNames}
-                    >
-                      <SelectItem key="todas" value="todas">Todas las ciudades</SelectItem>
-                      {ciudadesDisponibles.map(c => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </Select>
-                  </div>
-
-                  <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl p-4 flex flex-col gap-1 mt-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest">
-                      Resumen
-                    </p>
-                    <p className="text-xs font-medium text-slate-700 dark:text-zinc-300">
-                        Se imprimirá {ciudadLecturas === "todas" ? "todo el padrón" : `solo ${ciudadLecturas}`}, ordenado por {ordenLecturas === "numero_predio" ? "N° de Predio" : "ID"}.
-                    </p>
-                  </div>
-                </div>
+                    {/* Resumen */}
+                    <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl p-4 flex flex-col gap-1 mt-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest">
+                        Resumen
+                      </p>
+                      <p className="text-xs font-medium text-slate-700 dark:text-zinc-300">
+                          Se imprimirá {ciudadLecturas === "todas" ? "todo el padrón" : `solo ${ciudadLecturas}`}, ordenado por {ordenLecturas === "numero_predio" ? "N° de Predio" : "ID"}.
+                      </p>
+                    </div>
+                  </CardBody>
+                </Card>
               )}
 
               {/* Acciones Lecturas */}
               {lecturasData.length > 0 ? (
-                <div className="flex flex-col gap-3">
-                  {/* Token 4: Botón Secundario (Flat) */}
-                  <Button
-                    className="w-full font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 h-[52px] rounded-xl shadow-none"
-                    onPress={handlePreviewLecturas}
-                    isLoading={accion === 'preview-lecturas'}
-                    isDisabled={procesando || loadingLecturas}
-                    startContent={accion !== 'preview-lecturas' && <HiEye className="text-lg" />}
-                  >
-                    {accion === 'preview-lecturas' ? 'Generando...' : 'Vista Previa (PDF)'}
-                  </Button>
+                <div className="flex flex-col gap-4">
+                  
+                  {/* TARJETA 1: Vista Previa */}
+                  <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                    <CardBody className="p-5 flex flex-col gap-4">
+                      {/* Header de la tarjeta */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
+                            <HiEye className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                              Vista Previa
+                            </h4>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">
+                              Revisar Reporte
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                  {/* Token 4: Botón Primario */}
-                  <Button
-                    className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm h-[52px]"
-                    onPress={handlePrintLecturas}
-                    isLoading={accion === 'print-lecturas'}
-                    isDisabled={procesando || loadingLecturas}
-                    startContent={accion !== 'print-lecturas' && <HiPrinter className="text-lg" />}
-                  >
-                    {accion === 'print-lecturas' ? 'Preparando...' : 'Imprimir'}
-                  </Button>
+                      {/* Botón de Acción */}
+                      <Button
+                        color="primary"
+                        className="w-full h-11 font-bold shadow-sm"
+                        onPress={handlePreviewLecturas}
+                        isLoading={accion === 'preview-lecturas'}
+                        isDisabled={procesando || loadingLecturas}
+                        startContent={accion !== 'preview-lecturas' && <HiEye className="text-lg" />}
+                      >
+                        {accion === 'preview-lecturas' ? 'Generando PDF...' : 'Abrir Vista Previa'}
+                      </Button>
+                    </CardBody>
+                  </Card>
+
+                  {/* TARJETA 2: Imprimir Directamente */}
+                  <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                    <CardBody className="p-5 flex flex-col gap-4">
+                      {/* Header de la tarjeta */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600 dark:text-emerald-400">
+                            <HiPrinter className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                              Imprimir Reporte
+                            </h4>
+                            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">
+                              Enviar a impresora
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botón de Acción */}
+                      <Button
+                        color="success"
+                        className="w-full h-11 font-bold text-white shadow-sm"
+                        onPress={handlePrintLecturas}
+                        isLoading={accion === 'print-lecturas'}
+                        isDisabled={procesando || loadingLecturas}
+                        startContent={accion !== 'print-lecturas' && <HiPrinter className="text-lg" />}
+                      >
+                        {accion === 'print-lecturas' ? 'Preparando...' : 'Imprimir Directamente'}
+                      </Button>
+                    </CardBody>
+                  </Card>
+
                 </div>
               ) : (
                 <div className="border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/20 rounded-2xl p-10 flex flex-col items-center justify-center min-h-[250px]">
