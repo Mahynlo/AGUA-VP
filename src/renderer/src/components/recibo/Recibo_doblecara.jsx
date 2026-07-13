@@ -111,6 +111,25 @@ const Recibo = ({ facturaData = null }) => {
 
     useNotifyPrintReady(paginasRecibos.length > 0);
 
+    const ciudadFiltro = searchParams.get('ciudad') || 'All';
+
+    const obtenerIdentificadorRecibo = (factura) => {
+        if (!factura) return "";
+        const predio = factura.numero_predio || "";
+        const match = predio.match(/^([A-Za-z]+)[-\/]?(\d+)$/);
+        if (match) {
+            const siglas = match[1].toUpperCase();
+            const numero = parseInt(match[2], 10);
+            
+            if (ciudadFiltro === "All" || !ciudadFiltro) {
+                return `(${siglas}) - ${numero}`;
+            } else {
+                return numero;
+            }
+        }
+        return predio || factura.id || "";
+    };
+
     const { anuncio } = useAnuncioRecibo();
     const { obtenerFraseEquivalencia } = useEquivalenciaConsumo();
 
@@ -455,11 +474,11 @@ const Recibo = ({ facturaData = null }) => {
                                     {/* Header Paginación */}
                                     <div className="text-right text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2 px-2 border-b border-dashed border-gray-300 pb-1">
                                         <div className="text-left font-mono text-gray-500">
-                                            Fecha de emisión: {formatearFechaHoraEmisionCabecera(reciboIzquierdoFrente)} • Hora generación: {formatearHoraGeneracionCabecera(reciboIzquierdoFrente)} • Recibo {indicePagina * 2 + 1}
+                                            Fecha de emisión: {formatearFechaHoraEmisionCabecera(reciboIzquierdoFrente)} • Hora generación: {formatearHoraGeneracionCabecera(reciboIzquierdoFrente)} • Recibo {obtenerIdentificadorRecibo(reciboIzquierdoFrente)}
                                         </div>
                                         <div className="text-center font-mono text-gray-500">Fecha impresión: {fechaImpresion}</div>
                                         <div className="text-right font-mono text-gray-500">
-                                            {reciboDerechoFrente ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(reciboDerechoFrente)} • Hora generación: ${formatearHoraGeneracionCabecera(reciboDerechoFrente)} • Recibo ${indicePagina * 2 + 2}` : ''}
+                                            {reciboDerechoFrente ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(reciboDerechoFrente)} • Hora generación: ${formatearHoraGeneracionCabecera(reciboDerechoFrente)} • Recibo ${obtenerIdentificadorRecibo(reciboDerechoFrente)}` : ''}
                                         </div>
                                     </div>
 
