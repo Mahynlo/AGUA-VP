@@ -120,9 +120,9 @@ function createWindow() {
   }
 
   // Abrir las herramientas de desarrollo
-  if (is.dev) {
-  mainWindow.webContents.openDevTools();
-}
+  // if (is.dev) {
+  //   mainWindow.webContents.openDevTools();
+  // }
 
   // Inicializar el gestor de actualizaciones
   initUpdateManager(mainWindow);
