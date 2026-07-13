@@ -81,7 +81,7 @@ export const obtenerURLBase = () => {
  * @param {boolean} esPrevisualizacion - Si es vista previa o impresión directa
  * @returns {string} URL completa con datos codificados
  */
-export const construirURLImpresion = async (facturas, esPrevisualizacion = false) => {
+export const construirURLImpresion = async (facturas, esPrevisualizacion = false, ciudad = "All") => {
   const paginasRecibos = agruparRecibosPorPagina(facturas);
   const baseUrl = obtenerURLBase();
   
@@ -99,12 +99,12 @@ export const construirURLImpresion = async (facturas, esPrevisualizacion = false
     
     // IMPORTANTE: Asegurar que termine en / si es necesario, pero split('#')[0] suele ser correcto.
     // Concatenamos el hash.
-    return `${base}#/recibo?print=true&dataKey=${dataKey}`;
+    return `${base}#/recibo?print=true&dataKey=${dataKey}&ciudad=${encodeURIComponent(ciudad)}`;
   }
 
   // Desarrollo (Vite / localhost)
   // Usamos origin (http://localhost:5173) + / + hash
-  return `${origin}/#/recibo?print=true&dataKey=${dataKey}`;
+  return `${origin}/#/recibo?print=true&dataKey=${dataKey}&ciudad=${encodeURIComponent(ciudad)}`;
 };
 
 /**

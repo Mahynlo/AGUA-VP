@@ -40,6 +40,25 @@ const Recibo = ({ facturaData = null }) => {
 
     useNotifyPrintReady(paginasRecibos.length > 0);
 
+    const ciudadFiltro = searchParams.get('ciudad') || 'All';
+
+    const obtenerIdentificadorRecibo = (factura) => {
+        if (!factura) return "";
+        const predio = factura.numero_predio || "";
+        const match = predio.match(/^([A-Za-z]+)[-\/]?(\d+)$/);
+        if (match) {
+            const siglas = match[1].toUpperCase();
+            const numero = parseInt(match[2], 10);
+            
+            if (ciudadFiltro === "All" || !ciudadFiltro) {
+                return `(${siglas}) - ${numero}`;
+            } else {
+                return numero;
+            }
+        }
+        return predio || factura.id || "";
+    };
+
     // Hook para el anuncio personalizado
     const { anuncio } = useAnuncioRecibo();
 
@@ -282,11 +301,11 @@ const Recibo = ({ facturaData = null }) => {
                     <div className="text-right  text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2">
 
                         <div className="text-right">
-                            Fecha y hora: {fechaHora} Recibo No: {indicePagina * 2 + 1}
+                            Fecha y hora: {fechaHora} Recibo No: {obtenerIdentificadorRecibo(paginaRecibos[0])}
                         </div>
                         <div className='text-center'></div>
                         <div className="text-right">
-                            {paginaRecibos[1] ? `Fecha y hora: ${fechaHora} Recibo No: ${indicePagina * 2 + 2}` : ''}
+                            {paginaRecibos[1] ? `Fecha y hora: ${fechaHora} Recibo No: ${obtenerIdentificadorRecibo(paginaRecibos[1])}` : ''}
                         </div>
                     </div>
 

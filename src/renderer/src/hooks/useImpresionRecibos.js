@@ -147,7 +147,7 @@ const useImpresionRecibos = () => {
     setProcesandoAccion('imprimir');
     try {
         // Construir URL para impresión silenciosa
-        const batchPrintUrl = await construirURLImpresion(facturasParaImprimir, false);
+        const batchPrintUrl = await construirURLImpresion(facturasParaImprimir, false, ciudadFiltro);
         // Generar PDF de vista previa
         const response = await window.api.previewComponent(batchPrintUrl);
 
@@ -176,7 +176,7 @@ const useImpresionRecibos = () => {
 
     setProcesandoAccion('vista-previa');
     try {
-        const previewUrl = await construirURLImpresion(facturasParaImprimir, true);
+        const previewUrl = await construirURLImpresion(facturasParaImprimir, true, ciudadFiltro);
         
         console.log('Vista previa de recibos para:', facturasParaImprimir.length, 'clientes');
         console.log('Páginas en vista previa:', estadisticas.paginasEstimadas);
