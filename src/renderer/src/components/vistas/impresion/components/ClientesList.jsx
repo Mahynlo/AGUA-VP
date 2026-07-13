@@ -110,7 +110,7 @@ const ClientesList = ({
 
       {/* ── BODY: Lista de Tarjetas ── */}
       <CardBody className="p-4 bg-slate-50/30 dark:bg-black/10">
-        <div className="max-h-[500px] overflow-y-auto space-y-2.5 pr-2 custom-scrollbar">
+        <div className="max-h-[580px] overflow-y-auto space-y-2.5 pr-2 custom-scrollbar">
           
           {/* Estado de Carga o Vacío */}
           {clientesFiltrados.length === 0 ? (

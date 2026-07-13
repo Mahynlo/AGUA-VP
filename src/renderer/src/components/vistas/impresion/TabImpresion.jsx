@@ -29,6 +29,7 @@ const TabImpresion = () => {
     ordenCriterio,
     setOrdenCriterio,
     ciudadesDisponibles,
+    progresoGeneracion,
     handleCambioPeriodo,
     handleToggleCliente,
     handleToggleTodos,
@@ -90,8 +91,7 @@ const TabImpresion = () => {
             loading={loading}
           />
 
-          {/* Herramientas de desarrollo (Debug) */}
-          {/* Token 4: Estilo de contenedor colapsable sutil */}
+          {/* Herramientas de desarrollo (Debug) comentadas para producción
           <details className="group bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none">
             <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 p-4 flex items-center gap-2 select-none hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10">
               <HiCog className="w-4 h-4 text-slate-400 dark:text-zinc-500 group-open:rotate-90 transition-transform duration-300" /> 
@@ -138,64 +138,25 @@ const TabImpresion = () => {
               </Button>
             </div>
           </details>
+          */}
         </div>
 
         {/* COLUMNA DERECHA: Centro de Acción (Sticky) */}
         <div className="xl:col-span-1">
           <div className="sticky top-6 space-y-4">
             
-            {/* Opciones de Impresión */}
-            <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800">
-              <CardHeader className="pt-5 px-5 pb-3 border-b border-slate-100 dark:border-zinc-800/50">
-                <div className="flex items-center gap-2">
-                  <HiCog className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <h4 className="text-sm font-black tracking-tight text-slate-800 dark:text-zinc-100">
-                    Opciones de Impresión
-                  </h4>
-                </div>
-              </CardHeader>
-              <CardBody className="p-5 flex flex-col gap-4">
-                {/* Filtro de Ciudad */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                    Filtrar por Ciudad
-                  </label>
-                  <select
-                    value={ciudadFiltro}
-                    onChange={(e) => setCiudadFiltro(e.target.value)}
-                    className="w-full h-11 px-3 text-sm font-medium rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                  >
-                    <option value="All">Todas las ciudades</option>
-                    {ciudadesDisponibles.map(ciudad => (
-                      <option key={ciudad} value={ciudad}>{ciudad}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Criterio de Ordenamiento */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                    Criterio de Orden
-                  </label>
-                  <select
-                    value={ordenCriterio}
-                    onChange={(e) => setOrdenCriterio(e.target.value)}
-                    className="w-full h-11 px-3 text-sm font-medium rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
-                  >
-                    <option value="numero_predio">Número de Predio</option>
-                    <option value="cliente_nombre">Nombre del Cliente</option>
-                    <option value="defecto">Orden del Servidor</option>
-                  </select>
-                </div>
-              </CardBody>
-            </Card>
-
             {facturasParaImprimir.length > 0 ? (
               <AccionesImpresion
                 estadisticas={estadisticas}
                 onVistaPrevia={handleVistaPreviaRecibos}
                 onImprimir={handleImprimirRecibos}
                 procesandoAccion={procesandoAccion}
+                progresoGeneracion={progresoGeneracion}
+                ciudadFiltro={ciudadFiltro}
+                setCiudadFiltro={setCiudadFiltro}
+                ordenCriterio={ordenCriterio}
+                setOrdenCriterio={setOrdenCriterio}
+                ciudadesDisponibles={ciudadesDisponibles}
               />
             ) : (
               /* Empty State Premium SaaS */

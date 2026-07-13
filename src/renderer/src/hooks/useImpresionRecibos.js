@@ -19,6 +19,7 @@ const useImpresionRecibos = () => {
   const [pdfUrl, setPdfUrl] = useState(null);     // Ruta file:// del PDF temporal (para el visor)
   const [printUrl, setPrintUrl] = useState(null); // URL React original (para impresión silenciosa)
   const [modoPdf, setModoPdf] = useState(null);   // 'imprimir' | 'vista-previa' | null
+  const [progresoGeneracion, setProgresoGeneracion] = useState(null); // Indicador de progreso de impresión
   
   // Nuevos estados para opciones de impresión
   const [ciudadFiltro, setCiudadFiltro] = useState("All");
@@ -145,6 +146,29 @@ const useImpresionRecibos = () => {
     }
 
     setProcesandoAccion('imprimir');
+
+    // Iniciar temporizador de progreso
+    const total = facturasParaImprimir.length;
+    let actual = 0;
+    setProgresoGeneracion({
+      actual: 1,
+      total,
+      cliente: facturasParaImprimir[0] ? `${facturasParaImprimir[0].cliente_nombre} (${facturasParaImprimir[0].numero_predio})` : ""
+    });
+    
+    const intervalId = setInterval(() => {
+      actual += 1;
+      if (actual < total) {
+        setProgresoGeneracion({
+          actual: actual + 1,
+          total,
+          cliente: facturasParaImprimir[actual] ? `${facturasParaImprimir[actual].cliente_nombre} (${facturasParaImprimir[actual].numero_predio})` : ""
+        });
+      } else {
+        clearInterval(intervalId);
+      }
+    }, Math.max(80, Math.min(250, 4000 / total)));
+
     try {
         // Construir URL para impresión silenciosa
         const batchPrintUrl = await construirURLImpresion(facturasParaImprimir, false, ciudadFiltro);
@@ -156,14 +180,14 @@ const useImpresionRecibos = () => {
           setPdfUrl(response.path);
           setModoPdf('imprimir');
         }
-        setProcesandoAccion(null);
     } catch (err) {
         console.error("Error preparing print:", err);
-        setProcesandoAccion(null);
         alert("Hubo un error al preparar la impresión: " + err);
+    } finally {
+        clearInterval(intervalId);
+        setProgresoGeneracion(null);
+        setProcesandoAccion(null);
     }
-
-    setTimeout(() => setProcesandoAccion(null), 15000);
   };
 
   // Vista previa de recibos
@@ -175,6 +199,29 @@ const useImpresionRecibos = () => {
     }
 
     setProcesandoAccion('vista-previa');
+
+    // Iniciar temporizador de progreso
+    const total = facturasParaImprimir.length;
+    let actual = 0;
+    setProgresoGeneracion({
+      actual: 1,
+      total,
+      cliente: facturasParaImprimir[0] ? `${facturasParaImprimir[0].cliente_nombre} (${facturasParaImprimir[0].numero_predio})` : ""
+    });
+    
+    const intervalId = setInterval(() => {
+      actual += 1;
+      if (actual < total) {
+        setProgresoGeneracion({
+          actual: actual + 1,
+          total,
+          cliente: facturasParaImprimir[actual] ? `${facturasParaImprimir[actual].cliente_nombre} (${facturasParaImprimir[actual].numero_predio})` : ""
+        });
+      } else {
+        clearInterval(intervalId);
+      }
+    }, Math.max(80, Math.min(250, 4000 / total)));
+
     try {
         const previewUrl = await construirURLImpresion(facturasParaImprimir, true, ciudadFiltro);
         
@@ -191,19 +238,16 @@ const useImpresionRecibos = () => {
           setPdfUrl(response.path);
           setModoPdf('vista-previa');
         } else {
-          // Fallback legacy (si devolviera solo string)
           console.warn('Respuesta inesperada del preview:', response);
         }
-
-        setProcesandoAccion(null);
     } catch (err) {
         console.error("Error in preview:", err);
-        setProcesandoAccion(null);
         alert("Hubo un error al generar la vista previa: " + err);
+    } finally {
+        clearInterval(intervalId);
+        setProgresoGeneracion(null);
+        setProcesandoAccion(null);
     }
-
-    // Safety timeout (extended)
-    setTimeout(() => setProcesandoAccion(null), 15000);
   };
 
   // Prueba con datos mock
@@ -242,6 +286,7 @@ const useImpresionRecibos = () => {
     setCiudadFiltro,
     ordenCriterio,
     setOrdenCriterio,
+    progresoGeneracion,
     
     // Datos computados
     clientesConFacturasYLecturas,
