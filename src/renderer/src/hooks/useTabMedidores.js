@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useMedidores } from "../context/MedidoresContext";
+import { useClientes } from "../context/ClientesContext";
 
 export const useTabMedidores = () => {
   const { medidores, allMedidores, loading, initialLoading, fetchMedidores, pagination } = useMedidores();
+  const { allClientes, fetchAllClientes } = useClientes();
 
   // Estados locales para filtros y paginación UI
   const [search, setSearch] = useState("");
@@ -28,6 +30,13 @@ export const useTabMedidores = () => {
       return () => clearTimeout(timer);
   }, [search, locationFilter, cityFilter]);
 
+  // Asegurar que allClientes esté cargado
+  useEffect(() => {
+    if ((!allClientes || allClientes.length === 0) && !loading && !initialLoading) {
+      fetchAllClientes();
+    }
+  }, [allClientes, loading, initialLoading, fetchAllClientes]);
+
   const locationOptions = useMemo(() => {
     const unique = new Set();
     (allMedidores || []).forEach((m) => {
@@ -37,11 +46,15 @@ export const useTabMedidores = () => {
     return Array.from(unique).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
   }, [allMedidores]);
 
-  const cityOptions = useMemo(() => [
-    { key: "MP-", label: "Matape (MP)" },
-    { key: "NG-", label: "Nacori (NG)" },
-    { key: "AD-", label: "Adivino (AD)" }
-  ], []);
+  // Calcular la lista de ciudades de los clientes en memoria dinámicamente
+  const cityOptions = useMemo(() => {
+    const unique = new Set();
+    (allClientes || []).forEach((c) => {
+      const value = (c?.ciudad || "").trim();
+      if (value) unique.add(value);
+    });
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  }, [allClientes]);
 
   // Constante de buffer (Mínimo Común Múltiplo de 5, 10, 15, 20 para alineación perfecta)
   const FETCH_LIMIT = 60;

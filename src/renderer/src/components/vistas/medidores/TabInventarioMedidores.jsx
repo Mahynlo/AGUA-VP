@@ -602,7 +602,9 @@ const TabInventarioMedidores = () => {
                         <div className="lg:col-span-2">
                             <select value={cityFilter} onChange={(e) => handleCityFilterChange(e.target.value)} aria-label="Filtrar por ciudad" className={SELECT_CLS}>
                                 <option value="All">Todas las ciudades</option>
-                                {cityOptions.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                                {cityOptions.map(ciudad => (
+                                    <option key={ciudad} value={ciudad}>{ciudad}</option>
+                                ))}
                             </select>
                         </div>
 

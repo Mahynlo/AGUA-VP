@@ -5,7 +5,7 @@ import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
 export const useTabFacturas = () =>{
   const { facturas, pagination, loading, initialLoading, fetchFacturas, estadisticas, actualizarFacturas } = useFacturas();
-  const { allClientes } = useClientes();
+  const { allClientes, fetchAllClientes } = useClientes();
 
   // Estados de filtros y búsqueda
   const [search, setSearch] = useState("");
@@ -14,6 +14,13 @@ export const useTabFacturas = () =>{
   const [cityFilter, setCityFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Asegurar que allClientes esté cargado
+  useEffect(() => {
+    if ((!allClientes || allClientes.length === 0) && !loading && !initialLoading) {
+      fetchAllClientes();
+    }
+  }, [allClientes, loading, initialLoading, fetchAllClientes]);
 
   // Obtener la lista de ciudades de todos los clientes en memoria
   const ciudades = useMemo(() => {

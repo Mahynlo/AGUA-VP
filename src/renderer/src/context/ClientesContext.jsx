@@ -170,7 +170,9 @@ export function ClientesProvider({ children }) {
         initialLoading,
         error,
         actualizarClientes,
-        fetchClientes // Expose direct fetcher for pagination
+        fetchClientes, // Expose direct fetcher for pagination
+        fetchAllClientes,
+        fetchEstadisticas
       }}
     >
       {children}
