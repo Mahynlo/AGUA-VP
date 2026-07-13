@@ -20,6 +20,10 @@ const useImpresionRecibos = () => {
   const [printUrl, setPrintUrl] = useState(null); // URL React original (para impresión silenciosa)
   const [modoPdf, setModoPdf] = useState(null);   // 'imprimir' | 'vista-previa' | null
   
+  // Nuevos estados para opciones de impresión
+  const [ciudadFiltro, setCiudadFiltro] = useState("All");
+  const [ordenCriterio, setOrdenCriterio] = useState("numero_predio");
+
   // Consumir contexto de reportes
   const { recibos, loading, cargarRecibos } = useReportes();
   const { token } = useAuth();
@@ -36,22 +40,68 @@ const useImpresionRecibos = () => {
     }
   };
 
-  // Seleccionar todos automáticamente cuando llegan nuevos recibos
+  // Obtener las ciudades únicas disponibles
+  const ciudadesDisponibles = useMemo(() => {
+    const set = new Set();
+    (recibos || []).forEach(f => {
+      const city = (f.cliente_ciudad || "").trim();
+      if (city) set.add(city);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  }, [recibos]);
+
+  // Filtrar y ordenar los recibos
+  const clientesConFacturasYLecturas = useMemo(() => {
+    let list = [...recibos];
+    
+    // 1. Filtrar por ciudad
+    if (ciudadFiltro !== "All") {
+      list = list.filter(f => (f.cliente_ciudad || "").trim().toUpperCase() === ciudadFiltro.trim().toUpperCase());
+    }
+    
+    // 2. Ordenar
+    const parsePredioParts = (val) => {
+        if (!val) return ["", 0];
+        const match = val.match(/^([A-Za-z]*)[-\/]?(\d+)$/);
+        if (match) return [match[1].toUpperCase(), parseInt(match[2], 10)];
+        return [val.toUpperCase(), 0];
+    };
+
+    list.sort((a, b) => {
+      if (ordenCriterio === "numero_predio") {
+        const [prefA, numA] = parsePredioParts(a.numero_predio);
+        const [prefB, numB] = parsePredioParts(b.numero_predio);
+        if (prefA !== prefB) return prefA.localeCompare(prefB);
+        return numA - numB;
+      }
+      if (ordenCriterio === "cliente_nombre") {
+        return (a.cliente_nombre || "").localeCompare(b.cliente_nombre || "", "es", { sensitivity: "base" });
+      }
+      // "defecto" (no hace sort, conserva orden original)
+      return 0;
+    });
+
+    return list;
+  }, [recibos, ciudadFiltro, ordenCriterio]);
+
+  // Seleccionar todos automáticamente cuando cambie la lista filtrada de recibos
   useEffect(() => {
-    if (recibos.length > 0) {
+    if (clientesConFacturasYLecturas.length > 0) {
       const nuevosSeleccionados = new Set(
-        recibos.map(factura => factura.id)
+        clientesConFacturasYLecturas.map(factura => factura.id)
       );
       setClientesSeleccionados(nuevosSeleccionados);
+    } else {
+      setClientesSeleccionados(new Set());
     }
-  }, [recibos]);
+  }, [clientesConFacturasYLecturas]);
 
   // Obtener facturas seleccionadas
   const facturasParaImprimir = useMemo(() => {
-    return recibos.filter(factura => 
+    return clientesConFacturasYLecturas.filter(factura => 
       clientesSeleccionados.has(factura.id)
     );
-  }, [recibos, clientesSeleccionados]);
+  }, [clientesConFacturasYLecturas, clientesSeleccionados]);
   
   // Calcular estadísticas
   const estadisticas = useMemo(() => {
@@ -188,11 +238,16 @@ const useImpresionRecibos = () => {
     printUrl,
     modoPdf,
     setModoPdf,
+    ciudadFiltro,
+    setCiudadFiltro,
+    ordenCriterio,
+    setOrdenCriterio,
     
     // Datos computados
-    clientesConFacturasYLecturas: recibos,
+    clientesConFacturasYLecturas,
     facturasParaImprimir,
     estadisticas,
+    ciudadesDisponibles,
     
     // Handlers
     handleCambioPeriodo,
