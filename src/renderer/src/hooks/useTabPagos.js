@@ -6,12 +6,19 @@ import { obtenerPeriodoActual } from "../utils/periodoUtils";
 export const useTabPagos = () => {
   // Consumir datos y funciones del contexto
   const { pagos, pagination, loading, initialLoading, fetchPagos, resumen, actualizarPagos, filtros } = usePagos();
-  const { allClientes } = useClientes();
+  const { allClientes, fetchAllClientes } = useClientes();
 
   // Estados locales para UI (debounce y paginación visual)
   const [search, setSearch] = useState(filtros?.search || "");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [cityFilter, setCityFilter] = useState(filtros?.ciudad || "All");
+
+  // Asegurar que allClientes esté cargado
+  useEffect(() => {
+    if ((!allClientes || allClientes.length === 0) && !loading && !initialLoading) {
+      fetchAllClientes();
+    }
+  }, [allClientes, loading, initialLoading, fetchAllClientes]);
 
   // Obtener la lista de ciudades de todos los clientes en memoria
   const ciudades = useMemo(() => {

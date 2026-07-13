@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useClientes } from "../context/ClientesContext";
 
 export const useTabClientes = () => {
-  const { clientes, pagination, loading, initialLoading, fetchClientes, estadisticas } = useClientes();
+  const { clientes, pagination, loading, initialLoading, fetchClientes, estadisticas, allClientes, fetchAllClientes, fetchEstadisticas } = useClientes();
 
   // Estados de filtros y búsqueda
   const [search, setSearch] = useState("");
@@ -19,6 +19,16 @@ export const useTabClientes = () => {
       const timer = setTimeout(() => setDebouncedSearch(search), 500);
       return () => clearTimeout(timer);
   }, [search]);
+
+  // Asegurar que las estadísticas y todos los clientes estén cargados
+  useEffect(() => {
+    if (!estadisticas && !loading && !initialLoading) {
+      fetchEstadisticas();
+    }
+    if ((!allClientes || allClientes.length === 0) && !loading && !initialLoading) {
+      fetchAllClientes();
+    }
+  }, [estadisticas, allClientes, loading, initialLoading, fetchEstadisticas, fetchAllClientes]);
 
   // Constante de buffer (Mínimo Común Múltiplo de 5, 10, 15, 20 para alineación perfecta)
   const FETCH_LIMIT = 60;
@@ -38,13 +48,22 @@ export const useTabClientes = () => {
       });
     }, [debouncedSearch, cityFilter, statusFilter, orderBy, apiPage, fetchClientes]); // rowsPerPage no está porque solo afecta apiPage
 
-  // Obtener listas únicas para filtros
+  // Obtener listas únicas para filtros con fallback al dataset completo
   const ciudades = useMemo(() => {
+    const unique = new Set();
     if (estadisticas?.distribucion?.por_ciudad) {
-        return estadisticas.distribucion.por_ciudad.map(c => c.ciudad);
+      estadisticas.distribucion.por_ciudad.forEach(c => {
+        if (c.ciudad) unique.add(c.ciudad.trim());
+      });
     }
-    return [];
-  }, [estadisticas]);
+    if (unique.size === 0 && allClientes && allClientes.length > 0) {
+      allClientes.forEach(c => {
+        const value = (c?.ciudad || "").trim();
+        if (value) unique.add(value);
+      });
+    }
+    return Array.from(unique).sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  }, [estadisticas, allClientes]);
 
   const estados = ["Activo", "Inactivo", "Suspendido"];
 
