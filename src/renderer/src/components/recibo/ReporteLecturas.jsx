@@ -402,14 +402,9 @@ const ReporteLecturas = () => {
 
                                     {/* Tablas */}
                                     {isGrouped ? (
-                                        (() => {
-                                            let offset = 0;
-                                            return data.map((grupo, gIdx) => {
-                                                const el = <GrupoSection key={gIdx} grupo={grupo} offset={offset} ordenarPor={ordenarPor} />;
-                                                offset += grupo.clientes?.length || 0;
-                                                return el;
-                                            });
-                                        })()
+                                        data.map((grupo, gIdx) => (
+                                            <GrupoSection key={gIdx} grupo={grupo} offset={0} ordenarPor={ordenarPor} />
+                                        ))
                                     ) : (
                                         <div style={{ marginBottom: '20px' }}>
                                             <DataTable items={sortLecturasItems(data, ordenarPor)} offset={0} ordenarPor={ordenarPor} />
