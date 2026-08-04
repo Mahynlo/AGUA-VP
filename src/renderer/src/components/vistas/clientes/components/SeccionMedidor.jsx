@@ -14,15 +14,15 @@ export const SeccionMedidor = ({
   onMedidorSeleccionado 
 }) => {
   return (
-    <Card className="border border-orange-200 dark:border-orange-800 mt-2 h-[600px]">
+    <Card className="border border-slate-200 dark:border-zinc-800 mt-2">
       <CardBody className="space-y-4">
         <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <HiCog className="w-5 h-5 text-orange-600" />
+          <HiCog className="w-5 h-5 text-blue-600" />
           Gestión de Medidor
         </h3>
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Asigna o modifica el medidor asociado a este cliente.
-        </label>
+        <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">
+          Asigna o modifica los medidores asociados a este cliente.
+        </p>
         
         <BuscarMedidor
           clienteId={clienteId}
