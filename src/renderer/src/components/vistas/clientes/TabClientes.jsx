@@ -223,8 +223,13 @@ function ClienteUser({ nombre, numeroPredio, id }) {
             </div>
             <div className="flex flex-col">
                 <span className="font-bold text-sm text-slate-800 dark:text-zinc-100 leading-tight">{nombre}</span>
-                <span className="font-medium text-[11px] text-slate-500">
-                    {numeroPredio ? `Predio #${numeroPredio} · ID: ${id}` : `ID: ${id}`}
+                <span className="font-medium text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                    {numeroPredio ? (
+                        <>Predio <span className="font-bold text-slate-700 dark:text-zinc-300">#{numeroPredio}</span></>
+                    ) : (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500">Sin predio</span>
+                    )}
+                    <span className="text-slate-300 dark:text-zinc-700">·</span> ID: {id}
                 </span>
             </div>
         </div>
@@ -554,7 +559,14 @@ export function TabClientes() {
                                                 <td className="py-4 px-6">
                                                     <div className="flex flex-col">
                                                         <span className="font-bold text-sm text-slate-800 dark:text-zinc-100">{cliente.nombre}</span>
-                                                        <span className="text-[11px] text-slate-500">Predio #{cliente.numero_predio} · ID: {cliente.id}</span>
+                                                        <span className="font-medium text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                                            {cliente.numero_predio ? (
+                                                                <>Predio <span className="font-bold text-slate-700 dark:text-zinc-300">#{cliente.numero_predio}</span></>
+                                                            ) : (
+                                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500">Sin predio</span>
+                                                            )}
+                                                            <span className="text-slate-300 dark:text-zinc-700">·</span> ID: {cliente.id}
+                                                        </span>
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-6 text-xs text-slate-600 dark:text-zinc-300 font-medium">

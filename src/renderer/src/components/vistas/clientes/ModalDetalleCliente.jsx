@@ -139,16 +139,22 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                                 </span>
                             </div>
 
-                            {cliente.numero_predio && (
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                                        <HiHashtag className="w-3 h-3" /> Número de Predio
-                                    </span>
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                                    <HiHashtag className="w-3 h-3" /> Número de Predio
+                                </span>
+                                {cliente.numero_predio ? (
                                     <span className="text-sm font-semibold text-slate-800 dark:text-zinc-100 font-mono">
                                         {cliente.numero_predio}
                                     </span>
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="mt-1">
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500">
+                                            Sin predio
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
