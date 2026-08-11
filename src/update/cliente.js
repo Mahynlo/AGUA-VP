@@ -55,7 +55,12 @@ const updateCliente = async (id,nuevosDatos, token_session) => {
     const data = await response.json();
 
     if (!response.ok) {
-      return { success: false, message: data.error || "Error al modificar cliente" };
+      let errorMessage = data.error || "Error al modificar cliente";
+      if (data.detalles && Array.isArray(data.detalles)) {
+        const detallesMsg = data.detalles.map(d => d.mensaje).join(" | ");
+        errorMessage = `${errorMessage}: ${detallesMsg}`;
+      }
+      return { success: false, message: errorMessage };
     }
 
     return { success: true, message: "Cliente modificado correctamente", cambios: data.cambios };
