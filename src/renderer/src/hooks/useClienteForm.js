@@ -47,6 +47,7 @@ const cliente = clienteId
   useEffect(() => {
     if (clienteId && cliente) {
       setFormData({
+        id: cliente.id,
         numero_predio: cliente.numero_predio || "",
         nombre: cliente.nombre || "",
         direccion: cliente.direccion || "",
