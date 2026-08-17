@@ -12,7 +12,7 @@ import { validarCamposCliente, obtenerCamposFaltantes, limpiarDatosCliente } fro
 
 export const useClienteForm = (clienteId = null) => {
   const { user } = useAuth();
-  const { clientes, actualizarClientes } = useClientes();
+  const { clientes, allClientes, actualizarClientes } = useClientes();
   const { actualizarMedidores } = useMedidores(); // 🔹 Hook added
   const { setSuccess, setError } = useFeedback();
 
@@ -39,9 +39,9 @@ export const useClienteForm = (clienteId = null) => {
   const modo = clienteId ? 'editar' : 'crear';
 
   // Obtener datos del cliente si es edición
-const cliente = clienteId 
-  ? clientes.find(c => c.id?.toString() === clienteId.toString()) 
-  : null;
+  const cliente = clienteId 
+    ? (clientes.find(c => c.id?.toString() === clienteId.toString()) || allClientes.find(c => c.id?.toString() === clienteId.toString()))
+    : null;
 
   // Cargar datos del cliente al abrir en modo edición
   useEffect(() => {
