@@ -95,6 +95,11 @@ const api = {
     return await ipcRenderer.invoke("generar-facturas-ruta", params, token_session);
   },
 
+  // Validar si el periodo anterior ha sido cobrado correctamente
+  validarCobranzaPeriodo: async (params, token_session) => {
+    return await ipcRenderer.invoke("validar-cobranza-periodo", params, token_session);
+  },
+
 
   // Fetch de pagos
   fetchPagos: async (token_session, params) => {

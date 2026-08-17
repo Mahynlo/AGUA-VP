@@ -1,7 +1,7 @@
 import { ipcMain} from 'electron';
 
 // Fetch de facturas
-import {fetchLecturas, modificarLectura} from '../../fetch/lecturas.js';
+import {fetchLecturas, modificarLectura, validarCobranzaPeriodoAnterior} from '../../fetch/lecturas.js';
 // registro y actualizar
 import {registerLectura} from '../../register/lecturas.js'; // Importa la función registerLectura
 import { generarFacturasRuta } from '../../fetch/generarFacturasRuta.js';
@@ -54,6 +54,16 @@ export default function IpcHandlerLecturas () {
         }
         return await runWithAppKeyFlow(
             () => generarFacturasRuta({ ruta_id, periodo, fecha_emision, recalcular, motivo_recalculo }, token_session)
+        );
+    });
+
+    ipcMain.handle("validar-cobranza-periodo", async (event, params, token_session) => {
+        const { ruta_id, periodo } = params || {};
+        if (!ruta_id || !periodo) {
+            return { success: false, message: 'ruta_id y periodo son requeridos' };
+        }
+        return await runWithAppKeyFlow(
+            () => validarCobranzaPeriodoAnterior(ruta_id, periodo, token_session)
         );
     });
 }

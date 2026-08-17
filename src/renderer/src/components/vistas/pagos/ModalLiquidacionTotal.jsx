@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "flowbite-react";
-import { HiX, HiCreditCard, HiCash, HiExclamationCircle, HiArrowLeft, HiShieldCheck } from "react-icons/hi";
+import { HiX, HiCreditCard, HiCash, HiExclamationCircle, HiArrowLeft, HiShieldCheck, HiInformationCircle } from "react-icons/hi";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { usePagos } from "../../../context/PagosContext";
+import { formatearPeriodo } from "../../../utils/periodoUtils";
 
 const premiumModalTheme = {
   root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
@@ -79,18 +80,28 @@ const parsePredio = (predio) => {
 // Deuda que el backend SÍ puede liquidar vía pago distribuido. Replica el filtro
 // de pagosService.registrarPagoDistribuido: saldo > 0, estado != 'Pagado' y SIN
 // convenio. Las facturas en convenio NO se tocan aquí (se gestionan aparte).
-const calcularDeudaLiquidable = (cliente) => {
+const desglosarDeuda = (cliente, excluir_periodo = null) => {
   const facturas = Array.isArray(cliente?.facturas) ? cliente.facturas : null;
-  if (!facturas) return toMoney(cliente?.deuda_total); // fallback defensivo
+  if (!facturas) return { liquidable: toMoney(cliente?.deuda_total), convenio: 0, excluida: 0 };
+  
   return facturas.reduce((acc, f) => {
     const saldo = toMoney(f?.saldo_pendiente);
     const estado = String(f?.estado || "").toLowerCase();
-    const esConvenio = estado === "en convenio" || !!f?.convenio_id;
-    if (saldo > 0 && estado !== "pagado" && !esConvenio) {
-      return toMoney(acc + saldo);
+    
+    if (saldo > 0 && estado !== "pagado") {
+      const esConvenio = estado === "en convenio" || !!f?.convenio_id;
+      const esMesExcluido = excluir_periodo && f?.periodo === excluir_periodo;
+      
+      if (esConvenio) {
+        acc.convenio = toMoney(acc.convenio + saldo);
+      } else if (esMesExcluido) {
+        acc.excluida = toMoney(acc.excluida + saldo);
+      } else {
+        acc.liquidable = toMoney(acc.liquidable + saldo);
+      }
     }
     return acc;
-  }, 0);
+  }, { liquidable: 0, convenio: 0, excluida: 0 });
 };
 
 /**
@@ -117,6 +128,49 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
   const [fechaPago, setFechaPago] = useState(new Date().toISOString().split("T")[0]);
   const [comentario, setComentario] = useState("Liquidación total desde cobranza");
   const [mostrarErrores, setMostrarErrores] = useState(false);
+  const [excluirMesActual, setExcluirMesActual] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const [showConfirmQuitarSeguro, setShowConfirmQuitarSeguro] = useState(false);
+
+  const ultimoPeriodoFacturadoStr = useMemo(() => {
+    let maxPeriodo = "";
+    (clientesConDeuda || []).forEach(c => {
+      (c.facturas || []).forEach(f => {
+        if (f.periodo && f.periodo > maxPeriodo) {
+          maxPeriodo = f.periodo;
+        }
+      });
+    });
+    if (!maxPeriodo) {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    }
+    return maxPeriodo;
+  }, [clientesConDeuda]);
+
+  const ultimoPeriodoFormateado = useMemo(() => {
+    return ultimoPeriodoFacturadoStr ? formatearPeriodo(ultimoPeriodoFacturadoStr) : "";
+  }, [ultimoPeriodoFacturadoStr]);
+
+  const debeExcluirsePorDefecto = useMemo(() => {
+    if (!ultimoPeriodoFacturadoStr) return false;
+    const hoy = new Date().toISOString().split('T')[0];
+    let algunaVencida = false;
+    
+    for (const c of (clientesConDeuda || [])) {
+      for (const f of (c.facturas || [])) {
+        if (f.periodo === ultimoPeriodoFacturadoStr) {
+          if ((f.fecha_vencimiento && f.fecha_vencimiento <= hoy) || (String(f.estado || "").toLowerCase() === "vencida")) {
+            algunaVencida = true;
+            break;
+          }
+        }
+      }
+      if (algunaVencida) break;
+    }
+    
+    return !algunaVencida;
+  }, [clientesConDeuda, ultimoPeriodoFacturadoStr]);
 
   const listRef = useRef(null);
 
@@ -127,15 +181,17 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
     () =>
       (clientesConDeuda || [])
         .map((c) => {
-          const deudaLiquidable = calcularDeudaLiquidable(c);
+          const desglose = desglosarDeuda(c, excluirMesActual ? ultimoPeriodoFacturadoStr : null);
           return {
             ...c,
-            deuda_liquidable: deudaLiquidable,
-            deuda_no_liquidable: toMoney(toMoney(c.deuda_total) - deudaLiquidable)
+            deuda_liquidable: desglose.liquidable,
+            deuda_convenio: desglose.convenio,
+            deuda_excluida: desglose.excluida,
+            deuda_no_liquidable: desglose.convenio + desglose.excluida
           };
         })
         .filter((c) => c.deuda_liquidable > 0),
-    [clientesConDeuda]
+    [clientesConDeuda, excluirMesActual, ultimoPeriodoFacturadoStr]
   );
 
   // Reinicia solo la UI efímera. La selección NO se toca aquí: persiste entre
@@ -153,11 +209,12 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
     setFechaPago(new Date().toISOString().split("T")[0]);
     setComentario("Liquidación total desde cobranza");
     setMostrarErrores(false);
+    setExcluirMesActual(debeExcluirsePorDefecto);
   };
 
   useEffect(() => {
     if (isOpen) resetEstadoUI();
-  }, [isOpen]);
+  }, [isOpen, debeExcluirsePorDefecto]);
 
   // Guarda la selección "sigue debiendo" en localStorage en cada cambio para que
   // sobreviva al cierre del modal y de la app. Solo se borra al liquidar con éxito.
@@ -296,6 +353,7 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
 
   const handleClose = () => {
     if (procesando) return;
+    if (showConfirmQuitarSeguro) return;
     onClose();
   };
 
@@ -351,7 +409,8 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
           cantidad_entregada: cantidad,
           metodo_pago: metodoPago,
           comentario: comentario || null,
-          modificado_por: modificadoPor
+          modificado_por: modificadoPor,
+          excluir_periodo: excluirMesActual ? ultimoPeriodoFacturadoStr : undefined
         });
 
         if (!response?.success) {
@@ -406,31 +465,59 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
     && String(comentario || "").length <= MAX_COMENTARIO;
 
   return (
-    <Modal
-      show={isOpen}
-      size="6xl"
-      onClose={handleClose}
-      theme={premiumModalTheme}
-      dismissible={!procesando}
-    >
+    <>
+      <Modal
+        show={isOpen}
+        size="6xl"
+        onClose={handleClose}
+        theme={premiumModalTheme}
+        dismissible={!procesando}
+      >
       <Modal.Header>
-        <div className="flex items-center gap-4">
-          <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl p-3">
-            <HiCash className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-              Liquidación Total por Cliente
-            </h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-              {fase === "seleccion" ? (
-                <>Marca los clientes que <strong className="text-orange-500 dark:text-orange-400">SIGUEN debiendo</strong>. Al resto se le liquidará su deuda total completa.</>
-              ) : (
-                <>Revisa el resumen antes de aplicar. Esta acción registra pagos reales.</>
-              )}
-            </p>
+        <div className="flex items-start justify-between w-full">
+          <div className="flex items-center gap-4">
+            <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl p-3">
+              <HiCash className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+                  Liquidación Total por Cliente
+                </h3>
+                <button
+                  onClick={() => setShowInfo(!showInfo)}
+                  className="text-blue-500 hover:text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 rounded-full transition-colors"
+                  title="¿Qué hace esta herramienta?"
+                >
+                  <HiInformationCircle className="w-6 h-6" />
+                </button>
+              </div>
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                {fase === "seleccion" ? (
+                  <>Marca los clientes que <strong className="text-orange-500 dark:text-orange-400">SIGUEN debiendo</strong>. Al resto se le liquidará su deuda total completa.</>
+                ) : (
+                  <>Revisa el resumen antes de aplicar. Esta acción registra pagos reales.</>
+                )}
+              </p>
+            </div>
           </div>
         </div>
+
+        {/* Sección de Información Expandible */}
+        {showInfo && (
+          <div className="mt-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-800 dark:text-blue-300">
+            <h4 className="font-bold mb-2 flex items-center gap-2">
+              <HiInformationCircle className="w-5 h-5" />
+              ¿Cómo funciona la Liquidación Total?
+            </h4>
+            <ul className="list-disc list-inside space-y-1 ml-1 opacity-90">
+              <li>Esta herramienta asume que <strong>todos pagaron</strong>, excepto los que tú marques manualmente como "Siguen debiendo".</li>
+              <li>Al confirmar, se registrarán pagos reales en la base de datos para todos los deudores <strong>no excluidos</strong>.</li>
+              <li>Las facturas que están en <strong>Convenio</strong> no se liquidan por aquí, se protegen automáticamente.</li>
+              <li>Si hay facturas de un mes <strong>recién generado (no vencido)</strong>, la casilla de "Excluir mes nuevo" se activará sola para evitar cobrar por adelantado.</li>
+            </ul>
+          </div>
+        )}
       </Modal.Header>
 
       <Modal.Body>
@@ -457,57 +544,97 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
             </div>
 
             {/* Formulario */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
-                  Método de pago*
-                </label>
-                <div className="relative">
-                  <HiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                  <select
-                    value={metodoPago}
-                    onChange={(e) => setMetodoPago(e.target.value)}
-                    className={`${inputBaseClasses} pl-10`}
-                  >
-                    <option value="Efectivo">Efectivo</option>
-                    <option value="Transferencia">Transferencia</option>
-                    <option value="Tarjeta">Tarjeta</option>
-                    <option value="Cheque">Cheque</option>
-                  </select>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
+                    Método de pago*
+                  </label>
+                  <div className="relative">
+                    <HiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <select
+                      value={metodoPago}
+                      onChange={(e) => setMetodoPago(e.target.value)}
+                      className={`${inputBaseClasses} pl-10`}
+                    >
+                      <option value="Efectivo">Efectivo</option>
+                      <option value="Transferencia">Transferencia</option>
+                      <option value="Tarjeta">Tarjeta</option>
+                      <option value="Cheque">Cheque</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
+                    Fecha de pago*
+                  </label>
+                  <input
+                    type="date"
+                    value={fechaPago}
+                    onChange={(e) => setFechaPago(e.target.value)}
+                    className={`${inputBaseClasses} ${mostrarErrores && !isValidPaymentDate(fechaPago) ? "border-rose-500 focus:ring-rose-500" : "focus:ring-emerald-500"}`}
+                  />
+                  {mostrarErrores && !isValidPaymentDate(fechaPago) && (
+                    <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-wider">Fecha inválida</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
+                    Comentario
+                  </label>
+                  <input
+                    type="text"
+                    value={comentario}
+                    onChange={(e) => setComentario(e.target.value)}
+                    maxLength={MAX_COMENTARIO}
+                    placeholder="Nota interna..."
+                    className={`${inputBaseClasses} focus:ring-emerald-500`}
+                  />
+                  <div className="flex justify-end mt-1">
+                    <p className={`text-[10px] font-bold ${String(comentario || "").length > MAX_COMENTARIO ? "text-rose-500" : "text-slate-400 dark:text-zinc-600"}`}>
+                      {String(comentario || "").length} / {MAX_COMENTARIO}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
-                  Fecha de pago*
-                </label>
-                <input
-                  type="date"
-                  value={fechaPago}
-                  onChange={(e) => setFechaPago(e.target.value)}
-                  className={`${inputBaseClasses} ${mostrarErrores && !isValidPaymentDate(fechaPago) ? "border-rose-500 focus:ring-rose-500" : "focus:ring-emerald-500"}`}
-                />
-                {mostrarErrores && !isValidPaymentDate(fechaPago) && (
-                  <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-wider">Fecha inválida</p>
-                )}
-              </div>
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
-                  Comentario
-                </label>
-                <input
-                  type="text"
-                  value={comentario}
-                  onChange={(e) => setComentario(e.target.value)}
-                  maxLength={MAX_COMENTARIO}
-                  placeholder="Nota interna..."
-                  className={`${inputBaseClasses} focus:ring-emerald-500`}
-                />
-                <div className="flex justify-end mt-1">
-                  <p className={`text-[10px] font-bold ${String(comentario || "").length > MAX_COMENTARIO ? "text-rose-500" : "text-slate-400 dark:text-zinc-600"}`}>
-                    {String(comentario || "").length} / {MAX_COMENTARIO}
+
+              {/* Banner Inteligente de Exclusión */}
+              <label className={`flex items-start gap-4 px-5 py-4 border rounded-xl shadow-sm cursor-pointer select-none transition-colors ${debeExcluirsePorDefecto ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800" : "bg-slate-50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}>
+                <div className="pt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={excluirMesActual}
+                    onChange={(e) => {
+                      const newValue = e.target.checked;
+                      if (!newValue && debeExcluirsePorDefecto) {
+                        setShowConfirmQuitarSeguro(true);
+                        return;
+                      }
+                      setExcluirMesActual(newValue);
+                    }}
+                    className={`w-5 h-5 rounded ${debeExcluirsePorDefecto ? "accent-emerald-600" : "accent-slate-600"}`}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-sm font-bold flex items-center gap-2 ${debeExcluirsePorDefecto ? "text-emerald-800 dark:text-emerald-400" : "text-slate-800 dark:text-zinc-100"}`}>
+                    Excluir mes nuevo ({ultimoPeriodoFormateado})
+                    {debeExcluirsePorDefecto ? (
+                      <span className="bg-emerald-200 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                        ✨ Autodetectado
+                      </span>
+                    ) : (
+                      <span className="bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold">
+                        Vencido
+                      </span>
+                    )}
+                  </span>
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                    {debeExcluirsePorDefecto 
+                      ? "Recomendado: Hemos detectado que el periodo más reciente corresponde a facturas frescas aún no vencidas. El sistema lo ha excluido por defecto para evitar que lo cobres por accidente."
+                      : "El periodo más reciente ya se encuentra vencido, por lo cual se incluyó en este cobro masivo. Puedes excluirlo manualmente si deseas perdonar este mes por ahora."}
                   </p>
                 </div>
-              </div>
+              </label>
             </div>
 
             <hr className="border-slate-100 dark:border-zinc-800/50" />
@@ -547,22 +674,30 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
                     <option value="deuda_asc">Menor deuda primero</option>
                   </select>
 
-                  <label className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm cursor-pointer select-none">
+                  <label className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm cursor-pointer select-none hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors h-[46px]">
                     <input
                       type="checkbox"
                       checked={soloExcluidos}
                       onChange={(e) => setSoloExcluidos(e.target.checked)}
-                      className="w-4 h-4 rounded accent-orange-500"
+                      className="w-4 h-4 rounded accent-orange-500 cursor-pointer"
                     />
-                    <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">Ver solo deudores marcados</span>
+                    <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">Ver solo marcados</span>
                   </label>
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                  <button type="button" onClick={marcarPaginaSigueDebiendo} className="px-4 h-9 text-sm font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors">
+                  <button 
+                    type="button" 
+                    onClick={marcarPaginaSigueDebiendo} 
+                    className="px-4 h-[46px] text-sm font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 rounded-xl hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors shadow-sm"
+                  >
                     Marcar todos
                   </button>
-                  <button type="button" onClick={limpiarExcluidos} className="px-4 h-9 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                  <button 
+                    type="button" 
+                    onClick={limpiarExcluidos} 
+                    className="px-4 h-[46px] text-sm font-bold bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors shadow-sm"
+                  >
                     Resetear
                   </button>
                 </div>
@@ -607,10 +742,19 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
                                 <p className={`text-base font-black tracking-tight ${isExcluded ? "text-orange-600/50 dark:text-orange-500/50 line-through" : "text-emerald-600 dark:text-emerald-400"}`}>
                                   ${formatMoney(cliente.deuda_liquidable)}
                                 </p>
-                                {cliente.deuda_no_liquidable > 0 && (
-                                  <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400" title="Saldo en convenio: no se liquida con esta herramienta">
-                                    + ${formatMoney(cliente.deuda_no_liquidable)} en convenio
-                                  </p>
+                                {(cliente.deuda_convenio > 0 || cliente.deuda_excluida > 0) && (
+                                  <div>
+                                    {cliente.deuda_convenio > 0 && (
+                                      <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400" title="Saldo en convenio: no se liquida con esta herramienta">
+                                        + ${formatMoney(cliente.deuda_convenio)} convenio
+                                      </p>
+                                    )}
+                                    {cliente.deuda_excluida > 0 && (
+                                      <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400" title="Mes nuevo: protegido para no cobrarse por accidente">
+                                        + ${formatMoney(cliente.deuda_excluida)} {ultimoPeriodoFormateado} (excluido)
+                                      </p>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                               <div className="w-[150px] flex items-center justify-end gap-2">
@@ -812,7 +956,52 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
           )
         )}
       </Modal.Footer>
-    </Modal>
+      </Modal>
+
+      {/* Modal de confirmación UI (Cuidado) */}
+      <Modal 
+        show={showConfirmQuitarSeguro} 
+        size="md" 
+        popup 
+        onClose={() => setShowConfirmQuitarSeguro(false)}
+        theme={{
+          content: {
+            inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto w-full"
+          }
+        }}
+      >
+        <Modal.Header />
+        <Modal.Body>
+          <div className="text-center p-4">
+            <HiExclamationCircle className="mx-auto mb-4 h-16 w-16 text-orange-500 dark:text-orange-400 drop-shadow-sm" />
+            <h3 className="mb-3 text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              ¡CUIDADO!
+            </h3>
+            <p className="mb-8 text-sm font-medium text-slate-500 dark:text-zinc-400 leading-relaxed">
+              El sistema detectó que este periodo contiene facturas frescas o sin vencer. Si quitas este seguro, los cobrarás de manera adelantada a todos los clientes que seleccionaste.<br/><br/>
+              <strong className="text-slate-700 dark:text-zinc-300">¿Estás completamente seguro de incluir este mes?</strong>
+            </p>
+            <div className="flex justify-center gap-3 w-full">
+              <button
+                className="font-bold flex-1 bg-orange-500 text-white rounded-xl h-[46px] shadow-sm hover:bg-orange-600 transition-colors"
+                onClick={() => {
+                  setExcluirMesActual(false);
+                  setShowConfirmQuitarSeguro(false);
+                }}
+              >
+                Sí, estoy seguro
+              </button>
+              <button
+                className="font-bold flex-1 text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl h-[46px] transition-colors"
+                onClick={() => setShowConfirmQuitarSeguro(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </Modal.Body>
+      </Modal>
+    </>
   );
 };
 

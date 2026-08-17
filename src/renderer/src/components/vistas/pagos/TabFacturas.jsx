@@ -275,14 +275,13 @@ const TabFacturas = () => {
           </Dropdown>
 
           {/* Botón Maestro */}
-          <Button
-            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-11 px-6 shadow-sm transition-transform active:scale-95"
-            startContent={<HiCalculator className="text-lg" />}
-            onPress={() => setModalPagoRapido(true)}
-            title="Modo rapido: marca los que NO pagaron y aplica al resto"
-          >
-            Modo Rápido
-          </Button>
+          <button
+          onClick={() => setModalPagoRapido(true)}
+          className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-5 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-800 dark:hover:bg-zinc-100"
+        >
+          <HiCalculator className="text-lg" />
+          Liquidación de Periodo
+        </button>
         </div>
       </div>
 

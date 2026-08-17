@@ -26,12 +26,14 @@ const ModalSeleccionPeriodoRapido = ({
   return (
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
       <Modal.Header>
-        <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
-          Modo rápido de pagos
-        </h2>
-        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-          Selecciona el periodo para aplicar pagos masivos
-        </p>
+        <div>
+          <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+            Liquidación de Periodo
+          </h3>
+          <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
+            Selecciona el periodo para aplicar pagos masivos
+          </p>
+        </div>
       </Modal.Header>
 
       <Modal.Body>

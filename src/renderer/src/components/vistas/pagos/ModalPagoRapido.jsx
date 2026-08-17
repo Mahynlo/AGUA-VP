@@ -481,7 +481,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
           </div>
           <div>
             <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-              Pago Rápido Masivo
+              Liquidación de Periodo
             </h3>
             <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
               {fase === "seleccion" ? (
@@ -608,22 +608,30 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                     <option value="deuda_asc">Menor deuda primero</option>
                   </select>
 
-                  <label className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm cursor-pointer select-none">
+                  <label className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm cursor-pointer select-none hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors h-[46px]">
                     <input
                       type="checkbox"
                       checked={soloNoPagaron}
                       onChange={(e) => setSoloNoPagaron(e.target.checked)}
-                      className="w-4 h-4 rounded accent-orange-500"
+                      className="w-4 h-4 rounded accent-orange-500 cursor-pointer"
                     />
                     <span className="text-sm font-bold text-slate-600 dark:text-zinc-400">Ver solo excluidas</span>
                   </label>
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                  <button type="button" onClick={marcarTodasNoPagaron} className="px-4 h-9 text-sm font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors">
+                  <button 
+                    type="button" 
+                    onClick={marcarTodasNoPagaron} 
+                    className="px-4 h-[46px] text-sm font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 rounded-xl hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors shadow-sm"
+                  >
                     Excluir todas
                   </button>
-                  <button type="button" onClick={limpiarNoPagaron} className="px-4 h-9 text-sm font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+                  <button 
+                    type="button" 
+                    onClick={limpiarNoPagaron} 
+                    className="px-4 h-[46px] text-sm font-bold bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300 rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors shadow-sm"
+                  >
                     Resetear
                   </button>
                 </div>
