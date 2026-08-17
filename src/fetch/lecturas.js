@@ -75,3 +75,35 @@ export const fetchLecturas = async (token_session, isRetry = false) => {
     return [];
   }
 };
+
+export const validarCobranzaPeriodoAnterior = async (ruta_id, periodo, token_session) => {
+  try {
+    const token_app = leerToken();
+    if (!token_app) return { success: false, message: 'Token de aplicación no disponible' };
+    if (!token_session) return { success: false, message: 'Token de sesión no disponible' };
+
+    const url = new URL(`${URL_BASE}/api/v2/lecturas/validar-cobranza`);
+    url.searchParams.append('ruta_id', ruta_id);
+    url.searchParams.append('periodo', periodo);
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'x-app-key': `AppKey ${token_app}`,
+        'Authorization': `Bearer ${token_session}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      return { success: false, message: `Error HTTP ${response.status}: ${errorBody}` };
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error en validarCobranzaPeriodoAnterior:', error);
+    return { success: false, message: 'Error al validar cobranza' };
+  }
+};

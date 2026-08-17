@@ -1060,7 +1060,7 @@ const TabCobranzaCliente = () => {
             className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-800 dark:hover:bg-zinc-100"
           >
             <HiCalculator className="text-lg" />
-            Modo Rápido
+            Liquidación de Periodo
           </button>
         </div>
       </div>

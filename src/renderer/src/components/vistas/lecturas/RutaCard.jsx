@@ -54,6 +54,8 @@ export default function RutaCard({ ruta }) {
   const [facturasGeneradas, setFacturasGeneradas] = useState(false);
   const [motivoRecalculo, setMotivoRecalculo] = useState("Ajuste por rectificación de lecturas");
   const [ultimoResultadoFacturacion, setUltimoResultadoFacturacion] = useState(null);
+  const [modalAlertaCobranzaOpen, setModalAlertaCobranzaOpen] = useState(false);
+  const [datosAlertaCobranza, setDatosAlertaCobranza] = useState(null);
 
   useEffect(() => {
     try {
@@ -93,7 +95,23 @@ export default function RutaCard({ ruta }) {
 
   const handleGenerarFacturas = async () => {
     if (isGenerando || porcentajeCompletado < 100 || facturasGeneradas) return;
-    setModalGenerarOpen(true);
+    setIsGenerando(true);
+    try {
+      const token = localStorage.getItem('token');
+      const resValidacion = await window.api.validarCobranzaPeriodo({ ruta_id: ruta.id, periodo: ruta.periodo_mostrado }, token);
+      
+      if (resValidacion?.success && resValidacion.data?.alerta) {
+        setDatosAlertaCobranza(resValidacion.data);
+        setModalAlertaCobranzaOpen(true);
+      } else {
+        setModalGenerarOpen(true);
+      }
+    } catch (error) {
+      console.error("Error validando cobranza del periodo anterior:", error);
+      setModalGenerarOpen(true);
+    } finally {
+      setIsGenerando(false);
+    }
   };
 
   const ejecutarGenerarFacturas = async () => {
@@ -655,6 +673,52 @@ export default function RutaCard({ ruta }) {
         </Modal.Body>
         <Modal.Footer>
           <Button color="light" onClick={() => setModalResultadoOpen(false)} className="font-bold text-slate-500">Cerrar Visualizador</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal Alerta Cobranza */}
+      <Modal
+        show={modalAlertaCobranzaOpen}
+        onClose={() => setModalAlertaCobranzaOpen(false)}
+        size="md"
+        theme={premiumModalTheme}
+      >
+        <Modal.Header>
+          <div className="flex flex-col gap-1">
+            <span className="text-xl font-black tracking-tight text-red-600 dark:text-red-500">Alerta de Precaución</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+              Ruta {ruta.nombre} · Periodo Anterior {datosAlertaCobranza?.periodoAnterior}
+            </span>
+          </div>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5">
+              <p className="text-sm font-bold text-red-700 dark:text-red-400 mb-2">
+                ¡Se detectó un alto índice de facturas sin pagar del periodo anterior!
+              </p>
+              <p className="text-xs font-medium text-red-600 dark:text-red-500/80 mb-2">
+                Han quedado pendientes <strong>{datosAlertaCobranza?.totalPendientes}</strong> de <strong>{datosAlertaCobranza?.totalFacturas}</strong> facturas (<strong>{datosAlertaCobranza?.porcentajePendiente.toFixed(1)}%</strong>).
+              </p>
+              <p className="text-xs font-medium text-red-600 dark:text-red-500/80">
+                Si generas los recibos ahora, los usuarios podrían acumular el mes sin que se haya procesado su pago previo. ¿Deseas continuar?
+              </p>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button color="light" onClick={() => setModalAlertaCobranzaOpen(false)} className="font-bold text-slate-500">
+            Cancelar Generación
+          </Button>
+          <Button
+            className="bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl"
+            onClick={() => {
+              setModalAlertaCobranzaOpen(false);
+              setModalGenerarOpen(true);
+            }}
+          >
+            Continuar de todos modos
+          </Button>
         </Modal.Footer>
       </Modal>
     </div>
