@@ -245,7 +245,7 @@ function ImprimirDeudoresDropdown({ onImprimir, loading }) {
 }
 
 const TabCobranzaCliente = () => {
-  const { fetchClientes, allClientes } = useClientes();
+  const { fetchClientes, allClientes, fetchAllClientes } = useClientes();
   const { registrarPagoDistribuido, loading: loadingPagos, fetchPagos } = usePagos();
   const { setSuccess, setError } = useFeedback();
 
@@ -448,7 +448,8 @@ const TabCobranzaCliente = () => {
 
   useEffect(() => {
     cargarClientes();
-  }, [cargarClientes]);
+    if (fetchAllClientes) fetchAllClientes();
+  }, [cargarClientes, fetchAllClientes]);
 
   useEffect(() => {
     cargarFacturasHistorial();
@@ -752,9 +753,9 @@ const TabCobranzaCliente = () => {
     setModalPagoRapidoOpen(true);
   };
 
-  const clientesConDeuda = useMemo(
-    () => clientesTablaOrdenada.filter((cliente) => toMoney(cliente.deuda_total) > 0),
-    [clientesTablaOrdenada]
+  const allClientesConDeuda = useMemo(
+    () => allClientesTabla.filter((cliente) => toMoney(cliente.deuda_total) > 0),
+    [allClientesTabla]
   );
 
   const refrescarCobranzaTrasPagoRapido = async () => {
@@ -762,6 +763,7 @@ const TabCobranzaCliente = () => {
       cargarFacturasHistorial(),
       cargarPagosHistorial(),
       cargarClientes(),
+      fetchAllClientes ? fetchAllClientes() : Promise.resolve(),
       fetchPagos()
     ]);
   };
@@ -1048,7 +1050,7 @@ const TabCobranzaCliente = () => {
 
           <button
             onClick={() => setModalLiquidacionTotalOpen(true)}
-            disabled={clientesConDeuda.length === 0}
+            disabled={allClientesConDeuda.length === 0}
             className="font-bold bg-emerald-600 text-white rounded-xl px-6 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <HiCash className="text-lg" />
@@ -1407,7 +1409,7 @@ const TabCobranzaCliente = () => {
       <ModalLiquidacionTotal
         isOpen={modalLiquidacionTotalOpen}
         onClose={() => setModalLiquidacionTotalOpen(false)}
-        clientesConDeuda={clientesConDeuda}
+        clientesConDeuda={allClientesConDeuda}
         onLiquidacionRegistrada={refrescarCobranzaTrasPagoRapido}
       />
 
