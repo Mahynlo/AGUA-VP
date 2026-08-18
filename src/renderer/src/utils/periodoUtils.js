@@ -5,6 +5,35 @@ export const obtenerPeriodoActual = () => {
   return `${anio}-${mes}`;
 };
 
+export const sumarMesPeriodo = (periodo, n = 1) => {
+  if (!periodo || !/^\d{4}-\d{2}$/.test(periodo)) return periodo || "";
+  const [anioRaw, mesRaw] = periodo.split("-");
+  let anio = Number(anioRaw);
+  let mes = Number(mesRaw) + n;
+
+  while (mes > 12) {
+    mes -= 12;
+    anio += 1;
+  }
+  while (mes < 1) {
+    mes += 12;
+    anio -= 1;
+  }
+
+  return `${anio}-${String(mes).padStart(2, "0")}`;
+};
+
+export const restarMesPeriodo = (periodo, n = 1) => {
+  return sumarMesPeriodo(periodo, -n);
+};
+
+export const compararPeriodos = (p1, p2) => {
+  if (!p1 && !p2) return 0;
+  if (!p1) return -1;
+  if (!p2) return 1;
+  return p1.localeCompare(p2);
+};
+
 export const formatearPeriodo = (periodo, locale = "es-MX") => {
   if (!periodo || !/^\d{4}-\d{2}$/.test(periodo)) return periodo || "";
 
@@ -15,12 +44,15 @@ export const formatearPeriodo = (periodo, locale = "es-MX") => {
   if (!anio || !mes || mes < 1 || mes > 12) return periodo;
 
   const fecha = new Date(anio, mes - 1, 1);
-  const etiqueta = fecha.toLocaleDateString(locale, { month: "long", year: "numeric" });
-  return etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1);
+  const mesNombre = fecha.toLocaleDateString(locale, { month: "long" });
+  const mesCapitalizado = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
+  return `${mesCapitalizado} ${anio}`;
 };
 
-export const generarCatalogoPeriodos = ({ startYear = 2020, endPeriod } = {}) => {
-  const periodoFinal = endPeriod || obtenerPeriodoActual();
+export const generarCatalogoPeriodos = ({ startYear = 2020, endPeriod, futureMonths = 0 } = {}) => {
+  // Limita al mes actual del calendario (o endPeriod si se especifica) sin meses futuros extras
+  const baseActual = endPeriod || obtenerPeriodoActual();
+  const periodoFinal = futureMonths > 0 ? sumarMesPeriodo(baseActual, futureMonths) : baseActual;
 
   if (!/^\d{4}-\d{2}$/.test(periodoFinal)) {
     return [];

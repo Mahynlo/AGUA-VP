@@ -20,12 +20,37 @@ export function RutasProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [initialLoading, setInitialLoading] = useState(true);
     const [periodoActual, setPeriodoActual] = useState(obtenerPeriodoActual());
+    const [periodosInfo, setPeriodosInfo] = useState({});
+    const [ultimoPeriodoRegistrado, setUltimoPeriodoRegistrado] = useState(null);
+    const [ultimoPeriodoCompleto, setUltimoPeriodoCompleto] = useState(null);
+    const [siguientePeriodo, setSiguientePeriodo] = useState(null);
     const [error, setError] = useState(null);
     // Ref para detectar la carga inicial sin incluirla como dep de fetchRutas
-    // (evita la doble carga que ocurría cuando initialLoading cambiaba de true a false
-    // y regeneraba la referencia de fetchRutas, re-disparando el useEffect de inicio)
     const isFirstLoadRef = useRef(true);
 
+    // Cargar estado de periodos (cuál está completo, cuál es el último y cuál es el siguiente a capturar)
+    const actualizarEstadoPeriodos = useCallback(async () => {
+        try {
+            const token_session = localStorage.getItem("token");
+            if (!token_session || !window.api?.obtenerEstadoPeriodosLecturas) return;
+
+            const res = await window.api.obtenerEstadoPeriodosLecturas(token_session);
+            if (res && res.success) {
+                setPeriodosInfo(res.periodos || {});
+                setUltimoPeriodoRegistrado(res.ultimoPeriodoRegistrado || null);
+                setUltimoPeriodoCompleto(res.ultimoPeriodoCompleto || null);
+                if (res.siguientePeriodo) {
+                    setSiguientePeriodo(res.siguientePeriodo);
+                    // Si estamos en la primera carga, inicializar periodoActual al siguiente período
+                    if (isFirstLoadRef.current) {
+                        setPeriodoActual(res.siguientePeriodo);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error al actualizar estado de periodos de lecturas:", err);
+        }
+    }, []);
 
     // Función para obtener rutas desde el backend (puede recibir un período o params)
     const fetchRutas = useCallback(async (paramsOrPeriodo = periodoActual) => {
@@ -80,11 +105,26 @@ export function RutasProvider({ children }) {
         }
     }, [periodoActual]); // sin initialLoading como dep: evita regenerar la referencia
 
-
-    // Cargar rutas al iniciar — gated on auth user
+    // Cargar rutas y estado de periodos al iniciar — gated on auth user
     useEffect(() => {
-        if (user) fetchRutas();
-    }, [user, fetchRutas]);
+        if (user) {
+            actualizarEstadoPeriodos();
+            fetchRutas();
+        }
+    }, [user, fetchRutas, actualizarEstadoPeriodos]);
+
+    // Escuchar eventos de cambios en lecturas/rutas para refrescar periodos
+    useEffect(() => {
+        const handler = () => {
+            actualizarEstadoPeriodos();
+        };
+        window.addEventListener('rutas-changed', handler);
+        window.addEventListener('lectura-guardada', handler);
+        return () => {
+            window.removeEventListener('rutas-changed', handler);
+            window.removeEventListener('lectura-guardada', handler);
+        };
+    }, [actualizarEstadoPeriodos]);
 
     // Actualizar cuando se restaura la conexión
     useEffect(() => {
@@ -146,6 +186,11 @@ export function RutasProvider({ children }) {
             actualizarProgresoRuta,
             obtenerInfoRuta,
             periodoActual,
+            periodosInfo,
+            ultimoPeriodoRegistrado,
+            ultimoPeriodoCompleto,
+            siguientePeriodo,
+            actualizarEstadoPeriodos,
             pagination, // Exportar paginación
             fetchRutas // Exponer fetch manual
         }}>

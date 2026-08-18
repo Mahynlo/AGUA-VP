@@ -14,6 +14,7 @@ import {
 } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useTabPagos } from "../../../hooks/useTabPagos";
+import { useRutas } from "../../../context/RutasContext";
 import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
 import { formatearPeriodo } from "../../../utils/periodoUtils";
 import ModalDetallePago from "./ModalDetallePago";
@@ -209,6 +210,7 @@ const TabPagos = () => {
     setCityFilter
   } = useTabPagos();
 
+  const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
   const { setSuccess } = useFeedback();
 
   // Estados para modales
@@ -347,6 +349,9 @@ const TabPagos = () => {
                   startYear={2020}
                   isDisabled={loading}
                   className="w-full h-full"
+                  periodosInfo={periodosInfo}
+                  siguientePeriodo={siguientePeriodo}
+                  ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
                 />
               </div>
             </div>

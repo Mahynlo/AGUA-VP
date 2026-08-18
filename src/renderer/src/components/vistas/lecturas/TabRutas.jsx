@@ -46,7 +46,8 @@ export default function TabRutas() {
 
   const {
     search, setSearch, filtro, setFiltro, filtroPueblo, setPueblo,
-    periodoSel, setPeriodoSel, paginaActual, setPagina,
+    periodoSel, setPeriodoSel, periodoEfectivo, siguientePeriodo,
+    periodosInfo, ultimoPeriodoRegistrado, paginaActual, setPagina,
     totalPaginas, rutasPaginadas, estadisticas, limpiarFiltros
   } = useTabRutas(rutas, actualizarRutas, periodoActual);
 
@@ -181,12 +182,15 @@ export default function TabRutas() {
             <div className="lg:col-span-3">
               <div className="w-full h-[52px] flex items-center">
                 <SelectorPeriodoAvanzado
-                  value={periodoSel || periodoActual}
+                  value={periodoEfectivo}
                   onChange={setPeriodoSel}
                   placeholder="Período"
                   startYear={2020}
                   isDisabled={loading}
                   className="w-full h-full"
+                  periodosInfo={periodosInfo}
+                  siguientePeriodo={siguientePeriodo}
+                  ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
                 />
               </div>
             </div>

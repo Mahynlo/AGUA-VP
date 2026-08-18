@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useReportes } from '../context/ReportesContext'; // Importar contexto
+import { useRutas } from '../context/RutasContext';
 import { 
   construirURLImpresion,
   calcularEstadisticas,
@@ -12,6 +13,7 @@ import {
  * Ahora utiliza ReportesContext para caching y persistencia
  */
 const useImpresionRecibos = () => {
+  const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado, ultimoPeriodoFacturado } = useRutas();
   // Estado local UI
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState("");
   const [clientesSeleccionados, setClientesSeleccionados] = useState(new Set());
@@ -28,6 +30,18 @@ const useImpresionRecibos = () => {
   // Consumir contexto de reportes
   const { recibos, loading, cargarRecibos } = useReportes();
   const { token } = useAuth();
+
+  // Inicializar automáticamente con el último período facturado/registrado
+  useEffect(() => {
+    if (!periodoSeleccionado) {
+      const periodoInicial = ultimoPeriodoFacturado || ultimoPeriodoRegistrado || siguientePeriodo;
+      if (periodoInicial) {
+        setPeriodoSeleccionado(periodoInicial);
+        const cachedToken = token || localStorage.getItem("token");
+        cargarRecibos(cachedToken, periodoInicial);
+      }
+    }
+  }, [periodoSeleccionado, ultimoPeriodoFacturado, ultimoPeriodoRegistrado, siguientePeriodo, token, cargarRecibos]);
 
   // Cambio de período
   const handleCambioPeriodo = (nuevoPeriodo) => {

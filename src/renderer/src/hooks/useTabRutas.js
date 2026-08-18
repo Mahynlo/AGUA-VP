@@ -13,7 +13,7 @@ import { useRutas } from "../context/RutasContext";
  * @returns {Object} - Estados y funciones para TabRutas
  */
 export function useTabRutas(rutas, actualizarRutas, periodoActual) {
-  const { pagination, loading, initialLoading, fetchRutas } = useRutas();
+  const { pagination, loading, initialLoading, fetchRutas, siguientePeriodo, periodosInfo, ultimoPeriodoRegistrado } = useRutas();
 
   // Estados de UI
   const [search, setSearch] = useState("");
@@ -23,6 +23,9 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
   const [paginaActual, setPagina] = useState(1);
   const [rutasPorPagina, setPorPag] = useState(10);
   const [periodoSel, setPeriodoSel] = useState(null);
+
+  // Período efectivo: si el usuario no ha seleccionado uno manualmente, usa el siguiente período a capturar o periodoActual
+  const periodoEfectivo = periodoSel || siguientePeriodo || periodoActual;
 
   // Contador que se incrementa cuando una ruta es creada/editada
   const [refreshToken, setRefreshToken] = useState(0);
@@ -47,9 +50,9 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
         page: paginaActual,
         limit: rutasPorPagina,
         search: debouncedSearch,
-        periodo: periodoSel || periodoActual
+        periodo: periodoEfectivo
     });
-  }, [paginaActual, rutasPorPagina, debouncedSearch, periodoSel, periodoActual, refreshToken]);
+  }, [paginaActual, rutasPorPagina, debouncedSearch, periodoEfectivo, refreshToken]);
 
   // Estadisticas: totalRutas viene del servidor (pagination.total) para reflejar
   // el total real de rutas, no solo las de la página actual
@@ -107,6 +110,10 @@ export function useTabRutas(rutas, actualizarRutas, periodoActual) {
     setPueblo: actualizarPueblo,
     periodoSel,
     setPeriodoSel: actualizarPeriodo,
+    periodoEfectivo,
+    siguientePeriodo,
+    periodosInfo,
+    ultimoPeriodoRegistrado,
     
     // Paginación
     paginaActual,

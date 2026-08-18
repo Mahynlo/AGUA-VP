@@ -23,6 +23,7 @@ import {
 } from "react-icons/hi";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
 import { useReportes } from "../../../../context/ReportesContext";
+import { useRutas } from "../../../../context/RutasContext";
 import { generarCatalogoPeriodos, obtenerPeriodoActual } from "../../../../utils/periodoUtils";
 import ModalVistaPrevia from "./ModalVistaPrevia";
 import ModalImprimir from "./ModalImprimir";
@@ -35,10 +36,17 @@ const ReporteFinancieroEstado = () => {
     errorFinanciero,
     cargarReporteFinanciero,
   } = useReportes();
+  const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado, ultimoPeriodoFacturado } = useRutas();
   const { theme } = useTheme();
 
   const [tipoFiltro, setTipoFiltro] = useState("periodo");
-  const [periodo, setPeriodo] = useState(obtenerPeriodoActual());
+  const [periodo, setPeriodo] = useState(() => ultimoPeriodoFacturado || ultimoPeriodoRegistrado || siguientePeriodo || obtenerPeriodoActual());
+
+  useEffect(() => {
+    if (ultimoPeriodoFacturado || ultimoPeriodoRegistrado) {
+      setPeriodo(ultimoPeriodoFacturado || ultimoPeriodoRegistrado);
+    }
+  }, [ultimoPeriodoFacturado, ultimoPeriodoRegistrado]);
   const [ultimosMeses, setUltimosMeses] = useState("3");
   const [anioEspecifico, setAnioEspecifico] = useState(String(new Date().getFullYear()));
   const [pdfUrl, setPdfUrl] = useState(null);
@@ -374,6 +382,9 @@ const ReporteFinancieroEstado = () => {
                 onChange={setPeriodo}
                 placeholder="Seleccionar periodo"
                 className="h-[52px] w-full"
+                periodosInfo={periodosInfo}
+                siguientePeriodo={siguientePeriodo}
+                ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
               />
             </>
           )}
