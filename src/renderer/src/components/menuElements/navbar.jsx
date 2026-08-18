@@ -7,6 +7,7 @@ import { HiOutlineLogout, HiOutlineQuestionMarkCircle, HiOutlineCog, HiOutlineUs
 
 import { useAuth } from '../../context/AuthContext';
 import { Config } from '../Configuracion/Config';
+import BotonActualizacionesNavbar from './BotonActualizacionesNavbar';
 import { CloseAppModal } from '../../IconsApp/IconsAppSystem';
 
 import { useAppLogo } from '../../context/LogoContext';
@@ -37,7 +38,7 @@ function NavbarApp() {
   const [openCloseAppModal, setOpenCloseAppModal] = useState(false); // Para cerrar la ventana
   const [openLogoutModal, setOpenLogoutModal] = useState(false); // Para cerrar la sesión
 
-  const { logout, user } = useAuth();
+  const { logout, user, isAuthenticated } = useAuth();
 
   const avatarKey = user?.id ? `user_avatar_${user.id}` : null;
   const [avatarSrc, setAvatarSrc] = useState(() =>
@@ -113,14 +114,14 @@ function NavbarApp() {
           {/* ── LADO DERECHO ── */}
           <div className="flex items-center h-full" style={{ WebkitAppRegion: "no-drag" }}>
             
-            {!isAuthRoute && (
-              <div className="flex items-center gap-3 pr-4 border-r border-white/10 h-10 mr-2">
-                
-                <Config />
-                
+            <div className="flex items-center gap-2 pr-3 border-r border-white/10 h-10 mr-2">
+              <BotonActualizacionesNavbar />
+              <Config />
+              
+              {isAuthenticated() && (
                 <Dropdown placement="bottom-end" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl min-w-[240px]">
                   <DropdownTrigger>
-                    <button className="flex items-center outline-none transition-transform hover:scale-105 active:scale-95">
+                    <button className="flex items-center outline-none transition-transform hover:scale-105 active:scale-95 ml-1">
                       <Avatar
                         isBordered
                         color="primary"
@@ -189,8 +190,8 @@ function NavbarApp() {
 
                   </DropdownMenu>
                 </Dropdown>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Botones de Ventana */}
             <div className="flex h-full text-white/90">

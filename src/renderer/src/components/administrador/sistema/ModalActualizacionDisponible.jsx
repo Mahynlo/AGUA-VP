@@ -44,12 +44,19 @@ export default function ModalActualizacionDisponible() {
       }
     };
 
+    const handleTestReset = () => {
+      setIsOpen(false);
+      setUpdateInfo(null);
+    };
+
     verificarEstadoInicial();
     document.addEventListener("test-update-modal", handleTestEvent);
+    document.addEventListener("test-update-reset", handleTestReset);
 
     return () => {
       if (cleanup) cleanup();
       document.removeEventListener("test-update-modal", handleTestEvent);
+      document.removeEventListener("test-update-reset", handleTestReset);
     };
   }, [location.pathname]);
 
@@ -79,12 +86,7 @@ export default function ModalActualizacionDisponible() {
       localStorage.setItem(`omitir_alertas_update_v${updateInfo.version}`, "true");
     }
     setIsOpen(false);
-    
-    // Configurar persistencia de pestañas antes de navegar
-    localStorage.setItem("admin_activeTab", "mantenimiento");
-    localStorage.setItem("consola_activeTab", "actualizaciones");
-    
-    navigate("/administrador");
+    navigate("/actualizaciones");
   };
 
   if (!updateInfo) return null;

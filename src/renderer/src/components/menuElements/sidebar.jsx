@@ -13,14 +13,16 @@ import {
   ImpresionResibosIcon,
   HistorialResibosIcon,
 } from "../../IconsApp/IconsResibos";
+import { useAuth } from "../../context/AuthContext";
 
 function SidebarApp() {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
-  // Ocultar elementos si estamos en el login o registro
+  // Ocultar elementos si estamos en el login o si no hay sesión activa
   const isAuthRoute = location.pathname === '/' || location.pathname === '/registro' || location.pathname === '/recuperarPassword';
 
-  if (isAuthRoute) return null;
+  if (isAuthRoute || !isAuthenticated()) return null;
 
   // Diseño de los ítems de navegación (Modo Claro / Modo Oscuro Suavizado)
   const itemClass = (path) => {

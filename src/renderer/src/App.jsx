@@ -16,6 +16,7 @@ import Impresion from './components/vistas/ImpresionVista';
 import LoginApp from './components/login/login';
 import PerfilPage from './components/perfil/perfilpage';
 import NotFoundVista from './components/vistas/NotFoundVista';
+import ActualizacionesVista from './components/vistas/ActualizacionesVista';
 
 import Medidores from "./components/vistas/medidores/MedidoresVista";
 import Administrador from "./components/administrador/Administrador";
@@ -194,6 +195,7 @@ function MainApp() {
         <Route path="/reporteDeudoresMayores" element={<ReporteDeudoresMayores />} />
         {/* Rutas públicas */}
         <Route path='/' element={<LoginApp />} />
+        <Route path='/actualizaciones' element={<ActualizacionesVista />} />
         <Route path='/recuperarPassword' element={<RecuperarPassword />} />
         <Route path='*' element={<NotFoundVista />} />
       </Routes>
