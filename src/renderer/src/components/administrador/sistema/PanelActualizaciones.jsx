@@ -48,12 +48,57 @@ export default function PanelActualizaciones() {
   };
 
   const simularModalPrueba = () => {
-    const event = new CustomEvent("test-update-modal", {
-      detail: { 
-        version: "2.1.0-simulada", 
-        releaseNotes: "Esta es una actualización de prueba simulada para revisar el diseño del modal." 
+    const detail = { 
+      version: "2.1.0-simulada", 
+      releaseDate: new Date().toISOString(),
+      releaseNotes: `## 🚀 Novedades de la versión 2.1.0\n\n### ✨ Nuevas Funcionalidades\n- **Centro de Actualizaciones Independiente:** Ahora puedes gestionar e instalar actualizaciones sin necesidad de iniciar sesión.\n- **Indicador en Barra Superior:** Notificación con badge interactivo cuando hay nuevas versiones disponibles.\n\n### ⚡ Mejoras y Rendimiento\n- Carga más rápida en el módulo de facturación y lecturas.\n- Respaldo pre-actualización automático e instantáneo.\n\n### 🐛 Correcciones\n- Corrección en la alineación de impresión de recibos.`
+    };
+
+    setStatus((prev) => ({
+      ...prev,
+      updateAvailable: true,
+      updateInfo: detail,
+      updateDownloaded: false,
+      downloading: false,
+      checking: false,
+      error: null
+    }));
+    setNovedadMostrada(false);
+
+    const event = new CustomEvent("test-update-modal", { detail });
+    document.dispatchEvent(event);
+  };
+
+  const restablecerSimulacion = async () => {
+    try {
+      const result = await window.api.system.getUpdateStatus();
+      if (result?.success) {
+        setStatus(result);
+      } else {
+        setStatus({
+          updateAvailable: false,
+          updateDownloaded: false,
+          downloading: false,
+          checking: false,
+          updateInfo: null,
+          downloadProgress: null,
+          error: null
+        });
       }
-    });
+    } catch {
+      setStatus({
+        updateAvailable: false,
+        updateDownloaded: false,
+        downloading: false,
+        checking: false,
+        updateInfo: null,
+        downloadProgress: null,
+        error: null
+      });
+    }
+    setNovedadMostrada(true);
+    // Notificar al modal y navbar para que cierren/apaguen el badge
+    const event = new CustomEvent("test-update-reset");
     document.dispatchEvent(event);
   };
 
@@ -99,9 +144,44 @@ export default function PanelActualizaciones() {
           break;
       }
     });
+
+    const handleTestEvent = (e) => {
+      if (e.detail) {
+        setStatus((prev) => ({
+          ...prev,
+          updateAvailable: true,
+          updateInfo: e.detail,
+          updateDownloaded: false,
+          downloading: false,
+          checking: false,
+          error: null
+        }));
+        setNovedadMostrada(false);
+      }
+    };
+
+    const handleTestReset = () => {
+      setStatus((prev) => ({
+        ...prev,
+        updateAvailable: false,
+        updateDownloaded: false,
+        downloading: false,
+        checking: false,
+        updateInfo: null,
+        downloadProgress: null,
+        error: null
+      }));
+      setNovedadMostrada(true);
+    };
+
+    document.addEventListener("test-update-modal", handleTestEvent);
+    document.addEventListener("test-update-reset", handleTestReset);
+
     cleanupRef.current = cleanup;
     return () => {
       if (cleanupRef.current) cleanupRef.current();
+      document.removeEventListener("test-update-modal", handleTestEvent);
+      document.removeEventListener("test-update-reset", handleTestReset);
     };
   }, [setError]);
 
@@ -117,6 +197,31 @@ export default function PanelActualizaciones() {
   };
 
   const descargar = async () => {
+    if (status?.updateInfo?.version === "2.1.0-simulada") {
+      setStatus((prev) => ({ ...prev, downloading: true, error: null }));
+      let percent = 0;
+      const interval = setInterval(() => {
+        percent += 20;
+        if (percent >= 100) {
+          clearInterval(interval);
+          setStatus((prev) => ({
+            ...prev,
+            downloading: false,
+            updateDownloaded: true,
+            downloadProgress: { percent: 100, transferred: 45000000, total: 45000000, bytesPerSecond: 3500000 }
+          }));
+          const event = new CustomEvent("test-update-downloaded");
+          document.dispatchEvent(event);
+        } else {
+          setStatus((prev) => ({
+            ...prev,
+            downloadProgress: { percent, transferred: (percent / 100) * 45000000, total: 45000000, bytesPerSecond: 3500000 }
+          }));
+        }
+      }, 350);
+      return;
+    }
+
     setStatus((prev) => ({ ...prev, downloading: true }));
     try {
       await window.api.system.downloadUpdate();
@@ -127,6 +232,10 @@ export default function PanelActualizaciones() {
   };
 
   const instalar = async () => {
+    if (status?.updateInfo?.version === "2.1.0-simulada") {
+      alert("✅ Simulación completada: En un entorno de producción, la aplicación realizaría un respaldo automático de la base de datos y se reiniciaría para aplicar los cambios.");
+      return;
+    }
     try {
       await window.api.system.installUpdate();
     } catch (err) {
@@ -460,7 +569,14 @@ export default function PanelActualizaciones() {
               Verifica el comportamiento, el diseño y las animaciones de la ventana emergente simulando la aparición de una nueva versión.
             </p>
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={restablecerSimulacion}
+              className="inline-flex items-center gap-2 font-bold bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-xl px-3.5 h-9 text-xs transition-all active:scale-95"
+            >
+              Restablecer
+            </button>
             <button
               type="button"
               onClick={simularModalPrueba}
