@@ -4,6 +4,7 @@ import { HiUsers, HiSearch, HiX, HiLocationMarker } from "react-icons/hi";
 import { IoWaterOutline } from "react-icons/io5";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
 import { normalizarTexto } from "../../../../utils/textUtils";
+import { useRutas } from "../../../../context/RutasContext";
 
 /**
  * Componente para lista de clientes con checkboxes
@@ -18,6 +19,7 @@ const ClientesList = ({
   onCambioPeriodo,
   loading
 }) => {
+  const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
   const [searchTerm, setSearchTerm] = useState("");
 
   const clientesFiltrados = clientes.filter(c => {
@@ -103,7 +105,10 @@ const ClientesList = ({
             startYear={2020}
             size="sm"
             isDisabled={loading}
-            className="w-full h-11" 
+            className="w-full h-11"
+            periodosInfo={periodosInfo}
+            siguientePeriodo={siguientePeriodo}
+            ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
           />
         </div>
       </CardHeader>

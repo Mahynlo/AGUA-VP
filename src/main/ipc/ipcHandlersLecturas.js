@@ -1,9 +1,9 @@
-import { ipcMain} from 'electron';
+import { ipcMain } from 'electron';
 
 // Fetch de facturas
-import {fetchLecturas, modificarLectura, validarCobranzaPeriodoAnterior} from '../../fetch/lecturas.js';
+import { fetchLecturas, modificarLectura, validarCobranzaPeriodoAnterior, obtenerEstadoPeriodosLecturas } from '../../fetch/lecturas.js';
 // registro y actualizar
-import {registerLectura} from '../../register/lecturas.js'; // Importa la función registerLectura
+import { registerLectura } from '../../register/lecturas.js'; // Importa la función registerLectura
 import { generarFacturasRuta } from '../../fetch/generarFacturasRuta.js';
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 
@@ -18,6 +18,32 @@ export default function IpcHandlerLecturas () {
             () => fetchLecturas(token_session),
             { fallbackValue: [] }
         ); // Pasar el token recibido como argumento
+    });
+
+    ipcMain.handle("listar-lecturas", async (event, token_session) => {
+        return await runWithAppKeyFlow(
+            () => fetchLecturas(token_session),
+            { fallbackValue: [] }
+        );
+    });
+
+    // Obtener estado de periodos a través de la API
+    ipcMain.handle("obtener-estado-periodos-lecturas", async (event, token_session) => {
+        const ahora = new Date();
+        const fallbackPeriodo = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+
+        return await runWithAppKeyFlow(
+            () => obtenerEstadoPeriodosLecturas(token_session),
+            {
+                fallbackValue: {
+                    success: true,
+                    periodos: {},
+                    ultimoPeriodoRegistrado: null,
+                    ultimoPeriodoFacturado: null,
+                    siguientePeriodo: fallbackPeriodo
+                }
+            }
+        );
     });
 
     // 📌 Manejar el registro de una lectura

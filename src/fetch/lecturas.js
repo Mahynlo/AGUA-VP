@@ -107,3 +107,54 @@ export const validarCobranzaPeriodoAnterior = async (ruta_id, periodo, token_ses
     return { success: false, message: 'Error al validar cobranza' };
   }
 };
+
+export const obtenerEstadoPeriodosLecturas = async (token_session) => {
+  try {
+    const token_app = leerToken();
+    const ahora = new Date();
+    const fallbackPeriodo = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+
+    if (!token_app || !token_session) {
+      return {
+        success: true,
+        periodos: {},
+        ultimoPeriodoRegistrado: null,
+        ultimoPeriodoFacturado: null,
+        siguientePeriodo: fallbackPeriodo
+      };
+    }
+
+    const response = await fetch(`${URL_BASE}/api/v2/lecturas/estado-periodos`, {
+      method: "GET",
+      headers: {
+        "x-app-key": `AppKey ${token_app}`,
+        "Authorization": `Bearer ${token_session}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      console.warn("API /estado-periodos respondió con status:", response.status);
+      return {
+        success: true,
+        periodos: {},
+        ultimoPeriodoRegistrado: null,
+        ultimoPeriodoFacturado: null,
+        siguientePeriodo: fallbackPeriodo
+      };
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error en obtenerEstadoPeriodosLecturas fetch:", error);
+    const ahora = new Date();
+    return {
+      success: true,
+      periodos: {},
+      ultimoPeriodoRegistrado: null,
+      ultimoPeriodoFacturado: null,
+      siguientePeriodo: `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`
+    };
+  }
+};

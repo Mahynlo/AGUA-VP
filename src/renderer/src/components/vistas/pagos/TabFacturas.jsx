@@ -34,6 +34,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTabFacturas } from "../../../hooks/useTabFacturas";
 import { usePagos } from "../../../context/PagosContext";
+import { useRutas } from "../../../context/RutasContext";
 import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
 import { formatearPeriodo } from "../../../utils/periodoUtils";
 import ModalDetalleFactura from "./ModalDetalleFactura";
@@ -113,6 +114,7 @@ const TabFacturas = () => {
     setCityFilter
   } = useTabFacturas();
 
+  const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
   const { registrarPago } = usePagos();
   const { setSuccess } = useFeedback();
 
@@ -323,6 +325,9 @@ const TabFacturas = () => {
                       startYear={2020}
                       isDisabled={loading}
                       className="w-full h-full"
+                      periodosInfo={periodosInfo}
+                      siguientePeriodo={siguientePeriodo}
+                      ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
                   />
                 </div>
             </div>

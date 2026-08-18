@@ -1,5 +1,6 @@
 import { Modal } from "flowbite-react";
 import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
+import { useRutas } from "../../../context/RutasContext";
 
 const premiumModalTheme = {
   root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
@@ -23,6 +24,8 @@ const ModalSeleccionPeriodoRapido = ({
   onConfirmar,
   formatearPeriodo
 }) => {
+  const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
+
   return (
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
       <Modal.Header>
@@ -45,6 +48,9 @@ const ModalSeleccionPeriodoRapido = ({
             startYear={2020}
             size="sm"
             className="w-full"
+            periodosInfo={periodosInfo}
+            siguientePeriodo={siguientePeriodo}
+            ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
           />
           <p className="text-xs text-slate-500 dark:text-zinc-400">
             Periodo seleccionado:{" "}

@@ -57,12 +57,18 @@ const selectClasses = {
 };
 
 const MetricasLecturasEstado = () => {
-  const { rutas, initialLoading } = useRutas();
+  const { rutas, initialLoading, siguientePeriodo, periodosInfo, ultimoPeriodoRegistrado } = useRutas();
   const { theme } = useTheme();
 
   const [vista, setVista] = useState("consumo");
   const [tipoFiltro, setTipoFiltro] = useState("periodo");
-  const [periodo, setPeriodo] = useState(obtenerPeriodoActual());
+  const [periodo, setPeriodo] = useState(() => siguientePeriodo || obtenerPeriodoActual());
+
+  useEffect(() => {
+    if (siguientePeriodo) {
+      setPeriodo(siguientePeriodo);
+    }
+  }, [siguientePeriodo]);
   const [ultimosMeses, setUltimosMeses] = useState("3");
   const [anioEspecifico, setAnioEspecifico] = useState(
     String(new Date().getFullYear()),
@@ -473,6 +479,9 @@ const MetricasLecturasEstado = () => {
                 onChange={setPeriodo}
                 placeholder="Seleccionar periodo"
                 className="h-[52px] w-full"
+                periodosInfo={periodosInfo}
+                siguientePeriodo={siguientePeriodo}
+                ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
               />
             </>
           )}

@@ -3,6 +3,7 @@ import { Button, Spinner, Divider } from "@nextui-org/react";
 // Aquí está la corrección: se agregó HiCheck
 import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiCheck } from "react-icons/hi";
 import { usePermissions } from "../../context/PermissionsContext";
+import { useRutas } from "../../context/RutasContext";
 import SelectorPeriodoAvanzado from "../ui/SelectorPeriodoAvanzado";
 import { formatearPeriodo, obtenerPeriodoActual } from "../../utils/periodoUtils";
 import { nowHermosilloDateStr } from "../../utils/diasHabiles";
@@ -47,6 +48,7 @@ export default function PanelConfiguracion() {
     dias_vencimiento_factura: 15,
   });
   
+  const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -323,6 +325,9 @@ export default function PanelConfiguracion() {
                 size="md"
                 isDisabled={saving || loadingRecalculo}
                 className="w-full h-[52px]"
+                periodosInfo={periodosInfo}
+                siguientePeriodo={siguientePeriodo}
+                ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
               />
             </div>
 

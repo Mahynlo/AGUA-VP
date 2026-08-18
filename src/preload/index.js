@@ -76,8 +76,14 @@ const api = {
   },
 
   // Fetch de lecturas
-  listarLecturas:async (token_session) => {
+  listarLecturas: async (token_session) => {
     return await ipcRenderer.invoke("listar-lecturas", token_session);
+  },
+  fetchLecturas: async (token_session) => {
+    return await ipcRenderer.invoke("fetch-lecturas", token_session);
+  },
+  obtenerEstadoPeriodosLecturas: async (token_session) => {
+    return await ipcRenderer.invoke("obtener-estado-periodos-lecturas", token_session);
   },
 
   // Registro de lecturas

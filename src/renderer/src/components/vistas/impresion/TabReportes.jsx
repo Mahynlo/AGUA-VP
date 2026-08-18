@@ -4,6 +4,7 @@ import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownloa
 import ListadoLecturas from "./components/ListadoLecturas";
 import ModalImprimir from "./components/ModalImprimir";
 import { useReportes } from "../../../context/ReportesContext";
+import { useRutas } from "../../../context/RutasContext";
 import { exportData } from "../../../utils/exportUtils";
 import { obtenerPeriodoActual } from "../../../utils/periodoUtils";
 
@@ -24,8 +25,15 @@ const TabReportes = () => {
     loading,
     cargarLecturas
   } = useReportes();
+  const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
 
-  const [periodo, setPeriodo] = useState(obtenerPeriodoActual());
+  const [periodo, setPeriodo] = useState(() => ultimoPeriodoRegistrado || siguientePeriodo || obtenerPeriodoActual());
+
+  React.useEffect(() => {
+    if (ultimoPeriodoRegistrado) {
+      setPeriodo(ultimoPeriodoRegistrado);
+    }
+  }, [ultimoPeriodoRegistrado]);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [printUrl, setPrintUrl] = useState(null);
   const [modoPdf, setModoPdf] = useState(null);   // 'vista-previa' | 'imprimir' | null

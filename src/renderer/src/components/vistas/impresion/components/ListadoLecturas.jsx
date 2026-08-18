@@ -4,6 +4,7 @@ import { HiUsers, HiSearch, HiLocationMarker, HiX } from "react-icons/hi";
 import { IoWaterOutline } from "react-icons/io5";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
 import { normalizarTexto } from "../../../../utils/textUtils";
+import { useRutas } from "../../../../context/RutasContext";
 
 /**
  * Componente para listar lecturas (Solo lectura)
@@ -15,6 +16,7 @@ const ListadoLecturas = ({
     setPeriodo,
     loading
 }) => {
+    const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
     const [searchTerm, setSearchTerm] = useState("");
 
     // Aplanar datos para búsqueda si vienen agrupados
@@ -106,6 +108,9 @@ const ListadoLecturas = ({
                         size="sm"
                         isDisabled={loading}
                         className="w-full h-11"
+                        periodosInfo={periodosInfo}
+                        siguientePeriodo={siguientePeriodo}
+                        ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
                     />
                 </div>
             </CardHeader>
