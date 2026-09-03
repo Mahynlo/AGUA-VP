@@ -70,46 +70,52 @@ const ClientesList = ({
           </div>
         </div>
 
-        {/* Fila 2: Inputs de Búsqueda y Periodo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-          
-          {/* Buscador */}
-          <div className="md:col-span-2 relative w-full flex items-center">
-            <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+        {/* Fila 2: Selector de Período (Nivel Superior con Espacio Completo) */}
+        <div className="w-full flex flex-col gap-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
+            Ciclo / Período de Facturación
+          </label>
+          <div className="w-full h-12">
+            <SelectorPeriodoAvanzado
+              value={periodoSeleccionado}
+              onChange={onCambioPeriodo}
+              placeholder="Seleccionar período"
+              startYear={2020}
+              isDisabled={loading}
+              className="w-full h-full"
+              periodosInfo={periodosInfo}
+              siguientePeriodo={siguientePeriodo}
+              ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
+            />
+          </div>
+        </div>
+
+        {/* Fila 3: Input de Búsqueda a Ancho Completo */}
+        <div className="w-full flex flex-col gap-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
+            Buscar Cliente
+          </label>
+          <div className="relative w-full flex items-center">
+            <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
               <HiSearch className="w-5 h-5" />
             </span>
             <input
               type="text"
-              placeholder="Buscar por nombre o dirección..."
+              placeholder="Buscar por nombre o dirección del cliente..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-50 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 shadow-sm"
+              className="w-full pl-11 pr-11 py-3 text-xs sm:text-sm font-medium rounded-xl transition-all duration-200 bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 shadow-none h-12"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors"
                 title="Limpiar búsqueda"
               >
                 <HiX className="w-4 h-4" />
               </button>
             )}
           </div>
-
-          {/* Selector de Periodo */}
-          <SelectorPeriodoAvanzado
-            value={periodoSeleccionado}
-            onChange={onCambioPeriodo}
-            label="Período"
-            placeholder="Seleccionar período"
-            startYear={2020}
-            size="sm"
-            isDisabled={loading}
-            className="w-full h-11"
-            periodosInfo={periodosInfo}
-            siguientePeriodo={siguientePeriodo}
-            ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
-          />
         </div>
       </CardHeader>
 

@@ -474,9 +474,9 @@ const TabReportes = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           {/* COLUMNA IZQUIERDA: Listado */}
-          <div className="xl:col-span-2">
+          <div className="lg:col-span-7 xl:col-span-7">
             <ListadoLecturas
               lecturas={lecturasDataFiltradas}
               periodo={periodo}
@@ -486,7 +486,7 @@ const TabReportes = () => {
           </div>
 
           {/* COLUMNA DERECHA: Panel de acciones */}
-          <div className="xl:col-span-1">
+          <div className="lg:col-span-5 xl:col-span-5">
             <div className="sticky top-4 space-y-4">
               
               {/* Token 5: Tarjeta KPI */}
