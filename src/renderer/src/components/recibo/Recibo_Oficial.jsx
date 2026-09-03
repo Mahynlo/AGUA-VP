@@ -56,7 +56,7 @@ const Recibo = ({ facturaData = null }) => {
                 return numero;
             }
         }
-        return predio || factura.id || "";
+        return predio || "";
     };
 
     // Hook para el anuncio personalizado
@@ -300,12 +300,12 @@ const Recibo = ({ facturaData = null }) => {
                     {/* Header con numeración - layout de 3 columnas para consistencia */}
                     <div className="text-right  text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2">
 
-                        <div className="text-right">
-                            Fecha y hora: {fechaHora} Recibo No: {obtenerIdentificadorRecibo(paginaRecibos[0])}
+                        <div className="text-left font-mono">
+                            Fecha y hora: {fechaHora} • Recibo No: {obtenerIdentificadorRecibo(paginaRecibos[0]) || (indicePagina * 2 + 1)} • Folio Factura: #{paginaRecibos[0]?.id}
                         </div>
                         <div className='text-center'></div>
-                        <div className="text-right">
-                            {paginaRecibos[1] ? `Fecha y hora: ${fechaHora} Recibo No: ${obtenerIdentificadorRecibo(paginaRecibos[1])}` : ''}
+                        <div className="text-right font-mono">
+                            {paginaRecibos[1] ? `Fecha y hora: ${fechaHora} • Recibo No: ${obtenerIdentificadorRecibo(paginaRecibos[1]) || (indicePagina * 2 + 2)} • Folio Factura: #${paginaRecibos[1]?.id}` : ''}
                         </div>
                     </div>
 

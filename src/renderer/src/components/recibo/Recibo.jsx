@@ -119,7 +119,7 @@ const Recibo = ({ facturaData = null }) => {
                 return numero;
             }
         }
-        return predio || factura.id || "";
+        return predio || "";
     };
 
     // Hooks personalizados
@@ -468,14 +468,14 @@ const Recibo = ({ facturaData = null }) => {
                                 {/* 1. Header Paginación */}
                                 <div className="text-right text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2 px-2 border-b border-dashed border-gray-300 pb-1">
                                     <div className="text-left font-mono text-gray-500">
-                                        Fecha de emisión: {formatearFechaHoraEmisionCabecera(paginaRecibos[0])} • Recibo {obtenerIdentificadorRecibo(paginaRecibos[0])}
+                                        Fecha de emisión: {formatearFechaHoraEmisionCabecera(paginaRecibos[0])} • Recibo No: {obtenerIdentificadorRecibo(paginaRecibos[0]) || (indicePagina * 2 + 1)} • Folio Factura: #{paginaRecibos[0]?.id}
                                     </div>
                                     <div className='text-center font-mono text-gray-500'>
                                         
                                     </div>
                                     
                                     <div className="text-right font-mono text-gray-500">
-                                        {paginaRecibos[1] ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(paginaRecibos[1])} • Recibo ${obtenerIdentificadorRecibo(paginaRecibos[1])}` : ''}
+                                        {paginaRecibos[1] ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(paginaRecibos[1])} • Recibo No: ${obtenerIdentificadorRecibo(paginaRecibos[1]) || (indicePagina * 2 + 2)} • Folio Factura: #${paginaRecibos[1]?.id}` : ''}
                                     </div>
                                 </div>
 
