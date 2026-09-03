@@ -75,10 +75,10 @@ const TabImpresion = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
         {/* COLUMNA IZQUIERDA: Selección de Datos */}
-        <div className="xl:col-span-2 flex flex-col gap-6">
+        <div className="lg:col-span-7 xl:col-span-7 flex flex-col gap-6">
 
           {/* Lista Unificada con Filtros */}
           <ClientesList
@@ -142,7 +142,7 @@ const TabImpresion = () => {
         </div>
 
         {/* COLUMNA DERECHA: Centro de Acción (Sticky) */}
-        <div className="xl:col-span-1">
+        <div className="lg:col-span-5 xl:col-span-5">
           <div className="sticky top-6 space-y-4">
             
             {facturasParaImprimir.length > 0 ? (
