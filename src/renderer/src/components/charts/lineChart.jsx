@@ -1,7 +1,7 @@
 import Chart from "react-apexcharts";
 import { useEffect, useState } from "react";
 
-const LineChart = ({ data }) => {
+const LineChart = ({ data, hideCardWrapper = false, showTitle = true }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains("dark")
   );
@@ -19,27 +19,22 @@ const LineChart = ({ data }) => {
     return () => observer.disconnect();
   }, []);
 
-  // 1. FUNCIÓN NUEVA: Convierte "03-2026" o "2026-03" a "Mar 2026"
+  // Convierte "03-2026" o "2026-03" a "Mar 2026"
   const formatearMes = (cadenaMes) => {
     if (!cadenaMes) return "Desconocido";
     
     const partes = cadenaMes.split("-");
     if (partes.length === 2) {
-      // Detectar cuál parte es el año (la de 4 dígitos) y cuál el mes
       const esAnioPrimero = partes[0].length === 4;
       const mes = parseInt(esAnioPrimero ? partes[1] : partes[0], 10);
       const anio = esAnioPrimero ? partes[0] : partes[1];
       
-      // Construir una fecha válida (mes - 1 porque en JavaScript Enero es 0)
       const fecha = new Date(anio, mes - 1, 1);
-      
-      // Obtener el nombre del mes (ej: "marzo" o "mar")
       const nombreMes = fecha.toLocaleString("es-MX", { month: "short" });
       
-      // Retornar capitalizado "Mar 2026"
       return `${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${anio}`;
     }
-    return cadenaMes; // Si llega otro formato, lo devuelve como está
+    return cadenaMes;
   };
 
   const isDynamic = data && data.length > 0;
@@ -47,17 +42,16 @@ const LineChart = ({ data }) => {
   const series = isDynamic
     ? [{
         name: "Consumo Total",
-        data: data.map(item => item.total)
+        data: data.map(item => Number(item.total) || 0)
       }]
     : [
-        { name: "Nacori Grande", data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240] },
+        { name: "Nácori Grande", data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240] },
         { name: "Matape", data: [110, 140, 90, 180, 230, 590, 600, 180, 210, 260, 240, 220] },
         { name: "Adivino", data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720] },
       ];
 
-  // 2. APLICAMOS LA FUNCIÓN A TUS DATOS DINÁMICOS AQUÍ:
   const categories = isDynamic
-    ? data.map(item => formatearMes(item.mes)) // Transforma "03-2026" -> "Mar 2026"
+    ? data.map(item => formatearMes(item.mes))
     : ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
   const chartColors = isDarkMode 
@@ -83,7 +77,7 @@ const LineChart = ({ data }) => {
       type: "gradient",
       gradient: {
         shadeIntensity: 1,
-        opacityFrom: isDarkMode ? 0.4 : 0.4,
+        opacityFrom: isDarkMode ? 0.35 : 0.3,
         opacityTo: 0.05,
         stops: [0, 100]
       }
@@ -93,7 +87,7 @@ const LineChart = ({ data }) => {
       curve: "smooth",
       width: 3,
     },
-    title: {
+    title: showTitle ? {
       text: "Historial de Consumo",
       align: "left",
       offsetX: 10,
@@ -102,23 +96,22 @@ const LineChart = ({ data }) => {
         fontWeight: "700",
         color: isDarkMode ? "#f8fafc" : "#0f172a",
       },
-    },
+    } : undefined,
     grid: {
       show: true,
-      borderColor: isDarkMode ? "#334155" : "#e2e8f0",
+      borderColor: isDarkMode ? "#27272a" : "#f1f5f9",
       strokeDashArray: 4,
       xaxis: { lines: { show: false } }, 
       yaxis: { lines: { show: true } },
-      padding: { top: 0, right: 0, bottom: 0, left: 10 },
+      padding: { top: 0, right: 10, bottom: 0, left: 10 },
     },
     xaxis: {
-      // 3. APEXCHARTS USA LAS CATEGORÍAS FORMATEADAS AQUÍ
       categories: categories,
       axisBorder: { show: false },
       axisTicks: { show: false },
       labels: {
         style: {
-          colors: isDarkMode ? "#94a3b8" : "#64748b",
+          colors: isDarkMode ? "#a1a1aa" : "#64748b",
           fontSize: "12px",
           fontWeight: 500,
         },
@@ -131,12 +124,12 @@ const LineChart = ({ data }) => {
         style: {
           fontSize: "12px",
           fontWeight: "600",
-          color: isDarkMode ? "#94a3b8" : "#64748b",
+          color: isDarkMode ? "#a1a1aa" : "#64748b",
         },
       },
       labels: {
         style: {
-          colors: isDarkMode ? "#94a3b8" : "#64748b",
+          colors: isDarkMode ? "#a1a1aa" : "#64748b",
           fontSize: "11px",
         },
         formatter: (val) => `${val.toFixed(0)}` 
@@ -145,61 +138,67 @@ const LineChart = ({ data }) => {
     legend: {
       position: "top",
       horizontalAlign: "right",
-      offsetY: -20, 
-      fontSize: "13px",
+      offsetY: -10, 
+      fontSize: "12px",
       fontWeight: 500,
       labels: {
         colors: isDarkMode ? "#cbd5e1" : "#334155",
       },
       markers: {
-        width: 12,
-        height: 12,
-        radius: 4, 
+        width: 10,
+        height: 10,
+        radius: 3, 
       }
     },
     tooltip: {
       theme: isDarkMode ? "dark" : "light",
-      // El título del cuadrito (Header) mostrará la Categoría (Ej. "Mar 2026")
       x: {
         show: true,
       },
-      // El valor del cuadrito (Body) mostrará el consumo con el "m³"
       y: {
-        formatter: (val) => `${val} m³`
+        formatter: (val) => `${Number(val).toLocaleString('es-MX')} m³`
       },
       style: {
-        fontSize: '13px',
+        fontSize: '12px',
       }
     },
     markers: {
       size: 0, 
       hover: {
-        size: 6, 
+        size: 5, 
       }
     },
     responsive: [
       {
         breakpoint: 768,
         options: {
-          chart: { height: 320 },
+          chart: { height: 300 },
           legend: { position: "bottom", horizontalAlign: "center", offsetY: 0 },
         },
       },
     ],
   };
 
+  const chartElement = (
+    <div className="relative w-full h-full min-h-[300px]">
+      <Chart
+        options={options}
+        series={series}
+        type="area"
+        height="100%"
+        width="100%"
+        key={isDarkMode ? "dark" : "light"}
+      />
+    </div>
+  );
+
+  if (hideCardWrapper) {
+    return chartElement;
+  }
+
   return (
-    <div className="w-full h-full min-h-[350px] p-5 rounded-xl bg-white border shadow-sm border-slate-200 dark:border-zinc-800 dark:bg-zinc-900 transition-colors duration-300">
-      <div className="relative w-full h-full">
-        <Chart
-          options={options}
-          series={series}
-          type="area"
-          height="100%"
-          width="100%"
-          key={isDarkMode ? "dark" : "light"}
-        />
-      </div>
+    <div className="w-full h-full min-h-[350px] p-5 rounded-2xl bg-white border shadow-sm border-slate-200 dark:border-zinc-800 dark:bg-zinc-900 transition-colors duration-300">
+      {chartElement}
     </div>
   );
 };

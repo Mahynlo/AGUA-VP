@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Modal, Button } from "flowbite-react";
 import {
   HiDotsVertical,
@@ -8,7 +8,11 @@ import {
   HiCalendar,
   HiCheckCircle,
   HiExclamation,
-  HiCurrencyDollar
+  HiCurrencyDollar,
+  HiRefresh,
+  HiClock,
+  HiDocumentReport,
+  HiLocationMarker
 } from "react-icons/hi";
 
 import CarruselLecturasModal from "./CarruselLecturasModal";
@@ -19,19 +23,20 @@ import { useFeedback } from "../../../context/FeedbackContext";
 import { useAuth } from "../../../context/AuthContext";
 import { usePermissions } from "../../../context/PermissionsContext";
 import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
+import { prefijoDominante } from "../../../utils/rutaUtils";
 
 const premiumModalTheme = {
-    root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
-    content: {
-        base: "relative h-full w-full p-4 md:h-auto",
-        inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-lg dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800"
-    },
-    header: {
-        base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-t-2xl",
-        close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
-    },
-    body: { base: "p-8 flex-1 overflow-y-auto" },
-    footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-b-2xl" }
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+  content: {
+    base: "relative h-full w-full p-4 md:h-auto",
+    inner: "relative flex max-h-[90dvh] flex-col rounded-3xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800"
+  },
+  header: {
+    base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-t-3xl",
+    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+  },
+  body: { base: "p-8 flex-1 overflow-y-auto" },
+  footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-b-3xl" }
 };
 
 const getResultadoFacturacionStorageKey = (rutaId, periodo) => `facturacion_resultado_${rutaId}_${periodo}`;
@@ -84,6 +89,41 @@ export default function RutaCard({ ruta }) {
   const porcentajeCompletado = ruta.total_puntos > 0
     ? (ruta.completadas / ruta.total_puntos) * 100
     : 0;
+
+  const faltantes = Math.max(0, (ruta.total_puntos || 0) - (ruta.completadas || 0));
+
+  // Identificación del Sector / Pueblo
+  const sectorInfo = useMemo(() => {
+    const prefijo = prefijoDominante(ruta.numeros_serie || []);
+    const nombreLower = (ruta.nombre || "").toLowerCase();
+    
+    if (prefijo === "NG" || nombreLower.includes("nacori")) {
+      return { 
+        nombre: "Nácori Grande", 
+        badgeBg: "bg-blue-600/90 text-white border-blue-400/40",
+        chipText: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-200 dark:border-blue-900/40"
+      };
+    }
+    if (prefijo === "MP" || nombreLower.includes("matape")) {
+      return { 
+        nombre: "Matapé", 
+        badgeBg: "bg-emerald-600/90 text-white border-emerald-400/40",
+        chipText: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-200 dark:border-emerald-900/40"
+      };
+    }
+    if (prefijo === "AD" || nombreLower.includes("adivino")) {
+      return { 
+        nombre: "Adivino", 
+        badgeBg: "bg-amber-600/90 text-white border-amber-400/40",
+        chipText: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-200 dark:border-amber-900/40"
+      };
+    }
+    return { 
+      nombre: `Ruta #${ruta.id || '—'}`, 
+      badgeBg: "bg-slate-800/90 text-white border-slate-600/40",
+      chipText: "text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700"
+    };
+  }, [ruta.numeros_serie, ruta.nombre, ruta.id]);
 
   const handleOpenEditarRuta = () => {
     if (!canModificarRutas) {
@@ -223,17 +263,16 @@ export default function RutaCard({ ruta }) {
     : null;
 
   const estadoFacturacionLabel = !tieneFacturacionEnPeriodo
-    ? 'Sin Facturación'
+    ? 'Sin Facturar'
     : esResultadoRecalculo
-      ? 'Con Recalculo'
+      ? 'Recalculada'
       : 'Facturada';
 
-  // Regla de Tintes para Chip de Estado
   const estadoFacturacionChipClass = !tieneFacturacionEnPeriodo
-    ? 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400'
+    ? 'bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700'
     : esResultadoRecalculo
-      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+      ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800/50'
+      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50';
 
   useEffect(() => {
     let isMounted = true;
@@ -259,188 +298,224 @@ export default function RutaCard({ ruta }) {
   }, [ruta.id, ruta.total_puntos, obtenerInfoRuta]);
 
   return (
-    <div className="flex flex-col bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300 relative h-full">
+    <div className="flex flex-col bg-white dark:bg-zinc-950 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden group hover:shadow-lg transition-all duration-300 relative h-full">
 
-      {/* ── 1. HEADER (IMAGEN + DROPDOWN + CHIPS) ── */}
-      <div className="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100 dark:bg-zinc-900">
+      {/* ── 1. HEADER (PORTADA + INSIGNIAS + MENÚ RÁPIDO) ── */}
+      <div className="relative h-44 w-full shrink-0 overflow-hidden bg-slate-100 dark:bg-zinc-900">
         <img
           src={ruta.imagen}
           alt={ruta.nombre}
           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
         />
-        {/* Gradiente Oscuro para legibilidad */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent z-10" />
+        {/* Gradiente de contraste */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/25 z-10" />
 
-        {/* Dropdown de Opciones (Top Right) */}
-        <div className="absolute top-4 right-4 z-20">
+        {/* Fila Superior: Badge Sector + Menú de Opciones */}
+        <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-20">
+          <div className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider backdrop-blur-md shadow-sm border ${sectorInfo.badgeBg}`}>
+            <span className="flex items-center gap-1">
+              <HiLocationMarker className="w-3 h-3" />
+              {sectorInfo.nombre}
+            </span>
+          </div>
+
+          {/* Menú Tres Puntos */}
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(v => !v)}
-              className="w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-zinc-900/90 text-slate-700 dark:text-zinc-200 shadow-sm hover:scale-105 transition-transform rounded-xl"
+              className="w-8 h-8 flex items-center justify-center bg-black/40 hover:bg-black/60 text-white backdrop-blur-md rounded-xl transition-all shadow-sm"
+              title="Opciones de ruta"
             >
               <HiDotsVertical className="w-4 h-4" />
             </button>
             {dropdownOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
-                <div className="absolute z-20 right-0 mt-2 w-[180px] bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+                <div className="absolute z-20 right-0 mt-2 w-48 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden py-1">
                   <button
                     onClick={() => { setModalDetalleOpen(true); setDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2 px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-800 text-sm font-medium text-slate-700 dark:text-zinc-300 text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-bold text-slate-700 dark:text-zinc-200 text-left transition-colors"
                   >
-                    <HiEye className="w-4 h-4 text-blue-500" /> Ver Detalles
+                    <HiEye className="w-4 h-4 text-blue-500" /> Ver Detalles de Ruta
                   </button>
                   <button
                     onClick={() => { handleOpenEditarRuta(); setDropdownOpen(false); }}
                     disabled={!canModificarRutas}
-                    className="w-full flex items-center gap-2 px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-800 text-sm font-medium text-slate-700 dark:text-zinc-300 text-left disabled:opacity-50"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-bold text-slate-700 dark:text-zinc-200 text-left transition-colors disabled:opacity-50"
                   >
                     <HiPencil className="w-4 h-4 text-emerald-500" /> Editar Ruta
                   </button>
+                  {ultimoResultadoFacturacion && (
+                    <button
+                      onClick={() => { setModalResultadoOpen(true); setDropdownOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-bold text-slate-700 dark:text-zinc-200 text-left transition-colors border-t border-slate-100 dark:border-zinc-800"
+                    >
+                      <HiDocumentReport className="w-4 h-4 text-purple-500" /> Ver Historial Facturas
+                    </button>
+                  )}
                 </div>
               </>
             )}
           </div>
         </div>
 
-        {/* Chips de Estado (Bottom Left) sobre imagen */}
-        <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 z-20">
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-bold tracking-widest text-[10px] uppercase shadow-md border border-white/10 ${
-            porcentajeCompletado === 100
-              ? "bg-emerald-500/90 text-white"
-              : "bg-blue-500/90 text-white"
-          }`}>
-            {porcentajeCompletado === 100 && <HiCheckCircle className="w-3.5 h-3.5" />}
-            {porcentajeCompletado === 100 ? "Completada" : "En progreso"}
+        {/* Fila Inferior sobre la imagen: Estado de Avance y Período */}
+        <div className="absolute bottom-3 inset-x-3.5 flex items-center justify-between z-20">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-black tracking-wider text-[10px] uppercase shadow-sm backdrop-blur-md border ${
+              porcentajeCompletado === 100
+                ? "bg-emerald-500/90 text-white border-emerald-400/40"
+                : "bg-blue-600/90 text-white border-blue-400/40"
+            }`}>
+              {porcentajeCompletado === 100 ? (
+                <>
+                  <HiCheckCircle className="w-3.5 h-3.5" />
+                  Completada
+                </>
+              ) : (
+                <>
+                  <HiClock className="w-3.5 h-3.5" />
+                  {porcentajeCompletado.toFixed(0)}% En Progreso
+                </>
+              )}
+            </div>
+
+            {missingMetersCount > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-red-600/90 text-white border border-red-400/50 font-black tracking-wider text-[10px] uppercase shadow-sm animate-pulse backdrop-blur-md">
+                <HiExclamation className="w-3.5 h-3.5" />
+                {missingMetersCount} Sin Asignar
+              </div>
+            )}
           </div>
 
-          {missingMetersCount > 0 && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/90 text-white border border-red-400/50 font-bold tracking-widest text-[10px] uppercase shadow-md animate-pulse">
-              <HiExclamation className="w-3.5 h-3.5" />
-              {missingMetersCount} Sin Asignar
-            </div>
-          )}
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/40 text-white border border-white/20 font-bold text-[10px] uppercase backdrop-blur-md">
+            <HiCalendar className="w-3 h-3 text-slate-300" />
+            <span>{ruta.periodo_mostrado}</span>
+          </div>
         </div>
       </div>
 
-      {/* ── 2. CUERPO DE LA TARJETA ── */}
-      <div className="p-6 flex-1 flex flex-col gap-6">
+      {/* ── 2. CUERPO DE LA TARJETA (TÍTULO, DETALLES Y PROGRESO) ── */}
+      <div className="p-5 flex-1 flex flex-col gap-4">
 
         {/* Título y Descripción */}
-        <div className="flex flex-col gap-1.5">
-          <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-tight line-clamp-1">
-            {ruta.nombre}
-          </h3>
-          <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-            {ruta.descripcion}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-snug line-clamp-1">
+              {ruta.nombre}
+            </h3>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 shrink-0 font-mono">
+              #{ruta.id}
+            </span>
+          </div>
+          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 line-clamp-2 leading-relaxed min-h-[32px]">
+            {ruta.descripcion || "Sin descripción registrada para este sector."}
           </p>
         </div>
 
-        {/* Barra de Progreso */}
-        <div className="bg-slate-50 dark:bg-zinc-900/50 rounded-2xl p-5 border border-slate-100 dark:border-zinc-800/80 flex flex-col gap-3 mt-auto">
-          <div className="flex justify-between items-end">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
-              Progreso de Lectura
+        {/* Panel de Métricas y Progreso */}
+        <div className="bg-slate-50 dark:bg-zinc-900/60 rounded-2xl p-3.5 border border-slate-100 dark:border-zinc-800/80 flex flex-col gap-2.5 mt-auto">
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+              Medidores Leídos
             </span>
-            <span className="text-sm font-black text-slate-700 dark:text-zinc-200">
-              {ruta.completadas} <span className="text-slate-400 dark:text-zinc-500 font-bold">/ {ruta.total_puntos}</span>
+            <span className="text-xs font-black text-slate-800 dark:text-zinc-100">
+              {ruta.completadas} <span className="text-slate-400 dark:text-zinc-500 font-semibold">/ {ruta.total_puntos}</span>
             </span>
           </div>
 
-          <div className="w-full bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden" style={{ height: '6px' }}>
+          {/* Barra de Progreso */}
+          <div className="w-full bg-slate-200/80 dark:bg-zinc-800 rounded-full overflow-hidden h-2">
             <div
-              className={`h-full rounded-full transition-all ${porcentajeCompletado === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+              className={`h-full rounded-full transition-all duration-500 ${
+                porcentajeCompletado === 100 ? 'bg-emerald-500' : 'bg-blue-600'
+              }`}
               style={{ width: `${porcentajeCompletado}%` }}
             />
           </div>
 
-          <div className="flex justify-between items-center">
-            <span className={`text-[10px] font-bold uppercase tracking-widest ${porcentajeCompletado === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'}`}>
-              {porcentajeCompletado.toFixed(1)}% COMPLETADO
+          {/* Resumen inferior del progreso */}
+          <div className="flex justify-between items-center pt-0.5">
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+              porcentajeCompletado === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-blue-600 dark:text-blue-400'
+            }`}>
+              {porcentajeCompletado.toFixed(1)}% completado
+            </span>
+
+            {/* Badge de Facturación */}
+            <span className={`px-2 py-0.5 rounded-lg font-black tracking-wider text-[9px] uppercase ${estadoFacturacionChipClass}`}>
+              {estadoFacturacionLabel}
             </span>
           </div>
         </div>
 
-        {/* Info Extra (Metadatos) y Estado Facturación */}
-        <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
-              <div className="flex items-center gap-1.5">
-                <HiCalendar className="w-3.5 h-3.5" />
-                <span>{ruta.periodo_mostrado}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <HiMap className="w-3.5 h-3.5" />
-                <span>Ruta #{ruta.id}</span>
-              </div>
-            </div>
-
-            <span className={`px-2.5 py-1 rounded-md font-bold tracking-widest text-[9px] uppercase ${estadoFacturacionChipClass}`}>
-                {estadoFacturacionLabel}
-            </span>
-        </div>
       </div>
 
-      {/* ── 3. FOOTER Y BOTONES DE ACCIÓN ── */}
-      <div className="p-6 pt-0 flex flex-col gap-3">
+      {/* ── 3. ACCIONES Y BOTONES (FOOTER) ── */}
+      <div className="p-5 pt-0 flex flex-col gap-2.5">
 
-        {/* Componente Carrusel */}
+        {/* Acción Primaria: Tomar Lecturas */}
         <div className="w-full">
-            <CarruselLecturasModal rutaId={ruta.id} periodoMostrado={ruta.periodo_mostrado} />
+          <CarruselLecturasModal rutaId={ruta.id} periodoMostrado={ruta.periodo_mostrado} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-            {/* Botón Principal: Generar Facturas */}
+        {/* Acciones de Facturación Contextuales */}
+        {porcentajeCompletado === 100 ? (
+          tieneFacturacionEnPeriodo ? (
+            /* Ya facturado: Botón de Recalcular y Ver Resultado */
+            <div className="flex items-center gap-2">
+              <button
+                disabled={!puedeRecalcularPeriodo || isGenerando}
+                onClick={handleRecalcularFacturas}
+                className="flex-1 h-10 font-bold text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                title="Recalcular facturas sin pagos"
+              >
+                <HiRefresh className={`w-3.5 h-3.5 ${isGenerando ? 'animate-spin' : ''}`} />
+                Recalcular
+              </button>
+
+              <button
+                onClick={() => setModalResultadoOpen(true)}
+                className="h-10 px-3.5 font-bold text-xs bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+                title="Ver resultado de facturación"
+              >
+                <HiDocumentReport className="w-3.5 h-3.5 text-slate-500" />
+                <span>Historial</span>
+              </button>
+            </div>
+          ) : (
+            /* Completado pero sin facturar: Botón Generar Facturación */
             <button
               disabled={!puedeGenerarPrimeraFacturacion || isGenerando}
               onClick={handleGenerarFacturas}
-              className={`w-full h-11 font-bold shadow-sm transition-all duration-300 rounded-xl flex items-center justify-center gap-2 disabled:cursor-not-allowed ${
-                  puedeGenerarPrimeraFacturacion
-                      ? "bg-slate-900 text-white dark:bg-white dark:text-zinc-950"
-                      : "bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 shadow-none"
-              }`}
+              className="w-full h-10 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
             >
               {isGenerando ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                !puedeGenerarPrimeraFacturacion && tieneFacturacionEnPeriodo
-                  ? <HiCheckCircle className="text-lg" />
-                  : <HiCurrencyDollar className="text-lg" />
+                <HiCurrencyDollar className="w-4 h-4" />
               )}
-              {!puedeGenerarPrimeraFacturacion && tieneFacturacionEnPeriodo
-                  ? 'Facturado'
-                  : porcentajeCompletado < 100
-                  ? `Faltan ${ruta.total_puntos - ruta.completadas}`
-                  : 'Generar'
-              }
+              Generar Facturas
             </button>
-
-            {/* Botón Secundario: Recalcular */}
-            <button
-              disabled={!puedeRecalcularPeriodo || isGenerando}
-              onClick={handleRecalcularFacturas}
-              className={`w-full h-11 font-bold rounded-xl disabled:cursor-not-allowed ${
-                  puedeRecalcularPeriodo
-                  ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400"
-                  : "bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500"
-              }`}
-            >
-              Recalcular
-            </button>
-        </div>
-
-        {!tieneFacturacionEnPeriodo && porcentajeCompletado >= 100 && (
-          <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest text-center mt-1">
-            Requiere primera facturación
-          </p>
+          )
+        ) : (
+          /* Lecturas Pendientes: Indicador sutil de faltantes */
+          <div className="flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-zinc-900/40 rounded-xl border border-slate-100 dark:border-zinc-800/60 text-slate-500 dark:text-zinc-400 text-[11px] font-medium">
+            <span className="flex items-center gap-1.5">
+              <HiClock className="w-3.5 h-3.5 text-amber-500" />
+              Faltan {faltantes} medidor{faltantes !== 1 ? 'es' : ''}
+            </span>
+            {ultimoResultadoFacturacion && (
+              <button
+                onClick={() => setModalResultadoOpen(true)}
+                className="text-blue-600 dark:text-blue-400 font-bold hover:underline text-[10px] uppercase tracking-wider"
+              >
+                Ver Factura
+              </button>
+            )}
+          </div>
         )}
 
-        {/* Ver Resultado */}
-        <button
-          onClick={() => setModalResultadoOpen(true)}
-          className="w-full h-10 font-bold bg-slate-50 hover:bg-slate-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 rounded-xl mt-1 text-sm"
-        >
-          Ver Último Resultado
-        </button>
       </div>
 
       {/* ── MODALES ── */}
@@ -466,7 +541,7 @@ export default function RutaCard({ ruta }) {
           <div className="flex flex-col gap-1">
             <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Generar Facturas</span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
-              Ruta {ruta.nombre} · Periodo {ruta.periodo_mostrado}
+              Ruta {ruta.nombre} · Período {ruta.periodo_mostrado}
             </span>
           </div>
         </Modal.Header>
@@ -474,16 +549,16 @@ export default function RutaCard({ ruta }) {
           <div className="space-y-4">
             <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5">
               <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                Se generará la primera facturación para las lecturas pendientes de esta ruta.
+                Se generará la primera facturación para las lecturas de esta ruta.
               </p>
             </div>
 
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
               <p className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1.5">
-                Las lecturas quedarán cerradas para este ciclo.
+                Las lecturas quedarán confirmadas para este ciclo.
               </p>
               <p className="text-xs font-medium text-amber-600 dark:text-amber-500/80">
-                Si necesitas ajustar montos posteriormente, usa la opción de Recalcular Facturación.
+                Si requieres realizar ajustes posteriores en lecturas, podrás utilizar la función de Recalcular Facturación.
               </p>
             </div>
           </div>
@@ -491,7 +566,7 @@ export default function RutaCard({ ruta }) {
         <Modal.Footer>
           <Button color="light" onClick={() => setModalGenerarOpen(false)} className="font-bold text-slate-500">Cancelar</Button>
           <Button
-            className="bg-emerald-600 text-white font-bold rounded-xl"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl"
             isProcessing={isGenerando}
             onClick={ejecutarGenerarFacturas}
           >
@@ -511,18 +586,18 @@ export default function RutaCard({ ruta }) {
           <div className="flex flex-col gap-1">
             <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Recalcular Facturación</span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
-              Ruta {ruta.nombre} · Periodo {ruta.periodo_mostrado}
+              Ruta {ruta.nombre} · Período {ruta.periodo_mostrado}
             </span>
           </div>
         </Modal.Header>
         <Modal.Body>
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
               <p className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1.5">
                 Se recalcularán únicamente facturas sin pagos registrados.
               </p>
               <p className="text-xs font-medium text-amber-600 dark:text-amber-500/80">
-                Las facturas con pagos se conservarán y aparecerán en el resultado como fallidas por seguridad contable.
+                Las facturas con pagos registrados se conservarán intactas para proteger la consistencia contable.
               </p>
             </div>
 
@@ -534,7 +609,7 @@ export default function RutaCard({ ruta }) {
                 value={motivoRecalculo}
                 onChange={(e) => setMotivoRecalculo(e.target.value)}
                 rows={3}
-                placeholder="Describe por qué necesitas recalcular esta facturación..."
+                placeholder="Describe el motivo del ajuste en las lecturas..."
                 className="w-full bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 dark:text-zinc-100 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none shadow-none"
               />
             </div>
@@ -545,16 +620,16 @@ export default function RutaCard({ ruta }) {
             Cancelar
           </Button>
           <Button
-            className="bg-amber-500 text-white font-bold rounded-xl"
+            className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl"
             isProcessing={isGenerando}
             onClick={ejecutarRecalculoFacturas}
           >
-            Confirmar Recalculo
+            Confirmar Recálculo
           </Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Modal Resultado */}
+      {/* Modal Visualizador de Resultados */}
       <Modal
         show={modalResultadoOpen}
         onClose={() => setModalResultadoOpen(false)}
@@ -565,7 +640,7 @@ export default function RutaCard({ ruta }) {
           <div className="flex flex-col gap-1">
             <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Resultado de Facturación</span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
-              Ruta {ruta.nombre} · Periodo {ruta.periodo_mostrado}
+              Ruta {ruta.nombre} · Período {ruta.periodo_mostrado}
             </span>
           </div>
         </Modal.Header>
@@ -575,14 +650,14 @@ export default function RutaCard({ ruta }) {
               <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 p-6 text-center">
                 <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">
                   {tieneFacturacionEnPeriodo
-                    ? 'Ya existe facturación en este período, pero aún no hay un resultado guardado en esta sesión.'
+                    ? 'Ya existe facturación en este período, pero no se generó en esta sesión activa.'
                     : 'No hay un resultado reciente para mostrar. Aún no se ha realizado facturación en este período.'}
                 </p>
               </div>
             ) : (
               <>
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className={`px-2.5 py-1 rounded-md font-bold tracking-widest text-[10px] uppercase ${esResultadoRecalculo ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
+                  <div className={`px-2.5 py-1 rounded-lg font-bold tracking-widest text-[10px] uppercase ${esResultadoRecalculo ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800/40' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'}`}>
                     {etiquetaTipoProceso}
                   </div>
                   {savedAtLabel && (
@@ -593,15 +668,15 @@ export default function RutaCard({ ruta }) {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-emerald-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-1">
+                  <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-emerald-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-0.5">
                     <p className="text-[10px] uppercase tracking-widest font-bold text-emerald-700 dark:text-emerald-400">Generadas</p>
                     <p className="text-3xl font-black text-emerald-700 dark:text-emerald-400">{totalGeneradas}</p>
                   </div>
-                  <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-blue-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-1">
+                  <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-blue-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-0.5">
                     <p className="text-[10px] uppercase tracking-widest font-bold text-blue-700 dark:text-blue-400">Recalculadas</p>
                     <p className="text-3xl font-black text-blue-700 dark:text-blue-400">{totalRecalculadas}</p>
                   </div>
-                  <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-red-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-1">
+                  <div className="rounded-2xl p-5 border border-slate-100 dark:border-zinc-800 bg-red-500/10 flex flex-col gap-1.5 transition-transform hover:-translate-y-0.5">
                     <p className="text-[10px] uppercase tracking-widest font-bold text-red-700 dark:text-red-400">Fallidas</p>
                     <p className="text-3xl font-black text-red-700 dark:text-red-400">{totalFallidas}</p>
                   </div>
@@ -687,7 +762,7 @@ export default function RutaCard({ ruta }) {
           <div className="flex flex-col gap-1">
             <span className="text-xl font-black tracking-tight text-red-600 dark:text-red-500">Alerta de Precaución</span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
-              Ruta {ruta.nombre} · Periodo Anterior {datosAlertaCobranza?.periodoAnterior}
+              Ruta {ruta.nombre} · Período Anterior {datosAlertaCobranza?.periodoAnterior}
             </span>
           </div>
         </Modal.Header>
@@ -695,7 +770,7 @@ export default function RutaCard({ ruta }) {
           <div className="space-y-4">
             <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5">
               <p className="text-sm font-bold text-red-700 dark:text-red-400 mb-2">
-                ¡Se detectó un alto índice de facturas sin pagar del periodo anterior!
+                ¡Se detectó un alto índice de facturas sin pagar del período anterior!
               </p>
               <p className="text-xs font-medium text-red-600 dark:text-red-500/80 mb-2">
                 Han quedado pendientes <strong>{datosAlertaCobranza?.totalPendientes}</strong> de <strong>{datosAlertaCobranza?.totalFacturas}</strong> facturas (<strong>{datosAlertaCobranza?.porcentajePendiente.toFixed(1)}%</strong>).
@@ -721,6 +796,7 @@ export default function RutaCard({ ruta }) {
           </Button>
         </Modal.Footer>
       </Modal>
+
     </div>
   );
 }
