@@ -127,7 +127,7 @@ const Recibo = ({ facturaData = null }) => {
                 return numero;
             }
         }
-        return predio || factura.id || "";
+        return predio || "";
     };
 
     const { anuncio } = useAnuncioRecibo();
@@ -474,11 +474,11 @@ const Recibo = ({ facturaData = null }) => {
                                     {/* Header Paginación */}
                                     <div className="text-right text-[9px] bg-white grid grid-cols-[1fr_auto_1fr] gap-2 mb-2 px-2 border-b border-dashed border-gray-300 pb-1">
                                         <div className="text-left font-mono text-gray-500">
-                                            Fecha de emisión: {formatearFechaHoraEmisionCabecera(reciboIzquierdoFrente)} • Hora generación: {formatearHoraGeneracionCabecera(reciboIzquierdoFrente)} • Recibo {obtenerIdentificadorRecibo(reciboIzquierdoFrente)}
+                                            Fecha de emisión: {formatearFechaHoraEmisionCabecera(reciboIzquierdoFrente)} • Recibo No: {obtenerIdentificadorRecibo(reciboIzquierdoFrente) || (indicePagina * 2 + 1)} • Folio Factura: #{reciboIzquierdoFrente?.id}
                                         </div>
                                         <div className="text-center font-mono text-gray-500">Fecha impresión: {fechaImpresion}</div>
                                         <div className="text-right font-mono text-gray-500">
-                                            {reciboDerechoFrente ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(reciboDerechoFrente)} • Hora generación: ${formatearHoraGeneracionCabecera(reciboDerechoFrente)} • Recibo ${obtenerIdentificadorRecibo(reciboDerechoFrente)}` : ''}
+                                            {reciboDerechoFrente ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(reciboDerechoFrente)} • Recibo No: ${obtenerIdentificadorRecibo(reciboDerechoFrente) || (indicePagina * 2 + 2)} • Folio Factura: #${reciboDerechoFrente?.id}` : ''}
                                         </div>
                                     </div>
 
