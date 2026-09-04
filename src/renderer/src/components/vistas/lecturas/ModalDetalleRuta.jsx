@@ -122,7 +122,7 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
             <Modal.Header>
                 <div className="flex items-center justify-between gap-4 w-full">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl">
+                        <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0">
                             <HiMap className="w-7 h-7" />
                         </div>
                         <div className="flex flex-col">
@@ -134,7 +134,7 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                             </p>
                         </div>
                     </div>
-                    <span className={`hidden sm:inline-flex items-center h-7 px-2 rounded-md font-bold uppercase tracking-widest text-[10px] ${chipColor}`}>
+                    <span className={`hidden sm:inline-flex items-center h-7 px-2.5 rounded-lg font-bold uppercase tracking-widest text-[10px] ${chipColor}`}>
                         {chipLabel}
                     </span>
                 </div>
@@ -147,12 +147,12 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
 
                         {/* Progreso */}
-                        <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl p-5 flex flex-col justify-between">
+                        <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50/50 dark:bg-zinc-900/30 rounded-2xl p-5 flex flex-col justify-between">
                             <div className="flex justify-between items-center mb-4">
                                 <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                                    <HiChartPie className="text-sky-500 w-4 h-4" /> Avance de Lectura
+                                    <HiChartPie className="text-amber-500 w-4 h-4" /> Avance de Lectura
                                 </h4>
-                                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800">
+                                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 px-2.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800">
                                     {porcentaje.toFixed(1)}%
                                 </span>
                             </div>
@@ -165,9 +165,9 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                         / {ruta.total_puntos}
                                     </span>
                                 </div>
-                                <div className="w-full h-2.5 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                <div className="w-full h-2 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full transition-all ${porcentaje === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                        className={`h-full rounded-full transition-all ${porcentaje === 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
                                         style={{ width: `${porcentaje}%` }}
                                     />
                                 </div>
@@ -175,25 +175,25 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                         </div>
 
                         {/* Periodo */}
-                        <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl p-5 flex flex-col justify-between">
+                        <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50/50 dark:bg-zinc-900/30 rounded-2xl p-5 flex flex-col justify-between">
                             <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-4 uppercase tracking-widest flex items-center gap-2">
-                                <HiCalendar className="text-violet-500 w-4 h-4" /> Periodo Asignado
+                                <HiCalendar className="text-amber-500 w-4 h-4" /> Periodo Asignado
                             </h4>
                             <div className="mt-auto">
                                 <span className="text-2xl font-black text-slate-800 dark:text-zinc-100 tracking-tight block mb-1">
                                     {ruta.periodo_mostrado}
                                 </span>
-                                <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
                                     Ciclo de facturación actual
                                 </span>
                             </div>
                         </div>
 
                         {/* Estado de Asignación */}
-                        <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl p-5 flex flex-col justify-between">
+                        <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50/50 dark:bg-zinc-900/30 rounded-2xl p-5 flex flex-col justify-between">
                             <div className="flex justify-between items-center mb-4">
                                 <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                                    <HiUserGroup className="text-teal-500 w-4 h-4" /> Puntos de Ruta
+                                    <HiUserGroup className="text-amber-500 w-4 h-4" /> Puntos de Ruta
                                 </h4>
                                 {missingCount > 0 && (
                                     <HiExclamation className="text-red-500 w-5 h-5 animate-pulse" />
@@ -204,7 +204,7 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                     <span className="text-2xl font-black text-slate-800 dark:text-zinc-100 tracking-tight block leading-none mb-1">
                                         {detalleRuta?.puntos?.length || 0}
                                     </span>
-                                    <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                                    <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
                                         Asignados
                                     </span>
                                 </div>
@@ -212,7 +212,7 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                     <span className={`text-2xl font-black tracking-tight block leading-none mb-1 ${missingCount > 0 ? "text-red-500 dark:text-red-400" : "text-slate-300 dark:text-zinc-600"}`}>
                                         {missingCount}
                                     </span>
-                                    <span className={`text-[11px] font-bold uppercase tracking-wider ${missingCount > 0 ? "text-red-500/70 dark:text-red-400/70" : "text-slate-400 dark:text-zinc-500"}`}>
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${missingCount > 0 ? "text-red-500/80 dark:text-red-400/80" : "text-slate-400 dark:text-zinc-500"}`}>
                                         Sin Cliente
                                     </span>
                                 </div>
@@ -222,10 +222,10 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
 
                     {/* 2. Warning Card for Unassigned */}
                     {missingCount > 0 && (
-                        <div className="border border-red-200/70 dark:border-red-900/40 shadow-none bg-red-500/10 rounded-2xl overflow-hidden">
-                            <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="border border-red-200/70 dark:border-red-900/40 shadow-none bg-red-500/10 rounded-2xl overflow-hidden p-5">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="flex gap-4 items-center">
-                                    <div className="p-2.5 bg-red-500/10 rounded-full text-red-600 dark:text-red-400 shrink-0">
+                                    <div className="p-2.5 bg-red-500/20 rounded-xl text-red-600 dark:text-red-400 shrink-0">
                                         <HiExclamation className="w-6 h-6" />
                                     </div>
                                     <div>
@@ -239,7 +239,7 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="font-bold shrink-0 w-full sm:w-auto bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 rounded-xl px-4 py-2 text-sm flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-zinc-800"
+                                    className="font-bold shrink-0 w-full sm:w-auto bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 rounded-xl px-4 py-2.5 text-xs flex items-center justify-center gap-2 hover:bg-slate-100 dark:hover:bg-zinc-800 shadow-sm transition-all"
                                 >
                                     Ir al Inventario <HiArrowRight />
                                 </button>
@@ -250,7 +250,7 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                     {/* 3. Mapa de la Ruta */}
                     <div className="flex flex-col gap-3">
                         <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2 pl-1">
-                            <HiLocationMarker className="text-sky-500 w-4 h-4" /> Recorrido Geográfico
+                            <HiLocationMarker className="text-amber-500 w-4 h-4" /> Recorrido Geográfico
                         </h4>
                         <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl overflow-hidden h-[400px] sm:h-[500px] relative">
                             {loading ? (
@@ -276,13 +276,12 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
             </Modal.Body>
 
             <Modal.Footer>
-                <Button
-                    color="light"
+                <button
                     onClick={onClose}
-                    className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800"
+                    className="font-black bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 rounded-xl h-11 px-6 shadow-sm transition-transform active:scale-95 ml-auto"
                 >
                     Cerrar Panel
-                </Button>
+                </button>
             </Modal.Footer>
         </Modal>
     );

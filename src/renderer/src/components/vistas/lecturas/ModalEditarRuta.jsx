@@ -24,31 +24,30 @@ const largeModalTheme = {
 };
 
 // Componente de Input Personalizado (Premium UI) reutilizado para consistencia
-const CustomInput = ({ label, value, onChange, icon, type = "text", color = "blue", description, placeholder, as = "input", rows }) => {
+const CustomInput = ({ label, value, onChange, icon, type = "text", color = "amber", description, placeholder, as = "input", rows }) => {
     const focusColors = {
-        blue: "focus:ring-slate-400/20 focus:border-slate-300",
-        red: "focus:ring-red-500 focus:border-red-500 bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800",
+        amber: "focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500",
+        red: "focus:ring-2 focus:ring-red-500/20 focus:border-red-500 bg-red-50 dark:bg-red-900/10 border-red-300 dark:border-red-800",
     };
 
     const inputClasses = `
-        w-full pl-10 pr-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 resize-none
-    bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100
-    border border-slate-200 dark:border-zinc-800
-    hover:border-slate-300 dark:hover:border-zinc-700
-        focus:outline-none focus:ring-2 focus:bg-white dark:focus:bg-zinc-900
-    placeholder-slate-400 dark:placeholder-zinc-500 shadow-none
-        ${focusColors[color] || focusColors.blue}
+        w-full pl-10 pr-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 resize-none
+        bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100
+        border border-slate-200 dark:border-zinc-800
+        hover:border-slate-300 dark:hover:border-zinc-700
+        focus:outline-none placeholder-slate-400 dark:placeholder-zinc-500 shadow-none
+        ${focusColors[color] || focusColors.amber}
     `;
 
     return (
         <div className="w-full">
             {label && (
-              <label className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-1.5 block uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-widest">
                     {label}
                 </label>
             )}
             <div className="relative w-full flex items-start">
-                <span className="absolute left-3 top-3.5 text-slate-400 dark:text-zinc-500 flex items-center justify-center pointer-events-none">
+                <span className="absolute left-3.5 top-3.5 text-slate-400 dark:text-zinc-500 flex items-center justify-center pointer-events-none">
                     {icon}
                 </span>
                 {as === "textarea" ? (
@@ -133,7 +132,7 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
     >
       <Modal.Header>
         <div className="flex items-center gap-4">
-            <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0">
+            <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0">
                 <HiPencil className="w-7 h-7" />
             </div>
             <div className="flex flex-col">
@@ -141,137 +140,130 @@ export default function ModalEditarRuta({ isOpen, onClose, ruta }) {
                     Editar Ruta de Lectura
                 </h2>
                 <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-                    Modificar Configuración y Trazado
+                    Modificar configuración y trazado
                 </p>
             </div>
         </div>
       </Modal.Header>
 
       <Modal.Body>
-        {isLoading ? (
-          <div className="flex flex-col justify-center items-center h-full gap-4">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-600 dark:border-t-zinc-300 rounded-full animate-spin" />
-            <p className="text-sm font-bold text-slate-500 dark:text-zinc-400 animate-pulse">
-                Cargando información de la ruta...
-            </p>
+        <div className="flex flex-col min-h-0 h-full">
+          {/* Tabs header */}
+          <div className="flex border-b border-slate-200 dark:border-zinc-800 gap-6 shrink-0">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setTabActiva(tab.key)}
+                className={`flex items-center gap-2 h-12 text-sm border-b-2 -mb-px transition-colors ${
+                  tabActiva === tab.key
+                    ? "border-amber-600 dark:border-amber-500 text-amber-600 dark:text-amber-400 font-bold"
+                    : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 font-medium"
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
           </div>
-        ) : (
-          <div className="flex flex-col min-h-0 h-full">
-            {/* Tabs header */}
-            <div className="flex border-b border-slate-200 dark:border-zinc-800 gap-6 shrink-0">
-              {tabs.map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setTabActiva(tab.key)}
-                  className={`flex items-center gap-2 h-12 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                    tabActiva === tab.key
-                      ? "border-slate-800 dark:border-zinc-200 text-slate-800 dark:text-zinc-100 font-bold"
-                      : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700"
-                  }`}
-                >
-                  {tab.icon} {tab.label}
-                </button>
-              ))}
-            </div>
 
-            {/* Tab content */}
-            <div className="pt-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
+          {/* Tab content */}
+          <div className="pt-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
 
-              {/* TAB 1: INFORMACIÓN GENERAL */}
-              {tabActiva === "info" && (
-                <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl h-full">
-                    <div className="p-6">
-                        <div className="max-w-3xl space-y-6">
-                            <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-300 mb-2">
-                                Detalles de Identificación
-                            </h4>
+            {/* TAB 1: INFORMACIÓN GENERAL */}
+            {tabActiva === "info" && (
+              <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50/50 dark:bg-zinc-900/30 rounded-2xl h-full p-6">
+                  <div className="max-w-3xl space-y-6">
+                      <div className="pb-3 border-b border-slate-200/70 dark:border-zinc-800/70">
+                          <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100 uppercase tracking-wider">
+                              Detalles de Identificación
+                          </h4>
+                          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                              Actualiza el nombre descriptivo y notas operativas de la ruta
+                          </p>
+                      </div>
 
-                            <CustomInput
-                                label="Nombre de la Ruta *"
-                                placeholder="Ej: Ruta Centro 1"
-                                value={nombre}
-                                onChange={(e) => { setNombre(e.target.value); limpiarError("nombre"); }}
-                                icon={<HiMap className="w-5 h-5 text-slate-500" />}
-                                color={mostrarErrores && erroresCampos.nombre ? "red" : "blue"}
-                                description={mostrarErrores && erroresCampos.nombre ? "⚠ El nombre es requerido" : "Un nombre corto y descriptivo para ubicarla en el sistema."}
-                            />
-
-                            <CustomInput
-                                as="textarea"
-                                label="Descripción *"
-                                placeholder="Describe la ruta, zona o características..."
-                                value={descripcion}
-                                onChange={(e) => { setDescripcion(e.target.value); limpiarError("descripcion"); }}
-                                icon={<HiCollection className="w-5 h-5 text-slate-500" />}
-                                color={mostrarErrores && erroresCampos.descripcion ? "red" : "blue"}
-                                rows={5}
-                                description={mostrarErrores && erroresCampos.descripcion ? "⚠ La descripción es requerida" : "Información adicional de utilidad."}
-                            />
-                        </div>
-                    </div>
-                </div>
-              )}
-
-              {/* TAB 2: GESTIÓN Y MAPA */}
-              {tabActiva === "lista" && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 h-full min-h-[500px]">
-
-                  {/* Columna Izquierda: Panel gestión */}
-                  <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-white dark:bg-zinc-900/50 rounded-2xl flex flex-col h-full min-h-[500px] overflow-hidden">
-                    <div className="p-0 flex flex-col h-full overflow-hidden">
-                      <PanelGestionRuta
-                          key={ruta?.id}
-                          puntosRutaInicial={puntosRuta}
-                          modoEdicion={true}
-                          onPuntosChange={setPuntosRuta}
-                          erroresCampos={erroresCampos}
-                          mostrarErrores={mostrarErrores}
-                          handleDibujarRuta={handleDibujarRuta}
-                          reiniciarRuta={reiniciarRuta}
-                          rutaCalculada={rutaCalculada}
-                          isSaving={isSaving}
+                      <CustomInput
+                          label="Nombre de la Ruta *"
+                          placeholder="Ej: Ruta Centro Comercial Norte"
+                          value={nombre}
+                          onChange={(e) => { setNombre(e.target.value); limpiarError("nombre"); }}
+                          icon={<HiMap className="w-5 h-5 text-amber-500" />}
+                          color={mostrarErrores && erroresCampos.nombre ? "red" : "amber"}
+                          description={mostrarErrores && erroresCampos.nombre ? "⚠ El nombre es requerido" : "Un nombre corto y descriptivo para ubicarla en el sistema."}
                       />
-                    </div>
-                  </div>
 
-                  {/* Columna Derecha: Mapa */}
-                  <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl overflow-hidden h-full min-h-[400px] lg:min-h-[500px] relative">
-                    <div className="p-0 relative h-full">
-                      <MapaRutas
-                          medidores={allMedidores}
-                          puntosRuta={puntosRuta}
-                          rutaCalculada={rutaCalculada}
-                          dibujar={dibujar}
-                          readOnly={true}
+                      <CustomInput
+                          as="textarea"
+                          label="Descripción *"
+                          placeholder="Describe la zona, calles abarcadas o notas para el lecturista..."
+                          value={descripcion}
+                          onChange={(e) => { setDescripcion(e.target.value); limpiarError("descripcion"); }}
+                          icon={<HiCollection className="w-5 h-5 text-amber-500" />}
+                          color={mostrarErrores && erroresCampos.descripcion ? "red" : "amber"}
+                          rows={5}
+                          description={mostrarErrores && erroresCampos.descripcion ? "⚠ La descripción es requerida" : "Información adicional de utilidad."}
                       />
-                    </div>
                   </div>
+              </div>
+            )}
 
+            {/* TAB 2: GESTIÓN Y MAPA */}
+            {tabActiva === "lista" && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 h-full min-h-[500px]">
+
+                {/* Columna Izquierda: Panel gestión */}
+                <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-white dark:bg-zinc-900/50 rounded-2xl flex flex-col h-full min-h-[500px] overflow-hidden">
+                  <div className="p-0 flex flex-col h-full overflow-hidden">
+                    <PanelGestionRuta
+                        key={ruta?.id}
+                        puntosRutaInicial={puntosRuta}
+                        modoEdicion={true}
+                        onPuntosChange={setPuntosRuta}
+                        erroresCampos={erroresCampos}
+                        mostrarErrores={mostrarErrores}
+                        handleDibujarRuta={handleDibujarRuta}
+                        reiniciarRuta={reiniciarRuta}
+                        rutaCalculada={rutaCalculada}
+                        isSaving={isSaving}
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
+
+                {/* Columna Derecha: Mapa */}
+                <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl overflow-hidden h-full min-h-[400px] lg:min-h-[500px] relative">
+                  <div className="p-0 relative h-full">
+                    <MapaRutas
+                        medidores={allMedidores}
+                        puntosRuta={puntosRuta}
+                        rutaCalculada={rutaCalculada}
+                        dibujar={dibujar}
+                        readOnly={true}
+                    />
+                  </div>
+                </div>
+
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </Modal.Body>
 
       <Modal.Footer>
         <button
             onClick={onClose}
-            disabled={isSaving}
-            className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2 flex items-center gap-2 hover:bg-slate-200 dark:hover:bg-zinc-800 disabled:opacity-50"
+            className="font-bold text-slate-500 border-transparent bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl h-11 px-4 flex items-center gap-2 transition-colors"
         >
-            <HiX className="text-lg" /> Cancelar
+          <HiX className="text-lg" /> Cancelar
         </button>
         <button
-            onClick={handleGuardarRuta}
-            disabled={isSaving || isLoading || !canModificarRutas}
-            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 py-2 shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleGuardarRuta}
+          disabled={isSaving || !canModificarRutas}
+          className="font-black bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 rounded-xl h-11 px-6 shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-transform active:scale-95"
         >
-            {isSaving ? (
-              <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Guardando Cambios...</>
-            ) : (
-              <><HiCheck className="text-lg" />Guardar Cambios</>
-            )}
+          {isSaving ? (
+            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Guardando Cambios...</>
+          ) : (
+            <><HiCheck className="text-lg" />Guardar Cambios</>
+          )}
         </button>
       </Modal.Footer>
     </Modal>
