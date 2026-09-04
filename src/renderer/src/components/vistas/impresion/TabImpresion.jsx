@@ -53,28 +53,7 @@ const TabImpresion = () => {
   };
 
   return (
-    /* Token 1: Contenedor Raíz (adaptado para el módulo layout) */
-    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0 animate-in fade-in duration-300 flex flex-col gap-6">
-
-      {/* HEADER DEL MÓDULO */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 dark:border-zinc-800/50 pb-6">
-        <div className="flex items-center gap-4">
-          {/* Regla de tintes */}
-          <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
-            <HiPrinter className="w-6 h-6" />
-          </div>
-          <div>
-            {/* Token 3: Textos Principales */}
-            <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
-              Centro de Impresión de Recibos
-            </h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
-              Selección, vista previa y emisión masiva de facturas
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div className="w-full flex flex-col gap-6 animate-in fade-in duration-300 print:p-0">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
         {/* COLUMNA IZQUIERDA: Selección de Datos */}

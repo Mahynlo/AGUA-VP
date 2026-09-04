@@ -431,44 +431,26 @@ const TabReportes = () => {
 
   // Clases compartidas para los Selects (Token 4)
   const selectClassNames = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500 transition-all duration-200 shadow-none h-[52px]",
-    value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
+    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none focus:border-indigo-500 transition-all duration-200 shadow-none h-[52px]",
+    value: "font-semibold text-slate-800 dark:text-zinc-100 text-sm"
   };
 
   return (
-    /* Token 1: Contenedor Raíz */
-    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0 animate-in fade-in duration-300 flex flex-col gap-10">
-
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* HEADER DE LA VISTA COMPLETA                                       */}
-      {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col gap-2">
-        {/* Token 3: Textos Principales */}
-        <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
-          Centro de Reportes
-        </h2>
-        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
-          Generación de documentos, padrones y extracción de base de datos
-        </p>
-      </div>
-
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
+    <div className="w-full flex flex-col gap-10 animate-in fade-in duration-300 print:p-0">
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 1: REPORTE DE LECTURAS                                    */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
-          {/* Regla de tintes */}
-          <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+          <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0">
             <HiDocumentReport className="w-6 h-6" />
           </div>
           <div>
-            {/* Token 3: Overline */}
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
               Gestión e impresión de tomas para cobro
             </h3>
-            <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
+            <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
               Reporte de Lecturas Mensual
             </p>
           </div>
@@ -489,15 +471,15 @@ const TabReportes = () => {
           <div className="lg:col-span-5 xl:col-span-5">
             <div className="sticky top-4 space-y-4">
               
-              {/* Token 5: Tarjeta KPI */}
-              <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-200 grid grid-cols-2 gap-4 text-center divide-x divide-slate-200 dark:divide-zinc-700">
+              {/* Tarjeta KPI */}
+              <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 transition-all duration-200 grid grid-cols-2 gap-4 text-center divide-x divide-slate-200 dark:divide-zinc-800 shadow-sm">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Periodo</p>
                   <p className="text-sm font-black tracking-tight text-slate-800 dark:text-zinc-100 uppercase">{formatearPeriodoTexto(periodo)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Total Tomas</p>
-                  <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                  <p className="text-xl font-black tracking-tight text-sky-600 dark:text-sky-400 font-mono">
                     {lecturasDataFiltradas.reduce((acc, g) => acc + (g.clientes ? g.clientes.length : 0), 0)}
                   </p>
                 </div>
@@ -505,27 +487,34 @@ const TabReportes = () => {
 
               {/* Opciones de impresión de Lecturas */}
               {lecturasData.length > 0 && (
-                <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                  <CardHeader className="pt-5 px-5 pb-3 border-b border-slate-100 dark:border-zinc-800/50">
-                    <div className="flex items-center gap-2">
-                      <HiCog className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100">
-                        Opciones de Impresión
-                      </h4>
+                <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
+                  <CardHeader className="pt-5 px-6 pb-4 border-b border-slate-100 dark:border-zinc-800/80">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
+                        <HiCog className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                          Opciones de Emisión
+                        </h4>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
+                          Filtros del reporte de tomas
+                        </p>
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardBody className="p-5 flex flex-col gap-4">
+                  <CardBody className="p-6 flex flex-col gap-4">
                     {/* Filtro de Ciudad */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                        Filtrar por Ciudad
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
+                        Filtrar por Localidad
                       </label>
                       <select
                         value={ciudadLecturas}
                         onChange={(e) => setCiudadLecturas(e.target.value || "todas")}
-                        className="w-full h-11 px-3 text-sm font-medium rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                        className="w-full h-12 px-4 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-100 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 cursor-pointer transition-all"
                       >
-                        <option value="todas">Todas las ciudades</option>
+                        <option value="todas">Todas las localidades</option>
                         {ciudadesDisponibles.map(ciudad => (
                           <option key={ciudad} value={ciudad}>{ciudad}</option>
                         ))}
@@ -534,13 +523,13 @@ const TabReportes = () => {
 
                     {/* Criterio de Ordenamiento */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
                         Criterio de Orden
                       </label>
                       <select
                         value={ordenLecturas}
                         onChange={(e) => setOrdenLecturas(e.target.value || "numero_predio")}
-                        className="w-full h-11 px-3 text-sm font-medium rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                        className="w-full h-12 px-4 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-100 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 cursor-pointer transition-all"
                       >
                         <option value="numero_predio">Número de Predio</option>
                         <option value="id">ID (Secuencial)</option>
@@ -548,12 +537,12 @@ const TabReportes = () => {
                     </div>
 
                     {/* Resumen */}
-                    <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl p-4 flex flex-col gap-1 mt-2">
+                    <div className="bg-sky-500/10 text-sky-700 dark:text-sky-400 rounded-xl p-3.5 flex flex-col gap-1 mt-1 border border-sky-500/20">
                       <p className="text-[10px] font-bold uppercase tracking-widest">
-                        Resumen
+                        Resumen de Selección
                       </p>
-                      <p className="text-xs font-medium text-slate-700 dark:text-zinc-300">
-                          Se imprimirá {ciudadLecturas === "todas" ? "todo el padrón" : `solo ${ciudadLecturas}`}, ordenado por {ordenLecturas === "numero_predio" ? "N° de Predio" : "ID"}.
+                      <p className="text-xs font-medium text-slate-600 dark:text-zinc-300 leading-relaxed">
+                        Se generará {ciudadLecturas === "todas" ? "todo el padrón de tomas" : `solo ${ciudadLecturas}`}, ordenado por {ordenLecturas === "numero_predio" ? "N° de Predio" : "ID"}.
                       </p>
                     </div>
                   </CardBody>
@@ -562,87 +551,41 @@ const TabReportes = () => {
 
               {/* Acciones Lecturas */}
               {lecturasData.length > 0 ? (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   
-                  {/* TARJETA 1: Vista Previa */}
-                  <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                    <CardBody className="p-5 flex flex-col gap-4">
-                      {/* Header de la tarjeta */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
-                            <HiEye className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight">
-                              Vista Previa
-                            </h4>
-                            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">
-                              Revisar Reporte
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                  {/* Vista Previa */}
+                  <Button
+                    className="w-full h-12 font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm rounded-xl transition-all active:scale-98"
+                    onPress={handlePreviewLecturas}
+                    isLoading={accion === 'preview-lecturas'}
+                    isDisabled={procesando || loadingLecturas}
+                    startContent={accion !== 'preview-lecturas' && <HiEye className="text-lg" />}
+                  >
+                    {accion === 'preview-lecturas' ? 'Generando PDF...' : 'Vista Previa del Reporte'}
+                  </Button>
 
-                      {/* Botón de Acción */}
-                      <Button
-                        color="primary"
-                        className="w-full h-11 font-bold shadow-sm"
-                        onPress={handlePreviewLecturas}
-                        isLoading={accion === 'preview-lecturas'}
-                        isDisabled={procesando || loadingLecturas}
-                        startContent={accion !== 'preview-lecturas' && <HiEye className="text-lg" />}
-                      >
-                        {accion === 'preview-lecturas' ? 'Generando PDF...' : 'Abrir Vista Previa'}
-                      </Button>
-                    </CardBody>
-                  </Card>
-
-                  {/* TARJETA 2: Imprimir Directamente */}
-                  <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-zinc-700">
-                    <CardBody className="p-5 flex flex-col gap-4">
-                      {/* Header de la tarjeta */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600 dark:text-emerald-400">
-                            <HiPrinter className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight">
-                              Imprimir Reporte
-                            </h4>
-                            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-0.5">
-                              Enviar a impresora
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Botón de Acción */}
-                      <Button
-                        color="success"
-                        className="w-full h-11 font-bold text-white shadow-sm"
-                        onPress={handlePrintLecturas}
-                        isLoading={accion === 'print-lecturas'}
-                        isDisabled={procesando || loadingLecturas}
-                        startContent={accion !== 'print-lecturas' && <HiPrinter className="text-lg" />}
-                      >
-                        {accion === 'print-lecturas' ? 'Preparando...' : 'Imprimir Directamente'}
-                      </Button>
-                    </CardBody>
-                  </Card>
+                  {/* Imprimir Directamente */}
+                  <Button
+                    className="w-full h-12 font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm rounded-xl transition-all active:scale-98"
+                    onPress={handlePrintLecturas}
+                    isLoading={accion === 'print-lecturas'}
+                    isDisabled={procesando || loadingLecturas}
+                    startContent={accion !== 'print-lecturas' && <HiPrinter className="text-lg" />}
+                  >
+                    {accion === 'print-lecturas' ? 'Preparando...' : 'Imprimir Directamente'}
+                  </Button>
 
                 </div>
               ) : (
-                <div className="border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/20 rounded-2xl p-10 flex flex-col items-center justify-center min-h-[250px]">
-                  <div className="w-16 h-16 rounded-2xl bg-slate-500/10 text-slate-500 dark:text-slate-400 flex items-center justify-center mb-4">
-                      <HiPrinter className="w-8 h-8" />
+                <div className="border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/20 rounded-2xl p-8 flex flex-col items-center justify-center min-h-[200px]">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-500/10 text-slate-500 dark:text-slate-400 flex items-center justify-center mb-3">
+                    <HiPrinter className="w-6 h-6" />
                   </div>
                   <h3 className="text-sm font-black tracking-tight text-slate-800 dark:text-zinc-100 mb-1">
                     Sin datos para imprimir
                   </h3>
                   <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 max-w-[200px] text-center">
-                    Selecciona un mes válido en el listado.
+                    Selecciona un período válido en el listado para emitir el reporte.
                   </p>
                 </div>
               )}
@@ -651,7 +594,7 @@ const TabReportes = () => {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80 my-4" />
+      <Divider className="bg-slate-100 dark:border-zinc-800/80 my-2" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 2: PADRÓN GENERAL DE CLIENTES                               */}
@@ -663,41 +606,51 @@ const TabReportes = () => {
           </div>
           <div>
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
-              Listado base para impresión
+              Listado base para impresión institucional
             </h3>
-            <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
+            <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
               Padrón General de Clientes
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-zinc-900/50 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800">
-          <Select
-            aria-label="Ordenar listado por:"
-            placeholder="Ordenar listado por:"
-            selectedKeys={[ordenPadron]}
-            onChange={(e) => setOrdenPadron(e.target.value || "numero_predio")}
-            startContent={<HiSortAscending className="text-slate-400" />}
-            classNames={selectClassNames}
-          >
-            <SelectItem key="numero_predio" value="numero_predio">N° de Predio</SelectItem>
-            <SelectItem key="nombre" value="nombre">Nombre (A-Z)</SelectItem>
-          </Select>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-slate-50/60 dark:bg-zinc-900/40 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
+              Ordenar por
+            </label>
+            <Select
+              aria-label="Ordenar listado por:"
+              placeholder="Ordenar listado por:"
+              selectedKeys={[ordenPadron]}
+              onChange={(e) => setOrdenPadron(e.target.value || "numero_predio")}
+              startContent={<HiSortAscending className="text-slate-400" />}
+              classNames={selectClassNames}
+            >
+              <SelectItem key="numero_predio" value="numero_predio">N° de Predio</SelectItem>
+              <SelectItem key="nombre" value="nombre">Nombre (A-Z)</SelectItem>
+            </Select>
+          </div>
 
-          <Select
-            aria-label="Agrupar registros por:"
-            placeholder="Agrupar registros por:"
-            selectedKeys={[agrupacion]}
-            onChange={(e) => setAgrupacion(e.target.value || "ciudad")}
-            classNames={selectClassNames}
-          >
-            <SelectItem key="ciudad" value="ciudad">Por Ciudad</SelectItem>
-            <SelectItem key="tarifa" value="tarifa">Por Tarifa</SelectItem>
-            <SelectItem key="ninguna" value="ninguna">Sin agrupar</SelectItem>
-          </Select>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
+              Agrupación
+            </label>
+            <Select
+              aria-label="Agrupar registros por:"
+              placeholder="Agrupar registros por:"
+              selectedKeys={[agrupacion]}
+              onChange={(e) => setAgrupacion(e.target.value || "ciudad")}
+              classNames={selectClassNames}
+            >
+              <SelectItem key="ciudad" value="ciudad">Por Ciudad</SelectItem>
+              <SelectItem key="tarifa" value="tarifa">Por Tarifa</SelectItem>
+              <SelectItem key="ninguna" value="ninguna">Sin agrupar</SelectItem>
+            </Select>
+          </div>
 
           <Button
-            className="w-full font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 h-[52px] rounded-xl shadow-none"
+            className="w-full font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 h-[52px] rounded-xl shadow-none transition-all"
             onPress={handlePreviewPadron}
             isLoading={accion === 'preview-padron'}
             isDisabled={procesando}
@@ -707,7 +660,7 @@ const TabReportes = () => {
           </Button>
 
           <Button
-            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm h-[52px]"
+            className="w-full font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 shadow-sm h-[52px] transition-all"
             onPress={handlePrintPadron}
             isLoading={accion === 'print-padron'}
             isDisabled={procesando}
@@ -718,7 +671,7 @@ const TabReportes = () => {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80 my-4" />
+      <Divider className="bg-slate-100 dark:border-zinc-800/80 my-2" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 3: EXPORTAR DATOS                                           */}
@@ -732,39 +685,49 @@ const TabReportes = () => {
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
               Descarga en Excel o CSV
             </h3>
-            <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
+            <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
               Exportación de Base de Datos
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-slate-50 dark:bg-zinc-900/50 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800">
-          <Select
-            aria-label="Conjunto de datos a exportar:"
-            placeholder="Conjunto de datos a exportar:"
-            selectedKeys={[modoExport]}
-            onChange={(e) => setModoExport(e.target.value || "clientes")}
-            classNames={selectClassNames}
-          >
-            <SelectItem key="clientes" value="clientes">Solo Padrón de Clientes</SelectItem>
-            <SelectItem key="medidores" value="medidores">Solo Equipos (Medidores)</SelectItem>
-            <SelectItem key="combinado" value="combinado">Relación Clientes + Medidores</SelectItem>
-            <SelectItem key="cobranza" value="cobranza">Reporte de Cobranza por Cliente</SelectItem>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-slate-50/60 dark:bg-zinc-900/40 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
+              Conjunto de Datos
+            </label>
+            <Select
+              aria-label="Conjunto de datos a exportar:"
+              placeholder="Conjunto de datos a exportar:"
+              selectedKeys={[modoExport]}
+              onChange={(e) => setModoExport(e.target.value || "clientes")}
+              classNames={selectClassNames}
+            >
+              <SelectItem key="clientes" value="clientes">Solo Padrón de Clientes</SelectItem>
+              <SelectItem key="medidores" value="medidores">Solo Equipos (Medidores)</SelectItem>
+              <SelectItem key="combinado" value="combinado">Relación Clientes + Medidores</SelectItem>
+              <SelectItem key="cobranza" value="cobranza">Reporte de Cobranza por Cliente</SelectItem>
+            </Select>
+          </div>
 
-          <Select
-            aria-label="Formato de salida:"
-            placeholder="Formato de salida:"
-            selectedKeys={[formatoExport]}
-            onChange={(e) => setFormatoExport(e.target.value || "xlsx")}
-            classNames={selectClassNames}
-          >
-            <SelectItem key="xlsx" value="xlsx">Hoja de Cálculo Excel (.xlsx)</SelectItem>
-            <SelectItem key="csv" value="csv">Archivo de Texto (.csv)</SelectItem>
-          </Select>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
+              Formato de Archivo
+            </label>
+            <Select
+              aria-label="Formato de salida:"
+              placeholder="Formato de salida:"
+              selectedKeys={[formatoExport]}
+              onChange={(e) => setFormatoExport(e.target.value || "xlsx")}
+              classNames={selectClassNames}
+            >
+              <SelectItem key="xlsx" value="xlsx">Hoja de Cálculo Excel (.xlsx)</SelectItem>
+              <SelectItem key="csv" value="csv">Archivo de Texto (.csv)</SelectItem>
+            </Select>
+          </div>
 
           <Button
-            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 shadow-sm h-[52px]"
+            className="w-full font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 shadow-sm h-[52px] transition-all"
             onPress={handleExportar}
             isLoading={accion === 'export'}
             isDisabled={procesando}
@@ -775,12 +738,12 @@ const TabReportes = () => {
         </div>
 
         {modoExport === "combinado" && (
-          <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl p-4 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200 w-full md:w-2/3">
+          <div className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-xl p-4 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200 w-full md:w-2/3 border border-emerald-500/20">
             <p className="text-[10px] font-bold uppercase tracking-widest">
-                Nota de exportación
+              Nota de exportación
             </p>
-            <p className="text-xs font-medium text-slate-700 dark:text-zinc-300">
-                Al descargar la relación combinada, las columnas de los medidores llevarán el sufijo <code className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1 rounded mx-0.5 font-mono">_medidor</code> para distinguirlas fácilmente de los datos del cliente.
+            <p className="text-xs font-medium text-slate-700 dark:text-zinc-300 leading-relaxed">
+              Al descargar la relación combinada, las columnas de los medidores llevarán el sufijo <code className="bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded mx-0.5 font-mono font-bold">_medidor</code> para distinguirlas fácilmente de los datos del cliente.
             </p>
           </div>
         )}
