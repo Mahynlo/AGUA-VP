@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { Card, CardBody, Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@nextui-org/react";
 import { HiLocationMarker } from "react-icons/hi";
 import { CustomTextarea } from "../../../ui/FormComponents";
 
@@ -21,17 +21,26 @@ export const SeccionDireccion = ({
   limpiarError
 }) => {
   return (
-    <Card className="border border-green-200 dark:border-green-800 mt-2">
-      <CardBody className="space-y-4">
-        <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <HiLocationMarker className="w-5 h-5 text-green-600" />
-          Dirección de Residencia
-        </h3>
+    <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-6 space-y-5">
+      <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70 dark:border-zinc-800/70">
+        <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+          <HiLocationMarker className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="font-black text-sm text-slate-800 dark:text-zinc-100 uppercase tracking-wider leading-none">
+            Dirección de Residencia
+          </h3>
+          <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+            Pueblo y domicilio completo del cliente
+          </p>
+        </div>
+      </div>
 
+      <div className="space-y-4">
         {/* Pueblo */}
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Pueblo*
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+            Pueblo <span className="text-red-500">*</span>
           </label>
           <Select
             aria-label="Ciudad"
@@ -71,8 +80,8 @@ export const SeccionDireccion = ({
           isInvalid={mostrarErrores && !!erroresCampos.direccion}
           errorMessage="La dirección es requerida"
         />
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   );
 };
 

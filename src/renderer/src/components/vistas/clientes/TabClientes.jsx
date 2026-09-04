@@ -15,7 +15,8 @@ import {
     HiChevronRight,
     HiRefresh,
     HiFolder,
-    HiExclamationCircle
+    HiExclamationCircle,
+    HiUserCircle
 } from "react-icons/hi";
 import { Modal, Button } from "flowbite-react";
 import RegistrarClientes from "./RegistrarCliente";
@@ -56,7 +57,7 @@ const normalizarClientesParaExport = (lista) => {
     }));
 };
 
-// ── SKELETON DE CARGA (animate-pulse nativo, sin librerías) ───────────────────
+// ── SKELETON DE CARGA (animate-pulse nativo) ──────────────────────────────────
 const LoadingSkeleton = () => (
     <div className="w-full flex flex-col gap-6">
         <div className="flex justify-between items-center pb-4">
@@ -96,29 +97,29 @@ const LoadingSkeleton = () => (
     </div>
 );
 
-// ── SPINNER CSS PURO (sin librería) ───────────────────────────────────────────
+// ── SPINNER CSS PURO ──────────────────────────────────────────────────────────
 function LoadingSpinner({ className = "w-4 h-4" }) {
     return (
-        <div className={`${className} border-2 border-slate-300 dark:border-zinc-600 border-t-amber-500 rounded-full animate-spin`} />
+        <div className={`${className} border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600 rounded-full animate-spin`} />
     );
 }
 
-// ── DROPDOWN DE EXPORTAR (estado local, sin librería) ─────────────────────────
+// ── DROPDOWN DE EXPORTAR ──────────────────────────────────────────────────────
 function ExportDropdown({ onExportCSV, onExportExcel }) {
     const [open, setOpen] = useState(false);
     return (
         <div className="relative">
             <button
                 onClick={() => setOpen((v) => !v)}
-                className="font-bold bg-amber-500/10 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 rounded-xl h-11 px-5 shadow-sm flex items-center gap-2 transition-colors"
+                className="font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl h-[52px] px-5 shadow-sm flex items-center gap-2 transition-colors border border-slate-200 dark:border-zinc-800"
             >
-                <HiDownload className="text-lg" />
+                <HiDownload className="text-lg text-blue-600 dark:text-blue-400" />
                 Exportar
             </button>
             {open && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-                    <div className="absolute right-0 z-20 mt-2 w-52 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden">
+                    <div className="absolute right-0 z-20 mt-2 w-52 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <button
                             onClick={() => { onExportCSV(); setOpen(false); }}
                             className="w-full px-4 py-3 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left"
@@ -140,7 +141,7 @@ function ExportDropdown({ onExportCSV, onExportExcel }) {
     );
 }
 
-// ── PAGINACIÓN SIMPLE (sin librería) ──────────────────────────────────────────
+// ── PAGINACIÓN SIMPLE ─────────────────────────────────────────────────────────
 function SimplePagination({ currentPage, totalPages, onChange }) {
     if (totalPages <= 1) return null;
 
@@ -157,9 +158,9 @@ function SimplePagination({ currentPage, totalPages, onChange }) {
         pages.push(totalPages);
     }
 
-    const base = "h-9 min-w-[36px] px-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center";
-    const active = "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900";
-    const inactive = "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700";
+    const base = "h-9 min-w-[36px] px-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center";
+    const active = "bg-blue-600 text-white shadow-sm";
+    const inactive = "bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 border border-slate-200/60 dark:border-zinc-800";
     const disabled = "opacity-40 cursor-not-allowed";
 
     return (
@@ -168,12 +169,13 @@ function SimplePagination({ currentPage, totalPages, onChange }) {
                 onClick={() => onChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className={`${base} ${currentPage === 1 ? `${inactive} ${disabled}` : inactive}`}
+                title="Página anterior"
             >
                 <HiChevronLeft className="w-4 h-4" />
             </button>
             {pages.map((page, i) =>
                 page === "..." ? (
-                    <span key={`e${i}`} className="px-1 text-slate-400 text-sm select-none">…</span>
+                    <span key={`e${i}`} className="px-1 text-slate-400 text-sm select-none font-bold">…</span>
                 ) : (
                     <button
                         key={page}
@@ -188,6 +190,7 @@ function SimplePagination({ currentPage, totalPages, onChange }) {
                 onClick={() => onChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className={`${base} ${currentPage === totalPages ? `${inactive} ${disabled}` : inactive}`}
+                title="Página siguiente"
             >
                 <HiChevronRight className="w-4 h-4" />
             </button>
@@ -195,41 +198,47 @@ function SimplePagination({ currentPage, totalPages, onChange }) {
     );
 }
 
-// ── BADGE DE ESTADO (reemplaza Chip de NextUI) ────────────────────────────────
+// ── BADGE DE ESTADO ──────────────────────────────────────────────────────────
 const STATUS_COLORS = {
-    success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    danger:  "bg-red-500/10 text-red-600 dark:text-red-400",
-    default: "bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400",
+    success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/40",
+    warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/40",
+    danger:  "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200/50 dark:border-rose-900/40",
+    default: "bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700",
 };
 
 function StatusBadge({ status, getStatusColor }) {
     const color = STATUS_COLORS[getStatusColor(status)] ?? STATUS_COLORS.default;
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${color}`}>
+        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${color}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
             {status || "Sin estado"}
         </span>
     );
 }
 
-// ── AVATAR + NOMBRE (reemplaza User de NextUI) ────────────────────────────────
+// ── AVATAR + NOMBRE ──────────────────────────────────────────────────────────
 function ClienteUser({ nombre, numeroPredio, id }) {
     return (
         <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 border border-slate-200 dark:border-zinc-700 shadow-sm flex items-center justify-center shrink-0">
-                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-900/50 shadow-sm flex items-center justify-center shrink-0">
+                <span className="text-sm font-black text-blue-600 dark:text-blue-400">
                     {nombre?.charAt(0)?.toUpperCase() || "C"}
                 </span>
             </div>
-            <div className="flex flex-col">
-                <span className="font-bold text-sm text-slate-800 dark:text-zinc-100 leading-tight">{nombre}</span>
+            <div className="flex flex-col min-w-0">
+                <span className="font-bold text-sm text-slate-800 dark:text-zinc-100 leading-tight truncate">{nombre}</span>
                 <span className="font-medium text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
                     {numeroPredio ? (
-                        <>Predio <span className="font-bold text-slate-700 dark:text-zinc-300">#{numeroPredio}</span></>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
+                            #{numeroPredio}
+                        </span>
                     ) : (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500">Sin predio</span>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500">
+                            Sin predio
+                        </span>
                     )}
-                    <span className="text-slate-300 dark:text-zinc-700">·</span> ID: {id}
+                    <span className="text-slate-300 dark:text-zinc-700">·</span>
+                    <span className="text-slate-400 dark:text-zinc-500">ID: {id}</span>
                 </span>
             </div>
         </div>
@@ -237,7 +246,7 @@ function ClienteUser({ nombre, numeroPredio, id }) {
 }
 
 // ── ESTILOS COMPARTIDOS ───────────────────────────────────────────────────────
-const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-none appearance-none cursor-pointer";
+const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none appearance-none cursor-pointer";
 
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 export function TabClientes() {
@@ -432,8 +441,8 @@ export function TabClientes() {
             {/* ── HEADER Y ACCIONES ── */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-amber-500/10 dark:bg-amber-900/30 rounded-2xl shrink-0">
-                        <HiUsers className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                    <div className="p-3 bg-blue-500/10 dark:bg-blue-900/30 rounded-2xl shrink-0">
+                        <HiUsers className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
@@ -465,7 +474,7 @@ export function TabClientes() {
             <div className="flex border-b border-slate-200 dark:border-zinc-800 gap-6 my-2">
                 <button
                     onClick={() => setShowDeleted(false)}
-                    className={`pb-4 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-amber-500 text-amber-600 dark:text-amber-400" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+                    className={`pb-3 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"}`}
                 >
                     Directorio Activo
                 </button>
@@ -474,7 +483,7 @@ export function TabClientes() {
                         setShowDeleted(true);
                         loadDeletedClientes();
                     }}
-                    className={`pb-4 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-amber-500 text-amber-600 dark:text-amber-400" : "border-transparent text-slate-500 hover:text-slate-700"} flex items-center gap-2`}
+                    className={`pb-3 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"} flex items-center gap-2`}
                 >
                     <HiFolder className="w-4 h-4" /> Papelera
                 </button>
@@ -490,11 +499,11 @@ export function TabClientes() {
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div className="flex flex-col gap-1">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                                        Mostrando <span className="text-red-500 font-extrabold">{filteredDeletedClientes.length}</span> de <span className="font-extrabold">{deletedClientes.length}</span> clientes desactivados
+                                        Mostrando <span className="text-rose-600 dark:text-rose-400 font-extrabold">{filteredDeletedClientes.length}</span> de <span className="font-extrabold text-slate-700 dark:text-zinc-200">{deletedClientes.length}</span> clientes desactivados
                                     </span>
                                     <button 
                                         onClick={loadDeletedClientes}
-                                        className="text-left text-xs font-bold text-slate-600 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1"
+                                        className="text-left text-xs font-bold text-slate-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 flex items-center gap-1.5 transition-colors"
                                         disabled={loadingDeleted}
                                     >
                                         <HiRefresh className={`w-3.5 h-3.5 ${loadingDeleted ? "animate-spin" : ""}`} />
@@ -509,7 +518,7 @@ export function TabClientes() {
                                         placeholder="Buscar en papelera..."
                                         value={searchDeleted}
                                         onChange={(e) => setSearchDeleted(e.target.value)}
-                                        className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-none h-[52px]"
+                                        className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-none h-[52px]"
                                     />
                                     {searchDeleted && (
                                         <button
@@ -625,7 +634,7 @@ export function TabClientes() {
                                 placeholder="Buscar por nombre, dirección, tel., correo o predio..."
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-none h-[52px]"
+                                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none h-[52px]"
                             />
                             {search && (
                                 <button
@@ -685,7 +694,7 @@ export function TabClientes() {
                             {hasActiveFilters ? (
                                 <button
                                     onClick={clearFilters}
-                                    className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                    className="w-full font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors"
                                 >
                                     <HiFilter className="text-lg" />
                                     Limpiar
@@ -701,9 +710,9 @@ export function TabClientes() {
                 <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                         Mostrando{" "}
-                        <span className="text-amber-600 dark:text-amber-400">{paginatedData.length}</span>
+                        <span className="text-blue-600 dark:text-blue-400 font-extrabold">{paginatedData.length}</span>
                         {" "}de{" "}
-                        <span className="text-slate-700 dark:text-zinc-200">{totalItems}</span>
+                        <span className="text-slate-700 dark:text-zinc-200 font-extrabold">{totalItems}</span>
                         {" "}clientes
                     </span>
                     <div className="flex items-center gap-2">
@@ -714,7 +723,7 @@ export function TabClientes() {
                             value={rowsPerPage.toString()}
                             onChange={(e) => handleRowsPerPageChange(e.target.value)}
                             aria-label="Filas por página"
-                            className="h-[36px] px-3 text-sm font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20 shadow-none appearance-none cursor-pointer w-20"
+                            className="h-[36px] px-3 text-sm font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-none appearance-none cursor-pointer w-20"
                         >
                             {["5", "10", "15", "20", "50"].map((n) => (
                                 <option key={n} value={n}>{n}</option>
@@ -827,14 +836,14 @@ export function TabClientes() {
                                                 <button
                                                     onClick={() => handleAction("edit", cliente)}
                                                     title="Editar Cliente"
-                                                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-600 dark:bg-zinc-800 dark:hover:bg-amber-900/30 dark:text-zinc-400 dark:hover:text-amber-400 transition-colors"
+                                                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
                                                 >
                                                     <HiPencil className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleAction("delete", cliente)}
                                                     title="Eliminar"
-                                                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 transition-colors"
+                                                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400 transition-colors"
                                                 >
                                                     <HiTrash className="w-4 h-4" />
                                                 </button>
@@ -884,7 +893,7 @@ export function TabClientes() {
                 <Modal.Header />
                 <Modal.Body>
                     <div className="text-center p-2">
-                        <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-red-500"}`} />
+                        <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-rose-500"}`} />
                         <h3 className="mb-4 text-base font-black text-slate-800 dark:text-zinc-100">
                             {confirmModal.title}
                         </h3>
@@ -923,7 +932,7 @@ export function TabClientes() {
                 <Modal.Body>
                     <div className="p-2">
                         <div className="flex items-center gap-3 mb-4 justify-center">
-                            <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl">
+                            <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
                                 <HiDownload className="w-8 h-8" />
                             </div>
                         </div>
@@ -939,11 +948,11 @@ export function TabClientes() {
                             <button
                                 type="button"
                                 onClick={() => handleExecuteExport("page")}
-                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-amber-500 dark:hover:border-amber-500 bg-slate-50/50 hover:bg-amber-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-slate-50/50 hover:bg-blue-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
                             >
                                 <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
                                     <span>Página actual (tabla)</span>
-                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500/10 text-amber-600 rounded-md">
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md">
                                         {paginatedData.length} registros
                                     </span>
                                 </span>
@@ -956,7 +965,7 @@ export function TabClientes() {
                             <button
                                 type="button"
                                 onClick={() => handleExecuteExport("all")}
-                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-amber-500 dark:hover:border-amber-500 bg-slate-50/50 hover:bg-amber-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-slate-50/50 hover:bg-blue-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
                             >
                                 <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
                                     <span>Todos los registros</span>
