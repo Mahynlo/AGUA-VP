@@ -33,24 +33,27 @@ function reconstruirLista(puntosRuta, allMedidores, allClientes) {
   const clienteMedMap = new Map();
 
   puntosRuta.forEach((punto) => {
-    const med = allMedidores.find((m) => m.id === punto.id);
+    const med = allMedidores.find((m) => String(m.id) === String(punto.id));
     if (!med || !med.cliente_id) return;
-    if (!clienteMedMap.has(med.cliente_id)) clienteMedMap.set(med.cliente_id, []);
-    const existing = clienteMedMap.get(med.cliente_id);
-    if (!existing.find((m) => m.id === med.id)) existing.push(med);
+    const cId = String(med.cliente_id);
+    if (!clienteMedMap.has(cId)) clienteMedMap.set(cId, []);
+    const existing = clienteMedMap.get(cId);
+    if (!existing.find((m) => String(m.id) === String(med.id))) existing.push(med);
   });
 
   const items = [];
   puntosRuta.forEach((punto) => {
-    const med = allMedidores.find((m) => m.id === punto.id);
-    if (!med || !med.cliente_id || seenClientes.has(med.cliente_id)) return;
-    seenClientes.add(med.cliente_id);
-    const cliente = allClientes.find((c) => c.id === med.cliente_id);
+    const med = allMedidores.find((m) => String(m.id) === String(punto.id));
+    if (!med || !med.cliente_id) return;
+    const cId = String(med.cliente_id);
+    if (seenClientes.has(cId)) return;
+    seenClientes.add(cId);
+    const cliente = allClientes.find((c) => String(c.id) === cId);
     items.push({
-      key: `c-${med.cliente_id}`,
+      key: `c-${cId}`,
       clienteId: med.cliente_id,
       clienteData: cliente || { id: med.cliente_id, nombre: `Cliente #${med.cliente_id}` },
-      medidores: clienteMedMap.get(med.cliente_id) || [],
+      medidores: clienteMedMap.get(cId) || [],
     });
   });
   return items;
@@ -100,24 +103,31 @@ export default function PanelGestionRuta({
   const dragOverIdxRef = useRef(null);
   const [dragOverIdx, setDragOverIdx] = useState(null);
 
+  const isInitialMount = useRef(true);
   const initializedRef = useRef(false);
   const skipUpdateRef = useRef(false);
 
   useEffect(() => {
     if (
-      !initializedRef.current &&
+      puntosRutaInicial &&
       puntosRutaInicial.length > 0 &&
       allMedidores.length > 0 &&
       allClientes.length > 0
     ) {
-      initializedRef.current = true;
       const items = reconstruirLista(puntosRutaInicial, allMedidores, allClientes);
-      skipUpdateRef.current = true;
-      setListaItems(items);
+      if (items.length > 0) {
+        initializedRef.current = true;
+        skipUpdateRef.current = true;
+        setListaItems(items);
+      }
     }
   }, [puntosRutaInicial, allMedidores, allClientes]);
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     if (skipUpdateRef.current) {
       skipUpdateRef.current = false;
       return;
@@ -322,204 +332,200 @@ export default function PanelGestionRuta({
      Render
   ───────────────────────────────────────────────────────────────────────── */
   return (
-    <div className="flex flex-col gap-4 h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-zinc-950">
 
-      {/* ── Modos de orden (Segmented Control Style) ── */}
-      <div className="shrink-0 pt-4 px-4 sm:px-5">
-        <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">
-          Método de Ordenamiento
-        </p>
-        <div className="flex bg-slate-100 dark:bg-zinc-800 p-1 rounded-xl w-full">
-          {[
-            { key: "numero_predio", label: "No. Predio", icon: "🏠" },
-            { key: "id",            label: "ID",         icon: "#"  },
-            { key: "personalizado", label: "Manual",     icon: "⇅" },
-          ].map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => cambiarOrden(opt.key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200
-                ${modoOrden === opt.key
-                  ? "bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                  : "text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200"
-                }`}
-            >
-              <span className="opacity-80">{opt.icon}</span> <span className="hidden sm:inline">{opt.label}</span>
-            </button>
-          ))}
-        </div>
-        {modoOrden === "personalizado" && (
-          <p className="text-[10px] font-medium text-blue-500 dark:text-blue-400 mt-2 flex items-center gap-1">
-            <HiInformationCircle /> Mantén presionado y arrastra las filas para ordenar manualmente.
-          </p>
-        )}
-      </div>
-
-      {/* ── Buscador y Agregar en masa ── */}
-      <div className="shrink-0 flex flex-col gap-3 px-4 sm:px-5">
-        <div className="flex gap-2">
-            <button
-                onClick={() => agregarTodos("")}
-                className="flex-1 font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1.5 border border-blue-200/50 dark:border-blue-800/50"
-            >
-                <HiPlus className="w-4 h-4" />Añadir Todos
-            </button>
-            <div className="relative">
-                <button
-                    onClick={() => setShowCiudadMenu((v) => !v)}
-                    className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 rounded-lg px-3 py-1.5 text-sm flex items-center gap-1.5"
-                >
-                    <span>Por Ciudad</span><HiChevronDown className="w-4 h-4" />
-                </button>
-                {showCiudadMenu && (
-                    <div className="absolute z-50 right-0 mt-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl overflow-hidden min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
-                    {ciudadesDisponibles.length === 0 ? (
-                        <p className="px-4 py-3 text-xs font-medium text-slate-400 text-center">Sin ciudades disponibles</p>
-                    ) : (
-                        ciudadesDisponibles.map((ciudad) => (
-                        <button
-                            key={ciudad}
-                            onClick={() => agregarTodos(ciudad)}
-                            className="w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-700 dark:text-zinc-200 border-b border-slate-100 dark:border-zinc-700/50 last:border-b-0 transition-colors"
-                        >
-                            {ciudad}
-                        </button>
-                        ))
-                    )}
-                    </div>
-                )}
-            </div>
-        </div>
-
-        {/* Campo de Búsqueda Estilo CustomInput */}
-        <div className="relative">
-            <div className="relative flex items-center">
-                <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
-                    {isBuscando ? (
-                      <div className="w-4 h-4 border-2 border-blue-300/30 border-t-blue-500 rounded-full animate-spin" />
-                    ) : (
-                      <HiSearch className="w-4 h-4" />
-                    )}
-                </span>
-                <input
-                    type="text"
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder="Buscar cliente para agregar..."
-                    className="w-full pl-9 pr-9 py-2 text-sm font-medium border border-slate-200 dark:border-zinc-700 rounded-xl bg-slate-50 dark:bg-zinc-800/50 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all shadow-sm"
-                />
-                {busqueda && (
-                    <button
-                        onClick={() => { setBusqueda(""); setResultados([]); }}
-                        className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
-                    >
-                        <HiX className="w-4 h-4" />
-                    </button>
-                )}
-            </div>
+      {/* ── BARRA SUPERIOR INTEGRADA (Buscador + Añadir en masa + Ordenamiento) ── */}
+      <div className="shrink-0 p-3 sm:p-3.5 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-zinc-900/40 flex flex-col gap-2.5">
+        
+        {/* Fila 1: Buscador + Botón Añadir Todos + Selector Por Ciudad */}
+        <div className="flex items-center gap-2">
+          {/* Campo de búsqueda */}
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+              {isBuscando ? (
+                <div className="w-3.5 h-3.5 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+              ) : (
+                <HiSearch className="w-4 h-4" />
+              )}
+            </span>
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar cliente para agregar..."
+              className="w-full pl-9 pr-8 py-2 text-xs font-semibold border border-slate-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 hover:border-slate-300 dark:hover:border-zinc-700 transition-all shadow-none h-10"
+            />
+            {busqueda && (
+              <button
+                onClick={() => { setBusqueda(""); setResultados([]); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+              >
+                <HiX className="w-3.5 h-3.5" />
+              </button>
+            )}
 
             {/* Dropdown de Resultados de Búsqueda */}
             {resultados.length > 0 && (
-                <div className="absolute z-50 w-full mt-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                        {resultados.map((cliente) => {
-                            const medsCliente = allMedidores.filter((m) => m.cliente_id === cliente.id && m.latitud && m.longitud);
-                            const cnt = medsCliente.length;
-                            const rutasConflicto = [...new Set(medsCliente.filter((m) => m.ruta_id).map((m) => m.ruta_nombre).filter(Boolean))];
-                            const tieneConflicto = rutasConflicto.length > 0;
+              <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
+                  {resultados.map((cliente) => {
+                    const medsCliente = allMedidores.filter((m) => m.cliente_id === cliente.id && m.latitud && m.longitud);
+                    const cnt = medsCliente.length;
+                    const rutasConflicto = [...new Set(medsCliente.filter((m) => m.ruta_id).map((m) => m.ruta_nombre).filter(Boolean))];
+                    const tieneConflicto = rutasConflicto.length > 0;
 
-                            return (
-                                <button
-                                    key={cliente.id}
-                                    onClick={() => agregarCliente(cliente)}
-                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-700/50 text-left transition-colors border-b border-slate-100 dark:border-zinc-700/50 last:border-b-0"
-                                >
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${tieneConflicto ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400' : 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'}`}>
-                                        {(cliente.nombre || "?").charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate leading-tight mb-0.5">
-                                            {cliente.nombre}
-                                        </p>
-                                        <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 truncate">
-                                            {cliente.numero_predio ? `Predio #${cliente.numero_predio} · ` : ""}
-                                            {cnt} {cnt !== 1 ? "medidores" : "medidor"} c/coord.
-                                        </p>
-                                        {tieneConflicto && (
-                                            <p className="text-[10px] text-orange-600 dark:text-orange-400 font-bold mt-0.5">
-                                                ⚠ Ya en: {rutasConflicto.join(", ")}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className={`p-1.5 rounded-md ${tieneConflicto ? 'bg-orange-50 text-orange-500 dark:bg-orange-900/20' : 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20'}`}>
-                                        <HiPlus className="w-4 h-4 shrink-0" />
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
+                    return (
+                      <button
+                        key={cliente.id}
+                        onClick={() => agregarCliente(cliente)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800/60 rounded-xl text-left transition-colors"
+                      >
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${tieneConflicto ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`}>
+                          {(cliente.nombre || "?").charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate leading-tight">
+                            {cliente.nombre}
+                          </p>
+                          <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 truncate">
+                            {cliente.numero_predio ? `Predio #${cliente.numero_predio} · ` : ""}
+                            {cnt} {cnt !== 1 ? "medidores" : "medidor"}
+                          </p>
+                          {tieneConflicto && (
+                            <p className="text-[9px] text-amber-600 dark:text-amber-400 font-bold">
+                              ⚠ En ruta: {rutasConflicto.join(", ")}
+                            </p>
+                          )}
+                        </div>
+                        <div className={`p-1 rounded-lg ${tieneConflicto ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
+                          <HiPlus className="w-3.5 h-3.5 shrink-0" />
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
             )}
 
             {/* Mensaje Sin Resultados */}
             {busqueda.trim() && !isBuscando && resultados.length === 0 && (
-                <div className="absolute z-50 w-full mt-2 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl shadow-lg p-4 text-center">
-                    <p className="text-xs font-bold text-slate-600 dark:text-zinc-300">Sin resultados disponibles</p>
-                    <p className="text-[10px] text-slate-400 mt-1">El cliente ya está en la lista o no tiene medidores georreferenciados.</p>
-                </div>
+              <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg p-3 text-center">
+                <p className="text-xs font-bold text-slate-700 dark:text-zinc-200">Sin resultados disponibles</p>
+                <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">El cliente ya está en la lista o no tiene medidores con coordenadas.</p>
+              </div>
             )}
+          </div>
+
+          {/* Botón Añadir Todos */}
+          <button
+            onClick={() => agregarTodos("")}
+            className="h-10 px-3 bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-200/60 dark:border-amber-800/60 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-none"
+            title="Añadir todos los clientes con medidores georreferenciados sin asignar"
+          >
+            <HiPlus className="w-4 h-4" />
+            <span className="hidden sm:inline">Todos</span>
+          </button>
+
+          {/* Selector Por Ciudad */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setShowCiudadMenu((v) => !v)}
+              className="h-10 px-3 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-none"
+              title="Filtrar y añadir por ciudad"
+            >
+              <span>Ciudad</span>
+              <HiChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+            {showCiudadMenu && (
+              <div className="absolute z-50 right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden min-w-[190px] animate-in fade-in zoom-in-95 duration-150 p-1">
+                {ciudadesDisponibles.length === 0 ? (
+                  <p className="px-3 py-2 text-xs font-medium text-slate-400 text-center">Sin ciudades disponibles</p>
+                ) : (
+                  ciudadesDisponibles.map((ciudad) => (
+                    <button
+                      key={ciudad}
+                      onClick={() => agregarTodos(ciudad)}
+                      className="w-full text-left px-3 py-1.5 text-xs font-bold hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 rounded-xl text-slate-700 dark:text-zinc-200 transition-colors"
+                    >
+                      {ciudad}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Fila 2: Selector de Ordenamiento Compacto + Contador + Limpiar */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          {/* Píldoras de orden */}
+          <div className="flex items-center gap-1 bg-slate-200/60 dark:bg-zinc-800/80 p-0.5 rounded-lg">
+            {[
+              { key: "numero_predio", label: "No. Predio", icon: "🏠" },
+              { key: "id", label: "ID", icon: "#" },
+              { key: "personalizado", label: "Manual ⇅", icon: "" },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => cambiarOrden(opt.key)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all flex items-center gap-1 ${
+                  modoOrden === opt.key
+                    ? "bg-white dark:bg-zinc-900 text-amber-600 dark:text-amber-400 shadow-sm"
+                    : "text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Resumen de puntos y botón limpiar */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">
+              <span className="font-mono font-black text-amber-600 dark:text-amber-400">{listaItems.length}</span> pts
+              {totalMedidores > 0 && <span className="text-[10px] text-slate-400 dark:text-zinc-500"> ({totalMedidores} meds)</span>}
+            </span>
+            {listaItems.length > 0 && (
+              <button
+                onClick={() => {
+                  setListaItems([]);
+                  setExpandidos(new Set());
+                }}
+                className="text-[10px] font-bold uppercase tracking-wider text-rose-500 hover:text-rose-600 px-1.5 py-0.5 rounded hover:bg-rose-500/10 transition-colors"
+                title="Vaciar lista de puntos"
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ── Aviso clientes omitidos ── */}
+      {/* ── Aviso clientes omitidos (compacto) ── */}
       {omitidosAviso > 0 && (
-        <div className="shrink-0 mx-4 sm:mx-5">
-            <div className="flex items-start gap-3 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/50 rounded-xl px-4 py-3">
-                <HiExclamationCircle className="text-orange-500 w-5 h-5 shrink-0 mt-0.5" />
-                <span className="text-orange-700 dark:text-orange-300 text-xs font-medium flex-1 leading-relaxed">
-                    Se omitieron <strong>{omitidosAviso} {omitidosAviso !== 1 ? "clientes" : "cliente"}</strong> porque sus medidores ya pertenecen a otra ruta activa.
-                </span>
-                <button onClick={() => setOmitidosAviso(0)} className="text-orange-400 hover:text-orange-600 dark:hover:text-orange-300 transition-colors">
-                    <HiX className="w-4 h-4" />
-                </button>
-            </div>
+        <div className="shrink-0 mx-3 my-1">
+          <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-1.5">
+            <HiExclamationCircle className="text-amber-600 dark:text-amber-400 w-4 h-4 shrink-0" />
+            <span className="text-amber-800 dark:text-amber-300 text-[11px] font-medium flex-1">
+              Se omitieron <strong>{omitidosAviso}</strong> cliente(s) ya asignados a otra ruta.
+            </span>
+            <button onClick={() => setOmitidosAviso(0)} className="text-amber-400 hover:text-amber-600 transition-colors">
+              <HiX className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
 
-      {/* ── Cabecera de la lista ── */}
-      <div className="flex items-center justify-between shrink-0 px-4 sm:px-5 mt-2">
-        <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-          Puntos de la Ruta
-          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-slate-200 dark:bg-zinc-700 text-slate-600 dark:text-zinc-300">
-            {listaItems.length}
-          </span>
-          {totalMedidores > 0 && (
-            <span className="text-[10px] text-slate-400 dark:text-zinc-500 lowercase font-medium">({totalMedidores} meds)</span>
-          )}
-        </span>
-        {listaItems.length > 0 && (
-          <button
-            onClick={() => {
-              setListaItems([]);
-              setExpandidos(new Set());
-            }}
-            className="text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 transition-colors"
-          >
-            Limpiar Lista
-          </button>
-        )}
-      </div>
-
-      {/* ── Lista de clientes (Zona Arrastrable) ── */}
-      <div className="flex-1 overflow-y-auto min-h-0 space-y-2 px-4 sm:px-5 pb-4 custom-scrollbar">
+      {/* ── Lista de Clientes (Área Scrollable de Alta Densidad) ── */}
+      <div className="flex-1 overflow-y-auto min-h-0 space-y-1.5 p-3 custom-scrollbar">
         {listaItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-10 text-center opacity-60">
-            <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
-              <HiMap className="text-3xl text-slate-400 dark:text-zinc-500" />
+          <div className="flex flex-col items-center justify-center h-full py-12 text-center opacity-60">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-2">
+              <HiMap className="text-xl" />
             </div>
-            <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">Ruta Vacía</p>
-            <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1 max-w-[200px]">
-              Busca y selecciona clientes en la parte superior para construir la secuencia de la ruta.
+            <p className="text-xs font-bold text-slate-700 dark:text-zinc-200">Ruta sin puntos agregados</p>
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5 max-w-[220px]">
+              Busca clientes o presiona "Todos" arriba para definir el recorrido.
             </p>
           </div>
         ) : (
@@ -535,86 +541,85 @@ export default function PanelGestionRuta({
                 onDragStart={(e) => handleDragStart(e, idx)}
                 onDragOver={(e) => handleDragOver(e, idx)}
                 onDragEnd={handleDragEnd}
-                className={`rounded-xl border transition-all duration-200 overflow-hidden
-                  ${modoOrden === "personalizado" ? "cursor-grab active:cursor-grabbing" : ""}
-                  ${isDragTarget
-                    ? "border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-md scale-[0.98]"
-                    : "border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-blue-300 dark:hover:border-zinc-600 shadow-sm"
-                  }`}
+                className={`rounded-xl border transition-all duration-150 overflow-hidden ${
+                  modoOrden === "personalizado" ? "cursor-grab active:cursor-grabbing" : ""
+                } ${
+                  isDragTarget
+                    ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 shadow-md scale-[0.99]"
+                    : "border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-slate-300 dark:hover:border-zinc-700 shadow-sm"
+                }`}
               >
-                {/* Fila principal */}
-                <div className="flex items-center gap-3 px-3 py-2.5">
+                {/* Fila principal del cliente */}
+                <div className="flex items-center gap-2.5 px-3 py-2">
                   {/* Número de orden */}
-                  <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 w-5 text-center shrink-0 select-none bg-slate-100 dark:bg-zinc-800 py-1 rounded">
+                  <span className="text-[10px] font-mono font-black text-slate-500 dark:text-zinc-400 w-5 h-5 flex items-center justify-center shrink-0 select-none bg-slate-100 dark:bg-zinc-800 rounded-md">
                     {idx + 1}
                   </span>
 
-                  {/* Drag handle (solo modo personalizado) */}
+                  {/* Drag handle */}
                   {modoOrden === "personalizado" && (
-                    <span className="text-slate-300 dark:text-zinc-600 shrink-0 text-lg hover:text-slate-500 transition-colors select-none">
+                    <span className="text-slate-300 dark:text-zinc-600 shrink-0 text-sm hover:text-slate-500 transition-colors select-none">
                       <HiMenu />
                     </span>
                   )}
 
                   {/* Info del Cliente */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate leading-tight mb-0.5">
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    <p className="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate leading-tight">
                       {item.clienteData?.nombre}
                     </p>
-                    <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 truncate">
-                      {item.clienteData?.numero_predio ? `Predio #${item.clienteData.numero_predio}` : `ID: ${item.clienteId}`}
-                    </p>
-                  </div>
-
-                  {/* Chip de Medidores */}
-                  <div className="flex items-center gap-1 shrink-0">
-                      {item.medidores.some((m) => m.ruta_id) && (
-                        <span className="text-[10px] text-orange-500 font-bold bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded mr-1" title="Contiene medidores en otra ruta">
-                            ⚠ Conflicto
-                        </span>
-                      )}
-                      <span className="text-[10px] font-black px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 select-none">
-                        {item.medidores.length} med{item.medidores.length > 1 ? 's' : ''}.
+                    {item.clienteData?.numero_predio && (
+                      <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded shrink-0">
+                        #{item.clienteData.numero_predio}
                       </span>
+                    )}
                   </div>
 
-                  {/* Controles: Expandir y Quitar */}
-                  <div className="flex items-center gap-1 shrink-0 border-l border-slate-100 dark:border-zinc-800 pl-2 ml-1">
-                      <button
-                        onClick={() => toggleExpand(item.clienteId)}
-                        className="p-1.5 rounded-md text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-zinc-800 transition-colors"
-                        title="Ver medidores"
-                      >
-                        {isExpanded ? <HiChevronUp className="w-4 h-4" /> : <HiChevronDown className="w-4 h-4" />}
-                      </button>
-                      <button
-                        onClick={() => quitarCliente(item.clienteId)}
-                        className="p-1.5 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                        title="Quitar de la ruta"
-                      >
-                        <HiX className="w-4 h-4" />
-                      </button>
+                  {/* Medidores y Conflicto */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {item.medidores.some((m) => m.ruta_id) && (
+                      <span className="text-[9px] text-amber-700 dark:text-amber-400 font-bold bg-amber-500/15 px-1.5 py-0.5 rounded" title="Contiene medidores en otra ruta">
+                        ⚠ Conflicto
+                      </span>
+                    )}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 select-none">
+                      {item.medidores.length} med{item.medidores.length > 1 ? 's' : ''}.
+                    </span>
+
+                    {/* Botones de acción */}
+                    <button
+                      onClick={() => toggleExpand(item.clienteId)}
+                      className="p-1 rounded-md text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-zinc-800 transition-colors"
+                      title="Ver medidores asignados"
+                    >
+                      {isExpanded ? <HiChevronUp className="w-3.5 h-3.5" /> : <HiChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={() => quitarCliente(item.clienteId)}
+                      className="p-1 rounded-md text-slate-300 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                      title="Quitar de la ruta"
+                    >
+                      <HiX className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Sub-lista medidores (expandida) */}
+                {/* Sub-lista de medidores (expandida) */}
                 {isExpanded && (
-                  <div className="border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50 p-2 space-y-1.5">
+                  <div className="border-t border-slate-100 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/40 p-2 space-y-1">
                     {item.medidores.map((m, mIdx) => (
-                      <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-lg">
-                        <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 w-5 h-5 flex items-center justify-center rounded shrink-0">
+                      <div key={m.id} className="flex items-center gap-2 px-2 py-1 bg-white dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800 rounded-lg text-xs">
+                        <span className="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
                           {offsetPuntos + mIdx + 1}
                         </span>
-                        <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                            <span className="font-mono text-xs font-bold text-slate-700 dark:text-zinc-200 shrink-0">
-                                {m.numero_serie}
-                            </span>
-                            <span className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 truncate flex items-center gap-1">
-                                <HiLocationMarker className="shrink-0" /> {m.ubicacion || "Sin ubicación específica"}
-                            </span>
-                        </div>
+                        <span className="font-mono font-bold text-slate-700 dark:text-zinc-200 text-xs">
+                          {m.numero_serie}
+                        </span>
+                        <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500 truncate flex items-center gap-1 ml-auto">
+                          <HiLocationMarker className="w-3 h-3 text-slate-400" /> {m.ubicacion || "Sin ubicación"}
+                        </span>
                         {m.ruta_id && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-orange-500 shrink-0 ml-auto bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded">
+                          <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
                             ⚠ {m.ruta_nombre}
                           </span>
                         )}
@@ -630,30 +635,30 @@ export default function PanelGestionRuta({
 
       {/* ── Errores Inferiores ── */}
       {mostrarErrores && (erroresCampos.puntos || erroresCampos.rutaCalculada) && (
-        <div className="shrink-0 mx-4 sm:mx-5 mb-2 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-xl p-3 flex gap-3 items-start animate-in fade-in">
-          <HiExclamationCircle className="text-red-500 w-5 h-5 shrink-0" />
+        <div className="shrink-0 mx-3 mb-2 bg-rose-500/10 border border-rose-500/20 rounded-xl p-2.5 flex gap-2.5 items-center animate-in fade-in">
+          <HiExclamationCircle className="text-rose-500 w-4 h-4 shrink-0" />
           <div className="flex flex-col gap-0.5">
-              {erroresCampos.puntos && <p className="text-xs font-bold text-red-700 dark:text-red-400">Agrega al menos 2 clientes con medidores a la lista.</p>}
-              {erroresCampos.rutaCalculada && <p className="text-xs font-bold text-red-700 dark:text-red-400">Es necesario Calcular la Ruta antes de poder guardarla.</p>}
+            {erroresCampos.puntos && <p className="text-[11px] font-bold text-rose-700 dark:text-rose-400">Agrega al menos 2 clientes con medidores a la lista.</p>}
+            {erroresCampos.rutaCalculada && <p className="text-[11px] font-bold text-rose-700 dark:text-rose-400">Es necesario Calcular la Ruta antes de poder guardarla.</p>}
           </div>
         </div>
       )}
 
       {/* ── Acciones Finales (Calcular y Reiniciar) ── */}
-      <div className="flex gap-3 shrink-0 px-4 sm:px-5 pb-4 border-t border-slate-100 dark:border-zinc-800 pt-4">
+      <div className="flex gap-2 shrink-0 p-3 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30">
         <button
           onClick={handleDibujarRuta}
           disabled={totalMedidores < 2 || isSaving}
-          className={`flex-1 font-bold flex items-center justify-center gap-2 px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
+          className={`flex-1 font-bold flex items-center justify-center gap-2 px-4 h-10 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs shadow-sm ${
             rutaCalculada
-              ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'
-              : 'bg-blue-600 text-white shadow-md shadow-blue-500/30 hover:bg-blue-700'
+              ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 hover:bg-amber-500/20'
+              : 'bg-amber-600 text-white shadow-amber-500/20 hover:bg-amber-700'
           }`}
         >
-          <HiMap className="text-lg" />
+          <HiMap className="w-4 h-4" />
           {rutaCalculada ? "Recalcular Ruta" : "Calcular Ruta"}
           {rutaCalculada?.distancia_total_km && (
-            <span className="ml-1 text-[10px] font-black bg-indigo-200 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded-md">
+            <span className="ml-1 text-[10px] font-mono font-black bg-amber-500/20 text-amber-800 dark:text-amber-200 px-1.5 py-0.5 rounded">
               {rutaCalculada.distancia_total_km.toFixed(1)} km
             </span>
           )}
@@ -661,7 +666,7 @@ export default function PanelGestionRuta({
         <button
           onClick={handleReiniciar}
           disabled={isSaving}
-          className="font-bold px-6 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 border border-red-200/50 dark:border-red-800/50 disabled:opacity-50"
+          className="font-bold px-4 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 border border-rose-200/50 dark:border-rose-900/30 disabled:opacity-50 text-xs transition-colors"
         >
           Reiniciar
         </button>

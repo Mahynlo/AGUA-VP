@@ -65,28 +65,28 @@ const LecturaInput = React.memo(React.forwardRef(
   return (
     <div className="space-y-4">
 
-      {/* Lectura anterior de referencia */}
+      {/* Lectura anterior de referencia (Azul / Celeste institucional de agua) */}
       {lecturaAnterior !== null && lecturaAnterior !== undefined ? (
         <div className="flex items-center justify-between bg-sky-500/10 rounded-2xl p-4 border border-sky-200/60 dark:border-sky-900/40">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-sky-700/70 dark:text-sky-400/80 mb-1">Lectura Anterior</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-sky-700/80 dark:text-sky-400/80 mb-1">Lectura Anterior</p>
             <p className="text-2xl font-black text-sky-700 dark:text-sky-300 tracking-tight">{fmtM3(lecturaAnterior)} <span className="text-sm opacity-70">m³</span></p>
           </div>
           {consumoCalculado !== null && !valorMenorQueAnterior && (
-            <div className="text-right border-l pl-4 border-sky-200 dark:border-sky-900/40">
-              <p className="text-[10px] font-bold text-emerald-700/70 dark:text-emerald-400/80 uppercase tracking-widest mb-1">Consumo (Resta)</p>
-              <p className={`text-2xl font-black tracking-tight ${consumoCalculado >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+            <div className="text-right border-l pl-4 border-sky-200/60 dark:border-sky-900/40">
+              <p className="text-[10px] font-bold text-emerald-700/80 dark:text-emerald-400/80 uppercase tracking-widest mb-1">Consumo (Resta)</p>
+              <p className={`text-2xl font-black tracking-tight ${consumoCalculado >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
                 +{fmtM3(consumoCalculado)} <span className="text-sm opacity-70">m³</span>
               </p>
             </div>
           )}
         </div>
       ) : (
-        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 border border-amber-200/50 dark:border-amber-800/30">
-          <HiExclamation className="text-amber-500 text-xl shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 bg-amber-500/10 dark:bg-amber-950/20 rounded-2xl p-4 border border-amber-500/20">
+          <HiExclamation className="text-amber-600 dark:text-amber-400 text-xl shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-0.5">Primera lectura del medidor</p>
-            <p className="text-xs font-medium text-amber-700/70 dark:text-amber-400/70 leading-snug">
+            <p className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-0.5">Primera lectura del medidor</p>
+            <p className="text-xs font-medium text-amber-700/80 dark:text-amber-400/80 leading-snug">
               No hay un registro anterior. El valor que ingreses será el punto de partida oficial.
             </p>
           </div>
@@ -99,14 +99,14 @@ const LecturaInput = React.memo(React.forwardRef(
             Ingresar Lectura Actual (m³)
         </label>
         <div className="relative w-full flex shadow-none rounded-2xl group">
-          <span className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl transition-colors ${valorMenorQueAnterior ? 'text-orange-500' : 'text-slate-500 group-focus-within:text-slate-700 dark:group-focus-within:text-zinc-300'}`}>
+          <span className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl transition-colors ${valorMenorQueAnterior ? 'text-orange-500' : 'text-slate-400 group-focus-within:text-amber-600 dark:group-focus-within:text-amber-400'}`}>
             <HiCalculator />
-            </span>
-            <input
+          </span>
+          <input
             ref={ref}
             type="number"
             min="0"
-              max={capacidadMaxima}
+            max={capacidadMaxima}
             step="0.01"
             value={value}
             onChange={onChange}
@@ -118,56 +118,56 @@ const LecturaInput = React.memo(React.forwardRef(
                 if (e.key === 'Enter') { e.preventDefault(); if (!valorMenorQueAnterior) onSave(); }
             }}
             className={`
-                w-full pl-14 pr-16 py-4 text-3xl font-black rounded-2xl transition-all duration-200 focus:outline-none focus:ring-4
-                bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white placeholder-slate-300 dark:placeholder-zinc-600
+                w-full pl-14 pr-16 py-3.5 text-2xl sm:text-3xl font-black rounded-2xl transition-all duration-200 focus:outline-none focus:ring-2
+                bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 placeholder-slate-300 dark:placeholder-zinc-600
                 ${error
-                    ? 'border-2 border-red-500 focus:ring-red-500/20 focus:border-red-500 bg-red-50 dark:bg-red-900/10'
+                    ? 'border-2 border-rose-500 focus:ring-rose-500/20 focus:border-rose-500 bg-rose-500/10'
                     : valorMenorQueAnterior
-                        ? 'border-2 border-orange-400 focus:ring-orange-500/20 focus:border-orange-500 bg-orange-50 dark:bg-orange-900/10'
-                    : 'border-2 border-slate-200 dark:border-zinc-800 focus:ring-slate-400/20 focus:border-slate-300 hover:border-slate-300 dark:hover:border-zinc-700'
+                        ? 'border-2 border-orange-500 focus:ring-orange-500/20 focus:border-orange-500 bg-orange-500/10'
+                    : 'border border-slate-200 dark:border-zinc-800 focus:ring-amber-500/20 focus:border-amber-500 hover:border-slate-300 dark:hover:border-zinc-700'
                 }
             `}
-            />
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center">
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-slate-200/30 border-t-slate-400 rounded-full animate-spin" />
-                ) : (
-                    <span className="text-slate-400 font-bold">m³</span>
-                )}
-            </div>
+          />
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center">
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-amber-300/30 border-t-amber-500 rounded-full animate-spin" />
+              ) : (
+                  <span className="text-slate-400 dark:text-zinc-500 font-bold">m³</span>
+              )}
+          </div>
         </div>
         <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mt-2">
           Máximo permitido por medidor: {Number(capacidadMaxima).toLocaleString('es-MX', { maximumFractionDigits: 4 })} m³
         </p>
-        {error && <p className="text-xs font-bold text-red-500 mt-2 flex items-center gap-1"><HiExclamation /> {error}</p>}
+        {error && <p className="text-xs font-bold text-rose-500 mt-2 flex items-center gap-1"><HiExclamation /> {error}</p>}
       </div>
 
       {/* Panel de confirmación — aparece automáticamente cuando la lectura bajó */}
       {valorMenorQueAnterior ? (
-        <div className="rounded-2xl border border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-900/10 p-5 space-y-4 animate-in slide-in-from-top-2">
+        <div className="rounded-2xl border border-orange-300 dark:border-orange-800/60 bg-orange-50 dark:bg-orange-950/20 p-5 space-y-4 animate-in slide-in-from-top-2">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-orange-200/50 dark:bg-orange-800/50 rounded-full">
-                <HiExclamation className="text-orange-600 dark:text-orange-400 text-lg" />
+            <div className="p-1.5 bg-orange-200/70 dark:bg-orange-900/50 rounded-full">
+                <HiExclamation className="text-orange-700 dark:text-orange-400 text-lg" />
             </div>
-            <p className="font-bold text-orange-800 dark:text-orange-300 text-sm">Alerta: La lectura es menor que la anterior</p>
+            <p className="font-bold text-orange-900 dark:text-orange-300 text-sm">Alerta: La lectura es menor que la anterior</p>
           </div>
 
-          <div className="flex justify-between items-center bg-white dark:bg-zinc-900 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
+          <div className="flex justify-between items-center bg-white dark:bg-zinc-900 p-3.5 rounded-xl border border-orange-200/60 dark:border-orange-900/40">
             <div>
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Mes Anterior</p>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase tracking-wider font-bold mb-0.5">Mes Anterior</p>
               <p className="font-black text-lg text-slate-700 dark:text-zinc-200">{fmtM3(lecturaAnterior)} <span className="text-xs opacity-60">m³</span></p>
             </div>
-            <HiArrowRight className="text-slate-300" />
+            <HiArrowRight className="text-slate-300 dark:text-zinc-600" />
             <div className="text-right">
-              <p className="text-[10px] text-orange-500 uppercase tracking-wider font-bold mb-0.5">Ingresaste</p>
+              <p className="text-[10px] text-orange-600 dark:text-orange-400 uppercase tracking-wider font-bold mb-0.5">Ingresaste</p>
               <p className="font-black text-lg text-orange-600 dark:text-orange-400">{fmtM3(parseFloat(value))} <span className="text-xs opacity-60">m³</span></p>
             </div>
           </div>
 
-          <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-3 border border-indigo-100 dark:border-indigo-900/30 flex justify-between items-center">
+          <div className="bg-indigo-50/80 dark:bg-indigo-950/30 rounded-xl p-3.5 border border-indigo-200/60 dark:border-indigo-900/40 flex justify-between items-center">
             <div>
-                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">Si el medidor dio vuelta a cero:</p>
-                <p className="text-xs text-indigo-500/70 dark:text-indigo-400/70 mt-0.5 font-medium">
+                <p className="text-[10px] text-indigo-700 dark:text-indigo-400 font-bold uppercase tracking-wider">Si el medidor dio vuelta a cero:</p>
+                <p className="text-xs text-indigo-600/80 dark:text-indigo-300/80 mt-0.5 font-medium">
                 ({fmtM3(capacidadMaxima)} − {fmtM3(lecturaAnterior)}) + {fmtM3(parseFloat(value))}
                 </p>
             </div>
@@ -182,19 +182,19 @@ const LecturaInput = React.memo(React.forwardRef(
             <button
               onClick={onConfirmarVueltaCero}
               disabled={isLoading}
-              className="flex-1 font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-11 flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+              className="flex-1 font-bold bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 rounded-xl h-11 flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 transition-all text-sm"
             >
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <HiCheck />
+                <HiCheck className="text-lg" />
               )}
               Confirmar Vuelta a Cero
             </button>
             <button
               onClick={onCorregirLectura}
               disabled={isLoading}
-              className="flex-1 font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl h-11 flex items-center justify-center gap-2 disabled:opacity-60"
+              className="flex-1 font-bold bg-slate-100/70 dark:bg-zinc-900/80 hover:bg-slate-200/70 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl h-11 flex items-center justify-center gap-2 disabled:opacity-60 text-slate-700 dark:text-zinc-200 text-sm transition-colors"
             >
               Corregir Error
             </button>
@@ -205,7 +205,7 @@ const LecturaInput = React.memo(React.forwardRef(
           <button
             onClick={onSave}
             disabled={!value || String(value).trim() === "" || isLoading}
-            className="w-full font-bold text-base h-12 bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full font-bold text-base h-12 bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-sm hover:shadow flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -681,7 +681,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
       <button
         onClick={() => setIsOpen(true)}
         disabled={!canTomarLecturas}
-        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+        className="font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-6 shadow-sm hover:shadow h-11 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center transition-all active:scale-[0.99]"
       >
         <HiMap className="text-lg" />
         Tomar Lecturas
@@ -699,7 +699,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
           <div className="flex gap-4 items-center overflow-visible w-full justify-between">
             {/* Lado Izquierdo: Icono + Título del modal */}
             <div className="flex items-center gap-4 min-w-0">
-              <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0 hidden sm:flex">
+              <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0 hidden sm:flex">
                 <HiLocationMarker className="w-6 h-6" />
               </div>
               <div className="min-w-0">
@@ -716,7 +716,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
             {showSearch && (
               <div className="flex-1 min-w-[240px] sm:min-w-[380px] md:min-w-[480px] max-w-sm sm:max-w-xl lg:max-w-2xl relative animate-in fade-in zoom-in-95 duration-200 mx-2 sm:mx-4">
                 <div className="relative flex items-center">
-                  <HiSearch className="absolute left-4 w-5 h-5 text-slate-500 pointer-events-none" />
+                  <HiSearch className="absolute left-4 w-5 h-5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
                   <input
                     ref={searchInputRef}
                     value={busqueda}
@@ -726,13 +726,13 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                       if (e.key === "Escape") { setShowSearch(false); setBusqueda(""); }
                       if (e.key === "ArrowLeft" || e.key === "ArrowRight") e.stopPropagation();
                     }}
-                    className="w-full pl-11 pr-4 py-2 text-sm font-medium border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-400/20 shadow-none transition-all h-10"
+                    className="w-full pl-11 pr-4 py-2 text-sm font-medium border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 shadow-none transition-all h-10"
                   />
                 </div>
 
                 {/* Dropdown de resultados */}
                 {busqueda.trim() && (
-                  <div className="absolute top-full left-0 right-0 mt-2 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg overflow-hidden w-full">
+                  <div className="absolute top-full left-0 right-0 mt-2 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden w-full p-1">
                     {resultadosBusqueda.length > 0 ? (
                       <div className="max-h-64 overflow-y-auto custom-scrollbar">
                         {resultadosBusqueda.map((punto) => {
@@ -741,7 +741,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                             <button
                               key={punto.medidor_id}
                               onClick={() => handleJumpTo(punto.idx)}
-                              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-700/50 border-b border-slate-100 dark:border-zinc-700/50 last:border-0 text-left transition-colors"
+                              className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/60 rounded-xl text-left transition-colors"
                             >
                               <span className="text-xs font-black text-slate-400 dark:text-zinc-500 w-8 text-center shrink-0 bg-slate-100 dark:bg-zinc-800 py-1 rounded-md">
                                 #{punto.orden ?? punto.idx + 1}
@@ -751,16 +751,16 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                                   {punto.cliente_nombre || "Cliente"}
                                 </p>
                                 <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 whitespace-normal break-words">
-                                  <span className="font-mono text-sky-700 dark:text-sky-400 mr-2">{punto.numero_serie}</span>
+                                  <span className="font-mono text-amber-700 dark:text-amber-400 mr-2">{punto.numero_serie}</span>
                                   {punto.ubicacion ? ` ${punto.ubicacion}` : ""}
                                 </p>
                               </div>
                               {hecho ? (
-                                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded-md">
                                   <HiCheck className="text-sm" /> Hecho
                                 </span>
                               ) : (
-                                <span className="text-[10px] font-black uppercase tracking-wider text-orange-500 dark:text-orange-400 shrink-0 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 shrink-0 bg-amber-500/10 px-2 py-1 rounded-md">
                                     Pendiente
                                 </span>
                               )}
@@ -770,8 +770,8 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">Sin resultados</p>
-                        <p className="text-xs text-slate-400 mt-1">Verifica el nombre o número de serie.</p>
+                        <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">Sin resultados</p>
+                        <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">Verifica el nombre o número de serie.</p>
                       </div>
                     )}
                   </div>
@@ -787,23 +787,23 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                 title={showSearch ? "Cerrar búsqueda" : "Buscar cliente / medidor"}
                 className={`shrink-0 p-2.5 rounded-xl transition-all duration-200 ${
                     showSearch
-                      ? 'bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100'
-                      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800'
+                      ? 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'
+                      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200/70 dark:hover:bg-zinc-800'
                 }`}
               >
                 {showSearch ? <HiX className="w-5 h-5" /> : <HiSearch className="w-5 h-5" />}
               </button>
 
-              <div className="flex flex-col items-end justify-center shrink-0 w-24 sm:w-32 border-l border-slate-200 dark:border-zinc-700/50 pl-3">
+              <div className="flex flex-col items-end justify-center shrink-0 w-24 sm:w-32 border-l border-slate-200 dark:border-zinc-800 pl-3">
                 <div className="flex justify-between w-full items-end mb-1">
-                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avance</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Avance</span>
                   <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-zinc-100">
-                      {currentIndex + 1} <span className="text-[10px] sm:text-xs font-medium text-slate-400">/ {total}</span>
+                      {currentIndex + 1} <span className="text-[10px] sm:text-xs font-medium text-slate-400 dark:text-zinc-500">/ {total}</span>
                   </span>
                 </div>
                 <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all"
+                    className="h-full bg-amber-500 rounded-full transition-all"
                     style={{ width: `${(lecturasGuardadas.size / total) * 100}%` }}
                   />
                 </div>
@@ -820,17 +820,17 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
               <div className="flex flex-col gap-4 sm:gap-6 lg:h-full lg:min-h-0">
 
                 {/* Tarjeta de Información Completa */}
-                <div className="border-none shadow-none bg-white dark:bg-zinc-900/50 rounded-2xl shrink-0 border border-slate-200 dark:border-zinc-800">
+                <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-white dark:bg-zinc-900/50 rounded-2xl shrink-0">
                   <div className="pb-3 pt-4 sm:pt-5 px-4 sm:px-5 border-b border-slate-100 dark:border-zinc-800/50">
                     <div className="flex justify-between w-full items-start">
                         <div className="flex items-center gap-2 sm:gap-3 mb-1">
-                            <div className="p-1.5 sm:p-2 bg-sky-500/10 rounded-xl text-sky-600 dark:text-sky-400 hidden sm:block">
+                            <div className="p-1.5 sm:p-2 bg-amber-500/10 rounded-xl text-amber-600 dark:text-amber-400 hidden sm:block">
                                 <HiUser className="text-lg" />
                             </div>
                             <h4 className="font-bold text-base sm:text-lg text-slate-800 dark:text-zinc-100">Información del Cliente</h4>
                         </div>
                         {isLecturaCompletada && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                 <HiCheck className="text-xs" />Registrado
                             </span>
                         )}
@@ -838,11 +838,11 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                   </div>
                   <div className="p-4 sm:p-5">
                     <div className="flex flex-col gap-1">
-                        <InfoRow label="Cliente Titular" value={puntoActual?.cliente_nombre} icon={HiUser} colorClass="text-sky-600 dark:text-sky-400" />
-                        <InfoRow label="Dirección Física" value={puntoActual?.cliente_direccion} icon={HiLocationMarker} colorClass="text-violet-600 dark:text-violet-400" valueClass="truncate max-w-[180px] sm:max-w-[250px]" />
+                        <InfoRow label="Cliente Titular" value={puntoActual?.cliente_nombre} icon={HiUser} colorClass="text-amber-600 dark:text-amber-400" />
+                        <InfoRow label="Dirección Física" value={puntoActual?.cliente_direccion} icon={HiLocationMarker} colorClass="text-slate-500 dark:text-zinc-400" valueClass="truncate max-w-[180px] sm:max-w-[250px]" />
                         <InfoRow label="Número Teléfono" value={puntoActual?.cliente_telefono} icon={HiPhone} colorClass="text-emerald-600 dark:text-emerald-400" />
-                        <InfoRow label="Serie de Medidor" value={puntoActual?.numero_serie} icon={HiHashtag} colorClass="text-amber-600 dark:text-amber-400" valueClass="font-mono text-sky-700 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-200/70 dark:border-sky-900/40" />
-                        <InfoRow label="Ubicación Medidor" value={puntoActual?.ubicacion} icon={HiMap} colorClass="text-indigo-600 dark:text-indigo-400" />
+                        <InfoRow label="Serie de Medidor" value={puntoActual?.numero_serie} icon={HiHashtag} colorClass="text-amber-600 dark:text-amber-400" valueClass="font-mono text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-200/70 dark:border-amber-900/40" />
+                        <InfoRow label="Ubicación Medidor" value={puntoActual?.ubicacion} icon={HiMap} colorClass="text-slate-500 dark:text-zinc-400" />
                         <InfoRow label="Fecha Lectura" value={new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })} icon={HiCalendar} colorClass="text-teal-600 dark:text-teal-400" valueClass="capitalize" />
                     </div>
                   </div>
@@ -851,11 +851,11 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                 {/* Área de Lectura (Formulario) */}
                 <div className="flex-1 flex flex-col justify-end mt-2 sm:mt-4">
                     {isLecturaCompletada && !modoRectificar[puntoActual?.medidor_id] ? (
-                        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-200 dark:border-emerald-800/50 rounded-2xl animate-in zoom-in-95 duration-300">
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl animate-in zoom-in-95 duration-300">
                             <div className="flex flex-col gap-4 p-4 sm:p-6">
                                 {/* Encabezado */}
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 sm:p-2.5 bg-emerald-500 text-white rounded-full shadow-md shadow-emerald-500/30">
+                                    <div className="p-2 sm:p-2.5 bg-emerald-600 text-white rounded-xl shadow-sm">
                                         <HiCheck className="text-lg sm:text-xl" />
                                     </div>
                                     <h4 className="text-lg sm:text-xl font-black text-emerald-800 dark:text-emerald-400 tracking-tight">Lectura Guardada</h4>
@@ -864,28 +864,28 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                                 {/* Detalles numéricos */}
                                 {lecturasRegistradas[puntoActual?.medidor_id] ? (
                                     <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-slate-200 dark:border-zinc-800 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
                                             <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
                                                 {lecturasRegistradas[puntoActual.medidor_id].lectura_anterior !== null
                                                     ? `${Number(lecturasRegistradas[puntoActual.medidor_id].lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
                                                     : '0.00'}
                                             </span>
                                         </div>
-                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-500/30 shadow-sm ring-1 ring-emerald-500/20">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
                                             <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
                                                 {Number(lecturasRegistradas[puntoActual.medidor_id].lectura_actual).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                             </span>
                                         </div>
-                                        <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
-                                            <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
+                                        <div className="flex flex-col items-center bg-amber-500/10 rounded-xl p-2 sm:p-3 border border-amber-500/20 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
+                                            <span className="text-base sm:text-lg font-black text-amber-800 dark:text-amber-300">
                                                 +{Number(lecturasRegistradas[puntoActual.medidor_id].consumo_m3 ?? 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                                             </span>
                                         </div>
                                         {lecturasRegistradas[puntoActual.medidor_id].vuelta_cero && (
-                                            <div className="col-span-3 text-center text-[10px] sm:text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider bg-orange-100 dark:bg-orange-900/30 py-1.5 rounded-lg mt-1">
+                                            <div className="col-span-3 text-center text-[10px] sm:text-[11px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider bg-amber-500/20 py-1.5 rounded-lg mt-1">
                                                 ⚠ Vuelta a cero aplicada
                                             </div>
                                         )}
@@ -893,25 +893,25 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                                 ) : (
                                     // Lectura de sesión anterior
                                     <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-slate-200 dark:border-zinc-800 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
                                             <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
                                                 {puntoActual?.ultima_lectura_anterior !== null && puntoActual?.ultima_lectura_anterior !== undefined
                                                     ? `${Number(puntoActual.ultima_lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
                                                     : '0.00'}
                                             </span>
                                         </div>
-                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-500/30 shadow-sm ring-1 ring-emerald-500/20">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
                                             <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
                                                 {puntoActual?.lectura_anterior_disponible !== null && puntoActual?.lectura_anterior_disponible !== undefined
                                                     ? `${Number(puntoActual.lectura_anterior_disponible).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
                                                     : '0.00'}
                                             </span>
                                         </div>
-                                        <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
-                                            <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
+                                        <div className="flex flex-col items-center bg-amber-500/10 rounded-xl p-2 sm:p-3 border border-amber-500/20 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-amber-700 dark:text-amber-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
+                                            <span className="text-base sm:text-lg font-black text-amber-800 dark:text-amber-300">
                                                 {puntoActual?.lectura_anterior_disponible !== null && puntoActual?.ultima_lectura_anterior !== null
                                                     ? `+${Math.max(0, Number(puntoActual.lectura_anterior_disponible) - Number(puntoActual.ultima_lectura_anterior)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
                                                     : '0.00'}
@@ -921,7 +921,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                                 )}
 
                                 {/* Botón rectificar */}
-                                <div className="pt-2 border-t border-emerald-200/50 dark:border-emerald-900/30">
+                                <div className="pt-2 border-t border-emerald-500/20">
                                     <button
                                         onClick={() => {
                                             const med = puntoActual.medidor_id;
@@ -931,7 +931,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                                                 setLecturas(prev => ({ ...prev, [med]: String(lectActual) }));
                                             }
                                         }}
-                                        className="w-full font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 rounded-lg py-2 text-sm flex items-center justify-center gap-2"
+                                        className="w-full font-bold bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl py-2.5 text-sm flex items-center justify-center gap-2 shadow-sm transition-colors"
                                     >
                                         <HiPencil className="text-lg" />
                                         Editar / Rectificar Lectura
@@ -942,14 +942,14 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                     ) : (
                         <div className="space-y-4">
                             {modoRectificar[puntoActual?.medidor_id] && (
-                                <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700/50 rounded-xl p-3 animate-in slide-in-from-top-2">
+                                <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 animate-in slide-in-from-top-2">
                                     <div className="flex items-center gap-2">
-                                        <HiPencil className="text-orange-600 dark:text-orange-400 text-lg" />
-                                        <span className="text-xs sm:text-sm font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">Modo Edición Activado</span>
+                                        <HiPencil className="text-amber-600 dark:text-amber-400 text-lg" />
+                                        <span className="text-xs sm:text-sm font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">Modo Edición Activado</span>
                                     </div>
                                     <button
                                         onClick={() => setModoRectificar(prev => { const n = { ...prev }; delete n[puntoActual.medidor_id]; return n; })}
-                                        className="bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 font-bold shadow-none rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+                                        className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 font-bold shadow-none rounded-xl px-3 py-1.5 text-xs flex items-center gap-1 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 transition-colors"
                                     >
                                         <HiX /> Cancelar
                                     </button>
@@ -999,13 +999,13 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 disabled:opacity-50"
+            className="font-bold text-slate-700 dark:text-zinc-200 bg-slate-100/70 dark:bg-zinc-900/80 hover:bg-slate-200/70 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 disabled:opacity-50 transition-colors text-sm"
           >
             <HiArrowLeft className="text-lg" /><span className="hidden sm:inline">Anterior</span>
           </button>
 
           <div className="flex flex-col items-center justify-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 hidden sm:block">
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5 hidden sm:block">
                 Secuencia de Ruta
             </span>
             <div className="flex gap-1.5 self-center">
@@ -1019,7 +1019,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
                   return (
                       <div key={idx} className={`h-2 rounded-full transition-all duration-300 ${
-                          isCurrent ? 'w-6 bg-blue-500 shadow-sm shadow-blue-500/50' :
+                          isCurrent ? 'w-6 bg-amber-500 shadow-sm shadow-amber-500/50' :
                           isSaved ? 'w-2 bg-emerald-400' : 'w-2 bg-slate-200 dark:bg-zinc-700'
                       }`} />
                   );
@@ -1030,7 +1030,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
           {currentIndex < total - 1 ? (
             <button
               onClick={handleNext}
-              className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 shadow-sm"
+              className="font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 shadow-sm hover:shadow transition-all text-sm"
             >
               <span className="hidden sm:inline">Siguiente</span><HiArrowRight className="text-lg" />
             </button>
@@ -1038,7 +1038,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
             <button
               onClick={handleFinalizarRuta}
               disabled={lecturasGuardadas.size !== total}
-              className="font-bold bg-emerald-600 text-white dark:bg-emerald-500 dark:text-zinc-950 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
             >
               <span className="hidden sm:inline">Terminar Ruta</span><HiCheck className="text-lg" />
             </button>
