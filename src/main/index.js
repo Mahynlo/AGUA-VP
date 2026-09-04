@@ -79,6 +79,7 @@ function createWindow() {
     show: false, // Ocultar la ventana hasta que esté lista
     autoHideMenuBar: true, // Ocultar la barra de menú
     frame: false, // Sin marco
+    backgroundColor: '#f8fafc', // Fondo nativo para cálculo de contraste de cursor en Windows
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
