@@ -28,12 +28,12 @@ const premiumModalTheme = {
 
 // ── INPUT REUTILIZABLE ────────────────────────────────────────────────────────
 const CustomInput = ({ label, value, onChange, icon, type = "text", description, placeholder, as = "input", min, step, ...props }) => {
-    const inputCls = "w-full pl-10 pr-4 py-3 text-sm font-medium rounded-xl resize-none bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 shadow-none placeholder-slate-400 dark:placeholder-zinc-500";
+    const inputCls = "w-full pl-10 pr-4 py-3 text-sm font-medium rounded-xl resize-none bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none placeholder-slate-400 dark:placeholder-zinc-500 transition-all";
     return (
         <div className="w-full">
-            {label && <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5 block">{label}</label>}
+            {label && <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-1.5 block">{label}</label>}
             <div className="relative w-full flex items-start">
-                <span className="absolute left-3 top-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none">{icon}</span>
+                <span className="absolute left-3.5 top-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none">{icon}</span>
                 {as === "textarea" ? (
                     <textarea value={value} onChange={onChange} placeholder={placeholder} className={inputCls} {...props} />
                 ) : (
@@ -45,7 +45,7 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", description,
     );
 };
 
-const SELECT_CLS = "h-[46px] w-full px-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 shadow-none appearance-none cursor-pointer";
+const SELECT_CLS = "h-[46px] w-full px-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none appearance-none cursor-pointer transition-all";
 
 const PUEBLOS = [
     { key: "NG-", label: "NG" },
@@ -155,12 +155,12 @@ export default function RegistrarMedidor() {
                 {/* ── HEADER ── */}
                 <Modal.Header>
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0">
+                        <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
                             <HiCog className="w-7 h-7" />
                         </div>
                         <div>
                             <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Registrar Nuevo Medidor</h2>
-                            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Datos técnicos, Asignación y Ubicación</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Datos técnicos, asignación de cliente y ubicación</p>
                         </div>
                     </div>
                 </Modal.Header>
@@ -170,14 +170,20 @@ export default function RegistrarMedidor() {
                     <form id="form-registro-medidor" onSubmit={(e) => { e.preventDefault(); handleRegistroMedidor(); }} className="flex flex-col gap-6">
 
                         {/* 1. Datos del Equipo */}
-                        <div className="bg-sky-500/10 rounded-2xl border border-sky-200/70 dark:border-sky-900/40 p-5 sm:p-6 space-y-6">
-                            <h3 className="font-bold text-base text-sky-900 dark:text-sky-300 flex items-center gap-2 border-b border-sky-200/70 dark:border-sky-900/30 pb-3">
-                                <HiHashtag className="w-5 h-5 text-sky-500" /> Datos del Equipo
-                            </h3>
+                        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-6 space-y-5">
+                            <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70 dark:border-zinc-800/70">
+                                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                                    <HiHashtag className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-sm text-slate-800 dark:text-zinc-100 uppercase tracking-wider leading-none">Datos del Equipo</h3>
+                                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">Identificación y parámetros iniciales</p>
+                                </div>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Número de Serie */}
                                 <div>
-                                    <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">Número de Serie *</label>
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-widest">Número de Serie *</label>
                                     <div className="flex items-stretch gap-2">
                                         <select value={ciudad} onChange={(e) => setCiudad(e.target.value)} aria-label="Código de Ciudad" className={`${SELECT_CLS} !w-28 shrink-0`}>
                                             <option value="">Cód.</option>
@@ -186,36 +192,42 @@ export default function RegistrarMedidor() {
                                         <input
                                             type="text" placeholder="123456" value={numeroSerie}
                                             onChange={(e) => setNumeroSerie(e.target.value)} required
-                                            className="flex-1 px-4 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 shadow-none"
+                                            className="flex-1 px-4 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none transition-all"
                                         />
                                     </div>
                                     <p className="text-[10px] mt-1.5 ml-1 font-bold text-slate-400 dark:text-zinc-500">
-                                        Serie completa: <span className="text-sky-700 dark:text-sky-400 font-mono">{numeroSerieCompleto || "---"}</span>
+                                        Serie completa: <span className="text-blue-600 dark:text-blue-400 font-mono font-bold">{numeroSerieCompleto || "---"}</span>
                                     </p>
                                 </div>
 
-                                <CustomInput label="Fecha de Instalación *" type="date" value={fechaInstalacion} onChange={(e) => setFechaInstalacion(e.target.value)} icon={<HiCalendar className="w-5 h-5 text-sky-500" />} required />
-                                <CustomInput label="Marca" placeholder="Ej. AquaTech" value={marca} onChange={(e) => setMarca(e.target.value)} icon={<HiCog className="w-5 h-5 text-sky-500" />} />
-                                <CustomInput label="Modelo" placeholder="Ej. AT-150" value={modelo} onChange={(e) => setModelo(e.target.value)} icon={<HiInformationCircle className="w-5 h-5 text-sky-500" />} />
-                                <CustomInput label="Lectura Base (m³)" type="number" min="0" step="any" placeholder="Ej. 0 o 1234.56" value={lecturaBase} onChange={(e) => setLecturaBase(e.target.value)} icon={<HiHashtag className="w-5 h-5 text-sky-500" />} description="Valor inicial del medidor al instalarse." />
-                                <CustomInput label="Capacidad Máxima (m³)" type="number" min="1" step="1" placeholder="99999" value={capacidadMaxima} onChange={(e) => setCapacidadMaxima(e.target.value)} icon={<HiHashtag className="w-5 h-5 text-sky-500" />} description="Límite antes de dar vuelta a cero (estándar: 99,999)." />
+                                <CustomInput label="Fecha de Instalación *" type="date" value={fechaInstalacion} onChange={(e) => setFechaInstalacion(e.target.value)} icon={<HiCalendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />} required />
+                                <CustomInput label="Marca" placeholder="Ej. AquaTech" value={marca} onChange={(e) => setMarca(e.target.value)} icon={<HiCog className="w-5 h-5 text-blue-600 dark:text-blue-400" />} />
+                                <CustomInput label="Modelo" placeholder="Ej. AT-150" value={modelo} onChange={(e) => setModelo(e.target.value)} icon={<HiInformationCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />} />
+                                <CustomInput label="Lectura Base (m³)" type="number" min="0" step="any" placeholder="Ej. 0 o 1234.56" value={lecturaBase} onChange={(e) => setLecturaBase(e.target.value)} icon={<HiHashtag className="w-5 h-5 text-blue-600 dark:text-blue-400" />} description="Valor inicial del medidor al instalarse." />
+                                <CustomInput label="Capacidad Máxima (m³)" type="number" min="1" step="1" placeholder="99999" value={capacidadMaxima} onChange={(e) => setCapacidadMaxima(e.target.value)} icon={<HiHashtag className="w-5 h-5 text-blue-600 dark:text-blue-400" />} description="Límite antes de dar vuelta a cero (estándar: 99,999)." />
                             </div>
-                            <CustomInput as="textarea" rows={3} label="Comentarios de Ubicación *" placeholder="Ej. Frente a la casa, junto al poste..." value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} icon={<HiLocationMarker className="w-5 h-5 text-sky-500" />} required />
+                            <CustomInput as="textarea" rows={3} label="Comentarios de Ubicación *" placeholder="Ej. Frente a la casa, junto al poste..." value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} icon={<HiLocationMarker className="w-5 h-5 text-blue-600 dark:text-blue-400" />} required />
                         </div>
 
                         {/* 2. Asignación de Cliente */}
-                        <div className="bg-indigo-500/10 rounded-2xl border border-indigo-200/70 dark:border-indigo-900/40 p-6 sm:p-8 flex flex-col min-h-[380px]">
-                            <h3 className="font-bold text-base text-indigo-900 dark:text-indigo-300 flex items-center gap-2 mb-2 border-b border-indigo-100 dark:border-indigo-900/30 pb-4">
-                                <HiUser className="w-5 h-5 text-indigo-500" />
-                                Asignación de Cliente <span className="text-xs font-medium text-indigo-500/60 dark:text-indigo-400/60 normal-case">(Opcional)</span>
-                            </h3>
-                            <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 mb-6">
-                                Selecciona el cliente propietario del inmueble donde se instalará este equipo.
-                            </p>
-                            <div className="bg-slate-50/80 dark:bg-zinc-950/40 sm:p-2 rounded-xl border border-indigo-200/60 dark:border-zinc-800 flex flex-col flex-1">
+                        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-6 space-y-5 flex flex-col min-h-[380px]">
+                            <div className="flex items-center justify-between pb-3 border-b border-slate-200/70 dark:border-zinc-800/70">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                                        <HiUser className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-sm text-slate-800 dark:text-zinc-100 uppercase tracking-wider leading-none">
+                                            Asignación de Cliente <span className="text-xs font-medium text-slate-400 dark:text-zinc-500 normal-case">(Opcional)</span>
+                                        </h3>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">Vincula este equipo al cliente titular del predio</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-white dark:bg-zinc-900/60 p-4 rounded-xl border border-slate-200/70 dark:border-zinc-800 flex flex-col flex-1">
                                 <BuscarCliente onClienteSeleccionado={(id) => setClienteIdBusqueda(id)} />
                                 {clienteIdBusqueda && (
-                                    <div className="mt-6 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-3">
+                                    <div className="mt-4 bg-emerald-500/10 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200/70 dark:border-emerald-800/50 flex items-center gap-3">
                                         <HiCheck className="text-emerald-600 dark:text-emerald-400 text-xl shrink-0" />
                                         <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
                                             Cliente vinculado exitosamente (ID: {clienteIdBusqueda})
@@ -226,14 +238,17 @@ export default function RegistrarMedidor() {
                         </div>
 
                         {/* 3. Coordenadas */}
-                        <div className="bg-amber-500/10 rounded-2xl border border-amber-200/70 dark:border-amber-900/40 p-5 sm:p-6">
-                            <h3 className="font-bold text-base text-amber-900 dark:text-amber-300 flex items-center gap-2 mb-2 border-b border-amber-200/70 dark:border-amber-900/30 pb-3">
-                                <HiLocationMarker className="w-5 h-5 text-amber-500" /> Ubicación Geográfica *
-                            </h3>
-                            <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 mb-4">
-                                Ajusta el pin en el mapa para registrar las coordenadas exactas del medidor.
-                            </p>
-                            <div className="rounded-xl overflow-hidden border border-amber-200/60 dark:border-amber-900/50">
+                        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-6 space-y-5">
+                            <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70 dark:border-zinc-800/70">
+                                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                                    <HiLocationMarker className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-sm text-slate-800 dark:text-zinc-100 uppercase tracking-wider leading-none">Ubicación Geográfica *</h3>
+                                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">Ajusta el pin en el mapa para capturar las coordenadas exactas</p>
+                                </div>
+                            </div>
+                            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800">
                                 <SelectorCoordenadas
                                     valorInicial={{ lat: parseFloat(latitud) || 29.1180777, lng: parseFloat(longitud) || -109.9669819 }}
                                     onChange={({ lat, lng }) => { setLatitud(lat.toFixed(6)); setLongitud(lng.toFixed(6)); }}
@@ -259,7 +274,7 @@ export default function RegistrarMedidor() {
                         form="form-registro-medidor"
                         disabled={isUpdating}
                         isProcessing={isUpdating}
-                        className="font-bold bg-slate-900 border-transparent text-white dark:bg-white dark:text-zinc-950 rounded-xl h-11 px-2 shadow-sm transition-transform active:scale-95"
+                        className="font-black bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 text-white border-transparent rounded-xl h-11 px-5 shadow-sm transition-transform active:scale-95"
                     >
                         <div className="flex items-center gap-2">
                             {!isUpdating && <HiCheck className="text-lg" />}
