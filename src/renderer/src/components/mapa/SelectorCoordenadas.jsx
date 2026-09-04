@@ -103,13 +103,13 @@ export default function SelectorCoordenadas({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
 
       {/* Columna Izquierda: Mapa */}
-      <div className="lg:col-span-2 h-[300px] lg:h-full min-h-[300px] rounded-xl overflow-hidden shadow-md border-2 border-gray-200 dark:border-gray-700 relative z-0">
+      <div className="lg:col-span-2 h-[300px] lg:h-full min-h-[300px] rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 relative z-0">
         <MapContainer
           center={position || MAP_DEFAULT_CENTER}
           zoom={15}
           scrollWheelZoom={true}
           preferCanvas={true}
-          className="h-full w-full bg-gray-100" // Fondo gris mientras carga
+          className="h-full w-full bg-slate-100 dark:bg-zinc-900" // Fondo gris mientras carga
           style={{ height: "100%", width: "100%", zIndex: 0 }}
         >
           <MapResizer />
@@ -138,22 +138,22 @@ export default function SelectorCoordenadas({
         </MapContainer>
 
         {/* Badge de coordenadas */}
-        <div className="absolute top-3 right-3 z-[400] bg-white dark:bg-gray-900 px-3 py-1 rounded-full text-xs font-mono border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="absolute top-3 right-3 z-[400] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-none px-3 py-1 rounded-xl text-xs font-mono font-bold text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 shadow-sm">
           {position ? `${position[0].toFixed(5)}, ${position[1].toFixed(5)}` : "Selecciona un punto"}
         </div>
       </div>
 
       {/* Columna Derecha: Inputs Personalizados */}
-      <div className="flex flex-col justify-center space-y-5">
+      <div className="flex flex-col justify-center space-y-4">
 
         {/* Input Latitud */}
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-1.5 block">
             Latitud
           </label>
-          <div className="relative w-full flex">
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-lg border-r border-gray-300 dark:border-gray-600 pr-2 py-1">
-              <HiLocationMarker className="text-blue-600" />
+          <div className="relative w-full flex items-center">
+            <span className="absolute left-3.5 text-blue-600 dark:text-blue-400 pointer-events-none text-base">
+              <HiLocationMarker />
             </span>
             <input
               type="text"
@@ -161,19 +161,19 @@ export default function SelectorCoordenadas({
               placeholder="Ej: 29.118..."
               value={coordenadas.lat}
               onChange={handleInputChange}
-              className="border border-gray-300 focus:ring-blue-600 focus:border-blue-500 text-gray-600 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all duration-200 font-mono text-sm"
+              className="w-full pl-10 pr-4 py-2.5 text-sm font-mono font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none transition-all"
             />
           </div>
         </div>
 
         {/* Input Longitud */}
         <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-1.5 block">
             Longitud
           </label>
-          <div className="relative w-full flex">
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-lg border-r border-gray-300 dark:border-gray-600 pr-2 py-1">
-              <HiGlobeAlt className="text-blue-600" />
+          <div className="relative w-full flex items-center">
+            <span className="absolute left-3.5 text-blue-600 dark:text-blue-400 pointer-events-none text-base">
+              <HiGlobeAlt />
             </span>
             <input
               type="text"
@@ -181,19 +181,17 @@ export default function SelectorCoordenadas({
               placeholder="Ej: -109.96..."
               value={coordenadas.lng}
               onChange={handleInputChange}
-              className="border border-gray-300 focus:ring-blue-600 focus:border-blue-500 text-gray-600 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none focus:ring-2 dark:bg-neutral-800 dark:hover:bg-neutral-600 hover:bg-neutral-200 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transition-all duration-200 font-mono text-sm"
+              className="w-full pl-10 pr-4 py-2.5 text-sm font-mono font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none transition-all"
             />
           </div>
         </div>
 
-        <Card className="border border-blue-100 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-900/20 shadow-none mt-2">
-          <CardBody className="p-3 flex gap-3 items-start">
-            <HiMap className="text-blue-500 text-xl mt-0.5 shrink-0" />
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              Haz clic en el mapa para capturar la ubicación exacta del medidor automáticamente.
-            </p>
-          </CardBody>
-        </Card>
+        <div className="rounded-xl border border-blue-200/60 dark:border-blue-900/40 bg-blue-500/10 dark:bg-blue-950/20 p-3.5 flex gap-3 items-start mt-2">
+          <HiMap className="text-blue-600 dark:text-blue-400 text-lg mt-0.5 shrink-0" />
+          <p className="text-xs text-blue-800 dark:text-blue-300 font-medium leading-relaxed">
+            Haz clic en el mapa para capturar la ubicación exacta del medidor automáticamente.
+          </p>
+        </div>
 
       </div>
     </div>

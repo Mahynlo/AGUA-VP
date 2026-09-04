@@ -4,7 +4,7 @@ import { Spinner, Button } from "@nextui-org/react";
 import { HiSearch, HiUsers, HiX, HiLocationMarker } from "react-icons/hi";
 
 // Componente de Input Personalizado (Premium UI - Token 4)
-const CustomInput = ({ label, value, onChange, icon, type = "text", placeholder, autoFocus }) => (
+const CustomInput = ({ label, value, onChange, onClear, icon, type = "text", placeholder, autoFocus }) => (
     <div className="w-full flex flex-col gap-1.5">
         {label && (
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
@@ -21,8 +21,17 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", placeholder,
                 onChange={onChange}
                 placeholder={placeholder}
                 autoFocus={autoFocus}
-                className="w-full pl-11 pr-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 resize-none h-[52px] bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none placeholder:text-slate-400/70"
+                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 resize-none h-[52px] bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none placeholder:text-slate-400/70"
             />
+            {value && (
+                <button
+                    type="button"
+                    onClick={onClear}
+                    className="absolute right-3.5 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-200/50 dark:hover:bg-zinc-800 transition-all"
+                >
+                    <HiX className="w-4 h-4" />
+                </button>
+            )}
         </div>
     </div>
 );
@@ -127,6 +136,7 @@ const BuscarCliente = ({ onClienteSeleccionado }) => {
                         placeholder="Buscar cliente por nombre o ciudad..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
+                        onClear={() => setBusqueda("")}
                         icon={isSearching ? <Spinner size="sm" color="primary" /> : <HiSearch className="w-5 h-5" />}
                     />
 

@@ -60,7 +60,7 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
             {/* ── HEADER ── */}
             <Modal.Header>
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0">
+                    <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
                         <HiCog className="w-7 h-7" />
                     </div>
                     <div className="flex flex-col">
@@ -69,7 +69,7 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                         </h2>
                         <div className="flex items-center gap-2 mt-1">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                                ID: {medidor.id}
+                                ID: #{medidor.id}
                             </span>
                             <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-zinc-600" />
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${estadoBadgeClass}`}>
@@ -98,26 +98,34 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                     )}
 
                     {/* 1. Especificaciones Técnicas */}
-                    <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5">
-                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4 flex items-center gap-2">
-                            <HiFingerPrint className="w-4 h-4" /> Especificaciones Técnicas
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
+                    <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-6 space-y-4">
+                        <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70 dark:border-zinc-800/70">
+                            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                                <HiFingerPrint className="w-5 h-5" />
+                            </div>
                             <div>
-                                <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Número de Serie</span>
-                                <span className="text-lg sm:text-xl font-mono font-bold text-slate-800 dark:text-zinc-100 bg-white dark:bg-zinc-900 px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 inline-block">
+                                <h4 className="font-black text-sm text-slate-800 dark:text-zinc-100 uppercase tracking-wider leading-none">
+                                    Especificaciones Técnicas
+                                </h4>
+                                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">Identificador del medidor y ficha de fábrica</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 pt-1">
+                            <div>
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-1.5">Número de Serie</span>
+                                <span className="text-lg sm:text-xl font-mono font-bold text-blue-600 dark:text-blue-400 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 inline-block shadow-sm">
                                     {medidor.numero_serie}
                                 </span>
                             </div>
                             <div className="md:row-span-2">
-                                <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Estado Físico</span>
-                                <div className="flex flex-col gap-2 mt-2">
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-1.5">Estado Físico</span>
+                                <div className="flex flex-col gap-2.5 mt-1 bg-white dark:bg-zinc-900 p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800">
                                     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-300">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                        <span className="w-2 h-2 rounded-full bg-blue-500" />
                                         Marca: <strong className="text-slate-800 dark:text-zinc-100">{medidor.marca || "No especificada"}</strong>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-300">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                        <span className="w-2 h-2 rounded-full bg-blue-500" />
                                         Modelo: <strong className="text-slate-800 dark:text-zinc-100">{medidor.modelo || "No especificado"}</strong>
                                     </div>
                                 </div>
@@ -129,13 +137,21 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {/* Ubicación y Registro */}
-                        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 flex flex-col">
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-4 flex items-center gap-2">
-                                <HiLocationMarker className="w-4 h-4" /> Ubicación y Registro
-                            </h4>
+                        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-6 space-y-4 flex flex-col">
+                            <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70 dark:border-zinc-800/70">
+                                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                                    <HiLocationMarker className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-sm text-slate-800 dark:text-zinc-100 uppercase tracking-wider leading-none">
+                                        Ubicación y Registro
+                                    </h4>
+                                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">Lugar de instalación y coordenadas</p>
+                                </div>
+                            </div>
                             <div className="space-y-4 flex flex-col flex-1">
                                 <div>
-                                    <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Dirección / Localidad</span>
+                                    <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Dirección / Localidad</span>
                                     <span className="text-sm font-medium text-slate-800 dark:text-zinc-100 leading-snug block">
                                         {medidor.ubicacion || "Sin ubicación registrada"}
                                     </span>
@@ -143,18 +159,18 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
 
                                 {medidor.latitud && medidor.longitud && (
                                     <div className="flex flex-col">
-                                        <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Coordenadas</span>
-                                        <div className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-200/70 dark:border-sky-900/40 px-2 py-1 rounded w-fit">
+                                        <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Coordenadas</span>
+                                        <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-200/60 dark:border-blue-900/40 px-2.5 py-1 rounded-lg w-fit">
                                             <HiMap className="w-3.5 h-3.5" />
-                                            <span className="text-xs font-mono">{medidor.latitud}, {medidor.longitud}</span>
+                                            <span className="text-xs font-mono font-bold">{medidor.latitud}, {medidor.longitud}</span>
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="mt-auto pt-4 border-t border-slate-200 dark:border-zinc-700/50">
-                                    <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Fecha Instalación</span>
+                                <div className="mt-auto pt-4 border-t border-slate-200/70 dark:border-zinc-800/70">
+                                    <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Fecha Instalación</span>
                                     <div className="flex items-center gap-1.5 text-slate-700 dark:text-zinc-300">
-                                        <HiCalendar className="w-4 h-4 text-slate-400" />
+                                        <HiCalendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                         <span className="text-sm font-medium">
                                             {medidor.fecha_instalacion
                                                 ? new Date(medidor.fecha_instalacion).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })
@@ -166,25 +182,33 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                         </div>
 
                         {/* Cliente Asignado */}
-                        <div className={`rounded-2xl p-5 flex flex-col ${
+                        <div className={`rounded-2xl p-6 flex flex-col ${
                             clienteAsignado
                                 ? "bg-emerald-500/10 border border-emerald-200/70 dark:border-emerald-900/40"
-                                : "bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800"
+                                : "rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30"
                         }`}>
-                            <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2 ${clienteAsignado ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400 dark:text-zinc-500"}`}>
-                                <HiUser className="w-4 h-4" /> Asignación de Cliente
-                            </h4>
+                            <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70 dark:border-zinc-800/70">
+                                <div className={`p-2 rounded-xl shrink-0 ${clienteAsignado ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"}`}>
+                                    <HiUser className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-sm text-slate-800 dark:text-zinc-100 uppercase tracking-wider leading-none">
+                                        Asignación de Cliente
+                                    </h4>
+                                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1">Titular asociado</p>
+                                </div>
+                            </div>
 
                             {clienteAsignado ? (
-                                <div className="flex flex-col flex-1">
+                                <div className="flex flex-col flex-1 mt-4">
                                     <div className="mb-4">
-                                        <span className="text-[11px] font-bold text-emerald-700/70 dark:text-emerald-400/70 uppercase tracking-wider block mb-1">Cliente Titular</span>
+                                        <span className="text-[10px] font-bold text-emerald-700/80 dark:text-emerald-400/80 uppercase tracking-widest block mb-1">Cliente Titular</span>
                                         <div className="flex items-center justify-between gap-2">
                                             <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 truncate">
                                                 {clienteAsignado.nombre}
                                             </p>
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
-                                                ID: {clienteAsignado.id}
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 shrink-0">
+                                                ID: #{clienteAsignado.id}
                                             </span>
                                         </div>
                                         {clienteAsignado.telefono && (
@@ -193,7 +217,7 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                                     </div>
 
                                     <div className="mt-auto pt-4 border-t border-emerald-200/50 dark:border-emerald-900/30">
-                                        <span className="text-[11px] font-bold text-emerald-700/70 dark:text-emerald-400/70 uppercase tracking-wider block mb-1">Esquema de Tarifa</span>
+                                        <span className="text-[10px] font-bold text-emerald-700/80 dark:text-emerald-400/80 uppercase tracking-widest block mb-1">Esquema de Tarifa</span>
                                         <div className="flex items-start gap-2">
                                             <HiCurrencyDollar className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
                                             <div className="min-w-0">
@@ -210,12 +234,12 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center text-center opacity-60">
-                                    <div className="bg-slate-200 dark:bg-zinc-700 p-3 rounded-full mb-3">
-                                        <HiCog className="text-xl text-slate-500 dark:text-zinc-400" />
+                                <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
+                                    <div className="bg-slate-100 dark:bg-zinc-800 p-3 rounded-2xl mb-3 text-slate-400 dark:text-zinc-500">
+                                        <HiCog className="text-2xl" />
                                     </div>
-                                    <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">Medidor Libre</p>
-                                    <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1 max-w-[200px]">
+                                    <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">Medidor Libre</p>
+                                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mt-1 max-w-[220px]">
                                         Este equipo no está asignado a ningún cliente actualmente.
                                     </p>
                                 </div>
@@ -228,9 +252,9 @@ const ModalDetalleMedidor = ({ isOpen, onClose, medidor }) => {
             {/* ── FOOTER ── */}
             <Modal.Footer>
                 <Button
-                    color="gray"
+                    color="dark"
                     onClick={onClose}
-                    className="font-bold text-slate-500 border-transparent bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 focus:ring-0 rounded-xl h-11"
+                    className="font-black bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 text-white border-transparent rounded-xl h-11 px-5 shadow-sm transition-transform active:scale-95"
                 >
                     Cerrar Panel
                 </Button>

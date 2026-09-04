@@ -110,24 +110,24 @@ const LoadingSkeleton = () => (
 
 // ── SPINNER CSS PURO ──────────────────────────────────────────────────────────
 function LoadingSpinner({ className = "w-4 h-4" }) {
-    return <div className={`${className} border-2 border-slate-300 dark:border-zinc-600 border-t-indigo-500 rounded-full animate-spin`} />;
+    return <div className={`${className} border-2 border-slate-300 dark:border-zinc-600 border-t-blue-600 rounded-full animate-spin`} />;
 }
 
-// ── DROPDOWN EXPORTAR (sin librería) ──────────────────────────────────────────
+// ── DROPDOWN EXPORTAR ────────────────────────────────────────────────────────
 function ExportDropdown({ onExportCSV, onExportExcel }) {
     const [open, setOpen] = useState(false);
     return (
         <div className="relative">
             <button
                 onClick={() => setOpen(v => !v)}
-                className="font-bold bg-indigo-500/10 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 rounded-xl h-11 px-5 shadow-sm flex items-center gap-2 transition-colors"
+                className="font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl h-[52px] px-5 shadow-sm flex items-center gap-2 transition-colors border border-slate-200 dark:border-zinc-800"
             >
-                <HiDownload className="text-lg" /> Exportar
+                <HiDownload className="text-lg text-blue-600 dark:text-blue-400" /> Exportar
             </button>
             {open && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-                    <div className="absolute right-0 z-20 mt-2 w-52 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden">
+                    <div className="absolute right-0 z-20 mt-2 w-52 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <button onClick={() => { onExportCSV(); setOpen(false); }} className="w-full px-4 py-3 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left">
                             <span className="text-xl">📄</span> Exportar CSV
                         </button>
@@ -154,39 +154,41 @@ function SimplePagination({ currentPage, totalPages, onChange }) {
         if (currentPage < totalPages - 2) pages.push("...");
         pages.push(totalPages);
     }
-    const base = "h-9 min-w-[36px] px-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center";
-    const active = "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900";
-    const inactive = "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700";
+    const base = "h-9 min-w-[36px] px-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center";
+    const active = "bg-blue-600 text-white shadow-sm";
+    const inactive = "bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 border border-slate-200/60 dark:border-zinc-800";
+    const disabled = "opacity-40 cursor-not-allowed";
     return (
         <div className="flex items-center gap-1.5">
-            <button onClick={() => onChange(currentPage - 1)} disabled={currentPage === 1} className={`${base} ${inactive} ${currentPage === 1 ? "opacity-40 cursor-not-allowed" : ""}`}><HiChevronLeft className="w-4 h-4" /></button>
+            <button onClick={() => onChange(currentPage - 1)} disabled={currentPage === 1} className={`${base} ${currentPage === 1 ? `${inactive} ${disabled}` : inactive}`} title="Página anterior"><HiChevronLeft className="w-4 h-4" /></button>
             {pages.map((page, i) => page === "..." ? (
-                <span key={`e${i}`} className="px-1 text-slate-400 text-sm select-none">…</span>
+                <span key={`e${i}`} className="px-1 text-slate-400 text-sm select-none font-bold">…</span>
             ) : (
                 <button key={page} onClick={() => onChange(page)} className={`${base} ${page === currentPage ? active : inactive}`}>{page}</button>
             ))}
-            <button onClick={() => onChange(currentPage + 1)} disabled={currentPage === totalPages} className={`${base} ${inactive} ${currentPage === totalPages ? "opacity-40 cursor-not-allowed" : ""}`}><HiChevronRight className="w-4 h-4" /></button>
+            <button onClick={() => onChange(currentPage + 1)} disabled={currentPage === totalPages} className={`${base} ${currentPage === totalPages ? `${inactive} ${disabled}` : inactive}`} title="Página siguiente"><HiChevronRight className="w-4 h-4" /></button>
         </div>
     );
 }
 
 // ── BADGE DE ESTADO ────────────────────────────────────────────────────────────
 const STATUS_COLORS = {
-    success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    danger:  "bg-red-500/10 text-red-600 dark:text-red-400",
-    default: "bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400",
+    success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/40",
+    warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/40",
+    danger:  "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200/50 dark:border-rose-900/40",
+    default: "bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700",
 };
 function StatusBadge({ status, getStatusColor }) {
     const color = STATUS_COLORS[getStatusColor(status)] ?? STATUS_COLORS.default;
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${color}`}>
-            {status}
+        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${color}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
+            {status || "Sin estado"}
         </span>
     );
 }
 
-const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-none appearance-none cursor-pointer";
+const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none appearance-none cursor-pointer";
 
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 const TabInventarioMedidores = () => {
@@ -391,8 +393,8 @@ const TabInventarioMedidores = () => {
             {/* ── HEADER Y ACCIONES ── */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-indigo-500/10 dark:bg-indigo-900/30 rounded-2xl shrink-0">
-                        <HiCog className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    <div className="p-3 bg-blue-500/10 dark:bg-blue-900/30 rounded-2xl shrink-0">
+                        <HiCog className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
@@ -417,7 +419,7 @@ const TabInventarioMedidores = () => {
             <div className="flex border-b border-slate-200 dark:border-zinc-800 gap-6 my-2">
                 <button
                     onClick={() => setShowDeleted(false)}
-                    className={`pb-4 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-indigo-500 text-indigo-600 dark:text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+                    className={`pb-3 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"}`}
                 >
                     Inventario Activo
                 </button>
@@ -426,7 +428,7 @@ const TabInventarioMedidores = () => {
                         setShowDeleted(true);
                         loadDeletedMedidores();
                     }}
-                    className={`pb-4 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-indigo-500 text-indigo-600 dark:text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-700"} flex items-center gap-2`}
+                    className={`pb-3 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"} flex items-center gap-2`}
                 >
                     <HiFolder className="w-4 h-4" /> Papelera
                 </button>
@@ -442,11 +444,11 @@ const TabInventarioMedidores = () => {
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div className="flex flex-col gap-1">
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                                        Mostrando <span className="text-red-500 font-extrabold">{filteredDeletedMedidores.length}</span> de <span className="font-extrabold">{deletedMedidores.length}</span> medidores elminados
+                                        Mostrando <span className="text-rose-600 dark:text-rose-400 font-extrabold">{filteredDeletedMedidores.length}</span> de <span className="font-extrabold text-slate-700 dark:text-zinc-200">{deletedMedidores.length}</span> medidores desactivados
                                     </span>
                                     <button 
                                         onClick={loadDeletedMedidores}
-                                        className="text-left text-xs font-bold text-slate-600 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1"
+                                        className="text-left text-xs font-bold text-slate-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 flex items-center gap-1.5 transition-colors"
                                         disabled={loadingDeleted}
                                     >
                                         <HiRefresh className={`w-3.5 h-3.5 ${loadingDeleted ? "animate-spin" : ""}`} />
@@ -461,7 +463,7 @@ const TabInventarioMedidores = () => {
                                         placeholder="Buscar en papelera..."
                                         value={searchDeleted}
                                         onChange={(e) => setSearchDeleted(e.target.value)}
-                                        className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-none h-[52px]"
+                                        className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-none h-[52px]"
                                     />
                                     {searchDeleted && (
                                         <button
@@ -510,7 +512,7 @@ const TabInventarioMedidores = () => {
                                             <tr key={medidor.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/50 dark:hover:bg-zinc-900/10 transition-colors">
                                                 <td className="py-4 px-6">
                                                     <div className="flex flex-col">
-                                                        <span className="font-bold text-sm text-slate-800 dark:text-zinc-100 uppercase">{medidor.numero_serie}</span>
+                                                        <span className="font-bold text-sm text-slate-800 dark:text-zinc-100 font-mono uppercase">{medidor.numero_serie}</span>
                                                         <span className="text-[11px] text-slate-500">{medidor.marca} {medidor.modelo} · ID: {medidor.id}</span>
                                                     </div>
                                                 </td>
@@ -542,7 +544,7 @@ const TabInventarioMedidores = () => {
                                                         <button
                                                             onClick={() => handlePurgeMedidor(medidor)}
                                                             title="Eliminar Definitivamente"
-                                                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 transition-colors"
+                                                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400 transition-colors"
                                                         >
                                                             <HiTrash className="w-4 h-4" />
                                                         </button>
@@ -569,7 +571,7 @@ const TabInventarioMedidores = () => {
                                 placeholder="Buscar por serie, marca, cliente o predio..."
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-none h-[52px]"
+                                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none h-[52px]"
                             />
                             {search && (
                                 <button onClick={() => handleSearch("")} className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">
@@ -611,7 +613,7 @@ const TabInventarioMedidores = () => {
                         {/* Limpiar */}
                         <div className="lg:col-span-2 flex justify-end">
                             {hasActiveFilters ? (
-                                <button onClick={clearFilters} className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors">
+                                <button onClick={clearFilters} className="w-full font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors">
                                     <HiFilter className="text-lg" /> Limpiar
                                 </button>
                             ) : <div className="w-full h-[52px]" />}
@@ -622,7 +624,7 @@ const TabInventarioMedidores = () => {
                 {/* Sub-header paginación */}
                 <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                        Mostrando <span className="text-indigo-600 dark:text-indigo-400">{paginatedData.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{totalItems}</span> medidores
+                        Mostrando <span className="text-blue-600 dark:text-blue-400 font-extrabold">{paginatedData.length}</span> de <span className="text-slate-700 dark:text-zinc-200 font-extrabold">{totalItems}</span> medidores
                     </span>
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">Filas por página:</span>
@@ -630,7 +632,7 @@ const TabInventarioMedidores = () => {
                             value={rowsPerPage.toString()}
                             onChange={(e) => handleRowsPerPageChange(e.target.value)}
                             aria-label="Filas por página"
-                            className="h-[36px] px-3 text-sm font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-none appearance-none cursor-pointer w-20"
+                            className="h-[36px] px-3 text-sm font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-none appearance-none cursor-pointer w-20"
                         >
                             {["5", "10", "15", "20", "50"].map(n => <option key={n} value={n}>{n}</option>)}
                         </select>
@@ -671,11 +673,11 @@ const TabInventarioMedidores = () => {
                                     <tr key={medidor.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors">
                                         <td className="py-4 px-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2.5 bg-slate-100 dark:bg-zinc-800 rounded-xl text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700 shadow-sm shrink-0">
+                                                <div className="p-2.5 bg-blue-500/10 dark:bg-blue-950/40 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/50 shadow-sm shrink-0">
                                                     <HiCog className="text-lg" />
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
-                                                    <p className="font-black text-sm text-slate-800 dark:text-zinc-100 mb-0.5 truncate uppercase">{medidor.numero_serie}</p>
+                                                    <p className="font-black text-sm text-slate-800 dark:text-zinc-100 mb-0.5 truncate font-mono uppercase">{medidor.numero_serie}</p>
                                                     <p className="font-medium text-[11px] text-slate-500 dark:text-zinc-400 truncate capitalize">{medidor.marca} {medidor.modelo}</p>
                                                 </div>
                                             </div>
@@ -718,13 +720,13 @@ const TabInventarioMedidores = () => {
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => handleView(medidor)} title="Ver Detalle" className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 transition-colors">
+                                                <button onClick={() => handleView(medidor)} title="Ver Detalle" className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors">
                                                     <HiEye className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => handleEdit(medidor)} title="Editar Medidor" disabled={!canModificarMedidores} className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-600 dark:bg-zinc-800 dark:hover:bg-indigo-900/30 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                                                <button onClick={() => handleEdit(medidor)} title="Editar Medidor" disabled={!canModificarMedidores} className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                                                     <HiCog className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => handleDelete(medidor)} title="Eliminar" className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 transition-colors">
+                                                <button onClick={() => handleDelete(medidor)} title="Eliminar" className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400 transition-colors">
                                                     <HiTrash className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -755,14 +757,14 @@ const TabInventarioMedidores = () => {
                 <Modal.Header />
                 <Modal.Body className="p-6 bg-white dark:bg-zinc-950">
                     <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Eliminar Medidor</h3>
-                        <p className="text-sm text-gray-500">¿Está seguro de eliminar el medidor con número de serie <strong className="text-gray-900 dark:text-white">{medidorToDelete?.numero_serie}</strong>? Se moverá a la papelera.</p>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Desactivar Medidor</h3>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400">¿Está seguro de desactivar el medidor con número de serie <strong className="text-slate-800 dark:text-zinc-100 font-mono">{medidorToDelete?.numero_serie}</strong>? Se moverá a la papelera.</p>
                         
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 block mb-1">
                                 Motivo de la eliminación (mínimo 10 caracteres)
                                 {deleteReason.trim().length < 10 ? (
-                                    <span className="text-red-500 ml-2 font-extrabold">(Faltan {10 - deleteReason.trim().length} caract.)</span>
+                                    <span className="text-rose-500 ml-2 font-extrabold">(Faltan {10 - deleteReason.trim().length} caract.)</span>
                                 ) : (
                                     <span className="text-emerald-500 ml-2 font-extrabold">✓ Listo</span>
                                 )}
@@ -771,7 +773,7 @@ const TabInventarioMedidores = () => {
                                 placeholder="Ingrese el motivo por el cual se elimina este medidor..."
                                 value={deleteReason}
                                 onChange={(e) => setDeleteReason(e.target.value)}
-                                className="w-full px-4 py-3 text-sm font-medium rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 min-h-[80px]"
+                                className="w-full px-4 py-3 text-sm font-medium rounded-xl border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 min-h-[80px]"
                             />
                         </div>
                     </div>
@@ -786,9 +788,9 @@ const TabInventarioMedidores = () => {
                     <button
                         onClick={confirmDeleteMedidor}
                         disabled={deleteReason.trim().length < 10}
-                        className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors"
+                        className="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors"
                     >
-                        Eliminar Medidor
+                        Desactivar Medidor
                     </button>
                 </Modal.Footer>
             </Modal>
@@ -804,7 +806,7 @@ const TabInventarioMedidores = () => {
                 <Modal.Header />
                 <Modal.Body>
                     <div className="text-center p-2">
-                        <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-red-500"}`} />
+                        <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-rose-500"}`} />
                         <h3 className="mb-4 text-base font-black text-slate-800 dark:text-zinc-100">
                             {confirmModal.title}
                         </h3>
@@ -843,7 +845,7 @@ const TabInventarioMedidores = () => {
                 <Modal.Body>
                     <div className="p-2">
                         <div className="flex items-center gap-3 mb-4 justify-center">
-                            <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+                            <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
                                 <HiDownload className="w-8 h-8" />
                             </div>
                         </div>
@@ -859,11 +861,11 @@ const TabInventarioMedidores = () => {
                             <button
                                 type="button"
                                 onClick={() => handleExecuteExport("page")}
-                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50/50 hover:bg-indigo-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-slate-50/50 hover:bg-blue-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
                             >
                                 <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
                                     <span>Página actual (tabla)</span>
-                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-500/10 text-indigo-600 rounded-md">
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md">
                                         {(paginatedData || []).length} registros
                                     </span>
                                 </span>
@@ -876,7 +878,7 @@ const TabInventarioMedidores = () => {
                             <button
                                 type="button"
                                 onClick={() => handleExecuteExport("all")}
-                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50/50 hover:bg-indigo-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-slate-50/50 hover:bg-blue-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
                             >
                                 <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
                                     <span>Todos los registros</span>

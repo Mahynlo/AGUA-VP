@@ -125,7 +125,7 @@ const TabMapaMedidores = () => {
     };
 
     return (
-        <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10">
+        <div className="w-full animate-in fade-in duration-300">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* Mapa */}
@@ -133,7 +133,7 @@ const TabMapaMedidores = () => {
                 <Card className="h-[calc(100vh-190px)] border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 shadow-none rounded-2xl">
                     <CardHeader className="pb-3">
                         <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                            <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
                                 <HiLocationMarker className="text-lg" />
                             </div>
                             <div>
@@ -160,7 +160,7 @@ const TabMapaMedidores = () => {
                 <Card className="h-full border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 shadow-none rounded-2xl">
                     <CardHeader className="pb-3 flex-none">
                         <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
+                            <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
                                 <HiCog className="text-lg" />
                             </div>
                             <div className="flex-1">
@@ -183,17 +183,26 @@ const TabMapaMedidores = () => {
                         <div className="space-y-3 flex-none px-1">
                             {/* Buscador */}
                             <div>
-                                <div className="relative w-full flex">
-                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-zinc-500 z-10">
-                                        <HiSearch className="inline-block h-5 w-5" />
+                                <div className="relative w-full flex items-center">
+                                    <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
+                                        <HiSearch className="w-5 h-5" />
                                     </span>
                                     <input
                                         type="text"
                                         placeholder="Buscar por serie, ubicación o cliente..."
                                         value={busqueda}
                                         onChange={(e) => setBusqueda(e.target.value)}
-                                        className="border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-100 rounded-xl pl-10 pr-4 py-3 w-full bg-slate-100/70 dark:bg-zinc-900/80 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 transition-all duration-200 h-[52px]"
+                                        className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none h-[52px]"
                                     />
+                                    {busqueda && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setBusqueda("")}
+                                            className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                                        >
+                                            <HiX className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -266,18 +275,18 @@ const TabMapaMedidores = () => {
                                         onClick={() => handleSelectMedidor(medidor)}
                                         className={`w-full text-left rounded-xl border p-4 transition-colors bg-white dark:bg-zinc-950/30 ${
                                             seleccionado
-                                                ? 'border-sky-500 dark:border-sky-400 ring-2 ring-sky-200/60 dark:ring-sky-900/50'
+                                                ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 dark:ring-blue-900/50'
                                                 : 'border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700'
                                         }`}
                                     >
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex items-center gap-3 w-full min-w-0">
-                                                <div className="p-2 bg-slate-500/10 rounded-full flex-shrink-0">
-                                                    <HiCog className="text-slate-600 dark:text-zinc-300 text-sm" />
+                                                <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl flex-shrink-0">
+                                                    <HiCog className="text-sm" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-                                                        <HiHashtag className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                                                    <p className="font-semibold text-slate-900 dark:text-zinc-100 flex items-center gap-2 font-mono">
+                                                        <HiHashtag className="w-3 h-3 text-slate-400 flex-shrink-0" />
                                                         {medidor.numero_serie}
                                                     </p>
                                                     <p className="text-sm text-slate-600 dark:text-zinc-300 flex items-start gap-1 mt-1">
@@ -289,7 +298,7 @@ const TabMapaMedidores = () => {
                                             <span className={`flex-shrink-0 font-semibold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md ${
                                                 medidor.estado_medidor === "Activo"
                                                     ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                                                    : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
                                             }`}>
                                                 {medidor.estado_medidor}
                                             </span>
@@ -299,22 +308,22 @@ const TabMapaMedidores = () => {
                                                 <span className="text-xs font-medium text-slate-500 dark:text-zinc-400 flex items-center gap-1">
                                                     <HiLocationMarker className="w-3 h-3" /> Coordenadas:
                                                 </span>
-                                                <span className="text-xs font-semibold text-slate-800 dark:text-zinc-100">
+                                                <span className="text-xs font-semibold font-mono text-slate-800 dark:text-zinc-100">
                                                     {Number(medidor.latitud || 0).toFixed(4)}, {Number(medidor.longitud || 0).toFixed(4)}
                                                 </span>
                                             </div>
 
                                             {medidor.cliente_id ? (
-                                                <div className="flex flex-col gap-1 p-2 bg-sky-500/10 rounded-lg border border-sky-200/70 dark:border-sky-900/40">
+                                                <div className="flex flex-col gap-1 p-2 bg-blue-500/10 rounded-lg border border-blue-200/70 dark:border-blue-900/40">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-xs font-medium text-sky-700 dark:text-sky-400 flex items-center gap-1">
+                                                        <span className="text-xs font-medium text-blue-700 dark:text-blue-400 flex items-center gap-1">
                                                             <HiUser className="w-3 h-3" /> Cliente:
                                                         </span>
-                                                        <span className="text-[10px] font-bold text-sky-700 dark:text-sky-400 uppercase tracking-wider">Asignado</span>
+                                                        <span className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Asignado</span>
                                                     </div>
-                                                    <div className="text-xs font-bold text-sky-800 dark:text-sky-300 pl-4 truncate">
+                                                    <div className="text-xs font-bold text-slate-800 dark:text-zinc-100 pl-4 truncate">
                                                         {medidor.cliente_nombre || "Cliente"}
-                                                        {medidor.numero_predio ? <span className="font-medium text-sky-600/80 dark:text-sky-400/80"> • Predio #{medidor.numero_predio}</span> : ""}
+                                                        {medidor.numero_predio ? <span className="font-medium text-slate-500 dark:text-zinc-400"> • Predio #{medidor.numero_predio}</span> : ""}
                                                     </div>
                                                 </div>
                                             ) : (
