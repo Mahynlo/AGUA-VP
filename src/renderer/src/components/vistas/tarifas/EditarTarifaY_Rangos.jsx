@@ -248,8 +248,8 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
   const getInputClasses = (hasError) => `
     w-full text-sm font-medium rounded-xl transition-all duration-200 resize-none px-3 h-11
     ${hasError
-      ? 'bg-red-50/50 dark:bg-red-900/10 border border-red-300 dark:border-red-800/50 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-red-900 dark:text-red-200'
-      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:border-slate-400 dark:focus:border-zinc-500 text-slate-800 dark:text-zinc-100'
+      ? 'bg-rose-50/50 dark:bg-rose-900/10 border border-rose-300 dark:border-rose-800/50 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 dark:text-rose-200'
+      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 dark:text-zinc-100'
     }
     focus:outline-none shadow-none
   `;
@@ -261,7 +261,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
       <button
         onClick={() => setIsOpen(true)}
         disabled={!canModificarTarifas}
-        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl px-4 h-10 min-w-0 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl px-4 h-10 min-w-0 flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         title="Editar"
       >
         <HiPencil className="w-4 h-4" />
@@ -275,7 +275,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
       >
         <Modal.Header>
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+            <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-2xl shrink-0">
               <HiPencil className="w-6 h-6" />
             </div>
             <div>
@@ -302,7 +302,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
                 onClick={() => setTab(key)}
                 className={`px-0 h-12 mr-6 text-sm border-b-2 transition-colors ${
                   tab === key
-                    ? "border-slate-800 dark:border-zinc-200 text-slate-800 dark:text-zinc-100 font-bold"
+                    ? "border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400 font-bold"
                     : "border-transparent text-slate-500 dark:text-zinc-400 font-medium hover:text-slate-700 dark:hover:text-zinc-300"
                 }`}
               >
@@ -321,7 +321,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
               >
                 <div className="space-y-5">
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-md bg-slate-500/10 text-slate-500 flex items-center justify-center text-[10px] font-bold">1</span>
+                    <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">1</span>
                     <h3 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
                       Información General
                     </h3>
@@ -361,7 +361,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
 
                 <div className="space-y-5">
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-md bg-slate-500/10 text-slate-500 flex items-center justify-center text-[10px] font-bold">2</span>
+                    <span className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold">2</span>
                     <h3 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
                       Período de Vigencia
                     </h3>
@@ -475,7 +475,8 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
                                 <button
                                   type="button"
                                   onClick={() => eliminarRango(index)}
-                                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-500/10 rounded-lg transition-colors"
+                                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                  title="Eliminar fila de rango"
                                 >
                                   <HiTrash className="w-4 h-4" />
                                 </button>
@@ -491,7 +492,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
                     <button
                       type="button"
                       onClick={agregarRango}
-                      className="w-full font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl h-11 flex items-center justify-center gap-2 hover:bg-blue-500/20 transition-colors"
+                      className="w-full font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 rounded-xl h-11 flex items-center justify-center gap-2 hover:bg-emerald-500/20 transition-all active:scale-98"
                     >
                       <HiPlus className="text-lg" />
                       Agregar Nuevo Rango
@@ -508,7 +509,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
             type="button"
             onClick={handleCloseModal}
             disabled={isSaving}
-            className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 disabled:opacity-50"
+            className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -516,9 +517,9 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
             type="submit"
             form={tab === "tarifa" ? "form-editar-tarifa" : "form-editar-rangos"}
             disabled={isSaving}
-            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-70"
+            className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-70"
           >
-            {isSaving && <div className="w-4 h-4 border-2 border-white/30 dark:border-zinc-900/30 border-t-white dark:border-t-zinc-900 rounded-full animate-spin" />}
+            {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
             {isSaving ? "Guardando..." : "Guardar Cambios"}
           </button>
         </Modal.Footer>

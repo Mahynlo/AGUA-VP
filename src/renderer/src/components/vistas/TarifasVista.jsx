@@ -185,7 +185,7 @@ export default function Tarifas() {
         {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8 border-b border-slate-100 dark:border-zinc-800/80 pb-6">
           <div className="flex gap-4 items-start shrink-0">
-            <div className="p-3.5 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <div className="p-3.5 bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-2xl shrink-0 flex items-center justify-center">
               <TarifaIcon className="w-8 h-8" />
             </div>
             <div className="flex flex-col gap-1 pt-0.5">
@@ -198,42 +198,46 @@ export default function Tarifas() {
                 )}
               </div>
               <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-lg leading-relaxed mt-1">
-                Administra, configura rangos de consumo y mantén al día las estructuras de cobro.
+                Administra, configura rangos de consumo y mantén al día las estructuras de cobro del sistema.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full xl:w-auto shrink-0">
-            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-transform hover:-translate-y-1 min-w-[120px]">
+            {/* Total Tarifas */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50/60 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100/80 dark:hover:bg-zinc-900 transition-all shadow-sm min-w-[120px]">
               <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 dark:text-zinc-500">
-                <div className="p-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiOutlineDocumentReport className="w-4 h-4" /></div>
+                <div className="p-1 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"><HiOutlineDocumentReport className="w-4 h-4" /></div>
                 <span className="text-[10px] font-bold uppercase tracking-widest">Total Tarifas</span>
               </div>
               <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.total}</p>
             </div>
 
-            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-transform hover:-translate-y-1 min-w-[120px]">
+            {/* Vigentes */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50/60 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100/80 dark:hover:bg-zinc-900 transition-all shadow-sm min-w-[120px]">
               <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 dark:text-zinc-500">
                 <div className="p-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><HiCalendar className="w-4 h-4" /></div>
                 <span className="text-[10px] font-bold uppercase tracking-widest">Vigentes</span>
               </div>
-              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.vigentes}</p>
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none">{estadisticas.vigentes}</p>
             </div>
 
-            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-transform hover:-translate-y-1 min-w-[120px]">
+            {/* Base Promedio */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50/60 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100/80 dark:hover:bg-zinc-900 transition-all shadow-sm min-w-[120px]">
               <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 dark:text-zinc-500">
                 <div className="p-1 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400"><HiTrendingUp className="w-4 h-4" /></div>
                 <span className="text-[10px] font-bold uppercase tracking-widest">Base Prom.</span>
               </div>
-              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">${estadisticas.promedioRango1.toFixed(2)}</p>
+              <p className="text-2xl font-black text-purple-600 dark:text-purple-400 leading-none">${estadisticas.promedioRango1.toFixed(2)}</p>
             </div>
 
-            <div className="flex flex-col justify-center p-4 bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100 dark:hover:bg-zinc-900 transition-transform hover:-translate-y-1 min-w-[120px]">
+            {/* Por Vencer */}
+            <div className="flex flex-col justify-center p-4 bg-slate-50/60 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl hover:bg-slate-100/80 dark:hover:bg-zinc-900 transition-all shadow-sm min-w-[120px]">
               <div className="flex items-center gap-1.5 mb-1.5 text-slate-400 dark:text-zinc-500">
-                <div className="p-1 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400"><HiCalendar className="w-4 h-4" /></div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-orange-600 dark:text-orange-400">Por Vencer</span>
+                <div className="p-1 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400"><HiCalendar className="w-4 h-4" /></div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Por Vencer</span>
               </div>
-              <p className="text-2xl font-black text-orange-600 dark:text-orange-400 leading-none">{estadisticas.proximasAVencer}</p>
+              <p className="text-2xl font-black text-amber-600 dark:text-amber-400 leading-none">{estadisticas.proximasAVencer}</p>
             </div>
           </div>
         </div>
@@ -405,13 +409,13 @@ export default function Tarifas() {
 
                       <Button
                         onPress={handleCalcularTarifa}
-                        className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-[52px] shadow-sm transition-transform active:scale-95 mt-2"
+                        className="w-full font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-[52px] shadow-sm transition-all active:scale-95 mt-2"
                       >
                         Calcular Desglose
                       </Button>
 
                       {errorCalculo && (
-                        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold animate-in fade-in">
+                        <div className="flex items-center gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold animate-in fade-in">
                           <HiExclamationCircle className="w-5 h-5 shrink-0" />
                           {errorCalculo}
                         </div>
@@ -426,29 +430,29 @@ export default function Tarifas() {
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-950 flex flex-col gap-1 shadow-sm">
                               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo Ingresado</p>
-                              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{resultadoCalculo.consumo_ingresado} <span className="text-xs text-slate-400">m³</span></p>
+                              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 font-mono">{resultadoCalculo.consumo_ingresado} <span className="text-xs font-sans text-slate-400">m³</span></p>
                             </div>
-                            <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 bg-white dark:bg-zinc-950 flex flex-col gap-1 shadow-sm">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Consumo Facturable</p>
-                              <p className="text-xl font-black tracking-tight text-blue-600 dark:text-blue-400">{resultadoCalculo.consumo_facturable} <span className="text-xs text-blue-400/70">m³</span></p>
+                            <div className="rounded-2xl border border-purple-500/20 p-5 bg-purple-500/5 dark:bg-purple-950/20 flex flex-col gap-1 shadow-sm">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400">Consumo Facturable</p>
+                              <p className="text-xl font-black tracking-tight text-purple-600 dark:text-purple-400 font-mono">{resultadoCalculo.consumo_facturable} <span className="text-xs font-sans text-purple-400/70">m³</span></p>
                             </div>
-                            <div className="rounded-2xl border border-emerald-500/30 p-5 bg-emerald-500/10 flex flex-col gap-1">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-500">Total Calculado</p>
-                              <p className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">${resultadoCalculo.total.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <div className="rounded-2xl border border-emerald-500/30 p-5 bg-emerald-500/10 flex flex-col gap-1 shadow-sm">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Total Calculado</p>
+                              <p className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">${resultadoCalculo.total.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                             </div>
                           </div>
 
                           {/* Equivalencia de Consumo */}
                           {resultadoCalculo.equivalenciaFrase && (
-                            <div className="flex gap-4 items-start p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20">
-                              <div className="p-2 bg-blue-500/20 rounded-xl text-blue-600 dark:text-blue-400 shrink-0">
+                            <div className="flex gap-4 items-start p-5 rounded-2xl bg-sky-500/10 border border-sky-500/20 shadow-sm">
+                              <div className="p-2 bg-sky-500/20 rounded-xl text-sky-600 dark:text-sky-400 shrink-0">
                                 <HiOutlineDocumentReport className="w-5 h-5" />
                               </div>
                               <div className="flex flex-col gap-0.5 pt-0.5">
-                                <p className="text-[10px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase tracking-widest">
+                                <p className="text-[10px] font-bold text-sky-700 dark:text-sky-300 uppercase tracking-widest">
                                   Equivalencia del Consumo
                                 </p>
-                                <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 italic leading-relaxed">
+                                <p className="text-sm font-semibold text-sky-950 dark:text-sky-100 italic leading-relaxed">
                                   "{resultadoCalculo.equivalenciaFrase}"
                                 </p>
                               </div>
