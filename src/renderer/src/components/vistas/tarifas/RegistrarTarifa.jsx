@@ -127,8 +127,8 @@ export default function RegistrarTarifa({ onTarifaRegistrada }) {
   const inputClasses = (hasError) => `
     w-full text-sm font-medium rounded-xl transition-all duration-200 resize-none px-3
     ${hasError
-      ? 'bg-red-50/50 dark:bg-red-900/10 border border-red-300 dark:border-red-800/50 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-red-900 dark:text-red-200'
-      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:border-slate-400 dark:focus:border-zinc-500 text-slate-800 dark:text-zinc-100'
+      ? 'bg-rose-50/50 dark:bg-rose-900/10 border border-rose-300 dark:border-rose-800/50 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 dark:text-rose-200'
+      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 dark:text-zinc-100'
     }
     focus:outline-none shadow-none
   `;
@@ -140,7 +140,7 @@ export default function RegistrarTarifa({ onTarifaRegistrada }) {
       <button
         onClick={() => setIsOpen(true)}
         disabled={!canCrearTarifas}
-        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-11 shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 h-[52px] shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <HiPlus className="text-lg" />
         Nueva Tarifa
@@ -154,7 +154,7 @@ export default function RegistrarTarifa({ onTarifaRegistrada }) {
       >
         <Modal.Header>
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+            <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-2xl shrink-0">
               <HiCurrencyDollar className="w-6 h-6" />
             </div>
             <div>
@@ -244,7 +244,7 @@ export default function RegistrarTarifa({ onTarifaRegistrada }) {
             type="button"
             onClick={handleCloseModal}
             disabled={isSaving}
-            className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 disabled:opacity-50"
+            className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -252,9 +252,9 @@ export default function RegistrarTarifa({ onTarifaRegistrada }) {
             type="submit"
             form="form-registro-tarifa"
             disabled={isSaving}
-            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-70"
+            className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-70"
           >
-            {isSaving && <div className="w-4 h-4 border-2 border-white/30 dark:border-zinc-900/30 border-t-white dark:border-t-zinc-900 rounded-full animate-spin" />}
+            {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
             {isSaving ? "Guardando..." : "Guardar Tarifa"}
           </button>
         </Modal.Footer>

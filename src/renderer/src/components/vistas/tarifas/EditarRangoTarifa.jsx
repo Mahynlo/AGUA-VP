@@ -94,13 +94,13 @@ export default function EditarRangosTarifa({ tarifaId, rangosIniciales = [], onG
     }
   };
 
-  const inputClasses = "w-full bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500 transition-all duration-200 shadow-none h-11 px-3 text-sm font-medium text-slate-800 dark:text-zinc-100";
+  const inputClasses = "w-full bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none focus:border-emerald-500 transition-all duration-200 shadow-none h-11 px-3 text-sm font-medium text-slate-800 dark:text-zinc-100";
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl px-6 h-10 flex items-center"
+        className="font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 rounded-xl px-6 h-10 flex items-center transition-all active:scale-95"
       >
         Editar Rangos
       </button>
@@ -122,12 +122,12 @@ export default function EditarRangosTarifa({ tarifaId, rangosIniciales = [], onG
 
         <Modal.Body>
           {success && (
-            <div className="p-4 mb-4 text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+            <div className="p-4 mb-4 text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
               {success}
             </div>
           )}
           {error && (
-            <div className="p-4 mb-4 text-sm font-bold text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <div className="p-4 mb-4 text-sm font-bold text-rose-700 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl">
               {error}
             </div>
           )}
@@ -188,7 +188,7 @@ export default function EditarRangosTarifa({ tarifaId, rangosIniciales = [], onG
             <button
               type="button"
               onClick={agregarRango}
-              className="w-full font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl h-11 flex items-center justify-center gap-2 hover:bg-blue-500/20 transition-colors"
+              className="w-full font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 rounded-xl h-11 flex items-center justify-center gap-2 hover:bg-emerald-500/20 transition-all active:scale-98"
             >
               <HiPlus className="text-lg" />
               Agregar Nuevo Rango
@@ -200,7 +200,7 @@ export default function EditarRangosTarifa({ tarifaId, rangosIniciales = [], onG
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11"
+            className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors"
           >
             Cancelar
           </button>
@@ -208,9 +208,9 @@ export default function EditarRangosTarifa({ tarifaId, rangosIniciales = [], onG
             type="button"
             onClick={handleGuardar}
             disabled={isSaving}
-            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-70"
+            className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-70"
           >
-            {isSaving && <div className="w-4 h-4 border-2 border-white/30 dark:border-zinc-900/30 border-t-white dark:border-t-zinc-900 rounded-full animate-spin" />}
+            {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
             {isSaving ? "Guardando..." : "Guardar Cambios"}
           </button>
         </Modal.Footer>

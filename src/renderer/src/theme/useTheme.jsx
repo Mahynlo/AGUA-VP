@@ -16,12 +16,15 @@ export const ThemeProvider = ({ children }) => {
 
         const applyTheme = (currentTheme) => { // Remover clases existentes y agregar la clase del tema actual
             html.classList.remove("light", "dark"); // Remover clases existentes 
+            let isDark = false;
             if (currentTheme === "system") { // Si el tema es el sistema, obtener el tema del sistema y aplicarlo al HTML
-                const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-                html.classList.add(prefersDark ? "dark" : "light");
+                isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                html.classList.add(isDark ? "dark" : "light");
             } else { // Si el tema es claro u oscuro, aplicarlo al HTML
+                isDark = currentTheme === "dark";
                 html.classList.add(currentTheme);
             }
+            html.style.colorScheme = isDark ? "dark" : "light";
         };
 
         applyTheme(theme);
