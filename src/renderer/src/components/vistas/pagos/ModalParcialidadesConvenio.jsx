@@ -14,7 +14,7 @@ import ModalPagoParcialidad from "./ModalPagoParcialidad";
 import ModalPagoIntegradoConvenio from "./ModalPagoIntegradoConvenio";
 
 const premiumModalTheme = {
-  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
     inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-4xl w-full"
@@ -122,13 +122,15 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
     <>
       <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
         <Modal.Header>
-          <div className="flex items-center gap-2">
-            <HiDocumentText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
+              <HiDocumentText className="w-6 h-6" />
+            </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Convenio de Pago</h2>
+              <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Convenio de Pago</h2>
               {convenio && (
-                <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">
-                  {convenio.convenio.cliente_nombre} • Medidor: {convenio.convenio.numero_serie}
+                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+                  {convenio.convenio.cliente_nombre} • Medidor: <span className="font-mono">{convenio.convenio.numero_serie}</span>
                 </p>
               )}
             </div>
@@ -138,72 +140,72 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
         <Modal.Body>
           {loading && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
-              <p className="text-sm text-slate-500 dark:text-zinc-400">Cargando convenio...</p>
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-300 border-t-blue-600" />
+              <p className="text-sm font-semibold text-slate-500 dark:text-zinc-400">Cargando convenio...</p>
             </div>
           )}
 
           {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-xl text-red-600 dark:text-red-400">
+            <div className="flex items-center gap-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-600 dark:text-rose-400 font-medium text-sm">
               <HiX className="w-5 h-5 shrink-0" />
-              <span className="text-sm">{error}</span>
+              <span>{error}</span>
             </div>
           )}
 
           {!loading && !error && convenio && (
             <div className="space-y-5">
               {/* Información del Convenio */}
-              <div className="bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 rounded-2xl p-5">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Estado</p>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${convenio.convenio.estado === "Activo" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"}`}>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Estado</p>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest ${convenio.convenio.estado === "Activo" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-slate-200/50 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"}`}>
                       {convenio.convenio.estado}
                     </span>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Monto Total</p>
-                    <p className="text-sm font-bold text-slate-800 dark:text-zinc-100">{formatearMoneda(convenio.progreso.total)}</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Monto Total</p>
+                    <p className="text-base font-black text-slate-800 dark:text-zinc-100 font-mono">{formatearMoneda(convenio.progreso.total)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Pagado</p>
-                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatearMoneda(convenio.progreso.pagado)}</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Pagado</p>
+                    <p className="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">{formatearMoneda(convenio.progreso.pagado)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Pendiente</p>
-                    <p className="text-sm font-bold text-amber-600 dark:text-amber-400">{formatearMoneda(convenio.progreso.pendiente)}</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Pendiente</p>
+                    <p className="text-base font-black text-amber-600 dark:text-amber-400 font-mono">{formatearMoneda(convenio.progreso.pendiente)}</p>
                   </div>
                 </div>
 
                 {/* Barra de Progreso */}
-                <div className="mb-4">
+                <div className="mb-5">
                   <div className="flex justify-between items-center mb-1.5">
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Progreso del Convenio</p>
-                    <p className="text-[10px] font-bold text-slate-600 dark:text-zinc-300">{convenio.progreso.porcentaje.toFixed(1)}%</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Progreso del Convenio</p>
+                    <p className="text-[11px] font-bold text-slate-700 dark:text-zinc-300">{convenio.progreso.porcentaje.toFixed(1)}%</p>
                   </div>
-                  <div className="w-full bg-slate-200 dark:bg-zinc-700 rounded-full h-2">
+                  <div className="w-full bg-slate-200 dark:bg-zinc-700 rounded-full h-2.5 overflow-hidden">
                     <div
-                      className="bg-emerald-500 h-2 rounded-full transition-all"
+                      className="bg-emerald-500 h-full rounded-full transition-all"
                       style={{ width: `${Math.min(100, convenio.progreso.porcentaje)}%` }}
                     />
                   </div>
                 </div>
 
-                <hr className="border-t border-slate-200 dark:border-zinc-700/50 mb-4" />
+                <hr className="border-t border-slate-200 dark:border-zinc-800 mb-5" />
 
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Cobro combinado sugerido</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Cobro combinado sugerido</p>
                     {loadingResumen ? (
                       <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">Calculando...</p>
                     ) : (
-                      <p className="text-base font-bold text-slate-800 dark:text-zinc-100">
+                      <p className="text-xl font-black text-slate-800 dark:text-zinc-100 font-mono">
                         {resumenCobro?.sugerencia_cobro?.total != null
                           ? formatearMoneda(resumenCobro.sugerencia_cobro.total)
                           : formatearMoneda(0)}
                       </p>
                     )}
-                    <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                    <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-0.5">
                       Incluye recibo del periodo + parcialidad del convenio
                     </p>
                   </div>
@@ -211,7 +213,7 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
                     type="button"
                     disabled={loadingResumen || !resumenCobro}
                     onClick={() => setModalIntegradoOpen(true)}
-                    className="flex items-center gap-2 px-4 h-10 rounded-xl bg-blue-600 text-white text-sm font-bold shadow-sm disabled:opacity-50 hover:bg-blue-700 transition-colors shrink-0"
+                    className="flex items-center gap-2 px-5 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm disabled:opacity-50 transition-colors shrink-0"
                   >
                     <HiCalculator className="w-4 h-4" />
                     Cobro Integrado
@@ -220,13 +222,13 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
               </div>
 
               {/* Tabla de Parcialidades */}
-              <div className="bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 rounded-2xl overflow-hidden">
+              <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-200 dark:border-zinc-700/50">
-                        {["CUOTA", "MONTO", "VENCIMIENTO", "ESTADO", "FECHA PAGO", "ACCIÓN"].map((col) => (
-                          <th key={col} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 whitespace-nowrap">
+                      <tr className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50">
+                        {["CUOTA", "MONTO", "VENCIMIENTO", "ESTADO", "FECHA PAGO", "ACCIÓN"].map((col, idx) => (
+                          <th key={col} className={`px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 whitespace-nowrap ${idx === 5 ? "text-right" : ""}`}>
                             {col}
                           </th>
                         ))}
@@ -236,44 +238,46 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
                       {convenio.parcialidades.map((parcialidad) => {
                         const badge = getEstadoBadge(parcialidad.estado);
                         return (
-                          <tr key={parcialidad.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-white dark:hover:bg-zinc-900/30">
-                            <td className="px-4 py-3 font-bold text-slate-800 dark:text-zinc-100">
+                          <tr key={parcialidad.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors">
+                            <td className="px-5 py-4 font-black text-slate-800 dark:text-zinc-100">
                               #{parcialidad.numero_parcialidad}
                             </td>
-                            <td className="px-4 py-3 font-medium text-slate-700 dark:text-zinc-300">
+                            <td className="px-5 py-4 font-mono font-bold text-slate-800 dark:text-zinc-100">
                               {formatearMoneda(parcialidad.monto_esperado)}
                             </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-zinc-400">
-                                <HiCalendar className="w-3.5 h-3.5" />
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">
+                                <HiCalendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                 {formatearFecha(parcialidad.fecha_vencimiento)}
                               </div>
                             </td>
-                            <td className="px-4 py-3">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${badge.cls}`}>
+                            <td className="px-5 py-4">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest ${badge.cls}`}>
                                 {badge.icon}
                                 {parcialidad.estado}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-xs text-slate-400 dark:text-zinc-500">
+                            <td className="px-5 py-4 text-xs font-medium text-slate-500 dark:text-zinc-400">
                               {parcialidad.fecha_pago ? formatearFecha(parcialidad.fecha_pago) : "-"}
                             </td>
-                            <td className="px-4 py-3">
-                              {parcialidad.estado === "Pendiente" && (
-                                <button
-                                  type="button"
-                                  onClick={() => handlePagarParcialidad(parcialidad)}
-                                  className="flex items-center gap-1 px-3 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-500/20 transition-colors"
-                                >
-                                  <HiCurrencyDollar className="w-3.5 h-3.5" />
-                                  Pagar
-                                </button>
-                              )}
-                              {parcialidad.estado === "Pagada" && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                  <HiCheck className="w-3 h-3" /> Pagada
-                                </span>
-                              )}
+                            <td className="px-5 py-4">
+                              <div className="flex justify-end">
+                                {parcialidad.estado === "Pendiente" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePagarParcialidad(parcialidad)}
+                                    className="flex items-center gap-1 px-3.5 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors"
+                                  >
+                                    <HiCurrencyDollar className="w-3.5 h-3.5" />
+                                    Pagar
+                                  </button>
+                                )}
+                                {parcialidad.estado === "Pagada" && (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <HiCheck className="w-3 h-3" /> Pagada
+                                  </span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -287,7 +291,7 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
         </Modal.Body>
 
         <Modal.Footer>
-          <button type="button" onClick={onClose} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
+          <button type="button" onClick={onClose} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
             Cerrar
           </button>
         </Modal.Footer>

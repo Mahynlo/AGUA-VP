@@ -10,7 +10,7 @@ import {
 import { useAuth } from "../../../context/AuthContext";
 
 const premiumModalTheme = {
-  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
     inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-2xl w-full"
@@ -108,36 +108,40 @@ const ModalPagoIntegradoConvenio = ({ isOpen, onClose, resumenCobro, convenioId,
   return (
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible={false}>
       <Modal.Header>
-        <div className="flex items-center gap-2">
-          <HiCalculator className="text-2xl text-blue-600 dark:text-blue-400" />
-          <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
-            Cobro Integrado
-          </h2>
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+            <HiCalculator className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+              Cobro Integrado
+            </h2>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+              Cobrar consumo del periodo y parcialidades del convenio en una sola operación
+            </p>
+          </div>
         </div>
-        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-          Cobrar consumo del periodo y parcialidades del convenio en una sola operación
-        </p>
       </Modal.Header>
 
       <Modal.Body>
         <div className="space-y-5">
           {/* Resumen sugerido */}
-          <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 grid grid-cols-3 gap-3">
+          <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 grid grid-cols-3 gap-3">
             <div>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Consumo del periodo</p>
-              <p className="text-base font-semibold text-blue-600 dark:text-blue-400">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Consumo periodo</p>
+              <p className="text-base font-black text-blue-600 dark:text-blue-400 mt-0.5">
                 {formatearMoneda(resumenCobro?.sugerencia_cobro?.monto_factura || 0)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Parcialidad convenio</p>
-              <p className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Parcialidad convenio</p>
+              <p className="text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
                 {formatearMoneda(resumenCobro?.sugerencia_cobro?.monto_convenio || 0)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Sugerido total</p>
-              <p className="text-base font-semibold text-amber-600 dark:text-amber-400">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Sugerido total</p>
+              <p className="text-base font-black text-amber-600 dark:text-amber-400 mt-0.5">
                 {formatearMoneda(resumenCobro?.sugerencia_cobro?.total || 0)}
               </p>
             </div>
@@ -146,11 +150,11 @@ const ModalPagoIntegradoConvenio = ({ isOpen, onClose, resumenCobro, convenioId,
           {/* Monto factura */}
           <div>
             <label className={labelClasses}>Monto a factura (consumo)</label>
-            <div className="relative">
-              <HiCurrencyDollar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <input type="number" value={montoFactura} onChange={(e) => setMontoFactura(e.target.value)} className={`${inputClasses} pl-9`} />
+            <div className="relative flex items-center">
+              <HiCurrencyDollar className="absolute left-3.5 text-slate-400 pointer-events-none w-5 h-5" />
+              <input type="number" value={montoFactura} onChange={(e) => setMontoFactura(e.target.value)} className={`${inputClasses} pl-10`} />
             </div>
-            <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
+            <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1">
               {resumenCobro?.factura_actual
                 ? `Factura #${resumenCobro.factura_actual.id} · Saldo: ${formatearMoneda(saldoFacturaDisponible)}`
                 : "No hay factura activa del periodo"}
@@ -160,28 +164,28 @@ const ModalPagoIntegradoConvenio = ({ isOpen, onClose, resumenCobro, convenioId,
           {/* Monto convenio */}
           <div>
             <label className={labelClasses}>Monto a convenio</label>
-            <div className="relative">
-              <HiCurrencyDollar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <input type="number" value={montoConvenio} onChange={(e) => setMontoConvenio(e.target.value)} className={`${inputClasses} pl-9`} />
+            <div className="relative flex items-center">
+              <HiCurrencyDollar className="absolute left-3.5 text-slate-400 pointer-events-none w-5 h-5" />
+              <input type="number" value={montoConvenio} onChange={(e) => setMontoConvenio(e.target.value)} className={`${inputClasses} pl-10`} />
             </div>
-            <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">Puedes pagar una o varias parcialidades completas</p>
+            <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1">Puedes pagar una o varias parcialidades completas</p>
           </div>
 
           {/* Cantidad entregada */}
           <div>
             <label className={labelClasses}>Cantidad entregada</label>
-            <div className="relative">
-              <HiCurrencyDollar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <input type="number" value={cantidadEntregada} onChange={(e) => setCantidadEntregada(e.target.value)} className={`${inputClasses} pl-9`} />
+            <div className="relative flex items-center">
+              <HiCurrencyDollar className="absolute left-3.5 text-slate-400 pointer-events-none w-5 h-5" />
+              <input type="number" value={cantidadEntregada} onChange={(e) => setCantidadEntregada(e.target.value)} className={`${inputClasses} pl-10`} />
             </div>
           </div>
 
           {/* Método de pago */}
           <div>
             <label className={labelClasses}>Método de pago</label>
-            <div className="relative">
-              <HiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} className={`${selectClasses} pl-9`}>
+            <div className="relative flex items-center">
+              <HiCreditCard className="absolute left-3.5 text-slate-400 pointer-events-none w-5 h-5" />
+              <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} className={`${selectClasses} pl-10`}>
                 <option value="Efectivo">Efectivo</option>
                 <option value="Transferencia">Transferencia</option>
                 <option value="Tarjeta">Tarjeta</option>
@@ -197,25 +201,25 @@ const ModalPagoIntegradoConvenio = ({ isOpen, onClose, resumenCobro, convenioId,
           </div>
 
           {/* Totales */}
-          <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center">
+          <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center">
             <div>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Aplicado</p>
-              <p className="font-semibold text-slate-800 dark:text-zinc-100">{formatearMoneda(totales.aplicado)}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Aplicado</p>
+              <p className="font-bold text-slate-800 dark:text-zinc-100 mt-0.5">{formatearMoneda(totales.aplicado)}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Entregado</p>
-              <p className="font-semibold text-slate-800 dark:text-zinc-100">{formatearMoneda(totales.entregado)}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Entregado</p>
+              <p className="font-bold text-slate-800 dark:text-zinc-100 mt-0.5">{formatearMoneda(totales.entregado)}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">Cambio</p>
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${totales.cambio > 0 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-slate-200/50 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"}`}>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Cambio</p>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold mt-0.5 ${totales.cambio > 0 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-slate-200/50 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"}`}>
                 {formatearMoneda(totales.cambio)}
               </span>
             </div>
           </div>
 
           {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-600 dark:text-red-400 text-sm font-medium">
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm font-medium">
               <HiX className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -224,14 +228,14 @@ const ModalPagoIntegradoConvenio = ({ isOpen, onClose, resumenCobro, convenioId,
       </Modal.Body>
 
       <Modal.Footer>
-        <button type="button" onClick={onClose} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
+        <button type="button" onClick={onClose} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
           Cancelar
         </button>
         <button
           type="button"
           onClick={handleConfirmar}
           disabled={loading}
-          className="font-bold bg-blue-600 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-70"
+          className="font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
           {!loading && <HiCheck className="w-4 h-4" />}

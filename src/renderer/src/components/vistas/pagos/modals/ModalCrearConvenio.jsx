@@ -3,7 +3,7 @@ import { Modal } from "flowbite-react";
 import { HiClipboardCheck, HiCalculator, HiCurrencyDollar, HiViewGrid, HiCalendar, HiExclamationCircle } from "react-icons/hi";
 
 const premiumModalTheme = {
-  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
     inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-lg w-full"
@@ -16,19 +16,19 @@ const premiumModalTheme = {
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
 };
 
-const inputClasses = "border border-gray-300 dark:border-zinc-700 focus:ring-blue-600 focus:border-blue-500 text-gray-600 dark:text-zinc-100 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none focus:ring-2 bg-white dark:bg-zinc-900 transition-all";
+const inputClasses = "border border-slate-200 dark:border-zinc-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 dark:text-zinc-100 rounded-xl pl-12 pr-4 py-2 w-full focus:outline-none bg-slate-100/70 dark:bg-zinc-900/80 transition-all font-medium text-sm h-11";
 
 const CustomInput = ({ label, value, onChange, icon, type = "text", prefix }) => (
   <div>
-    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-1.5 block">
       {label}
     </label>
-    <div className="relative w-full flex">
-      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 border-r border-gray-300 dark:border-gray-600 py-2 pr-2">
+    <div className="relative w-full flex items-center">
+      <span className="absolute left-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center">
         {icon}
       </span>
       {prefix && (
-        <span className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold text-sm pointer-events-none">
+        <span className="absolute left-10 text-slate-400 dark:text-zinc-500 font-bold text-sm pointer-events-none">
           {prefix}
         </span>
       )}
@@ -38,7 +38,7 @@ const CustomInput = ({ label, value, onChange, icon, type = "text", prefix }) =>
         onChange={onChange}
         placeholder="0"
         min={0}
-        className={`${inputClasses} ${prefix ? "pl-14" : "pl-12"}`}
+        className={`${inputClasses} ${prefix ? "pl-14" : "pl-11"}`}
       />
     </div>
   </div>
@@ -112,15 +112,15 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
       <Modal.Header>
         <div className="flex gap-3 items-center">
-          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-            <HiClipboardCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+            <HiClipboardCheck className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
               Crear Convenio
             </h2>
-            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
-              Plan de pagos diferidos
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+              Plan de pagos diferidos para regularización
             </p>
           </div>
         </div>
@@ -129,12 +129,12 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
       <Modal.Body>
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 dark:bg-zinc-800 p-4 rounded-xl border border-gray-200 dark:border-zinc-700 text-center">
-              <p className="text-xs text-gray-500 dark:text-zinc-400 uppercase font-bold tracking-wider">Deuda Total</p>
-              <p className="text-xl font-black text-gray-800 dark:text-zinc-100 mt-1">${deudaTotal?.toLocaleString()}</p>
+            <div className="bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 text-center">
+              <p className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold tracking-wider">Deuda Total</p>
+              <p className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">${deudaTotal?.toLocaleString()}</p>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/30 text-center">
-              <p className="text-xs text-blue-500 dark:text-blue-400 uppercase font-bold tracking-wider">Saldo a Diferir</p>
+            <div className="bg-blue-500/10 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-500/20 text-center">
+              <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold tracking-wider">Saldo a Diferir</p>
               <p className="text-xl font-black text-blue-700 dark:text-blue-300 mt-1">${proyeccion.saldoRestante.toLocaleString()}</p>
             </div>
           </div>
@@ -144,7 +144,7 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
             type="number"
             value={pagoInicial}
             onChange={(e) => setPagoInicial(e.target.value)}
-            icon={<HiCurrencyDollar className="w-5 h-5 text-green-600" />}
+            icon={<HiCurrencyDollar className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
             prefix="$"
           />
 
@@ -158,17 +158,17 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
             />
 
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-1.5 block">
                 Periodicidad
               </label>
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400">
+              <div className="relative flex items-center">
+                <span className="absolute left-3.5 text-slate-400 pointer-events-none">
                   <HiCalendar className="w-5 h-5" />
                 </span>
                 <select
                   value={periodicidad}
                   onChange={(e) => setPeriodicidad(e.target.value)}
-                  className="border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-700 dark:text-zinc-100 rounded-xl pl-8 pr-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm font-medium transition-all h-10"
+                  className="border border-slate-200 dark:border-zinc-800 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 rounded-xl pl-11 pr-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium transition-all h-11"
                 >
                   <option value="mensual">Mensual</option>
                   <option value="quincenal">Quincenal</option>
@@ -178,22 +178,22 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
           </div>
 
           {proyeccion.saldoRestante < 0 && (
-            <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded-lg border border-red-100 dark:border-red-800/30 flex items-center gap-2">
+            <p className="text-xs font-semibold text-rose-600 bg-rose-500/10 dark:bg-rose-900/20 p-3 rounded-xl border border-rose-500/20 flex items-center gap-2">
               <HiExclamationCircle className="w-4 h-4" />
               El pago inicial excede la deuda total.
             </p>
           )}
 
-          <div className="bg-gray-100 dark:bg-zinc-800 p-4 rounded-xl border border-gray-200 dark:border-zinc-700">
-            <div className="flex items-center gap-2 mb-3 text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-zinc-700 pb-2">
-              <HiCalculator className="w-5 h-5" />
+          <div className="bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800">
+            <div className="flex items-center gap-2 mb-3 text-slate-700 dark:text-zinc-300 border-b border-slate-200 dark:border-zinc-800 pb-2">
+              <HiCalculator className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               <span className="font-bold text-sm">Resumen del Plan</span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600 dark:text-gray-400">
+              <span className="text-slate-500 dark:text-zinc-400 font-medium">
                 {parcialidades} pagos {periodicidad}es de:
               </span>
-              <span className="font-bold text-2xl text-blue-600 dark:text-blue-400">
+              <span className="font-mono font-black text-2xl text-emerald-600 dark:text-emerald-400">
                 ${proyeccion.cuota.toFixed(2)}
               </span>
             </div>
@@ -205,7 +205,7 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
         <button
           type="button"
           onClick={onClose}
-          className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11"
+          className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors"
         >
           Cancelar
         </button>
@@ -213,7 +213,7 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
           type="button"
           onClick={handleConfirm}
           disabled={loading || !pagoInicial || proyeccion.saldoRestante < 0}
-          className="font-bold bg-green-600 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-70 shadow-green-500/30"
+          className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
           <HiClipboardCheck className="w-4 h-4" />

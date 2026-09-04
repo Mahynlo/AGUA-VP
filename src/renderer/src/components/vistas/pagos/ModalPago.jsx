@@ -15,7 +15,7 @@ import {
 } from "react-icons/hi";
 
 const premiumModalTheme = {
-  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
     inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-2xl w-full"
@@ -371,13 +371,13 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
     <>
       <Modal.Header>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-            <HiCreditCard className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+            <HiCreditCard className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Realizar Pago — Factura #{factura.id}</h3>
-            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">
-              Total a pagar: <span className="font-bold text-slate-800 dark:text-white">${toMoney(factura.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
+            <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Realizar Pago — Factura #{factura.id}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+              Total a pagar: <span className="font-bold text-slate-800 dark:text-zinc-100 font-mono">${toMoney(factura.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
             </p>
           </div>
         </div>
@@ -385,14 +385,14 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
 
       <Modal.Body>
         <div className="space-y-5">
-          <div className="flex justify-between items-center bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-200 dark:border-zinc-700/50">
+          <div className="flex justify-between items-center bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Cliente</p>
-              <p className="font-medium text-slate-800 dark:text-zinc-100">{factura.cliente_nombre}</p>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Cliente</p>
+              <p className="font-bold text-slate-800 dark:text-zinc-100 mt-0.5">{factura.cliente_nombre}</p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Saldo Pendiente</p>
-              <p className="text-xl font-black text-red-600 dark:text-red-400">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Saldo Pendiente</p>
+              <p className="text-xl font-black text-rose-600 dark:text-rose-400 font-mono mt-0.5">
                 ${toMoney(formPago.monto).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
               </p>
             </div>
@@ -400,8 +400,8 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
 
           <div>
             <label className={labelClasses}>Cantidad entregada por el cliente*</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-zinc-400 font-semibold text-lg pointer-events-none">$</span>
+            <div className="relative flex items-center">
+              <span className="absolute left-4 text-slate-400 font-bold text-xl pointer-events-none">$</span>
               <input
                 type="number"
                 placeholder="0.00"
@@ -414,7 +414,7 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
                 onKeyDown={(e) => { if (e.key === "Enter") handleConfirmar(); }}
                 min="0"
                 step="0.01"
-                className={`${inputClasses} pl-8 text-2xl font-black h-14 ${mostrarErrores && erroresCampos.cantidad_entregada ? "border-red-500" : ""}`}
+                className={`${inputClasses} pl-9 text-2xl font-black h-14 ${mostrarErrores && erroresCampos.cantidad_entregada ? "border-rose-500 focus:ring-rose-500/20" : "focus:ring-emerald-500/20 focus:border-emerald-500"}`}
               />
             </div>
 
@@ -427,13 +427,13 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
                     setFormPago({ ...formPago, cantidad_entregada: montoSugerido.toString() });
                     limpiarError("cantidad_entregada");
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition-all active:scale-95 ${toMoney(formPago.cantidad_entregada) === montoSugerido
-                    ? "bg-green-600 text-white border-green-600 shadow-sm"
-                    : "bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-green-400 hover:text-green-600"
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${toMoney(formPago.cantidad_entregada) === montoSugerido
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                    : "bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-emerald-400 hover:text-emerald-600"
                     }`}
                 >
-                  <span className="flex items-center gap-1">
-                    <HiCash className={toMoney(formPago.cantidad_entregada) === montoSugerido ? "text-white" : "text-green-500"} />
+                  <span className="flex items-center gap-1.5 font-mono">
+                    <HiCash className={toMoney(formPago.cantidad_entregada) === montoSugerido ? "text-white" : "text-emerald-500"} />
                     ${montoSugerido}
                   </span>
                 </button>
@@ -441,22 +441,22 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             </div>
 
             {mostrarErrores && erroresCampos.cantidad_entregada && (
-              <p className="text-xs text-red-500 mt-1">Ingrese un monto valido</p>
+              <p className="text-xs font-semibold text-rose-500 mt-1">Ingrese un monto válido</p>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClasses}>Metodo de pago*</label>
-              <div className="relative">
-                <HiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <label className={labelClasses}>Método de pago*</label>
+              <div className="relative flex items-center">
+                <HiCreditCard className="absolute left-3.5 text-slate-400 pointer-events-none w-5 h-5" />
                 <select
                   value={formPago.metodo_pago}
                   onChange={(e) => {
                     setFormPago({ ...formPago, metodo_pago: e.target.value });
                     limpiarError("metodo_pago");
                   }}
-                  className={`${inputClasses} pl-9 ${mostrarErrores && erroresCampos.metodo_pago ? "border-red-500" : ""}`}
+                  className={`${inputClasses} pl-10 ${mostrarErrores && erroresCampos.metodo_pago ? "border-rose-500" : ""}`}
                 >
                   <option value="Efectivo">Efectivo</option>
                   <option value="Transferencia">Transferencia</option>
@@ -475,10 +475,10 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
                   setFormPago({ ...formPago, fecha_pago: e.target.value });
                   limpiarError("fecha_pago");
                 }}
-                className={`${inputClasses} ${mostrarErrores && erroresCampos.fecha_pago ? "border-red-500" : ""}`}
+                className={`${inputClasses} ${mostrarErrores && erroresCampos.fecha_pago ? "border-rose-500" : ""}`}
               />
               {mostrarErrores && erroresCampos.fecha_pago && (
-                <p className="text-xs text-red-500 mt-1">Ingrese una fecha de pago valida</p>
+                <p className="text-xs font-semibold text-rose-500 mt-1">Ingrese una fecha de pago válida</p>
               )}
             </div>
 
@@ -493,21 +493,21 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
                   setFormPago({ ...formPago, comentario: e.target.value });
                   limpiarError("comentario");
                 }}
-                className={`${inputClasses} ${mostrarErrores && erroresCampos.comentario ? "border-red-500" : ""}`}
+                className={`${inputClasses} ${mostrarErrores && erroresCampos.comentario ? "border-rose-500" : ""}`}
               />
-              <p className={`text-[11px] mt-1 ${mostrarErrores && erroresCampos.comentario ? "text-red-500" : "text-slate-500 dark:text-zinc-400"}`}>
+              <p className={`text-[11px] font-medium mt-1 ${mostrarErrores && erroresCampos.comentario ? "text-rose-500" : "text-slate-400 dark:text-zinc-500"}`}>
                 {String(formPago.comentario || "").length}/{MAX_COMENTARIO}
               </p>
             </div>
           </div>
 
           {cambio > 0 && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3 flex justify-between items-center">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium">
+            <div className="bg-amber-500/10 dark:bg-amber-900/20 border border-amber-500/20 rounded-2xl p-4 flex justify-between items-center">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-xs uppercase tracking-widest">
                 <HiExclamation className="w-5 h-5" />
                 <span>Cambio a entregar:</span>
               </div>
-              <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
+              <span className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono">
                 ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -516,10 +516,10 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
       </Modal.Body>
 
       <Modal.Footer>
-        <button type="button" onClick={handleCerrarModal} className="font-bold text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl px-6 h-11">
+        <button type="button" onClick={handleCerrarModal} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
           Cancelar
         </button>
-        <button type="button" onClick={handleConfirmar} className="font-bold bg-green-600 text-white rounded-xl px-8 h-11 shadow-sm hover:bg-green-700 transition-colors">
+        <button type="button" onClick={handleConfirmar} className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm transition-colors">
           Cobrar
         </button>
       </Modal.Footer>
@@ -530,12 +530,12 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
     <>
       <Modal.Header>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <HiExclamation className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
+            <HiExclamation className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Confirmar Pago — Factura #{factura.id}</h3>
-            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">
+            <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Confirmar Pago — Factura #{factura.id}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
               Revise los datos antes de procesar el pago
             </p>
           </div>
@@ -544,42 +544,42 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
 
       <Modal.Body>
         <div className="space-y-4">
-          <div className="bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/50 rounded-2xl p-5">
-            <h4 className="font-semibold text-slate-800 dark:text-zinc-100 flex items-center gap-2 mb-4 text-sm">
-              <HiUser className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5">
+            <h4 className="font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2 mb-4 text-xs uppercase tracking-widest">
+              <HiUser className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               Resumen del Pago
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Cliente</span>
-                <p className="font-semibold text-slate-800 dark:text-zinc-100">{factura.cliente_nombre}</p>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Cliente</span>
+                <p className="font-bold text-slate-800 dark:text-zinc-100">{factura.cliente_nombre}</p>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Saldo Pendiente</span>
-                <p className="text-lg font-black text-red-600 dark:text-red-400">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Saldo Pendiente</span>
+                <p className="text-lg font-black text-rose-600 dark:text-rose-400 font-mono">
                   ${toMoney(factura.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Cantidad Entregada</span>
-                <p className="text-lg font-black text-green-600 dark:text-green-400">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Cantidad Entregada</span>
+                <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono">
                   ${toMoney(formPago.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">Metodo de Pago</span>
-                <p className="font-semibold text-slate-800 dark:text-zinc-100">{formPago.metodo_pago}</p>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">Método de Pago</span>
+                <p className="font-bold text-slate-800 dark:text-zinc-100">{formPago.metodo_pago}</p>
               </div>
             </div>
 
             {cambio > 0 && (
-              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-zinc-700/50">
-                <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                <div className="flex items-center gap-3 bg-amber-500/10 dark:bg-amber-900/20 border border-amber-500/20 rounded-xl p-3.5">
                   <HiCurrencyDollar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   <div>
-                    <p className="text-xs font-bold text-amber-700/60 dark:text-amber-400/60 uppercase tracking-wider">Cambio a entregar</p>
-                    <p className="text-lg font-black text-amber-600 dark:text-amber-400">
+                    <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest">Cambio a entregar</p>
+                    <p className="text-lg font-black text-amber-600 dark:text-amber-400 font-mono">
                       ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -587,9 +587,9 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
               </div>
             )}
 
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-zinc-700/50">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider block mb-1">Comentarios</span>
-              <p className="text-sm text-slate-800 dark:text-zinc-100 bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-700/50">
+            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Comentarios</span>
+              <p className="text-sm font-medium text-slate-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-800">
                 {formPago.comentario || "Sin comentarios"}
               </p>
             </div>
@@ -598,10 +598,10 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
       </Modal.Body>
 
       <Modal.Footer>
-        <button type="button" onClick={handleVolverFormulario} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
-          Volver al Formulario
+        <button type="button" onClick={handleVolverFormulario} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
+          Volver
         </button>
-        <button type="button" onClick={handleProcesarPago} className="font-bold bg-blue-600 text-white rounded-xl px-8 h-11 shadow-sm hover:bg-blue-700 transition-colors">
+        <button type="button" onClick={handleProcesarPago} className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm transition-colors">
           Confirmar y Procesar Pago
         </button>
       </Modal.Footer>
@@ -612,19 +612,19 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
     <>
       <Modal.Header>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <HiCurrencyDollar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
+            <HiCurrencyDollar className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Procesando Pago...</h3>
-            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">Por favor espere</p>
+            <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Procesando Pago...</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">Por favor espere</p>
           </div>
         </div>
       </Modal.Header>
       <Modal.Body>
         <div className="flex flex-col items-center justify-center py-12 gap-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600" />
-          <p className="text-slate-500 dark:text-zinc-400">Procesando el pago...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-slate-300 border-t-emerald-600" />
+          <p className="text-sm font-semibold text-slate-500 dark:text-zinc-400">Procesando el pago...</p>
         </div>
       </Modal.Body>
     </>
@@ -634,30 +634,30 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
     <>
       <Modal.Header>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-            <HiCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+            <HiCheck className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Pago Realizado con Exito</h3>
-            <p className="text-sm font-normal text-slate-500 dark:text-zinc-400">El pago se proceso correctamente</p>
+            <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Pago Realizado con Éxito</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">El pago se procesó correctamente</p>
           </div>
         </div>
       </Modal.Header>
       <Modal.Body>
         <div className="space-y-4">
-          <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-2xl border border-green-100 dark:border-green-800/30 flex flex-col items-center text-center">
-            <div className="rounded-full bg-green-500 p-3 mb-3">
-              <HiCheck className="w-8 h-8 text-white" />
+          <div className="bg-emerald-500/10 dark:bg-emerald-900/20 p-6 rounded-2xl border border-emerald-500/20 flex flex-col items-center text-center">
+            <div className="rounded-full bg-emerald-500 text-white p-3 mb-3 shadow-sm">
+              <HiCheck className="w-8 h-8" />
             </div>
-            <h3 className="text-2xl font-black text-green-700 dark:text-green-400 mb-1">
+            <h3 className="text-3xl font-black text-emerald-700 dark:text-emerald-400 mb-1 font-mono">
               ${toMoney(formPago.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
             </h3>
-            <p className="text-green-600 dark:text-green-300 text-sm">Monto registrado</p>
+            <p className="text-emerald-600 dark:text-emerald-300 text-xs font-bold uppercase tracking-widest">Monto registrado</p>
 
             {cambio > 0 && (
-              <div className="mt-4 p-3 bg-white dark:bg-zinc-800 rounded-xl border border-slate-200 dark:border-zinc-700/50 w-full">
-                <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">Cambio Entregado</p>
-                <p className="text-xl font-black text-slate-800 dark:text-zinc-100">
+              <div className="mt-4 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-emerald-500/20 w-full shadow-xs">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Cambio Entregado</p>
+                <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 font-mono mt-0.5">
                   ${toMoney(cambio).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                 </p>
               </div>
@@ -668,7 +668,7 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             type="button"
             disabled={generandoComprobante}
             onClick={handleImprimirComprobante}
-            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-zinc-700/50 bg-slate-50 dark:bg-zinc-800/50 text-slate-700 dark:text-zinc-300 font-bold text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 text-slate-700 dark:text-zinc-300 font-bold text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-60"
           >
             {generandoComprobante
               ? <><div className="w-4 h-4 border-2 border-slate-400/30 border-t-slate-600 rounded-full animate-spin" /> Generando comprobante...</>
@@ -678,7 +678,7 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
         </div>
       </Modal.Body>
       <Modal.Footer>
-        <button type="button" onClick={handleCerrarModal} className="w-full font-bold bg-blue-600 text-white rounded-xl px-8 h-11 shadow-sm hover:bg-blue-700 transition-colors">
+        <button type="button" onClick={handleCerrarModal} className="w-full font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm transition-colors">
           Finalizar
         </button>
       </Modal.Footer>
@@ -689,18 +689,18 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
     <>
       <Modal.Body>
         <div className="flex flex-col items-center text-center space-y-4 py-8">
-          <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-            <HiX className="w-10 h-10 text-red-600 dark:text-red-400" />
+          <div className="p-3 bg-rose-500/10 rounded-full text-rose-600 dark:text-rose-400">
+            <HiX className="w-10 h-10" />
           </div>
-          <h3 className="text-xl font-bold text-red-600 dark:text-red-400">Error al Procesar</h3>
-          <p className="text-slate-600 dark:text-zinc-300">{resultadoPago?.mensaje || "Error inesperado"}</p>
+          <h3 className="text-xl font-black text-rose-600 dark:text-rose-400">Error al Procesar</h3>
+          <p className="text-sm font-medium text-slate-600 dark:text-zinc-300">{resultadoPago?.mensaje || "Error inesperado"}</p>
         </div>
       </Modal.Body>
       <Modal.Footer>
-        <button type="button" onClick={handleReintentar} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
+        <button type="button" onClick={handleReintentar} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
           Reintentar
         </button>
-        <button type="button" onClick={handleCerrarModal} className="font-bold bg-red-600 text-white rounded-xl px-8 h-11 shadow-sm">
+        <button type="button" onClick={handleCerrarModal} className="font-bold bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-xl px-8 h-11 transition-colors">
           Cerrar
         </button>
       </Modal.Footer>

@@ -11,7 +11,7 @@ import {
 import { useAuth } from "../../../context/AuthContext";
 
 const premiumModalTheme = {
-  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
     inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-2xl w-full"
@@ -115,40 +115,44 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
     <Modal
       show={isOpen}
       onClose={onClose}
-      size="6xl"
+      size="2xl"
       theme={premiumModalTheme}
       dismissible={estadoPago === "formulario"}
     >
       <Modal.Header>
-        <div className="flex items-center gap-2">
-          <HiCurrencyDollar className="text-2xl text-blue-600 dark:text-blue-400" />
-          <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
-            Pagar Parcialidad #{parcialidad.numero_parcialidad}
-          </h2>
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+            <HiCurrencyDollar className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+              Pagar Parcialidad #{parcialidad.numero_parcialidad}
+            </h2>
+            {convenio && (
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+                Cliente: {convenio.cliente_nombre}
+              </p>
+            )}
+          </div>
         </div>
-        {convenio && (
-          <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-            Cliente: {convenio.cliente_nombre}
-          </p>
-        )}
       </Modal.Header>
 
       <Modal.Body>
         {estadoPago === "formulario" && (
           <div className="space-y-5">
             {/* Info parcialidad */}
-            <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 grid grid-cols-2 gap-4">
+            <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">Monto a Pagar</p>
-                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Monto a Pagar</p>
+                <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
                   {formatearMoneda(parcialidad.monto_esperado)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">Fecha de Vencimiento</p>
-                <div className="flex items-center gap-1 mt-0.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Fecha de Vencimiento</p>
+                <div className="flex items-center gap-1.5 mt-1">
                   <HiCalendar className="text-slate-400 w-4 h-4" />
-                  <p className="text-sm font-medium text-slate-700 dark:text-zinc-300">{formatearFecha(parcialidad.fecha_vencimiento)}</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">{formatearFecha(parcialidad.fecha_vencimiento)}</p>
                 </div>
               </div>
             </div>
@@ -156,16 +160,16 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
             {/* Sugerencias */}
             {sugerenciasPago.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 mb-2">Sugerencias de pago:</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mb-2">Sugerencias de pago:</p>
                 <div className="flex flex-wrap gap-2">
                   {sugerenciasPago.map((sugerencia) => (
                     <button
                       key={sugerencia}
                       type="button"
                       onClick={() => setFormPago((prev) => ({ ...prev, cantidad_entregada: sugerencia.toString() }))}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-bold border transition-all ${parseFloat(formPago.cantidad_entregada) === sugerencia
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-blue-400 hover:text-blue-600"
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${parseFloat(formPago.cantidad_entregada) === sugerencia
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                        : "bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-emerald-400 hover:text-emerald-600"
                         }`}
                     >
                       {formatearMoneda(sugerencia)}
@@ -178,8 +182,8 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
             {/* Cantidad entregada */}
             <div>
               <label className={labelClasses}>Cantidad Entregada</label>
-              <div className="relative">
-                <HiCurrencyDollar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <div className="relative flex items-center">
+                <HiCurrencyDollar className="absolute left-3.5 text-slate-400 pointer-events-none w-5 h-5" />
                 <input
                   type="number"
                   placeholder="0.00"
@@ -188,23 +192,23 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
                     setFormPago((prev) => ({ ...prev, cantidad_entregada: e.target.value }));
                     if (erroresCampos.cantidad_entregada) setErroresCampos((prev) => ({ ...prev, cantidad_entregada: false }));
                   }}
-                  className={`${inputClasses} pl-9 ${mostrarErrores && erroresCampos.cantidad_entregada ? "border-red-500" : ""}`}
+                  className={`${inputClasses} pl-10 h-12 text-lg font-black ${mostrarErrores && erroresCampos.cantidad_entregada ? "border-rose-500 focus:ring-rose-500/20" : "focus:ring-emerald-500/20 focus:border-emerald-500"}`}
                 />
               </div>
               {mostrarErrores && erroresCampos.cantidad_entregada && (
-                <p className="text-xs text-red-500 mt-1">Ingrese una cantidad válida</p>
+                <p className="text-xs font-semibold text-rose-500 mt-1">Ingrese una cantidad válida</p>
               )}
             </div>
 
             {/* Método de pago */}
             <div>
               <label className={labelClasses}>Método de Pago</label>
-              <div className="relative">
-                <HiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <div className="relative flex items-center">
+                <HiCreditCard className="absolute left-3.5 text-slate-400 pointer-events-none w-5 h-5" />
                 <select
                   value={formPago.metodo_pago}
                   onChange={(e) => setFormPago((prev) => ({ ...prev, metodo_pago: e.target.value }))}
-                  className={`${inputClasses} pl-9`}
+                  className={`${inputClasses} pl-10`}
                 >
                   <option value="Efectivo">Efectivo</option>
                   <option value="Transferencia">Transferencia</option>
@@ -228,9 +232,9 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
 
             {/* Cambio */}
             {cambio > 0 && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3 flex justify-between items-center">
-                <span className="text-sm font-medium text-amber-700 dark:text-amber-400">Cambio a devolver:</span>
-                <span className="text-lg font-bold text-amber-600 dark:text-amber-400">{formatearMoneda(cambio)}</span>
+              <div className="bg-amber-500/10 dark:bg-amber-900/20 border border-amber-500/20 rounded-xl p-4 flex justify-between items-center">
+                <span className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">Cambio a devolver:</span>
+                <span className="text-xl font-black text-amber-600 dark:text-amber-400 font-mono">{formatearMoneda(cambio)}</span>
               </div>
             )}
           </div>
@@ -238,27 +242,27 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
 
         {estadoPago === "procesando" && (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600" />
-            <p className="text-slate-500 dark:text-zinc-400">Procesando pago...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-slate-300 border-t-emerald-600" />
+            <p className="text-sm font-semibold text-slate-500 dark:text-zinc-400">Procesando pago...</p>
           </div>
         )}
 
         {estadoPago === "exitoso" && resultadoPago && (
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 rounded-2xl p-6">
+          <div className="bg-emerald-500/10 dark:bg-emerald-900/20 border border-emerald-500/20 rounded-2xl p-6">
             <div className="flex flex-col items-center gap-4 py-4 text-center">
-              <div className="rounded-full bg-emerald-500 p-3">
-                <HiCheck className="text-4xl text-white w-8 h-8" />
+              <div className="rounded-full bg-emerald-500 text-white p-3 shadow-sm">
+                <HiCheck className="text-3xl w-7 h-7" />
               </div>
               <div>
-                <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">¡Pago Exitoso!</p>
-                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2">
-                  Monto aplicado: {formatearMoneda(resultadoPago.monto_aplicado)}
+                <p className="text-lg font-black text-emerald-700 dark:text-emerald-400">¡Pago Exitoso!</p>
+                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-2">
+                  Monto aplicado: <span className="font-bold text-slate-800 dark:text-zinc-100">{formatearMoneda(resultadoPago.monto_aplicado)}</span>
                 </p>
                 {resultadoPago.cambio > 0 && (
-                  <p className="text-sm text-amber-600 dark:text-amber-400">Cambio: {formatearMoneda(resultadoPago.cambio)}</p>
+                  <p className="text-sm font-bold text-amber-600 dark:text-amber-400 mt-1">Cambio: {formatearMoneda(resultadoPago.cambio)}</p>
                 )}
                 {resultadoPago.convenio_completado && (
-                  <span className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <span className="inline-flex items-center gap-1 mt-3 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     <HiCheck className="w-3.5 h-3.5" /> ¡Convenio Completado!
                   </span>
                 )}
@@ -268,7 +272,7 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
         )}
 
         {estadoPago === "error" && resultadoPago && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-2xl p-4 flex items-center gap-2 text-red-600 dark:text-red-400">
+          <div className="bg-rose-500/10 dark:bg-rose-900/20 border border-rose-500/20 rounded-2xl p-4 flex items-center gap-3 text-rose-600 dark:text-rose-400 font-medium text-sm">
             <HiX className="text-xl shrink-0" />
             <span>{resultadoPago.error}</span>
           </div>
@@ -278,16 +282,28 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
       <Modal.Footer>
         {estadoPago === "formulario" && (
           <>
-            <button type="button" onClick={onClose} className="font-bold text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl px-6 h-11">
+            <button
+              type="button"
+              onClick={onClose}
+              className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors"
+            >
               Cancelar
             </button>
-            <button type="button" onClick={handleConfirmar} className="font-bold bg-blue-600 text-white rounded-xl px-8 h-11 shadow-sm">
+            <button
+              type="button"
+              onClick={handleConfirmar}
+              className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm transition-colors"
+            >
               Confirmar Pago
             </button>
           </>
         )}
         {estadoPago === "error" && (
-          <button type="button" onClick={onClose} className="font-bold bg-red-600 text-white rounded-xl px-8 h-11">
+          <button
+            type="button"
+            onClick={onClose}
+            className="font-bold bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-xl px-8 h-11 transition-colors"
+          >
             Cerrar
           </button>
         )}

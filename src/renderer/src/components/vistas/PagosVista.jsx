@@ -189,7 +189,7 @@ const PagosVista = () => {
     const tintClasses = colorStyles[data.color] || colorStyles.blue;
 
     return (
-      <div className="flex flex-col gap-3 p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1 w-full">
+      <div className="flex flex-col gap-3 p-5 bg-slate-50/80 dark:bg-zinc-900/40 border border-slate-200/80 dark:border-zinc-800/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm w-full">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">{data.label}</span>
           <div className={`p-1.5 rounded-lg ${tintClasses}`}>
