@@ -75,6 +75,8 @@ const LoadingSkeleton = () => (
   </div>
 );
 
+const SELECT_CLS = "w-full h-[52px] px-4 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-none appearance-none cursor-pointer";
+
 const TabDeudores = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -211,11 +213,6 @@ const TabDeudores = () => {
       setCurrentPage(1);
   };
 
-  const selectClassNames = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
-    value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
-  };
-
   if (!candidatos.length && loading) { 
     return <LoadingSkeleton />;
   }
@@ -306,62 +303,54 @@ const TabDeudores = () => {
 
             {/* Filtro Gravedad */}
             <div className="lg:col-span-3">
-                <Select
-                    placeholder="Todas las gravedades"
-                    selectedKeys={[filtroGravedad]}
-                    onSelectionChange={(keys) => {
-                        setFiltroGravedad(Array.from(keys)[0] || "All");
-                        setCurrentPage(1);
-                    }}
-                    startContent={<HiExclamation className="text-slate-400" />}
-                    aria-label="Filtrar por Gravedad"
-                    variant="flat"
-                    classNames={selectClassNames}
-                >
-                    <SelectItem key="All" value="All">Todas</SelectItem>
-                    <SelectItem key="Crítico" value="Crítico" className="text-red-600 dark:text-red-400 font-bold">Críticos (+90 días)</SelectItem>
-                    <SelectItem key="Moderado" value="Moderado" className="text-orange-500 dark:text-orange-400 font-bold">Moderados (+30 días)</SelectItem>
-                    <SelectItem key="Leve" value="Leve" className="text-emerald-600 dark:text-emerald-400 font-bold">Leves</SelectItem>
-                </Select>
+              <select
+                value={filtroGravedad}
+                onChange={(e) => {
+                  setFiltroGravedad(e.target.value);
+                  setCurrentPage(1);
+                }}
+                aria-label="Filtrar por Gravedad"
+                className={SELECT_CLS}
+              >
+                <option value="All">Todas las gravedades</option>
+                <option value="Crítico">Críticos (+90 días)</option>
+                <option value="Moderado">Moderados (+30 días)</option>
+                <option value="Leve">Leves</option>
+              </select>
             </div>
 
             {/* Filtro Estado Servicio */}
             <div className="lg:col-span-3">
-                <Select
-                    placeholder="Todos los estados"
-                    selectedKeys={[filtroEstado]}
-                    onSelectionChange={(keys) => {
-                        setFiltroEstado(Array.from(keys)[0] || "All");
-                        setCurrentPage(1);
-                    }}
-                    startContent={<HiFilter className="text-slate-400" />}
-                    aria-label="Filtrar por Estado"
-                    variant="flat"
-                    classNames={selectClassNames}
-                >
-                    <SelectItem key="All" value="All">Todos</SelectItem>
-                    <SelectItem key="Activo" value="Activo">Activos (Con Deuda)</SelectItem>
-                    <SelectItem key="Cortado" value="Cortado">Servicios Cortados</SelectItem>
-                    <SelectItem key="Convenio" value="Convenio">En Convenio</SelectItem>
-                </Select>
+              <select
+                value={filtroEstado}
+                onChange={(e) => {
+                  setFiltroEstado(e.target.value);
+                  setCurrentPage(1);
+                }}
+                aria-label="Filtrar por Estado"
+                className={SELECT_CLS}
+              >
+                <option value="All">Todos los estados</option>
+                <option value="Activo">Activos (Con Deuda)</option>
+                <option value="Cortado">Servicios Cortados</option>
+                <option value="Convenio">En Convenio</option>
+              </select>
             </div>
 
             {/* Botón Limpiar */}
             <div className="lg:col-span-1 flex justify-end">
-                {hasActiveFilters ? (
-                    <Button 
-                        variant="flat" 
-                        color="default"
-                        onPress={clearFilters}
-                        className="w-full font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 shadow-none h-[52px] rounded-xl min-w-0"
-                        isIconOnly
-                        title="Limpiar filtros"
-                    >
-                        <HiFilter className="text-slate-400 text-lg" />
-                    </Button>
-                ) : (
-                    <div className="w-full h-[52px]"></div> 
-                )}
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="w-full font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 h-[52px] rounded-xl flex items-center justify-center transition-colors"
+                  title="Limpiar filtros"
+                >
+                  <HiFilter className="text-lg" />
+                </button>
+              ) : (
+                <div className="w-full h-[52px]" />
+              )}
             </div>
 
           </div>

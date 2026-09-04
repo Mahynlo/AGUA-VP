@@ -3,7 +3,7 @@ import { Modal } from "flowbite-react";
 import { HiBan, HiExclamation, HiChat } from "react-icons/hi";
 
 const premiumModalTheme = {
-  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
     inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-lg w-full"
@@ -66,15 +66,15 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
       <Modal.Header>
         <div className="flex gap-3 items-center">
-          <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-            <HiBan className="w-6 h-6 text-red-600 dark:text-red-400" />
+          <div className="p-3 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl">
+            <HiBan className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+            <h2 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
               Confirmar Corte
             </h2>
-            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
-              Procedimiento de suspensión
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+              Procedimiento de suspensión de servicio
             </p>
           </div>
         </div>
@@ -82,17 +82,17 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
 
       <Modal.Body>
         <div className="space-y-5">
-          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-800/30">
-            <div className="flex gap-3">
-              <HiExclamation className="w-6 h-6 text-red-500 flex-shrink-0" />
-              <div>
-                <p className="font-bold text-red-800 dark:text-red-300 text-sm">¿ESTÁ SEGURO DE PROCEDER?</p>
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1 mb-2">
+          <div className="bg-rose-500/10 dark:bg-rose-900/20 p-5 rounded-2xl border border-rose-500/20">
+            <div className="flex gap-3.5">
+              <HiExclamation className="w-6 h-6 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold text-rose-800 dark:text-rose-300 text-sm">¿ESTÁ SEGURO DE PROCEDER?</p>
+                <p className="text-xs text-rose-700 dark:text-rose-400 mt-1 mb-3 font-medium">
                   Se registrará el corte de servicio para:
                 </p>
-                <div className="bg-white dark:bg-zinc-800 p-2 rounded-lg border border-red-100 dark:border-red-900/50">
-                  <p className="font-bold text-gray-800 dark:text-gray-200 text-sm">{selectedDeudor.cliente_nombre}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase">{selectedDeudor.direccion_cliente}</p>
+                <div className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-rose-200 dark:border-rose-900/50 shadow-xs">
+                  <p className="font-bold text-slate-800 dark:text-zinc-100 text-sm">{selectedDeudor.cliente_nombre}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-semibold mt-0.5">{selectedDeudor.direccion_cliente}</p>
                 </div>
               </div>
             </div>
@@ -119,15 +119,15 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
               Observaciones
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-3 text-slate-400">
-                <HiChat className="w-5 h-5" />
+              <span className="absolute left-3.5 top-3.5 text-slate-400">
+                <HiChat className="w-4 h-4" />
               </span>
               <textarea
                 value={observaciones}
                 onChange={(e) => setObservaciones(e.target.value)}
                 rows={3}
                 placeholder="Detalles adicionales sobre la acción..."
-                className="border border-slate-200 dark:border-zinc-800 bg-slate-100/70 dark:bg-zinc-900/80 rounded-xl pl-10 pr-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 text-sm font-medium text-slate-800 dark:text-zinc-100 resize-none transition-all"
+                className="border border-slate-200 dark:border-zinc-800 bg-slate-100/70 dark:bg-zinc-900/80 rounded-xl pl-10 pr-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm font-medium text-slate-800 dark:text-zinc-100 resize-none transition-all"
               />
             </div>
           </div>
@@ -138,7 +138,7 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
         <button
           type="button"
           onClick={onClose}
-          className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11"
+          className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors"
         >
           Cancelar
         </button>
@@ -146,7 +146,7 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
           type="button"
           onClick={handleConfirm}
           disabled={loading}
-          className="font-bold bg-red-600 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-70 shadow-red-500/30"
+          className="font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-8 h-11 shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
           <HiBan className="w-4 h-4" />
