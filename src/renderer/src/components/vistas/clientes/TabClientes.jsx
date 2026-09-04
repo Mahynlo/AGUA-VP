@@ -30,7 +30,7 @@ import { normalizarTexto } from "../../../utils/textUtils";
 
 const premiumConfirmModalTheme = {
   root: {
-    show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" }
+    show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" }
   },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
