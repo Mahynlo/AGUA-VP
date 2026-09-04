@@ -13,37 +13,30 @@ import { useFeedback } from "../../../context/FeedbackContext";
 const MetricCard = ({ icon: Icon, title, value, subTitle, color, chipValue }) => {
   const colorMap = {
     blue: {
-      card: "bg-sky-500/10 border-sky-200/70 dark:border-sky-900/40",
-      icon: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
-      badge: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-200/70 dark:border-sky-900/50"
+      icon: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      badge: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200/70 dark:border-blue-900/50"
     },
     green: {
-      card: "bg-emerald-500/10 border-emerald-200/70 dark:border-emerald-900/40",
       icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
       badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200/70 dark:border-emerald-900/50"
     },
     purple: {
-      card: "bg-violet-500/10 border-violet-200/70 dark:border-violet-900/40",
       icon: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
       badge: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-200/70 dark:border-violet-900/50"
     },
     red: {
-      card: "bg-rose-500/10 border-rose-200/70 dark:border-rose-900/40",
       icon: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
       badge: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200/70 dark:border-rose-900/50"
     },
     cyan: {
-      card: "bg-cyan-500/10 border-cyan-200/70 dark:border-cyan-900/40",
       icon: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
       badge: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-200/70 dark:border-cyan-900/50"
     },
     amber: {
-      card: "bg-amber-500/10 border-amber-200/70 dark:border-amber-900/40",
       icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
       badge: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200/70 dark:border-amber-900/50"
     },
     teal: {
-      card: "bg-teal-500/10 border-teal-200/70 dark:border-teal-900/40",
       icon: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
       badge: "bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-200/70 dark:border-teal-900/50"
     },
@@ -52,25 +45,23 @@ const MetricCard = ({ icon: Icon, title, value, subTitle, color, chipValue }) =>
   const theme = colorMap[color] || colorMap.blue;
 
   return (
-    <Card className={`border shadow-none rounded-2xl ${theme.card}`}>
-      <CardBody className="p-5 flex flex-row items-center gap-4">
-        <div className={`p-3 rounded-xl shrink-0 ${theme.icon}`}>
-             <Icon className="w-6 h-6" />
+    <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 flex flex-row items-center gap-4 transition-all hover:border-slate-300 dark:hover:border-zinc-700 shadow-sm">
+      <div className={`p-3 rounded-xl shrink-0 ${theme.icon}`}>
+           <Icon className="w-6 h-6" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-slate-500 dark:text-zinc-400 truncate">{title}</p>
+        <div className="flex items-baseline gap-2">
+          <p className="text-3xl font-black tracking-tight leading-none text-slate-800 dark:text-zinc-100">{value}</p>
+          {chipValue && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${theme.badge}`}>
+                  {chipValue}
+              </span>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-slate-500 dark:text-zinc-400 truncate">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-black tracking-tight leading-none text-slate-800 dark:text-zinc-100">{value}</p>
-            {chipValue && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${theme.badge}`}>
-                    {chipValue}
-                </span>
-            )}
-          </div>
-          {subTitle && <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 truncate">{subTitle}</p>}
-        </div>
-      </CardBody>
-    </Card>
+        {subTitle && <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 truncate">{subTitle}</p>}
+      </div>
+    </div>
   );
 };
 
@@ -132,7 +123,7 @@ export const TabMetricas = () => {
   if (initialLoading) return <LoadingSkeleton tipo="metricas" />;
 
   return (
-    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6">
+    <div className="w-full bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6">
 
       {/* 0. Header con Exportación */}
       <div className="flex justify-end">

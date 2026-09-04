@@ -193,7 +193,7 @@ const Clientes = () => {
               tabList: "gap-6 w-full relative rounded-none p-0",
               cursor: "w-full bg-blue-600 dark:bg-blue-500 h-[2px]",
               tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-slate-800 dark:group-data-[selected=true]:text-zinc-100 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
+              tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
             }}
           >
             {/* TAB 1: LISTA DE CLIENTES */}
