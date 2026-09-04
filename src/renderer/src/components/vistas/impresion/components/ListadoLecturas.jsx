@@ -40,39 +40,40 @@ const ListadoLecturas = ({
         const cliente = normalizarTexto(item.cliente || item.nombre);
         const medidor = normalizarTexto(item.medidor?.serie || item.medidor);
         const loc = normalizarTexto(item._localidad);
-        return cliente.includes(term) || medidor.includes(term) || loc.includes(term);
+        const predio = normalizarTexto(item.numero_predio || "");
+        return cliente.includes(term) || medidor.includes(term) || loc.includes(term) || predio.includes(term);
     });
 
     return (
-        <Card className="border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 flex flex-col h-full min-h-[600px]">
+        <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm flex flex-col h-full min-h-[600px]">
             
             {/* ── HEADER: Título, Filtros y Conteo ── */}
-            <CardHeader className="flex flex-col gap-5 pt-6 px-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
+            <CardHeader className="flex flex-col gap-5 pt-6 px-6 pb-5 border-b border-slate-100 dark:border-zinc-800/80">
 
                 {/* Fila 1: Título y Conteo */}
                 <div className="flex justify-between items-center w-full">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
-                            <HiUsers className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <div className="p-2.5 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl">
+                            <HiUsers className="w-5 h-5" />
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 leading-tight">
-                                Padrón General
+                                Padrón de Lecturas
                             </h3>
-                            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mt-0.5">
-                                Base de datos de lecturas
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
+                                Base de datos para toma y cobro
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center">
-                        <Chip size="sm" variant="flat" color="primary" className="font-bold text-[10px] uppercase tracking-wider px-1">
+                        <Chip size="sm" variant="flat" className="bg-sky-500/10 text-sky-600 dark:text-sky-400 font-mono font-black text-xs px-2 h-7 rounded-lg">
                             {filtrados.length} Registros
                         </Chip>
                     </div>
                 </div>
 
-                {/* Fila 2: Selector de Período (Nivel Superior Dedicado a Ancho Completo) */}
+                {/* Fila 2: Selector de Período */}
                 <div className="w-full flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
                         Ciclo / Período del Reporte
@@ -92,7 +93,7 @@ const ListadoLecturas = ({
                     </div>
                 </div>
 
-                {/* Fila 3: Input de Búsqueda a Ancho Completo */}
+                {/* Fila 3: Buscador */}
                 <div className="w-full flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
                         Buscar Registro
@@ -103,15 +104,15 @@ const ListadoLecturas = ({
                         </span>
                         <input
                             type="text"
-                            placeholder="Buscar usuario, medidor o localidad..."
+                            placeholder="Buscar usuario, medidor, predio o localidad..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-11 pr-11 py-3 text-xs sm:text-sm font-medium rounded-xl transition-all duration-200 bg-slate-50 dark:bg-zinc-800/60 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 shadow-none h-12"
+                            className="w-full pl-11 pr-11 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-none h-[52px] transition-all"
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm("")}
-                                className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors"
+                                className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors p-1"
                                 title="Limpiar búsqueda"
                             >
                                 <HiX className="w-4 h-4" />
@@ -122,27 +123,27 @@ const ListadoLecturas = ({
             </CardHeader>
 
             {/* ── BODY: Lista de Tarjetas ── */}
-            <CardBody className="p-4 bg-slate-50/30 dark:bg-black/10">
-                <div className="max-h-[500px] overflow-y-auto space-y-2.5 pr-2 custom-scrollbar">
+            <CardBody className="p-4 bg-slate-50/40 dark:bg-black/20 flex-1">
+                <div className="max-h-[500px] overflow-y-auto space-y-2.5 pr-1 custom-scrollbar">
                     
                     {/* Estado de Carga */}
                     {loading ? (
-                        <div className="flex flex-col justify-center items-center h-40 gap-4">
+                        <div className="flex flex-col justify-center items-center h-40 gap-3">
                             <Spinner size="md" color="primary" />
-                            <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">Cargando padrón...</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 animate-pulse">Cargando padrón...</p>
                         </div>
                     ) : 
                     
                     /* Estado Vacío */
                     filtrados.length === 0 ? (
-                        <div className="text-center py-12 flex flex-col items-center justify-center">
-                            <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center mb-3">
-                                <HiUsers className="text-3xl text-slate-400 dark:text-zinc-500" />
+                        <div className="text-center py-16 flex flex-col items-center justify-center">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center mb-3 text-slate-400 dark:text-zinc-500">
+                                <HiUsers className="text-2xl" />
                             </div>
-                            <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">
-                                No hay registros para este periodo
+                            <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">
+                                No hay registros para este período
                             </p>
-                            <p className="text-xs font-medium text-slate-500 mt-1">
+                            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-1 max-w-xs">
                                 Intenta seleccionar un mes diferente o limpia tu búsqueda.
                             </p>
                         </div>
@@ -155,24 +156,31 @@ const ListadoLecturas = ({
                             return (
                                 <div
                                     key={idx}
-                                    className="w-full transition-all duration-200 rounded-xl border p-3.5 border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-blue-300 dark:hover:border-zinc-600 hover:shadow-sm"
+                                    className="w-full transition-all duration-200 rounded-2xl border p-4 border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 hover:border-sky-300 dark:hover:border-zinc-700 hover:shadow-sm"
                                 >
                                     <div className="flex items-center justify-between gap-4">
                                         
                                         {/* Left: Info Principal */}
                                         <div className="flex items-center gap-3.5 min-w-0">
                                             {/* Marcador Visual Vertical */}
-                                            <div className="w-1 h-10 bg-blue-500 rounded-full shrink-0"></div>
+                                            <div className="w-1 h-10 bg-sky-500 rounded-full shrink-0"></div>
 
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-sm text-slate-800 dark:text-zinc-100 mb-0.5 truncate">
-                                                    {item.cliente || item.nombre}
-                                                </p>
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    <p className="font-bold text-sm text-slate-800 dark:text-zinc-100 truncate">
+                                                        {item.cliente || item.nombre}
+                                                    </p>
+                                                    {item.numero_predio && (
+                                                        <span className="font-mono font-bold text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 px-1.5 py-0.5 rounded shrink-0">
+                                                            #{item.numero_predio}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 
                                                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-zinc-400 font-medium">
                                                     {item._localidad && (
                                                         <span className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-300">
-                                                            <HiLocationMarker className="shrink-0 text-blue-500" /> 
+                                                            <HiLocationMarker className="shrink-0 text-sky-500" /> 
                                                             <span className="truncate max-w-[120px]">{item._localidad}</span>
                                                         </span>
                                                     )}
@@ -192,8 +200,8 @@ const ListadoLecturas = ({
                                             <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-widest">
                                                 Lec. Anterior
                                             </span>
-                                            <div className="flex items-center gap-1.5 bg-blue-500/10 px-2 py-1 rounded-lg text-blue-700 dark:text-blue-400 font-mono font-bold text-sm">
-                                                <IoWaterOutline className="text-blue-500" />
+                                            <div className="flex items-center gap-1.5 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-xl text-sky-700 dark:text-sky-400 font-mono font-bold text-sm">
+                                                <IoWaterOutline className="text-sky-500" />
                                                 {lecturaAteriorValor}
                                             </div>
                                         </div>

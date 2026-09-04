@@ -28,7 +28,7 @@ const EstadisticasImpresion = ({ estadisticas = {} }) => {
   });
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm p-4 sm:p-5 flex flex-col gap-3.5">
+    <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm p-4 sm:p-5 flex flex-col gap-3.5">
       
       {/* ── Fila 1: Tarjetas Financieras Principales (Total a Cobrar y Adeudos) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -85,9 +85,9 @@ const EstadisticasImpresion = ({ estadisticas = {} }) => {
       <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100 dark:border-zinc-800/80">
         
         {/* Consumo Total */}
-        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/70 dark:border-zinc-800 flex flex-col gap-1">
+        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/70 dark:border-zinc-800 flex flex-col gap-1">
           <div className="flex items-center gap-1.5 text-slate-400 dark:text-zinc-500">
-            <HiChartBar className="w-3.5 h-3.5 text-blue-500" />
+            <HiChartBar className="w-3.5 h-3.5 text-purple-500" />
             <span className="text-[9px] font-bold uppercase tracking-wider">Consumo Total</span>
           </div>
           <p className="text-sm sm:text-base font-black text-slate-800 dark:text-zinc-100 leading-none truncate">
@@ -96,9 +96,9 @@ const EstadisticasImpresion = ({ estadisticas = {} }) => {
         </div>
 
         {/* Recibos / Formatos */}
-        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/70 dark:border-zinc-800 flex flex-col gap-1">
+        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/70 dark:border-zinc-800 flex flex-col gap-1">
           <div className="flex items-center gap-1.5 text-slate-400 dark:text-zinc-500">
-            <HiDocumentDuplicate className="w-3.5 h-3.5 text-purple-500" />
+            <HiDocumentDuplicate className="w-3.5 h-3.5 text-sky-500" />
             <span className="text-[9px] font-bold uppercase tracking-wider">Por Hoja</span>
           </div>
           <p className="text-sm sm:text-base font-black text-slate-800 dark:text-zinc-100 leading-none truncate">
