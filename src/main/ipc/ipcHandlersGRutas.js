@@ -70,16 +70,16 @@ export default function IpcHandlersRutas() {
     }
   });
 
-  ipcMain.handle("listar-rutas-info-medidores", async (event, token_session, id_ruta) => {
+  ipcMain.handle("listar-rutas-info-medidores", async (event, token_session, id_ruta, periodo) => {
     try {
-      console.log("📌 Listando información de medidores para la ruta con ID:", id_ruta);
+      console.log("📌 Listando información de medidores para la ruta con ID:", id_ruta, "periodo:", periodo);
 
       if (!token_session) {
         throw new Error("Token de sesión no proporcionado");
       }
 
       const medidores = await runWithAppKeyFlow(
-        () => fetchRutasInfoMedidores(token_session, id_ruta),
+        () => fetchRutasInfoMedidores(token_session, id_ruta, periodo),
         { fallbackValue: [] }
       );
       return medidores;

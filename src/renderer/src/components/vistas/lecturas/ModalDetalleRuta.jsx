@@ -38,7 +38,7 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
             setLoading(true);
             setRutaCalculadaState(null);
 
-            obtenerInfoRuta(ruta.id)
+            obtenerInfoRuta(ruta.id, ruta.periodo_mostrado)
                 .then(async (data) => {
                     setDetalleRuta(data);
 

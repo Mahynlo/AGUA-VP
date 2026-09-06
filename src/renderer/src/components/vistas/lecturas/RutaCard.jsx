@@ -280,7 +280,7 @@ export default function RutaCard({ ruta }) {
       if (!ruta.id) return;
       try {
         if (ruta.total_puntos > 0) {
-          const detailedRuta = await obtenerInfoRuta(ruta.id);
+          const detailedRuta = await obtenerInfoRuta(ruta.id, ruta.periodo_mostrado);
           if (isMounted && detailedRuta && detailedRuta.puntos) {
             const sinCliente = detailedRuta.puntos.filter(p => !p.cliente_id).length;
             if (sinCliente > 0) {
@@ -295,7 +295,7 @@ export default function RutaCard({ ruta }) {
 
     checkIntegrity();
     return () => { isMounted = false; };
-  }, [ruta.id, ruta.total_puntos, obtenerInfoRuta]);
+  }, [ruta.id, ruta.total_puntos, ruta.periodo_mostrado, obtenerInfoRuta]);
 
   return (
     <div className="flex flex-col bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300 relative h-full">
