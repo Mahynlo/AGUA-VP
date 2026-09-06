@@ -325,7 +325,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
         const registradasObj = {};
         puntosValidos.forEach(p => {
           if (p.tiene_lectura === 1 || p.lectura_id || (p.lectura_actual !== null && p.lectura_actual !== undefined)) {
-            guardadasSet.add(p.numero_serie);
+            guardadasSet.add(p.medidor_id);
             registradasObj[p.medidor_id] = {
               lectura_anterior: p.lectura_anterior !== null && p.lectura_anterior !== undefined ? p.lectura_anterior : p.lectura_anterior_disponible,
               lectura_actual: p.lectura_actual,
@@ -365,7 +365,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
   const isLecturaCompletada = useMemo(() => {
     if (!puntoActual) return false;
-    return lecturasGuardadas.has(puntoActual.numero_serie);
+    return lecturasGuardadas.has(puntoActual.medidor_id);
   }, [puntoActual, lecturasGuardadas]);
 
   const resultadosBusqueda = useMemo(() => {
@@ -491,7 +491,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
         vuelta_cero: esVueltaCero,
         fecha_lectura: obtenerFechaActual(),
         periodo: periodoMostrado,
-        modificado_por: user.id,
+        modificado_por: user?.id || user?.id_usuario || 1,
       };
 
       const response = await window.api.registerLectura(lecturaData, tokensession);
@@ -499,7 +499,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
       if (response.success) {
         setLecturasGuardadas(prevSet => {
           const newSet = new Set(prevSet);
-          newSet.add(numeroSerieActual);
+          newSet.add(medidorId);
           return newSet;
         });
         setVueltasCero(prev => { const n = { ...prev }; delete n[medidorId]; return n; });
@@ -633,7 +633,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
       setCurrentIndex(currentIndex + 1);
       setTimeout(() => {
         const siguientePunto = ruta.puntos[currentIndex + 1];
-        if (siguientePunto && !lecturasGuardadas.has(siguientePunto.numero_serie) && lecturaInputRef.current) {
+        if (siguientePunto && !lecturasGuardadas.has(siguientePunto.medidor_id) && lecturaInputRef.current) {
           lecturaInputRef.current?.focus();
         }
       }, 100);
@@ -645,7 +645,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
       setCurrentIndex(currentIndex - 1);
       setTimeout(() => {
         const anteriorPunto = ruta.puntos[currentIndex - 1];
-        if (anteriorPunto && !lecturasGuardadas.has(anteriorPunto.numero_serie) && lecturaInputRef.current) {
+        if (anteriorPunto && !lecturasGuardadas.has(anteriorPunto.medidor_id) && lecturaInputRef.current) {
           lecturaInputRef.current?.focus();
         }
       }, 100);
@@ -677,7 +677,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
 
   const handleFinalizarRuta = useCallback(() => {
     if (!hasValidData) return;
-    const lecturasNoGuardadas = ruta.puntos.filter(punto => !lecturasGuardadas.has(punto.numero_serie));
+    const lecturasNoGuardadas = ruta.puntos.filter(punto => !lecturasGuardadas.has(punto.medidor_id));
 
     if (lecturasNoGuardadas.length > 0) {
       setError(`Faltan ${lecturasNoGuardadas.length} lecturas por registrar.`, "Toma de Lecturas");
@@ -773,7 +773,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                     {resultadosBusqueda.length > 0 ? (
                       <div className="max-h-64 overflow-y-auto custom-scrollbar">
                         {resultadosBusqueda.map((punto) => {
-                          const hecho = lecturasGuardadas.has(punto.numero_serie);
+                          const hecho = lecturasGuardadas.has(punto.medidor_id);
                           return (
                             <button
                               key={punto.medidor_id}
@@ -1066,7 +1066,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
                   if (idx >= total) return null;
 
                   const isCurrent = idx === currentIndex;
-                  const isSaved = lecturasGuardadas.has(ruta.puntos[idx]?.numero_serie);
+                  const isSaved = lecturasGuardadas.has(ruta.puntos[idx]?.medidor_id);
 
                   return (
                       <div key={idx} className={`h-2 rounded-full transition-all duration-300 ${
