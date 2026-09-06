@@ -145,6 +145,20 @@ export function ClientesProvider({ children }) {
     };
   }, [fetchClientes, fetchEstadisticas, fetchAllClientes]);
 
+  // Escuchar eventos de actualización de clientes
+  useEffect(() => {
+    const handleClientesChanged = () => {
+      fetchClientes(lastFetchParamsRef.current || {});
+      fetchEstadisticas();
+      fetchAllClientes();
+    };
+
+    window.addEventListener("clientes-changed", handleClientesChanged);
+    return () => {
+      window.removeEventListener("clientes-changed", handleClientesChanged);
+    };
+  }, [fetchClientes, fetchEstadisticas, fetchAllClientes]);
+
   // =====================================================
   // API pública
   // =====================================================
