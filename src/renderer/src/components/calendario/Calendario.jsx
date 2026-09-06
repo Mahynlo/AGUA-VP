@@ -295,31 +295,30 @@ const CalendarComponent = () => {
         <div className="flex flex-col lg:flex-row w-full lg:h-full gap-4 lg:gap-6 items-start">
             
             {/* ---------------- CALENDARIO PRINCIPAL ---------------- */}
-            {/* CAMBIO CLAVE: Añadimos min-h-[400px] para móviles, manteniendo h-full para LG+ */}
-            <Card className="flex-1 w-full min-h-[450px] lg:h-full border-none bg-white dark:bg-zinc-900 shadow-sm border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
+            <Card className="flex-1 w-full min-h-[450px] lg:h-full border-none bg-white dark:bg-zinc-950 shadow-sm border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
                 <CardBody className="p-4 sm:p-5 lg:p-6 h-full flex flex-col">
                     
                     <div className="flex items-center gap-3 mb-4 flex-shrink-0">
-                        <div className="bg-orange-500/10 dark:bg-orange-500/20 p-2.5 rounded-xl text-orange-600 dark:text-orange-500">
+                        <div className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
                             <HiCalendar className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <div>
-                            <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-zinc-100 leading-tight">
-                                Calendario General
+                            <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-zinc-100 leading-tight">
+                                Calendario Operativo
                             </h2>
-                            <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400">
                                 Lecturas, vencimientos, cortes y días hábiles
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-center mb-4 bg-slate-50 dark:bg-zinc-800/50 p-1.5 rounded-xl border border-slate-100 dark:border-zinc-800 flex-shrink-0">
+                    <div className="flex justify-between items-center mb-4 bg-slate-50/80 dark:bg-zinc-900/50 p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 flex-shrink-0">
                         <Button
                             isIconOnly
                             variant="light"
                             radius="full"
                             onClick={() => changeMonth(-1)}
-                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-700 shadow-sm h-8 w-8 min-w-8"
+                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8"
                         >
                             <HiChevronLeft className="w-5 h-5" />
                         </Button>
@@ -333,7 +332,7 @@ const CalendarComponent = () => {
                             variant="light"
                             radius="full"
                             onClick={() => changeMonth(1)}
-                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-700 shadow-sm h-8 w-8 min-w-8"
+                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8"
                         >
                             <HiChevronRight className="w-5 h-5" />
                         </Button>
@@ -364,23 +363,23 @@ const CalendarComponent = () => {
                                     className={`
                                         relative flex flex-col items-center justify-start pt-1 sm:pt-2 pb-1.5
                                         w-full h-full rounded-lg sm:rounded-xl transition-all duration-200
-                                        focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                                        focus:outline-none focus:ring-2 focus:ring-indigo-500/50
                                         ${!isCurrentMonth 
-                                            ? "opacity-40 cursor-not-allowed bg-transparent" 
+                                            ? "opacity-30 cursor-not-allowed bg-transparent" 
                                             : isSelected
-                                                ? "bg-blue-600 text-white shadow-md shadow-blue-500/30 scale-[1.02] z-10" 
+                                                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30 scale-[1.02] z-10 font-bold" 
                                                 : today
-                                                    ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 ring-2 ring-blue-500 ring-inset" 
+                                                    ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500 ring-inset font-bold" 
                                                     : hasFeriado
-                                                        ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40" 
+                                                        ? "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40" 
                                                         : isWeekend
-                                                            ? "bg-slate-50 dark:bg-zinc-800/50 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800" 
-                                                            : "bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-100 dark:border-zinc-800/50" 
+                                                            ? "bg-slate-50/80 dark:bg-zinc-900/40 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800" 
+                                                            : "bg-white dark:bg-zinc-950 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 border border-slate-100 dark:border-zinc-800/60" 
                                         }
                                     `}
                                     disabled={!isCurrentMonth}
                                 >
-                                    <span className={`text-xs sm:text-sm font-semibold ${isSelected ? 'text-white' : ''}`}>
+                                    <span className={`text-xs sm:text-sm font-semibold ${isSelected ? 'text-white font-bold' : ''}`}>
                                         {date.getDate()}
                                     </span>
                                     
@@ -392,12 +391,12 @@ const CalendarComponent = () => {
                                                     className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${
                                                         isSelected
                                                             ? "bg-white/90"
-                                                            : evt.tipo === 'feriado' ? "bg-red-500"
+                                                            : evt.tipo === 'feriado' ? "bg-rose-500"
                                                             : evt.tipo === 'corte' ? "bg-rose-600"
                                                             : evt.tipo === 'vencimiento' ? "bg-blue-500"
-                                                            : evt.tipo === 'lectura' ? "bg-teal-500"
-                                                            : evt.tipo === 'emision' ? "bg-violet-500"
-                                                            : "bg-orange-500"
+                                                            : evt.tipo === 'lectura' ? "bg-amber-500"
+                                                            : evt.tipo === 'emision' ? "bg-indigo-500"
+                                                            : "bg-emerald-500"
                                                     }`}
                                                 ></span>
                                             ))}
@@ -414,19 +413,18 @@ const CalendarComponent = () => {
             </Card>
 
             {/* ---------------- PANEL DE EVENTOS LATERAL ---------------- */}
-            {/* CAMBIO CLAVE: En móviles le damos min-h fijo, en desktop (lg) recupera el h-full */}
-            <Card className="w-full min-h-[300px] lg:min-h-0 lg:w-72 xl:w-80 border-none bg-white dark:bg-zinc-900 shadow-sm border border-slate-200 dark:border-zinc-800 rounded-2xl flex-shrink-0">
+            <Card className="w-full min-h-[300px] lg:min-h-0 lg:w-72 xl:w-80 border-none bg-white dark:bg-zinc-950 shadow-sm border border-slate-200 dark:border-zinc-800 rounded-2xl flex-shrink-0">
                 <CardBody className="p-4 sm:p-5 h-full flex flex-col">
                     
-                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-zinc-800 flex-shrink-0">
-                        <div className="bg-purple-500/10 dark:bg-purple-500/20 p-2.5 rounded-xl text-purple-600 dark:text-purple-400">
+                    <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0">
+                        <div className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
                             <HiClock className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <div>
-                            <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-zinc-100 leading-tight">
+                            <h3 className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100 leading-tight">
                                 Eventos
                             </h3>
-                            <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 capitalize">
+                            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 capitalize mt-0.5">
                                 {selectedDate ? (() => {
                                     const [y, m, d] = selectedDate.split("-");
                                     return new Date(y, m - 1, d).toLocaleDateString("es-MX", {
@@ -443,31 +441,31 @@ const CalendarComponent = () => {
                                 <div 
                                     key={index} 
                                     className={`
-                                        p-3 sm:p-4 rounded-xl border transition-all duration-200
+                                        p-3.5 rounded-xl border transition-all duration-200
                                         ${event.tipo === 'feriado'
-                                            ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'
+                                            ? 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-400'
                                             : event.tipo === 'corte'
-                                                ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/30'
+                                                ? 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-400'
                                                 : event.tipo === 'vencimiento'
-                                                    ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30'
+                                                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400'
                                                     : event.tipo === 'lectura'
-                                                        ? 'bg-teal-50/50 dark:bg-teal-900/10 border-teal-100 dark:border-teal-900/30'
+                                                        ? 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400'
                                                         : event.tipo === 'emision'
-                                                            ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-900/30'
+                                                            ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400'
                                                             : event.tipo === 'habil'
-                                                                ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30'
+                                                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
                                                                 : event.tipo === 'inhabil'
-                                                                    ? 'bg-slate-100/80 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700'
-                                                                    : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'
+                                                                    ? 'bg-slate-100/80 dark:bg-zinc-900/60 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400'
+                                                                    : 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400'
                                         }
                                     `}
                                 >
                                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                                        <h4 className="text-sm font-semibold text-slate-800 dark:text-zinc-100 leading-tight">
+                                        <h4 className="text-sm font-bold leading-tight">
                                             {event.title}
                                         </h4>
                                     </div>
-                                    <Chip size="sm" color={event.color} variant="flat" className="h-4 px-1 text-[9px] font-semibold uppercase mb-2">
+                                    <Chip size="sm" color={event.color} variant="flat" className="h-5 px-1.5 text-[9px] font-bold uppercase mb-2">
                                         {event.tipo === 'vencimiento' ? 'Vencimiento'
                                             : event.tipo === 'corte' ? 'Corte'
                                             : event.tipo === 'lectura' ? 'Lectura'
@@ -478,7 +476,7 @@ const CalendarComponent = () => {
                                             : 'Tarifa'}
                                     </Chip>
                                     {event.descripcion && (
-                                        <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                                        <p className="text-xs font-medium text-slate-600 dark:text-zinc-400 leading-relaxed">
                                             {event.descripcion}
                                         </p>
                                     )}
