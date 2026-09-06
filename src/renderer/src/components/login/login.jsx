@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Carousel } from "flowbite-react";
 import { Button, Spinner } from "@nextui-org/react";
-import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle } from "react-icons/hi";
+import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle, HiShieldCheck } from "react-icons/hi";
 
 import { useAuth } from '../../context/AuthContext';
-
 import { useAppLogo } from '../../context/LogoContext';
 import defaultImg1 from '../../assets/images/LoginPrueba.jpg';
 import defaultImg2 from '../../assets/images/LoginPrueba2.jpg';
@@ -95,73 +94,86 @@ function LoginApp() {
     };
 
     return (
-        <section className="flex flex-col md:flex-row h-screen items-center bg-white dark:bg-zinc-950 overflow-hidden">
+        <section className="flex flex-col md:flex-row h-screen pt-16 items-center bg-slate-50 dark:bg-zinc-950 overflow-hidden">
             
-            {/* ── LADO IZQUIERDO: Carrusel de imágenes ── */}
-            <div className="hidden lg:block relative w-full lg:w-1/2 xl:w-2/3 h-screen bg-slate-900">
-                {/* Overlay oscuro para darle un toque premium y oscurecer las imágenes */}
-                <div className="absolute inset-0 bg-slate-900/30 dark:bg-zinc-900/60 z-10 mix-blend-multiply pointer-events-none"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent z-10 pointer-events-none"></div>
-                
-                <Carousel slideInterval={5000} className="h-full z-0" indicators={false}>
+            {/* ── LADO IZQUIERDO: Carrusel de imágenes con 100% de visibilidad ── */}
+            <div className="hidden lg:block relative w-full lg:w-1/2 xl:w-7/12 h-full bg-slate-900">
+                <Carousel slideInterval={6000} className="h-full z-0 rounded-none" indicators={false}>
                     {carouselImages.map((src, i) => (
-                        <img key={i} src={src} alt={`Login ${i + 1}`} className="w-full h-full object-cover" />
+                        <img key={i} src={src} alt={`AguaVP Vista ${i + 1}`} className="w-full h-full object-cover" />
                     ))}
                 </Carousel>
 
-                {/* Texto decorativo sobre el carrusel (Opcional) */}
-                <div className="absolute bottom-12 left-12 z-20">
-                    <h2 className="text-3xl font-black text-white tracking-tight drop-shadow-md">
-                        Sistema de Agua Potable
-                    </h2>
-                    <p className="text-white/80 font-medium mt-2 drop-shadow">
-                        Administración y control eficiente de recursos.
-                    </p>
+                {/* Tarjeta flotante transparente de cristal (Glassmorphism) */}
+                <div className="absolute bottom-8 left-8 right-8 z-20 max-w-xl">
+                    <div className="p-6 rounded-3xl bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/20 shadow-2xl flex flex-col gap-2.5 animate-in fade-in duration-300">
+                        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none drop-shadow-md">
+                            Sistema de Agua Potable
+                        </h2>
+                        <p className="text-white font-medium text-xs sm:text-sm leading-relaxed mt-0.5 drop-shadow">
+                            Administración y control eficiente de recursos.
+                        </p>
+
+                        <div className="flex items-center gap-3.5 pt-2.5 mt-0.5 border-t border-white/20 text-[11px] font-bold text-white uppercase tracking-wider flex-wrap drop-shadow-sm">
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                                Nácori Grande
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                Matapé
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                                Adivino
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* ── LADO DERECHO: Formulario de inicio de sesión ── */}
-            <div className="w-full lg:w-1/2 xl:w-1/3 h-screen flex flex-col justify-center px-8 sm:px-16 lg:px-12 xl:px-16 bg-white dark:bg-zinc-950 relative">
+            <div className="w-full lg:w-1/2 xl:w-5/12 h-full flex flex-col justify-center px-6 sm:px-12 xl:px-16 bg-white dark:bg-zinc-950 relative overflow-y-auto">
                 
-                <div className="w-full max-w-sm mx-auto">
+                <div className="w-full max-w-md mx-auto py-8">
                     
-                    {/* Logo */}
-                    <div className="flex justify-center mb-8">
-                        <div className="w-32 h-32 p-2 bg-slate-50 dark:bg-zinc-900 rounded-3xl border border-slate-100 dark:border-zinc-800 shadow-sm flex items-center justify-center">
-                            <img src={logoSrc} alt="Logo" className="w-full h-full object-contain drop-shadow-sm" />
+                    {/* Logo Institucional */}
+                    <div className="flex justify-center mb-6">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 p-3 bg-slate-50 dark:bg-zinc-900 rounded-3xl border border-slate-200/80 dark:border-zinc-800 shadow-sm flex items-center justify-center transition-transform hover:scale-105 duration-300">
+                            <img src={logoSrc} alt="Logo AguaVP" className="w-full h-full object-contain drop-shadow-sm" />
                         </div>
                     </div>
 
                     {/* Encabezados */}
-                    <div className="text-center mb-8">
-                        <h1 className="text-2xl font-black text-slate-800 dark:text-zinc-100 tracking-tight">
-                            Bienvenido de nuevo
+                    <div className="text-center mb-6">
+                        <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-none">
+                            Iniciar Sesión
                         </h1>
-                        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1.5">
-                            Ingresa tus credenciales para acceder al panel.
+                        <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400 mt-2">
+                            Ingresa tus credenciales oficiales para acceder al sistema.
                         </p>
                     </div>
 
-                    {/* Caja de Error Premium */}
+                    {/* Caja de Error */}
                     {error && (
-                        <div className="mb-6 p-3.5 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/50 rounded-xl flex items-start gap-2.5 animate-in fade-in slide-in-from-top-2">
-                            <HiExclamationCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                            <p className="text-sm font-semibold text-red-700 dark:text-red-400">
+                        <div className="mb-5 p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start gap-2.5 animate-in fade-in slide-in-from-top-2">
+                            <HiExclamationCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+                            <p className="text-xs sm:text-sm font-bold text-rose-700 dark:text-rose-300">
                                 {error}
                             </p>
                         </div>
                     )}
 
                     {/* Formulario */}
-                    <form className="space-y-5" onSubmit={handleLogin}>
+                    <form className="space-y-4" onSubmit={handleLogin}>
                         
                         {/* Input Correo */}
-                        <div>
-                            <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
+                        <div className="w-full flex flex-col gap-1.5">
+                            <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest ml-1">
                                 Correo Electrónico
                             </label>
-                            <div className="relative flex items-center">
-                                <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
+                            <div className="relative w-full flex items-center group">
+                                <span className="absolute left-4 flex items-center justify-center pointer-events-none text-slate-400 dark:text-zinc-500 group-focus-within:text-blue-500 transition-colors">
                                     <HiMail className="w-5 h-5" />
                                 </span>
                                 <input
@@ -172,7 +184,7 @@ function LoginApp() {
                                     list="correosGuardados"
                                     autoComplete="email"
                                     disabled={loading}
-                                    className="w-full pl-11 pr-4 h-12 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800/80 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-950 shadow-sm disabled:opacity-50"
+                                    className="w-full pl-11 pr-4 h-[52px] text-sm font-medium rounded-xl transition-all bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-950 shadow-none disabled:opacity-50"
                                 />
                                 <datalist id="correosGuardados">
                                     {correosGuardados.map((correoGuardado, index) => (
@@ -183,12 +195,17 @@ function LoginApp() {
                         </div>
 
                         {/* Input Contraseña */}
-                        <div>
-                            <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 mb-1.5 block uppercase tracking-wider">
-                                Contraseña
-                            </label>
-                            <div className="relative flex items-center">
-                                <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
+                        <div className="w-full flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between ml-1">
+                                <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
+                                    Contraseña
+                                </label>
+                                <Link to="/recuperarPassword" className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
+                                    ¿Olvidaste tu contraseña?
+                                </Link>
+                            </div>
+                            <div className="relative w-full flex items-center group">
+                                <span className="absolute left-4 flex items-center justify-center pointer-events-none text-slate-400 dark:text-zinc-500 group-focus-within:text-blue-500 transition-colors">
                                     <HiLockClosed className="w-5 h-5" />
                                 </span>
                                 <input
@@ -197,43 +214,38 @@ function LoginApp() {
                                     value={contrasena}
                                     onChange={(e) => setContrasena(e.target.value)}
                                     disabled={loading}
-                                    className="w-full pl-11 pr-12 h-12 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800/80 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-950 shadow-sm disabled:opacity-50"
+                                    className="w-full pl-11 pr-12 h-[52px] text-sm font-medium rounded-xl transition-all bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-950 shadow-none disabled:opacity-50"
                                 />
                                 {contrasena.length > 0 && (
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors focus:outline-none rounded-lg"
+                                        className="absolute right-3 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors focus:outline-none rounded-lg"
                                         title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                                     >
                                         {showPassword ? <HiEyeOff className="w-5 h-5" /> : <HiEye className="w-5 h-5" />}
                                     </button>
                                 )}
                             </div>
-                            <div className="flex justify-end mt-2">
-                                <Link to="/recuperarPassword" className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-                                    ¿Olvidaste tu contraseña?
-                                </Link>
-                            </div>
                         </div>
 
-                        {/* Botón Submit (NextUI) */}
-                        <Button
-                            type="submit"
-                            color="primary"
-                            className="w-full h-12 font-bold text-base mt-2 shadow-lg shadow-blue-500/30"
-                            isLoading={loading}
-                            spinner={<Spinner color="current" size="sm" />}
-                        >
-                            {loading ? "Autenticando..." : "Ingresar al Panel"}
-                        </Button>
+                        {/* Botón Submit */}
+                        <div className="pt-2">
+                            <Button
+                                type="submit"
+                                className="w-full h-[52px] font-bold text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-transform duration-150"
+                                isLoading={loading}
+                                spinner={<Spinner color="current" size="sm" />}
+                            >
+                                {loading ? "Autenticando..." : "Ingresar al Panel"}
+                            </Button>
+                        </div>
                     </form>
 
                     {/* Footer sutil */}
-                    <div className="mt-10 text-center">
-                        <p className="text-[11px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-widest">
-                            Sistema Interno • Versión 2.0
-                        </p>
+                    <div className="mt-8 text-center flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-widest">
+                        <HiShieldCheck className="w-4 h-4 text-slate-400 dark:text-zinc-600" />
+                        <span>AguaVP • Versión 3.0</span>
                     </div>
 
                 </div>
