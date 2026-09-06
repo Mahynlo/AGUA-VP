@@ -270,7 +270,7 @@ const InfoRow = ({ label, value, icon: Icon, colorClass, valueClass = "" }) => (
   </div>
 );
 
-export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
+export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInfo }) {
   const { obtenerInfoRuta, actualizarRutas, rutas, loading } = useRutas();
   const { setError, setSuccess } = useFeedback();
   const { user } = useAuth();
@@ -309,7 +309,26 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado }) {
           setError("No se pudo cargar la ruta", "Toma de Lecturas");
           return;
         }
-        const puntosValidos = (rutaData.puntos || []).filter(p => p.cliente_id);
+
+        // Detectar si el periodo está cerrado / facturado
+        const esPeriodoCerrado = Boolean(
+          rutaInfo?.periodo_cerrado ||
+          rutaInfo?.tiene_facturacion_periodo ||
+          Number(rutaInfo?.facturas_generadas_periodo || 0) > 0 ||
+          rutaData?.periodo_cerrado ||
+          rutaData?.tiene_facturacion_periodo ||
+          Number(rutaData?.facturas_generadas_periodo || 0) > 0
+        );
+
+        // Si el periodo está cerrado para captura, mostrar únicamente los medidores que formaron parte de ese ciclo (que tienen lectura)
+        const puntosValidos = (rutaData.puntos || []).filter(p => {
+          if (!p.cliente_id) return false;
+          if (esPeriodoCerrado) {
+            return p.tiene_lectura === 1 || p.lectura_id || (p.lectura_actual !== null && p.lectura_actual !== undefined);
+          }
+          return true;
+        });
+
         setRuta({
           ...rutaData,
           puntos: puntosValidos

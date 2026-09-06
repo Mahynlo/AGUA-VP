@@ -456,7 +456,7 @@ export default function RutaCard({ ruta }) {
 
         {/* Acción Primaria: Tomar Lecturas */}
         <div className="w-full">
-          <CarruselLecturasModal rutaId={ruta.id} periodoMostrado={ruta.periodo_mostrado} />
+          <CarruselLecturasModal rutaId={ruta.id} periodoMostrado={ruta.periodo_mostrado} rutaInfo={ruta} />
         </div>
 
         {/* Acciones de Facturación Contextuales */}

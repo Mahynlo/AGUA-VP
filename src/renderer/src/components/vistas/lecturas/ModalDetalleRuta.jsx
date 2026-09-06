@@ -46,14 +46,33 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
 
             obtenerInfoRuta(ruta.id, ruta.periodo_mostrado)
                 .then(async (data) => {
-                    setDetalleRuta(data);
+                    const esPeriodoCerrado = Boolean(
+                        ruta?.periodo_cerrado ||
+                        ruta?.tiene_facturacion_periodo ||
+                        Number(ruta?.facturas_generadas_periodo || 0) > 0 ||
+                        data?.periodo_cerrado ||
+                        data?.tiene_facturacion_periodo ||
+                        Number(data?.facturas_generadas_periodo || 0) > 0
+                    );
 
-                    const sinCliente = (data?.puntos || []).filter(p => !p.cliente_id).length;
+                    const puntosValidos = (data?.puntos || []).filter(p => {
+                        if (esPeriodoCerrado) {
+                            return p.tiene_lectura === 1 || p.lectura_id || (p.lectura_actual !== null && p.lectura_actual !== undefined);
+                        }
+                        return true;
+                    });
+
+                    setDetalleRuta({
+                        ...data,
+                        puntos: puntosValidos
+                    });
+
+                    const sinCliente = puntosValidos.filter(p => !p.cliente_id).length;
                     setMissingCount(sinCliente);
 
-                    if (data && data.puntos && data.puntos.length >= 2) {
+                    if (puntosValidos.length >= 2) {
                         try {
-                            const puntosParaCalculo = data.puntos.map(p => ({
+                            const puntosParaCalculo = puntosValidos.map(p => ({
                                 lat: parseFloat(p.latitud),
                                 lng: parseFloat(p.longitud)
                             }));
