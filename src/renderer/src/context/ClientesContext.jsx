@@ -26,6 +26,7 @@ export function ClientesProvider({ children }) {
 
   // Ref para recordar los últimos parámetros de paginación/filtros usados
   const lastFetchParamsRef = useRef(null);
+  const isFirstLoadRef = useRef(true);
 
   // =====================================================
   // Helpers
@@ -37,7 +38,7 @@ export function ClientesProvider({ children }) {
   // =====================================================
   const fetchClientes = useCallback(async (params = {}) => {
     try {
-      if (!initialLoading) setLoading(true);
+      if (!isFirstLoadRef.current) setLoading(true);
 
       const token = getToken();
       if (!token) {
@@ -80,9 +81,12 @@ export function ClientesProvider({ children }) {
       return null;
     } finally {
       setLoading(false);
-      setInitialLoading(false);
+      if (isFirstLoadRef.current) {
+        setInitialLoading(false);
+        isFirstLoadRef.current = false;
+      }
     }
-  }, [initialLoading]);
+  }, []);
 
   // Obtener TODOS los clientes sin paginación (para modales, búsquedas cruzadas y export)
   const fetchAllClientes = useCallback(async () => {

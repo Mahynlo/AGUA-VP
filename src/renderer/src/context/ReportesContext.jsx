@@ -1,5 +1,4 @@
-
-import { createContext, useState, useContext, useCallback, useEffect } from "react";
+import { createContext, useState, useContext, useCallback, useEffect, useRef } from "react";
 import { adaptarReciboAPI } from "../utils/reciboUtils";
 
 const ReportesContext = createContext();
@@ -7,6 +6,7 @@ const ReportesContext = createContext();
 export function ReportesProvider({ children }) {
     // Cache para recibos: { '2024-11': [...data], '2024-12': [...data] }
     const [cacheRecibos, setCacheRecibos] = useState({});
+    const cacheRecibosRef = useRef({});
 
     // Estado actual visualizado para recibos
     const [recibosActuales, setRecibosActuales] = useState([]);
@@ -17,10 +17,12 @@ export function ReportesProvider({ children }) {
 
     // --- NUEVO: Cache para lecturas ---
     const [cacheLecturas, setCacheLecturas] = useState({});
+    const cacheLecturasRef = useRef({});
     const [lecturasActuales, setLecturasActuales] = useState([]);
 
     // --- NUEVO: Cache y estado para reporte financiero ---
     const [cacheFinanciero, setCacheFinanciero] = useState({});
+    const cacheFinancieroRef = useRef({});
     const [financieroActual, setFinancieroActual] = useState(null);
     const [loadingFinanciero, setLoadingFinanciero] = useState(false);
     const [errorFinanciero, setErrorFinanciero] = useState(null);
@@ -39,9 +41,9 @@ export function ReportesProvider({ children }) {
         setPeriodoActual(periodo);
 
         // 1. Revisar caché si no se fuerza recarga
-        if (!forzarRecarga && cacheRecibos[periodo]) {
+        if (!forzarRecarga && cacheRecibosRef.current[periodo]) {
             console.log(`📦 Usando datos en caché para periodo ${periodo}`);
-            setRecibosActuales(cacheRecibos[periodo]);
+            setRecibosActuales(cacheRecibosRef.current[periodo]);
             return;
         }
 
@@ -55,10 +57,11 @@ export function ReportesProvider({ children }) {
             if (data && data.recibos) {
                 const recibosAdaptados = data.recibos.map(adaptarReciboAPI);
                 setRecibosActuales(recibosAdaptados);
-                setCacheRecibos(prev => ({
-                    ...prev,
+                cacheRecibosRef.current = {
+                    ...cacheRecibosRef.current,
                     [periodo]: recibosAdaptados
-                }));
+                };
+                setCacheRecibos(cacheRecibosRef.current);
             } else {
                 setRecibosActuales([]);
             }
@@ -69,7 +72,7 @@ export function ReportesProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    }, [cacheRecibos]);
+    }, []);
 
     /**
      * Carga las lecturas para un periodo dado.
@@ -81,9 +84,9 @@ export function ReportesProvider({ children }) {
         }
 
         // 1. Revisar caché
-        if (!forzarRecarga && cacheLecturas[periodo]) {
+        if (!forzarRecarga && cacheLecturasRef.current[periodo]) {
             console.log(`📦 Usando lecturas en caché para ${periodo}`);
-            setLecturasActuales(cacheLecturas[periodo]);
+            setLecturasActuales(cacheLecturasRef.current[periodo]);
             return;
         }
 
@@ -95,14 +98,15 @@ export function ReportesProvider({ children }) {
             console.log("Datos de lecturas reporte:", datos);
 
             setLecturasActuales(datos);
-            setCacheLecturas(prev => ({ ...prev, [periodo]: datos }));
+            cacheLecturasRef.current = { ...cacheLecturasRef.current, [periodo]: datos };
+            setCacheLecturas(cacheLecturasRef.current);
         } catch (err) {
             console.error("Error cargando lecturas:", err);
             setLecturasActuales([]);
         } finally {
             setLoading(false);
         }
-    }, [cacheLecturas]);
+    }, []);
 
     /**
      * Carga el reporte financiero con filtros flexibles.
@@ -110,9 +114,9 @@ export function ReportesProvider({ children }) {
     const cargarReporteFinanciero = useCallback(async (token, filtros = {}, forzarRecarga = false) => {
         const cacheKey = JSON.stringify(filtros || {});
 
-        if (!forzarRecarga && cacheFinanciero[cacheKey]) {
-            setFinancieroActual(cacheFinanciero[cacheKey]);
-            return cacheFinanciero[cacheKey];
+        if (!forzarRecarga && cacheFinancieroRef.current[cacheKey]) {
+            setFinancieroActual(cacheFinancieroRef.current[cacheKey]);
+            return cacheFinancieroRef.current[cacheKey];
         }
 
         setLoadingFinanciero(true);
@@ -121,7 +125,8 @@ export function ReportesProvider({ children }) {
         try {
             const data = await window.api.fetchReporteFinanciero(token, filtros);
             setFinancieroActual(data || null);
-            setCacheFinanciero(prev => ({ ...prev, [cacheKey]: data || null }));
+            cacheFinancieroRef.current = { ...cacheFinancieroRef.current, [cacheKey]: data || null };
+            setCacheFinanciero(cacheFinancieroRef.current);
             return data;
         } catch (err) {
             console.error("Error cargando reporte financiero:", err);
@@ -131,13 +136,16 @@ export function ReportesProvider({ children }) {
         } finally {
             setLoadingFinanciero(false);
         }
-    }, [cacheFinanciero]);
+    }, []);
 
 
     /**
      * Limpia la caché si es necesario (ej. logout)
      */
     const limpiarCache = useCallback(() => {
+        cacheRecibosRef.current = {};
+        cacheLecturasRef.current = {};
+        cacheFinancieroRef.current = {};
         setCacheRecibos({});
         setCacheLecturas({});
         setCacheFinanciero({});
@@ -152,6 +160,9 @@ export function ReportesProvider({ children }) {
     useEffect(() => {
         const handleInvalidate = () => {
             console.log("🧹 Invalidando caché de reportes por actualización de datos...");
+            cacheRecibosRef.current = {};
+            cacheLecturasRef.current = {};
+            cacheFinancieroRef.current = {};
             setCacheRecibos({});
             setCacheLecturas({});
             setCacheFinanciero({});
