@@ -11,6 +11,7 @@ import {
 } from "react-icons/hi";
 import { useRutas } from "../../../context/RutasContext";
 import MapaRutas from "../../mapa/MapaRutas";
+import { formatearPeriodo } from "../../../utils/periodoUtils";
 
 const largeModalTheme = {
     root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
@@ -32,6 +33,11 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
     const [detalleRuta, setDetalleRuta] = useState(null);
     const [missingCount, setMissingCount] = useState(0);
     const [rutaCalculadaState, setRutaCalculadaState] = useState(null);
+
+    const periodoRaw = ruta?.periodo_mostrado || detalleRuta?.periodo || ruta?.periodo;
+    const periodoTexto = useMemo(() => {
+        return formatearPeriodo(periodoRaw) || "";
+    }, [periodoRaw]);
 
     useEffect(() => {
         if (isOpen && ruta?.id) {
@@ -121,15 +127,23 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
         >
             <Modal.Header>
                 <div className="flex items-center justify-between gap-4 w-full">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 min-w-0">
                         <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0">
                             <HiMap className="w-7 h-7" />
                         </div>
-                        <div className="flex flex-col">
-                            <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                                Ruta de Lectura: {ruta.nombre}
-                            </h2>
-                            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                        <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+                                    Ruta de Lectura: {ruta.nombre}
+                                </h2>
+                                {periodoTexto && (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-black tracking-tight bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 shrink-0 shadow-sm">
+                                        <HiCalendar className="text-xs shrink-0" />
+                                        {periodoTexto}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1 truncate">
                                 {ruta.descripcion || "Sin descripción"}
                             </p>
                         </div>
@@ -176,12 +190,19 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
 
                         {/* Periodo */}
                         <div className="border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50/50 dark:bg-zinc-900/30 rounded-2xl p-5 flex flex-col justify-between">
-                            <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 mb-4 uppercase tracking-widest flex items-center gap-2">
-                                <HiCalendar className="text-amber-500 w-4 h-4" /> Periodo Asignado
-                            </h4>
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                                    <HiCalendar className="text-amber-500 w-4 h-4" /> Periodo Asignado
+                                </h4>
+                                {periodoRaw && (
+                                    <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800">
+                                        {periodoRaw}
+                                    </span>
+                                )}
+                            </div>
                             <div className="mt-auto">
-                                <span className="text-2xl font-black text-slate-800 dark:text-zinc-100 tracking-tight block mb-1">
-                                    {ruta.periodo_mostrado}
+                                <span className="text-2xl font-black text-slate-800 dark:text-zinc-100 tracking-tight block mb-1 capitalize">
+                                    {periodoTexto || periodoRaw || "Sin asignar"}
                                 </span>
                                 <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
                                     Ciclo de facturación actual
