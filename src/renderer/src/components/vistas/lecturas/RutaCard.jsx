@@ -298,20 +298,23 @@ export default function RutaCard({ ruta }) {
   }, [ruta.id, ruta.total_puntos, ruta.periodo_mostrado, obtenerInfoRuta]);
 
   return (
-    <div className="flex flex-col bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden group hover:shadow-md transition-all duration-300 relative h-full">
+    <div className={`flex flex-col bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm group hover:shadow-md transition-all duration-300 relative h-full ${dropdownOpen ? 'z-30' : 'z-0'}`}>
 
       {/* ── 1. HEADER (PORTADA + INSIGNIAS + MENÚ RÁPIDO) ── */}
-      <div className="relative h-44 w-full shrink-0 overflow-hidden bg-slate-100 dark:bg-zinc-900">
-        <img
-          src={ruta.imagen}
-          alt={ruta.nombre}
-          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
-        />
-        {/* Gradiente de contraste */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/25 z-10" />
+      <div className="relative h-44 w-full shrink-0 bg-slate-100 dark:bg-zinc-900 rounded-t-2xl">
+        {/* Imagen de fondo con gradiente encapsulados con overflow-hidden */}
+        <div className="absolute inset-0 overflow-hidden rounded-t-2xl">
+          <img
+            src={ruta.imagen}
+            alt={ruta.nombre}
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
+          />
+          {/* Gradiente de contraste */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/25 z-[1]" />
+        </div>
 
         {/* Fila Superior: Badge Sector + Menú de Opciones */}
-        <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-20">
+        <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-30">
           <div className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm border ${sectorInfo.badgeBg}`}>
             <span className="flex items-center gap-1">
               <HiLocationMarker className="w-3 h-3" />
@@ -322,35 +325,42 @@ export default function RutaCard({ ruta }) {
           {/* Menú Tres Puntos */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => setDropdownOpen(v => !v)}
-              className="w-8 h-8 flex items-center justify-center bg-black/40 hover:bg-black/60 text-white rounded-xl transition-all shadow-sm"
+              className="w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/80 active:scale-95 text-white rounded-xl transition-all shadow-md"
               title="Opciones de ruta"
             >
               <HiDotsVertical className="w-4 h-4" />
             </button>
             {dropdownOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
-                <div className="absolute z-20 right-0 mt-2 w-48 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden py-1">
+                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                <div className="absolute z-50 right-0 mt-2 w-52 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden py-1.5 animate-in fade-in zoom-in-95 duration-150">
                   <button
+                    type="button"
                     onClick={() => { setModalDetalleOpen(true); setDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-bold text-slate-700 dark:text-zinc-200 text-left transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold text-slate-700 dark:text-zinc-200 text-left transition-colors"
                   >
-                    <HiEye className="w-4 h-4 text-amber-500" /> Ver Detalles de Ruta
+                    <HiEye className="w-4 h-4 text-amber-500 shrink-0" /> 
+                    <span>Ver Detalles de Ruta</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => { handleOpenEditarRuta(); setDropdownOpen(false); }}
                     disabled={!canModificarRutas}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-bold text-slate-700 dark:text-zinc-200 text-left transition-colors disabled:opacity-50"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold text-slate-700 dark:text-zinc-200 text-left transition-colors disabled:opacity-50"
                   >
-                    <HiPencil className="w-4 h-4 text-emerald-500" /> Editar Ruta
+                    <HiPencil className="w-4 h-4 text-emerald-500 shrink-0" /> 
+                    <span>Editar Ruta</span>
                   </button>
                   {ultimoResultadoFacturacion && (
                     <button
+                      type="button"
                       onClick={() => { setModalResultadoOpen(true); setDropdownOpen(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-bold text-slate-700 dark:text-zinc-200 text-left transition-colors border-t border-slate-100 dark:border-zinc-800"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 text-xs font-bold text-purple-700 dark:text-purple-300 text-left transition-colors border-t border-slate-100 dark:border-zinc-800"
                     >
-                      <HiDocumentReport className="w-4 h-4 text-purple-500" /> Ver Historial Facturas
+                      <HiDocumentReport className="w-4 h-4 text-purple-500 shrink-0" /> 
+                      <span>Ver Historial Facturas</span>
                     </button>
                   )}
                 </div>
@@ -360,7 +370,7 @@ export default function RutaCard({ ruta }) {
         </div>
 
         {/* Fila Inferior sobre la imagen: Estado de Avance y Período */}
-        <div className="absolute bottom-3 inset-x-3.5 flex items-center justify-between z-20">
+        <div className="absolute bottom-3 inset-x-3.5 flex items-center justify-between z-10">
           <div className="flex items-center gap-1.5 flex-wrap">
             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-black tracking-wider text-[10px] uppercase shadow-sm border ${
               porcentajeCompletado === 100

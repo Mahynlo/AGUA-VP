@@ -5,7 +5,7 @@ import useEquivalenciaConsumo from "../../../hooks/useEquivalenciaConsumo";
 
 const equivalenciaModalTheme = {
   root: {
-    base: "fixed top-0 right-0 left-0 z-[100000] h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
+    base: "fixed top-16 right-0 left-0 z-[9990] h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden",
     show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" }
   },
   content: {
