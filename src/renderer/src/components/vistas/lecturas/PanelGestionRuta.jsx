@@ -97,7 +97,7 @@ export default function PanelGestionRuta({
   }, [fetchAllClientes, fetchAllMedidores]);
 
   const [listaItems, setListaItems] = useState([]);
-  const [modoOrden, setModoOrden] = useState("personalizado");
+  const [modoOrden, setModoOrden] = useState("numero_predio");
   const [busqueda, setBusqueda] = useState("");
   const [resultados, setResultados] = useState([]);
   const [isBuscando, setIsBuscando] = useState(false);
@@ -120,10 +120,17 @@ export default function PanelGestionRuta({
       allMedidores.length > 0 &&
       allClientes.length > 0
     ) {
-      const items = reconstruirLista(puntosRutaInicial, allMedidores, allClientes);
+      let items = reconstruirLista(puntosRutaInicial, allMedidores, allClientes);
       if (items.length > 0) {
         initializedRef.current = true;
         skipUpdateRef.current = true;
+        items = items.sort((a, b) =>
+          (a.clienteData.numero_predio || "").localeCompare(
+            b.clienteData.numero_predio || "",
+            undefined,
+            { numeric: true }
+          )
+        );
         setListaItems(items);
       }
     }
@@ -249,6 +256,7 @@ export default function PanelGestionRuta({
     dragIdxRef.current = null;
     dragOverIdxRef.current = null;
     if (from === null || to === null || from === to) return;
+    setModoOrden("personalizado");
     setListaItems((prev) => {
       const list = [...prev];
       const [item] = list.splice(from, 1);
