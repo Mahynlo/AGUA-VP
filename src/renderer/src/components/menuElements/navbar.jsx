@@ -97,11 +97,6 @@ function NavbarApp() {
   const handleMaximize = () => window.electronAPI?.maximize();
   const handleClose = () => window.electronAPI?.close();
 
-  // Ocultar elementos si estamos en el login
-  const isAuthRoute = location.pathname === '/' || location.pathname === '/registro' || location.pathname === '/recuperarPassword';
-
-  if (isAuthRoute) return null;
-
   const rolInfo = ROL_CONFIG[user?.rol] || {
     label: user?.rol || "Usuario",
     badge: "bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border-slate-200 dark:border-zinc-700",
@@ -118,16 +113,18 @@ function NavbarApp() {
           
           {/* ── LADO IZQUIERDO: LOGO E IDENTIDAD ── */}
           <div className="flex items-center justify-start gap-3">
-            <button 
-              data-drawer-target="logo-sidebar" 
-              data-drawer-toggle="logo-sidebar" 
-              type="button" 
-              className="inline-flex items-center p-2 text-sm text-white/80 rounded-lg sm:hidden hover:bg-white/10 focus:outline-none transition-colors"
-              style={{ WebkitAppRegion: "no-drag" }}
-            >
-              <span className="sr-only">Abrir menú</span>
-              <HiMenuAlt2 className="w-6 h-6" />
-            </button>
+            {isAuthenticated() && (
+              <button 
+                data-drawer-target="logo-sidebar" 
+                data-drawer-toggle="logo-sidebar" 
+                type="button" 
+                className="inline-flex items-center p-2 text-sm text-white/80 rounded-lg sm:hidden hover:bg-white/10 focus:outline-none transition-colors"
+                style={{ WebkitAppRegion: "no-drag" }}
+              >
+                <span className="sr-only">Abrir menú</span>
+                <HiMenuAlt2 className="w-6 h-6" />
+              </button>
+            )}
 
             <div className="flex items-center gap-3 pointer-events-none select-none">
               <img src={logoSrc} className="h-10 w-auto drop-shadow-md" alt="Logo" />
