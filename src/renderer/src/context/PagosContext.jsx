@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
@@ -14,6 +14,9 @@ export function PagosProvider({ children }) {
   const [error, setError] = useState(null);
   const { renovarAccessToken, user } = useAuth();
 
+  // Ref para detectar carga inicial sin regenerar callbacks
+  const isFirstLoadRef = useRef(true);
+
   // Agregar estado persistente de filtros
   const [filtros, setFiltros] = useState({
     periodo: obtenerPeriodoActual(),
@@ -24,12 +27,15 @@ export function PagosProvider({ children }) {
     limit: 60
   });
 
+  const filtrosRef = useRef(filtros);
+  filtrosRef.current = filtros;
+
   const [pagination, setPagination] = useState(null);
 
   // Función para obtener los pagos
   const fetchPagos = useCallback(async (params = {}) => {
     try {
-      if (!initialLoading) {
+      if (!isFirstLoadRef.current) {
         setLoading(true);
       }
       const token_session = localStorage.getItem("token");
@@ -38,7 +44,7 @@ export function PagosProvider({ children }) {
       }
 
       // Manejo robusto de parámetros: fusionar con filtros y sobreescribir con nuevos
-      let finalParams = { ...filtros }; // Empezar con lo que ya teniamos
+      let finalParams = { ...filtrosRef.current }; // Empezar con lo que ya teniamos
 
       if (typeof params === 'string') {
         // Soporte legado
@@ -95,9 +101,12 @@ export function PagosProvider({ children }) {
       setError(error.message || error);
     } finally {
       setLoading(false);
-      setInitialLoading(false);
+      if (isFirstLoadRef.current) {
+        setInitialLoading(false);
+        isFirstLoadRef.current = false;
+      }
     }
-  }, [initialLoading]);
+  }, []);
 
   // Cargar pagos al iniciar — gated on auth user
   useEffect(() => {

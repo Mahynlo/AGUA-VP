@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   HiCreditCard, 
   HiDocumentText, 
@@ -12,6 +12,7 @@ import {
   HiCalculator
 } from "react-icons/hi";
 import { Tabs, Tab } from "@nextui-org/react";
+import { PagosIcon } from "../../IconsApp/IconsResibos";
 import TabFacturas from "./pagos/TabFacturas";
 import TabPagos from "./pagos/TabPagos";
 import TabEstadisticas from "./pagos/TabEstadisticas";
@@ -20,6 +21,7 @@ import TabCobranzaCliente from "./pagos/TabCobranzaCliente";
 import { useFacturas } from "../../context/FacturasContext";
 import { usePagos } from "../../context/PagosContext";
 import { useDeudores } from "../../context/DeudoresContext";
+import { useReportes } from "../../context/ReportesContext";
 
 const PagosVista = () => {
   // Estado para la pestaña activa
@@ -33,24 +35,25 @@ const PagosVista = () => {
   const { estadisticas: statsFacturas } = useFacturas();
   const { resumen: statsPagos } = usePagos();
   const { estadisticas: statsDeudores } = useDeudores();
+  const { financiero } = useReportes();
 
-  // Estado local para KPIs visuales
-  const [kpis, setKpis] = useState({
-    card1: { icon: HiDocumentText, value: "$0", label: "Total", color: "blue" },
-    card2: { icon: HiExclamation, value: "0", label: "Pendientes", color: "orange" },
-    card3: { icon: HiCreditCard, value: "0", label: "Pagadas", color: "emerald" },
-    card4: { icon: HiTrendingUp, value: "0", label: "Vencidas", color: "rose" }
-  });
+  // Estado sincronizado en vivo desde TabCobranzaCliente
+  const [cobranzaStats, setCobranzaStats] = useState(null);
 
-  // Efecto para actualizar KPIs basado en tab seleccionado
-  useEffect(() => {
+  const handleTabChange = (key) => {
+    setSelectedTab(key);
+    localStorage.setItem("pagos_activeTab", key);
+  };
+
+  // KPIs calculados con useMemo puro para evitar bucles o recargas
+  const kpis = useMemo(() => {
     switch (selectedTab) {
       case "facturas":
-        setKpis({
+        return {
           card1: {
             icon: HiCurrencyDollar,
-            value: `$${(statsFacturas?.monto_total || 0).toLocaleString('es-MX')}`,
-            label: "Total Facturado",
+            value: `$${(statsFacturas?.monto_total || financiero?.resumen?.total_esperado || 0).toLocaleString('es-MX')}`,
+            label: "Facturado",
             color: "blue"
           },
           card2: {
@@ -71,85 +74,86 @@ const PagosVista = () => {
             label: "Vencidas",
             color: "rose"
           }
-        });
-        break;
+        };
 
       case "pagos":
-        setKpis({
+        return {
           card1: {
             icon: HiCurrencyDollar,
-            value: `$${(statsPagos?.total_pagado || 0).toLocaleString('es-MX')}`,
+            value: `$${(statsPagos?.total_pagado || financiero?.resumen?.total_recaudado || 0).toLocaleString('es-MX')}`,
             label: "Recaudado",
             color: "emerald"
           },
           card2: {
             icon: HiCash,
             value: (statsPagos?.cantidad_pagos || 0).toLocaleString('es-MX'),
-            label: "Transacciones",
+            label: "Operaciones",
             color: "blue"
           },
           card3: {
             icon: HiChartBar,
-            value: `$${(statsPagos?.promedio_pago || 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`,
-            label: "Ticket Promedio",
+            value: `$${(statsPagos?.promedio_pago || 0).toLocaleString('es-MX', { maximumFractionDigits: 0 })}`,
+            label: "Promedio",
             color: "purple"
           },
           card4: {
             icon: HiTrendingUp,
-            value: "100%", // Placeholder o calculado
+            value: financiero?.resumen?.eficiencia_recaudo_porcentaje !== undefined 
+              ? `${Number(financiero.resumen.eficiencia_recaudo_porcentaje).toFixed(0)}%`
+              : "100%",
             label: "Efectividad",
             color: "teal"
           }
-        });
-        break;
+        };
 
-      case "cobranza":
-        setKpis({
+      case "estadisticas":
+        return {
           card1: {
             icon: HiCurrencyDollar,
-            value: `$${(statsFacturas?.monto_total_pendiente || 0).toLocaleString('es-MX')}`,
-            label: "Cartera Visible",
-            color: "rose"
+            value: `$${(financiero?.resumen?.total_recaudado || statsPagos?.total_pagado || 0).toLocaleString('es-MX')}`,
+            label: "Recaudado",
+            color: "emerald"
           },
           card2: {
             icon: HiDocumentText,
-            value: (statsFacturas?.cantidad_pendientes || 0).toLocaleString('es-MX'),
-            label: "Facturas Pendientes",
-            color: "orange"
+            value: `$${(financiero?.resumen?.total_esperado || statsFacturas?.monto_total || 0).toLocaleString('es-MX')}`,
+            label: "Esperado",
+            color: "blue"
           },
           card3: {
-            icon: HiCreditCard,
-            value: (statsFacturas?.cantidad_pagadas || 0).toLocaleString('es-MX'),
-            label: "Facturas Pagadas",
-            color: "emerald"
+            icon: HiExclamation,
+            value: `$${(financiero?.resumen?.por_cobrar_estimado || statsFacturas?.monto_total_pendiente || 0).toLocaleString('es-MX')}`,
+            label: "Por Cobrar",
+            color: "orange"
           },
           card4: {
-            icon: HiCalculator,
-            value: "FIFO",
-            label: "Método Cobro",
-            color: "blue"
+            icon: HiTrendingUp,
+            value: financiero?.resumen?.eficiencia_recaudo_porcentaje !== undefined 
+              ? `${Number(financiero.resumen.eficiencia_recaudo_porcentaje).toFixed(0)}%`
+              : (statsPagos?.total_pagado ? "100%" : "0%"),
+            label: "Eficiencia",
+            color: "purple"
           }
-        });
-        break;
+        };
 
       case "deudores":
-        setKpis({
+        return {
           card1: {
             icon: HiCurrencyDollar,
             value: `$${(statsDeudores?.totalDeuda || 0).toLocaleString('es-MX')}`,
-            label: "Deuda Visible",
+            label: "Deuda",
             color: "rose"
           },
           card2: {
             icon: HiUserGroup,
             value: (statsDeudores?.criticos || 0).toLocaleString('es-MX'),
-            label: "Usuarios Críticos",
+            label: "Críticos",
             color: "orange"
           },
           card3: {
             icon: HiDocumentText,
             value: (statsDeudores?.casosActivos || 0).toLocaleString('es-MX'),
-            label: "Casos Activos",
+            label: "Casos",
             color: "amber"
           },
           card4: {
@@ -158,21 +162,55 @@ const PagosVista = () => {
             label: "Convenios",
             color: "blue"
           }
-        });
-        break;
+        };
 
-      default:
-        break;
+      case "cobranza":
+      default: {
+        const porCobrar = cobranzaStats?.deuda_total !== undefined
+          ? cobranzaStats.deuda_total
+          : (statsFacturas?.monto_total_pendiente || financiero?.resumen?.por_cobrar_estimado || statsDeudores?.totalDeuda || 0);
+
+        const pendientes = cobranzaStats?.facturas_pendientes !== undefined
+          ? cobranzaStats.facturas_pendientes
+          : (statsFacturas?.cantidad_pendientes || statsDeudores?.totalDeudores || statsDeudores?.criticos || 0);
+
+        const pagadas = cobranzaStats?.facturas_pagadas !== undefined
+          ? cobranzaStats.facturas_pagadas
+          : (statsFacturas?.cantidad_pagadas || statsPagos?.cantidad_pagos || 0);
+
+        return {
+          card1: {
+            icon: HiCurrencyDollar,
+            value: `$${porCobrar.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            label: "Por Cobrar",
+            color: "rose"
+          },
+          card2: {
+            icon: HiDocumentText,
+            value: pendientes.toLocaleString('es-MX'),
+            label: "Pendientes",
+            color: "orange"
+          },
+          card3: {
+            icon: HiCreditCard,
+            value: pagadas.toLocaleString('es-MX'),
+            label: "Pagadas",
+            color: "emerald"
+          },
+          card4: {
+            icon: HiCalculator,
+            value: "FIFO",
+            label: "Método",
+            color: "blue"
+          }
+        };
+      }
     }
-  }, [selectedTab, statsFacturas, statsPagos, statsDeudores]);
-
-  const handleTabChange = (key) => {
-    setSelectedTab(key);
-    localStorage.setItem("pagos_activeTab", key);
-  };
+  }, [selectedTab, statsFacturas, statsPagos, statsDeudores, financiero, cobranzaStats]);
 
   // Helper para renderizar card Premium SaaS
   const KpiCard = ({ data }) => {
+    if (!data) return null;
     const Icon = data.icon;
     
     // Mapeo de tintes dinámicos
@@ -189,11 +227,11 @@ const PagosVista = () => {
     const tintClasses = colorStyles[data.color] || colorStyles.blue;
 
     return (
-      <div className="flex flex-col gap-3 p-5 bg-slate-50/80 dark:bg-zinc-900/40 border border-slate-200/80 dark:border-zinc-800/80 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm w-full">
+      <div className="flex flex-col justify-center p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1 gap-3">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">{data.label}</span>
           <div className={`p-1.5 rounded-lg ${tintClasses}`}>
-            <Icon className="w-4 h-4" />
+            {Icon && <Icon className="w-4 h-4" />}
           </div>
         </div>
         <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">
@@ -217,7 +255,7 @@ const PagosVista = () => {
           <div className="flex gap-4 items-start shrink-0">
             {/* Regla de Tintes (Esmeralda Corporativo para Pagos) */}
             <div className="p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
-              <HiCreditCard className="w-8 h-8" />
+              <PagosIcon className="w-8 h-8" />
             </div>
             <div className="flex flex-col gap-1 pt-0.5">
               {/* Token 3: Textos Principales */}
@@ -266,7 +304,7 @@ const PagosVista = () => {
               }
             >
               <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabCobranzaCliente />
+                <TabCobranzaCliente onCobranzaStatsChange={setCobranzaStats} />
               </div>
             </Tab>
 

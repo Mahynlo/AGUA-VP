@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
@@ -16,6 +16,9 @@ export function FacturasProvider({ children }) {
   const [estadisticas, setEstadisticas] = useState({});
   const [metadata, setMetadata] = useState({});
 
+  // Ref para detectar la carga inicial sin regenerar callbacks
+  const isFirstLoadRef = useRef(true);
+
   // Estados para filtros
   const [filtros, setFiltros] = useState({
     cliente_nombre: "",
@@ -29,10 +32,13 @@ export function FacturasProvider({ children }) {
     ruta_id: ""
   });
 
+  const filtrosRef = useRef(filtros);
+  filtrosRef.current = filtros;
+
   // Función para obtener las facturas
   const fetchFacturas = useCallback(async (params = {}) => {
     try {
-      if (!initialLoading) setLoading(true);
+      if (!isFirstLoadRef.current) setLoading(true);
 
       const token_session = localStorage.getItem("token");
       if (!token_session) {
@@ -41,7 +47,7 @@ export function FacturasProvider({ children }) {
 
       // Parámetros por defecto si no se envían
       const queryParams = {
-        periodo: params.periodo || filtros.periodo || obtenerPeriodoActual(),
+        periodo: params.periodo || filtrosRef.current.periodo || obtenerPeriodoActual(),
         page: params.page || 1,
         limit: params.limit || 60,
         search: params.search || '',
@@ -78,34 +84,37 @@ export function FacturasProvider({ children }) {
       setError(error);
     } finally {
       setLoading(false);
-      setInitialLoading(false);
+      if (isFirstLoadRef.current) {
+        setInitialLoading(false);
+        isFirstLoadRef.current = false;
+      }
     }
-  }, [initialLoading, filtros.periodo]);
+  }, []);
 
   // Cargar facturas al iniciar — gated on auth user
   useEffect(() => {
-    if (initialLoading && user) {
-      fetchFacturas(filtros);
+    if (user) {
+      fetchFacturas(filtrosRef.current);
     }
-  }, [user]); // Se ejecuta cuando el usuario está autenticado
+  }, [user, fetchFacturas]); // Se ejecuta una sola vez cuando el usuario está autenticado
 
   // Actualizar cuando se restaura la conexión
   useEffect(() => {
     const handleConnectionRestored = () => {
       console.log("🔄 Reconexión detectada en FacturasContext, actualizando...");
-      fetchFacturas({ ...filtros, force: true });
+      fetchFacturas({ ...filtrosRef.current, force: true });
     };
 
     window.addEventListener('connection-restored', handleConnectionRestored);
     return () => window.removeEventListener('connection-restored', handleConnectionRestored);
-  }, [filtros, fetchFacturas]);
+  }, [fetchFacturas]);
 
   // Función para actualizar filtros y recargar datos
   const aplicarFiltros = useCallback(async (nuevosFiltros) => {
-    const filtrosActualizados = { ...filtros, ...nuevosFiltros };
+    const filtrosActualizados = { ...filtrosRef.current, ...nuevosFiltros };
     setFiltros(filtrosActualizados);
     await fetchFacturas(filtrosActualizados);
-  }, [filtros]);
+  }, [fetchFacturas]);
 
   // Función para limpiar todos los filtros
   const limpiarFiltros = useCallback(async () => {
@@ -126,8 +135,8 @@ export function FacturasProvider({ children }) {
 
   // Función para actualizar facturas después de cambios
   const actualizarFacturas = useCallback(async () => {
-    await fetchFacturas({ ...filtros, force: true });
-  }, [filtros]);
+    await fetchFacturas({ ...filtrosRef.current, force: true });
+  }, [fetchFacturas]);
 
   // Funciones de filtrado específicas
   const filtrarPorCliente = useCallback(async (nombreCliente) => {

@@ -244,7 +244,7 @@ function ImprimirDeudoresDropdown({ onImprimir, loading }) {
   );
 }
 
-const TabCobranzaCliente = () => {
+const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
   const { fetchClientes, allClientes, fetchAllClientes } = useClientes();
   const { registrarPagoDistribuido, loading: loadingPagos, fetchPagos } = usePagos();
   const { setSuccess, setError } = useFeedback();
@@ -614,18 +614,33 @@ const TabCobranzaCliente = () => {
   }, [currentPage, totalPages]);
 
   const resumen = useMemo(() => {
-    const totalClientes = clientesPagination.total || 0;
-    const clientesConDeuda = Array.from(facturasPorCliente.keys()).length;
-    const deudaTotal = facturasHistorial.reduce((acc, f) => toMoney(acc + f.saldo_pendiente), 0);
-    const facturasTotales = facturasHistorial.length;
+    const totalClientes = clientesTabla.length;
+    const clientesConDeuda = clientesTabla.filter((c) => toMoney(c.deuda_total) > 0).length;
+    const deudaTotal = clientesTabla.reduce((acc, c) => toMoney(acc + c.deuda_total), 0);
+    const facturasPendientesTotales = clientesTabla.reduce((acc, c) => acc + (c.facturas_pendientes || 0), 0);
+    const facturasPagadasTotales = clientesTabla.reduce((acc, c) => acc + (c.facturas_pagadas || 0), 0);
 
     return {
       clientes_total: totalClientes,
       clientes_con_deuda: clientesConDeuda,
-      facturas: facturasTotales,
+      facturas_pendientes: facturasPendientesTotales,
+      facturas_pagadas: facturasPagadasTotales,
       deuda: deudaTotal
     };
-  }, [clientesPagination.total, facturasPorCliente, facturasHistorial]);
+  }, [clientesTabla]);
+
+  // Notificar al componente padre (PagosVista) para sincronizar las tarjetas KPI superiores
+  useEffect(() => {
+    if (onCobranzaStatsChange) {
+      onCobranzaStatsChange({
+        deuda_total: resumen.deuda,
+        facturas_pendientes: resumen.facturas_pendientes,
+        facturas_pagadas: resumen.facturas_pagadas,
+        clientes_con_deuda: resumen.clientes_con_deuda,
+        clientes_total: resumen.clientes_total
+      });
+    }
+  }, [resumen, onCobranzaStatsChange]);
 
   const abrirModalCobro = (cliente) => {
     setClienteSeleccionado(cliente);
@@ -1089,7 +1104,7 @@ const TabCobranzaCliente = () => {
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Fact. Pendientes</span>
             <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"><HiDocumentText className="w-4 h-4" /></div>
           </div>
-          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{resumen.facturas.toLocaleString("es-MX")}</p>
+          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{resumen.facturas_pendientes.toLocaleString("es-MX")}</p>
         </div>
 
         <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
