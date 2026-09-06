@@ -109,7 +109,7 @@ export function MedidoresProvider({ children }) {
     return () => window.removeEventListener('connection-restored', handleConnectionRestored);
   }, [fetchMedidores, fetchAllMedidores]);
 
-  // Escuchar eventos de actualización de medidores y clientes
+  // Escuchar eventos de actualización de medidores, clientes y rutas
   useEffect(() => {
     const handleMedidoresChanged = () => {
       const savedParams = lastFetchParamsRef.current || {};
@@ -119,9 +119,11 @@ export function MedidoresProvider({ children }) {
 
     window.addEventListener('medidores-changed', handleMedidoresChanged);
     window.addEventListener('clientes-changed', handleMedidoresChanged);
+    window.addEventListener('rutas-changed', handleMedidoresChanged);
     return () => {
       window.removeEventListener('medidores-changed', handleMedidoresChanged);
       window.removeEventListener('clientes-changed', handleMedidoresChanged);
+      window.removeEventListener('rutas-changed', handleMedidoresChanged);
     };
   }, [fetchMedidores, fetchAllMedidores]);
 
