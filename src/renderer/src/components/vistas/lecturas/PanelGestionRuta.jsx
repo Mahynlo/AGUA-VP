@@ -87,8 +87,14 @@ export default function PanelGestionRuta({
   rutaCalculada,
   isSaving = false,
 }) {
-  const { allClientes } = useClientes();
-  const { allMedidores } = useMedidores();
+  const { allClientes, fetchAllClientes } = useClientes();
+  const { allMedidores, fetchAllMedidores } = useMedidores();
+
+  // Asegurar que allClientes y allMedidores estén frescos al abrir la gestión de ruta
+  useEffect(() => {
+    fetchAllClientes?.();
+    fetchAllMedidores?.();
+  }, [fetchAllClientes, fetchAllMedidores]);
 
   const [listaItems, setListaItems] = useState([]);
   const [modoOrden, setModoOrden] = useState("personalizado");
@@ -150,15 +156,12 @@ export default function PanelGestionRuta({
         .filter((c) =>
           norm(`${c.nombre} ${c.ciudad} ${c.numero_predio}`).includes(termino)
         )
-        .filter((c) =>
-          allMedidores.some((m) => m.cliente_id === c.id && m.latitud && m.longitud)
-        )
-        .slice(0, 8);
+        .slice(0, 10);
       setResultados(filtrados);
       setIsBuscando(false);
-    }, 250);
+    }, 200);
     return () => clearTimeout(t);
-  }, [busqueda, listaItems, allClientes, allMedidores]);
+  }, [busqueda, listaItems, allClientes]);
 
   const agregarCliente = useCallback(
     (cliente) => {
@@ -371,16 +374,30 @@ export default function PanelGestionRuta({
                   {resultados.map((cliente) => {
                     const medsCliente = allMedidores.filter((m) => m.cliente_id === cliente.id && m.latitud && m.longitud);
                     const cnt = medsCliente.length;
+                    const sinMedidorValido = cnt === 0;
                     const rutasConflicto = [...new Set(medsCliente.filter((m) => m.ruta_id).map((m) => m.ruta_nombre).filter(Boolean))];
                     const tieneConflicto = rutasConflicto.length > 0;
 
                     return (
                       <button
                         key={cliente.id}
-                        onClick={() => agregarCliente(cliente)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800/60 rounded-xl text-left transition-colors"
+                        onClick={() => {
+                          if (!sinMedidorValido) agregarCliente(cliente);
+                        }}
+                        disabled={sinMedidorValido}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${
+                          sinMedidorValido
+                            ? 'opacity-70 bg-slate-50/50 dark:bg-zinc-900/30 cursor-not-allowed'
+                            : 'hover:bg-slate-50 dark:hover:bg-zinc-800/60 cursor-pointer'
+                        }`}
                       >
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${tieneConflicto ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`}>
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-black ${
+                          sinMedidorValido
+                            ? 'bg-slate-200 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400'
+                            : tieneConflicto
+                              ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+                              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        }`}>
                           {(cliente.nombre || "?").charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -389,16 +406,26 @@ export default function PanelGestionRuta({
                           </p>
                           <p className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 truncate">
                             {cliente.numero_predio ? `Predio #${cliente.numero_predio} · ` : ""}
-                            {cnt} {cnt !== 1 ? "medidores" : "medidor"}
+                            {sinMedidorValido ? (
+                              <span className="text-rose-500 dark:text-rose-400 font-bold">⚠ Sin medidor con coordenadas GPS</span>
+                            ) : (
+                              `${cnt} ${cnt !== 1 ? "medidores" : "medidor"}`
+                            )}
                           </p>
-                          {tieneConflicto && (
+                          {tieneConflicto && !sinMedidorValido && (
                             <p className="text-[9px] text-amber-600 dark:text-amber-400 font-bold">
                               ⚠ En ruta: {rutasConflicto.join(", ")}
                             </p>
                           )}
                         </div>
-                        <div className={`p-1 rounded-lg ${tieneConflicto ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
-                          <HiPlus className="w-3.5 h-3.5 shrink-0" />
+                        <div className={`p-1 rounded-lg ${
+                          sinMedidorValido
+                            ? 'bg-slate-100 text-slate-400 dark:bg-zinc-800'
+                            : tieneConflicto
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        }`}>
+                          {sinMedidorValido ? <HiExclamationCircle className="w-3.5 h-3.5 text-rose-500" /> : <HiPlus className="w-3.5 h-3.5 shrink-0" />}
                         </div>
                       </button>
                     );

@@ -109,6 +109,22 @@ export function MedidoresProvider({ children }) {
     return () => window.removeEventListener('connection-restored', handleConnectionRestored);
   }, [fetchMedidores, fetchAllMedidores]);
 
+  // Escuchar eventos de actualización de medidores y clientes
+  useEffect(() => {
+    const handleMedidoresChanged = () => {
+      const savedParams = lastFetchParamsRef.current || {};
+      fetchMedidores(savedParams);
+      fetchAllMedidores();
+    };
+
+    window.addEventListener('medidores-changed', handleMedidoresChanged);
+    window.addEventListener('clientes-changed', handleMedidoresChanged);
+    return () => {
+      window.removeEventListener('medidores-changed', handleMedidoresChanged);
+      window.removeEventListener('clientes-changed', handleMedidoresChanged);
+    };
+  }, [fetchMedidores, fetchAllMedidores]);
+
   // Función para actualizar los medidores (después de agregar o editar uno)
   const actualizarMedidores = useCallback(async () => {
     const savedParams = lastFetchParamsRef.current || {};
