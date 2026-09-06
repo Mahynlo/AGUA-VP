@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Chip, Tabs, Tab, Skeleton } from "@nextui-org/react";
 import { 
-  HiPrinter, 
+  HiPrinter,
   HiUsers, 
   HiDocumentText, 
   HiCog, 
@@ -9,6 +9,7 @@ import {
   HiOutlinePresentationChartLine, 
   HiOutlinePresentationChartBar 
 } from "react-icons/hi";
+import { ImpresionResibosIcon } from "../../IconsApp/IconsResibos";
 import React, { useMemo, useState } from "react";
 import { useReportes } from "../../context/ReportesContext";
 import TabImpresion from "./impresion/TabImpresion";
@@ -71,7 +72,7 @@ const Impresion = () => {
           <div className="flex gap-4 items-start shrink-0">
             {/* Regla de Tintes (Índigo Corporativo) */}
             <div className="p-3.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 flex items-center justify-center">
-              <HiPrinter className="w-8 h-8" />
+              <ImpresionResibosIcon className="w-8 h-8" />
             </div>
             <div className="flex flex-col gap-1 pt-0.5">
               {/* Token 3: Textos Principales */}
@@ -87,11 +88,11 @@ const Impresion = () => {
           {/* Tarjetas de Estadísticas (KPIs) - Se alinean a la derecha */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full xl:w-auto shrink-0">
             
-            {/* KPI: Recibos (Azul) */}
-            <div className="flex flex-col gap-3 p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1">
+            {/* KPI: Recibos (Índigo) */}
+            <div className="flex flex-col justify-center p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1 gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Recibos</span>
-                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiUsers className="w-4 h-4" /></div>
+                <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"><HiPrinter className="w-4 h-4" /></div>
               </div>
               {loading ? (
                 <Skeleton className="h-8 w-16 rounded-lg bg-slate-200 dark:bg-zinc-800" />
@@ -103,9 +104,9 @@ const Impresion = () => {
             </div>
 
             {/* KPI: Total $ (Esmeralda) */}
-            <div className="flex flex-col gap-3 p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1">
+            <div className="flex flex-col justify-center p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1 gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total a Cobrar</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Facturado</span>
                 <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><HiCurrencyDollar className="w-4 h-4" /></div>
               </div>
               {loading ? (
@@ -118,32 +119,34 @@ const Impresion = () => {
               )}
             </div>
 
-            {/* KPI: m³ Total (Púrpura) */}
-            <div className="flex flex-col gap-3 p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1">
+            {/* KPI: Consumo (Púrpura) */}
+            <div className="flex flex-col justify-center p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1 gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">m³ Total</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Consumo</span>
                 <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400"><HiOutlinePresentationChartBar className="w-4 h-4" /></div>
               </div>
               {loading ? (
                 <Skeleton className="h-8 w-20 rounded-lg bg-slate-200 dark:bg-zinc-800" />
               ) : (
-                <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">
+                <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none flex items-baseline gap-1">
                   {estadisticas.consumoTotal.toLocaleString('es-MX')}
+                  <span className="text-xs font-bold text-purple-400/80">m³</span>
                 </p>
               )}
             </div>
 
             {/* KPI: Promedio (Naranja) */}
-            <div className="flex flex-col gap-3 p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1">
+            <div className="flex flex-col justify-center p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1 gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Promedio m³</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Promedio</span>
                 <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400"><HiOutlinePresentationChartLine className="w-4 h-4" /></div>
               </div>
               {loading ? (
                 <Skeleton className="h-8 w-16 rounded-lg bg-slate-200 dark:bg-zinc-800" />
               ) : (
-                <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">
+                <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none flex items-baseline gap-1">
                   {estadisticas.promedioConsumo}
+                  <span className="text-xs font-bold text-orange-400/80">m³</span>
                 </p>
               )}
             </div>
