@@ -98,20 +98,24 @@ export default function ModalActualizacionDisponible() {
       size="md"
       popup
       theme={{
+        root: {
+          show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" }
+        },
         content: {
           base: "relative h-full w-full p-4 md:h-auto",
           inner: "relative rounded-3xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800"
         }
       }}
     >
-      <div className="relative p-6">
+      <div className="relative p-6 sm:p-7">
         
         {/* Botón de cierre manual */}
         <button 
           onClick={handleCerrar}
-          className="absolute right-6 top-6 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors"
+          className="absolute right-5 top-5 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-900 transition-colors"
+          title="Cerrar aviso"
         >
-          <HiX className="w-4.5 h-4.5 text-slate-400 dark:text-zinc-500" />
+          <HiX className="w-5 h-5" />
         </button>
 
         {/* Cabecera */}
