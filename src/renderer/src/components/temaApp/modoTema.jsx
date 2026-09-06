@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
 import { ModoClaroIcon, ModoOscuroIcon, ModoSistemaIcon } from "../../IconsApp/IconsAppSystem";
 
 function ModoTema() {
@@ -39,39 +38,33 @@ function ModoTema() {
         }
     }, [theme]);
 
+    const opciones = [
+        { key: "light", label: "Claro", icon: ModoClaroIcon },
+        { key: "dark", label: "Oscuro", icon: ModoOscuroIcon },
+        { key: "system", label: "Sistema", icon: ModoSistemaIcon }
+    ];
+
     return (
-        <Dropdown>
-            <DropdownTrigger>
-                <Button>
-                    {theme === "light" && (
-                        <>
-                            <ModoClaroIcon className="w-6 h-6"/> Claro
-                        </>
-                    )}
-                    {theme === "dark" && (
-                        <>
-                            <ModoOscuroIcon className="w-6 h-6"/> Oscuro
-                        </>
-                    )}
-                    {theme === "system" && (
-                        <>
-                            <ModoSistemaIcon className="w-6 h-6"/> Sistema
-                        </>
-                    )}
-                </Button>
-            </DropdownTrigger>
-            <DropdownMenu aria-label="Cambiar tema">
-                <DropdownItem key="light" onClick={() => setTheme("light")} startContent={<ModoClaroIcon className="w-6 h-6" />} isSelected={theme === "light"}>
-                    Claro
-                </DropdownItem>
-                <DropdownItem key="dark" onClick={() => setTheme("dark")} startContent={<ModoOscuroIcon className="w-6 h-6" />} isSelected={theme === "dark"}>
-                    Oscuro
-                </DropdownItem>
-                <DropdownItem key="system" onClick={() => setTheme("system")} startContent={<ModoSistemaIcon className="w-6 h-6" />} isSelected={theme === "system"}>
-                    Sistema
-                </DropdownItem>
-            </DropdownMenu>
-        </Dropdown>
+        <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-zinc-900 rounded-xl border border-slate-200/80 dark:border-zinc-800">
+            {opciones.map(({ key, label, icon: Icon }) => {
+                const isSelected = theme === key;
+                return (
+                    <button
+                        key={key}
+                        type="button"
+                        onClick={() => setTheme(key)}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs transition-all duration-200 ${
+                            isSelected
+                                ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-bold shadow-sm border border-slate-200/80 dark:border-zinc-700"
+                                : "text-slate-600 dark:text-zinc-400 font-medium hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-white/40 dark:hover:bg-zinc-800/40"
+                        }`}
+                    >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span>{label}</span>
+                    </button>
+                );
+            })}
+        </div>
     );
 }
 

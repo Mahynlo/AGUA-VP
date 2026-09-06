@@ -26,7 +26,7 @@ const ConfigInput = ({ label, value, onChange, icon, type = "number", descriptio
           value={value}
           min={min}
           onChange={onChange}
-          className="w-full pl-11 pr-4 h-[52px] text-sm font-medium rounded-xl transition-all duration-200 resize-none bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:border-slate-400 dark:focus:border-zinc-500 shadow-none"
+          className="w-full pl-11 pr-4 h-[52px] text-sm font-medium rounded-xl transition-all duration-200 resize-none bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none"
         />
       </div>
       {description && <p className="text-[10px] text-slate-400 dark:text-zinc-500 ml-1 mt-0.5 leading-tight">{description}</p>}
@@ -167,15 +167,15 @@ export default function PanelConfiguracion() {
       <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
 
       {/* Nota informativa Superior */}
-      <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-6 flex items-start gap-4">
-        <div className="p-2 bg-orange-500/20 text-orange-600 dark:text-orange-400 rounded-xl shrink-0">
+      <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 flex items-start gap-4">
+        <div className="p-2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl shrink-0">
           <HiExclamation className="w-5 h-5" />
         </div>
         <div className="flex flex-col gap-1.5 pt-0.5">
-          <p className="text-[10px] font-bold text-orange-600/80 dark:text-orange-400/80 uppercase tracking-widest">
+          <p className="text-[10px] font-bold text-amber-600/80 dark:text-amber-400/80 uppercase tracking-widest">
             Aviso Importante
           </p>
-          <p className="text-sm font-medium text-orange-800 dark:text-orange-200 leading-relaxed">
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-200 leading-relaxed">
             Modificar estos valores afectará el cálculo automático de deudores en todo el sistema durante la próxima sincronización nocturna. Asegúrate de que los valores de avisos sean progresivos (Primer Aviso &lt; Segundo &lt; Tercer &lt; Corte).
           </p>
         </div>
@@ -227,7 +227,7 @@ export default function PanelConfiguracion() {
       {/* ── SECCIÓN 2: CORTES ── */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl shrink-0">
+          <div className="p-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
             <HiBan className="w-5 h-5" />
           </div>
           <div>
