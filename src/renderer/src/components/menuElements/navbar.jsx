@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from "react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar, Tooltip } from "@nextui-org/react";
-import { Modal, Button } from "flowbite-react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@nextui-org/react";
+import { Modal } from "flowbite-react";
 import { VscChromeMinimize, VscChromeMaximize, VscChromeClose } from "react-icons/vsc";
 import { HiOutlineLogout, HiOutlineQuestionMarkCircle, HiOutlineCog, HiOutlineUser, HiMenuAlt2 } from "react-icons/hi";
 
@@ -20,13 +20,36 @@ const confirmModalTheme = {
   },
   content: {
     base: "relative h-full w-full p-4 md:h-auto",
-    inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-md w-full"
+    inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-md w-full overflow-hidden"
   },
   header: {
     base: "hidden",
     close: { base: "hidden", icon: "hidden" }
   },
-  body: { base: "pt-12 pb-6 px-6 flex-1 overflow-y-auto bg-transparent" }
+  body: { base: "pt-8 pb-6 px-6 flex-1 overflow-y-auto bg-transparent" }
+};
+
+const ROL_CONFIG = {
+  superadmin: {
+    label: "Superadmin",
+    badge: "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/50",
+    dot: "bg-purple-500",
+  },
+  administrador: {
+    label: "Administrador",
+    badge: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/50",
+    dot: "bg-blue-500",
+  },
+  operador: {
+    label: "Operador",
+    badge: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50",
+    dot: "bg-amber-500",
+  },
+  cajero: {
+    label: "Cajero",
+    badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50",
+    dot: "bg-emerald-500",
+  },
 };
 
 function NavbarApp() {
@@ -77,15 +100,23 @@ function NavbarApp() {
   // Ocultar elementos si estamos en el login
   const isAuthRoute = location.pathname === '/' || location.pathname === '/registro' || location.pathname === '/recuperarPassword';
 
+  if (isAuthRoute) return null;
+
+  const rolInfo = ROL_CONFIG[user?.rol] || {
+    label: user?.rol || "Usuario",
+    badge: "bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border-slate-200 dark:border-zinc-700",
+    dot: "bg-slate-400",
+  };
+
   return (
     <>
       <nav 
-        className="fixed top-0 z-[10000] w-full h-16 bg-blue-600 dark:bg-blue-800 border-b border-blue-700 dark:border-blue-900 transition-colors shadow-lg"
+        className="fixed top-0 z-[10000] w-full h-16 bg-blue-600 dark:bg-blue-700 border-b border-blue-700 dark:border-blue-800 transition-colors shadow-sm select-none"
         style={{ WebkitAppRegion: "drag" }}
       >
         <div className="flex items-center justify-between h-full pl-4 pr-0">
           
-          {/* ── LADO IZQUIERDO ── */}
+          {/* ── LADO IZQUIERDO: LOGO E IDENTIDAD ── */}
           <div className="flex items-center justify-start gap-3">
             <button 
               data-drawer-target="logo-sidebar" 
@@ -99,51 +130,56 @@ function NavbarApp() {
             </button>
 
             <div className="flex items-center gap-3 pointer-events-none select-none">
-              <img src={logoSrc} className="h-11 w-auto drop-shadow-md" alt="Logo" />
+              <img src={logoSrc} className="h-10 w-auto drop-shadow-md" alt="Logo" />
               <div className="flex flex-col">
-                <span className="text-xl font-black tracking-tight text-white hidden sm:block leading-none">
+                <span className="text-base sm:text-lg font-black tracking-tight text-white hidden sm:block leading-tight">
                   AGUA DE VILLA PESQUEIRA
                 </span>
-                <span className="text-[10px] font-bold text-blue-100 hidden sm:block uppercase tracking-widest mt-1">
+                <span className="text-[9px] font-bold text-blue-100 hidden sm:block uppercase tracking-widest">
                   SISTEMA DE AGUA POTABLE
                 </span>
               </div>
             </div>
           </div>
 
-          {/* ── LADO DERECHO ── */}
+          {/* ── LADO DERECHO: UTILIDADES Y CONTROLES ── */}
           <div className="flex items-center h-full" style={{ WebkitAppRegion: "no-drag" }}>
             
-            <div className="flex items-center gap-2 pr-3 border-r border-white/10 h-10 mr-2">
+            <div className="flex items-center gap-2 pr-3 border-r border-white/20 h-10 mr-1">
               <BotonActualizacionesNavbar />
               <Config />
               
               {isAuthenticated() && (
-                <Dropdown placement="bottom-end" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl min-w-[240px]">
+                <Dropdown placement="bottom-end" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl min-w-[250px] p-1">
                   <DropdownTrigger>
                     <button className="flex items-center outline-none transition-transform hover:scale-105 active:scale-95 ml-1">
                       <Avatar
                         isBordered
                         color="primary"
-                        className="w-9 h-9 border-2 border-white/80 shadow"
+                        className="w-9 h-9 border-2 border-white/90 shadow-sm"
                         src={avatarSrc || AvatarPerfil}
                       />
                     </button>
                   </DropdownTrigger>
                   
-                  <DropdownMenu aria-label="Acciones de perfil" itemClasses={{ base: "rounded-lg" }}>
+                  <DropdownMenu aria-label="Acciones de perfil" itemClasses={{ base: "rounded-xl" }}>
                     <DropdownItem
                       key="profile"
-                      className="h-16 gap-2 opacity-100 mb-2 pointer-events-none"
+                      className="h-auto py-2 opacity-100 mb-1 pointer-events-none"
                       textValue="Perfil"
                     >
-                      <div className="flex items-center gap-3 p-1 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-inner w-full">
+                      <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800 w-full">
                           <Avatar src={avatarSrc || AvatarPerfil} size="sm" className="shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <p className="font-bold text-sm text-slate-800 dark:text-zinc-100 truncate">{user?.nombre || "Usuario"}</p>
-                            <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 truncate mt-0.5">
-                                {user?.correo || "Sin correo"}
+                            <p className="font-bold text-sm text-slate-800 dark:text-zinc-100 truncate leading-tight">
+                              {user?.nombre || "Usuario"}
                             </p>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${rolInfo.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${rolInfo.dot}`} />
+                                {rolInfo.label}
+                              </span>
+                            </div>
                           </div>
                       </div>
                     </DropdownItem>
@@ -152,7 +188,7 @@ function NavbarApp() {
                       key="settings"
                       startContent={<HiOutlineUser className="text-lg text-slate-400" />}
                       onPress={() => handleNavigation("/perfil", "Mi Perfil")}
-                      className="hover:bg-slate-50 dark:hover:bg-zinc-800"
+                      className="hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold"
                     >
                       <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Mi Perfil</span>
                     </DropdownItem>
@@ -162,7 +198,7 @@ function NavbarApp() {
                         key="configurations"
                         startContent={<HiOutlineCog className="text-lg text-slate-400" />}
                         onPress={() => handleNavigation("/administrador", "Administrador")}
-                        className="hover:bg-slate-50 dark:hover:bg-zinc-800"
+                        className="hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold"
                       >
                         <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Panel de Administrador</span>
                       </DropdownItem>
@@ -172,16 +208,16 @@ function NavbarApp() {
                       key="help"
                       startContent={<HiOutlineQuestionMarkCircle className="text-lg text-slate-400" />}
                       onPress={() => handleNavigation("/ayuda", "Centro de Ayuda")}
-                      className="hover:bg-slate-50 dark:hover:bg-zinc-800"
+                      className="hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold"
                     >
                       <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Centro de Ayuda</span>
                     </DropdownItem>
 
-                    {/* AQUI DISPARAMOS EL MODAL EN LUGAR DE CERRAR SESIÓN DIRECTO */}
+                    {/* DISPARADOR DE MODAL CERRAR SESIÓN */}
                     <DropdownItem
                       key="logout"
                       color="danger"
-                      className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 mt-2 border-t border-slate-100 dark:border-zinc-800 pt-2 rounded-t-none"
+                      className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 mt-1 border-t border-slate-100 dark:border-zinc-800 pt-2 rounded-t-none"
                       startContent={<HiOutlineLogout className="text-lg" />}
                       onPress={() => setOpenLogoutModal(true)}
                     >
@@ -193,30 +229,30 @@ function NavbarApp() {
               )}
             </div>
 
-            {/* Botones de Ventana */}
+            {/* ── BOTONES DE CONTROL DE VENTANA (ELECTRON) ── */}
             <div className="flex h-full text-white/90">
               <button
                 onClick={handleMinimize}
-                className="h-full w-12 flex items-center justify-center hover:bg-white/10 transition-colors focus:outline-none"
+                className="h-full w-12 flex items-center justify-center hover:bg-white/15 transition-colors focus:outline-none active:bg-white/25"
                 title="Minimizar"
               >
-                <VscChromeMinimize size={16} />
+                <VscChromeMinimize size={15} />
               </button>
 
               <button
                 onClick={handleMaximize}
-                className="h-full w-12 flex items-center justify-center hover:bg-white/10 transition-colors focus:outline-none"
+                className="h-full w-12 flex items-center justify-center hover:bg-white/15 transition-colors focus:outline-none active:bg-white/25"
                 title="Maximizar"
               >
-                <VscChromeMaximize size={16} />
+                <VscChromeMaximize size={15} />
               </button>
 
               <button
                 onClick={() => setOpenCloseAppModal(true)}
-                className="h-full w-12 flex items-center justify-center hover:bg-red-600 transition-colors focus:outline-none"
-                title="Cerrar App"
+                className="h-full w-12 flex items-center justify-center hover:bg-rose-600 active:bg-rose-700 transition-colors focus:outline-none"
+                title="Cerrar AGUA-VP"
               >
-                <VscChromeClose size={16} />
+                <VscChromeClose size={15} />
               </button>
             </div>
 
@@ -235,30 +271,28 @@ function NavbarApp() {
         <Modal.Header />
         <Modal.Body>
           <div className="text-center p-6">
-            <div className="w-14 h-14 bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center mx-auto mb-4">
-              <HiOutlineLogout className="w-8 h-8" />
+            <div className="w-14 h-14 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <HiOutlineLogout className="w-7 h-7" />
             </div>
-            <h3 className="mb-2 text-base font-black text-slate-800 dark:text-zinc-100">
+            <h3 className="mb-2 text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
               ¿Cerrar Sesión?
             </h3>
             <p className="mb-6 text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed max-w-xs mx-auto">
               Tendrás que volver a ingresar tus credenciales para acceder a tu panel de administración.
             </p>
             <div className="flex flex-col gap-2">
-              <Button
-                color="warning"
+              <button
                 onClick={handleLogout}
-                className="font-bold h-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white"
+                className="font-black h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-transform active:scale-95 text-xs uppercase tracking-wider"
               >
                 Sí, cerrar sesión
-              </Button>
-              <Button
-                color="gray"
+              </button>
+              <button
                 onClick={() => setOpenLogoutModal(false)}
-                className="font-bold h-11 rounded-xl text-slate-500"
+                className="font-bold h-11 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-colors text-xs"
               >
                 Cancelar
-              </Button>
+              </button>
             </div>
           </div>
         </Modal.Body>
@@ -275,30 +309,28 @@ function NavbarApp() {
         <Modal.Header />
         <Modal.Body>
           <div className="text-center p-6">
-            <div className="w-14 h-14 bg-red-500/10 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CloseAppModal className="w-8 h-8" />
+            <div className="w-14 h-14 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <CloseAppModal className="w-7 h-7" />
             </div>
-            <h3 className="mb-2 text-base font-black text-slate-800 dark:text-zinc-100">
+            <h3 className="mb-2 text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100">
               ¿Cerrar AGUA-VP?
             </h3>
             <p className="mb-6 text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed max-w-xs mx-auto">
               Estás a punto de salir del sistema. Se perderán los cambios que no se hayan guardado.
             </p>
             <div className="flex flex-col gap-2">
-              <Button
-                color="failure"
+              <button
                 onClick={handleClose}
-                className="font-bold h-11 rounded-xl bg-red-600 hover:bg-red-700 text-white"
+                className="font-black h-11 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-transform active:scale-95 text-xs uppercase tracking-wider"
               >
                 Sí, salir del sistema
-              </Button>
-              <Button
-                color="gray"
+              </button>
+              <button
                 onClick={() => setOpenCloseAppModal(false)}
-                className="font-bold h-11 rounded-xl text-slate-500"
+                className="font-bold h-11 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-colors text-xs"
               >
                 Cancelar
-              </Button>
+              </button>
             </div>
           </div>
         </Modal.Body>
