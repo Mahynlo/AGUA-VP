@@ -114,6 +114,8 @@ export default function PanelGestionRuta({
   const skipUpdateRef = useRef(false);
 
   useEffect(() => {
+    if (initializedRef.current) return;
+
     if (
       puntosRutaInicial &&
       puntosRutaInicial.length > 0 &&
@@ -124,13 +126,6 @@ export default function PanelGestionRuta({
       if (items.length > 0) {
         initializedRef.current = true;
         skipUpdateRef.current = true;
-        items = items.sort((a, b) =>
-          (a.clienteData.numero_predio || "").localeCompare(
-            b.clienteData.numero_predio || "",
-            undefined,
-            { numeric: true }
-          )
-        );
         setListaItems(items);
       }
     }
@@ -266,10 +261,17 @@ export default function PanelGestionRuta({
   }, []);
 
   const handleReiniciar = useCallback(() => {
-    setListaItems([]);
-    setExpandidos(new Set());
-    reiniciarRuta?.();
-  }, [reiniciarRuta]);
+    if (modoEdicion && puntosRutaInicial && puntosRutaInicial.length > 0) {
+      const items = reconstruirLista(puntosRutaInicial, allMedidores, allClientes);
+      setListaItems(items);
+      setExpandidos(new Set());
+      reiniciarRuta?.();
+    } else {
+      setListaItems([]);
+      setExpandidos(new Set());
+      reiniciarRuta?.();
+    }
+  }, [modoEdicion, puntosRutaInicial, allMedidores, allClientes, reiniciarRuta]);
 
   const totalMedidores = useMemo(
     () => listaItems.reduce((s, i) => s + i.medidores.length, 0),
