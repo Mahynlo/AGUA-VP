@@ -140,10 +140,11 @@ export function RutasProvider({ children }) {
     // Función externa para actualizar rutas con período opcional
     const actualizarRutas = useCallback(async (periodo = obtenerPeriodoActual()) => {
         await fetchRutas(periodo);
-    }, [fetchRutas]);
+        await actualizarEstadoPeriodos();
+    }, [fetchRutas, actualizarEstadoPeriodos]);
 
     // Función para obtener información detallada de una ruta específica
-    const obtenerInfoRuta = useCallback(async (rutaId) => {
+    const obtenerInfoRuta = useCallback(async (rutaId, periodo = null) => {
         try {
             // NO modificar el loading state global para peticiones específicas
             const token_session = localStorage.getItem("token");
@@ -151,18 +152,17 @@ export function RutasProvider({ children }) {
                 throw new Error("No se encontró token de sesión");
             }
 
-            const data = await window.api.listarRutasInfoMedidores(token_session, rutaId);
+            const periodoQuery = periodo || periodoActual;
+            const data = await window.api.listarRutasInfoMedidores(token_session, rutaId, periodoQuery);
             if (!data || !data.ruta) {
                 throw new Error("La ruta no se encontró o no tiene medidores asignados");
             }
-            //console.log("Información de la ruta obtenida context:", data.ruta);
             return data.ruta;
         } catch (error) {
             console.error("❌ Error al obtener información de la ruta:", error);
             throw error;
         }
-        // NO modificar loading state global aquí
-    }, []);
+    }, [periodoActual]);
 
     // Función para actualización optimista del progreso
     const actualizarProgresoRuta = useCallback((rutaId, nuevoTotal = null) => {

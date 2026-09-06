@@ -71,8 +71,8 @@ const api = {
   listarRutas: async (token_session, params) => {
     return await ipcRenderer.invoke("listar-rutas", token_session, params);
   },
-  listarRutasInfoMedidores: async (token_session, id_ruta) => {
-    return await ipcRenderer.invoke("listar-rutas-info-medidores", token_session, id_ruta);
+  listarRutasInfoMedidores: async (token_session, id_ruta, periodo) => {
+    return await ipcRenderer.invoke("listar-rutas-info-medidores", token_session, id_ruta, periodo);
   },
 
   // Fetch de lecturas

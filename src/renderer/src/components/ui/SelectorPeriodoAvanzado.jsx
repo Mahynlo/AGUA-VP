@@ -64,7 +64,8 @@ const SelectorPeriodoAvanzado = ({
 
   const infoActual = periodosInfo[value];
   const esSiguiente = siguientePeriodo && value === siguientePeriodo;
-  const esCompletado = (infoActual?.completado || infoActual?.registrado || (ultimoPeriodoRegistrado && value <= ultimoPeriodoRegistrado && infoActual));
+  const esCompletado = infoActual?.completado || infoActual?.estado === 'completado';
+  const esParcial = infoActual?.estado === 'parcial' || (!esCompletado && Number(infoActual?.totalLecturas || 0) > 0);
   const tieneFacturasActual = infoActual?.tieneFacturas;
 
   const handleNavegar = (nuevoPeriodo) => {
@@ -128,7 +129,13 @@ const SelectorPeriodoAvanzado = ({
               {esCompletado && !tieneFacturasActual && !esSiguiente && (
                 <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  Registrado
+                  Completado
+                </span>
+              )}
+              {esParcial && !tieneFacturasActual && !esSiguiente && (
+                <span className="hidden sm:inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-500/20 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  En Progreso
                 </span>
               )}
             </div>
@@ -221,9 +228,10 @@ const SelectorPeriodoAvanzado = ({
               {periodosFiltrados.map((periodo) => {
                 const infoMes = periodosInfo[periodo.value];
                 const isSig = siguientePeriodo && periodo.value === siguientePeriodo;
-                const isReg = infoMes?.completado || infoMes?.registrado || (ultimoPeriodoRegistrado && periodo.value <= ultimoPeriodoRegistrado && infoMes);
                 const hasFacturas = infoMes?.tieneFacturas;
                 const isVencido = infoMes?.vencida;
+                const isCompletado = infoMes?.completado || infoMes?.estado === 'completado';
+                const isParcial = infoMes?.estado === 'parcial' || (!isCompletado && Number(infoMes?.totalLecturas || 0) > 0);
 
                 return (
                   <SelectItem 
@@ -248,9 +256,13 @@ const SelectorPeriodoAvanzado = ({
                             ✓ Facturado (Vigente)
                           </span>
                         )
-                      ) : isReg ? (
+                      ) : isCompletado ? (
                         <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 ml-2">
-                          ✓ Registrado
+                          ✓ Completado
+                        </span>
+                      ) : isParcial ? (
+                        <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 ml-2">
+                          ● En Progreso
                         </span>
                       ) : null}
                     </div>

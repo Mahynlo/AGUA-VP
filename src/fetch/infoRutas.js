@@ -1,6 +1,6 @@
 import { leerToken } from '../appConfig/authApp';
 
-export const fetchRutasInfoMedidores = async (token_session, id_ruta) => {
+export const fetchRutasInfoMedidores = async (token_session, id_ruta, periodo) => {
   try {
     const token_app = leerToken();
     if (!token_app) {
@@ -12,9 +12,9 @@ export const fetchRutasInfoMedidores = async (token_session, id_ruta) => {
       return [];
     }
 
-
-    // Construir la URL con el período
-    const url = `${import.meta.env.VITE_API_FETCH_RUTAS_INFO_MEDIDORES}/${id_ruta}/medidores`;
+    // Construir la URL con el período si se proporciona
+    const queryParams = periodo ? `?periodo=${encodeURIComponent(periodo)}` : '';
+    const url = `${import.meta.env.VITE_API_FETCH_RUTAS_INFO_MEDIDORES}/${id_ruta}/medidores${queryParams}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -30,7 +30,6 @@ export const fetchRutasInfoMedidores = async (token_session, id_ruta) => {
     }
 
     const data = await response.json();
-    console.log("Datos de medidores y rutas obtenidos:", data);
     return data;
   } catch (error) {
     console.error("Error al obtener información de rutas y medidores:", error);
