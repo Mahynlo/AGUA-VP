@@ -37,31 +37,32 @@ const largeModalTheme = {
     footer: { base: "flex items-center justify-between gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 shrink-0" }
 };
 
-// Componente separado para el input de lectura (UI Premium)
+// Componente separado para el input de lectura (UI Premium - Solo Enteros m³)
 const LecturaInput = React.memo(React.forwardRef(
   ({ value, onChange, clienteId, onSave, isLoading, error, autoFocus, lecturaAnterior, capacidadMaxima = 99999, onConfirmarVueltaCero, onCorregirLectura, periodoTexto }, ref) => {
 
   const consumoCalculado = useMemo(() => {
-    const actual = parseFloat(value);
-    if (isNaN(actual) || value === "") return null;
+    if (value === "" || isNaN(parseInt(value, 10))) return null;
+    const actual = parseInt(value, 10);
     if (lecturaAnterior === null || lecturaAnterior === undefined) return 0;
-    const anterior = parseFloat(lecturaAnterior);
-    return parseFloat((actual - anterior).toFixed(4));
+    const anterior = Math.round(Number(lecturaAnterior));
+    return Math.max(0, actual - anterior);
   }, [value, lecturaAnterior]);
 
   const consumoCalculadoRollover = useMemo(() => {
-    const actual = parseFloat(value);
-    if (isNaN(actual) || value === "" || lecturaAnterior === null || lecturaAnterior === undefined) return null;
-    const anterior = parseFloat(lecturaAnterior);
-    return parseFloat(((capacidadMaxima - anterior) + actual).toFixed(4));
+    if (value === "" || isNaN(parseInt(value, 10)) || lecturaAnterior === null || lecturaAnterior === undefined) return null;
+    const actual = parseInt(value, 10);
+    const anterior = Math.round(Number(lecturaAnterior));
+    const cap = Math.round(Number(capacidadMaxima));
+    return Math.max(0, ((cap - anterior) + actual));
   }, [value, lecturaAnterior, capacidadMaxima]);
 
   const valorMenorQueAnterior =
     lecturaAnterior !== null && lecturaAnterior !== undefined &&
-    value !== "" && !isNaN(parseFloat(value)) &&
-    parseFloat(value) < parseFloat(lecturaAnterior);
+    value !== "" && !isNaN(parseInt(value, 10)) &&
+    parseInt(value, 10) < Math.round(Number(lecturaAnterior));
 
-  const fmtM3 = (v) => Number(v).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  const fmtM3 = (v) => Number(v).toLocaleString('es-MX', { maximumFractionDigits: 0 });
 
   return (
     <div className="space-y-4">
@@ -112,18 +113,22 @@ const LecturaInput = React.memo(React.forwardRef(
             </span>
             <input
             ref={ref}
-            type="number"
-            min="0"
-              max={capacidadMaxima}
-            step="0.01"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={value}
             onChange={onChange}
-            placeholder={lecturaAnterior !== null && lecturaAnterior !== undefined ? String(Number(lecturaAnterior)) : "0.00"}
+            placeholder={lecturaAnterior !== null && lecturaAnterior !== undefined ? String(Math.round(Number(lecturaAnterior))) : "0"}
             disabled={isLoading}
             autoFocus={autoFocus}
             onKeyDown={(e) => {
-                if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') e.preventDefault();
-                if (e.key === 'Enter') { e.preventDefault(); if (!valorMenorQueAnterior) onSave(); }
+                if (e.key === '.' || e.key === ',' || e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                  e.preventDefault();
+                }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (!valorMenorQueAnterior) onSave();
+                }
             }}
             className={`
                 w-full pl-14 pr-16 py-4 text-3xl font-black rounded-2xl transition-all duration-200 focus:outline-none focus:ring-4
@@ -168,7 +173,7 @@ const LecturaInput = React.memo(React.forwardRef(
             <HiArrowRight className="text-slate-300" />
             <div className="text-right">
               <p className="text-[10px] text-orange-500 uppercase tracking-wider font-bold mb-0.5">Ingresaste</p>
-              <p className="font-black text-lg text-orange-600 dark:text-orange-400">{fmtM3(parseFloat(value))} <span className="text-xs opacity-60">m³</span></p>
+              <p className="font-black text-lg text-orange-600 dark:text-orange-400">{fmtM3(parseInt(value, 10))} <span className="text-xs opacity-60">m³</span></p>
             </div>
           </div>
 
@@ -176,7 +181,7 @@ const LecturaInput = React.memo(React.forwardRef(
             <div>
                 <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">Si el medidor dio vuelta a cero:</p>
                 <p className="text-xs text-indigo-500/70 dark:text-indigo-400/70 mt-0.5 font-medium">
-                ({fmtM3(capacidadMaxima)} − {fmtM3(lecturaAnterior)}) + {fmtM3(parseFloat(value))}
+                ({fmtM3(capacidadMaxima)} − {fmtM3(lecturaAnterior)}) + {fmtM3(parseInt(value, 10))}
                 </p>
             </div>
             <div className="text-right">
@@ -442,27 +447,17 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
   const handleLecturaChange = useCallback((e) => {
     if (!puntoActual) return;
     const medidorId = puntoActual.medidor_id;
-    let value = String(e.target.value || "").replace(',', '.');
+    let value = String(e.target.value || "");
 
-    // Permitir solo números y un punto decimal
-    value = value.replace(/[^\d.]/g, '');
-    const firstDot = value.indexOf('.');
-    if (firstDot !== -1) {
-      value = value.slice(0, firstDot + 1) + value.slice(firstDot + 1).replace(/\./g, '');
-    }
+    // Permitir exclusivamente dígitos enteros (0-9)
+    value = value.replace(/\D/g, '');
 
-    let [entero = "", decimal = ""] = value.split('.');
-    if (entero.length > maxEnterosCapacidad) {
-      entero = entero.slice(0, maxEnterosCapacidad);
+    if (value.length > maxEnterosCapacidad) {
+      value = value.slice(0, maxEnterosCapacidad);
     }
-    if (decimal.length > 4) {
-      decimal = decimal.slice(0, 4);
-    }
-
-    value = decimal !== "" ? `${entero}.${decimal}` : entero;
 
     if (value !== "" && !Number.isNaN(Number(value)) && Number(value) > capMaxPuntoNum) {
-      value = String(capMaxPuntoNum);
+      value = String(Math.floor(capMaxPuntoNum));
     }
 
     setLecturas(prev => ({ ...prev, [medidorId]: value }));
@@ -489,13 +484,13 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
       return;
     }
 
-    const lecturaNum = parseFloat(lectura);
+    const lecturaNum = parseInt(lectura, 10);
     if (isNaN(lecturaNum) || lecturaNum < 0) {
       setErroresLectura(prev => ({ ...prev, [medidorId]: "La lectura no puede ser negativa" }));
       return;
     }
     if (lecturaNum > capMaxPuntoNum) {
-      setErroresLectura(prev => ({ ...prev, [medidorId]: `La lectura no puede exceder ${capMaxPuntoNum.toLocaleString('es-MX', { maximumFractionDigits: 4 })} m³` }));
+      setErroresLectura(prev => ({ ...prev, [medidorId]: `La lectura no puede exceder ${Math.floor(capMaxPuntoNum).toLocaleString('es-MX')} m³` }));
       return;
     }
 
@@ -523,14 +518,18 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
         });
         setVueltasCero(prev => { const n = { ...prev }; delete n[medidorId]; return n; });
         const lectAnteriorReal = response.detalles?.lectura_anterior !== undefined
-            ? response.detalles.lectura_anterior
-            : lectAnterior;
+            ? Math.round(Number(response.detalles.lectura_anterior))
+            : (lectAnterior !== null ? Math.round(Number(lectAnterior)) : null);
+        const consumoFinal = response.detalles?.consumo_m3 !== undefined
+            ? Math.round(Number(response.detalles.consumo_m3))
+            : (lectAnteriorReal !== null ? Math.max(0, lecturaNum - lectAnteriorReal) : lecturaNum);
+
         setLecturasRegistradas(prev => ({
           ...prev,
           [medidorId]: {
             lectura_anterior: lectAnteriorReal,
             lectura_actual: response.detalles?.lectura_actual ?? lecturaNum,
-            consumo_m3: response.detalles?.consumo_m3 ?? (lectAnteriorReal !== null ? Math.max(0, lecturaNum - lectAnteriorReal) : lecturaNum),
+            consumo_m3: consumoFinal,
             lecturaId: response.lecturaID,
             vuelta_cero: esVueltaCero
           }
@@ -586,13 +585,13 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
     const lecturaId = infoAnterior?.lecturaId ?? puntoActual.lectura_id ?? puntoActual.ultima_lectura_id ?? null;
     if (!lecturaValue || !lecturaId) return;
 
-    const nuevaLectura = parseFloat(lecturaValue);
+    const nuevaLectura = parseInt(lecturaValue, 10);
     if (isNaN(nuevaLectura) || nuevaLectura < 0) {
       setErroresLectura(prev => ({ ...prev, [medidorId]: "La lectura no puede ser negativa" }));
       return;
     }
     if (nuevaLectura > capMaxPuntoNum) {
-      setErroresLectura(prev => ({ ...prev, [medidorId]: `La lectura no puede exceder ${capMaxPuntoNum.toLocaleString('es-MX', { maximumFractionDigits: 4 })} m³` }));
+      setErroresLectura(prev => ({ ...prev, [medidorId]: `La lectura no puede exceder ${Math.floor(capMaxPuntoNum).toLocaleString('es-MX')} m³` }));
       return;
     }
 
@@ -604,10 +603,11 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
       const tokensession = localStorage.getItem("token");
       let nuevoConsumo;
       if (lecturaAnteriorCalculo !== null) {
+        const lectAntNum = Math.round(Number(lecturaAnteriorCalculo));
         if (fuConRollover) {
-          nuevoConsumo = parseFloat(((capMaxPuntoNum - lecturaAnteriorCalculo) + nuevaLectura).toFixed(4));
+          nuevoConsumo = Math.max(0, (Math.round(capMaxPuntoNum) - lectAntNum) + nuevaLectura);
         } else {
-          nuevoConsumo = Math.max(0, parseFloat((nuevaLectura - lecturaAnteriorCalculo).toFixed(4)));
+          nuevoConsumo = Math.max(0, nuevaLectura - lectAntNum);
         }
       } else {
         nuevoConsumo = nuevaLectura;
@@ -623,7 +623,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
         setLecturasRegistradas(prev => ({
           ...prev,
           [medidorId]: {
-            ...(prev[medidorId] ?? { lectura_anterior: lecturaAnteriorCalculo, lecturaId }),
+            ...(prev[medidorId] ?? { lectura_anterior: lecturaAnteriorCalculo !== null ? Math.round(Number(lecturaAnteriorCalculo)) : null, lecturaId }),
             lectura_actual: nuevaLectura,
             consumo_m3: nuevoConsumo
           }
@@ -935,20 +935,20 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
                                             <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
                                             <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
                                                 {lecturasRegistradas[puntoActual.medidor_id].lectura_anterior !== null
-                                                    ? `${Number(lecturasRegistradas[puntoActual.medidor_id].lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                                                    : '0.00'}
+                                                    ? `${Number(lecturasRegistradas[puntoActual.medidor_id].lectura_anterior).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
+                                                    : '0'}
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
                                             <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
                                             <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
-                                                {Number(lecturasRegistradas[puntoActual.medidor_id].lectura_actual).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                {Number(lecturasRegistradas[puntoActual.medidor_id].lectura_actual).toLocaleString('es-MX', { maximumFractionDigits: 2 })}
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
                                             <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
                                             <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
-                                                +{Number(lecturasRegistradas[puntoActual.medidor_id].consumo_m3 ?? 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                +{Number(lecturasRegistradas[puntoActual.medidor_id].consumo_m3 ?? 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })}
                                             </span>
                                         </div>
                                         {lecturasRegistradas[puntoActual.medidor_id].vuelta_cero && (
@@ -964,26 +964,26 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
                                             <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
                                             <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
                                                 {puntoActual?.lectura_anterior !== null && puntoActual?.lectura_anterior !== undefined
-                                                    ? `${Number(puntoActual.lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+                                                    ? `${Number(puntoActual.lectura_anterior).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
                                                     : puntoActual?.ultima_lectura_anterior !== null && puntoActual?.ultima_lectura_anterior !== undefined
-                                                        ? `${Number(puntoActual.ultima_lectura_anterior).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                                                        : '0.00'}
+                                                        ? `${Number(puntoActual.ultima_lectura_anterior).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
+                                                        : '0'}
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
                                             <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
                                             <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
                                                 {puntoActual?.lectura_actual !== null && puntoActual?.lectura_actual !== undefined
-                                                    ? `${Number(puntoActual.lectura_actual).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
+                                                    ? `${Number(puntoActual.lectura_actual).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
                                                     : puntoActual?.lectura_anterior_disponible !== null && puntoActual?.lectura_anterior_disponible !== undefined
-                                                        ? `${Number(puntoActual.lectura_anterior_disponible).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`
-                                                        : '0.00'}
+                                                        ? `${Number(puntoActual.lectura_anterior_disponible).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
+                                                        : '0'}
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
                                             <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
                                             <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
-                                                +{Number(puntoActual?.consumo_m3 ?? 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                                                +{Number(puntoActual?.consumo_m3 ?? 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })}
                                             </span>
                                         </div>
                                     </div>
