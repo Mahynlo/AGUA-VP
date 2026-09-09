@@ -1,32 +1,43 @@
 ---
-titulo: "Liberar Medidor"
+titulo: "Liberar y Reemplazar Medidores"
 seccion: "clientes"
-orden: 6
-descripcion: "Aprende cómo liberar un medidor para usarlo con otro cliente"
-tags: ["cliente", "medidor", "liberar", "desasignar"]
-tipo: "funcionamiento"
+orden: 4
+descripcion: "Cuándo y cómo desvincular un medidor de un cliente manteniendo el historial de lecturas y cobros intacto."
+tags: ["medidores", "liberar", "desasignar", "reemplazo", "mantenimiento"]
 ---
-# Liberar un Medidor
 
-Liberar un medidor significa quitarlo del cliente que lo tenía asignado para que pueda usarse con otro registro.
+# 🔄 Liberar y Reemplazar Medidores
 
-## Cuándo conviene hacerlo
+**Liberar un medidor** es la operación mediante la cual se retira el vínculo físico entre un equipo de micromedición y el contrato de un cliente, regresando el medidor al inventario general sin perder la historia contable.
 
-- Cuando el cliente se cambió de casa.
-- Cuando el medidor fue reemplazado por otro nuevo.
-- Cuando el medidor se registró por error en la ficha equivocada.
+---
 
-## Pasos
+## 🧐 ¿Cuándo se debe Liberar un Medidor?
 
-1. Entre a la **tabla de clientes**.
-2. Abra la ficha del cliente con el botón de edición.
-3. Busque la sección **Gestión de Medidor**.
-4. Ubique el medidor que desea liberar.
-5. Presione el botón **Liberar**.
-6. Confirme con **Actualizar Cliente**.
+* **Reemplazo por Avería**: El medidor físico sufrió rotura de carátula, fuga o dejó de girar y se instalará un medidor nuevo.
+* **Baja de Toma o Demolición**: El predio queda deshabitado o cancelado y el medidor físico se retira para inventario.
+* **Corrección de Registro**: El operador asignó por equivocación un número de serie que correspondía a otro domicilio.
 
-## Después de liberar
+---
 
-El medidor quedará disponible para asignarlo a otro cliente. Si el cliente anterior sigue usando otro equipo, puede dejarlo registrado con el nuevo medidor sin perder su historial.
+## 🛠️ Procedimiento de Liberación Paso a Paso
 
-> Esta opción es útil para mantener ordenado el padrón y evitar duplicados.
+1. En el **Directorio de Clientes**, busque al usuario correspondiente y haga clic en **Editar (✏️)**.
+2. En la sección **Gestión de Medidor**, observe la tarjeta del equipo en la lista de **Medidores Asignados**.
+3. Presione el botón rojo **"Liberar Medidor"** junto al equipo.
+
+![Botón de Liberar Medidor en la sección de gestión del cliente](../imagenes/clientes/boton_liberar_medidor_cliente.png)
+
+4. El medidor se marcará visualmente para desvinculación.
+5. Presione el botón **"Actualizar Cliente"** en el pie del modal para formalizar la liberación.
+
+---
+
+## 🛡️ Integridad de Datos Históricos
+
+> [!NOTE]
+> **Tranquilidad Contable**: Liberar un medidor **NO borra** las lecturas tomadas en los meses anteriores ni altera las facturas emitidas. Todo el historial de consumo de ese medidor queda registrado para consultas históricas y auditorías.
+
+![Estado del medidor devuelto a Libre en el inventario general](../imagenes/clientes/medidor_liberado_inventario.png)
+
+El medidor liberado pasará inmediatamente al estado **"Libre" (🟢)** en el módulo de Medidores y podrá ser asignado a una nueva toma cuando sea necesario.

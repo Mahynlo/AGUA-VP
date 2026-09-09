@@ -12,7 +12,8 @@ import {
   HiExclamationCircle,
   HiLink,
   HiZoomIn,
-  HiX
+  HiX,
+  HiPhotograph
 } from "react-icons/hi";
 
 // Función utilitaria para generar IDs consistentes a partir de títulos
@@ -36,14 +37,19 @@ export const extractTextFromChildren = (node) => {
   return '';
 };
 
-// Componente para imágenes con soporte de rutas relativas y Lightbox Zoom
+// Componente para imágenes con soporte de rutas relativas, Lightbox Zoom y Placeholder Informativo
 const DocImage = ({ src, alt, ...props }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imgSrc, setImgSrc] = useState(src);
   const [loading, setLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (!src) return;
+    setHasError(false);
+    if (!src) {
+      setHasError(true);
+      return;
+    }
     if (src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) {
       setImgSrc(src);
       return;
@@ -56,19 +62,50 @@ const DocImage = ({ src, alt, ...props }) => {
         .then((res) => {
           if (res?.success && res.dataUri) {
             setImgSrc(res.dataUri);
+            setHasError(false);
           } else {
-            setImgSrc(src);
+            setHasError(true);
           }
         })
         .catch((err) => {
           console.warn("Error cargando imagen vía IPC:", err);
-          setImgSrc(src);
+          setHasError(true);
         })
         .finally(() => setLoading(false));
     } else {
       setImgSrc(src);
     }
   }, [src]);
+
+  // Si la imagen aún no existe físicamente en disco, renderizamos un indicador visual profesional
+  if (hasError) {
+    const filename = src?.split(/[/|\\]/).pop() || "captura.png";
+    return (
+      <div className="my-6 p-4 sm:p-5 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20 shadow-2xs group transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-800">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3.5">
+          <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 border border-blue-200/60 dark:border-blue-800/40">
+            <HiPhotograph className="w-6 h-6" />
+          </div>
+          <div className="flex-1 min-w-0 text-center sm:text-left space-y-1">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-2xs">
+                📷 Espacio Reservado para Captura
+              </span>
+              <code className="text-[10px] font-mono text-slate-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-900 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-800">
+                {filename}
+              </code>
+            </div>
+            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-zinc-200 leading-snug">
+              {alt || "Captura de pantalla ilustrativa del sistema"}
+            </p>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 truncate">
+              Ruta destino: <span className="font-mono text-blue-600 dark:text-blue-400">{src}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -78,7 +115,7 @@ const DocImage = ({ src, alt, ...props }) => {
           className="relative group cursor-zoom-in overflow-hidden rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 shadow-md hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300"
         >
           {loading ? (
-            <div className="h-64 flex items-center justify-center bg-slate-100 dark:bg-zinc-900 animate-pulse">
+            <div className="h-48 flex items-center justify-center bg-slate-100 dark:bg-zinc-900 animate-pulse">
               <span className="text-xs font-bold text-slate-400">Cargando captura...</span>
             </div>
           ) : (
@@ -86,6 +123,7 @@ const DocImage = ({ src, alt, ...props }) => {
               src={imgSrc}
               alt={alt || "Captura del sistema"}
               loading="lazy"
+              onError={() => setHasError(true)}
               className="w-full h-auto object-contain max-h-[520px] transition-transform duration-300 group-hover:scale-[1.015]"
               {...props}
             />
@@ -196,58 +234,87 @@ const CodeBlock = ({ children, className }) => {
   );
 };
 
+// Limpiar el tag [!TIPO] del árbol de elementos React recursivamente
+const stripCalloutTag = (nodes) => {
+  let stripped = false;
+
+  const clean = (node) => {
+    if (stripped || !node) return node;
+
+    if (typeof node === 'string') {
+      const regex = /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i;
+      if (regex.test(node)) {
+        stripped = true;
+        const cleaned = node.replace(regex, '');
+        return cleaned.trim() === '' ? null : cleaned;
+      }
+      return node;
+    }
+
+    if (Array.isArray(node)) {
+      return node.map(clean).filter(n => n !== null);
+    }
+
+    if (React.isValidElement(node) && node.props?.children) {
+      const newChildren = clean(node.props.children);
+      return React.cloneElement(node, {
+        children: Array.isArray(newChildren) && newChildren.length === 0 ? null : newChildren
+      });
+    }
+
+    return node;
+  };
+
+  return clean(nodes);
+};
+
 // Componente para Blockquotes con soporte de GitHub Callouts ([!NOTE], [!TIP], etc.)
 const CalloutBlockquote = ({ children }) => {
-  const rawChildren = React.Children.toArray(children);
-  const firstChild = rawChildren[0];
-  const firstText = typeof firstChild === 'string' ? firstChild : firstChild?.props?.children;
-  const textStr = Array.isArray(firstText) ? firstText.join('') : String(firstText || '');
+  const fullText = extractTextFromChildren(children).trim();
+  const match = fullText.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
 
-  let calloutType = null;
-  if (textStr.includes('[!NOTE]')) calloutType = 'note';
-  else if (textStr.includes('[!TIP]')) calloutType = 'tip';
-  else if (textStr.includes('[!IMPORTANT]')) calloutType = 'important';
-  else if (textStr.includes('[!WARNING]')) calloutType = 'warning';
-  else if (textStr.includes('[!CAUTION]')) calloutType = 'caution';
+  const calloutType = match ? match[1].toLowerCase() : null;
 
   const config = {
     note: {
       title: 'Nota informativa',
-      icon: <HiInformationCircle className="w-5 h-5 text-blue-500" />,
-      border: 'border-blue-500/60 bg-blue-50/60 dark:bg-blue-950/20 text-blue-900 dark:text-blue-200'
+      icon: <HiInformationCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
+      border: 'border-l-4 border-blue-500 bg-blue-50/80 dark:bg-blue-950/30 text-blue-950 dark:text-blue-200'
     },
     tip: {
       title: 'Consejo práctico',
-      icon: <HiLightBulb className="w-5 h-5 text-emerald-500" />,
-      border: 'border-emerald-500/60 bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200'
+      icon: <HiLightBulb className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
+      border: 'border-l-4 border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-200'
     },
     important: {
       title: 'Importante',
-      icon: <HiExclamation className="w-5 h-5 text-amber-500" />,
-      border: 'border-amber-500/60 bg-amber-50/60 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200'
+      icon: <HiExclamation className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
+      border: 'border-l-4 border-amber-500 bg-amber-50/80 dark:bg-amber-950/30 text-amber-950 dark:text-amber-200'
     },
     warning: {
       title: 'Advertencia',
-      icon: <HiExclamationCircle className="w-5 h-5 text-orange-500" />,
-      border: 'border-orange-500/60 bg-orange-50/60 dark:bg-orange-950/20 text-orange-900 dark:text-orange-200'
+      icon: <HiExclamationCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />,
+      border: 'border-l-4 border-orange-500 bg-orange-50/80 dark:bg-orange-950/30 text-orange-950 dark:text-orange-200'
     },
     caution: {
       title: 'Precaución',
-      icon: <HiExclamationCircle className="w-5 h-5 text-rose-500" />,
-      border: 'border-rose-500/60 bg-rose-50/60 dark:bg-rose-950/20 text-rose-900 dark:text-rose-200'
+      icon: <HiExclamationCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />,
+      border: 'border-l-4 border-rose-500 bg-rose-50/80 dark:bg-rose-950/30 text-rose-950 dark:text-rose-200'
     }
   };
 
   if (calloutType && config[calloutType]) {
     const active = config[calloutType];
+    const cleanedChildren = stripCalloutTag(children);
+
     return (
-      <div className={`border-l-4 rounded-r-2xl p-4 my-6 shadow-sm ${active.border}`}>
-        <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider mb-2">
+      <div className={`rounded-2xl p-4 sm:p-5 my-6 shadow-sm border ${active.border}`}>
+        <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider mb-2.5">
           {active.icon}
           <span>{active.title}</span>
         </div>
-        <div className="text-sm font-medium leading-relaxed prose-p:my-1">
-          {children}
+        <div className="text-sm font-medium leading-relaxed prose-p:my-1 text-slate-800 dark:text-zinc-200">
+          {cleanedChildren}
         </div>
       </div>
     );
@@ -354,6 +421,9 @@ export const MarkdownRenderer = ({ content }) => {
       </a>
     ),
     hr: () => <hr className="my-8 border-slate-200 dark:border-zinc-800" />,
+
+    // ── CITAS Y CALLOUTS / ALERTAS ([!NOTE], [!TIP], etc.) ──
+    blockquote: (props) => <CalloutBlockquote {...props} />,
 
     // ── IMÁGENES CON CAPTION Y LIGHTBOX ZOOM ──
     img: (props) => <DocImage {...props} />,
