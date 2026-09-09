@@ -6,7 +6,7 @@ import {
 import { 
   HiBookOpen, 
   HiSearch, 
-  HiMenu, 
+  HiMenu
 } from "react-icons/hi";
 import 'katex/dist/katex.min.css';
 import { normalizarTexto } from "../../utils/textUtils";
@@ -58,7 +58,9 @@ const AyudaVista = () => {
   // ==========================================
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) setSidebarOpen(true);
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -96,6 +98,14 @@ const AyudaVista = () => {
   const navegarA = useCallback(async (section, fileName) => {
     setSelectedSection(section);
     setSelectedFile(fileName);
+
+    if (!section || !fileName) {
+      setCurrentContent("");
+      setCurrentMetadata({});
+      setCurrentFileIndex(0);
+      if (window.innerWidth < 1024) setSidebarOpen(false);
+      return;
+    }
 
     setSections((prevSections) => {
       const files = prevSections[section] || [];
@@ -308,7 +318,7 @@ const AyudaVista = () => {
   // 5. RENDERIZADO
   // ==========================================
 
-  // Pantalla de carga integrada al diseño Premium
+  // Pantalla de carga
   if (loading) {
     return (
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-zinc-950 select-none">
@@ -328,7 +338,6 @@ const AyudaVista = () => {
   const totalDocs = Object.values(sections).reduce((acc, f) => acc + f.length, 0);
 
   return (
-    // CONTENEDOR PRINCIPAL: Ventana Completa e Independiente
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-100/70 dark:bg-zinc-950 select-none">
       <HelpTitleBar onOpenSearch={onOpen} />
 
@@ -343,38 +352,58 @@ const AyudaVista = () => {
         handleSelectResult={handleSelectResult}
       />
       
-      {/* CONTENEDOR DE LA VISTA: Ocupa el espacio restante debajo del titlebar */}
-      <div className="flex-1 flex flex-col overflow-hidden p-2 sm:p-3">
-        <div className="w-full h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm flex flex-col overflow-hidden relative animate-in fade-in duration-300">
+      {/* CONTENEDOR DE LA VISTA DEBAJO DEL TITLEBAR */}
+      <div className="flex-1 flex flex-col overflow-hidden p-1.5 sm:p-2.5">
+        <div className="w-full h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm flex flex-col overflow-hidden relative">
           
-          {/* ── HEADER SUPERIOR ── */}
-          <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0 bg-white dark:bg-zinc-950 z-10">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          {/* ── HEADER SUPERIOR RESPONSIVO ── */}
+          <div className="px-3.5 py-2.5 sm:px-5 sm:py-3 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0 bg-white dark:bg-zinc-950 z-20">
+            <div className="flex items-center justify-between gap-3">
               
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl shrink-0 flex items-center justify-center">
-                  <HiBookOpen className="w-6 h-6" />
+              {/* Izquierda: Botón Toggle Menú (Disponible en TODAS las resoluciones) + Identidad */}
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className={`p-2 rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/30 shrink-0 ${
+                    sidebarOpen
+                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20"
+                      : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  }`}
+                  aria-label={sidebarOpen ? "Ocultar menú lateral" : "Mostrar menú lateral"}
+                  title={sidebarOpen ? "Ocultar menú lateral" : "Mostrar menú lateral"}
+                >
+                  <HiMenu className="w-5 h-5" />
+                </button>
+
+                <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl shrink-0 hidden sm:flex items-center justify-center">
+                  <HiBookOpen className="w-5 h-5" />
                 </div>
-                <div className="flex flex-col">
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
+
+                <div className="flex flex-col min-w-0">
+                  <button 
+                    onClick={() => navegarA(null, null)}
+                    className="text-left text-base sm:text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate"
+                  >
                     Centro de Ayuda
-                  </h1>
-                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
-                    {totalDocs} documentos disponibles en {Object.keys(sections).length} módulos
+                  </button>
+                  <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 truncate hidden sm:block">
+                    {totalDocs} guías en {Object.keys(sections).length} módulos
                   </p>
                 </div>
               </div>
 
-              {/* Barra de Búsqueda Estilo Premium */}
+              {/* Derecha: Botón de Búsqueda Responsivo */}
               <button 
                 onClick={onOpen}
-                className="w-full sm:w-72 h-[42px] flex items-center justify-between px-3.5 bg-slate-100/70 hover:bg-slate-200/70 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-500 dark:text-zinc-400 transition-all duration-200 shadow-sm group focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-100/80 hover:bg-slate-200/70 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-500 dark:text-zinc-400 transition-all shadow-2xs group shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                title="Buscar documentación (Ctrl+K)"
               >
                 <div className="flex items-center gap-2">
                   <HiSearch className="w-4 h-4 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
-                  <span>Buscar documentación...</span>
+                  <span className="hidden sm:inline">Buscar documentación...</span>
+                  <span className="sm:hidden text-xs font-semibold text-slate-600 dark:text-zinc-300">Buscar</span>
                 </div>
-                <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 rounded border border-slate-200 dark:border-zinc-700 shadow-sm">
+                <kbd className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 rounded border border-slate-200 dark:border-zinc-700 shadow-2xs">
                   Ctrl+K
                 </kbd>
               </button>
@@ -382,66 +411,73 @@ const AyudaVista = () => {
             </div>
           </div>
 
-          {/* ── LAYOUT DE CUERPO (Sidebar + Contenido) ── */}
+          {/* ── CUERPO DE LA VISTA (Sidebar + Contenido) ── */}
           <div className="flex flex-1 overflow-hidden relative">
             
-            {/* Botón Móvil Sidebar */}
-            {!sidebarOpen && (
-              <button 
-                  className="absolute top-4 left-4 z-50 lg:hidden p-2 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl shadow-md border border-slate-200 dark:border-zinc-700" 
-                  onClick={() => setSidebarOpen(true)}
-              >
-                <HiMenu className="w-4 h-4" />
-              </button>
+            {/* Sidebar en Escritorio (Colapsable) */}
+            {sidebarOpen && (
+              <div className="hidden lg:block w-64 xl:w-72 shrink-0 h-full animate-in slide-in-from-left-2 duration-200">
+                <DocsSidebar
+                  filteredSections={filteredSections} 
+                  sectionIcons={sectionIcons}
+                  selectedSection={selectedSection}
+                  selectedFile={selectedFile}
+                  navegarA={navegarA}
+                  sidebarOpen={sidebarOpen}
+                  setSidebarOpen={setSidebarOpen}
+                  onOpenSearch={onOpen}
+                />
+              </div>
             )}
 
-            {/* Sidebar */}
-            <div className={`
-              absolute lg:relative z-40 h-full bg-slate-50/50 dark:bg-zinc-900/20 border-r border-slate-100 dark:border-zinc-800/80
-              transition-all duration-300 ease-in-out
-              ${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full lg:w-0 lg:translate-x-0 lg:hidden'}
-            `}>
-              <DocsSidebar
-                filteredSections={filteredSections} 
-                sectionIcons={sectionIcons}
-                selectedSection={selectedSection}
-                selectedFile={selectedFile}
-                navegarA={navegarA}
-                sidebarOpen={sidebarOpen}
-                setSidebarOpen={setSidebarOpen}
-                onOpenSearch={onOpen}
-              />
-            </div>
-
-            {/* Overlay Móvil */}
+            {/* Drawer Móvil / Pantallas Reducidas (Confinado estrictamente bajo el header, NUNCA tapa el navbar) */}
             {sidebarOpen && (
-              <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 z-30 lg:hidden animate-in fade-in duration-200" onClick={() => setSidebarOpen(false)} />
+              <div className="lg:hidden">
+                {/* Backdrop Oscuro */}
+                <div 
+                  className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 z-30 animate-in fade-in duration-200" 
+                  onClick={() => setSidebarOpen(false)} 
+                />
+                {/* Drawer Flotante */}
+                <div className="absolute inset-y-0 left-0 z-40 w-72 sm:w-80 h-full bg-white dark:bg-zinc-950 shadow-2xl animate-in slide-in-from-left duration-200">
+                  <DocsSidebar
+                    filteredSections={filteredSections} 
+                    sectionIcons={sectionIcons}
+                    selectedSection={selectedSection}
+                    selectedFile={selectedFile}
+                    navegarA={navegarA}
+                    sidebarOpen={sidebarOpen}
+                    setSidebarOpen={setSidebarOpen}
+                    onOpenSearch={onOpen}
+                  />
+                </div>
+              </div>
             )}
 
             {/* Área de Contenido Central */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent w-full relative bg-white dark:bg-zinc-950">
-              <div className="max-w-5xl mx-auto p-4 sm:p-8 lg:p-10 min-h-full">
-                {selectedSection && selectedFile ? (
-                  <DocumentViewer
-                    currentContent={currentContent}
-                    currentMetadata={currentMetadata}
-                    selectedSection={selectedSection}
-                    selectedFile={selectedFile}
-                    currentFileIndex={currentFileIndex}
-                    getCurrentFiles={getCurrentFiles}
-                    getCurrentSectionConfig={getCurrentSectionConfig}
-                    navegarAnterior={() => navegarRelativo('prev')}
-                    navegarSiguiente={() => navegarRelativo('next')}
-                  />
-                ) : (
-                  <WelcomeView 
-                      sections={filteredSections}
-                      sectionIcons={sectionIcons}
-                      navegarA={navegarA}
-                  />
-                )}
-              </div>
-            </div>
+            <main className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent w-full min-w-0 bg-slate-50/50 dark:bg-zinc-950/60 p-3 sm:p-5 lg:p-7">
+              {selectedSection && selectedFile ? (
+                <DocumentViewer
+                  currentContent={currentContent}
+                  currentMetadata={currentMetadata}
+                  selectedSection={selectedSection}
+                  selectedFile={selectedFile}
+                  currentFileIndex={currentFileIndex}
+                  getCurrentFiles={getCurrentFiles}
+                  getCurrentSectionConfig={getCurrentSectionConfig}
+                  navegarAnterior={() => navegarRelativo('prev')}
+                  navegarSiguiente={() => navegarRelativo('next')}
+                  navegarA={navegarA}
+                />
+              ) : (
+                <WelcomeView 
+                  sections={filteredSections}
+                  sectionIcons={sectionIcons}
+                  navegarA={navegarA}
+                  onOpenSearch={onOpen}
+                />
+              )}
+            </main>
 
           </div>
         </div>
