@@ -294,7 +294,7 @@ export const AuthProvider = ({ children }) => {
             obtenerSesionesActivas(decoded.id);
             programarRenovacion(expiresIn);
 
-            navigate(decoded.rol === "administrador" ? "/home" : "/ayuda");
+            navigate("/home");
         } catch (error) {
             console.error("Error en login:", error);
             logout();

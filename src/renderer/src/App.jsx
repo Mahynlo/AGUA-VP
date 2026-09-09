@@ -110,8 +110,8 @@ function App() {
 
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores'];
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores'];
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/ayuda'];
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/ayuda'];
 
   const { loading } = useAuth();
 
@@ -156,13 +156,13 @@ function MainApp() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Si está cargando y NO estamos en modo impresión, mostrar pantalla de carga
-  if (loading && !isPrintMode) {
+  // Si está cargando y NO estamos en modo impresión ni en ayuda, mostrar pantalla de carga
+  if (loading && !isPrintMode && location.pathname !== '/ayuda') {
     return <PantallaCarga tiempo={4000} />; // Aquí puedes colocar un componente de carga mientras esperas
   }
 
   return (
-    <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>
+    <main className='dark:bg-gray-900 bg-gray-200 h-screen overflow-hidden'>
 
       {/* Navbar solo si no está en rutas ocultas Y no está en modo impresión */}
       {!hideNavbarRoutes.includes(location.pathname) && !isPrintMode && <NavbarApp />}
@@ -180,12 +180,12 @@ function MainApp() {
           <Route path="/resibos/pagos" element={<Pagos />} />
           <Route path="/resibos/lecturas" element={<Lecturas />} />
           <Route path="/resibos/tarifas" element={<Tarifas />} />
-          <Route path="/ayuda" element={<Ayuda />} />
           <Route path='/perfil' element={<PerfilPage />} />
           <Route path="/medidores" element={<Medidores />} />
           <Route path="/administrador" element={<Administrador />} />
 
         </Route>
+        <Route path="/ayuda" element={<Ayuda />} />
         <Route path="/recibo" element={<Recibo />} />
         <Route path="/reporteLecturas" element={<ReporteLecturas />} />
         <Route path="/reporteLecturasMetricas" element={<ReporteLecturasMetricas />} />

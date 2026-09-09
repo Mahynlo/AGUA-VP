@@ -298,8 +298,20 @@ const tarifasApp = {
 const docsApp = {
   loadDocumentationFile: (section, fileName) => ipcRenderer.invoke('load-documentation-file', section, fileName),
   listDocumentationFiles: (section = null) => ipcRenderer.invoke('list-documentation-files', section),
+  openHelpWindow: (section = null, file = null) => ipcRenderer.invoke('open-help-window', section, file),
+  onNavigateToDoc: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('navigate-to-doc', handler);
+    return () => ipcRenderer.removeListener('navigate-to-doc', handler);
+  }
 };
 
+
+const electronWindowControls = {
+  minimize: () => ipcRenderer.send("minimize"),
+  maximize: () => ipcRenderer.send("maximize"),
+  close: () => ipcRenderer.send("close"),
+};
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
@@ -311,24 +323,18 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('authApp', authApp);
     contextBridge.exposeInMainWorld('tarifasApp', tarifasApp);
     contextBridge.exposeInMainWorld('docsApp', docsApp);
-
+    contextBridge.exposeInMainWorld('electronAPI', electronWindowControls);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 } else {
-  window.electron = electronAPI
-  window.api = api
+  window.electron = electronAPI;
+  window.api = api;
   window.authApp = authApp;
   window.tarifasApp = tarifasApp;
   window.docsApp = docsApp;
+  window.electronAPI = electronWindowControls;
 }
-
-// context para botones de la ventana
-contextBridge.exposeInMainWorld("electronAPI", {
-  minimize: () => ipcRenderer.send("minimize"),
-  maximize: () => ipcRenderer.send("maximize"),
-  close: () => ipcRenderer.send("close"),
-});
 
 // Escuchar evento de token expirado del proceso principal y despacharlo al window del renderer
 ipcRenderer.on('auth:token-expired', () => {

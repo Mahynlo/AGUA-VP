@@ -158,6 +158,15 @@ function SidebarApp() {
 
   const userRol = user?.rol;
 
+  const handleItemClick = (e, item) => {
+    if (item.path === "/ayuda") {
+      if (window.docsApp?.openHelpWindow) {
+        e.preventDefault();
+        window.docsApp.openHelpWindow();
+      }
+    }
+  };
+
   return (
     <aside
       className="fixed top-16 left-0 z-40 w-24 h-[calc(100dvh-4rem)] bg-white dark:bg-zinc-950 border-r border-slate-200/80 dark:border-zinc-800/80 transition-transform -translate-x-full sm:translate-x-0 overflow-y-auto custom-scrollbar py-3.5 shadow-sm select-none"
@@ -189,6 +198,7 @@ function SidebarApp() {
                   <Link
                     key={item.path}
                     to={item.path}
+                    onClick={(e) => handleItemClick(e, item)}
                     className={`relative flex flex-col items-center justify-center w-full py-2.5 px-1.5 rounded-2xl transition-all duration-200 group cursor-pointer active:scale-95 ${
                       isActive
                         ? `${style.active} shadow-sm ring-1 ring-black/5 dark:ring-white/5`

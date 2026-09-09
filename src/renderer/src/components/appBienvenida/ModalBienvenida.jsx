@@ -1,15 +1,22 @@
-// src/components/appBienvenida/ModalBienvenida.jsx
 import { useAuthApp } from '../../context/appAuthContext';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@nextui-org/react";
 import { HiOutlineDesktopComputer, HiCheck, HiExclamationCircle } from "react-icons/hi";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 
 const ModalBienvenida = () => {
   const { modalAbierto, registrarApp, error } = useAuthApp(); 
   const [isRegistering, setIsRegistering] = useState(false);
+  const location = useLocation();
 
-  // Si el modal no está abierto, no renderizamos nada
-  if (!modalAbierto) return null; 
+  const isAuxiliaryRoute =
+    location.pathname === '/ayuda' ||
+    location.pathname.startsWith('/recibo') ||
+    location.pathname.startsWith('/reporte') ||
+    location.pathname.startsWith('/comprobante');
+
+  // Si el modal no está abierto o estamos en una ruta auxiliar/ayuda/impresión, no renderizamos nada
+  if (!modalAbierto || isAuxiliaryRoute) return null; 
 
   const handleRegistrar = async () => {
     setIsRegistering(true);

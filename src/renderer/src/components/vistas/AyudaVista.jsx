@@ -12,6 +12,7 @@ import 'katex/dist/katex.min.css';
 import { normalizarTexto } from "../../utils/textUtils";
 
 // Componentes internos
+import HelpTitleBar from "./ayuda/HelpTitleBar";
 import SearchModal from "./ayuda/SearchModal";
 import DocsSidebar from "./ayuda/DocsSidebar";
 import DocumentViewer from "./ayuda/DocumentViewer";
@@ -19,6 +20,18 @@ import WelcomeView from "./ayuda/WelcomeView";
 import { sectionIcons } from "./ayuda/sectionConfig.jsx";
 
 const sectionOrder = ["clientes", "medidores", "lecturas", "facturas", "pagos", "impresion", "tarifas", "configuracion", "faq"];
+
+const parseHashParams = () => {
+  const hash = window.location.hash || '';
+  const queryIndex = hash.indexOf('?');
+  if (queryIndex !== -1) {
+    const searchParams = new URLSearchParams(hash.substring(queryIndex));
+    const section = searchParams.get('section');
+    const file = searchParams.get('file');
+    return { section, file };
+  }
+  return { section: null, file: null };
+};
 
 const AyudaVista = () => {
   // ==========================================
@@ -62,6 +75,53 @@ const AyudaVista = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onOpen]);
 
+  // ==========================================
+  // 3. CARGA DE ARCHIVO Y NAVEGACIÓN
+  // ==========================================
+  const cargarArchivo = useCallback(async (section, fileName) => {
+    try {
+      const resultado = await window.docsApp.loadDocumentationFile(section, fileName);
+      if (resultado.success) {
+        setCurrentContent(resultado.content);
+        setCurrentMetadata(resultado.metadata);
+      } else {
+        throw new Error(resultado.error);
+      }
+    } catch (error) {
+      console.error("Error cargando archivo:", error);
+      setCurrentContent("# Error\nNo se pudo cargar el documento.");
+    }
+  }, []);
+
+  const navegarA = useCallback(async (section, fileName) => {
+    setSelectedSection(section);
+    setSelectedFile(fileName);
+
+    setSections((prevSections) => {
+      const files = prevSections[section] || [];
+      const fileIndex = files.findIndex((f) => f.fileName === fileName);
+      setCurrentFileIndex(fileIndex >= 0 ? fileIndex : 0);
+      return prevSections;
+    });
+
+    await cargarArchivo(section, fileName);
+
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+  }, [cargarArchivo]);
+
+  // Escuchar eventos de navegación profunda enviados desde el proceso principal
+  useEffect(() => {
+    if (!window.docsApp?.onNavigateToDoc) return;
+    const unsubscribe = window.docsApp.onNavigateToDoc(({ section, file }) => {
+      if (section && file) {
+        navegarA(section, file);
+      }
+    });
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [navegarA]);
+
   useEffect(() => {
     const cargarEstructura = async () => {
       setLoading(true);
@@ -73,6 +133,12 @@ const AyudaVista = () => {
         if (resultado.success) {
           setSections(resultado.sections);
           precargarContenidos(resultado.sections);
+
+          // Verificar si se abrió con parámetros en la URL hash
+          const { section: initialSection, file: initialFile } = parseHashParams();
+          if (initialSection && initialFile && resultado.sections[initialSection]) {
+            navegarA(initialSection, initialFile);
+          }
         } else {
           throw new Error(resultado.error);
         }
@@ -84,10 +150,10 @@ const AyudaVista = () => {
       }
     };
     cargarEstructura();
-  }, []);
+  }, [navegarA]);
 
   // ==========================================
-  // 3. LÓGICA DE DATOS (Precarga y Búsqueda)
+  // 4. LÓGICA DE DATOS (Precarga y Búsqueda)
   // ==========================================
   const precargarContenidos = async (sectionsData) => {
     const contenidos = {};
@@ -196,39 +262,6 @@ const AyudaVista = () => {
     return () => clearTimeout(timeoutId);
   }, [modalSearchTerm, buscarEnContenido, searchResults.length]);
 
-  // ==========================================
-  // 4. NAVEGACIÓN Y CARGA DE ARCHIVOS
-  // ==========================================
-  const cargarArchivo = useCallback(async (section, fileName) => {
-    try {
-      const resultado = await window.docsApp.loadDocumentationFile(section, fileName);
-      if (resultado.success) {
-        setCurrentContent(resultado.content);
-        setCurrentMetadata(resultado.metadata);
-      } else {
-        throw new Error(resultado.error);
-      }
-    } catch (error) {
-      console.error("Error cargando archivo:", error);
-      setCurrentContent("# Error\nNo se pudo cargar el documento.");
-    }
-  }, []);
-
-  const navegarA = useCallback(async (section, fileName) => {
-    if (sections[section]) {
-      const files = sections[section];
-      const fileIndex = files.findIndex(f => f.fileName === fileName);
-      
-      setSelectedSection(section);
-      setSelectedFile(fileName);
-      setCurrentFileIndex(fileIndex >= 0 ? fileIndex : 0);
-      
-      await cargarArchivo(section, fileName);
-      
-      if (window.innerWidth < 1024) setSidebarOpen(false);
-    }
-  }, [sections, cargarArchivo]);
-
   const handleSelectResult = useCallback((sectionKey, fileName) => {
     navegarA(sectionKey, fileName);
     onOpenChange(false);
@@ -278,14 +311,15 @@ const AyudaVista = () => {
   // Pantalla de carga integrada al diseño Premium
   if (loading) {
     return (
-      <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
-        <div className="w-full h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <Spinner size="lg" color="primary" />
-              <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest animate-pulse">
-                Cargando base de conocimiento...
-              </p>
-            </div>
+      <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-zinc-950 select-none">
+        <HelpTitleBar onOpenSearch={null} />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="flex flex-col items-center gap-4">
+            <Spinner size="lg" color="primary" />
+            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest animate-pulse">
+              Cargando base de conocimiento...
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -294,9 +328,10 @@ const AyudaVista = () => {
   const totalDocs = Object.values(sections).reduce((acc, f) => acc + f.length, 0);
 
   return (
-    // CONTENEDOR PRINCIPAL: Fluido y con padding exterior
-    <div className="mt-16 h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
-      
+    // CONTENEDOR PRINCIPAL: Ventana Completa e Independiente
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-100/70 dark:bg-zinc-950 select-none">
+      <HelpTitleBar onOpenSearch={onOpen} />
+
       <SearchModal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
@@ -308,106 +343,107 @@ const AyudaVista = () => {
         handleSelectResult={handleSelectResult}
       />
       
-      {/* CONTENEDOR DE LA VISTA: Ocupa el 100% de altura, SIN scroll global para manejar el sidebar y visor internamente */}
-      <div className="w-full h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm flex flex-col overflow-hidden relative animate-in fade-in duration-500">
-        
-        {/* ── HEADER SUPERIOR ── */}
-        <div className="px-6 py-5 sm:px-8 sm:py-6 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0 bg-white dark:bg-zinc-950 z-10">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-            
-            <div className="flex items-center gap-4">
-              {/* Regla de Tintes (Azul Corporativo) */}
-              <div className="p-3.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0 flex items-center justify-center">
-                <HiBookOpen className="w-8 h-8" />
-              </div>
-              <div className="flex flex-col gap-1 pt-0.5">
-                <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
-                  Centro de Ayuda
-                </h1>
-                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                  Explora {totalDocs} documentos disponibles en {Object.keys(sections).length} secciones
-                </p>
-              </div>
-            </div>
-
-            {/* Barra de Búsqueda Estilo Premium "DocSearch" (Token 4) */}
-            <button 
-              onClick={onOpen}
-              className="w-full lg:w-80 h-[52px] flex items-center justify-between px-4 bg-slate-100/70 hover:bg-slate-200/70 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl text-sm font-medium text-slate-500 dark:text-zinc-400 transition-all duration-200 shadow-sm group focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            >
-              <div className="flex items-center gap-3">
-                <HiSearch className="w-5 h-5 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
-                <span>Buscar documentación...</span>
-              </div>
-              <kbd className="hidden sm:inline-flex items-center gap-1 px-2 py-1 font-mono text-[10px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 rounded-lg border border-slate-200 dark:border-zinc-700 shadow-sm">
-                <span className="text-xs">⌘</span>K
-              </kbd>
-            </button>
-
-          </div>
-        </div>
-
-        {/* ── LAYOUT DE CUERPO (Sidebar + Contenido) ── */}
-        <div className="flex flex-1 overflow-hidden relative">
+      {/* CONTENEDOR DE LA VISTA: Ocupa el espacio restante debajo del titlebar */}
+      <div className="flex-1 flex flex-col overflow-hidden p-2 sm:p-3">
+        <div className="w-full h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm flex flex-col overflow-hidden relative animate-in fade-in duration-300">
           
-          {/* Botón Móvil Sidebar */}
-          {!sidebarOpen && (
-            <button 
-                className="absolute top-4 left-4 z-50 lg:hidden p-2.5 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl shadow-md border border-slate-200 dark:border-zinc-700" 
-                onClick={() => setSidebarOpen(true)}
-            >
-              <HiMenu className="w-5 h-5" />
-            </button>
-          )}
+          {/* ── HEADER SUPERIOR ── */}
+          <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0 bg-white dark:bg-zinc-950 z-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl shrink-0 flex items-center justify-center">
+                  <HiBookOpen className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
+                    Centro de Ayuda
+                  </h1>
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                    {totalDocs} documentos disponibles en {Object.keys(sections).length} módulos
+                  </p>
+                </div>
+              </div>
 
-          {/* Sidebar */}
-          <div className={`
-            absolute lg:relative z-40 h-full bg-slate-50/50 dark:bg-zinc-900/20 border-r border-slate-100 dark:border-zinc-800/80
-            transition-all duration-300 ease-in-out
-            ${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full lg:w-0 lg:translate-x-0 lg:hidden'}
-          `}>
-            <DocsSidebar
-              filteredSections={filteredSections} 
-              sectionIcons={sectionIcons}
-              selectedSection={selectedSection}
-              selectedFile={selectedFile}
-              navegarA={navegarA}
-              sidebarOpen={sidebarOpen}
-              setSidebarOpen={setSidebarOpen}
-              onOpenSearch={onOpen}
-            />
-          </div>
+              {/* Barra de Búsqueda Estilo Premium */}
+              <button 
+                onClick={onOpen}
+                className="w-full sm:w-72 h-[42px] flex items-center justify-between px-3.5 bg-slate-100/70 hover:bg-slate-200/70 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-500 dark:text-zinc-400 transition-all duration-200 shadow-sm group focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <div className="flex items-center gap-2">
+                  <HiSearch className="w-4 h-4 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
+                  <span>Buscar documentación...</span>
+                </div>
+                <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 rounded border border-slate-200 dark:border-zinc-700 shadow-sm">
+                  Ctrl+K
+                </kbd>
+              </button>
 
-          {/* Overlay Móvil */}
-          {sidebarOpen && (
-            <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 z-30 lg:hidden animate-in fade-in duration-200" onClick={() => setSidebarOpen(false)} />
-          )}
-
-          {/* Área de Contenido Central */}
-          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent w-full relative bg-white dark:bg-zinc-950">
-            <div className="max-w-5xl mx-auto p-6 sm:p-10 lg:p-12 min-h-full">
-              {selectedSection && selectedFile ? (
-                <DocumentViewer
-                  currentContent={currentContent}
-                  currentMetadata={currentMetadata}
-                  selectedSection={selectedSection}
-                  selectedFile={selectedFile}
-                  currentFileIndex={currentFileIndex}
-                  getCurrentFiles={getCurrentFiles}
-                  getCurrentSectionConfig={getCurrentSectionConfig}
-                  navegarAnterior={() => navegarRelativo('prev')}
-                  navegarSiguiente={() => navegarRelativo('next')}
-                />
-              ) : (
-                <WelcomeView 
-                    sections={filteredSections}
-                    sectionIcons={sectionIcons}
-                    navegarA={navegarA}
-                />
-              )}
             </div>
           </div>
 
+          {/* ── LAYOUT DE CUERPO (Sidebar + Contenido) ── */}
+          <div className="flex flex-1 overflow-hidden relative">
+            
+            {/* Botón Móvil Sidebar */}
+            {!sidebarOpen && (
+              <button 
+                  className="absolute top-4 left-4 z-50 lg:hidden p-2 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl shadow-md border border-slate-200 dark:border-zinc-700" 
+                  onClick={() => setSidebarOpen(true)}
+              >
+                <HiMenu className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Sidebar */}
+            <div className={`
+              absolute lg:relative z-40 h-full bg-slate-50/50 dark:bg-zinc-900/20 border-r border-slate-100 dark:border-zinc-800/80
+              transition-all duration-300 ease-in-out
+              ${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full lg:w-0 lg:translate-x-0 lg:hidden'}
+            `}>
+              <DocsSidebar
+                filteredSections={filteredSections} 
+                sectionIcons={sectionIcons}
+                selectedSection={selectedSection}
+                selectedFile={selectedFile}
+                navegarA={navegarA}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                onOpenSearch={onOpen}
+              />
+            </div>
+
+            {/* Overlay Móvil */}
+            {sidebarOpen && (
+              <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 z-30 lg:hidden animate-in fade-in duration-200" onClick={() => setSidebarOpen(false)} />
+            )}
+
+            {/* Área de Contenido Central */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent w-full relative bg-white dark:bg-zinc-950">
+              <div className="max-w-5xl mx-auto p-4 sm:p-8 lg:p-10 min-h-full">
+                {selectedSection && selectedFile ? (
+                  <DocumentViewer
+                    currentContent={currentContent}
+                    currentMetadata={currentMetadata}
+                    selectedSection={selectedSection}
+                    selectedFile={selectedFile}
+                    currentFileIndex={currentFileIndex}
+                    getCurrentFiles={getCurrentFiles}
+                    getCurrentSectionConfig={getCurrentSectionConfig}
+                    navegarAnterior={() => navegarRelativo('prev')}
+                    navegarSiguiente={() => navegarRelativo('next')}
+                  />
+                ) : (
+                  <WelcomeView 
+                      sections={filteredSections}
+                      sectionIcons={sectionIcons}
+                      navegarA={navegarA}
+                  />
+                )}
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
     </div>

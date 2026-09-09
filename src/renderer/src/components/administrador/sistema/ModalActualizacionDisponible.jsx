@@ -64,10 +64,14 @@ export default function ModalActualizacionDisponible() {
     const version = info.version;
     const omitido = localStorage.getItem(`omitir_alertas_update_v${version}`) === "true";
     
-    // No interrumpir si estamos en pantallas críticas de impresión
-    const enImpresion = location.pathname.includes("/recibo") || location.pathname.includes("/reporte");
+    // No interrumpir si estamos en pantallas críticas de impresión o ventana de ayuda
+    const enRutaAuxiliar = 
+      location.pathname === "/ayuda" ||
+      location.pathname.includes("/recibo") || 
+      location.pathname.includes("/reporte") ||
+      location.pathname.includes("/comprobante");
 
-    if (!omitido && !enImpresion) {
+    if (!omitido && !enRutaAuxiliar) {
       setUpdateInfo(info);
       setNoMostrar(false);
       setIsOpen(true);

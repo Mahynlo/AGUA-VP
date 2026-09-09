@@ -6,6 +6,7 @@ import { execFile } from 'child_process';
 import { pathToFileURL, fileURLToPath } from 'url';
 import ExcelJS from 'exceljs';
 import { zoomIn, zoomOut, zoomReset, getZoom } from '../managers/zoomManager.js';
+import { openHelpWindow } from '../managers/helpWindowManager.js';
 
 const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
@@ -567,41 +568,41 @@ export default function IpcHandlers () {
       return metadata;
     };
 
+    // Función helper para resolver la ruta del directorio ayuda
+    const resolveAyudaPath = () => {
+      const isDev = !app.isPackaged;
+      const candidates = isDev
+        ? [
+            path.join(process.cwd(), 'ayuda'),
+            path.join(app.getAppPath(), 'ayuda'),
+            path.join(__dirname, '../../ayuda'),
+            path.join(__dirname, '../ayuda')
+          ]
+        : [
+            path.join(process.resourcesPath, 'ayuda'),
+            path.join(process.resourcesPath, 'app.asar.unpacked', 'ayuda'),
+            path.join(app.getAppPath(), 'ayuda'),
+            path.join(process.cwd(), 'ayuda')
+          ];
+
+      for (const cand of candidates) {
+        if (fs.existsSync(cand)) {
+          return cand;
+        }
+      }
+      return candidates[0];
+    };
+
     // Handler para listar archivos de documentación
     ipcMain.handle('list-documentation-files', async (event, section = null) => {
       console.log(`📚 Handler documentación - Listando archivos de sección: ${section || 'todas'}`);
       
       try {
-        const isDev = !app.isPackaged;
-        let ayudaPath;
-        
-        if (isDev) {
-          // En desarrollo: buscar en el directorio de trabajo
-          ayudaPath = path.join(process.cwd(), 'ayuda');
-        } else {
-          // En producción: buscar en el directorio de la aplicación desempaquetada
-          // Como está en asarUnpack, estará disponible en process.resourcesPath
-          ayudaPath = path.join(process.resourcesPath, 'ayuda');
-          
-          // Verificar si existe, si no, intentar buscar en app.getAppPath()
-          if (!fs.existsSync(ayudaPath)) {
-            console.log('📁 Intentando ruta alternativa en app.getAppPath()');
-            ayudaPath = path.join(app.getAppPath(), 'ayuda');
-          }
-        }
-        
-        console.log(`📁 Buscando en directorio: ${ayudaPath} (isDev: ${isDev})`);
+        const ayudaPath = resolveAyudaPath();
+        console.log(`📁 Buscando en directorio: ${ayudaPath}`);
         
         if (!fs.existsSync(ayudaPath)) {
           console.warn(`⚠️ Directorio de ayuda no encontrado: ${ayudaPath}`);
-          // Intentar listar contenido del directorio padre para debug
-          try {
-            const parentDir = path.dirname(ayudaPath);
-            const parentContents = fs.readdirSync(parentDir);
-            console.log(`📁 Contenido del directorio padre (${parentDir}):`, parentContents);
-          } catch (debugError) {
-            console.log('❌ No se pudo listar directorio padre:', debugError.message);
-          }
           return { success: false, error: 'Directorio de ayuda no encontrado', sections: {} };
         }
         
@@ -649,17 +650,6 @@ export default function IpcHandlers () {
               })
               .sort((a, b) => a.metadata.orden - b.metadata.orden);
               
-            // Debug: Mostrar orden después del sort
-            if (sectionDir === 'clientes') {
-              console.log(`🔍 Orden en backend para ${sectionDir}:`, 
-                files.map(f => ({
-                  fileName: f.fileName,
-                  titulo: f.metadata.titulo,
-                  orden: f.metadata.orden
-                }))
-              );
-            }
-              
             if (files.length > 0) {
               sections[sectionDir] = files;
             }
@@ -675,45 +665,28 @@ export default function IpcHandlers () {
       }
     });
 
+    // Handler para abrir ventana independiente de ayuda
+    ipcMain.handle('open-help-window', async (_event, section = null, file = null) => {
+      try {
+        openHelpWindow(section, file);
+        return { success: true };
+      } catch (error) {
+        console.error('❌ Error al abrir ventana de ayuda:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     // Handler para cargar un archivo específico de documentación
     ipcMain.handle('load-documentation-file', async (event, section, fileName) => {
       console.log(`📄 Handler documentación - Solicitando archivo: ${section}/${fileName}`);
       
       try {
-        const isDev = !app.isPackaged;
-        let ayudaPath;
-        
-        if (isDev) {
-          // En desarrollo: buscar en el directorio de trabajo
-          ayudaPath = path.join(process.cwd(), 'ayuda');
-        } else {
-          // En producción: buscar en el directorio de la aplicación desempaquetada
-          ayudaPath = path.join(process.resourcesPath, 'ayuda');
-          
-          // Verificar si existe, si no, intentar buscar en app.getAppPath()
-          if (!fs.existsSync(ayudaPath)) {
-            console.log('📁 Intentando ruta alternativa en app.getAppPath()');
-            ayudaPath = path.join(app.getAppPath(), 'ayuda');
-          }
-        }
-        
+        const ayudaPath = resolveAyudaPath();
         const filePath = path.join(ayudaPath, section, fileName);
-        console.log(`📁 Buscando archivo en: ${filePath} (isDev: ${isDev})`);
+        console.log(`📁 Buscando archivo en: ${filePath}`);
         
         if (!fs.existsSync(filePath)) {
           console.warn(`⚠️ Archivo no encontrado: ${filePath}`);
-          // Debug: listar contenido del directorio de la sección
-          try {
-            const sectionPath = path.join(ayudaPath, section);
-            if (fs.existsSync(sectionPath)) {
-              const sectionContents = fs.readdirSync(sectionPath);
-              console.log(`📁 Contenido de la sección (${sectionPath}):`, sectionContents);
-            } else {
-              console.log(`❌ Directorio de sección no existe: ${sectionPath}`);
-            }
-          } catch (debugError) {
-            console.log('❌ Error en debug:', debugError.message);
-          }
           return { success: false, error: 'Archivo no encontrado', content: '', metadata: {} };
         }
         
