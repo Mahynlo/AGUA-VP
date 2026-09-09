@@ -1,5 +1,4 @@
 import React from "react";
-import { Chip } from "@nextui-org/react";
 import {
   HiBookOpen,
   HiArrowRight,
@@ -9,52 +8,46 @@ import {
   HiChevronRight
 } from "react-icons/hi";
 
-const WelcomeView = ({ sections = {}, sectionIcons = {}, navegarA, onOpenSearch }) => {
+const WelcomeView = ({
+  sections = {},
+  sectionIcons = {},
+  navegarA,
+  onOpenSearch
+}) => {
   const totalSections = Object.keys(sections).length;
   const totalArticles = Object.values(sections).reduce((acc, curr) => acc + curr.length, 0);
 
   return (
-    <div className="max-w-6xl mx-auto py-4 sm:py-6 animate-in fade-in zoom-in-95 duration-400 space-y-10">
+    <div className="max-w-6xl mx-auto py-2 sm:py-4 animate-in fade-in zoom-in-95 duration-300 space-y-8">
       
-      {/* ── 1. HERO BANNER ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-6 sm:p-10 shadow-lg">
-        {/* Adorno visual de fondo */}
+      {/* ── 1. HERO BANNER PRINCIPAL ── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-5 sm:p-9 shadow-lg">
+        {/* Adornos visuales de fondo */}
         <div className="absolute -right-10 -bottom-10 w-72 h-72 rounded-full bg-white/5 blur-2xl pointer-events-none" />
         <div className="absolute left-1/2 -top-12 w-60 h-60 rounded-full bg-blue-400/10 blur-xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-2xl space-y-4">
+        <div className="relative z-10 max-w-3xl space-y-3.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-bold uppercase tracking-wider text-blue-100">
             <HiLightningBolt className="w-3.5 h-3.5 text-amber-300" />
             <span>Documentación Oficial AguaVP</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white leading-tight">
-            Centro de Ayuda y Base de Conocimiento
+            Centro de Ayuda y Manuales de Uso
           </h1>
 
-          <p className="text-sm sm:text-base text-blue-100/90 font-medium leading-relaxed">
-            Consulta manuales operativos paso a paso, tutoriales de cobranza, gestión de medidores, toma de lecturas y configuración del sistema.
+          <p className="text-xs sm:text-sm text-blue-100/90 font-medium leading-relaxed max-w-2xl">
+            Consulta los manuales de usuario y guías operativas paso a paso para la captura de lecturas, cobro de recibos, administración de medidores y facturación del sistema.
           </p>
 
-          {/* Métricas y Botón de Búsqueda Rápida */}
-          <div className="pt-2 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/10 text-xs font-semibold text-white">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{totalSections} Módulos Activos</span>
-            </div>
-
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/10 text-xs font-semibold text-white">
-              <HiDocumentText className="w-4 h-4 text-blue-200" />
-              <span>{totalArticles} Guías y Manuales</span>
-            </div>
-
+          <div className="pt-2 flex flex-wrap items-center gap-2.5">
             {onOpenSearch && (
               <button
                 onClick={onOpenSearch}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs transition-all shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs transition-all shadow-sm"
               >
-                <HiSearch className="w-3.5 h-3.5" />
-                <span>Búsqueda Rápida (Ctrl+K)</span>
+                <HiSearch className="w-4 h-4" />
+                <span>Buscar en la documentación (Ctrl+K)</span>
               </button>
             )}
           </div>
@@ -63,13 +56,16 @@ const WelcomeView = ({ sections = {}, sectionIcons = {}, navegarA, onOpenSearch 
 
       {/* ── 2. GRID DE CATEGORÍAS Y MÓDULOS ── */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
           <div>
-            <h2 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight">
-              Módulos del Sistema
+            <h2 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+              <span>Módulos del Sistema</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 font-mono">
+                ({totalSections} módulos)
+              </span>
             </h2>
             <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
-              Selecciona una categoría para explorar sus manuales operativos y guías de uso
+              Explora las guías de uso organizadas por módulos operativos
             </p>
           </div>
         </div>
@@ -78,7 +74,7 @@ const WelcomeView = ({ sections = {}, sectionIcons = {}, navegarA, onOpenSearch 
           {Object.entries(sections).map(([sectionKey, files]) => {
             const sectionConfig = sectionIcons[sectionKey] || {
               title: sectionKey,
-              subtitle: "Manuales y documentación",
+              subtitle: "Manuales y guías de uso",
               badgeClass: "bg-blue-500/10 text-blue-600 border-blue-200",
               icon: <HiBookOpen className="w-5 h-5" />
             };
@@ -106,7 +102,7 @@ const WelcomeView = ({ sections = {}, sectionIcons = {}, navegarA, onOpenSearch 
                         {sectionConfig.title}
                       </h3>
                       <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-                        {files.length} {files.length === 1 ? "artículo" : "artículos"}
+                        {files.length} {files.length === 1 ? "tema" : "temas"}
                       </span>
                     </div>
                   </div>
@@ -120,25 +116,27 @@ const WelcomeView = ({ sections = {}, sectionIcons = {}, navegarA, onOpenSearch 
                 {/* Vista previa de artículos destacados */}
                 {files.length > 0 && (
                   <div className="space-y-1.5 mb-5 flex-1">
-                    {files.slice(0, 3).map((file) => (
-                      <button
-                        key={file.fileName}
-                        onClick={() => navegarA(sectionKey, file.fileName)}
-                        className="w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-100 dark:border-zinc-800/80 group/item"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <HiDocumentText className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-blue-500 shrink-0" />
-                          <span className="text-xs font-semibold truncate">
-                            {file.metadata?.titulo || file.fileName.replace(".md", "")}
-                          </span>
-                        </div>
-                        <HiChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-blue-500 shrink-0" />
-                      </button>
-                    ))}
+                    {files.slice(0, 3).map((file) => {
+                      return (
+                        <button
+                          key={file.fileName}
+                          onClick={() => navegarA(sectionKey, file.fileName)}
+                          className="w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-100 dark:border-zinc-800/80 group/item"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <HiDocumentText className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-blue-500 shrink-0" />
+                            <span className="text-xs font-semibold truncate">
+                              {file.metadata?.titulo || file.fileName.replace(".md", "")}
+                            </span>
+                          </div>
+                          <HiChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-blue-500 shrink-0" />
+                        </button>
+                      );
+                    })}
 
                     {files.length > 3 && (
                       <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2 pt-0.5">
-                        + {files.length - 3} guías adicionales
+                        + {files.length - 3} temas adicionales
                       </p>
                     )}
                   </div>
@@ -154,7 +152,7 @@ const WelcomeView = ({ sections = {}, sectionIcons = {}, navegarA, onOpenSearch 
                     }}
                     className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 hover:bg-blue-600 text-slate-700 hover:text-white dark:bg-zinc-800 dark:hover:bg-blue-600 dark:text-zinc-300 dark:hover:text-white text-xs font-bold transition-all shadow-2xs group/btn"
                   >
-                    <span>Explorar Módulo</span>
+                    <span>Explorar {sectionConfig.title}</span>
                     <HiArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-1" />
                   </button>
                 </div>

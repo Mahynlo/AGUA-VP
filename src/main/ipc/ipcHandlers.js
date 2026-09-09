@@ -564,7 +564,26 @@ export default function IpcHandlers () {
           console.warn(`⚠️ Error parseando metadata de ${fileName}:`, parseError);
         }
       }
-      
+
+      if (!metadata.tipo) {
+        const lowerFile = fileName.toLowerCase();
+        const lowerTitle = (metadata.titulo || '').toLowerCase();
+        if (
+          lowerFile.includes('introduccion') ||
+          lowerFile.includes('recalcular') ||
+          lowerFile.includes('cartera vencida') ||
+          lowerFile.includes('configurar-tarifas') ||
+          lowerTitle.includes('introducción') ||
+          lowerTitle.includes('funcionamiento') ||
+          lowerTitle.includes('lógica') ||
+          lowerTitle.includes('arquitectura')
+        ) {
+          metadata.tipo = 'funcionamiento';
+        } else {
+          metadata.tipo = 'uso';
+        }
+      }
+
       return metadata;
     };
 
@@ -607,53 +626,33 @@ export default function IpcHandlers () {
         }
         
         const sections = {};
-        
-        if (section) {
-          // Listar archivos de una sección específica
-          const sectionPath = path.join(ayudaPath, section);
-          if (fs.existsSync(sectionPath)) {
-            const files = fs.readdirSync(sectionPath)
-              .filter(file => file.endsWith('.md'))
-              .map(file => {
-                const filePath = path.join(sectionPath, file);
-                const content = fs.readFileSync(filePath, 'utf8');
-                const metadata = parseFrontmatter(content, file);
-                
-                return {
-                  fileName: file,
-                  metadata: metadata
-                };
-              })
-              .sort((a, b) => a.metadata.orden - b.metadata.orden);
-              
-            sections[section] = files;
+        const subDirs = fs.readdirSync(ayudaPath).filter(d => {
+          try {
+            return fs.statSync(path.join(ayudaPath, d)).isDirectory() && d !== 'imagenes';
+          } catch {
+            return false;
           }
-        } else {
-          // Listar todas las secciones y sus archivos
-          const sectionDirs = fs.readdirSync(ayudaPath)
-            .filter(dir => fs.statSync(path.join(ayudaPath, dir)).isDirectory());
-          
-          for (const sectionDir of sectionDirs) {
-            const sectionPath = path.join(ayudaPath, sectionDir);
-            const files = fs.readdirSync(sectionPath)
-              .filter(file => file.endsWith('.md'))
-              .map(file => {
-                const filePath = path.join(sectionPath, file);
-                const content = fs.readFileSync(filePath, 'utf8');
-                const metadata = parseFrontmatter(content, file);
-                metadata.seccion = sectionDir; // Asegurar que tenga la sección
-                
-                return {
-                  fileName: file,
-                  metadata: metadata
-                };
-              })
-              .sort((a, b) => a.metadata.orden - b.metadata.orden);
-              
-            if (files.length > 0) {
-              sections[sectionDir] = files;
+        });
+
+        for (const sDir of subDirs) {
+          if (section && sDir !== section) continue;
+          const sPath = path.join(ayudaPath, sDir);
+          const mdFiles = fs.readdirSync(sPath).filter(f => f.endsWith('.md'));
+          sections[sDir] = [];
+
+          for (const f of mdFiles) {
+            try {
+              const fullF = path.join(sPath, f);
+              const content = fs.readFileSync(fullF, 'utf8');
+              const metadata = parseFrontmatter(content, f);
+              metadata.seccion = sDir;
+              sections[sDir].push({ fileName: f, metadata });
+            } catch (e) {
+              console.warn(`Error leyendo archivo ${f}:`, e);
             }
           }
+
+          sections[sDir].sort((a, b) => (a.metadata.orden || 999) - (b.metadata.orden || 999));
         }
         
         console.log(`✅ Documentación listada exitosamente: ${Object.keys(sections).length} secciones`);
@@ -682,16 +681,28 @@ export default function IpcHandlers () {
       
       try {
         const ayudaPath = resolveAyudaPath();
-        const filePath = path.join(ayudaPath, section, fileName);
-        console.log(`📁 Buscando archivo en: ${filePath}`);
         
-        if (!fs.existsSync(filePath)) {
-          console.warn(`⚠️ Archivo no encontrado: ${filePath}`);
+        const candidatePaths = [
+          path.join(ayudaPath, section, fileName),
+          path.join(ayudaPath, section, `${fileName}.md`),
+          path.join(ayudaPath, fileName)
+        ];
+
+        let filePath = null;
+        for (const cand of candidatePaths) {
+          if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+            filePath = cand;
+            break;
+          }
+        }
+        
+        if (!filePath) {
+          console.warn(`⚠️ Archivo no encontrado en ninguna ruta: ${section}/${fileName}`);
           return { success: false, error: 'Archivo no encontrado', content: '', metadata: {} };
         }
         
         const content = fs.readFileSync(filePath, 'utf8');
-        console.log(`✅ Archivo leído exitosamente: ${section}/${fileName} (${content.length} caracteres)`);
+        console.log(`✅ Archivo leído exitosamente: ${filePath} (${content.length} caracteres)`);
         
         // Parsear y remover frontmatter del contenido
         const frontmatterRegex = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n/;
@@ -701,14 +712,78 @@ export default function IpcHandlers () {
         let metadata = {};
         
         if (match) {
-          // Remover frontmatter del contenido para renderizado
           cleanContent = content.replace(frontmatterRegex, '');
-          
-          // Parsear metadata
           metadata = parseFrontmatter(content, fileName);
-          
-          console.log(`✅ Frontmatter parseado: ${Object.keys(metadata).length} propiedades`);
+        } else {
+          metadata = parseFrontmatter(content, fileName);
         }
+
+        // Resolver y transformar rutas de imágenes locales relativas a Data URIs
+        const mimeTypes = {
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.svg': 'image/svg+xml',
+          '.webp': 'image/webp',
+          '.gif': 'image/gif',
+          '.ico': 'image/x-icon'
+        };
+
+        const tryFindImage = (imgPath) => {
+          if (!imgPath || imgPath.startsWith('http://') || imgPath.startsWith('https://') || imgPath.startsWith('data:')) {
+            return null;
+          }
+          const clean = imgPath.trim().replace(/^<|>$/g, '').trim();
+
+          const candidates = [
+            path.resolve(path.dirname(filePath), clean),
+            path.resolve(ayudaPath, clean.replace(/^(\.\.\/)+/g, '').replace(/^(\.\/)+/g, '').replace(/^\//g, '')),
+            path.resolve(ayudaPath, 'imagenes', clean.replace(/^(\.\.\/)+/g, '').replace(/^(\.\/)+/g, '').replace(/^imagenes\//g, '').replace(/^\//g, '')),
+            path.resolve(ayudaPath, 'imagenes', 'Guia_Acccion_mes', path.basename(clean)),
+            path.resolve(ayudaPath, 'imagenes', path.basename(clean))
+          ];
+
+          for (const cand of candidates) {
+            if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+              const ext = path.extname(cand).toLowerCase();
+              const mime = mimeTypes[ext] || 'image/png';
+              try {
+                const buf = fs.readFileSync(cand);
+                return `data:${mime};base64,${buf.toString('base64')}`;
+              } catch (e) {
+                console.warn(`Error leyendo imagen ${cand}:`, e);
+              }
+            }
+          }
+          return null;
+        };
+
+        // 1. Reemplazar enlaces inline ![alt](path)
+        cleanContent = cleanContent.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, imgPath) => {
+          const dataUri = tryFindImage(imgPath);
+          if (dataUri) {
+            return `![${alt}](${dataUri})`;
+          }
+          return match;
+        });
+
+        // 2. Reemplazar referencias [ref]: path o [ref]: <path>
+        cleanContent = cleanContent.replace(/^\[([^\]]+)\]:\s*<?([^\s>]+)>?/gm, (match, ref, imgPath) => {
+          const dataUri = tryFindImage(imgPath);
+          if (dataUri) {
+            return `[${ref}]: ${dataUri}`;
+          }
+          return match;
+        });
+
+        // 3. Reemplazar etiquetas HTML <img src="path" ... />
+        cleanContent = cleanContent.replace(/<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)\/?>/gi, (match, before, imgPath, after) => {
+          const dataUri = tryFindImage(imgPath);
+          if (dataUri) {
+            return `<img ${before}src="${dataUri}"${after} />`;
+          }
+          return match;
+        });
         
         return { 
           success: true, 
@@ -719,6 +794,54 @@ export default function IpcHandlers () {
       } catch (error) {
         console.error('❌ Error cargando archivo de documentación:', error);
         return { success: false, error: error.message, content: '', metadata: {} };
+      }
+    });
+
+    // Handler para cargar imágenes individuales de documentación
+    ipcMain.handle('load-documentation-image', async (_event, imagePath) => {
+      try {
+        if (!imagePath) return { success: false, error: 'Ruta no proporcionada' };
+        if (imagePath.startsWith('data:') || imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+          return { success: true, dataUri: imagePath };
+        }
+
+        const ayudaPath = resolveAyudaPath();
+        const clean = imagePath.trim().replace(/^<|>$/g, '').trim();
+
+        const candidates = [
+          path.resolve(ayudaPath, clean.replace(/^(\.\.\/)+/g, '').replace(/^(\.\/)+/g, '').replace(/^\//g, '')),
+          path.resolve(ayudaPath, 'imagenes', clean.replace(/^(\.\.\/)+/g, '').replace(/^(\.\/)+/g, '').replace(/^imagenes\//g, '').replace(/^\//g, '')),
+          path.resolve(ayudaPath, 'imagenes', 'Guia_Acccion_mes', path.basename(clean)),
+          path.resolve(ayudaPath, 'imagenes', path.basename(clean)),
+          path.resolve(clean)
+        ];
+
+        const mimeTypes = {
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.svg': 'image/svg+xml',
+          '.webp': 'image/webp',
+          '.gif': 'image/gif',
+          '.ico': 'image/x-icon'
+        };
+
+        for (const cand of candidates) {
+          if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+            const ext = path.extname(cand).toLowerCase();
+            const mime = mimeTypes[ext] || 'image/png';
+            const buf = fs.readFileSync(cand);
+            return {
+              success: true,
+              dataUri: `data:${mime};base64,${buf.toString('base64')}`
+            };
+          }
+        }
+
+        return { success: false, error: 'Imagen no encontrada' };
+      } catch (error) {
+        console.error('❌ Error cargando imagen de documentación:', error);
+        return { success: false, error: error.message };
       }
     });
     

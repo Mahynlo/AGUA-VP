@@ -85,7 +85,7 @@ const AyudaVista = () => {
       const resultado = await window.docsApp.loadDocumentationFile(section, fileName);
       if (resultado.success) {
         setCurrentContent(resultado.content);
-        setCurrentMetadata(resultado.metadata);
+        setCurrentMetadata(resultado.metadata || {});
       } else {
         throw new Error(resultado.error);
       }
@@ -171,7 +171,9 @@ const AyudaVista = () => {
       for (const file of files) {
         try {
           const res = await window.docsApp.loadDocumentationFile(sectionKey, file.fileName);
-          if (res.success) contenidos[`${sectionKey}/${file.fileName}`] = res.content;
+          if (res.success) {
+            contenidos[`${sectionKey}/${file.fileName}`] = res.content;
+          }
         } catch (e) { console.warn(e); }
       }
     }
@@ -292,15 +294,20 @@ const AyudaVista = () => {
         newIndex = currentFileIndex < files.length - 1 ? currentFileIndex + 1 : 0;
     }
     
-    navegarA(selectedSection, files[newIndex].fileName);
+    const targetFile = files[newIndex];
+    if (targetFile) {
+      navegarA(selectedSection, targetFile.fileName);
+    }
   }, [currentFileIndex, selectedSection, navegarA, getCurrentFiles]);
 
+  // Secciones ordenadas
   const filteredSections = useMemo(() => {
     const sortedEntries = Object.entries(sections)
       .map(([key, files]) => [
         key,
         [...files].sort((a, b) => (a.metadata?.orden || 999) - (b.metadata?.orden || 999))
       ])
+      .filter(([_, files]) => files.length > 0)
       .sort(([sectionA], [sectionB]) => {
         const indexA = sectionOrder.indexOf(sectionA);
         const indexB = sectionOrder.indexOf(sectionB);
@@ -360,7 +367,7 @@ const AyudaVista = () => {
           <div className="px-3.5 py-2.5 sm:px-5 sm:py-3 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0 bg-white dark:bg-zinc-950 z-20">
             <div className="flex items-center justify-between gap-3">
               
-              {/* Izquierda: Botón Toggle Menú (Disponible en TODAS las resoluciones) + Identidad */}
+              {/* Izquierda: Botón Toggle Menú + Identidad */}
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -395,15 +402,15 @@ const AyudaVista = () => {
               {/* Derecha: Botón de Búsqueda Responsivo */}
               <button 
                 onClick={onOpen}
-                className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-100/80 hover:bg-slate-200/70 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-500 dark:text-zinc-400 transition-all shadow-2xs group shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                className="flex items-center justify-between gap-2 px-3.5 py-2 bg-slate-100/80 hover:bg-slate-200/70 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-500 dark:text-zinc-400 transition-all shadow-2xs group shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 title="Buscar documentación (Ctrl+K)"
               >
                 <div className="flex items-center gap-2">
                   <HiSearch className="w-4 h-4 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
-                  <span className="hidden sm:inline">Buscar documentación...</span>
+                  <span className="hidden sm:inline">Buscar en la documentación...</span>
                   <span className="sm:hidden text-xs font-semibold text-slate-600 dark:text-zinc-300">Buscar</span>
                 </div>
-                <kbd className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 rounded border border-slate-200 dark:border-zinc-700 shadow-2xs">
+                <kbd className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 rounded border border-slate-200 dark:border-zinc-700 shadow-2xs">
                   Ctrl+K
                 </kbd>
               </button>

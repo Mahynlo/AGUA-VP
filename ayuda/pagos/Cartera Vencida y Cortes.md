@@ -4,8 +4,8 @@ seccion: "pagos"
 orden: 7
 descripcion: "Guía para revisar deudores, convenios y cortes"
 tags: ["pagos", "deudores", "cortes", "convenio", "morosidad"]
+tipo: "funcionamiento"
 ---
-
 # Cartera Vencida y Cortes
 
 Esta sección se usa para revisar clientes con deuda y decidir si conviene crear un convenio, hacer un corte o reconectar el servicio.

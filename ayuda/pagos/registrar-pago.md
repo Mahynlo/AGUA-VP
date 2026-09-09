@@ -4,8 +4,8 @@ seccion: "pagos"
 orden: 2
 descripcion: "Aprende cómo registrar un pago de un cliente"
 tags: ["pago", "cobro", "recibo", "cambio"]
+tipo: "funcionamiento"
 ---
-
 # Registrar Pago
 
 Registrar un pago significa dejar anotado que el cliente ya entregó el dinero correspondiente a su factura.

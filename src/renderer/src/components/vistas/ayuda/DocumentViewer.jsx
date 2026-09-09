@@ -170,7 +170,7 @@ const DocumentViewer = ({
 
           <span className="text-slate-300 dark:text-zinc-700">/</span>
 
-          <span className="text-slate-800 dark:text-zinc-200 font-bold truncate max-w-[180px] sm:max-w-[280px]">
+          <span className="text-slate-800 dark:text-zinc-200 font-bold truncate max-w-[200px] sm:max-w-[320px]">
             {docTitle}
           </span>
         </nav>

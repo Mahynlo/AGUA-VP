@@ -4,8 +4,8 @@ seccion: "impresion"
 orden: 1
 descripcion: "Guía visual del módulo de impresión"
 tags: ["impresión", "recibos", "vista previa", "reportes"]
+tipo: "funcionamiento"
 ---
-
 # Introducción al Módulo de Impresión
 
 El módulo de **Impresión** se usa para preparar documentos que el usuario necesita ver o sacar en papel, como recibos, reportes y listas.

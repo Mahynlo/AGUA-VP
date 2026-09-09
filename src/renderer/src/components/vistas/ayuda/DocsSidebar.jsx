@@ -85,16 +85,16 @@ const DocsSidebar = ({
     <div className="w-full h-full bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 flex flex-col select-none overflow-hidden">
       
       {/* ── HEADER DEL SIDEBAR ── */}
-      <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/40 shrink-0">
+      <div className="p-3 sm:p-3.5 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/40 shrink-0 space-y-2.5">
         
         {/* Fila 1: Catálogo General y Acciones */}
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center justify-between gap-1.5">
           <button
             onClick={() => {
               navegarA(null, null);
               if (window.innerWidth < 1024) setSidebarOpen(false);
             }}
-            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all group text-left ${
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-xl transition-all group text-left ${
               !selectedSection && !selectedFile
                 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black shadow-sm"
                 : "text-slate-700 dark:text-zinc-200 hover:bg-slate-200/50 dark:hover:bg-zinc-800/60"
@@ -104,28 +104,27 @@ const DocsSidebar = ({
             <div className="p-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
               <HiHome className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold tracking-tight">Catálogo General</span>
+            <span className="text-xs font-bold tracking-tight">Inicio</span>
           </button>
 
           <div className="flex items-center gap-1">
             <button
               onClick={expandAll}
-              className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 px-1.5 py-1 rounded-md hover:bg-slate-200/50 dark:hover:bg-zinc-800 transition-colors"
+              className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 px-1.5 py-0.5 rounded-md hover:bg-slate-200/50 dark:hover:bg-zinc-800 transition-colors"
               title="Expandir todas las secciones"
             >
               + Todo
             </button>
             <button
               onClick={collapseAll}
-              className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 px-1.5 py-1 rounded-md hover:bg-slate-200/50 dark:hover:bg-zinc-800 transition-colors"
+              className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 px-1.5 py-0.5 rounded-md hover:bg-slate-200/50 dark:hover:bg-zinc-800 transition-colors"
               title="Colapsar todas las secciones"
             >
               - Todo
             </button>
-            {/* Botón Ocultar Menú (Visible tanto en móvil como en escritorio) */}
             <button
               onClick={() => setSidebarOpen(false)}
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors ml-0.5"
+              className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
               title="Ocultar menú lateral"
             >
               <HiOutlineX className="w-4 h-4" />
@@ -135,20 +134,20 @@ const DocsSidebar = ({
 
         {/* Fila 2: Input de Filtro Rápido */}
         <div className="relative flex items-center">
-          <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none">
+          <span className="absolute left-2.5 text-slate-400 dark:text-zinc-500 pointer-events-none">
             <HiSearch className="w-3.5 h-3.5" />
           </span>
           <input
             type="text"
-            placeholder="Filtrar manuales..."
+            placeholder="Filtrar temas..."
             value={sidebarFilter}
             onChange={(e) => setSidebarFilter(e.target.value)}
-            className="w-full pl-9 pr-8 py-2 text-xs font-medium rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs"
+            className="w-full pl-8 pr-7 py-1.5 text-xs font-medium rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-700/80 hover:border-slate-300 dark:hover:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs"
           />
           {sidebarFilter && (
             <button
               onClick={() => setSidebarFilter("")}
-              className="absolute right-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800"
+              className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800"
             >
               <HiX className="w-3 h-3" />
             </button>
@@ -166,14 +165,8 @@ const DocsSidebar = ({
               Sin coincidencias
             </p>
             <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1">
-              No se encontraron manuales con "{sidebarFilter}"
+              No hay documentos en esta vista
             </p>
-            <button
-              onClick={onOpenSearch}
-              className="mt-2.5 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Buscar en todo el contenido (Ctrl+K)
-            </button>
           </div>
         ) : (
           Object.entries(visibleSections).map(([sectionKey, files]) => {
@@ -240,20 +233,20 @@ const DocsSidebar = ({
                             navegarA(sectionKey, file.fileName);
                             if (window.innerWidth < 1024) setSidebarOpen(false);
                           }}
-                          className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all duration-150 group relative ${
+                          className={`w-full text-left flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-xl transition-all duration-150 group relative ${
                             isSelected
                               ? "bg-blue-600 text-white shadow-sm font-bold"
                               : "text-slate-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800/80 hover:text-slate-900 dark:hover:text-white"
                           }`}
                         >
-                          <HiDocumentText
-                            className={`w-3.5 h-3.5 shrink-0 transition-colors ${
-                              isSelected
-                                ? "text-white"
-                                : "text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400"
-                            }`}
-                          />
-                          <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <HiDocumentText
+                              className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                                isSelected
+                                  ? "text-white"
+                                  : "text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400"
+                              }`}
+                            />
                             <p className="text-xs truncate leading-snug">
                               {file.metadata?.titulo || file.fileName.replace(".md", "")}
                             </p>

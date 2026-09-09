@@ -4,8 +4,8 @@ seccion: "lecturas"
 orden: 1
 descripcion: "Introduccion a Lecturas"
 tags: ["cliente", "medidor", "asignar", "gestión"]
+tipo: "funcionamiento"
 ---
-
 # Introducción al Módulo de Lecturas
 
 El módulo de **Lecturas** es donde se registra el consumo real de cada medidor y se da seguimiento a la ruta de trabajo.

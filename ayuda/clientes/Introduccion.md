@@ -4,8 +4,8 @@ seccion: "Clientes"
 orden: 1
 descripcion: "Introducción al módulo de clientes"
 tags: ["cliente", "registro", "modificación", "baja", "asignación", "cancelar"]
+tipo: "funcionamiento"
 ---
-
 # Introducción
 
 El módulo de **Clientes** es el lugar donde se administra la información principal de cada persona que recibe el servicio. Desde aquí puede registrar a un cliente nuevo, revisar su ficha, hacer cambios, asignarle un medidor o liberar ese medidor cuando ya no corresponda.

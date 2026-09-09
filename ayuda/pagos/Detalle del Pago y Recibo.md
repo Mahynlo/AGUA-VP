@@ -4,8 +4,8 @@ seccion: "pagos"
 orden: 4
 descripcion: "Guía para revisar un pago y abrir su comprobante"
 tags: ["pago", "recibo", "detalle", "comprobante"]
+tipo: "funcionamiento"
 ---
-
 # Detalle del Pago y Recibo
 
 Esta vista muestra la información completa de un pago ya guardado.

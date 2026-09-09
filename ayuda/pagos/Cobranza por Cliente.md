@@ -4,8 +4,8 @@ seccion: "pagos"
 orden: 6
 descripcion: "Guía para revisar y cobrar facturas desde la vista por cliente"
 tags: ["pagos", "cobranza", "cliente", "recibo", "historial"]
+tipo: "funcionamiento"
 ---
-
 # Cobranza por Cliente
 
 Esta vista sirve para revisar la deuda de cada cliente y cobrar desde su historial completo.

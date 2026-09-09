@@ -4,8 +4,8 @@ seccion: "pagos"
 orden: 5
 descripcion: "Guía para revisar o ajustar tarifas de cobro"
 tags: ["tarifas", "cálculo", "cobro", "consumo"]
+tipo: "funcionamiento"
 ---
-
 # Configurar Tarifas
 
 Esta sección sirve para entender cómo se calculan los cobros que luego aparecen en facturas y pagos.

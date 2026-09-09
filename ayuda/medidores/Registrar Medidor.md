@@ -4,8 +4,8 @@ seccion: "medidores"
 orden: 2
 descripcion: "Guía para registrar un nuevo medidor en el sistema"
 tags: ["medidor", "registro", "instalación"]
+tipo: "funcionamiento"
 ---
-
 # Registrar Medidor
 
 Para registrar un nuevo medidor, presione **Registrar Medidor**. Se abrirá una ventana con el formulario de alta.

@@ -296,7 +296,8 @@ const tarifasApp = {
 
 // objeto para manejar la documentación de ayuda
 const docsApp = {
-  loadDocumentationFile: (section, fileName) => ipcRenderer.invoke('load-documentation-file', section, fileName),
+  loadDocumentationFile: (section, fileName, tipo = null) => ipcRenderer.invoke('load-documentation-file', section, fileName, tipo),
+  loadDocumentationImage: (imagePath) => ipcRenderer.invoke('load-documentation-image', imagePath),
   listDocumentationFiles: (section = null) => ipcRenderer.invoke('list-documentation-files', section),
   openHelpWindow: (section = null, file = null) => ipcRenderer.invoke('open-help-window', section, file),
   onNavigateToDoc: (callback) => {

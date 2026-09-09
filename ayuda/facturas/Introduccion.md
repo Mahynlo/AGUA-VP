@@ -4,8 +4,8 @@ seccion: "facturas"
 orden: 1
 descripcion: "Introduccion a facturas"
 tags: ["cliente", "medidor", "asignar", "gestión"]
+tipo: "funcionamiento"
 ---
-
 # Introducción al Módulo de Facturas
 
 El módulo de **Facturas** le permite revisar, consultar y dar seguimiento a los cobros generados a partir de las lecturas.

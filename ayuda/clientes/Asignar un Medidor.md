@@ -4,8 +4,8 @@ seccion: "clientes"
 orden: 4
 descripcion: "Aprende cómo asignar un medidor a un cliente existente en el sistema"
 tags: ["cliente", "medidor", "asignar", "gestión"]
+tipo: "funcionamiento"
 ---
-
 # Asignar un Medidor
 
 Asignar un medidor permite que el cliente quede listo para registrar lecturas y generar sus cobros.

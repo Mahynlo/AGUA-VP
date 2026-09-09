@@ -4,8 +4,8 @@ seccion: "clientes"
 orden: 3
 descripcion: "Aprende cómo modificar la información de un cliente existente"
 tags: ["cliente", "modificar", "editar", "actualizar"]
+tipo: "funcionamiento"
 ---
-
 # Modificar Datos de un Cliente
 
 Modificar un cliente sirve para corregir datos que cambiaron con el tiempo o que fueron capturados con error.

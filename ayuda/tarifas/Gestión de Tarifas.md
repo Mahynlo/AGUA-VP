@@ -4,8 +4,8 @@ seccion: "tarifas"
 orden: 2
 descripcion: "Guía visual para revisar y registrar tarifas"
 tags: ["tarifas", "gestión", "registro", "vigencia"]
+tipo: "funcionamiento"
 ---
-
 # Gestión de Tarifas
 
 Esta sección se usa para ver las tarifas registradas y agregar una nueva cuando haga falta.

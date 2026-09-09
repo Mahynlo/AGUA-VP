@@ -4,8 +4,8 @@ seccion: "clientes"
 orden: 2
 descripcion: "Aprende cómo registrar un nuevo cliente en el sistema"
 tags: ["cliente", "registro", "nuevo"]
+tipo: "funcionamiento"
 ---
-
 # Registrar Cliente
 
 Para registrar un nuevo cliente, presione el botón **Registrar Cliente**. Al hacerlo se abrirá una ventana con el formulario de alta.

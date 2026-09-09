@@ -4,8 +4,8 @@ seccion: "medidores"
 orden: 1
 descripcion: "Conoce el funcionamiento general del módulo de medidores"
 tags: ["medidor", "registro", "instalación", "ubicación"]
+tipo: "funcionamiento"
 ---
-
 # Introducción al Módulo de Medidores
 
 El módulo de **Medidores** le ayuda a ver, registrar y organizar los equipos que están instalados o disponibles para usar.

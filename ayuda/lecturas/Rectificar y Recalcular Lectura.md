@@ -4,8 +4,8 @@ seccion: "lecturas"
 orden: 3
 descripcion: "Aprende cómo corregir una lectura antes de facturar"
 tags: ["lectura", "rectificar", "recalcular", "factura"]
+tipo: "funcionamiento"
 ---
-
 # Rectificar y Recalcular Lectura
 
 Esta opción sirve para corregir una lectura cuando todavía no debe cerrarse como definitiva.

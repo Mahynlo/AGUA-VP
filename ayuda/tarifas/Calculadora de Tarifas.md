@@ -4,8 +4,8 @@ seccion: "tarifas"
 orden: 3
 descripcion: "Guía visual para simular el cobro de una tarifa"
 tags: ["tarifas", "calculadora", "consumo", "cálculo"]
+tipo: "funcionamiento"
 ---
-
 # Calculadora de Tarifas
 
 Esta sección sirve para probar un consumo y ver cómo quedaría el cobro antes de usarlo en una factura o revisión.

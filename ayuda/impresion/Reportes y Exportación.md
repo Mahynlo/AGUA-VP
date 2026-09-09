@@ -4,8 +4,8 @@ seccion: "impresion"
 orden: 3
 descripcion: "Guía visual para reportes, padrón y exportación de datos"
 tags: ["impresión", "reportes", "lecturas", "padrón", "exportación"]
+tipo: "funcionamiento"
 ---
-
 # Reportes y Exportación
 
 Esta parte del módulo se usa para preparar reportes de apoyo y descargar información de trabajo.
