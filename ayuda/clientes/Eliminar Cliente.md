@@ -4,8 +4,8 @@ seccion: "clientes"
 orden: 5
 descripcion: "Aprende cómo eliminar un cliente del sistema"
 tags: ["cliente", "eliminar", "baja", "borrar"]
+tipo: "funcionamiento"
 ---
-
 # Eliminar Cliente
 
 Eliminar un cliente significa quitar su registro del sistema cuando ya no debe permanecer guardado.

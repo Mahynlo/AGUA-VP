@@ -4,8 +4,8 @@ seccion: "pagos"
 orden: 3
 descripcion: "Guía para cobrar varios clientes o facturas de forma ágil"
 tags: ["pago rápido", "cobro", "periodo", "masivo"]
+tipo: "funcionamiento"
 ---
-
 # Pago Rápido
 
 El pago rápido sirve para registrar cobros de un periodo completo de forma más ágil, sin entrar factura por factura.

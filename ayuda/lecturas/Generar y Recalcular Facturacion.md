@@ -4,8 +4,8 @@ seccion: "lecturas"
 orden: 4
 descripcion: "Aprende cómo cerrar un periodo y corregirlo antes de facturar"
 tags: ["lecturas", "facturación", "recalcular", "ruta"]
+tipo: "funcionamiento"
 ---
-
 # Generar y Recalcular Facturación
 
 En Lecturas también existe la parte donde el sistema transforma las lecturas capturadas en facturas.

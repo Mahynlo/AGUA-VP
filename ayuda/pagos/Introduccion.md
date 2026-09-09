@@ -4,8 +4,8 @@ seccion: "pagos"
 orden: 1
 descripcion: "Guía general del módulo de pagos"
 tags: ["pagos", "cobro", "recibo", "saldo"]
+tipo: "funcionamiento"
 ---
-
 # Introducción al Módulo de Pagos
 
 El módulo de **Pagos** le ayuda a registrar cuándo un cliente ya cubrió su deuda y a dejar constancia de la forma en que pagó.

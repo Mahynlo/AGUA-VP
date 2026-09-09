@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -10,7 +10,9 @@ import {
   HiLightBulb,
   HiExclamation,
   HiExclamationCircle,
-  HiLink
+  HiLink,
+  HiZoomIn,
+  HiX
 } from "react-icons/hi";
 
 // Función utilitaria para generar IDs consistentes a partir de títulos
@@ -32,6 +34,116 @@ export const extractTextFromChildren = (node) => {
   if (Array.isArray(node)) return node.map(extractTextFromChildren).join('');
   if (node?.props?.children) return extractTextFromChildren(node.props.children);
   return '';
+};
+
+// Componente para imágenes con soporte de rutas relativas y Lightbox Zoom
+const DocImage = ({ src, alt, ...props }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imgSrc, setImgSrc] = useState(src);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!src) return;
+    if (src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) {
+      setImgSrc(src);
+      return;
+    }
+
+    // Si es una ruta relativa local, cargar vía IPC si está disponible
+    if (window.docsApp?.loadDocumentationImage) {
+      setLoading(true);
+      window.docsApp.loadDocumentationImage(src)
+        .then((res) => {
+          if (res?.success && res.dataUri) {
+            setImgSrc(res.dataUri);
+          } else {
+            setImgSrc(src);
+          }
+        })
+        .catch((err) => {
+          console.warn("Error cargando imagen vía IPC:", err);
+          setImgSrc(src);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setImgSrc(src);
+    }
+  }, [src]);
+
+  return (
+    <>
+      <figure className="my-6 mx-auto max-w-full">
+        <div
+          onClick={() => setIsModalOpen(true)}
+          className="relative group cursor-zoom-in overflow-hidden rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 shadow-md hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300"
+        >
+          {loading ? (
+            <div className="h-64 flex items-center justify-center bg-slate-100 dark:bg-zinc-900 animate-pulse">
+              <span className="text-xs font-bold text-slate-400">Cargando captura...</span>
+            </div>
+          ) : (
+            <img
+              src={imgSrc}
+              alt={alt || "Captura del sistema"}
+              loading="lazy"
+              className="w-full h-auto object-contain max-h-[520px] transition-transform duration-300 group-hover:scale-[1.015]"
+              {...props}
+            />
+          )}
+
+          {/* Overlay hover con botón de zoom */}
+          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+            <span className="px-3.5 py-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-slate-800 dark:text-zinc-100 text-xs font-bold shadow-lg flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+              <HiZoomIn className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              Clic para ampliar captura
+            </span>
+          </div>
+        </div>
+
+        {alt && (
+          <figcaption className="text-center text-xs font-semibold text-slate-500 dark:text-zinc-400 mt-2.5 px-2 leading-relaxed">
+            📷 {alt}
+          </figcaption>
+        )}
+      </figure>
+
+      {/* Modal Lightbox de Pantalla Completa */}
+      {isModalOpen && (
+        <div
+          onClick={() => setIsModalOpen(false)}
+          className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-8 animate-fadeIn"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-5xl max-h-[90vh] bg-white dark:bg-zinc-950 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col"
+          >
+            {/* Cabecera del modal */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/80 dark:bg-zinc-900/80 shrink-0">
+              <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 truncate pr-4">
+                {alt || "Vista ampliada de captura"}
+              </span>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-200/60 dark:hover:bg-zinc-800 transition-colors"
+                title="Cerrar vista ampliada"
+              >
+                <HiX className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contenido de la imagen */}
+            <div className="p-3 overflow-auto flex items-center justify-center bg-slate-900/5 dark:bg-black/40">
+              <img
+                src={imgSrc}
+                alt={alt || "Captura ampliada"}
+                className="max-h-[80vh] w-auto max-w-full object-contain rounded-xl"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 // Componente para bloques de código con botón de copiado
@@ -243,8 +355,8 @@ export const MarkdownRenderer = ({ content }) => {
     ),
     hr: () => <hr className="my-8 border-slate-200 dark:border-zinc-800" />,
 
-    // ── CITAS (NOTAS / ALERTAS) ──
-    blockquote: ({ children }) => <CalloutBlockquote>{children}</CalloutBlockquote>,
+    // ── IMÁGENES CON CAPTION Y LIGHTBOX ZOOM ──
+    img: (props) => <DocImage {...props} />,
 
     // ── TABLAS ──
     table: ({ children }) => (
@@ -279,6 +391,7 @@ export const MarkdownRenderer = ({ content }) => {
   return (
     <div className="text-slate-800 dark:text-zinc-200">
       <ReactMarkdown
+        urlTransform={(url) => url}
         components={customComponents}
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}

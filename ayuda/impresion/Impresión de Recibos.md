@@ -4,8 +4,8 @@ seccion: "impresion"
 orden: 2
 descripcion: "Guía visual para seleccionar clientes y sacar recibos"
 tags: ["impresión", "recibos", "vista previa", "clientes"]
+tipo: "funcionamiento"
 ---
-
 # Impresión de Recibos
 
 Esta parte del módulo se usa cuando quiere preparar recibos para uno o varios clientes antes de mandarlos a imprimir.

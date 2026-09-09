@@ -4,8 +4,8 @@ seccion: "medidores"
 orden: 3
 descripcion: "Guía para editar los datos de un medidor existente"
 tags: ["medidor", "editar", "modificar", "asignación", "estado"]
+tipo: "funcionamiento"
 ---
-
 # Modificar Medidor
 
 Modificar un medidor sirve para corregir sus datos visibles, actualizar su ubicación o cambiar su estado cuando la situación del equipo cambia.

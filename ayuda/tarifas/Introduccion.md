@@ -4,8 +4,8 @@ seccion: "tarifas"
 orden: 1
 descripcion: "Guía visual del módulo de tarifas"
 tags: ["tarifas", "cobro", "gestión", "calculadora"]
+tipo: "funcionamiento"
 ---
-
 # Introducción al Módulo de Tarifas
 
 En este módulo se administran las tarifas que usa el sistema para calcular cobros y se puede revisar cómo quedaría un consumo antes de usarlo en cobro o facturación.

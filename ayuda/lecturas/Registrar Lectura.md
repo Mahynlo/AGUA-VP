@@ -4,8 +4,8 @@ seccion: "lecturas"
 orden: 2
 descripcion: "Aprende cómo capturar una lectura nueva"
 tags: ["lectura", "consumo", "registro"]
+tipo: "funcionamiento"
 ---
-
 # Registrar una Lectura
 
 Registrar una lectura significa anotar cuánto marcó el medidor en esa visita.

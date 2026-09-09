@@ -4,8 +4,8 @@ seccion: "clientes"
 orden: 6
 descripcion: "Aprende cómo liberar un medidor para usarlo con otro cliente"
 tags: ["cliente", "medidor", "liberar", "desasignar"]
+tipo: "funcionamiento"
 ---
-
 # Liberar un Medidor
 
 Liberar un medidor significa quitarlo del cliente que lo tenía asignado para que pueda usarse con otro registro.
