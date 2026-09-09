@@ -1,26 +1,37 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useClientes } from "./ClientesContext";
 import { useMedidores } from "./MedidoresContext";
 import { useTarifas } from "./TarifasContext";
-// // Componente para cargar datos iniciales de clientes, medidores y tarifas
+
+// Componente para cargar datos iniciales de clientes, medidores y tarifas
 const InitDataLoader = () => {
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { actualizarClientes } = useClientes();
   const { actualizarMedidores } = useMedidores();
   const { actualizarTarifas } = useTarifas();
 
-  useEffect(() => { // Efecto para cargar datos al iniciar sesión
-    const yaInicializado = localStorage.getItem("datosInicializados"); // Verifica si los datos ya fueron inicializados
-    if (isAuthenticated() && user && !yaInicializado) { // Si el usuario está autenticado y los datos no han sido inicializados
+  useEffect(() => {
+    const isAuxiliary = 
+      location.pathname === '/ayuda' ||
+      location.pathname.startsWith('/recibo') ||
+      location.pathname.startsWith('/reporte') ||
+      location.pathname.startsWith('/comprobante');
+
+    if (isAuxiliary) return;
+
+    const yaInicializado = localStorage.getItem("datosInicializados");
+    if (isAuthenticated() && user && !yaInicializado) {
       actualizarClientes();
       actualizarMedidores();
       actualizarTarifas();
       localStorage.setItem("datosInicializados", "true");
     }
-  }, [user, isAuthenticated, actualizarClientes, actualizarMedidores, actualizarTarifas]);
+  }, [user, isAuthenticated, location.pathname, actualizarClientes, actualizarMedidores, actualizarTarifas]);
 
-  return null; // No renderiza nada
+  return null;
 };
 
 export default InitDataLoader;

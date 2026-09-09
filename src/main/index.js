@@ -62,6 +62,8 @@ const createMenu = () => {
   Menu.setApplicationMenu(menu);
 }
 
+let mainWindow = null;
+
 function createWindow() {
   createMenu();
   
@@ -69,7 +71,7 @@ function createWindow() {
   const windowState = setupWindowState();
 
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: windowState.width, 
     height: windowState.height,
     x: windowState.x,
@@ -179,25 +181,36 @@ app.on('window-all-closed', async () => {
 
 
 //Botones para el titleBar personalizado
-ipcMain.on("minimize", (event) => { // Minimizar la ventana
-  const window = BrowserWindow.getFocusedWindow();
-  if (window) window.minimize();
+ipcMain.on("minimize", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getFocusedWindow();
+  if (win) win.minimize();
 });
 
-ipcMain.on("maximize", (event) => { // Maximizar la ventana
-  const window = BrowserWindow.getFocusedWindow();
-  if (window) {
-    if (window.isMaximized()) {
-      window.unmaximize();
+ipcMain.on("maximize", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getFocusedWindow();
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize();
     } else {
-      window.maximize();
+      win.maximize();
     }
   }
 });
 
-ipcMain.on("close", (event) => { // Cerrar la ventana
-  if (process.platform !== 'darwin') { // Solo cerrar en Windows y Linux (no en macOS)
-    app.quit() // Cierra la aplicación por completo
+ipcMain.on("close", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getFocusedWindow();
+  if (win) {
+    if (mainWindow && win === mainWindow) {
+      if (process.platform !== 'darwin') {
+        app.quit();
+      }
+    } else {
+      win.close();
+    }
+  } else {
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
   }
 });
 

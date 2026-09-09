@@ -204,7 +204,13 @@ function NavbarApp() {
                     <DropdownItem
                       key="help"
                       startContent={<HiOutlineQuestionMarkCircle className="text-lg text-slate-400" />}
-                      onPress={() => handleNavigation("/ayuda", "Centro de Ayuda")}
+                      onPress={() => {
+                        if (window.docsApp?.openHelpWindow) {
+                          window.docsApp.openHelpWindow();
+                        } else {
+                          handleNavigation("/ayuda", "Centro de Ayuda");
+                        }
+                      }}
                       className="hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold"
                     >
                       <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Centro de Ayuda</span>

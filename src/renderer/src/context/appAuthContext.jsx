@@ -9,6 +9,17 @@ export const AuthAppProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     const verificarToken = async () => {
+        // En ventanas de solo lectura / auxiliares (ayuda, reportes, recibos), omitir verificación
+        const hash = window.location.hash || '';
+        if (
+            hash.startsWith('#/ayuda') || 
+            hash.includes('/recibo') || 
+            hash.includes('/reporte') || 
+            hash.includes('/comprobante')
+        ) {
+            return;
+        }
+
         try {
             const status = await window.api.checkServerStatus();
             if (status?.success) {
@@ -66,6 +77,16 @@ export const AuthAppProvider = ({ children }) => {
         if (!window?.authApp?.onTokenMissing) return;
 
         const unsubscribe = window.authApp.onTokenMissing(async () => {
+            const hash = window.location.hash || '';
+            if (
+                hash.startsWith('#/ayuda') || 
+                hash.includes('/recibo') || 
+                hash.includes('/reporte') || 
+                hash.includes('/comprobante')
+            ) {
+                return;
+            }
+
             const ensureResult = await window.authApp.ensureToken("Mi App en Producción");
             if (ensureResult?.success && ensureResult.token) {
                 setToken(ensureResult.token);
