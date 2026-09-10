@@ -163,7 +163,7 @@ function MainApp() {
   }
 
   return (
-    <main className='dark:bg-gray-900 bg-gray-200 h-screen overflow-hidden'>
+    <main className={isPrintMode ? 'bg-white h-auto overflow-visible min-h-0' : 'dark:bg-gray-900 bg-gray-200 h-screen overflow-hidden'}>
 
       {/* Navbar solo si no está en rutas ocultas Y no está en modo impresión */}
       {!hideNavbarRoutes.includes(location.pathname) && !isPrintMode && <NavbarApp />}

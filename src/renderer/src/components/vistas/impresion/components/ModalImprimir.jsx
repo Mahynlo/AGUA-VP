@@ -27,14 +27,14 @@ const IconVertical = () => (
 );
 
 // initialMode: 'preview' (default) | 'print'
-const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview' }) => {
+const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', defaultLandscape = true }) => {
     const [showPrint, setShowPrint] = useState(initialMode === 'print');
 
     // Print options state
     const [printers, setPrinters] = useState([]);
     const [loadingPrinters, setLoadingPrinters] = useState(false);
     const [selectedPrinter, setSelectedPrinter] = useState('');
-    const [landscape, setLandscape] = useState(true);
+    const [landscape, setLandscape] = useState(defaultLandscape);
     const [copies, setCopies] = useState(1);
     const [pageSize, setPageSize] = useState('Letter');
     const [isPrinting, setIsPrinting] = useState(false);

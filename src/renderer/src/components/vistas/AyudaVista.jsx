@@ -360,7 +360,9 @@ const AyudaVista = () => {
         if (seccion && archivo) {
           const content = await obtenerContenido(seccion, archivo);
           const meta = currentMetadata || {};
-          const secTitle = sectionIcons[seccion]?.title || seccion;
+          const secConfig = sectionIcons[seccion] || {};
+          const secTitle = secConfig.title || seccion;
+          const secSubtitle = secConfig.subtitle || "";
           const tituloDoc = meta.titulo || archivo.replace(".md", "");
 
           tituloPrincipal = tituloDoc;
@@ -369,6 +371,7 @@ const AyudaVista = () => {
           docsList.push({
             seccionKey: seccion,
             seccionTitulo: secTitle,
+            seccionSubtitulo: secSubtitle,
             fileName: archivo,
             titulo: tituloDoc,
             descripcion: meta.descripcion || "",
@@ -378,7 +381,9 @@ const AyudaVista = () => {
         }
       } else if (alcance === "modulo_actual") {
         const secFiles = filteredSections[seccion] || sections[seccion] || [];
-        const secTitle = sectionIcons[seccion]?.title || seccion;
+        const secConfig = sectionIcons[seccion] || {};
+        const secTitle = secConfig.title || seccion;
+        const secSubtitle = secConfig.subtitle || "";
 
         tituloPrincipal = `Módulo: ${secTitle}`;
         subtitulo = `Manual de Procedimientos y Operación • ${secFiles.length} Guías`;
@@ -389,6 +394,7 @@ const AyudaVista = () => {
           docsList.push({
             seccionKey: seccion,
             seccionTitulo: secTitle,
+            seccionSubtitulo: secSubtitle,
             fileName: file.fileName,
             titulo: meta.titulo || file.fileName.replace(".md", ""),
             descripcion: meta.descripcion || "",
@@ -401,13 +407,17 @@ const AyudaVista = () => {
         subtitulo = "Guía Integral de Operación, Facturación, Cobranza y Administración";
 
         for (const [secKey, secFiles] of Object.entries(filteredSections)) {
-          const secTitle = sectionIcons[secKey]?.title || secKey;
+          const secConfig = sectionIcons[secKey] || {};
+          const secTitle = secConfig.title || secKey;
+          const secSubtitle = secConfig.subtitle || "";
+
           for (const file of secFiles) {
             const content = await obtenerContenido(secKey, file.fileName);
             const meta = file.metadata || {};
             docsList.push({
               seccionKey: secKey,
               seccionTitulo: secTitle,
+              seccionSubtitulo: secSubtitle,
               fileName: file.fileName,
               titulo: meta.titulo || file.fileName.replace(".md", ""),
               descripcion: meta.descripcion || "",
@@ -443,7 +453,11 @@ const AyudaVista = () => {
       const hashBase = protocol === "file:" ? `${base}#` : `${origin}/#`;
       const url = `${hashBase}/reporteDocumentacion?dataKey=${dataKey}&print=true`;
 
-      const response = await window.api.previewComponent(url, { pageNumbers: true });
+      const response = await window.api.previewComponent(url, { 
+        landscape: false, 
+        pageNumbers: true, 
+        pageSize: 'Letter' 
+      });
       if (response && response.success && response.path) {
         setPrintUrl(url);
         setPdfUrl(response.path);
@@ -657,6 +671,7 @@ const AyudaVista = () => {
           pdfUrl={pdfUrl}
           printUrl={printUrl}
           initialMode={modoPdf === "imprimir" ? "print" : "preview"}
+          defaultLandscape={false}
           onClose={() => {
             setPdfUrl(null);
             setPrintUrl(null);

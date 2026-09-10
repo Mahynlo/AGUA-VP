@@ -35,10 +35,23 @@ export default function ModalImprimirDocumentacion({
   sectionConfig = {},
   onIniciarImpresion
 }) {
-  const [alcance, setAlcance] = useState("guia_actual"); // 'guia_actual' | 'modulo_actual' | 'manual_completo'
+  const [alcance, setAlcance] = useState(selectedSection && selectedFile ? "guia_actual" : "manual_completo");
   const [incluirPortada, setIncluirPortada] = useState(true);
   const [incluirIndice, setIncluirIndice] = useState(true);
   const [preparando, setPreparando] = useState(false);
+
+  // Sincronizar el alcance predeterminado cuando se abre el modal
+  React.useEffect(() => {
+    if (isOpen) {
+      if (selectedSection && selectedFile) {
+        setAlcance("guia_actual");
+      } else if (selectedSection) {
+        setAlcance("modulo_actual");
+      } else {
+        setAlcance("manual_completo");
+      }
+    }
+  }, [isOpen, selectedSection, selectedFile]);
 
   const seccionActualInfo = sectionConfig[selectedSection] || { title: selectedSection || "Módulo" };
   const totalGuiasModulo = sections[selectedSection]?.length || 0;
