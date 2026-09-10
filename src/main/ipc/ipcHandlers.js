@@ -296,14 +296,39 @@ export default function IpcHandlers () {
           } catch (e) {}
 
           let captured = false;
+          let fallbackTimer = null;
+          let onPrintReady = null;
+
+          const cleanup = () => {
+            if (fallbackTimer) {
+              clearTimeout(fallbackTimer);
+              fallbackTimer = null;
+            }
+            if (onPrintReady) {
+              ipcMain.removeListener('print-ready', onPrintReady);
+              onPrintReady = null;
+            }
+          };
 
           const capturePdf = async () => {
             if (captured) return;
             captured = true;
-            clearTimeout(fallbackTimer);
+            cleanup();
 
             try {
-              const pdfOptions = { ...printOptions, scaleFactor: 100 };
+              const pdfOptions = { 
+                ...printOptions, 
+                ...(options || {}), 
+                scaleFactor: 100 
+              };
+
+              // Normalizar pageSize si viene especificado
+              if (pdfOptions.pageSize) {
+                const size = String(pdfOptions.pageSize).toLowerCase();
+                if (size === 'letter') pdfOptions.pageSize = 'Letter';
+                else if (size === 'legal') pdfOptions.pageSize = 'Legal';
+                else if (size === 'a4') pdfOptions.pageSize = 'A4';
+              }
 
               // Número de página por hoja (opcional, vía footer nativo de Chromium).
               // Solo se activa cuando el renderer lo pide explícitamente.
@@ -333,17 +358,28 @@ export default function IpcHandlers () {
             }
           };
 
-          // Esperar la señal del componente React cuando terminó de renderizar
-          win.webContents.ipc.once('print-ready', () => {
-            console.log('Señal print-ready recibida');
-            capturePdf();
-          });
+          // Escuchar la señal 'print-ready' vía ipcMain para compatibilidad con ipcRenderer.send
+          onPrintReady = (event) => {
+            if (win && !win.isDestroyed() && (event.sender === win.webContents || event.sender?.id === win.webContents?.id)) {
+              console.log('Señal print-ready recibida vía ipcMain');
+              capturePdf();
+            }
+          };
+          ipcMain.on('print-ready', onPrintReady);
 
-          // Fallback: si la señal no llega (datos no cargaron, etc.), proceder a los 7s
-          const fallbackTimer = setTimeout(() => {
-            console.log('Usando fallback timer para PDF (señal no recibida)');
+          // Escuchar también vía webContents.ipc si está disponible
+          try {
+            win.webContents?.ipc?.once?.('print-ready', () => {
+              console.log('Señal print-ready recibida vía webContents.ipc');
+              capturePdf();
+            });
+          } catch (e) {}
+
+          // Fallback: si la señal no llega a tiempo, proceder a los 25s
+          fallbackTimer = setTimeout(() => {
+            console.log('Usando fallback timer para PDF');
             capturePdf();
-          }, 7000);
+          }, 25000);
         });
       });
     });

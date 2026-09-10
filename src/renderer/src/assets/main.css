@@ -94,21 +94,9 @@ label:has(input[type="radio"]) * {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Estilos de Impresión y Exportación a PDF (Recibos, Reportes y Manuales)
+   Estilos base de Impresión y Vista Previa
    ═══════════════════════════════════════════════════════════════════════ */
 @media print {
-  @page {
-    size: letter portrait;
-    margin: 1.2cm 1.2cm 1.2cm 1.2cm;
-  }
-
-  body {
-    background: white !important;
-    color: #0f172a !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
   .page-break {
     break-after: page;
   }
@@ -128,46 +116,17 @@ label:has(input[type="radio"]) * {
   .docs-sidebar,
   .doc-toc,
   .search-modal,
-  .nextui-modal,
-  header:not(.print-header),
-  nav:not(.print-nav),
-  aside,
-  button:not(.print-button) {
+  .nextui-modal {
     display: none !important;
   }
 
-  /* Evitar cortes indeseados dentro de bloques */
-  table, pre, blockquote, figure, .callout-block, .avoid-page-break {
+  .avoid-page-break {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
-
-  h1, h2, h3 {
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-    color: #0f172a !important;
-  }
-
-  /* Tablas nítidas con bordes en impresión */
-  .prose table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
-
-  .prose th, .prose td {
-    border: 1px solid #cbd5e1 !important;
-    padding: 6px 10px !important;
-    color: #0f172a !important;
-  }
-
-  .prose th {
-    background-color: #f1f5f9 !important;
-    font-weight: bold !important;
-  }
 }
 
-
-/* Estilos para vista previa de impresión */
+/* Estilos para vista previa de impresión en pantalla */
 .page-break {
   margin-bottom: 2rem;
   padding: 1rem;

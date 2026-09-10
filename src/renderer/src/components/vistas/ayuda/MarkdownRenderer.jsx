@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import mermaid from 'mermaid';
 import {
   HiOutlineClipboardCopy,
   HiCheck,
@@ -81,7 +82,7 @@ const DocImage = ({ src, alt, ...props }) => {
   if (hasError) {
     const filename = src?.split(/[/|\\]/).pop() || "captura.png";
     return (
-      <div className="my-6 p-4 sm:p-5 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20 shadow-2xs group transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-800">
+      <div className="my-6 p-4 sm:p-5 rounded-2xl border-2 border-dashed border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20 shadow-2xs group transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-800 placeholder-card avoid-break">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3.5">
           <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 border border-blue-200/60 dark:border-blue-800/40">
             <HiPhotograph className="w-6 h-6" />
@@ -109,7 +110,7 @@ const DocImage = ({ src, alt, ...props }) => {
 
   return (
     <>
-      <figure className="my-6 mx-auto max-w-full">
+      <figure className="my-6 mx-auto max-w-full avoid-break">
         <div
           onClick={() => setIsModalOpen(true)}
           className="relative group cursor-zoom-in overflow-hidden rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 shadow-md hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300"
@@ -184,10 +185,227 @@ const DocImage = ({ src, alt, ...props }) => {
   );
 };
 
+let mermaidInitialized = false;
+let mermaidCounter = 0;
+export const chartSvgCache = new Map();
+
+// Gestor reactivo de estado para coordinar la carga de diagramas con la vista y el sistema de impresión
+const coordinatorListeners = new Set();
+const pendingDiagrams = new Set();
+const renderedDiagrams = new Set();
+const failedDiagrams = new Set();
+
+export const mermaidCoordinator = {
+  register: (id) => {
+    pendingDiagrams.add(id);
+    mermaidCoordinator._notify();
+  },
+  markRendered: (id) => {
+    pendingDiagrams.delete(id);
+    renderedDiagrams.add(id);
+    mermaidCoordinator._notify();
+  },
+  markFailed: (id) => {
+    pendingDiagrams.delete(id);
+    failedDiagrams.add(id);
+    mermaidCoordinator._notify();
+  },
+  unregister: (id) => {
+    pendingDiagrams.delete(id);
+    mermaidCoordinator._notify();
+  },
+  getStatus: () => ({
+    pending: pendingDiagrams.size,
+    rendered: renderedDiagrams.size,
+    failed: failedDiagrams.size,
+    isAllDone: pendingDiagrams.size === 0
+  }),
+  subscribe: (fn) => {
+    coordinatorListeners.add(fn);
+    return () => coordinatorListeners.delete(fn);
+  },
+  _notify: () => {
+    const status = mermaidCoordinator.getStatus();
+    coordinatorListeners.forEach((fn) => {
+      try { fn(status); } catch (e) {}
+    });
+    if (typeof window !== 'undefined') {
+      window.__aguavp_mermaid_pending = status.pending;
+      window.__aguavp_mermaid_rendered = status.rendered;
+      window.dispatchEvent(new CustomEvent('aguavp-mermaid-status', { detail: status }));
+    }
+  }
+};
+
+// Cola de renderizado secuencial para evitar colisiones en el DOM interno de Mermaid
+let renderQueue = Promise.resolve();
+
+export const renderMermaidSequential = (chartText) => {
+  const clean = (chartText || '').trim();
+  if (!clean) return Promise.resolve('');
+
+  if (chartSvgCache.has(clean)) {
+    return Promise.resolve(chartSvgCache.get(clean));
+  }
+
+  const task = renderQueue.then(async () => {
+    if (chartSvgCache.has(clean)) {
+      return chartSvgCache.get(clean);
+    }
+
+    if (!mermaidInitialized) {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'neutral',
+        securityLevel: 'loose',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        logLevel: 'error',
+        suppressErrorRendering: true
+      });
+      mermaidInitialized = true;
+    }
+
+    mermaidCounter++;
+    const id = `mermaid-svg-${mermaidCounter}-${Math.random().toString(36).substring(2, 7)}`;
+
+    try {
+      const { svg } = await mermaid.render(id, clean);
+      chartSvgCache.set(clean, svg);
+      return svg;
+    } catch (err) {
+      const errorEl = document.getElementById(id) || document.getElementById(`d${id}`);
+      if (errorEl) errorEl.remove();
+      throw err;
+    }
+  });
+
+  // Mantener viva la cadena secuencial aunque un diagrama individual falle
+  renderQueue = task.catch((err) => {
+    console.warn("Aviso en cola Mermaid:", err);
+  });
+
+  return task;
+};
+
+// Componente interactivo para renderizar diagramas Mermaid en SVG vectoriales
+const MermaidDiagram = ({ chart }) => {
+  const cleanChart = React.useMemo(() => (chart || '').trim(), [chart]);
+  const cachedSvg = React.useMemo(() => chartSvgCache.get(cleanChart), [cleanChart]);
+
+  // Si ya está en caché, inicializar directamente con el SVG y loading = false (cero parpadeo y renderizado instantáneo)
+  const [svgContent, setSvgContent] = useState(() => cachedSvg || '');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(() => !cachedSvg && Boolean(cleanChart));
+  const diagramIdRef = React.useRef(null);
+
+  if (!diagramIdRef.current) {
+    diagramIdRef.current = `diag-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`;
+  }
+  const diagramId = diagramIdRef.current;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Si ya tenemos el SVG del caché, marcar como renderizado directamente
+    if (cachedSvg) {
+      setSvgContent(cachedSvg);
+      setLoading(false);
+      setError(null);
+      mermaidCoordinator.markRendered(diagramId);
+      return () => {
+        mermaidCoordinator.unregister(diagramId);
+      };
+    }
+
+    if (!cleanChart) {
+      setError('Diagrama sin contenido');
+      setLoading(false);
+      mermaidCoordinator.markFailed(diagramId);
+      return;
+    }
+
+    mermaidCoordinator.register(diagramId);
+
+    renderMermaidSequential(cleanChart)
+      .then((svg) => {
+        if (isMounted) {
+          setSvgContent(svg);
+          setError(null);
+          setLoading(false);
+        }
+        mermaidCoordinator.markRendered(diagramId);
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err?.message || 'Error de formato en diagrama Mermaid');
+          setLoading(false);
+        }
+        mermaidCoordinator.markFailed(diagramId);
+      });
+
+    return () => {
+      isMounted = false;
+      mermaidCoordinator.unregister(diagramId);
+    };
+  }, [cleanChart, cachedSvg, diagramId]);
+
+  if (error) {
+    return (
+      <div 
+        data-mermaid-error="true"
+        className="my-6 rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/30 p-4 text-xs font-mono avoid-break"
+      >
+        <div className="flex items-center gap-2 font-bold text-amber-700 dark:text-amber-400 mb-2">
+          <span>⚠️ Diagrama de proceso (Sintaxis no interpretada):</span>
+        </div>
+        <pre className="text-slate-700 dark:text-zinc-300 overflow-x-auto whitespace-pre-wrap">{chart}</pre>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div 
+        data-mermaid-loading="true"
+        className="my-6 flex items-center justify-center p-8 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 animate-pulse avoid-break"
+      >
+        <span className="text-xs font-semibold text-slate-400">Generando diagrama de proceso...</span>
+      </div>
+    );
+  }
+
+  return (
+    <figure 
+      data-mermaid-rendered="true"
+      className="my-6 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden avoid-break mermaid-diagram-figure"
+    >
+      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/90 text-xs font-bold text-slate-600 dark:text-zinc-300 print:hidden">
+        <span className="uppercase tracking-widest text-[10px] text-blue-600 dark:text-blue-400 flex items-center gap-1.5 font-sans">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+          </svg>
+          Diagrama de Proceso
+        </span>
+      </div>
+      <div
+        className="p-4 sm:p-6 overflow-x-auto flex items-center justify-center bg-white dark:bg-zinc-950/40 mermaid-svg-container [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:mx-auto"
+        dangerouslySetInnerHTML={{ __html: svgContent }}
+      />
+    </figure>
+  );
+};
+
 // Componente para bloques de código con botón de copiado
 const CodeBlock = ({ children, className }) => {
   const [copied, setCopied] = useState(false);
-  const language = (className || '').replace('language-', '') || 'texto';
+  const childClass = children?.props?.className || '';
+  const rawLang = (className || childClass || '').replace('language-', '').trim();
+  const language = rawLang || 'texto';
+
+  if (language === 'mermaid') {
+    const rawCode = extractTextFromChildren(children);
+    return <MermaidDiagram chart={rawCode} />;
+  }
 
   const handleCopy = async () => {
     const rawCode = extractTextFromChildren(children);
@@ -201,9 +419,9 @@ const CodeBlock = ({ children, className }) => {
   };
 
   return (
-    <div className="relative my-6 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-lg group">
+    <div className="relative my-6 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-lg group avoid-break">
       {/* Cabecera del bloque */}
-      <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-b border-slate-800/80 text-xs font-mono text-slate-400">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-b border-slate-800/80 text-xs font-mono text-slate-400 avoid-break">
         <span className="uppercase tracking-widest text-[10px] font-bold text-slate-300">
           {language}
         </span>
@@ -227,7 +445,7 @@ const CodeBlock = ({ children, className }) => {
       </div>
 
       {/* Contenido del código */}
-      <pre className="p-4 text-slate-100 font-mono text-xs sm:text-sm overflow-x-auto leading-relaxed custom-scrollbar">
+      <pre className="p-4 text-slate-100 font-mono text-xs sm:text-sm overflow-x-auto leading-relaxed custom-scrollbar avoid-break">
         {children}
       </pre>
     </div>
@@ -308,8 +526,8 @@ const CalloutBlockquote = ({ children }) => {
     const cleanedChildren = stripCalloutTag(children);
 
     return (
-      <div className={`rounded-2xl p-4 sm:p-5 my-6 shadow-sm border ${active.border}`}>
-        <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider mb-2.5">
+      <div className={`rounded-2xl p-4 sm:p-5 my-6 shadow-sm border ${active.border} callout-box avoid-break`}>
+        <div className="flex items-center gap-2 font-black text-xs uppercase tracking-wider mb-2.5 avoid-break">
           {active.icon}
           <span>{active.title}</span>
         </div>
@@ -322,7 +540,7 @@ const CalloutBlockquote = ({ children }) => {
 
   // Blockquote estándar
   return (
-    <blockquote className="border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 py-3 px-5 rounded-r-2xl my-6 text-slate-700 dark:text-zinc-300 italic font-medium shadow-sm">
+    <blockquote className="border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 py-3 px-5 rounded-r-2xl my-6 text-slate-700 dark:text-zinc-300 italic font-medium shadow-sm avoid-break">
       {children}
     </blockquote>
   );
@@ -430,8 +648,8 @@ export const MarkdownRenderer = ({ content }) => {
 
     // ── TABLAS ──
     table: ({ children }) => (
-      <div className="overflow-x-auto my-6 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm bg-white dark:bg-zinc-900">
-        <table className="w-full text-left border-collapse text-xs sm:text-sm">
+      <div className="overflow-x-auto my-6 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm bg-white dark:bg-zinc-900 avoid-break table-box">
+        <table className="w-full text-left border-collapse text-xs sm:text-sm avoid-break">
           {children}
         </table>
       </div>
@@ -452,7 +670,7 @@ export const MarkdownRenderer = ({ content }) => {
       </td>
     ),
     tr: ({ children }) => (
-      <tr className="hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors last:border-0">
+      <tr className="hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors last:border-0 avoid-break">
         {children}
       </tr>
     ),
