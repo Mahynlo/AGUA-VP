@@ -51,6 +51,7 @@ import ReporteClientesCompleto from "./components/recibo/ReporteClientes"
 import ComprobantePago from "./components/recibo/ComprobantePago";
 import ReporteFinancieroPagos from "./components/recibo/ReporteFinancieroPagos";
 import ReporteDeudoresMayores from "./components/recibo/ReporteDeudoresMayores";
+import ReporteDocumentacion from "./components/recibo/ReporteDocumentacion";
 
 // Pantalla de carga de la aplicación
 import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
@@ -110,8 +111,8 @@ function App() {
 
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/ayuda'];
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/ayuda'];
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/ayuda'];
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/ayuda'];
 
   const { loading } = useAuth();
 
@@ -193,6 +194,7 @@ function MainApp() {
         <Route path="/comprobante-pago" element={<ComprobantePago />} />
         <Route path="/reporteFinancieroPagos" element={<ReporteFinancieroPagos />} />
         <Route path="/reporteDeudoresMayores" element={<ReporteDeudoresMayores />} />
+        <Route path="/reporteDocumentacion" element={<ReporteDocumentacion />} />
         {/* Rutas públicas */}
         <Route path='/' element={<LoginApp />} />
         <Route path='/actualizaciones' element={<ActualizacionesVista />} />

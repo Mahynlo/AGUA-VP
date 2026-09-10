@@ -10,7 +10,8 @@ import {
   HiOutlineArrowNarrowRight,
   HiMenuAlt2,
   HiChevronDown,
-  HiOutlineArrowUp
+  HiOutlineArrowUp,
+  HiPrinter
 } from "react-icons/hi";
 import { Tooltip } from "@nextui-org/react";
 import { MarkdownRenderer, slugify } from "./MarkdownRenderer";
@@ -59,7 +60,8 @@ const DocumentViewer = ({
   getCurrentSectionConfig,
   navegarAnterior,
   navegarSiguiente,
-  navegarA
+  navegarA,
+  onOpenPrint
 }) => {
   const [copiedTitle, setCopiedTitle] = useState(false);
   const [activeHeadingId, setActiveHeadingId] = useState("");
@@ -190,6 +192,18 @@ const DocumentViewer = ({
               ) : (
                 <HiOutlineClipboardCopy className="w-4 h-4" />
               )}
+            </button>
+          </Tooltip>
+
+          {/* Botón Imprimir / Exportar Documentación */}
+          <Tooltip content="Imprimir o exportar guía / manual a PDF" placement="top">
+            <button
+              onClick={() => onOpenPrint && onOpenPrint()}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-blue-600 dark:text-zinc-300 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors font-medium text-xs"
+              title="Imprimir o exportar a PDF"
+            >
+              <HiPrinter className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span className="hidden sm:inline font-bold">Imprimir</span>
             </button>
           </Tooltip>
 

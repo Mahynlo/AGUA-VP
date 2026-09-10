@@ -6,7 +6,8 @@ import {
 import { 
   HiBookOpen, 
   HiSearch, 
-  HiMenu
+  HiMenu,
+  HiPrinter
 } from "react-icons/hi";
 import 'katex/dist/katex.min.css';
 import { normalizarTexto } from "../../utils/textUtils";
@@ -17,6 +18,8 @@ import SearchModal from "./ayuda/SearchModal";
 import DocsSidebar from "./ayuda/DocsSidebar";
 import DocumentViewer from "./ayuda/DocumentViewer";
 import WelcomeView from "./ayuda/WelcomeView";
+import ModalImprimirDocumentacion from "./ayuda/ModalImprimirDocumentacion";
+import ModalImprimir from "./impresion/components/ModalImprimir";
 import { sectionIcons } from "./ayuda/sectionConfig.jsx";
 
 const sectionOrder = ["clientes", "medidores", "lecturas", "facturas", "pagos", "impresion", "tarifas", "configuracion", "faq"];
@@ -52,6 +55,12 @@ const AyudaVista = () => {
   const [modalSearchTerm, setModalSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
+
+  // Estados para impresión / exportación de documentación a PDF
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [printUrl, setPrintUrl] = useState(null);
+  const [modoPdf, setModoPdf] = useState(null); // 'vista-previa' | 'imprimir' | null
 
   // ==========================================
   // 2. EFECTOS DE INICIALIZACIÓN
@@ -322,7 +331,134 @@ const AyudaVista = () => {
   }, [sections]);
 
   // ==========================================
-  // 5. RENDERIZADO
+  // 5. GENERACIÓN DE DOCUMENTACIÓN EN PDF
+  // ==========================================
+  const handleIniciarImpresion = useCallback(async (opciones) => {
+    const { alcance, seccion, archivo, incluirPortada, incluirIndice } = opciones;
+
+    try {
+      const docsList = [];
+      let tituloPrincipal = "Documentación del Sistema AguaVP";
+      let subtitulo = "Manual de Operación y Procedimientos";
+
+      const obtenerContenido = async (secKey, fName) => {
+        const cacheKey = `${secKey}/${fName}`;
+        if (fileContents[cacheKey]) return fileContents[cacheKey];
+        if (secKey === selectedSection && fName === selectedFile && currentContent) return currentContent;
+        if (window.docsApp?.loadDocumentationFile) {
+          try {
+            const res = await window.docsApp.loadDocumentationFile(secKey, fName);
+            if (res?.success) return res.content;
+          } catch (e) {
+            console.warn("Error cargando doc para PDF:", e);
+          }
+        }
+        return "";
+      };
+
+      if (alcance === "guia_actual") {
+        if (seccion && archivo) {
+          const content = await obtenerContenido(seccion, archivo);
+          const meta = currentMetadata || {};
+          const secTitle = sectionIcons[seccion]?.title || seccion;
+          const tituloDoc = meta.titulo || archivo.replace(".md", "");
+
+          tituloPrincipal = tituloDoc;
+          subtitulo = `${secTitle} • Guía de Operación`;
+
+          docsList.push({
+            seccionKey: seccion,
+            seccionTitulo: secTitle,
+            fileName: archivo,
+            titulo: tituloDoc,
+            descripcion: meta.descripcion || "",
+            orden: meta.orden || 1,
+            content: content
+          });
+        }
+      } else if (alcance === "modulo_actual") {
+        const secFiles = filteredSections[seccion] || sections[seccion] || [];
+        const secTitle = sectionIcons[seccion]?.title || seccion;
+
+        tituloPrincipal = `Módulo: ${secTitle}`;
+        subtitulo = `Manual de Procedimientos y Operación • ${secFiles.length} Guías`;
+
+        for (const file of secFiles) {
+          const content = await obtenerContenido(seccion, file.fileName);
+          const meta = file.metadata || {};
+          docsList.push({
+            seccionKey: seccion,
+            seccionTitulo: secTitle,
+            fileName: file.fileName,
+            titulo: meta.titulo || file.fileName.replace(".md", ""),
+            descripcion: meta.descripcion || "",
+            orden: meta.orden || 1,
+            content: content
+          });
+        }
+      } else if (alcance === "manual_completo") {
+        tituloPrincipal = "Manual General del Sistema AguaVP";
+        subtitulo = "Guía Integral de Operación, Facturación, Cobranza y Administración";
+
+        for (const [secKey, secFiles] of Object.entries(filteredSections)) {
+          const secTitle = sectionIcons[secKey]?.title || secKey;
+          for (const file of secFiles) {
+            const content = await obtenerContenido(secKey, file.fileName);
+            const meta = file.metadata || {};
+            docsList.push({
+              seccionKey: secKey,
+              seccionTitulo: secTitle,
+              fileName: file.fileName,
+              titulo: meta.titulo || file.fileName.replace(".md", ""),
+              descripcion: meta.descripcion || "",
+              orden: meta.orden || 1,
+              content: content
+            });
+          }
+        }
+      }
+
+      if (docsList.length === 0) {
+        alert("No hay documentos seleccionados para generar el PDF.");
+        return;
+      }
+
+      const payload = {
+        alcance,
+        tituloPrincipal,
+        subtitulo,
+        fechaHoy: new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" }),
+        incluirPortada,
+        incluirIndice,
+        docs: docsList
+      };
+
+      if (!window.api?.savePrintData || !window.api?.previewComponent) {
+        throw new Error("La API de impresión de AguaVP no está disponible.");
+      }
+
+      const dataKey = await window.api.savePrintData(JSON.stringify(payload));
+      const { protocol, origin, href } = window.location;
+      const base = protocol === "file:" ? href.split("#")[0] : origin + "/";
+      const hashBase = protocol === "file:" ? `${base}#` : `${origin}/#`;
+      const url = `${hashBase}/reporteDocumentacion?dataKey=${dataKey}&print=true`;
+
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf("preview");
+      } else {
+        throw new Error(response?.error || "Error generando vista previa del PDF");
+      }
+    } catch (error) {
+      console.error("Error preparando PDF de documentación:", error);
+      alert("Ocurrió un error al generar el PDF de la documentación.");
+    }
+  }, [fileContents, selectedSection, selectedFile, currentContent, currentMetadata, filteredSections, sections]);
+
+  // ==========================================
+  // 6. RENDERIZADO
   // ==========================================
 
   // Pantalla de carga
@@ -399,21 +535,32 @@ const AyudaVista = () => {
                 </div>
               </div>
 
-              {/* Derecha: Botón de Búsqueda Responsivo */}
-              <button 
-                onClick={onOpen}
-                className="flex items-center justify-between gap-2 px-3.5 py-2 bg-slate-100/80 hover:bg-slate-200/70 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-500 dark:text-zinc-400 transition-all shadow-2xs group shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                title="Buscar documentación (Ctrl+K)"
-              >
-                <div className="flex items-center gap-2">
-                  <HiSearch className="w-4 h-4 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
-                  <span className="hidden sm:inline">Buscar en la documentación...</span>
-                  <span className="sm:hidden text-xs font-semibold text-slate-600 dark:text-zinc-300">Buscar</span>
-                </div>
-                <kbd className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 rounded border border-slate-200 dark:border-zinc-700 shadow-2xs">
-                  Ctrl+K
-                </kbd>
-              </button>
+              {/* Derecha: Botón de Búsqueda e Impresión Responsivos */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button 
+                  onClick={() => setPrintModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-xl text-xs font-bold transition-all shadow-2xs group shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-95"
+                  title="Imprimir o exportar manual / guías a PDF"
+                >
+                  <HiPrinter className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="hidden md:inline">Imprimir Manual</span>
+                </button>
+
+                <button 
+                  onClick={onOpen}
+                  className="flex items-center justify-between gap-2 px-3.5 py-2 bg-slate-100/80 hover:bg-slate-200/70 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-xl text-xs font-medium text-slate-500 dark:text-zinc-400 transition-all shadow-2xs group shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  title="Buscar documentación (Ctrl+K)"
+                >
+                  <div className="flex items-center gap-2">
+                    <HiSearch className="w-4 h-4 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
+                    <span className="hidden sm:inline">Buscar en la documentación...</span>
+                    <span className="sm:hidden text-xs font-semibold text-slate-600 dark:text-zinc-300">Buscar</span>
+                  </div>
+                  <kbd className="hidden lg:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-950 rounded border border-slate-200 dark:border-zinc-700 shadow-2xs">
+                    Ctrl+K
+                  </kbd>
+                </button>
+              </div>
 
             </div>
           </div>
@@ -475,6 +622,7 @@ const AyudaVista = () => {
                   navegarAnterior={() => navegarRelativo('prev')}
                   navegarSiguiente={() => navegarRelativo('next')}
                   navegarA={navegarA}
+                  onOpenPrint={() => setPrintModalOpen(true)}
                 />
               ) : (
                 <WelcomeView 
@@ -489,6 +637,33 @@ const AyudaVista = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Configuración de Impresión */}
+      <ModalImprimirDocumentacion
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        selectedSection={selectedSection}
+        selectedFile={selectedFile}
+        currentMetadata={currentMetadata}
+        sections={sections}
+        filteredSections={filteredSections}
+        sectionConfig={sectionIcons}
+        onIniciarImpresion={handleIniciarImpresion}
+      />
+
+      {/* Modal Visor de PDF e Impresión Nativo de AguaVP */}
+      {pdfUrl && (
+        <ModalImprimir
+          pdfUrl={pdfUrl}
+          printUrl={printUrl}
+          initialMode={modoPdf === "imprimir" ? "print" : "preview"}
+          onClose={() => {
+            setPdfUrl(null);
+            setPrintUrl(null);
+            setModoPdf(null);
+          }}
+        />
+      )}
     </div>
   );
 };
