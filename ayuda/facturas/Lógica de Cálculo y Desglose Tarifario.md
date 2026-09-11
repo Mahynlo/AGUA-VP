@@ -47,10 +47,10 @@ flowchart TD
     Base & B1 & B2 --> Total[Total Facturado: $260.00 MXN]
 ```
 
-1. **Cuota Base (0 a 10 $m^3$)**: $120.00
+1. **Cuota Base (0 a 10 $m^3$)**: \$120.00 MXN
 2. **Bloque 1 (10 $m^3$ excedentes)**: $10 \times \$8.00 = \$80.00$
 3. **Bloque 2 (5 $m^3$ excedentes)**: $5 \times \$12.00 = \$60.00$
-4. **Total Facturado**: $$120.00 + \$80.00 + \$60.00 = \mathbf{\$260.00 \text{ MXN}}$
+4. **Total Facturado**: $\$120.00 + \$80.00 + \$60.00 = \mathbf{\$260.00\text{ MXN}}$
 
 ---
 

@@ -49,5 +49,5 @@ Al concluir el recálculo, se despliega el **Visualizador de Resultados** (`moda
 ![Visualizador de facturas recalculadas vs anteriores](../imagenes/facturas/visualizador_facturas_recalculadas.png)
 
 * **Resumen de la Operación**: Total de facturas recalculadas, generadas y fallidas.
-* **Tabla Comparativa de Importes**: Muestra el monto anterior tachado junto al nuevo importe recalculado (ej. ~$280.00~ $\rightarrow$ **$195.00 MXN**).
+* **Tabla Comparativa de Importes**: Muestra el monto anterior tachado junto al nuevo importe recalculado (ej. ~~\$280.00~~ &rarr; **\$195.00 MXN**).
 * **Actualización en el Padrón**: El nuevo saldo se refleja de inmediato en el expediente de **Cobranza por Cliente**.

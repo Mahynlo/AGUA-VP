@@ -16,12 +16,22 @@ El éxito del ciclo mensual depende de seguir estrictamente el orden de las **5 
 
 ## 🗺️ Resumen del Ciclo Operativo Mensual
 
+
 ```mermaid
 flowchart TD
-    A[1. Generar Lista de Campo] --> B[2. Liquidación Total de Deudas Previas]
-    B --> C[3. Captura de Nuevas Lecturas del Mes]
-    C --> D[4. Generación y Revisión de Facturas]
-    D --> E[5. Impresión y Distribución de Recibos]
+    A["<b>1. Generar lista de campo</b>"]
+    B["<b>2. Liquidar adeudos</b><br/>del periodo anterior<br/>y meses anteriores"]
+    C["<b>3. Capturar nuevas lecturas</b><br/>del mes"]
+    D["<b>4. Generar y revisar</b><br/>las facturas"]
+    E["<b>5. Imprimir y distribuir</b><br/>los recibos"]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+
+    classDef paso fill:#f8fafc,stroke:#64748b,stroke-width:1.5px,color:#0f172a,text-align:center;
+    class A,B,C,D,E paso;
 ```
 
 ---
@@ -48,8 +58,7 @@ Antes de que el personal de campo salga a tomar lecturas en las calles y colonia
 
 > [!CAUTION]
 > **Regla de Oro Operativa**: Es **obligatorio** realizar el corte y liquidación de adeudos del periodo anterior **antes** de registrar las nuevas lecturas y generar facturas.  
-> **Orden correcto:** Primero liquidar adeudos antiguos $
-ightarrow$ después capturar la nueva lectura mensual y facturar.
+> **Orden correcto:** Primero liquidar adeudos antiguos &rarr; después capturar la nueva lectura mensual y facturar.
 
 Para gestionar cobros masivos y regularizar los pagos pendientes del mes anterior:
 
@@ -124,4 +133,4 @@ Para concluir el ciclo mensual y entregar los comprobantes de cobro a la ciudada
 ## ⚡ Recomendaciones Finales
 
 > [!TIP]
-> **Trazabilidad Continua**: Mantenga un archivo digital de las listas de campo firmadas por los lecturistas para cualquier aclaración ciudadana en ventanilla.
+> **Trazabilidad Continua**: Mantenga un archivo de las listas de campo para cualquier aclaración ciudadana.

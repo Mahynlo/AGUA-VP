@@ -26,11 +26,11 @@ La captura de lecturas en **AguaVP** se realiza a través de un **Carrusel Inmer
 
 La pantalla se divide en dos paneles complementarios:
 
-### Panel Izquierdo: Cartografía GIS de Precisión
+### Panel Derecho: Cartografía GIS de Precisión
 * Muestra el mapa satelital enfocado y centrado exactamente sobre las coordenadas GPS del medidor actual.
 * Permite verificar visualmente la ubicación de la toma, la calle y referencias de campo.
 
-### Panel Derecho: Expediente del Predio y Caja de Captura
+### Panel Izquierdo: Expediente del Predio y Caja de Captura
 1. **Identidad del Usuario**: Nombre completo del cliente titular, número de predio, dirección y teléfono de contacto.
 2. **Ficha del Medidor**: Número de serie troquelado, marca, modelo y esquema tarifario asignado.
 3. **Lectura Anterior de Referencia**:
