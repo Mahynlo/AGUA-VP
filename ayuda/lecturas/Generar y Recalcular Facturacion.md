@@ -16,7 +16,7 @@ Una vez capturadas las lecturas de campo, el módulo de **Lecturas** permite tra
 
 Cuando todos los medidores de una ruta han sido leídos ($100\%$ de avance):
 
-![Modal de confirmación para Generar Facturas de la ruta](../imagenes/lecturas/modal_generar_facturas_ruta.png)
+![Modal de confirmación para Generar Facturas de la ruta](../imagenes/lecturas/recalculo_lecturas/modal_generar_facturas_ruta.avif)
 
 ### Pasos para Generar Facturas:
 1. Localice la tarjeta de la ruta en la vista principal de **Lecturas**.
@@ -35,7 +35,7 @@ Cuando todos los medidores de una ruta han sido leídos ($100\%$ de avance):
 
 Si después de haber generado las facturas de un período se rectificó la lectura de uno o más medidores, debe actualizarse el importe de los recibos mediante un **Recálculo**:
 
-![Modal de Recalcular Facturación con motivo obligatorio](../imagenes/lecturas/modal_recalcular_facturacion.png)
+![Modal de Recalcular Facturación con motivo obligatorio](../imagenes/lecturas/recalculo_lecturas/modal_recalcular_facturacion.avif)
 
 ### Pasos para Recalcular:
 1. En la tarjeta de la ruta facturada, presione el botón ámbar **"Recalcular Facturación"**.
@@ -58,14 +58,14 @@ Si después de haber generado las facturas de un período se rectificó la lectu
 
 Al finalizar tanto una primera facturación como un recálculo, el sistema despliega automáticamente el **Visualizador de Resultados** (`modalResultadoOpen`):
 
-![Visualizador de resultados de facturación y comparativa de totales](../imagenes/lecturas/visualizador_resultados_facturacion.png)
+![Visualizador de resultados de facturación y comparativa de totales](../imagenes/lecturas/recalculo_lecturas/visualizador_resultados_facturacion.avif)
 
 ### Información Detallada en el Visualizador:
 * **Resumen de Procesamiento**: Conteo de facturas *Generadas*, *Recalculadas* y *Fallidas*.
 * **Tabla de Auditoría por Predio**:
   * Nombre del cliente y número de medidor.
   * Folio de factura asignado.
-  * **Comparativa de Importes**: Si fue un recálculo, muestra el total anterior tachado y el total nuevo en negrita (ej. ~$185.00~ $\rightarrow$ **$142.50**).
+  * **Comparativa de Importes**: Si fue un recálculo, muestra el total anterior tachado y el total nuevo en negrita (ej. ~~\$185.00~~ &rarr; **\$142.50 MXN**).
   * Estado individual del renglón (*Generada*, *Recalculada* o *Fallida con mensaje de error técnico*).
 
 ---

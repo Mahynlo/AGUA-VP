@@ -77,6 +77,5 @@ Al presionar el botón **"Trazar Ruta"** en el panel:
 
 ## 🛠️ Modificar o Auditar una Ruta Existente
 
-* **Editar Ruta (`ModalEditarRuta`)**: En la tarjeta de la ruta, presione el menú de tres puntos $
-ightarrow$ **"Editar Ruta"**. Permite agregar nuevas tomas recién contratadas, retirar medidores dados de baja o reajustar la secuencia.
+* **Editar Ruta (`ModalEditarRuta`)**: En la tarjeta de la ruta, presione el menú de tres puntos &rarr; **"Editar Ruta"**. Permite agregar nuevas tomas recién contratadas, retirar medidores dados de baja o reajustar la secuencia.
 * **Ver Detalle (`ModalDetalleRuta`)**: Despliega la ficha técnica de la ruta con la relación de clientes, medidores, lectura anterior registrada y mapa interactivo con zoom a cada punto.

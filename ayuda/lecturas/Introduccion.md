@@ -15,7 +15,7 @@ El módulo de **Lecturas** es el corazón operativo de la micromedición en **Ag
 ## 🗺️ Ciclo Operativo Mensual de Micromedición
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[1. Generación de Lista de Campo] --> B[2. Liquidación de Saldos Previos]
     B --> C[3. Recorrido y Captura en Carrusel]
     C --> D[4. Validación y Rectificación]
@@ -60,10 +60,8 @@ Cada ruta se presenta como una tarjeta modular que condensa:
 * **Métricas de Cobertura**: Conteo de medidores asignados, lecturas completadas y porcentaje de avance.
 * **Estado de Facturación**: Chip distintivo que indica si la ruta está *Sin Facturar*, *Facturada* o *Recalculada*.
 * **Botón de Acción Principal**:
-  * Si la ruta está pendiente $
-ightarrow$ **"Tomar Lecturas"** (abre el carrusel interactivo).
-  * Si la ruta llegó al $100\%$ $
-ightarrow$ **"Generar Facturas"** (emisión de recibos) o **"Recalcular Facturación"** (si ya fue facturada pero requiere ajustes).
+  * Si la ruta está pendiente &rarr; **"Tomar Lecturas"** (abre el carrusel interactivo).
+  * Si la ruta llegó al $100\%$ &rarr; **"Generar Facturas"** (emisión de recibos) o **"Recalcular Facturación"** (si ya fue facturada pero requiere ajustes).
 * **Menú de Opciones (Tres Puntos)**: Permite inspeccionar la ficha técnica y mapa de la ruta (`ModalDetalleRuta`), editar su secuencia de predios (`ModalEditarRuta`) o eliminarla.
 
 ![Tarjeta de Ruta](../imagenes/lecturas/introduccion/Tarjeta_Ruta.avif)

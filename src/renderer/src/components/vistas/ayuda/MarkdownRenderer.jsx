@@ -548,7 +548,52 @@ const CalloutBlockquote = ({ children }) => {
   );
 };
 
+// Preprocesador inteligente para evitar que símbolos de moneda ($) o saltos de línea colisionen con KaTeX (remark-math)
+export const preprocessMarkdownForMath = (raw) => {
+  if (!raw || typeof raw !== "string") return "";
+
+  // 1. Corregir flechas LaTeX con saltos de línea o no formateadas
+  let text = raw.replace(/\$\s*\r?\n\s*ightarrow\$/g, " &rarr; ");
+  text = text.replace(/\$\\rightarrow\$/g, " &rarr; ");
+
+  // 2. Proteger bloques de código (``` ... ```) y código inline (`...`)
+  const codeRegex = /(```[\s\S]*?```|`[^`\n]+`)/g;
+  const parts = text.split(codeRegex);
+
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 1) continue; // Si es código, no se modifica
+
+    let part = parts[i];
+
+    // Proteger bloques de matemáticas $$ ... $$
+    const displayMathRegex = /(\$\$[\s\S]*?\$\$)/g;
+    const mathParts = part.split(displayMathRegex);
+
+    for (let j = 0; j < mathParts.length; j++) {
+      if (j % 2 === 1) continue; // Si es bloque $$, no se modifica
+
+      let sub = mathParts[j];
+
+      // Proteger referencias directas a monedas como ($), ($ MXN), ($/m³)
+      sub = sub.replace(/\(\$\)/g, "(\\$ MXN)");
+      sub = sub.replace(/\(\$\s*MXN\)/gi, "(\\$ MXN)");
+      sub = sub.replace(/\(\$\/m³\)/g, "(\\$/m³)");
+
+      // Escapar montos de dinero aislados que tengan $ seguido de números (ej. ~$185.00~ o **$142.50** o $120.00)
+      sub = sub.replace(/(?<!\\|\$)\$(\d+(?:[.,]\d+)?)(?!\s*\\text|\s*m\^|\s*[+\-*/=<>])/g, "\\$$1");
+
+      mathParts[j] = sub;
+    }
+
+    parts[i] = mathParts.join("");
+  }
+
+  return parts.join("");
+};
+
 export const MarkdownRenderer = ({ content }) => {
+  const processedContent = React.useMemo(() => preprocessMarkdownForMath(content), [content]);
+
   const customComponents = {
     // ── TÍTULOS CON ANCHORS / IDS PARA TABLA DE CONTENIDO ──
     h1: ({ children }) => {
@@ -686,7 +731,7 @@ export const MarkdownRenderer = ({ content }) => {
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
