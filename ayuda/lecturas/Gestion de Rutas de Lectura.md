@@ -17,7 +17,7 @@ Una **Ruta de Lectura** es una agrupación lógica y geográfica de tomas de agu
 1. Ingrese al módulo de **Lecturas** y presione el botón superior **"+ Nueva Ruta"** (`RegistrarRuta`).
 2. Se abrirá el asistente modal estructurado en dos fases:
 
-![Modal de Creación y Trazado de Rutas](../imagenes/lecturas/modal_crear_ruta.png)
+![Modal de Creación y Trazado de Rutas](../imagenes/lecturas/creacion_gestion_ruta/modal_crear_ruta.avif)
 
 ---
 
@@ -31,7 +31,7 @@ Una **Ruta de Lectura** es una agrupación lógica y geográfica de tomas de agu
 
 En esta sección se eligen los clientes y medidores que integrarán la ruta:
 
-![Panel de Gestión de Secuencia y Ordenamiento de Predios](../imagenes/lecturas/panel_ordenamiento_predios.png)
+![Panel de Gestión de Secuencia y Ordenamiento de Predios](../imagenes/lecturas/creacion_gestion_ruta/panel_ordenamiento_predios.avif)
 
 #### 1. Métodos para Agregar Tomas a la Ruta:
 * **Buscador Individual Reactivo**: Escriba el nombre del cliente, número de predio, dirección o número de serie del medidor. Al seleccionarlo, se agregará a la lista.
@@ -63,7 +63,7 @@ Al presionar el botón **"Trazar Ruta"** en el panel:
 * Se traza la poligonal del recorrido mostrando la línea directriz del avance de campo.
 * Si desea reiniciar el trazado para reordenar, presione **"Reiniciar Trazado"**.
 
-![Visualización de la ruta en mapa interactivo con paradas](../imagenes/lecturas/mapa_trazado_ruta.png)
+![Visualización de la ruta en mapa interactivo con paradas](../imagenes/lecturas/creacion_gestion_ruta/mapa_trazado_ruta.avif)
 
 ---
 
@@ -77,5 +77,6 @@ Al presionar el botón **"Trazar Ruta"** en el panel:
 
 ## 🛠️ Modificar o Auditar una Ruta Existente
 
-* **Editar Ruta (`ModalEditarRuta`)**: En la tarjeta de la ruta, presione el menú de tres puntos $ightarrow$ **"Editar Ruta"**. Permite agregar nuevas tomas recién contratadas, retirar medidores dados de baja o reajustar la secuencia.
+* **Editar Ruta (`ModalEditarRuta`)**: En la tarjeta de la ruta, presione el menú de tres puntos $
+ightarrow$ **"Editar Ruta"**. Permite agregar nuevas tomas recién contratadas, retirar medidores dados de baja o reajustar la secuencia.
 * **Ver Detalle (`ModalDetalleRuta`)**: Despliega la ficha técnica de la ruta con la relación de clientes, medidores, lectura anterior registrada y mapa interactivo con zoom a cada punto.

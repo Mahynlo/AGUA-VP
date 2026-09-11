@@ -29,12 +29,12 @@ flowchart LR
 
 La vista principal de **Lecturas** (`TabRutas`) ofrece un centro de control intuitivo para supervisar el progreso de captura de todo el municipio:
 
-![Vista principal del Módulo de Rutas y Lecturas con KPIs y tarjetas de ruta](../imagenes/lecturas/rutas_vista_principal.png)
+![Vista principal del Módulo de Rutas y Lecturas con KPIs y tarjetas de ruta](../imagenes/lecturas/introduccion/rutas_vista_principal.avif)
 
 ### 1. Panel de Indicadores Analíticos (KPIs en Tiempo Real)
 En la parte superior se presentan cuatro tarjetas dinámicas que resumen el estado del ciclo mensual:
 
-![Tarjetas analíticas de avance global de lecturas](../imagenes/lecturas/kpis_avance_lecturas.png)
+![Tarjetas analíticas de avance global de lecturas](../imagenes/lecturas/introduccion/kpis_avance_lecturas.avif)
 
 | Indicador KPI | Código Color | Significado y Utilidad Operativa |
 | :--- | :---: | :--- |
@@ -60,9 +60,13 @@ Cada ruta se presenta como una tarjeta modular que condensa:
 * **Métricas de Cobertura**: Conteo de medidores asignados, lecturas completadas y porcentaje de avance.
 * **Estado de Facturación**: Chip distintivo que indica si la ruta está *Sin Facturar*, *Facturada* o *Recalculada*.
 * **Botón de Acción Principal**:
-  * Si la ruta está pendiente $ightarrow$ **"Tomar Lecturas"** (abre el carrusel interactivo).
-  * Si la ruta llegó al $100\%$ $ightarrow$ **"Generar Facturas"** (emisión de recibos) o **"Recalcular Facturación"** (si ya fue facturada pero requiere ajustes).
+  * Si la ruta está pendiente $
+ightarrow$ **"Tomar Lecturas"** (abre el carrusel interactivo).
+  * Si la ruta llegó al $100\%$ $
+ightarrow$ **"Generar Facturas"** (emisión de recibos) o **"Recalcular Facturación"** (si ya fue facturada pero requiere ajustes).
 * **Menú de Opciones (Tres Puntos)**: Permite inspeccionar la ficha técnica y mapa de la ruta (`ModalDetalleRuta`), editar su secuencia de predios (`ModalEditarRuta`) o eliminarla.
+
+![Tarjeta de Ruta](../imagenes/lecturas/introduccion/Tarjeta_Ruta.avif)
 
 ---
 

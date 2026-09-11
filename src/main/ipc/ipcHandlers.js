@@ -761,6 +761,7 @@ export default function IpcHandlers () {
           '.jpeg': 'image/jpeg',
           '.svg': 'image/svg+xml',
           '.webp': 'image/webp',
+          '.avif': 'image/avif',
           '.gif': 'image/gif',
           '.ico': 'image/x-icon'
         };
@@ -858,6 +859,7 @@ export default function IpcHandlers () {
           '.jpeg': 'image/jpeg',
           '.svg': 'image/svg+xml',
           '.webp': 'image/webp',
+          '.avif': 'image/avif',
           '.gif': 'image/gif',
           '.ico': 'image/x-icon'
         };

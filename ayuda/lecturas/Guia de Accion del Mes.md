@@ -39,15 +39,17 @@ Antes de que el personal de campo salga a tomar lecturas en las calles y colonia
 > [!IMPORTANT]
 > **Verificación previa**: Es fundamental comprobar que la columna **"LECT. ANT."** (Lectura Anterior) contenga los valores correctos antes de entregar el formato al personal de campo.
 
-![1.1 Vista previa de la lista de toma de lecturas con la columna de lectura anterior](../imagenes/Guia_Acccion_mes/image1.png)
+![1.1 Impresion de Lista de Toma de Lecturas](../imagenes/lecturas/Guia_Acccion_mes/image1.avif)
 
+![1.1.1 Vista previa de la lista de toma de lecturas con la columna de lectura anterior](../imagenes/lecturas/Guia_Acccion_mes/image1_uno.avif)
 ---
 
 ## 2️⃣ Fase 2: Proceso de Liquidación de Deudas Previas
 
 > [!CAUTION]
 > **Regla de Oro Operativa**: Es **obligatorio** realizar el corte y liquidación de adeudos del periodo anterior **antes** de registrar las nuevas lecturas y generar facturas.  
-> **Orden correcto:** Primero liquidar adeudos antiguos $ightarrow$ después capturar la nueva lectura mensual y facturar.
+> **Orden correcto:** Primero liquidar adeudos antiguos $
+ightarrow$ después capturar la nueva lectura mensual y facturar.
 
 Para gestionar cobros masivos y regularizar los pagos pendientes del mes anterior:
 
@@ -55,15 +57,19 @@ Para gestionar cobros masivos y regularizar los pagos pendientes del mes anterio
 1. Abra el apartado de **Liquidación Total** o **Lista de Deudores** en el módulo de **Pagos**.
 2. En la lista desplegada, **marque únicamente a los clientes que "Siguen debiendo"**. El sistema asumirá automáticamente que todos los clientes desmarcados ya realizaron su pago.
 
-![2.1 Selección de clientes con adeudo pendiente en Liquidación Total](../imagenes/Guia_Acccion_mes/image2.png)
+
+![2.1 Modulo de Pagos](../imagenes/lecturas/Guia_Acccion_mes/image2.avif)
+
+
+![2.2 Selección de clientes con adeudo pendiente en Liquidación Total](../imagenes/lecturas/Guia_Acccion_mes/image3.avif)
 
 3. Presione el botón **"Revisar y confirmar"** en la parte inferior para visualizar el resumen financiero.
 
-![2.2 Resumen financiero de la liquidación](../imagenes/Guia_Acccion_mes/image3.png)
+![2.3 Resumen financiero de la liquidación](../imagenes/lecturas/Guia_Acccion_mes/image4.avif)
 
-4. Si los importes y conteos son correctos, presione **"Confirmar liquidación"** para asentar las operaciones.
+4. Si los importes y conteos son correctos, presione **"Si, registrar ahora"** para asentar las operaciones.
 
-![2.3 Confirmación de la liquidación de deudas](../imagenes/Guia_Acccion_mes/image4.png)
+![2.4 Confirmación de la liquidación de deudas](../imagenes/lecturas/Guia_Acccion_mes/image5.avif)
 
 ### ⚠️ Alerta de Precaución de Cobranza en Rutas (`validarCobranzaPeriodo`)
 Si un operador intenta generar facturas de una ruta sin haber liquidado el mes anterior y el sistema detecta un alto porcentaje de recibos sin pagar, se disparará una ventana modal de advertencia:
@@ -76,7 +82,7 @@ Se recomienda detener la facturación, procesar la liquidación en caja y poster
 
 ## 3️⃣ Fase 3: Captura de las Nuevas Lecturas del Mes
 
-Una vez que las cuadrillas regresan de campo con las hojas de ruta completadas:
+Una vez que ya se tengan las lecturas en hojas de ruta y ya esten completadas:
 
 1. Diríjase al módulo de **Lecturas**.
 2. Seleccione la ruta correspondiente y presione **"Tomar Lecturas"**.
@@ -85,7 +91,7 @@ Una vez que las cuadrillas regresan de campo con las hojas de ruta completadas:
 5. El sistema calculará en tiempo real el consumo: $\text{Consumo} = \text{Lectura Actual} - \text{Lectura Anterior}$.
 6. Presione **Enter** o **"Guardar y Siguiente"** para avanzar automáticamente al siguiente predio.
 
-![3.1 Captura interactiva de lecturas en el carrusel con mapa](../imagenes/lecturas/carrusel_toma_lecturas.png)
+![3.1 Captura interactiva de lecturas en el carrusel con mapa](../imagenes/lecturas/Guia_Acccion_mes/carrusel_toma_lecturas.avif)
 
 ---
 
@@ -98,7 +104,7 @@ Cuando el avance de la ruta alcance el **100%**:
 3. El sistema aplicará la estructura tarifaria correspondiente a cada usuario y generará las facturas en la base de datos.
 4. Se desplegará el **Visualizador de Resultados** con el listado detallado de recibos creados y montos totales calculados.
 
-![4.1 Visualizador de resultados de facturación de ruta](../imagenes/lecturas/visualizador_resultados_facturacion.png)
+![4.1 Visualizador de resultados de facturación de ruta](../imagenes/lecturas/Guia_Acccion_mes/visualizador_resultados_facturacion.avif)
 
 ---
 
@@ -108,9 +114,11 @@ Para concluir el ciclo mensual y entregar los comprobantes de cobro a la ciudada
 
 1. Ingrese a **Impresión > Impresión de Recibos**.
 2. Seleccione el **Pueblo / Localidad**, la **Ruta** y el **Periodo Facturado**.
-3. Seleccione el formato de impresión deseado (Térmico o Carta).
+3. Seleccione el formato de impresión deseado.
 4. Envíe los recibos a la impresora municipal para su entrega domiciliaria.
 
+
+![5.1 Visualizador de recibos para impresion](../imagenes/lecturas/Guia_Acccion_mes/visualizador_Recibos_impresion.avif)
 ---
 
 ## ⚡ Recomendaciones Finales
