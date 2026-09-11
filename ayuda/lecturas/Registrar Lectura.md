@@ -18,7 +18,7 @@ La captura de lecturas en **AguaVP** se realiza a través de un **Carrusel Inmer
 2. Localice la tarjeta de la ruta a capturar y presione el botón **"Tomar Lecturas"**.
 3. Se abrirá la interfaz de captura a pantalla completa:
 
-![Carrusel interactivo de toma de lecturas con mapa y expediente](../imagenes/lecturas/carrusel_toma_lecturas.png)
+![Carrusel interactivo de toma de lecturas con mapa y expediente](../imagenes/lecturas/registro_lectura/carrusel_toma_lecturas.avif)
 
 ---
 
@@ -50,7 +50,10 @@ La pantalla se divide en dos paneles complementarios:
 
 Si la lectura observada en el medidor físico es **menor que la lectura anterior** (por ejemplo, el mes pasado tenía $99,985 \ m^3$ y ahora marca $00,020 \ m^3$ debido a que el odómetro llegó a su capacidad máxima de $99,999 \ m^3$):
 
-![Panel de alerta y confirmación de vuelta a cero en carrusel](../imagenes/lecturas/alerta_vuelta_cero_carrusel.png)
+> [!IMPORTANT]
+> **A tomar en cuanta : revision si se cumple la vulta a cero**: Comúnmente puede pasar mucho tiempo antes de que un medidor llegue a una vuelta a cero, por lo que, en la mayoría de los casos, una lectura que parezca indicar una vuelta a cero podría deberse a un error de captura o de lectura. Por ello, es importante verificar que las lecturas sean congruentes, cuadren correctamente y tengan sentido respecto al consumo registrado.
+
+![Panel de alerta y confirmación de vuelta a cero en carrusel(en este caso es un error de medicion)](../imagenes/lecturas/registro_lectura/alerta_vuelta_cero_carrusel.avif)
 
 1. El sistema activará automáticamente un **Panel de Alerta Naranja**.
 2. Mostrará el comparativo entre la lectura anterior y el valor ingresado.
@@ -72,7 +75,7 @@ Para maximizar la velocidad de captura de las secretarias y operadores:
 | **Navegar Entre Predios** | Utilice los botones **"‹ Anterior"** y **"Siguiente ›"** en el pie de página. |
 | **Búsqueda y Salto Rápido** | Presione el botón **🔍 Buscar** en la cabecera para abrir el buscador predictivo y saltar directamente a cualquier medidor por serie, nombre o predio. |
 
-![Buscador rápido de medidores en el carrusel de lecturas](../imagenes/lecturas/buscador_salto_carrusel.png)
+![Buscador rápido de medidores en el carrusel de lecturas](../imagenes/lecturas/registro_lectura/buscador_salto_carrusel.avif)
 
 ---
 

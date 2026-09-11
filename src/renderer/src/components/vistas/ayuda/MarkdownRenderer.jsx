@@ -124,6 +124,7 @@ const DocImage = ({ src, alt, ...props }) => {
               src={imgSrc}
               alt={alt || "Captura del sistema"}
               loading="lazy"
+              decoding="async"
               onError={() => setHasError(true)}
               className="w-full h-auto object-contain max-h-[520px] transition-transform duration-300 group-hover:scale-[1.015]"
               {...props}
@@ -175,6 +176,7 @@ const DocImage = ({ src, alt, ...props }) => {
               <img
                 src={imgSrc}
                 alt={alt || "Captura ampliada"}
+                decoding="async"
                 className="max-h-[80vh] w-auto max-w-full object-contain rounded-xl"
               />
             </div>
