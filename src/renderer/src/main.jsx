@@ -3,7 +3,7 @@ import './assets/main.css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
-import { NextUIProvider } from '@nextui-org/react'
+import { HeroUIProvider } from '@heroui/react'
 import { ThemeProvider } from './theme/useTheme'
 import { CustomTitleBar } from './TitleBar';
 import { FeedbackProvider } from './context/FeedbackContext';
@@ -12,7 +12,7 @@ import { ReportesProvider } from './context/ReportesContext';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <NextUIProvider>
+    <HeroUIProvider>
       <ThemeProvider>
         <FeedbackProvider>
           <DashboardProvider>
@@ -23,6 +23,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         </FeedbackProvider>
 
       </ThemeProvider>
-    </NextUIProvider>
+    </HeroUIProvider>
   </React.StrictMode>
 )

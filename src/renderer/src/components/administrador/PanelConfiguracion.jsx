@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button, Spinner, Divider } from "@nextui-org/react";
+import { Button, Spinner, Divider } from "@heroui/react";
 // Aquí está la corrección: se agregó HiCheck
 import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiCheck } from "react-icons/hi";
 import { usePermissions } from "../../context/PermissionsContext";

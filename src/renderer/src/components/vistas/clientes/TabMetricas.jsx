@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Select, SelectItem, Card, CardBody, CardHeader, Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@nextui-org/react";
+import { Select, SelectItem, Card, CardBody, CardHeader, Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from "@heroui/react";
 import { HiUsers, HiTrendingUp, HiLocationMarker, HiCalendar, HiCheckCircle, HiXCircle, HiDownload, HiChartBar } from "react-icons/hi";
 import { MdSpeed } from "react-icons/md";
 import ClientesPorMesChart from "../../charts/ChartClientesPorMes";

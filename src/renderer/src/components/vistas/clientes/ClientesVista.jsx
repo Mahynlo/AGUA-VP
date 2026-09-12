@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { HiUserCircle, HiUsers, HiUserAdd, HiTrendingUp, HiMap } from "react-icons/hi";
 import { TabClientes } from "./TabClientes";
 import { TabMetricas } from "./TabMetricas";
-import { Tabs, Tab, Chip, Skeleton } from "@nextui-org/react";
+import { Tabs, Tab, Chip, Skeleton } from "@heroui/react";
 import { MetricasLecturaIcon } from "../../../IconsApp/IconsResibos";
 import { useClientes } from "../../../context/ClientesContext";
 

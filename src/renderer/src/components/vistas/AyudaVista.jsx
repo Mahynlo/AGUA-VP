@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { 
   Spinner, 
   useDisclosure 
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { 
   HiBookOpen, 
   HiSearch, 

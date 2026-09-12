@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Tooltip } from "@nextui-org/react";
+import { Button, Tooltip } from "@heroui/react";
 import { HiTrash } from "react-icons/hi";
 import { useFeedback } from "../../../../context/FeedbackContext";
 

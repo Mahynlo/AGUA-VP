@@ -1,4 +1,4 @@
-﻿import { Button } from "@nextui-org/react";
+﻿import { Button } from "@heroui/react";
 import { FlechaReturnIcon } from "../../../IconsApp/IconsAppSystem";
 import { useNavigate } from "react-router-dom";
 import ReporteFinancieroEstado from "../impresion/components/ReporteFinancieroEstado";

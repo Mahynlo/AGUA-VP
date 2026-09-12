@@ -177,7 +177,7 @@ Todos los componentes incluyen datos realistas para demostración:
 10. **App móvil** - Para lectores de campo
 
 ## Dependencias Principales
-- `@nextui-org/react` - Componentes UI
+- `@heroui/react` - Componentes UI
 - `react-router-dom` - Navegación
 - Iconografía personalizada
 - TailwindCSS para estilos

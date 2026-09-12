@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, CardBody, CardHeader, Chip, Checkbox, Button, Spinner } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Chip, Checkbox, Button, Spinner } from "@heroui/react";
 import { HiUsers, HiSearch, HiX, HiLocationMarker } from "react-icons/hi";
 import { IoWaterOutline } from "react-icons/io5";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";

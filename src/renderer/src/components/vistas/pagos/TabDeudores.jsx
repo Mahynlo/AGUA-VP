@@ -10,7 +10,7 @@ import {
   Spinner,
   Skeleton,
   Chip
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { 
   HiExclamation, 
   HiBan, 

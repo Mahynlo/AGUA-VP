@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardHeader, CardBody, Button } from "@nextui-org/react";
+import { Card, CardHeader, CardBody, Button } from "@heroui/react";
 import { HiPrinter, HiEye, HiDocumentText, HiCog } from "react-icons/hi";
 import EstadisticasImpresion from "./EstadisticasImpresion";
 

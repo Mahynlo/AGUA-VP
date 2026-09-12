@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Card, CardBody, Button, Chip } from "@nextui-org/react";
+import { Card, CardBody, Button, Chip } from "@heroui/react";
 import { HiChevronLeft, HiChevronRight, HiCalendar, HiClock } from "react-icons/hi";
 import { useTarifas } from "../../context/TarifasContext";
 import { obtenerFeriadosMexico, esDiaHabil } from "../../utils/diasHabiles";

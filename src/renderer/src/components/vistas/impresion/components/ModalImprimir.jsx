@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { HiX, HiPrinter, HiDownload, HiArrowLeft, HiRefresh, HiDocumentText } from 'react-icons/hi';
-import { Button, Spinner } from '@nextui-org/react';
+import { Button, Spinner } from '@heroui/react';
 import { PDFViewer } from '@embedpdf/react-pdf-viewer';
 import { useTheme } from '@renderer/theme/useTheme';
 import { useFeedback } from '@renderer/context/FeedbackContext';

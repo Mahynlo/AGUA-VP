@@ -14,7 +14,7 @@ import {
   Skeleton,
   Spinner,
   Chip
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { Modal, Button as FlowbiteButton } from "flowbite-react";
 import { 
   HiEye, 

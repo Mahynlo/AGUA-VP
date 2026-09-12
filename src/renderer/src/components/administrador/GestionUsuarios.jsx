@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardBody,
   Spinner
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { 
   HiShieldCheck, 
   HiSearch, 

@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader, Skeleton, Divider } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Skeleton, Divider } from "@heroui/react";
 
 const LoadingSkeleton = () => (
     <div className="h-full w-full"> {/* Adjusted container to fit inside Tab */}

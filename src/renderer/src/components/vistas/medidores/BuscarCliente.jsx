@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useClientes } from "../../../context/ClientesContext";
-import { Spinner, Button } from "@nextui-org/react";
+import { Spinner, Button } from "@heroui/react";
 import { HiSearch, HiUsers, HiX, HiLocationMarker } from "react-icons/hi";
 
 // Componente de Input Personalizado (Premium UI - Token 4)

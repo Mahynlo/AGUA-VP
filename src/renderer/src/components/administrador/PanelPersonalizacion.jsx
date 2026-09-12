@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Divider } from "@nextui-org/react";
+import { Button, Divider } from "@heroui/react";
 import { HiCollection, HiPhotograph, HiPlusCircle, HiTrash, HiUpload } from "react-icons/hi";
 import { useAppLogo } from "../../context/LogoContext";
 

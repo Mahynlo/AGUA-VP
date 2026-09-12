@@ -7,7 +7,7 @@ import {
   Select,
   SelectItem,
   Chip,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   HiCalendar,
   HiChevronLeft,

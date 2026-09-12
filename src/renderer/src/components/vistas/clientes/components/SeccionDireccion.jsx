@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
 import { HiLocationMarker } from "react-icons/hi";
 import { CustomTextarea } from "../../../ui/FormComponents";
 

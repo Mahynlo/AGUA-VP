@@ -4,7 +4,7 @@
  */
 
 import { Component } from "react";
-import { Button } from "@nextui-org/react";
+import { Button } from "@heroui/react";
 import { HiExclamationCircle, HiChevronDown, HiChevronUp } from "react-icons/hi";
 
 export default class ErrorBoundary extends Component {

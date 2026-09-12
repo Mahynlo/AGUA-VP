@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, CardBody, Button, Chip, Input, Divider } from "@nextui-org/react";
+import { Card, CardBody, Button, Chip, Input, Divider } from "@heroui/react";
 import { HiBeaker, HiLightningBolt, HiCheckCircle, HiInformationCircle } from "react-icons/hi";
 import useEquivalenciaConsumo from "../../../hooks/useEquivalenciaConsumo";
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Carousel } from "flowbite-react";
-import { Button, Spinner } from "@nextui-org/react";
+import { Button, Spinner } from "@heroui/react";
 import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle, HiShieldCheck } from "react-icons/hi";
 
 import { useAuth } from '../../context/AuthContext';

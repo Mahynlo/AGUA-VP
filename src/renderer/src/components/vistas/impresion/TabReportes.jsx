@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Select, SelectItem, Divider, Card, CardHeader, CardBody } from "@nextui-org/react";
+import { Button, Select, SelectItem, Divider, Card, CardHeader, CardBody } from "@heroui/react";
 import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog } from "react-icons/hi";
 import ListadoLecturas from "./components/ListadoLecturas";
 import ModalImprimir from "./components/ModalImprimir";

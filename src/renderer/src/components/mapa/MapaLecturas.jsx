@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Card, CardBody, Chip } from '@nextui-org/react';
+import { Card, CardBody, Chip } from '@heroui/react';
 import { HiLocationMarker, HiUser, HiHashtag } from 'react-icons/hi';
 import MarkerMap from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 import municipiojson from "../../../../public/VillaPesqueira.json";
