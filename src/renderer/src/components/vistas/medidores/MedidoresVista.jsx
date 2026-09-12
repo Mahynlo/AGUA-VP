@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Tabs, Tab, Chip } from "@nextui-org/react";
+import { Tabs, Tab, Chip } from "@heroui/react";
 import { HiCog, HiCheck, HiX, HiLocationMarker, HiMap, HiTable, HiCube, HiSparkles } from "react-icons/hi";
 
 import { useMedidores } from "../../../context/MedidoresContext";

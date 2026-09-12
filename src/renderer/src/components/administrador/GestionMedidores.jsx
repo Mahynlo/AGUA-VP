@@ -18,7 +18,7 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
 import { EditIcon } from "../../IconsApp/IconsClientes";
 import { useNavigate } from "react-router-dom";

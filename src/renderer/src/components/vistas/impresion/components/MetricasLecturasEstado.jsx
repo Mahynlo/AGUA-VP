@@ -11,7 +11,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import Chart from "react-apexcharts";
 import {
   HiCalendar,

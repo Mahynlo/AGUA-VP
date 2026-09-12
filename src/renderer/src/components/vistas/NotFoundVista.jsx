@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@nextui-org/react";
+import { Button } from "@heroui/react";
 import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
 
 const NotFoundVista = () => {

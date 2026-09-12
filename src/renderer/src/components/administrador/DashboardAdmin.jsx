@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardBody, Badge, Progress, Button } from "@nextui-org/react";
+import { Card, CardBody, Badge, Progress, Button } from "@heroui/react";
 import { EstadisticasIcon, AlertaIcon } from "../../IconsApp/IconsAdmin";
 import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
 import { useNavigate } from "react-router-dom";

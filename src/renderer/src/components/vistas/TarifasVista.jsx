@@ -15,7 +15,7 @@ import {
   TableRow,
   TableCell,
   Pagination
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { 
   HiSearch, 
   HiCurrencyDollar, 

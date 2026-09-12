@@ -11,7 +11,7 @@ import {
   HiHand,
   HiCalculator
 } from "react-icons/hi";
-import { Tabs, Tab } from "@nextui-org/react";
+import { Tabs, Tab } from "@heroui/react";
 import { PagosIcon } from "../../IconsApp/IconsResibos";
 import TabFacturas from "./pagos/TabFacturas";
 import TabPagos from "./pagos/TabPagos";

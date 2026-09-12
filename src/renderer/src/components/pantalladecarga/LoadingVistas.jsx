@@ -1,6 +1,6 @@
 // src/components/PantallaCarga.jsx
 import React, { useEffect, useState } from "react";
-import { Spinner } from "@nextui-org/react";
+import { Spinner } from "@heroui/react";
 import { IoWaterOutline } from "react-icons/io5";
 
 const LoadingVistas = ({ tiempo = 5000, onFinalizado, titulo = "Cargando", mensaje = "Preparando el entorno..." }) => {

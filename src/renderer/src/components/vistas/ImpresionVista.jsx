@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Chip, Tabs, Tab, Skeleton } from "@nextui-org/react";
+import { Chip, Tabs, Tab, Skeleton } from "@heroui/react";
 import { 
   HiPrinter,
   HiUsers, 

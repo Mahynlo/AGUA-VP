@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Tooltip, Button } from "@nextui-org/react";
+import { Tooltip, Button } from "@heroui/react";
 import { HiRefresh, HiLightningBolt, HiDownload } from "react-icons/hi";
 
 export default function BotonActualizacionesNavbar() {

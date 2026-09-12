@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Modal } from "flowbite-react";
-import { Avatar } from "@nextui-org/react";
+import { Avatar } from "@heroui/react";
 import defaultAvatar from "../../assets/images/Avatar.png";
 import {
     HiDeviceMobile, HiDesktopComputer, HiClock, HiBan,

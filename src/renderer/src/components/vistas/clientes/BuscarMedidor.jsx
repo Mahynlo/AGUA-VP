@@ -5,7 +5,7 @@ import {
     Button,
     Avatar,
     Spinner
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
     HiSearch,
     HiCog,

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal } from "flowbite-react";
-import { Spinner } from "@nextui-org/react";
+import { Spinner } from "@heroui/react";
 import { 
   HiPrinter, 
   HiDocumentText, 

@@ -122,7 +122,7 @@ Todos los componentes incluyen datos de ejemplo para demostraci√≥n. En producci√
 - Base de datos local
 
 ## Dependencias
-- @nextui-org/react (Tabs, Cards, Tables, Modals, etc.)
+- @heroui/react (Tabs, Cards, Tables, Modals, etc.)
 - flowbite-react (Buttons)
 - react-router-dom (Navigation)
 

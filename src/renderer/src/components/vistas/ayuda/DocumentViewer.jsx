@@ -13,7 +13,7 @@ import {
   HiOutlineArrowUp,
   HiPrinter
 } from "react-icons/hi";
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/react";
 import { MarkdownRenderer, slugify } from "./MarkdownRenderer";
 
 // Extractor robusto de encabezados Markdown

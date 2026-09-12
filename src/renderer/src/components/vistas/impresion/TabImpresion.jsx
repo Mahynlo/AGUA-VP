@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { HiPrinter, HiCog, HiDocumentText, HiLink, HiDatabase, HiTemplate } from "react-icons/hi";
 import { Link } from "react-router-dom";
 import useImpresionRecibos from "../../../hooks/useImpresionRecibos";

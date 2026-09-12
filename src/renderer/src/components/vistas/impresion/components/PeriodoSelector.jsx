@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardBody, CardHeader, Select, SelectItem } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Select, SelectItem } from "@heroui/react";
 import { HiCog, HiUsers } from "react-icons/hi";
 import { generarOpcionesPeriodos } from "../../../../utils/reciboUtils";
 

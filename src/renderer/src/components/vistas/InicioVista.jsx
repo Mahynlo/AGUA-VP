@@ -1,5 +1,5 @@
 import React from "react";
-import { Chip, Progress, Skeleton, Button, Spinner } from "@nextui-org/react";
+import { Chip, Progress, Skeleton, Button, Spinner } from "@heroui/react";
 import PieChart from "../charts/piechart";
 import LineChart from "../charts/lineChart";
 import CalendarComponent from "../calendario/Calendario";

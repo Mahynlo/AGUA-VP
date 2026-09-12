@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Card, CardBody, CardHeader, Divider, Select, SelectItem, Spinner } from "@nextui-org/react";
+import { Card, CardBody, CardHeader, Divider, Select, SelectItem, Spinner } from "@heroui/react";
 import { HiSearch, HiLocationMarker, HiCog, HiHashtag, HiUser } from "react-icons/hi";
 import MapaMedidores from "../../mapa/MapaMedidores";
 import { useMedidores } from "../../../context/MedidoresContext";

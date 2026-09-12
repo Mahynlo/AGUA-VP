@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
 import { HiCurrencyDollar, HiInformationCircle } from "react-icons/hi";
 import { useTarifas } from "../../../../context/TarifasContext";
 

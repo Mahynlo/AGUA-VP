@@ -20,7 +20,7 @@ import {
   ModalFooter,
   Tabs,
   Tab
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
 import { AgregarClienteIcon, EditIcon, EliminarClienteIcon } from "../../IconsApp/IconsClientes";
 import { useNavigate } from "react-router-dom";

@@ -12,7 +12,7 @@ import {
     Tooltip,
     Chip,
     Divider
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { ConfiguracionIcon } from "../../IconsApp/IconsAppSystem";
 import { useState, useEffect } from "react";
 import { 

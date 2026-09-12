@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Avatar, Chip, Button, Tooltip, Tabs, Tab } from "@nextui-org/react";
+import { Avatar, Chip, Button, Tooltip, Tabs, Tab } from "@heroui/react";
 import {
   HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer,
   HiClock, HiCheckCircle, HiExclamationCircle, HiGlobeAlt, HiInformationCircle,
