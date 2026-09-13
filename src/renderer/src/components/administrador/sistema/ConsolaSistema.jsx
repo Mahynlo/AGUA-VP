@@ -63,7 +63,7 @@ export default function ConsolaSistema() {
       {/* ── TABS ── */}
       <div className="flex flex-col gap-0">
         {/* Barra de pestañas */}
-        <div className="flex gap-0 border-b border-slate-200 dark:border-zinc-800 overflow-x-auto">
+        <div className="flex gap-0 border-b border-slate-200 dark:border-zinc-800">
           {tabsVisibles.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
