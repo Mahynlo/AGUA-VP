@@ -433,10 +433,10 @@ const TabPagos = () => {
       </div>
 
       {/* ── CONTENEDOR PRINCIPAL ── */}
-      <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-hidden flex flex-col">
+      <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-visible flex flex-col relative z-20">
 
         {/* Filtros */}
-        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
+        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 rounded-t-2xl relative z-30">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
 
             {/* Buscador */}
@@ -552,7 +552,7 @@ const TabPagos = () => {
         </div>
 
         {/* Tabla nativa */}
-        <div className="bg-white dark:bg-zinc-950 overflow-x-auto">
+        <div className="bg-white dark:bg-zinc-950 overflow-x-auto rounded-b-2xl">
           <table className="min-w-full">
             <thead>
               <tr className="border-b border-slate-200 dark:border-zinc-800">

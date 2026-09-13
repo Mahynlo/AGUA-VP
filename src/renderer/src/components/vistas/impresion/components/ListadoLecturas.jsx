@@ -45,10 +45,10 @@ const ListadoLecturas = ({
     });
 
     return (
-        <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm flex flex-col h-full min-h-[600px]">
+        <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm flex flex-col h-full min-h-[600px] overflow-visible relative z-20">
             
             {/* ── HEADER: Título, Filtros y Conteo ── */}
-            <CardHeader className="flex flex-col gap-5 pt-6 px-6 pb-5 border-b border-slate-100 dark:border-zinc-800/80">
+            <CardHeader className="flex flex-col gap-5 pt-6 px-6 pb-5 border-b border-slate-100 dark:border-zinc-800/80 overflow-visible relative z-30">
 
                 {/* Fila 1: Título y Conteo */}
                 <div className="flex justify-between items-center w-full">

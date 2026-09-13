@@ -307,7 +307,7 @@ export default function PanelConfiguracion() {
           </div>
         </div>
 
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6 sm:p-8 space-y-6">
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6 sm:p-8 space-y-6 relative z-30">
           <p className="text-sm font-medium text-amber-900 dark:text-amber-200 leading-relaxed max-w-3xl">
             Use esta acción para corregir facturas generadas con lógica anterior. Solo afecta facturas no pagadas del período seleccionado.
           </p>
