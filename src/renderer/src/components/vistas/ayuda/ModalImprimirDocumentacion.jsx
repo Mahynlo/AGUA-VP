@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { Spinner } from "@heroui/react";
 import { 
   HiPrinter, 
@@ -79,8 +79,8 @@ export default function ModalImprimirDocumentacion({
   };
 
   return (
-    <Modal show={isOpen} onClose={onClose} theme={modalTheme} dismissible={false}>
-      <Modal.Header>
+    <Modal show={isOpen} onClose={onClose} theme={modalTheme} dismissible>
+      <ModalHeader>
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3.5">
             <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-2xl shrink-0">
@@ -102,9 +102,9 @@ export default function ModalImprimirDocumentacion({
             <HiX className="w-5 h-5" />
           </button>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="space-y-6">
           <div>
             <label className="block mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
@@ -240,9 +240,9 @@ export default function ModalImprimirDocumentacion({
             </div>
           )}
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={onClose}
@@ -269,7 +269,7 @@ export default function ModalImprimirDocumentacion({
             </>
           )}
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 }

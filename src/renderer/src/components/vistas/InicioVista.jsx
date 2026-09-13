@@ -1,5 +1,5 @@
 import React from "react";
-import { Chip, Progress, Skeleton, Button, Spinner } from "@heroui/react";
+import { Skeleton, Button, Chip } from "@heroui/react";
 import PieChart from "../charts/piechart";
 import LineChart from "../charts/lineChart";
 import CalendarComponent from "../calendario/Calendario";
@@ -28,62 +28,86 @@ const InicioVista = () => {
   // Datos para gráficos
   const graficosAPI = dashboardData?.graficos || {};
   const graficos = {
-    consumo_mensual: graficosAPI.linea_historico?.map(h => ({ mes: h.mes, total: h.consumo })) || [],
-    estado_clientes: graficosAPI.pie_distribucion?.map(p => ({ estado: p.nombre, cantidad: p.valor })) || []
+    consumo_mensual: 
+      graficosAPI.linea_historico?.map(h => ({ mes: h.mes || h.fecha, total: h.consumo || h.total || 0 })) ||
+      graficosAPI.consumo_mensual ||
+      (Array.isArray(graficosAPI.historicoConsumo) ? graficosAPI.historicoConsumo : []),
+    estado_clientes: 
+      graficosAPI.pie_distribucion?.map(p => ({ estado: p.nombre || p.ruta || p.estado, cantidad: p.valor || p.cantidad || p.consumo || 0 })) ||
+      graficosAPI.estado_clientes ||
+      graficosAPI.distribucionPueblos?.map(p => ({ estado: p.nombre || p.ruta || p.estado, cantidad: p.valor || p.cantidad || p.consumo || 0 })) ||
+      (Array.isArray(graficosAPI.pastel) ? graficosAPI.pastel : [])
   };
 
+  // Validación de estado de carga inicial
   if (loading && !dashboardData) {
     return (
       <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20">
-        <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8 mb-12">
-          <div className="flex items-center gap-4">
-            <Skeleton className="w-14 h-14 rounded-2xl" />
-            <div className="flex flex-col gap-2">
-              <Skeleton className="w-64 h-6 rounded-lg" />
-              <Skeleton className="w-48 h-4 rounded-lg" />
+        <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 space-y-8 animate-pulse">
+          {/* Skeleton Header */}
+          <div className="flex justify-between items-center pb-2">
+            <div className="space-y-3">
+              <Skeleton className="h-8 w-64 rounded-xl" />
+              <Skeleton className="h-4 w-96 rounded-lg" />
             </div>
+            <Skeleton className="h-11 w-32 rounded-xl" />
           </div>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+
+          {/* Skeleton KPIs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="rounded-2xl h-40" />
+              <div key={i} className="p-5 rounded-2xl border border-slate-200 dark:border-zinc-800 space-y-4">
+                <Skeleton className="h-4 w-24 rounded-md" />
+                <Skeleton className="h-8 w-32 rounded-xl" />
+                <Skeleton className="h-6 w-20 rounded-md" />
+              </div>
             ))}
           </div>
-          <Skeleton className="rounded-2xl h-[450px] w-full mt-4" />
+
+          {/* Skeleton Calendario y Gráficos */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 space-y-4">
+              <Skeleton className="h-6 w-32 rounded-md" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+            </div>
+            <div className="lg:col-span-2 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 space-y-4">
+              <Skeleton className="h-6 w-48 rounded-md" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    // CONTENEDOR PRINCIPAL: Padding exterior fluido y fondo gris sutil
+    // CONTENEDOR PRINCIPAL: Padding exterior fluido y fondo gris sutil estandarizado
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
+      
+      {/* CONTENEDOR DE LA VISTA: 'w-full min-h-full' para ocupar todo el espacio disponible */}
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8 animate-in fade-in duration-500">
 
-      {/* CONTENEDOR DE LA VISTA: 'w-full min-h-full' para ocupar todo el espacio */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-10 animate-in fade-in duration-500">
-          
-        {/* ── 1. HEADER DEL DASHBOARD ── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="flex gap-4 items-center shrink-0">
-            {/* Regla de Tintes (Índigo para el Panel General) */}
-            <div className="p-3.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 flex items-center justify-center">
-              <HiChartPie className="w-8 h-8" />
+        {/* ── 1. HEADER Y ACCIONES ── */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2">
+          <div className="flex gap-4 items-start">
+            {/* Regla de Tintes (Indigo Corporativo para Dashboard) */}
+            <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0 flex items-center justify-center">
+              <HiChartBar className="w-8 h-8" />
             </div>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
-                  Panel General
-                </h1>
-                {loading && <Spinner size="sm" color="primary" className="w-4 h-4" />}
-              </div>
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 leading-relaxed">
-                Resumen operativo y financiero · <span className="font-bold text-indigo-600 dark:text-indigo-400">{dashboardData?.meta?.mes_actual || 'Mes Actual'}</span>
+            <div className="flex flex-col gap-1 pt-0.5">
+              {/* Token 3: Textos Principales */}
+              <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
+                Panel General
+              </h1>
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-lg mt-1 leading-relaxed">
+                Resumen ejecutivo del consumo, recaudación y estado operativo del sistema de agua.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <Button
-              variant="flat"
+              variant="ghost"
               onPress={() => refetch && refetch()}
               isLoading={loading}
               startContent={!loading && <HiRefresh className="text-lg" />}
@@ -115,7 +139,7 @@ const InicioVista = () => {
               <Chip
                 size="sm"
                 color={consumo.variacion >= 0 ? "danger" : "success"}
-                variant="flat"
+                variant="ghost"
                 className="font-bold text-[10px] uppercase tracking-wider px-1 h-6"
                 startContent={consumo.variacion >= 0 ? <HiTrendingUp className="w-3 h-3" /> : <HiTrendingDown className="w-3 h-3" />}
               >
@@ -140,7 +164,7 @@ const InicioVista = () => {
             <div className="flex items-center gap-2">
               <Chip
                 size="sm"
-                variant="flat"
+                variant="ghost"
                 className="font-bold text-[10px] uppercase tracking-wider px-1 h-6 bg-blue-500/10 text-blue-600 dark:text-blue-400"
                 startContent={<HiTrendingUp className="w-3 h-3" />}
               >
@@ -168,13 +192,12 @@ const InicioVista = () => {
                 <span>Nuevos: +{medidores.nuevos_este_mes}</span>
                 <span className="text-amber-600 dark:text-amber-400 font-mono">{medidores.crecimiento_nuevos || 0}%</span>
               </div>
-              <Progress
-                value={medidores.crecimiento_nuevos || 0}
-                color="warning"
-                size="sm"
-                aria-label="Crecimiento de medidores"
-                classNames={{ track: "bg-slate-200/80 dark:bg-zinc-800", indicator: "bg-amber-500" }}
-              />
+              <div className="h-1.5 w-full bg-slate-200/80 dark:bg-zinc-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-amber-500 rounded-full transition-all duration-300" 
+                  style={{ width: `${Math.min(Math.max(medidores.crecimiento_nuevos || 0, 0), 100)}%` }} 
+                />
+              </div>
             </div>
           </div>
 
@@ -196,7 +219,7 @@ const InicioVista = () => {
               <Chip
                 size="sm"
                 color={recaudo.variacion >= 0 ? "success" : "danger"}
-                variant="flat"
+                variant="ghost"
                 className="font-bold text-[10px] uppercase tracking-wider px-1 h-6"
                 startContent={recaudo.variacion >= 0 ? <HiTrendingUp className="w-3 h-3" /> : <HiTrendingDown className="w-3 h-3" />}
               >
@@ -226,7 +249,7 @@ const InicioVista = () => {
                 <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">Tendencias de Consumo</p>
               </div>
             </div>
-            <div className="flex-1 p-6 flex items-center justify-center">
+            <div className="flex-1 p-4 sm:p-6 w-full flex items-center justify-center">
               <LineChart data={graficos.consumo_mensual} />
             </div>
           </div>
@@ -242,7 +265,7 @@ const InicioVista = () => {
                 <p className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">Consumo por Ruta</p>
               </div>
             </div>
-            <div className="flex-1 p-6 flex items-center justify-center">
+            <div className="flex-1 p-4 sm:p-6 w-full flex items-center justify-center">
               <PieChart data={graficos.estado_clientes} unit="m³" />
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from "react";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Avatar } from "@heroui/react";
-import { Modal } from "flowbite-react";
+import { useState, useEffect, useRef } from "react";
+import { Avatar } from "@heroui/react";
+import { Modal, ModalHeader, ModalBody } from "flowbite-react";
 import { VscChromeMinimize, VscChromeMaximize, VscChromeClose } from "react-icons/vsc";
 import { HiOutlineLogout, HiOutlineQuestionMarkCircle, HiOutlineCog, HiOutlineUser, HiMenuAlt2 } from "react-icons/hi";
 
@@ -60,6 +60,8 @@ function NavbarApp() {
   // Estados independientes para cada modal
   const [openCloseAppModal, setOpenCloseAppModal] = useState(false); // Para cerrar la ventana
   const [openLogoutModal, setOpenLogoutModal] = useState(false); // Para cerrar la sesión
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef(null);
 
   const { logout, user, isAuthenticated } = useAuth();
 
@@ -76,8 +78,19 @@ function NavbarApp() {
     return () => window.removeEventListener('user-avatar-changed', handler);
   }, [avatarKey]);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleNavigation = (path, sectionName) => {
     try {
+      setIsProfileOpen(false);
       navigate(path);
     } catch (error) {
       console.error(`❌ Error navegando a ${sectionName}:`, error);
@@ -147,25 +160,23 @@ function NavbarApp() {
               <Config />
               
               {isAuthenticated() && (
-                <Dropdown placement="bottom-end" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl min-w-[250px] p-1">
-                  <DropdownTrigger>
-                    <button className="flex items-center outline-none transition-transform hover:scale-105 active:scale-95 ml-1">
-                      <Avatar
-                        isBordered
-                        color="primary"
-                        className="w-9 h-9 border-2 border-white/90 shadow-sm"
-                        src={avatarSrc || AvatarPerfil}
-                      />
-                    </button>
-                  </DropdownTrigger>
+                <div className="relative" ref={profileRef}>
+                  <button 
+                    onClick={() => setIsProfileOpen((prev) => !prev)}
+                    className="flex items-center outline-none transition-transform hover:scale-105 active:scale-95 ml-1"
+                    aria-label="Menú de perfil"
+                  >
+                    <Avatar
+                      color="primary"
+                      className="w-9 h-9 border-2 border-white/90 shadow-sm"
+                      src={avatarSrc || AvatarPerfil}
+                    />
+                  </button>
                   
-                  <DropdownMenu aria-label="Acciones de perfil" itemClasses={{ base: "rounded-xl" }}>
-                    <DropdownItem
-                      key="profile"
-                      className="h-auto py-2 opacity-100 mb-1 pointer-events-none"
-                      textValue="Perfil"
-                    >
-                      <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800 w-full">
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl min-w-[250px] p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="h-auto py-1 opacity-100 mb-1 pointer-events-none">
+                        <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800 w-full">
                           <Avatar src={avatarSrc || AvatarPerfil} size="sm" className="shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-sm text-slate-800 dark:text-zinc-100 truncate leading-tight">
@@ -178,57 +189,56 @@ function NavbarApp() {
                               </span>
                             </div>
                           </div>
+                        </div>
                       </div>
-                    </DropdownItem>
 
-                    <DropdownItem
-                      key="settings"
-                      startContent={<HiOutlineUser className="text-lg text-slate-400" />}
-                      onPress={() => handleNavigation("/perfil", "Mi Perfil")}
-                      className="hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold"
-                    >
-                      <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Mi Perfil</span>
-                    </DropdownItem>
-
-                    {['superadmin', 'administrador', 'operador'].includes(user?.rol) && (
-                      <DropdownItem
-                        key="configurations"
-                        startContent={<HiOutlineCog className="text-lg text-slate-400" />}
-                        onPress={() => handleNavigation("/administrador", "Administrador")}
-                        className="hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold"
+                      <button
+                        onClick={() => handleNavigation("/perfil", "Mi Perfil")}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800/80 rounded-xl text-left transition-colors"
                       >
-                        <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Panel de Administrador</span>
-                      </DropdownItem>
-                    )}
+                        <HiOutlineUser className="text-lg text-slate-400" />
+                        <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Mi Perfil</span>
+                      </button>
 
-                    <DropdownItem
-                      key="help"
-                      startContent={<HiOutlineQuestionMarkCircle className="text-lg text-slate-400" />}
-                      onPress={() => {
-                        if (window.docsApp?.openHelpWindow) {
-                          window.docsApp.openHelpWindow();
-                        } else {
-                          handleNavigation("/ayuda", "Centro de Ayuda");
-                        }
-                      }}
-                      className="hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-xs font-bold"
-                    >
-                      <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Centro de Ayuda</span>
-                    </DropdownItem>
+                      {['superadmin', 'administrador', 'operador'].includes(user?.rol) && (
+                        <button
+                          onClick={() => handleNavigation("/administrador", "Administrador")}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800/80 rounded-xl text-left transition-colors"
+                        >
+                          <HiOutlineCog className="text-lg text-slate-400" />
+                          <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Panel de Administrador</span>
+                        </button>
+                      )}
 
-                    {/* DISPARADOR DE MODAL CERRAR SESIÓN */}
-                    <DropdownItem
-                      key="logout"
-                      color="danger"
-                      className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 mt-1 border-t border-slate-100 dark:border-zinc-800 pt-2 rounded-t-none"
-                      startContent={<HiOutlineLogout className="text-lg" />}
-                      onPress={() => setOpenLogoutModal(true)}
-                    >
-                      <span className="font-bold text-sm">Cerrar Sesión</span>
-                    </DropdownItem>
+                      <button
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          if (window.docsApp?.openHelpWindow) {
+                            window.docsApp.openHelpWindow();
+                          } else {
+                            handleNavigation("/ayuda", "Centro de Ayuda");
+                          }
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 dark:hover:bg-zinc-800/80 rounded-xl text-left transition-colors"
+                      >
+                        <HiOutlineQuestionMarkCircle className="text-lg text-slate-400" />
+                        <span className="font-semibold text-slate-700 dark:text-zinc-300 text-sm">Centro de Ayuda</span>
+                      </button>
 
-                  </DropdownMenu>
-                </Dropdown>
+                      {/* DISPARADOR DE MODAL CERRAR SESIÓN */}
+                      <button
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          setOpenLogoutModal(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 mt-1 border-t border-slate-100 dark:border-zinc-800 pt-2 rounded-t-none rounded-b-xl text-left transition-colors"
+                      >
+                        <HiOutlineLogout className="text-lg" />
+                        <span className="font-bold text-sm">Cerrar Sesión</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -271,8 +281,8 @@ function NavbarApp() {
         popup
         theme={confirmModalTheme}
       >
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="text-center p-6">
             <div className="w-14 h-14 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <HiOutlineLogout className="w-7 h-7" />
@@ -286,19 +296,19 @@ function NavbarApp() {
             <div className="flex flex-col gap-2">
               <button
                 onClick={handleLogout}
-                className="font-black h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-transform active:scale-95 text-xs uppercase tracking-wider"
+                className="font-black h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-transform active:scale-95 text-xs uppercase tracking-wider cursor-pointer"
               >
                 Sí, cerrar sesión
               </button>
               <button
                 onClick={() => setOpenLogoutModal(false)}
-                className="font-bold h-11 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-colors text-xs"
+                className="font-bold h-11 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-colors text-xs cursor-pointer"
               >
                 Cancelar
               </button>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       {/* ── 2. MODAL: CONFIRMAR CERRAR APLICACIÓN DE ESCRITORIO ── */}
@@ -309,8 +319,8 @@ function NavbarApp() {
         popup
         theme={confirmModalTheme}
       >
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="text-center p-6">
             <div className="w-14 h-14 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <CloseAppModal className="w-7 h-7" />
@@ -324,19 +334,19 @@ function NavbarApp() {
             <div className="flex flex-col gap-2">
               <button
                 onClick={handleClose}
-                className="font-black h-11 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-transform active:scale-95 text-xs uppercase tracking-wider"
+                className="font-black h-11 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-transform active:scale-95 text-xs uppercase tracking-wider cursor-pointer"
               >
                 Sí, salir del sistema
               </button>
               <button
                 onClick={() => setOpenCloseAppModal(false)}
-                className="font-bold h-11 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-colors text-xs"
+                className="font-bold h-11 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-colors text-xs cursor-pointer"
               >
                 Cancelar
               </button>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
     </>
   );

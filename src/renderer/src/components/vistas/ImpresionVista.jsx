@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Chip, Tabs, Tab, Skeleton } from "@heroui/react";
+import { Skeleton } from "@heroui/react";
 import { 
   HiPrinter,
   HiUsers, 
@@ -155,71 +155,77 @@ const Impresion = () => {
 
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
         <div className="flex flex-col w-full flex-1 mt-2">
-          {/* Token 7: Pestañas de Navegación SaaS - Tema Índigo */}
-          <Tabs
-            aria-label="Opciones de Impresión"
-            selectedKey={selectedTab}
-            onSelectionChange={handleTabChange}
-            variant="underlined"
-            classNames={{
-              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
-              tabList: "gap-6 w-full relative rounded-none p-0",
-              cursor: "w-full bg-indigo-600 dark:bg-indigo-500 h-[2px]", // Cursor Índigo
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-indigo-600 dark:group-data-[selected=true]:text-indigo-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
-            }}
-          >
-            {/* TAB: IMPRESIÓN */}
-            <Tab
-              key="impresion"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiPrinter className="text-lg" />
-                  <span>Impresión General</span>
-                  <Chip size="sm" variant="flat" className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold h-5 text-[10px] px-1 ml-1 rounded-md">
-                    {estadisticas.totalFacturas}
-                  </Chip>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabImpresion />
-              </div>
-            </Tab>
+          {/* Pestañas de Navegación SaaS - Tema Índigo */}
+          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto">
+            <nav className="flex gap-6 w-full -mb-px">
+              {/* TAB: IMPRESIÓN */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("impresion")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "impresion"
+                    ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiPrinter className="text-lg" />
+                <span>Impresión General</span>
+                <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold h-5 text-[10px] px-1.5 ml-1 rounded-md inline-flex items-center">
+                  {estadisticas.totalFacturas}
+                </span>
+              </button>
 
-            {/* TAB: REPORTES */}
-            <Tab
-              key="reportes"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiDocumentText className="text-lg" />
-                  <span>Reportes y Listas</span>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabReportes />
-              </div>
-            </Tab>
+              {/* TAB: REPORTES */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("reportes")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "reportes"
+                    ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiDocumentText className="text-lg" />
+                <span>Reportes y Listas</span>
+              </button>
 
-            {/* TAB: CONFIGURACIÓN */}
-            <Tab
-              key="configuracion"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiCog className="text-lg" />
-                  <span>Configuración Visual</span>
-                  <Chip size="sm" variant="flat" className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-widest text-[9px] h-5 px-1 ml-1 rounded-md">
-                    Global
-                  </Chip>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabConfiguracion />
-              </div>
-            </Tab>
-          </Tabs>
+              {/* TAB: CONFIGURACIÓN */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("configuracion")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "configuracion"
+                    ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiCog className="text-lg" />
+                <span>Configuración Visual</span>
+                <span className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-widest text-[9px] h-5 px-1.5 ml-1 rounded-md inline-flex items-center">
+                  Global
+                </span>
+              </button>
+            </nav>
+          </div>
+
+          {/* CONTENIDOS */}
+          {selectedTab === "impresion" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabImpresion />
+            </div>
+          )}
+
+          {selectedTab === "reportes" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabReportes />
+            </div>
+          )}
+
+          {selectedTab === "configuracion" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabConfiguracion />
+            </div>
+          )}
         </div>
 
       </div>

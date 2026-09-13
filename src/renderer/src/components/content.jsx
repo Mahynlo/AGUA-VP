@@ -1,4 +1,4 @@
-import { Dropdown } from "flowbite-react"
+import { Dropdown } from "flowbite-react";
 import PieChart from "./charts/piechart"
 import LineChart from "./charts/lineChart"
 import { Datepicker } from "flowbite-react";

@@ -42,14 +42,14 @@ export default class ErrorBoundary extends Component {
                 <Button
                   size="sm"
                   color="danger"
-                  variant="flat"
+                  variant="ghost"
                   onPress={() => this.setState({ hasError: false, error: null, errorInfo: null, showDetail: false })}
                 >
                   Reintentar
                 </Button>
                 <Button
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                   className="text-red-500 dark:text-red-400"
                   endContent={this.state.showDetail
                     ? <HiChevronUp className="w-4 h-4" />

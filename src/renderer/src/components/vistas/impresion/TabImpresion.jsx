@@ -1,7 +1,5 @@
 import React from "react";
-import { Button, Card, CardBody, CardHeader } from "@heroui/react";
-import { HiPrinter, HiCog, HiDocumentText, HiLink, HiDatabase, HiTemplate } from "react-icons/hi";
-import { Link } from "react-router-dom";
+import { HiPrinter } from "react-icons/hi";
 import useImpresionRecibos from "../../../hooks/useImpresionRecibos";
 import ClientesList from "./components/ClientesList";
 import AccionesImpresion from "./components/AccionesImpresion";

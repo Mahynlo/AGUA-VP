@@ -18,7 +18,7 @@ import {
   HiDownload,
   HiExclamationCircle
 } from "react-icons/hi";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody } from "flowbite-react";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
 import { useFeedback } from "../../../context/FeedbackContext";
@@ -1436,8 +1436,8 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         popup
         theme={premiumConfirmModalTheme}
       >
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="p-2">
             <div className="flex items-center gap-3 mb-4 justify-center">
               <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
@@ -1497,7 +1497,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
               </Button>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       {pdfUrl && modoPdf && (

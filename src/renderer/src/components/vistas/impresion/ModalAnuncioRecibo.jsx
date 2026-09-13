@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiSpeakerphone, HiRefresh, HiCheck, HiPencilAlt, HiInformationCircle } from "react-icons/hi";
 
 const anuncioModalTheme = {
@@ -86,7 +86,7 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
       dismissible={!isLoading}
     >
       {/* ── HEADER ── */}
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-4">
           <div className="p-3 bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-2xl shrink-0">
             <HiSpeakerphone className="w-6 h-6" />
@@ -100,10 +100,10 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
       {/* ── BODY ── */}
-      <Modal.Body>
+      <ModalBody>
         <div className="flex flex-col gap-5">
           {/* Vista previa */}
           <div className="relative bg-orange-500/10 rounded-2xl p-5 overflow-hidden">
@@ -177,10 +177,10 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
             </button>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
       {/* ── FOOTER ── */}
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={handleCancelar}
@@ -200,7 +200,7 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
             : <><HiCheck className="w-4 h-4" />Guardar Cambios</>
           }
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 };

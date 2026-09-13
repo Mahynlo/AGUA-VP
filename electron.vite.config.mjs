@@ -13,8 +13,7 @@ export default defineConfig({
   renderer: {
     resolve: {
       alias: {
-        '@renderer': resolve('src/renderer/src'),
-        '@heroui/react': resolve('src/renderer/src/components/ui/heroui-bridge.jsx')
+        '@renderer': resolve('src/renderer/src')
       }
     },
     css: {

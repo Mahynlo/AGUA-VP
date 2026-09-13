@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button, Spinner, Divider } from "@heroui/react";
+import { Button, Spinner } from "@heroui/react";
 // Aquí está la corrección: se agregó HiCheck
 import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiCheck } from "react-icons/hi";
 import { usePermissions } from "../../context/PermissionsContext";
@@ -164,7 +164,7 @@ export default function PanelConfiguracion() {
         </Button>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
+      <div className="h-px bg-slate-100 dark:bg-zinc-800/80 w-full" />
 
       {/* Nota informativa Superior */}
       <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 flex items-start gap-4">
@@ -289,7 +289,7 @@ export default function PanelConfiguracion() {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80 my-2" />
+      <div className="h-px bg-slate-100 dark:bg-zinc-800/80 my-2 w-full" />
 
       {/* ── SECCIÓN 4: CORRECCIÓN DE VENCIMIENTOS ── */}
       <div className="flex flex-col gap-6">
@@ -361,7 +361,7 @@ export default function PanelConfiguracion() {
             </label>
 
             <Button
-              variant="flat"
+              variant="ghost"
               onPress={handleRecalcularVencimientos}
               isLoading={loadingRecalculo}
               isDisabled={!canRecalcularLecturas || saving || loadingRecalculo || !periodoRecalculo || (actualizarFechaEmision && !fechaEmisionObjetivo)}

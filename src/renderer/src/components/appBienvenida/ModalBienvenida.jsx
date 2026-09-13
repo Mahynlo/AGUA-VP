@@ -1,5 +1,5 @@
 import { useAuthApp } from '../../context/appAuthContext';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@heroui/react";
+import { Modal, ModalBackdrop, ModalContainer, ModalDialog, ModalHeader, ModalBody, ModalFooter, Button } from "@heroui/react";
 import { HiOutlineDesktopComputer, HiCheck, HiExclamationCircle } from "react-icons/hi";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -28,27 +28,12 @@ const ModalBienvenida = () => {
   };
 
   return (
-    <Modal 
-      isOpen={modalAbierto} 
-      hideCloseButton={true} // Obligamos al usuario a interactuar con el botón
-      isDismissable={false} // No se cierra al dar clic afuera
-      isKeyboardDismissDisabled={true} // No se cierra con ESC
-      placement="center"
-      backdrop="opaque"
-      classNames={{
-        wrapper: "z-[100000] pt-16",
-        base: "bg-white dark:bg-zinc-950 shadow-2xl rounded-[2rem] border border-slate-200 dark:border-zinc-800 overflow-hidden",
-        backdrop: "bg-slate-900/80 dark:bg-black/80 z-[99999] top-16",
-        header: "border-b border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50 px-6 sm:px-8 py-5 shrink-0",
-        body: "py-8 px-6 sm:px-8 bg-slate-50/50 dark:bg-black/10",
-        footer: "border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50 px-6 sm:px-8 py-4",
-      }}
-    >
-      <ModalContent>
-        {() => (
-          <>
+    <Modal isOpen={modalAbierto}>
+      <ModalBackdrop className="fixed inset-0 bg-slate-900/80 dark:bg-black/80 z-[99999] flex items-center justify-center p-4">
+        <ModalContainer placement="center">
+          <ModalDialog className="bg-white dark:bg-zinc-950 shadow-2xl rounded-[2rem] border border-slate-200 dark:border-zinc-800 overflow-hidden max-w-lg w-full">
             {/* ── HEADER ── */}
-            <ModalHeader className="flex flex-col gap-1">
+            <ModalHeader className="border-b border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50 px-6 sm:px-8 py-5 shrink-0 flex flex-col gap-1">
               <div className="flex items-center gap-3.5">
                 <div className="p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
                   <HiOutlineDesktopComputer className="w-7 h-7" />
@@ -65,7 +50,7 @@ const ModalBienvenida = () => {
             </ModalHeader>
 
             {/* ── BODY ── */}
-            <ModalBody>
+            <ModalBody className="py-8 px-6 sm:px-8 bg-slate-50/50 dark:bg-black/10">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-2">
                   <HiOutlineDesktopComputer className="w-8 h-8 text-blue-600 dark:text-blue-400" />
@@ -92,7 +77,7 @@ const ModalBienvenida = () => {
             </ModalBody>
 
             {/* ── FOOTER ── */}
-            <ModalFooter className="flex justify-center sm:justify-end">
+            <ModalFooter className="border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50 px-6 sm:px-8 py-4 flex justify-center sm:justify-end">
               <Button
                 color="primary"
                 onPress={handleRegistrar}
@@ -103,9 +88,9 @@ const ModalBienvenida = () => {
                 {isRegistering ? "Registrando equipo..." : "Registrar y Continuar"}
               </Button>
             </ModalFooter>
-          </>
-        )}
-      </ModalContent>
+          </ModalDialog>
+        </ModalContainer>
+      </ModalBackdrop>
     </Modal>
   );
 };

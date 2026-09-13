@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiOutlineShieldCheck, HiCheck, HiX } from "react-icons/hi";
 import { useUsuarios } from "../../context/UsuariosContext";
 
@@ -93,7 +93,7 @@ export default function ModalPermisosUsuario({ isOpen, onClose, usuario }) {
       dismissible={!saving}
     >
       {/* ── HEADER ── */}
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-4 shrink-0">
           <div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl shrink-0">
             <HiOutlineShieldCheck className="w-7 h-7" />
@@ -109,10 +109,10 @@ export default function ModalPermisosUsuario({ isOpen, onClose, usuario }) {
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
       {/* ── BODY ── */}
-      <Modal.Body>
+      <ModalBody>
         <div className="flex flex-col gap-6">
 
           <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-5">
@@ -203,10 +203,10 @@ export default function ModalPermisosUsuario({ isOpen, onClose, usuario }) {
             </div>
           )}
         </div>
-      </Modal.Body>
+      </ModalBody>
 
       {/* ── FOOTER ── */}
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={onClose}
@@ -226,7 +226,7 @@ export default function ModalPermisosUsuario({ isOpen, onClose, usuario }) {
           )}
           {saving ? "Guardando..." : "Guardar Permisos"}
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 }

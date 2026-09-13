@@ -1,7 +1,7 @@
+import React, { useEffect, useState, useMemo } from "react";
 import Chart from "react-apexcharts";
-import { useEffect, useState } from "react";
 
-const LineChart = ({ data, hideCardWrapper = false, showTitle = true }) => {
+const LineChart = ({ data }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     document.documentElement.classList.contains("dark")
   );
@@ -19,96 +19,119 @@ const LineChart = ({ data, hideCardWrapper = false, showTitle = true }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Convierte "03-2026" o "2026-03" a "Mar 2026"
+  // Convierte "03-2026", "2026-03", "2026-03-01", números o nombres de mes a formato legible
   const formatearMes = (cadenaMes) => {
-    if (!cadenaMes) return "Desconocido";
+    if (cadenaMes === null || cadenaMes === undefined || cadenaMes === '') return '';
+    const str = String(cadenaMes).trim();
     
-    const partes = cadenaMes.split("-");
-    if (partes.length === 2) {
+    // Formatos con guion: YYYY-MM o MM-YYYY o YYYY-MM-DD
+    const partes = str.split("-");
+    if (partes.length >= 2) {
       const esAnioPrimero = partes[0].length === 4;
-      const mes = parseInt(esAnioPrimero ? partes[1] : partes[0], 10);
-      const anio = esAnioPrimero ? partes[0] : partes[1];
+      const mesNum = parseInt(esAnioPrimero ? partes[1] : partes[0], 10);
+      const anio = esAnioPrimero ? partes[0] : (partes[1].length === 4 ? partes[1] : (partes[2] || ''));
       
-      const fecha = new Date(anio, mes - 1, 1);
-      const nombreMes = fecha.toLocaleString("es-MX", { month: "short" });
-      
-      return `${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} ${anio}`;
+      if (!isNaN(mesNum) && mesNum >= 1 && mesNum <= 12) {
+        const fecha = new Date(anio ? parseInt(anio, 10) : new Date().getFullYear(), mesNum - 1, 1);
+        const nombreMes = fecha.toLocaleString("es-MX", { month: "short" });
+        const mesCapitalizado = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
+        return anio ? `${mesCapitalizado} ${anio}` : mesCapitalizado;
+      }
     }
-    return cadenaMes;
+    
+    // Si es un número del 1 al 12
+    const num = parseInt(str, 10);
+    if (!isNaN(num) && num >= 1 && num <= 12 && str.length <= 2) {
+      const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+      return meses[num - 1];
+    }
+
+    return str;
   };
 
-  const isDynamic = data && data.length > 0;
+  const isDynamic = Array.isArray(data) && data.length > 0;
 
-  const series = isDynamic
-    ? [{
+  const series = useMemo(() => {
+    if (isDynamic) {
+      return [{
         name: "Consumo Total",
-        data: data.map(item => Number(item.total) || 0)
-      }]
-    : [
-        { name: "Nácori Grande", data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240] },
-        { name: "Matape", data: [110, 140, 90, 180, 230, 590, 600, 180, 210, 260, 240, 220] },
-        { name: "Adivino", data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720] },
-      ];
+        data: data.map(item => Number(item.total ?? item.consumo ?? item.valor ?? item.cantidad ?? 0))
+      }];
+    }
+    return [
+      {
+        name: "Consumo Nácori Grande",
+        data: [120, 150, 100, 200, 250, 300, 220, 190, 230, 280, 260, 240],
+      },
+      {
+        name: "Consumo Matape",
+        data: [110, 140, 90, 180, 230, 590, 600, 180, 210, 260, 240, 220],
+      },
+      {
+        name: "Consumo Adivino",
+        data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720],
+      },
+    ];
+  }, [data, isDynamic]);
 
-  const categories = isDynamic
-    ? data.map(item => formatearMes(item.mes))
-    : ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  const categories = useMemo(() => {
+    if (isDynamic) {
+      return data.map(item => formatearMes(item.mes || item.fecha || item.periodo || item.label || ''));
+    }
+    return ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  }, [data, isDynamic]);
 
-  const chartColors = isDarkMode 
-    ? ["#3b82f6", "#10b981", "#8b5cf6"] 
-    : ["#2563eb", "#059669", "#7c3aed"]; 
+  const colors = isDarkMode
+    ? ["#60a5fa", "#34d399", "#a78bfa"]
+    : ["#2563eb", "#059669", "#7c3aed"];
 
-  const options = {
+  const options = useMemo(() => ({
     chart: {
       type: "area",
-      height: "100%",
-      fontFamily: 'inherit',
+      height: 320,
       background: "transparent",
-      toolbar: { 
+      fontFamily: "inherit",
+      toolbar: {
         show: true,
-        tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true }
+        tools: {
+          download: true,
+          selection: true,
+          zoom: true,
+          zoomin: true,
+          zoomout: true,
+          pan: true,
+          reset: true
+        }
       },
+      zoom: { enabled: true },
     },
     theme: {
       mode: isDarkMode ? "dark" : "light",
     },
-    colors: chartColors,
-    fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        opacityFrom: isDarkMode ? 0.35 : 0.3,
-        opacityTo: 0.05,
-        stops: [0, 100]
-      }
-    },
+    colors: colors,
     dataLabels: { enabled: false },
     stroke: {
       curve: "smooth",
       width: 3,
     },
-    title: showTitle ? {
-      text: "Historial de Consumo",
-      align: "left",
-      offsetX: 10,
-      style: {
-        fontSize: "16px",
-        fontWeight: "700",
-        color: isDarkMode ? "#f8fafc" : "#0f172a",
-      },
-    } : undefined,
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: isDarkMode ? 0.4 : 0.3,
+        opacityTo: 0.05,
+        stops: [0, 95, 100]
+      }
+    },
     grid: {
-      show: true,
-      borderColor: isDarkMode ? "#27272a" : "#f1f5f9",
+      borderColor: isDarkMode ? "#27272a" : "#e2e8f0",
       strokeDashArray: 4,
-      xaxis: { lines: { show: false } }, 
+      xaxis: { lines: { show: false } },
       yaxis: { lines: { show: true } },
-      padding: { top: 0, right: 10, bottom: 0, left: 10 },
+      padding: { top: 0, right: 12, bottom: 0, left: 12 }
     },
     xaxis: {
       categories: categories,
-      axisBorder: { show: false },
-      axisTicks: { show: false },
       labels: {
         style: {
           colors: isDarkMode ? "#a1a1aa" : "#64748b",
@@ -116,6 +139,8 @@ const LineChart = ({ data, hideCardWrapper = false, showTitle = true }) => {
           fontWeight: 500,
         },
       },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
       tooltip: { enabled: false },
     },
     yaxis: {
@@ -132,13 +157,16 @@ const LineChart = ({ data, hideCardWrapper = false, showTitle = true }) => {
           colors: isDarkMode ? "#a1a1aa" : "#64748b",
           fontSize: "11px",
         },
-        formatter: (val) => `${val.toFixed(0)}` 
+        formatter: (val) => {
+          if (val == null) return "0";
+          return `${Number(val).toLocaleString("es-MX", { maximumFractionDigits: 0 })}`;
+        }
       },
     },
     legend: {
       position: "top",
       horizontalAlign: "right",
-      offsetY: -10, 
+      offsetY: -5,
       fontSize: "12px",
       fontWeight: 500,
       labels: {
@@ -147,65 +175,50 @@ const LineChart = ({ data, hideCardWrapper = false, showTitle = true }) => {
       markers: {
         width: 10,
         height: 10,
-        radius: 3, 
+        radius: 3,
       }
     },
     tooltip: {
       theme: isDarkMode ? "dark" : "light",
-      x: {
-        show: true,
-      },
+      x: { show: true },
       y: {
-        formatter: (val) => `${Number(val).toLocaleString('es-MX')} m³`
-      },
-      style: {
-        fontSize: '12px',
+        formatter: (val) => `${Number(val || 0).toLocaleString("es-MX")} m³`
       }
     },
     markers: {
-      size: 0, 
+      size: isDynamic && data.length <= 1 ? 5 : 3,
+      colors: isDarkMode ? ["#60a5fa", "#34d399", "#a78bfa"] : ["#2563eb", "#059669", "#7c3aed"],
+      strokeColors: isDarkMode ? "#18181b" : "#ffffff",
+      strokeWidth: 2,
       hover: {
-        size: 5, 
+        size: 6,
       }
     },
     responsive: [
       {
         breakpoint: 768,
         options: {
-          chart: { height: 300 },
+          chart: { height: 280 },
           legend: { position: "bottom", horizontalAlign: "center", offsetY: 0 },
         },
       },
     ],
-  };
-
-  const chartElement = (
-    <div className="relative w-full h-full min-h-[300px]">
-      <Chart
-        options={options}
-        series={series}
-        type="area"
-        height="100%"
-        width="100%"
-        key={isDarkMode ? "dark" : "light"}
-      />
-    </div>
-  );
-
-  if (hideCardWrapper) {
-    return chartElement;
-  }
+  }), [isDarkMode, categories, colors, isDynamic, data]);
 
   return (
-    <div className="w-full h-full min-h-[350px] p-5 rounded-2xl bg-white border shadow-sm border-slate-200 dark:border-zinc-800 dark:bg-zinc-900 transition-colors duration-300">
-      {chartElement}
+    <div className="w-full h-full min-h-[320px] flex items-center justify-center">
+      <div className="relative w-full h-[320px]">
+        <Chart
+          options={options}
+          series={series}
+          type="area"
+          height={320}
+          width="100%"
+          key={isDarkMode ? "dark" : "light"}
+        />
+      </div>
     </div>
   );
 };
 
 export default LineChart;
-
-
-
-
-

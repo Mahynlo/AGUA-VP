@@ -1,21 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Button, 
-  Skeleton, 
-  Tabs, 
-  Tab, 
-  Chip,
-  Select,
-  SelectItem,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Pagination
-} from "@heroui/react";
+import { Button, Skeleton } from "@heroui/react";
 import { 
   HiSearch, 
   HiCurrencyDollar, 
@@ -24,7 +9,10 @@ import {
   HiOutlineDocumentReport,
   HiX,
   HiCalculator,
-  HiExclamationCircle
+  HiExclamationCircle,
+  HiChevronLeft,
+  HiChevronRight,
+  HiChevronDown
 } from "react-icons/hi";
 import { useTarifas } from "../../context/TarifasContext";
 import RegistrarTarifa from "./tarifas/RegistrarTarifa";
@@ -244,30 +232,38 @@ export default function Tarifas() {
 
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
         <div className="flex flex-col w-full flex-1">
-          <Tabs
-            aria-label="Secciones de tarifas"
-            selectedKey={selectedTab}
-            onSelectionChange={handleTabChange}
-            variant="underlined"
-            classNames={{
-              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
-              tabList: "gap-6 w-full relative rounded-none p-0",
-              cursor: "w-full bg-emerald-600 dark:bg-emerald-500 h-[2px]",
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-emerald-600 dark:group-data-[selected=true]:text-emerald-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors"
-            }}
-          >
-            {/* ── TAB 1: LISTA DE TARIFAS ── */}
-            <Tab
-              key="tarifas"
-              title={
-                <div className="flex items-center gap-2">
-                  <HiCurrencyDollar className="text-lg" />
-                  <span>Tarifas</span>
-                </div>
-              }
-            >
-              <div className="animate-in fade-in duration-500 h-full flex flex-col">
+          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto">
+            <nav className="flex gap-6 w-full -mb-px">
+              <button
+                type="button"
+                onClick={() => handleTabChange("tarifas")}
+                className={`flex items-center gap-2 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "tarifas"
+                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiCurrencyDollar className="text-lg" />
+                <span>Tarifas</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleTabChange("calculadora")}
+                className={`flex items-center gap-2 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "calculadora"
+                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiCalculator className="text-lg" />
+                <span>Calculadora</span>
+              </button>
+            </nav>
+          </div>
+
+          {selectedTab === "tarifas" && (
+            <div className="animate-in fade-in duration-500 h-full flex flex-col">
                 
                 {/* Controles de Búsqueda y Registro */}
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white dark:bg-zinc-950 mb-8">
@@ -312,18 +308,36 @@ export default function Tarifas() {
 
                       {/* Paginación */}
                       {totalPaginas > 1 && (
-                        <div className="flex justify-center mt-auto py-6 border-t border-slate-100 dark:border-zinc-800/50">
-                          <Pagination
-                            total={totalPaginas}
-                            page={paginaActual}
-                            onChange={setPaginaActual}
-                            showControls
-                            color="default"
-                            variant="flat"
-                            classNames={{
-                              cursor: "bg-emerald-600 text-white font-bold shadow-md",
-                            }}
-                          />
+                        <div className="flex items-center justify-center gap-2 mt-auto py-6 border-t border-slate-100 dark:border-zinc-800/50">
+                          <button
+                            onClick={() => setPaginaActual(p => Math.max(p - 1, 1))}
+                            disabled={paginaActual === 1}
+                            className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+                          >
+                            <HiChevronLeft className="w-4 h-4" />
+                          </button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => (
+                              <button
+                                key={p}
+                                onClick={() => setPaginaActual(p)}
+                                className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
+                                  paginaActual === p
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                                }`}
+                              >
+                                {p}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            onClick={() => setPaginaActual(p => Math.min(p + 1, totalPaginas))}
+                            disabled={paginaActual === totalPaginas}
+                            className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+                          >
+                            <HiChevronRight className="w-4 h-4" />
+                          </button>
                         </div>
                       )}
                     </>
@@ -343,19 +357,11 @@ export default function Tarifas() {
                   )}
                 </div>
               </div>
-            </Tab>
+          )}
 
-            {/* ── TAB 2: CALCULADORA ── */}
-            <Tab
-              key="calculadora"
-              title={
-                <div className="flex items-center gap-2">
-                  <HiCalculator className="text-lg" />
-                  <span>Calculadora</span>
-                </div>
-              }
-            >
-              <div className="animate-in fade-in duration-500 flex justify-center py-4">
+          {/* ── TAB 2: CALCULADORA ── */}
+          {selectedTab === "calculadora" && (
+            <div className="animate-in fade-in duration-500 flex justify-center py-4">
                 <div className="w-full bg-slate-50/40 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-[2rem] p-6 sm:p-10 flex flex-col gap-8 shadow-sm">
                   
                   <div className="flex flex-col gap-1.5 border-b border-slate-200 dark:border-zinc-800 pb-6">
@@ -376,22 +382,20 @@ export default function Tarifas() {
                       </h4>
 
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">Tarifa a Simular</label>
-                        <Select
-                          aria-label="Selecciona una tarifa"
-                          placeholder="Selecciona de la lista..."
-                          selectedKeys={tarifaCalculadoraId ? [tarifaCalculadoraId] : []}
-                          onChange={(e) => setTarifaCalculadoraId(e.target.value)}
-                          variant="flat"
-                          classNames={{
-                            trigger: "bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 h-[52px]",
-                            value: "font-bold text-slate-700 dark:text-zinc-200"
-                          }}
-                        >
-                          {tarifas.map((tarifa) => (
-                            <SelectItem key={tarifa.id} value={tarifa.id}>{tarifa.nombre}</SelectItem>
-                          ))}
-                        </Select>
+                        <div className="relative">
+                          <select
+                            aria-label="Selecciona una tarifa"
+                            value={tarifaCalculadoraId}
+                            onChange={(e) => setTarifaCalculadoraId(e.target.value)}
+                            className="w-full pl-4 pr-10 py-3 text-sm font-bold rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-100 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 h-[52px] appearance-none cursor-pointer"
+                          >
+                            <option value="">Selecciona de la lista...</option>
+                            {tarifas.map((tarifa) => (
+                              <option key={tarifa.id} value={tarifa.id}>{tarifa.nombre}</option>
+                            ))}
+                          </select>
+                          <HiChevronDown className="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        </div>
                       </div>
 
                       <div className="flex flex-col gap-1.5">
@@ -461,46 +465,40 @@ export default function Tarifas() {
 
                           {/* Tabla de Desglose Standard SaaS */}
                           <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-950 shadow-sm">
-                            <Table
-                              aria-label="Desglose del cálculo"
-                              removeWrapper
-                              classNames={{
-                                th: "bg-slate-50 dark:bg-zinc-900/50 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-3.5 px-5",
-                                td: "py-3.5 px-5 border-b border-slate-100 dark:border-zinc-800/50",
-                                tr: "hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
-                              }}
-                            >
-                              <TableHeader>
-                                <TableColumn>RANGO</TableColumn>
-                                <TableColumn>TIPO DE COBRO</TableColumn>
-                                <TableColumn align="end">METROS (m³)</TableColumn>
-                                <TableColumn align="end">PRECIO/m³</TableColumn>
-                                <TableColumn align="end">SUBTOTAL</TableColumn>
-                              </TableHeader>
-                              <TableBody items={resultadoCalculo.detalle}>
-                                {(item) => (
-                                  <TableRow key={`${item.consumo_min}-${item.consumo_max}`}>
-                                    <TableCell className="font-bold text-sm text-slate-800 dark:text-zinc-100">
+                            <table className="w-full text-left text-sm">
+                              <thead className="bg-slate-50 dark:bg-zinc-900/50 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800">
+                                <tr>
+                                  <th className="py-3.5 px-5">RANGO</th>
+                                  <th className="py-3.5 px-5">TIPO DE COBRO</th>
+                                  <th className="py-3.5 px-5 text-right">METROS (m³)</th>
+                                  <th className="py-3.5 px-5 text-right">PRECIO/m³</th>
+                                  <th className="py-3.5 px-5 text-right">SUBTOTAL</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+                                {resultadoCalculo.detalle?.map((item) => (
+                                  <tr key={`${item.consumo_min}-${item.consumo_max}`} className="hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors">
+                                    <td className="py-3.5 px-5 font-bold text-sm text-slate-800 dark:text-zinc-100">
                                       {item.consumo_min}{item.consumo_max != null ? ` - ${item.consumo_max}` : "+"}
-                                    </TableCell>
-                                    <TableCell>
+                                    </td>
+                                    <td className="py-3.5 px-5">
                                       <span className="text-xs font-bold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-md">
                                         {item.tipo === "base_fija" ? "Base fija" : "Cobro por tramo"}
                                       </span>
-                                    </TableCell>
-                                    <TableCell className="font-mono text-sm text-slate-600 dark:text-zinc-300">
+                                    </td>
+                                    <td className="py-3.5 px-5 font-mono text-sm text-slate-600 dark:text-zinc-300 text-right">
                                       {item.metros == null ? "-" : item.metros}
-                                    </TableCell>
-                                    <TableCell className="font-mono text-sm text-slate-600 dark:text-zinc-300">
+                                    </td>
+                                    <td className="py-3.5 px-5 font-mono text-sm text-slate-600 dark:text-zinc-300 text-right">
                                       ${item.precio_por_m3.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </TableCell>
-                                    <TableCell className="font-mono font-black text-base text-slate-800 dark:text-zinc-100">
+                                    </td>
+                                    <td className="py-3.5 px-5 font-mono font-black text-base text-slate-800 dark:text-zinc-100 text-right">
                                       ${item.subtotal.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </TableCell>
-                                  </TableRow>
-                                )}
-                              </TableBody>
-                            </Table>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
                       ) : (
@@ -521,12 +519,9 @@ export default function Tarifas() {
                   </div>
                 </div>
               </div>
-            </Tab>
-          </Tabs>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-

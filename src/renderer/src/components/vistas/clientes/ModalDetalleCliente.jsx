@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Button } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "flowbite-react";
 import { 
     HiUser, 
     HiPhone, 
@@ -28,8 +28,7 @@ const premiumModalTheme = {
     },
     header: {
         base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-t-2xl",
-        close: {
-            base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors",
+        close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer",
             icon: "h-5 w-5"
         }
     },
@@ -58,10 +57,10 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
             onClose={onClose}
             size="3xl"
             theme={premiumModalTheme}
-            dismissible={false} // Evita que se cierre al hacer clic fuera si así lo deseas
+            dismissible
         >
             {/* ── HEADER DEL MODAL ── */}
-            <Modal.Header>
+            <ModalHeader>
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
                         <HiUser className="w-7 h-7" />
@@ -85,10 +84,10 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                         </div>
                     </div>
                 </div>
-            </Modal.Header>
+            </ModalHeader>
 
             {/* ── CUERPO DEL MODAL ── */}
-            <Modal.Body>
+            <ModalBody>
                 <div className="flex flex-col gap-10">
                     {(cliente.estado_cliente === "Eliminado" || cliente.fecha_eliminacion) && (
                         <div className="p-5 bg-red-500/10 border border-red-200/50 dark:border-red-900/40 rounded-2xl flex flex-col gap-2">
@@ -293,18 +292,18 @@ export default function ModalDetalleCliente({ isOpen, onClose, cliente }) {
                     </div>
 
                 </div>
-            </Modal.Body>
+            </ModalBody>
             
             {/* ── FOOTER Y ACCIONES ── */}
-            <Modal.Footer>
-                <Button 
-                    color="gray" 
+            <ModalFooter>
+                <button 
+                    type="button"
                     onClick={onClose}
-                    className="font-bold text-slate-500 border-transparent bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 focus:ring-0 rounded-xl h-11"
+                    className="font-bold text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl h-11 px-6 text-sm transition-colors cursor-pointer"
                 >
                     Cerrar Panel
-                </Button>
-            </Modal.Footer>
+                </button>
+            </ModalFooter>
         </Modal>
     );
 }

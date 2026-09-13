@@ -198,7 +198,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                     <Button
                                         size="sm"
                                         color={medidoresLiberados.has(medidor.id) ? "danger" : "default"}
-                                        variant={medidoresLiberados.has(medidor.id) ? "flat" : "bordered"}
+                                        variant={medidoresLiberados.has(medidor.id) ? "ghost" : "outline"}
                                         onPress={() => manejarLiberacion(medidor.id)}
                                         className={`h-7 px-2 rounded-lg text-[9px] font-bold uppercase tracking-widest flex-shrink-0 transition-all ${
                                             !medidoresLiberados.has(medidor.id) 
@@ -344,7 +344,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                             <Button
                                                 isIconOnly
                                                 size="sm"
-                                                variant="flat"
+                                                variant="ghost"
                                                 onPress={() => quitarMedidor(medidor.id)}
                                                 className="w-7 h-7 min-w-7 ml-3 bg-white/80 dark:bg-zinc-900/60 text-slate-400 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
                                             >

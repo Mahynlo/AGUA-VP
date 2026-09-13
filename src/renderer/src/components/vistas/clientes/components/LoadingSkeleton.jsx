@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { Card, CardBody, CardHeader, Skeleton } from "@heroui/react";
+import { Card, CardContent, CardHeader, Skeleton } from "@heroui/react";
 
 export const LoadingSkeleton = ({ tipo = 'tabla' }) => {
   if (tipo === 'tabla') {
@@ -30,7 +30,7 @@ const TablaSkeleton = () => (
       <CardHeader>
         <Skeleton className="w-48 h-6 rounded-lg" />
       </CardHeader>
-      <CardBody>
+      <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-2">
             <Skeleton className="w-full h-10 rounded-lg" />
@@ -43,12 +43,12 @@ const TablaSkeleton = () => (
           <Skeleton className="w-64 h-4 rounded-lg" />
           <Skeleton className="w-32 h-8 rounded-lg" />
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
 
     {/* Table skeleton */}
     <Card>
-      <CardBody className="p-0">
+      <CardContent className="p-0">
         <div className="space-y-3 p-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
@@ -65,7 +65,7 @@ const TablaSkeleton = () => (
             </div>
           ))}
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   </div>
 );
@@ -86,7 +86,7 @@ const MetricasSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       {Array.from({ length: 3 }).map((_, i) => (
         <Card key={i}>
-          <CardBody className="p-6">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <Skeleton className="w-24 h-4 rounded-lg" />
@@ -94,7 +94,7 @@ const MetricasSkeleton = () => (
               </div>
               <Skeleton className="w-12 h-12 rounded-full" />
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ))}
     </div>
@@ -105,17 +105,17 @@ const MetricasSkeleton = () => (
         <CardHeader>
           <Skeleton className="w-48 h-6 rounded-lg" />
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <Skeleton className="w-full h-64 rounded-lg" />
-        </CardBody>
+        </CardContent>
       </Card>
       <Card>
         <CardHeader>
           <Skeleton className="w-48 h-6 rounded-lg" />
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <Skeleton className="w-full h-64 rounded-lg" />
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   </div>
@@ -128,7 +128,7 @@ const FormSkeleton = () => (
       <CardHeader>
         <Skeleton className="w-48 h-6 rounded-lg" />
       </CardHeader>
-      <CardBody className="space-y-4">
+      <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <Skeleton className="w-full h-10 rounded-lg" />
           <Skeleton className="w-full h-10 rounded-lg" />
@@ -137,15 +137,15 @@ const FormSkeleton = () => (
           <Skeleton className="w-full h-10 rounded-lg" />
           <Skeleton className="w-full h-10 rounded-lg" />
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
     <Card>
       <CardHeader>
         <Skeleton className="w-48 h-6 rounded-lg" />
       </CardHeader>
-      <CardBody>
+      <CardContent>
         <Skeleton className="w-full h-20 rounded-lg" />
-      </CardBody>
+      </CardContent>
     </Card>
   </div>
 );

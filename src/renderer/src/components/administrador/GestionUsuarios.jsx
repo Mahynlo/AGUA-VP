@@ -1,22 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import {
-  Button,
-  Select,
-  SelectItem,
-  Tooltip,
-  User,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Pagination,
-  Card,
-  CardHeader,
-  CardBody,
-  Spinner
-} from "@heroui/react";
 import { 
   HiShieldCheck, 
   HiSearch, 
@@ -25,14 +7,16 @@ import {
   HiUserGroup, 
   HiX, 
   HiFilter,
-  HiBan,
   HiArrowLeft,
   HiFolder,
   HiRefresh,
   HiExclamationCircle,
-  HiDesktopComputer
+  HiDesktopComputer,
+  HiChevronLeft,
+  HiChevronRight,
+  HiChevronDown
 } from "react-icons/hi";
-import { Modal as FlowbiteModal, Button as FlowbiteButton } from "flowbite-react";
+import { Modal as FlowbiteModal, ModalHeader as FlowbiteModalHeader, ModalBody as FlowbiteModalBody, Button as FlowbiteButton } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
 import ModalRegistrarUsuario from "./ModalRegistroUsuario";
 import ModalSesionesUsuario from "./ModalSesionesUsuario";
@@ -122,12 +106,10 @@ const GestionUsuarios = () => {
   // Filtrado Directorio Activo (Excluye 'Eliminado')
   const filteredUsers = useMemo(() => {
     return usuarios.filter(user => {
-      // Si el usuario logueado es administrador, no puede ver a los superadmins
       if (currentUser?.rol === 'administrador' && user.rol === 'superadmin') {
         return false;
       }
 
-      // Excluir a los usuarios eliminados (van a la papelera)
       if (user.estado_usuario === 'Eliminado') {
         return false;
       }
@@ -147,12 +129,10 @@ const GestionUsuarios = () => {
   // Filtrado Papelera (Solo 'Eliminado')
   const filteredDeletedUsers = useMemo(() => {
     return usuarios.filter(user => {
-      // Si el usuario logueado es administrador, no puede ver a los superadmins
       if (currentUser?.rol === 'administrador' && user.rol === 'superadmin') {
         return false;
       }
 
-      // Solo eliminados
       if (user.estado_usuario !== 'Eliminado') {
         return false;
       }
@@ -173,7 +153,7 @@ const GestionUsuarios = () => {
     return filteredDeletedUsers.slice(start, end);
   }, [pageDeleted, filteredDeletedUsers, rowsPerPageDeleted]);
 
-  const totalPagesDeleted = Math.ceil(filteredDeletedUsers.length / rowsPerPageDeleted);
+  const totalPagesDeleted = Math.ceil(filteredDeletedUsers.length / rowsPerPageDeleted) || 1;
 
   useEffect(() => {
     setPageDeleted(1);
@@ -203,7 +183,7 @@ const GestionUsuarios = () => {
     return filteredUsers.slice(start, end);
   }, [page, filteredUsers, rowsPerPage]);
 
-  const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredUsers.length / rowsPerPage) || 1;
 
   useEffect(() => {
     setPage(1);
@@ -296,12 +276,6 @@ const GestionUsuarios = () => {
     setPage(1);
   };
 
-  // Clases estandarizadas para selects (Basado en TabClientes)
-  const selectClassNames = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
-    value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
-  };
-
   // Control de carga inicial (Skeleton)
   if (loading && !usuarios.length) {
     return <LoadingSkeleton />;
@@ -311,8 +285,8 @@ const GestionUsuarios = () => {
     <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6 animate-in fade-in duration-500">
       
       {/* ── SECCIÓN 1: HEADER Y KPIs ── */}
-      <Card className="border-none shadow-none bg-transparent rounded-2xl border border-slate-200 dark:border-zinc-800">
-        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
+      <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-950 overflow-hidden">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl shrink-0">
               <HiUserGroup className="w-6 h-6" />
@@ -323,7 +297,7 @@ const GestionUsuarios = () => {
                   Gestión de Usuarios
                 </h3>
                 {loading && usuarios.length > 0 && (
-                  <Spinner size="sm" color="default" className="w-4 h-4 ml-1" />
+                  <div className="w-4 h-4 rounded-full border-2 border-purple-500 border-t-transparent animate-spin ml-1" />
                 )}
               </div>
               <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
@@ -333,24 +307,23 @@ const GestionUsuarios = () => {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              variant="flat"
-              onPress={() => navigate(-1)}
-              className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-[44px] px-4 min-w-0 flex-1 sm:flex-none shadow-sm"
-              startContent={<HiArrowLeft className="w-4 h-4" />}
+            <button
+              onClick={() => navigate(-1)}
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-[44px] px-4 min-w-0 flex-1 sm:flex-none shadow-sm flex items-center justify-center gap-2 transition-colors text-xs"
             >
+              <HiArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Volver</span>
-            </Button>
+            </button>
             <div className="flex-1 sm:flex-none">
               <ModalRegistrarUsuario />
             </div>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardBody className="p-6">
+        <div className="p-6 bg-slate-50/50 dark:bg-zinc-900/30">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Tarjetas KPI */}
-            <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full shadow-sm">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total Usuarios</span>
                 <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiUserGroup className="w-4 h-4" /></div>
@@ -358,7 +331,7 @@ const GestionUsuarios = () => {
               <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.total}</p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full shadow-sm">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Activos</span>
                 <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><HiCheck className="w-4 h-4" /></div>
@@ -366,7 +339,7 @@ const GestionUsuarios = () => {
               <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.activos}</p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full shadow-sm">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Admin / Super</span>
                 <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><HiShieldCheck className="w-4 h-4" /></div>
@@ -374,7 +347,7 @@ const GestionUsuarios = () => {
               <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.admins}</p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
+            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full shadow-sm">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Operadores</span>
                 <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400"><HiUserGroup className="w-4 h-4" /></div>
@@ -382,34 +355,32 @@ const GestionUsuarios = () => {
               <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.operadores}</p>
             </div>
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       {/* Pestañas de Navegación (Directorio / Papelera) */}
       <div className="flex gap-6 border-b border-slate-200 dark:border-zinc-800 px-2 mt-4">
         <button
           onClick={() => setShowDeleted(false)}
-          className={`pb-4 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-purple-500 text-purple-600 dark:text-purple-400" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+          className={`pb-4 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-purple-500 text-purple-600 dark:text-purple-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"}`}
         >
           Directorio Activo
         </button>
         <button
-          onClick={() => {
-            setShowDeleted(true);
-          }}
-          className={`pb-4 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-purple-500 text-purple-600 dark:text-purple-400" : "border-transparent text-slate-500 hover:text-slate-700"} flex items-center gap-2`}
+          onClick={() => setShowDeleted(true)}
+          className={`pb-4 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-purple-500 text-purple-600 dark:text-purple-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"} flex items-center gap-2`}
         >
           <HiFolder className="w-4 h-4" /> Papelera
         </button>
       </div>
 
       {/* ── SECCIÓN 2: FILTROS Y TABLA ── */}
-      <Card className="border-none shadow-none bg-transparent rounded-2xl border border-slate-200 dark:border-zinc-800">
+      <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-950 overflow-hidden shadow-sm">
         
         {!showDeleted ? (
           <>
             {/* Controles de Filtrado - Directorio Activo */}
-            <div className="p-6 border-b border-slate-100 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 rounded-t-2xl">
+            <div className="p-6 border-b border-slate-100 dark:border-zinc-800/50 bg-white dark:bg-zinc-950">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
                 
                 {/* Buscador */}
@@ -421,7 +392,7 @@ const GestionUsuarios = () => {
                     placeholder="Buscar por nombre, usuario o correo..."
                     value={busqueda}
                     onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full pl-10 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-300 shadow-none h-[52px]"
+                    className="w-full pl-10 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-none h-[52px]"
                   />
                   {busqueda && (
                     <button
@@ -434,53 +405,50 @@ const GestionUsuarios = () => {
                 </div>
 
                 {/* Filtro Rol */}
-                <div className="lg:col-span-2">
-                  <Select
-                    placeholder="Todos los roles"
-                    selectedKeys={[filtroRol]}
+                <div className="lg:col-span-2 relative">
+                  <select
+                    value={filtroRol}
                     onChange={(e) => setFiltroRol(e.target.value)}
-                    variant="flat"
                     aria-label="Filtrar por Rol"
-                    classNames={selectClassNames}
+                    className="w-full h-[52px] pl-3 pr-8 text-xs font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none cursor-pointer"
                   >
-                    <SelectItem key="todos" value="todos">Todos los roles</SelectItem>
+                    <option value="todos">Todos los roles</option>
                     {currentUser?.rol === 'superadmin' && (
-                      <SelectItem key="superadmin" value="superadmin">Superadmin</SelectItem>
+                      <option value="superadmin">Superadmin</option>
                     )}
-                    <SelectItem key="administrador" value="administrador">Administrador</SelectItem>
-                    <SelectItem key="operador" value="operador">Operador</SelectItem>
-                  </Select>
+                    <option value="administrador">Administrador</option>
+                    <option value="operador">Operador</option>
+                  </select>
+                  <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
 
                 {/* Filtro Estado */}
-                <div className="lg:col-span-2">
-                  <Select
-                    placeholder="Todos los estados"
-                    selectedKeys={[filtroEstado]}
+                <div className="lg:col-span-2 relative">
+                  <select
+                    value={filtroEstado}
                     onChange={(e) => setFiltroEstado(e.target.value)}
-                    variant="flat"
                     aria-label="Filtrar por Estado"
-                    classNames={selectClassNames}
+                    className="w-full h-[52px] pl-3 pr-8 text-xs font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none cursor-pointer"
                   >
-                    <SelectItem key="todos" value="todos">Todos los estados</SelectItem>
-                    <SelectItem key="Activo" value="Activo">Activos</SelectItem>
-                    <SelectItem key="Inactivo" value="Inactivo">Inactivos</SelectItem>
-                  </Select>
+                    <option value="todos">Todos los estados</option>
+                    <option value="Activo">Activos</option>
+                    <option value="Inactivo">Inactivos</option>
+                  </select>
+                  <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
 
                 {/* Botón Limpiar Filtros */}
                 <div className="lg:col-span-2 flex justify-end">
                   {hasActiveFilters ? (
-                    <Button 
-                      variant="flat" 
-                      onPress={clearFilters}
-                      className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl"
-                      startContent={<HiFilter className="text-lg" />}
+                    <button 
+                      onClick={clearFilters}
+                      className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors text-xs"
                     >
-                      Limpiar
-                    </Button>
+                      <HiFilter className="text-lg" />
+                      <span>Limpiar</span>
+                    </button>
                   ) : (
-                    <div className="w-full h-[52px]"></div> // Espaciador
+                    <div className="w-full h-[52px]"></div>
                   )}
                 </div>
               </div>
@@ -496,167 +464,173 @@ const GestionUsuarios = () => {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
                   Filas por página:
                 </span>
-                <Select
-                  size="sm"
-                  aria-label="Por página"
-                  className="w-24"
-                  variant="flat"
-                  selectedKeys={[rowsPerPage.toString()]}
-                  onSelectionChange={(keys) => {
-                    setRowsPerPage(Number(Array.from(keys)[0]));
-                    setPage(1);
-                  }}
-                  classNames={{
-                    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-none h-[40px]",
-                    value: "font-bold text-slate-700 dark:text-zinc-300"
-                  }}
-                >
-                  <SelectItem key="5" value="5">5</SelectItem>
-                  <SelectItem key="10" value="10">10</SelectItem>
-                  <SelectItem key="15" value="15">15</SelectItem>
-                  <SelectItem key="50" value="50">50</SelectItem>
-                </Select>
+                <div className="relative">
+                  <select
+                    value={rowsPerPage}
+                    onChange={(e) => {
+                      setRowsPerPage(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    aria-label="Por página"
+                    className="h-9 pl-3 pr-7 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 appearance-none cursor-pointer"
+                  >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="50">50</option>
+                  </select>
+                  <HiChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
               </div>
             </div>
 
             {/* Tabla Directorio Activo */}
-            <CardBody className="p-0 bg-white dark:bg-zinc-950">
-              <div className="w-full overflow-x-auto">
-                <Table 
-                  aria-label="Tabla de usuarios activos" 
-                  removeWrapper
-                  classNames={{
-                    base: "min-h-[400px]",
-                    table: "min-w-full",
-                    th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4 px-6",
-                    td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4 px-6",
-                    tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
-                  }}
-                >
-                  <TableHeader>
-                    <TableColumn>USUARIO</TableColumn>
-                    <TableColumn>ROL</TableColumn>
-                    <TableColumn>ESTADO</TableColumn>
-                    <TableColumn>ÚLTIMO ACCESO</TableColumn>
-                    <TableColumn align="end">ACCIONES</TableColumn>
-                  </TableHeader>
-                  <TableBody 
-                    emptyContent={
-                      <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-400 dark:text-zinc-500">
-                        <HiUserGroup className="w-12 h-12 opacity-20 mb-2" />
-                        <p className="font-bold">No se encontraron usuarios</p>
-                      </div>
-                    } 
-                  >
-                    {items.map((usuario) => {
+            <div className="w-full overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-zinc-800">
+                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">USUARIO</th>
+                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ROL</th>
+                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ESTADO</th>
+                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ÚLTIMO ACCESO</th>
+                    <th className="text-right text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+                  {items.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="py-16 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
+                          <HiUserGroup className="w-12 h-12 opacity-20 mb-2" />
+                          <p className="font-bold text-sm">No se encontraron usuarios</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    items.map((usuario) => {
                       const isSelf = currentUser?.id == usuario.id;
                       return (
-                        <TableRow key={usuario.id}>
-                          <TableCell>
-                            <User
-                              name={<span className={`font-bold text-sm ${isSelf ? 'text-purple-600 dark:text-purple-400' : 'text-slate-800 dark:text-zinc-100'}`}>{usuario.nombre} {isSelf && "(Tú)"}</span>}
-                              description={
+                        <tr key={usuario.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-900/30 transition-colors">
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-purple-500/10 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-black text-xs flex items-center justify-center border border-purple-200/50 dark:border-purple-800/40 shadow-sm shrink-0">
+                                {(usuario.nombre || "U").charAt(0).toUpperCase()}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className={`font-bold text-sm leading-tight ${isSelf ? 'text-purple-600 dark:text-purple-400' : 'text-slate-800 dark:text-zinc-100'}`}>
+                                  {usuario.nombre} {isSelf && "(Tú)"}
+                                </span>
                                 <div className="flex flex-col gap-0.5 mt-0.5">
                                   <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">@{usuario.username}</span>
                                   <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500">{usuario.correo}</span>
                                 </div>
-                              }
-                              avatarProps={{
-                                src: `https://ui-avatars.com/api/?name=${usuario.nombre}&background=random`,
-                                size: "sm",
-                                className: "border border-slate-200 dark:border-zinc-800 shadow-sm shrink-0"
-                              }}
-                            />
-                          </TableCell>
+                              </div>
+                            </div>
+                          </td>
                           
-                          <TableCell>
+                          <td className="py-4 px-6">
                             <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest ${getRolBadge(usuario.rol)}`}>
                               {usuario.rol}
                             </span>
-                          </TableCell>
+                          </td>
                           
-                          <TableCell>
-                            <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 ${getEstadoBadge(usuario.estado_usuario)}`}>
+                          <td className="py-4 px-6">
+                            <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5 ${getEstadoBadge(usuario.estado_usuario)}`}>
                               <div className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
                               {usuario.estado_usuario}
                             </span>
-                          </TableCell>
+                          </td>
 
-                          <TableCell>
+                          <td className="py-4 px-6">
                             <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
                               {usuario.ultimo_acceso ? new Date(usuario.ultimo_acceso).toLocaleString('es-MX', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : <span className="italic opacity-60">Nunca</span>}
                             </span>
-                          </TableCell>
+                          </td>
 
-                          <TableCell>
+                          <td className="py-4 px-6">
                             <div className="flex items-center justify-end gap-2">
-                              <Tooltip content="Gestionar permisos" classNames={{content: "font-bold text-[10px] uppercase tracking-widest text-slate-500"}}>
-                                <Button
-                                  isIconOnly
-                                  size="sm"
-                                  variant="flat"
-                                  className="bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 rounded-lg transition-colors"
-                                  onPress={() => handleOpenPermissions(usuario)}
-                                >
-                                  <HiShieldCheck className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
+                              <button
+                                title="Gestionar permisos"
+                                onClick={() => handleOpenPermissions(usuario)}
+                                className="p-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 rounded-lg transition-colors"
+                              >
+                                <HiShieldCheck className="w-4 h-4" />
+                              </button>
 
-                              <Tooltip content="Ver sesiones activas" classNames={{content: "font-bold text-[10px] uppercase tracking-widest text-slate-500"}}>
-                                <Button 
-                                  isIconOnly 
-                                  size="sm" 
-                                  variant="flat" 
-                                  className="bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 rounded-lg transition-colors"
-                                  onPress={() => handleOpenSessions(usuario)}
-                                >
-                                  <HiDesktopComputer className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
+                              <button
+                                title="Ver sesiones activas"
+                                onClick={() => handleOpenSessions(usuario)}
+                                className="p-2 bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 rounded-lg transition-colors"
+                              >
+                                <HiDesktopComputer className="w-4 h-4" />
+                              </button>
 
-                              <Tooltip content={isSelf ? "No puedes desactivarte" : "Desactivar usuario"} classNames={{content: "font-bold text-[10px] uppercase tracking-widest text-red-600 bg-red-50"}}>
-                                <Button 
-                                    isIconOnly 
-                                    size="sm" 
-                                    variant="flat" 
-                                    className={isSelf ? "bg-slate-100 text-slate-300 dark:bg-zinc-800/50 dark:text-zinc-600 rounded-lg" : "bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"}
-                                    isDisabled={isSelf} 
-                                    onPress={() => !isSelf && handleEliminar(usuario)}
-                                >
-                                  <HiTrash className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
+                              <button
+                                title={isSelf ? "No puedes desactivarte" : "Desactivar usuario"}
+                                disabled={isSelf}
+                                onClick={() => !isSelf && handleEliminar(usuario)}
+                                className={isSelf ? "p-2 bg-slate-100 text-slate-300 dark:bg-zinc-800/50 dark:text-zinc-600 rounded-lg cursor-not-allowed" : "p-2 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"}
+                              >
+                                <HiTrash className="w-4 h-4" />
+                              </button>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-              {/* Paginación Inferior */}
-              {totalPages > 1 && (
-                <div className="flex justify-center p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50">
-                  <Pagination
-                    total={totalPages}
-                    page={page}
-                    onChange={setPage}
-                    showControls
-                    color="default"
-                    variant="flat"
-                    classNames={{
-                      cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold shadow-sm",
-                    }}
-                  />
+            {/* Paginación Inferior */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                  Página {page} de {totalPages}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setPage(p => Math.max(p - 1, 1))}
+                    disabled={page === 1}
+                    className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+                  >
+                    <HiChevronLeft className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                      .map((p, idx, arr) => (
+                        <div key={p} className="flex items-center">
+                          {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                          <button
+                            onClick={() => setPage(p)}
+                            className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                              page === p
+                                ? 'bg-purple-600 text-white shadow-sm'
+                                : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                  <button
+                    onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                    disabled={page === totalPages}
+                    className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+                  >
+                    <HiChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
-            </CardBody>
+              </div>
+            )}
           </>
         ) : (
           <>
             {/* Controles de Filtrado - Papelera */}
-            <div className="p-6 border-b border-slate-100 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 rounded-t-2xl">
+            <div className="p-6 border-b border-slate-100 dark:border-zinc-800/50 bg-white dark:bg-zinc-950">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
                 
                 {/* Info y botón de actualización */}
@@ -707,148 +681,156 @@ const GestionUsuarios = () => {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
                   Filas por página:
                 </span>
-                <Select
-                  size="sm"
-                  aria-label="Por página papelera"
-                  className="w-24"
-                  variant="flat"
-                  selectedKeys={[rowsPerPageDeleted.toString()]}
-                  onSelectionChange={(keys) => {
-                    setRowsPerPageDeleted(Number(Array.from(keys)[0]));
-                    setPageDeleted(1);
-                  }}
-                  classNames={{
-                    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-none h-[40px]",
-                    value: "font-bold text-slate-700 dark:text-zinc-300"
-                  }}
-                >
-                  <SelectItem key="5" value="5">5</SelectItem>
-                  <SelectItem key="10" value="10">10</SelectItem>
-                  <SelectItem key="15" value="15">15</SelectItem>
-                  <SelectItem key="50" value="50">50</SelectItem>
-                </Select>
+                <div className="relative">
+                  <select
+                    value={rowsPerPageDeleted}
+                    onChange={(e) => {
+                      setRowsPerPageDeleted(Number(e.target.value));
+                      setPageDeleted(1);
+                    }}
+                    aria-label="Por página papelera"
+                    className="h-9 pl-3 pr-7 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 appearance-none cursor-pointer"
+                  >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="50">50</option>
+                  </select>
+                  <HiChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
               </div>
             </div>
 
             {/* Tabla de Papelera */}
-            <CardBody className="p-0 bg-white dark:bg-zinc-950">
-              <div className="w-full overflow-x-auto">
-                <Table 
-                  aria-label="Tabla de usuarios en papelera" 
-                  removeWrapper
-                  classNames={{
-                    base: "min-h-[300px]",
-                    table: "min-w-full",
-                    th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4 px-6",
-                    td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4 px-6",
-                    tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
-                  }}
-                >
-                  <TableHeader>
-                    <TableColumn>USUARIO</TableColumn>
-                    <TableColumn>FECHA ELIMINACIÓN</TableColumn>
-                    <TableColumn>MOTIVO DE ELIMINACIÓN</TableColumn>
-                    <TableColumn>ELIMINADO POR</TableColumn>
-                    <TableColumn align="end">ACCIONES</TableColumn>
-                  </TableHeader>
-                  <TableBody 
-                    emptyContent={
-                      <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-400 dark:text-zinc-500">
-                        <HiFolder className="w-12 h-12 opacity-20 mb-2" />
-                        <p className="font-bold">La papelera está vacía</p>
-                      </div>
-                    } 
-                  >
-                    {itemsDeleted.map((usuario) => (
-                      <TableRow key={usuario.id}>
-                        <TableCell>
-                          <User
-                            name={<span className="font-bold text-sm text-slate-800 dark:text-zinc-100">{usuario.nombre}</span>}
-                            description={
+            <div className="w-full overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-zinc-800">
+                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">USUARIO</th>
+                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">FECHA ELIMINACIÓN</th>
+                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">MOTIVO DE ELIMINACIÓN</th>
+                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ELIMINADO POR</th>
+                    <th className="text-right text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+                  {itemsDeleted.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="py-16 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
+                          <HiFolder className="w-12 h-12 opacity-20 mb-2" />
+                          <p className="font-bold text-sm">La papelera está vacía</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    itemsDeleted.map((usuario) => (
+                      <tr key={usuario.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-900/30 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-black text-xs flex items-center justify-center border border-slate-300/50 dark:border-zinc-700/40 shadow-sm shrink-0">
+                              {(usuario.nombre || "U").charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-sm leading-tight text-slate-800 dark:text-zinc-100">{usuario.nombre}</span>
                               <div className="flex flex-col gap-0.5 mt-0.5">
                                 <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">@{usuario.username}</span>
                                 <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500">{usuario.correo}</span>
                               </div>
-                            }
-                            avatarProps={{
-                              src: `https://ui-avatars.com/api/?name=${usuario.nombre}&background=random`,
-                              size: "sm",
-                              className: "border border-slate-200 dark:border-zinc-800 shadow-sm shrink-0"
-                            }}
-                          />
-                        </TableCell>
+                            </div>
+                          </div>
+                        </td>
                         
-                        <TableCell>
+                        <td className="py-4 px-6">
                           <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
                             {usuario.fecha_eliminacion ? new Date(usuario.fecha_eliminacion).toLocaleString('es-MX', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : <span className="italic opacity-60">No registrada</span>}
                           </span>
-                        </TableCell>
+                        </td>
                         
-                        <TableCell>
+                        <td className="py-4 px-6">
                           <span className="text-xs font-bold text-red-500/80 uppercase tracking-widest max-w-[200px] truncate block" title={usuario.razon_eliminacion}>
                             {usuario.razon_eliminacion || "Sin motivo registrado"}
                           </span>
-                        </TableCell>
+                        </td>
 
-                        <TableCell>
+                        <td className="py-4 px-6">
                           <span className="text-xs font-medium text-slate-600 dark:text-zinc-300">
                             {usuario.eliminador_username ? `@${usuario.eliminador_username}` : <span className="italic opacity-60">Desconocido</span>}
                           </span>
-                        </TableCell>
+                        </td>
 
-                        <TableCell>
+                        <td className="py-4 px-6">
                           <div className="flex items-center justify-end gap-2">
-                            <Tooltip content="Restaurar usuario" classNames={{content: "font-bold text-[10px] uppercase tracking-widest text-emerald-600 bg-emerald-50"}}>
-                              <Button 
-                                  isIconOnly 
-                                  size="sm" 
-                                  variant="flat" 
-                                  className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
-                                  onPress={() => handleReactivar(usuario)}
-                              >
-                                <HiCheck className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
+                            <button
+                              title="Restaurar usuario"
+                              onClick={() => handleReactivar(usuario)}
+                              className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
+                            >
+                              <HiCheck className="w-4 h-4" />
+                            </button>
 
-                            <Tooltip content="Eliminar definitivamente" classNames={{content: "font-bold text-[10px] uppercase tracking-widest text-red-600 bg-red-50"}}>
-                              <Button 
-                                  isIconOnly 
-                                  size="sm" 
-                                  variant="flat" 
-                                  className="bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                                  onPress={() => handlePurge(usuario)}
-                              >
-                                <HiTrash className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
+                            <button
+                              title="Eliminar definitivamente"
+                              onClick={() => handlePurge(usuario)}
+                              className="p-2 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                            >
+                              <HiTrash className="w-4 h-4" />
+                            </button>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-              {/* Paginación Inferior Papelera */}
-              {totalPagesDeleted > 1 && (
-                <div className="flex justify-center p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50">
-                  <Pagination
-                    total={totalPagesDeleted}
-                    page={pageDeleted}
-                    onChange={setPageDeleted}
-                    showControls
-                    color="default"
-                    variant="flat"
-                    classNames={{
-                      cursor: "bg-purple-600 text-white dark:bg-purple-500 dark:text-white font-bold shadow-sm",
-                    }}
-                  />
+            {/* Paginación Inferior Papelera */}
+            {totalPagesDeleted > 1 && (
+              <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50">
+                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                  Página {pageDeleted} de {totalPagesDeleted}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setPageDeleted(p => Math.max(p - 1, 1))}
+                    disabled={pageDeleted === 1}
+                    className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+                  >
+                    <HiChevronLeft className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPagesDeleted }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPagesDeleted || Math.abs(p - pageDeleted) <= 1)
+                      .map((p, idx, arr) => (
+                        <div key={p} className="flex items-center">
+                          {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                          <button
+                            onClick={() => setPageDeleted(p)}
+                            className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                              pageDeleted === p
+                                ? 'bg-purple-600 text-white shadow-sm'
+                                : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                  <button
+                    onClick={() => setPageDeleted(p => Math.min(p + 1, totalPagesDeleted))}
+                    disabled={pageDeleted === totalPagesDeleted}
+                    className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+                  >
+                    <HiChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
-              )}
-            </CardBody>
+              </div>
+            )}
           </>
         )}
-      </Card>
+      </div>
 
       {/* Modales */}
       <ModalSesionesUsuario
@@ -871,8 +853,8 @@ const GestionUsuarios = () => {
         popup
         theme={premiumConfirmModalTheme}
       >
-        <FlowbiteModal.Header />
-        <FlowbiteModal.Body>
+        <FlowbiteModalHeader />
+        <FlowbiteModalBody>
           <div className="text-center p-2">
             <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-red-500"}`} />
             <h3 className="mb-4 text-base font-black text-slate-800 dark:text-zinc-100">
@@ -898,7 +880,7 @@ const GestionUsuarios = () => {
               </FlowbiteButton>
             </div>
           </div>
-        </FlowbiteModal.Body>
+        </FlowbiteModalBody>
       </FlowbiteModal>
     </div>
   );

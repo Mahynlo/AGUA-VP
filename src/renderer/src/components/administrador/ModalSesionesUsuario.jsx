@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { Avatar } from "@heroui/react";
 import defaultAvatar from "../../assets/images/Avatar.png";
 import {
@@ -109,7 +109,7 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
             dismissible
         >
             {/* ── HEADER ── */}
-            <Modal.Header>
+            <ModalHeader>
                 <div className="flex items-center justify-between w-full pr-8">
                     <div className="flex items-center gap-4">
                         <Avatar
@@ -136,10 +136,10 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
                         <HiRefresh className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
                     </button>
                 </div>
-            </Modal.Header>
+            </ModalHeader>
 
             {/* ── BODY ── */}
-            <Modal.Body>
+            <ModalBody>
                 <div className="flex flex-col gap-4">
                     {/* Banner de confirmación inline */}
                     {confirmCerrar && (
@@ -277,10 +277,10 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
                         </div>
                     )}
                 </div>
-            </Modal.Body>
+            </ModalBody>
 
             {/* ── FOOTER ── */}
-            <Modal.Footer>
+            <ModalFooter>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                     {sesiones.length} {sesiones.length === 1 ? 'Sesión activa' : 'Sesiones activas'}
                 </span>
@@ -304,7 +304,7 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
                         </button>
                     )}
                 </div>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     );
 };

@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { useState, useEffect } from "react";
 import { useAuth } from '../../../context/AuthContext';
 import { useTarifas } from '../../../context/TarifasContext';
@@ -11,7 +11,7 @@ const premiumModalTheme = {
     },
     header: {
         base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-        close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+        close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
     },
     body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
     footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -105,18 +105,18 @@ export default function EditarTarifa({ tarifa, onTarifaEditada }) {
         show={isOpen}
         onClose={() => setIsOpen(false)}
         theme={premiumModalTheme}
-        dismissible={false}
+        dismissible
       >
-        <Modal.Header>
+        <ModalHeader>
           <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
             Editar Tarifa
           </h2>
           <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
             Modifica los datos generales y la vigencia
           </p>
-        </Modal.Header>
+        </ModalHeader>
 
-        <Modal.Body>
+        <ModalBody>
           {success && (
             <div className="p-4 mb-4 text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
               {success}
@@ -180,9 +180,9 @@ export default function EditarTarifa({ tarifa, onTarifaEditada }) {
               </div>
             </div>
           </form>
-        </Modal.Body>
+        </ModalBody>
 
-        <Modal.Footer>
+        <ModalFooter>
           <button
             type="button"
             onClick={() => setIsOpen(false)}
@@ -199,7 +199,7 @@ export default function EditarTarifa({ tarifa, onTarifaEditada }) {
             {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
             {isSaving ? "Guardando..." : "Guardar Cambios"}
           </button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </>
   );
