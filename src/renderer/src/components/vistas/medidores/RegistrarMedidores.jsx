@@ -272,11 +272,14 @@ export default function RegistrarMedidor() {
                         type="submit"
                         form="form-registro-medidor"
                         disabled={isUpdating}
-                        isProcessing={isUpdating}
                         className="font-black bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 text-white border-transparent rounded-xl h-11 px-5 shadow-sm transition-transform active:scale-95"
                     >
                         <div className="flex items-center gap-2">
-                            {!isUpdating && <HiCheck className="text-lg" />}
+                            {isUpdating ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white dark:border-zinc-950/30 dark:border-t-zinc-950 rounded-full animate-spin" />
+                            ) : (
+                                <HiCheck className="text-lg" />
+                            )}
                             {isUpdating ? "Registrando..." : "Registrar Medidor"}
                         </div>
                     </Button>

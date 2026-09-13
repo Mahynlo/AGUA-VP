@@ -225,11 +225,14 @@ export default function EditarClientes({ id, isOpen, onClose, onSuccess }) {
                     type="submit"
                     form="form-editar-cliente"
                     disabled={isUpdating || !canModificarClientes}
-                    isProcessing={isUpdating}
                     className="font-bold bg-slate-900 border-transparent text-white dark:bg-white dark:text-zinc-950 rounded-xl h-11 px-2 shadow-sm transition-transform active:scale-95"
                 >
                     <div className="flex items-center gap-2">
-                        {!isUpdating && <HiCheck className="text-lg" />}
+                        {isUpdating ? (
+                            <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                        ) : (
+                            <HiCheck className="text-lg" />
+                        )}
                         {isUpdating ? "Actualizando..." : "Guardar Cambios"}
                     </div>
                 </Button>
