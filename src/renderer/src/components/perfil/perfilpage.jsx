@@ -247,7 +247,7 @@ export default function PerfilPage() {
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
       
       {/* CONTENEDOR MAESTRO DE LA VISTA */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8 animate-in fade-in duration-300">
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8">
 
         {/* ── 1. HEADER Y TARJETAS DE ESTADO (KPIs) ── */}
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8 pb-2">
@@ -476,7 +476,7 @@ export default function PerfilPage() {
 
             {/* TAB 1: DATOS DE IDENTIDAD */}
             {selectedTab === "identidad" && (
-              <div className="flex flex-col gap-6 pt-1 animate-in fade-in duration-300">
+              <div className="flex flex-col gap-6 pt-1">
                   
                   {/* Card de Información de Cuenta */}
                   <div className="bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 flex flex-col gap-6">
@@ -561,7 +561,7 @@ export default function PerfilPage() {
 
             {/* TAB 2: SEGURIDAD Y CONTRASEÑA */}
             {selectedTab === "seguridad" && (
-              <div className="flex flex-col gap-6 pt-1 animate-in fade-in duration-300">
+              <div className="flex flex-col gap-6 pt-1">
                   
                   <div className="bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 flex flex-col gap-6">
                     
@@ -699,7 +699,7 @@ export default function PerfilPage() {
 
             {/* TAB 3: DISPOSITIVOS Y SESIONES */}
             {selectedTab === "sesiones" && (
-              <div className="flex flex-col gap-6 pt-1 animate-in fade-in duration-300">
+              <div className="flex flex-col gap-6 pt-1">
                   
                   <div className="bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 flex flex-col gap-6">
                     
