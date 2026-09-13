@@ -123,7 +123,7 @@ const SelectorPeriodoAvanzado = ({
   };
 
   return (
-    <div className={`relative ${className}`} ref={containerRef}>
+    <div className={`relative ${isOpen ? 'z-[999]' : 'z-20'} ${className}`} ref={containerRef}>
       {/* Botón Disparador Principal */}
       <button
         type="button"
@@ -182,7 +182,7 @@ const SelectorPeriodoAvanzado = ({
 
       {/* Popover Dropdown Panel Visual (Cuadrícula 12 Meses) */}
       {isOpen && (
-        <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-[360px] sm:w-[390px] bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-[calc(100%+8px)] left-0 z-[999] w-[360px] sm:w-[390px] bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           
           {/* Header del Popover con Navegación y Selector Directo de Año */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/50">

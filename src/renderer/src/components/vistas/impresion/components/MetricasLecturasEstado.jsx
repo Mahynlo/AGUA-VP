@@ -433,7 +433,7 @@ const MetricasLecturasEstado = () => {
       </div>
 
       {/* ── FILTER CONTROLS ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 items-end print:hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 items-end print:hidden relative z-30">
 
         <div className="lg:col-span-3 flex flex-col gap-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
