@@ -245,7 +245,7 @@ const PagosVista = () => {
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
 
       {/* CONTENEDOR DE LA VISTA: 'w-full min-h-full' para ocupar todo el espacio disponible */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-10 animate-in fade-in duration-500">
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-10">
 
         {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8">
@@ -341,25 +341,25 @@ const PagosVista = () => {
 
           {/* CONTENIDOS */}
           {selectedTab === "cobranza" && (
-            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+            <div className="pt-2 h-full flex flex-col">
               <TabCobranzaCliente onCobranzaStatsChange={setCobranzaStats} />
             </div>
           )}
 
           {selectedTab === "facturas" && (
-            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+            <div className="pt-2 h-full flex flex-col">
               <TabFacturas />
             </div>
           )}
 
           {selectedTab === "pagos" && (
-            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+            <div className="pt-2 h-full flex flex-col">
               <TabPagos />
             </div>
           )}
 
           {selectedTab === "estadisticas" && (
-            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+            <div className="pt-2 h-full flex flex-col">
               <TabEstadisticas />
             </div>
           )}

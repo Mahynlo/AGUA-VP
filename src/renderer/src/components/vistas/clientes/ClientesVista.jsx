@@ -94,7 +94,7 @@ const Clientes = () => {
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
 
       {/* CONTENEDOR DE LA VISTA: 'w-full min-h-full' para ocupar todo el espacio */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-10 animate-in fade-in duration-500">
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-10">
 
         {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8">
@@ -223,13 +223,13 @@ const Clientes = () => {
 
           {/* CONTENIDO */}
           {selectedTab === "Clientes" && (
-            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+            <div className="pt-2 h-full flex flex-col">
               <TabClientes />
             </div>
           )}
 
           {selectedTab === "Metricas" && (
-            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+            <div className="pt-2 h-full flex flex-col">
               <TabMetricas />
             </div>
           )}
