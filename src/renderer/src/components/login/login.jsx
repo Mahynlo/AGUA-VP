@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, Navigate } from 'react-router-dom';
-import { Carousel } from "flowbite-react";
 import { Button, Spinner } from "@heroui/react";
-import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle, HiShieldCheck } from "react-icons/hi";
+import {
+  HiMail,
+  HiLockClosed,
+  HiEye,
+  HiEyeOff,
+  HiExclamationCircle,
+  HiShieldCheck,
+  HiChevronLeft,
+  HiChevronRight
+} from "react-icons/hi";
 
 import { useAuth } from '../../context/AuthContext';
 import { useAppLogo } from '../../context/LogoContext';
@@ -11,6 +19,143 @@ import defaultImg2 from '../../assets/images/LoginPrueba2.jpg';
 import defaultImg3 from '../../assets/images/LoginPrueba3.jpg';
 
 const DEFAULT_LOGIN_IMAGES = [defaultImg1, defaultImg2, defaultImg3];
+
+const LoginCarousel = ({ images = [] }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Asegura que activeIndex esté dentro del rango si la lista de imágenes cambia
+  useEffect(() => {
+    if (activeIndex >= images.length) {
+      setActiveIndex(0);
+    }
+  }, [images.length, activeIndex]);
+
+  // Transición automática cada 5.5 segundos (se pausa al pasar el cursor)
+  useEffect(() => {
+    if (images.length <= 1 || isHovered) return;
+
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % images.length);
+    }, 5500);
+
+    return () => clearInterval(timer);
+  }, [images.length, isHovered]);
+
+  const handlePrev = (e) => {
+    e.stopPropagation();
+    setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleNext = (e) => {
+    e.stopPropagation();
+    setActiveIndex((prev) => (prev + 1) % images.length);
+  };
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div
+      className="relative w-full h-full overflow-hidden group select-none bg-slate-950"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Capas de imágenes con Cross-Fade y sutil zoom */}
+      {images.map((src, index) => {
+        const isActive = index === activeIndex;
+        return (
+          <div
+            key={index}
+            className={`absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out ${
+              isActive
+                ? "opacity-100 scale-100 z-10"
+                : "opacity-0 scale-105 z-0 pointer-events-none"
+            }`}
+          >
+            <img
+              src={src}
+              alt={`AguaVP Vista ${index + 1}`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        );
+      })}
+
+      {/* Degradados para garantizar alto contraste y legibilidad */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
+
+      {/* Botones de Navegación Manual (Visibles en hover) */}
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={handlePrev}
+            aria-label="Imagen anterior"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 cursor-pointer shadow-lg"
+          >
+            <HiChevronLeft className="w-6 h-6" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleNext}
+            aria-label="Siguiente imagen"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 cursor-pointer shadow-lg"
+          >
+            <HiChevronRight className="w-6 h-6" />
+          </button>
+        </>
+      )}
+
+      {/* Indicadores de Diapositiva (Píldoras interactivas) */}
+      {images.length > 1 && (
+        <div className="absolute top-6 right-6 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 shadow-lg">
+          {images.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setActiveIndex(idx)}
+              aria-label={`Ir a imagen ${idx + 1}`}
+              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                idx === activeIndex
+                  ? "w-6 bg-white shadow-sm"
+                  : "w-2 bg-white/40 hover:bg-white/70"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Tarjeta flotante transparente de cristal (Glassmorphism) */}
+      <div className="absolute bottom-8 left-8 right-8 z-20 max-w-xl">
+        <div className="p-6 rounded-3xl bg-white/10 dark:bg-black/30 backdrop-blur-md border border-white/20 shadow-2xl flex flex-col gap-2.5 animate-in fade-in duration-300">
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none drop-shadow-md">
+            Sistema de Agua Potable
+          </h2>
+          <p className="text-white/90 font-medium text-xs sm:text-sm leading-relaxed mt-0.5 drop-shadow">
+            Administración y control eficiente de recursos.
+          </p>
+
+          <div className="flex items-center gap-3.5 pt-2.5 mt-0.5 border-t border-white/20 text-[11px] font-bold text-white uppercase tracking-wider flex-wrap drop-shadow-sm">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+              Nácori Grande
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              Matapé
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+              Adivino
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function LoginApp() {
     const { logoSrc, loginImages } = useAppLogo();
@@ -96,40 +241,9 @@ function LoginApp() {
     return (
         <section className="flex flex-col md:flex-row h-screen pt-16 items-center bg-slate-50 dark:bg-zinc-950 overflow-hidden">
             
-            {/* ── LADO IZQUIERDO: Carrusel de imágenes con 100% de visibilidad ── */}
+            {/* ── LADO IZQUIERDO: Carrusel de imágenes fluido con transiciones suaves ── */}
             <div className="hidden lg:block relative w-full lg:w-1/2 xl:w-7/12 h-full bg-slate-900">
-                <Carousel slideInterval={6000} className="h-full z-0 rounded-none" indicators={false}>
-                    {carouselImages.map((src, i) => (
-                        <img key={i} src={src} alt={`AguaVP Vista ${i + 1}`} className="w-full h-full object-cover" />
-                    ))}
-                </Carousel>
-
-                {/* Tarjeta flotante transparente de cristal (Glassmorphism) */}
-                <div className="absolute bottom-8 left-8 right-8 z-20 max-w-xl">
-                    <div className="p-6 rounded-3xl bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/20 shadow-2xl flex flex-col gap-2.5 animate-in fade-in duration-300">
-                        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-none drop-shadow-md">
-                            Sistema de Agua Potable
-                        </h2>
-                        <p className="text-white font-medium text-xs sm:text-sm leading-relaxed mt-0.5 drop-shadow">
-                            Administración y control eficiente de recursos.
-                        </p>
-
-                        <div className="flex items-center gap-3.5 pt-2.5 mt-0.5 border-t border-white/20 text-[11px] font-bold text-white uppercase tracking-wider flex-wrap drop-shadow-sm">
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                                Nácori Grande
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                                Matapé
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                                Adivino
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                <LoginCarousel images={carouselImages} />
             </div>
 
             {/* ── LADO DERECHO: Formulario de inicio de sesión ── */}
