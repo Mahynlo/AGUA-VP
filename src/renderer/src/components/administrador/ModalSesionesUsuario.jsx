@@ -113,10 +113,15 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
                 <div className="flex items-center justify-between w-full pr-8">
                     <div className="flex items-center gap-4">
                         <Avatar
-                            src={usuarioAvatarSrc || defaultAvatar}
                             size="md"
                             className="border-2 border-slate-100 dark:border-zinc-800 shadow-sm shrink-0"
-                        />
+                        >
+                            <Avatar.Image
+                                src={usuarioAvatarSrc || defaultAvatar}
+                                alt={usuario?.nombre || "Avatar"}
+                            />
+                            <Avatar.Fallback>{(usuario?.nombre || "U").charAt(0).toUpperCase()}</Avatar.Fallback>
+                        </Avatar>
                         <div className="flex flex-col gap-0.5">
                             <span className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
                                 Sesiones Activas

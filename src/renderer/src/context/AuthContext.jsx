@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useRef } from "react";
+import { createContext, useState, useEffect, useContext, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFeedback } from "./FeedbackContext";
 
@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }) => {
     // --------------------
     const renovacionTimerRef = useRef(null);
     const refreshPromiseRef = useRef(null);
+    const isFetchingSesionesRef = useRef(false);
 
     // =====================================================
     // Servidor
@@ -139,17 +140,17 @@ export const AuthProvider = ({ children }) => {
     // =====================================================
     // Sesiones
     // =====================================================
-    // =====================================================
-    // Sesiones
-    // =====================================================
-    const obtenerSesionesActivas = async (usuarioId) => {
+    const obtenerSesionesActivas = useCallback(async (usuarioId) => {
+        if (!usuarioId) return;
+        if (isFetchingSesionesRef.current) return;
+        isFetchingSesionesRef.current = true;
         try {
             // Obtener token (puede ser del state o localStorage para asegurar)
             const token = localStorage.getItem("token");
             if (!token) return;
 
             const response = await window.api.getSession(usuarioId, token);
-            console.log("🔍 Respuesta obtenerSesionesActivas:", response); // Debug Log
+            console.log("🔍 Respuesta obtenerSesionesActivas:", response);
 
             // Fix: Permitir si success es true O si contiene el array directamente (fallback)
             if (response?.success || Array.isArray(response?.sesiones_activas)) {
@@ -160,8 +161,10 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error("💥 Error al obtener sesiones:", error);
             setSesiones([]);
+        } finally {
+            isFetchingSesionesRef.current = false;
         }
-    };
+    }, []);
 
     // =====================================================
     // Bootstrap inicial (incluye modo impresión)

@@ -3,7 +3,6 @@ import { useMedidores } from "../../../context/MedidoresContext";
 import {
     Chip,
     Button,
-    Avatar,
     Spinner
 } from "@heroui/react";
 import {
@@ -175,14 +174,9 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                     className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800/60 bg-white dark:bg-zinc-950 hover:border-slate-300 dark:hover:border-zinc-700 transition-colors flex items-center justify-between gap-3 shadow-sm"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <Avatar
-                                            icon={<HiCog className="text-base" />}
-                                            classNames={{
-                                                base: "bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex-shrink-0 shadow-sm",
-                                                icon: "text-slate-500 dark:text-zinc-400"
-                                            }}
-                                            size="sm"
-                                        />
+                                        <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center shrink-0 shadow-sm text-slate-500 dark:text-zinc-400">
+                                            <HiCog className="text-base" />
+                                        </div>
                                         <div className="flex flex-col min-w-0">
                                             <h5 className="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate uppercase">
                                                 {medidor.numero_serie}

@@ -4,7 +4,7 @@ import {
   HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer,
   HiClock, HiCheckCircle, HiExclamationCircle, HiGlobeAlt, HiInformationCircle,
   HiCamera, HiTrash, HiEye, HiEyeOff, HiBan, HiCalendar, HiCheck,
-  HiLockClosed, HiSparkles, HiOutlineIdentification
+  HiLockClosed, HiSparkles, HiOutlineIdentification, HiRefresh
 } from "react-icons/hi";
 import defaultAvatar from "../../assets/images/Avatar.png";
 import { useAuth } from "../../context/AuthContext";
@@ -96,7 +96,7 @@ export default function PerfilPage() {
     if (user?.id) {
       obtenerSesionesActivas(user.id);
     }
-  }, [user, obtenerSesionesActivas]);
+  }, [user?.id, obtenerSesionesActivas]);
 
   // Estados para cambio de contraseña
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
@@ -182,6 +182,20 @@ export default function PerfilPage() {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
+  const [refreshingSessions, setRefreshingSessions] = useState(false);
+
+  const handleRefreshSessions = async () => {
+    if (!user?.id) return;
+    setRefreshingSessions(true);
+    try {
+      await obtenerSesionesActivas(user.id);
+    } catch (error) {
+      console.error("Error al actualizar sesiones:", error);
+    } finally {
+      setRefreshingSessions(false);
+    }
+  };
+
   const handleCloseSession = async (sesionId) => {
     setClosingSession(sesionId);
     try {
@@ -191,9 +205,11 @@ export default function PerfilPage() {
       const response = await window.api.closeSpecificSession(sesionId, token);
 
       if (response.success) {
-        window.location.reload();
+        if (user?.id) {
+          await obtenerSesionesActivas(user.id);
+        }
       } else {
-        alert("Error: " + response.message);
+        alert("Error: " + (response.message || response.error || "No se pudo cerrar la sesión"));
       }
     } catch (error) {
       console.error("Error cerrar sesión:", error);
@@ -324,9 +340,14 @@ export default function PerfilPage() {
                 {/* Avatar con Anillo y Beacon de Estado */}
                 <div className="relative mb-4 mt-2">
                   <Avatar
-                    src={avatarSrc || defaultAvatar}
                     className="w-28 h-28 text-large border-4 border-white dark:border-zinc-950 shadow-md bg-slate-200 dark:bg-zinc-800"
-                  />
+                  >
+                    <Avatar.Image
+                      src={avatarSrc || defaultAvatar}
+                      alt={user?.nombre || "Avatar"}
+                    />
+                    <Avatar.Fallback>{(user?.nombre || "U").charAt(0).toUpperCase()}</Avatar.Fallback>
+                  </Avatar>
                   <div className="absolute bottom-1 right-1 p-1 bg-white dark:bg-zinc-950 rounded-full shadow-sm">
                     <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 block border-2 border-white dark:border-zinc-950" />
                   </div>
@@ -682,18 +703,30 @@ export default function PerfilPage() {
                   
                   <div className="bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 flex flex-col gap-6">
                     
-                    <div className="flex items-center gap-3 border-b border-slate-200 dark:border-zinc-800 pb-4">
-                      <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
-                        <HiDesktopComputer className="w-5 h-5" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                          <HiDesktopComputer className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-widest">
+                            Sesiones Activas y Dispositivos
+                          </h3>
+                          <p className="text-xs text-slate-400 dark:text-zinc-500 font-medium">
+                            Monitorea los equipos que han iniciado sesión con tu cuenta institucional.
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-widest">
-                          Sesiones Activas y Dispositivos
-                        </h3>
-                        <p className="text-xs text-slate-400 dark:text-zinc-500 font-medium">
-                          Monitorea los equipos que han iniciado sesión con tu cuenta institucional.
-                        </p>
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="font-bold text-xs h-9 rounded-xl text-slate-600 dark:text-zinc-400 hover:bg-slate-200/60 dark:hover:bg-zinc-800 self-start sm:self-auto"
+                        onPress={handleRefreshSessions}
+                        isLoading={refreshingSessions}
+                        startContent={!refreshingSessions && <HiRefresh className="w-4 h-4" />}
+                      >
+                        Actualizar
+                      </Button>
                     </div>
                     
                     <div className="flex flex-col gap-4">

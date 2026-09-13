@@ -191,11 +191,14 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                         type="submit"
                         form="form-registro-cliente"
                         disabled={isUpdating || !canCrearClientes}
-                        isProcessing={isUpdating}
                         className="font-bold bg-slate-900 border-transparent text-white dark:bg-white dark:text-zinc-950 rounded-xl h-11 px-2 shadow-sm transition-transform active:scale-95"
                     >
                         <div className="flex items-center gap-2">
-                            {!isUpdating && <HiCheck className="text-lg" />}
+                            {isUpdating ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white dark:border-zinc-950/30 dark:border-t-zinc-950 rounded-full animate-spin" />
+                            ) : (
+                                <HiCheck className="text-lg" />
+                            )}
                             {isUpdating ? "Registrando..." : "Guardar Cliente"}
                         </div>
                     </Button>

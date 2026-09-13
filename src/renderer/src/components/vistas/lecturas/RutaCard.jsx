@@ -577,10 +577,15 @@ export default function RutaCard({ ruta }) {
           <Button color="light" onClick={() => setModalGenerarOpen(false)} className="font-bold text-slate-500">Cancelar</Button>
           <Button
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl"
-            isProcessing={isGenerando}
+            disabled={isGenerando}
             onClick={ejecutarGenerarFacturas}
           >
-            Confirmar Generación
+            <div className="flex items-center gap-2">
+              {isGenerando && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              {isGenerando ? "Generando..." : "Confirmar Generación"}
+            </div>
           </Button>
         </ModalFooter>
       </Modal>
@@ -631,10 +636,15 @@ export default function RutaCard({ ruta }) {
           </Button>
           <Button
             className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl"
-            isProcessing={isGenerando}
+            disabled={isGenerando}
             onClick={ejecutarRecalculoFacturas}
           >
-            Confirmar Recálculo
+            <div className="flex items-center gap-2">
+              {isGenerando && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              {isGenerando ? "Recalculando..." : "Confirmar Recálculo"}
+            </div>
           </Button>
         </ModalFooter>
       </Modal>

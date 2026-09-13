@@ -168,16 +168,27 @@ function NavbarApp() {
                   >
                     <Avatar
                       color="primary"
-                      className="w-9 h-9 border-2 border-white/90 shadow-sm"
-                      src={avatarSrc || AvatarPerfil}
-                    />
+                      className="w-9 h-9 border-2 border-white/90 shadow-sm shrink-0"
+                    >
+                      <Avatar.Image
+                        src={avatarSrc || AvatarPerfil}
+                        alt={user?.nombre || "Avatar"}
+                      />
+                      <Avatar.Fallback>{(user?.nombre || "U").charAt(0).toUpperCase()}</Avatar.Fallback>
+                    </Avatar>
                   </button>
                   
                   {isProfileOpen && (
                     <div className="absolute right-0 mt-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl min-w-[250px] p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                       <div className="h-auto py-1 opacity-100 mb-1 pointer-events-none">
                         <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-100 dark:border-zinc-800 w-full">
-                          <Avatar src={avatarSrc || AvatarPerfil} size="sm" className="shrink-0" />
+                          <Avatar size="sm" className="shrink-0">
+                            <Avatar.Image 
+                              src={avatarSrc || AvatarPerfil} 
+                              alt={user?.nombre || "Avatar"}
+                            />
+                            <Avatar.Fallback>{(user?.nombre || "U").charAt(0).toUpperCase()}</Avatar.Fallback>
+                          </Avatar>
                           <div className="min-w-0 flex-1">
                             <p className="font-bold text-sm text-slate-800 dark:text-zinc-100 truncate leading-tight">
                               {user?.nombre || "Usuario"}
