@@ -425,7 +425,7 @@ export default function PerfilPage() {
           {/* ── COLUMNA DERECHA: Pestañas de Gestión (8 columnas) ── */}
           <div className="lg:col-span-8 flex flex-col w-full">
             
-            <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto">
+            <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6">
               <nav className="flex gap-6 sm:gap-8 w-full -mb-px">
                 {/* TAB 1: DATOS DE IDENTIDAD */}
                 <button

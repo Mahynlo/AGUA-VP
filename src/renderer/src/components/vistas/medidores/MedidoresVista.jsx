@@ -146,7 +146,7 @@ const Medidores = () => {
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
         <div className="flex flex-col w-full flex-1">
           {/* Pestañas de Navegación SaaS Unificadas */}
-          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto">
+          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6">
             <nav className="flex gap-8 w-full -mb-px">
               {/* TAB 1: MAPA */}
               <button
