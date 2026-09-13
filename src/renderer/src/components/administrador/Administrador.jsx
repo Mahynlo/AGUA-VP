@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Tabs, Tab, Chip } from "@heroui/react";
 import { HiOutlineShieldCheck } from "react-icons/hi";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -64,88 +63,98 @@ export default function Administrador() {
 
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
         <div className="flex flex-col w-full flex-1 mt-2">
-          {/* Token 7: Pestañas de Navegación SaaS - Tema Púrpura */}
-          <Tabs
-            aria-label="Panel de Administración"
-            selectedKey={selectedTab}
-            onSelectionChange={handleTabChange}
-            variant="underlined"
-            classNames={{
-              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
-              tabList: "gap-6 w-full relative rounded-none p-0",
-              cursor: "w-full bg-purple-600 dark:bg-purple-500 h-[2px]", // Cursor Púrpura
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-purple-600 dark:group-data-[selected=true]:text-purple-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors"
-            }}
-          >
-            {/* TAB: USUARIOS */}
-            {!esOperador && (
-              <Tab
-                key="usuarios"
-                title={
-                  <div className="flex items-center gap-2.5">
-                    <UsuariosAdminIcon className="w-5 h-5" />
-                    <span>Usuarios y Permisos</span>
-                  </div>
-                }
+          {/* Pestañas de Navegación SaaS - Tema Púrpura */}
+          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto">
+            <nav className="flex gap-6 w-full -mb-px">
+              {/* TAB: USUARIOS */}
+              {!esOperador && (
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("usuarios")}
+                  className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                    selectedTab === "usuarios"
+                      ? "border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400 font-bold"
+                      : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                  }`}
+                >
+                  <UsuariosAdminIcon className="w-5 h-5" />
+                  <span>Usuarios y Permisos</span>
+                </button>
+              )}
+
+              {/* TAB: MANTENIMIENTO */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("mantenimiento")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "mantenimiento"
+                    ? "border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
               >
-                <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                  <GestionUsuarios />
-                </div>
-              </Tab>
-            )}
+                <MantenimientoIcon className="w-5 h-5" />
+                <span>Mantenimiento</span>
+                <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold uppercase tracking-widest text-[9px] h-5 px-1.5 ml-1 rounded-md inline-flex items-center">
+                  Sistema
+                </span>
+              </button>
 
-            {/* TAB: MANTENIMIENTO */}
-            <Tab
-              key="mantenimiento"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <MantenimientoIcon className="w-5 h-5" />
-                  <span>Mantenimiento</span>
-                  <Chip size="sm" variant="flat" className="bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold uppercase tracking-widest text-[9px] h-5 px-1 ml-1 rounded-md">
-                    Sistema
-                  </Chip>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <ConsolaSistema />
-              </div>
-            </Tab>
-
-            {/* TAB: CONFIGURACIÓN */}
-            {!esOperador && (
-              <Tab
-                key="configuracion"
-                title={
-                  <div className="flex items-center gap-2.5">
-                    <ConfiguracionAdminIcon className="w-5 h-5" />
-                    <span>Configuración Global</span>
-                  </div>
-                }
-              >
-                <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                  <PanelConfiguracion />
-                </div>
-              </Tab>
-            )}
-
-            {/* TAB: PERSONALIZACIÓN */}
-            <Tab
-              key="personalizacion"
-              title={
-                <div className="flex items-center gap-2.5">
+              {/* TAB: CONFIGURACIÓN */}
+              {!esOperador && (
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("configuracion")}
+                  className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                    selectedTab === "configuracion"
+                      ? "border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400 font-bold"
+                      : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                  }`}
+                >
                   <ConfiguracionAdminIcon className="w-5 h-5" />
-                  <span>Personalización Visual</span>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <PanelPersonalizacion />
-              </div>
-            </Tab>
+                  <span>Configuración Global</span>
+                </button>
+              )}
 
-          </Tabs>
+              {/* TAB: PERSONALIZACIÓN */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("personalizacion")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "personalizacion"
+                    ? "border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <ConfiguracionAdminIcon className="w-5 h-5" />
+                <span>Personalización Visual</span>
+              </button>
+            </nav>
+          </div>
+
+          {/* CONTENIDOS */}
+          {!esOperador && selectedTab === "usuarios" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <GestionUsuarios />
+            </div>
+          )}
+
+          {selectedTab === "mantenimiento" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <ConsolaSistema />
+            </div>
+          )}
+
+          {!esOperador && selectedTab === "configuracion" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <PanelConfiguracion />
+            </div>
+          )}
+
+          {selectedTab === "personalizacion" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <PanelPersonalizacion />
+            </div>
+          )}
         </div>
 
       </div>

@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { useState } from "react";
 import { HiUser, HiMail, HiLockClosed, HiShieldCheck, HiBadgeCheck } from "react-icons/hi";
 import FeedbackMessages from "../toast/FeedbackMessages";
@@ -169,7 +169,7 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
         dismissible={!isUpdating}
       >
         {/* ── HEADER ── */}
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl shrink-0">
               <HiUser className="w-7 h-7" />
@@ -183,10 +183,10 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
               </p>
             </div>
           </div>
-        </Modal.Header>
+        </ModalHeader>
 
         {/* ── BODY ── */}
-        <Modal.Body>
+        <ModalBody>
           <div className="space-y-2">
             <FeedbackMessages
               error={generalError}
@@ -311,10 +311,10 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
               </div>
             </form>
           </div>
-        </Modal.Body>
+        </ModalBody>
 
         {/* ── FOOTER ── */}
-        <Modal.Footer>
+        <ModalFooter>
           <button
             type="button"
             onClick={handleClose}
@@ -334,7 +334,7 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
             )}
             {isUpdating ? "Registrando..." : "Confirmar Registro"}
           </button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </>
   );

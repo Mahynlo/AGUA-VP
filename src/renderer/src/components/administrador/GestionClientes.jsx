@@ -1,25 +1,16 @@
 import { useState, useEffect } from "react";
 import { 
   Card, 
-  CardBody, 
+  CardContent, 
   Button, 
-  Input, 
-  Select, 
-  SelectItem, 
-  Table, 
-  TableHeader, 
-  TableColumn, 
-  TableBody, 
-  TableRow, 
-  TableCell,
   Chip,
   Modal,
-  ModalContent,
+  ModalBackdrop,
+  ModalContainer,
+  ModalDialog,
   ModalHeader,
   ModalBody,
-  ModalFooter,
-  Tabs,
-  Tab
+  ModalFooter
 } from "@heroui/react";
 import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
 import { AgregarClienteIcon, EditIcon, EliminarClienteIcon } from "../../IconsApp/IconsClientes";
@@ -173,257 +164,259 @@ const GestionClientes = () => {
 
       {/* Filtros y búsqueda */}
       <Card>
-        <CardBody>
+        <CardContent className="p-5">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Input
-              label="Buscar cliente"
-              placeholder="Nombre, medidor o dirección..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              clearable
-            />
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Buscar cliente</label>
+              <input
+                placeholder="Nombre, medidor o dirección..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="w-full h-10 px-3 text-sm rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100"
+              />
+            </div>
             
-            <Select
-              label="Estado"
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-            >
-              <SelectItem key="todos" value="todos">Todos los estados</SelectItem>
-              <SelectItem key="activo" value="activo">Activo</SelectItem>
-              <SelectItem key="suspendido" value="suspendido">Suspendido</SelectItem>
-              <SelectItem key="inactivo" value="inactivo">Inactivo</SelectItem>
-            </Select>
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Estado</label>
+              <select
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado(e.target.value)}
+                className="w-full h-10 px-3 text-sm rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100"
+              >
+                <option value="todos">Todos los estados</option>
+                <option value="activo">Activo</option>
+                <option value="suspendido">Suspendido</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
             
-            <Select
-              label="Ciudad"
-              value={filtroCiudad}
-              onChange={(e) => setFiltroCiudad(e.target.value)}
-            >
-              <SelectItem key="todas" value="todas">Todas las ciudades</SelectItem>
-              {ciudades.map(ciudad => (
-                <SelectItem key={ciudad} value={ciudad}>{ciudad}</SelectItem>
-              ))}
-            </Select>
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-zinc-400 mb-1 block">Ciudad</label>
+              <select
+                value={filtroCiudad}
+                onChange={(e) => setFiltroCiudad(e.target.value)}
+                className="w-full h-10 px-3 text-sm rounded-xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-100"
+              >
+                <option value="todas">Todas las ciudades</option>
+                {ciudades.map(ciudad => (
+                  <option key={ciudad} value={ciudad}>{ciudad}</option>
+                ))}
+              </select>
+            </div>
 
             <div className="flex items-end">
-              <Button color="primary" className="w-full">
+              <Button color="primary" className="w-full h-10 font-bold">
                 <AgregarClienteIcon className="w-5 h-5" />
                 <span className="ml-2">Nuevo Cliente</span>
               </Button>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Estadísticas rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardBody className="text-center">
+          <CardContent className="text-center p-4">
             <p className="text-2xl font-bold text-blue-600">{clientesFiltrados.length}</p>
             <p className="text-sm text-gray-600">Clientes mostrados</p>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card>
-          <CardBody className="text-center">
+          <CardContent className="text-center p-4">
             <p className="text-2xl font-bold text-green-600">
               {clientesFiltrados.filter(c => c.estado === "Activo").length}
             </p>
             <p className="text-sm text-gray-600">Activos</p>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card>
-          <CardBody className="text-center">
+          <CardContent className="text-center p-4">
             <p className="text-2xl font-bold text-red-600">
               {clientesFiltrados.filter(c => c.estado === "Suspendido").length}
             </p>
             <p className="text-sm text-gray-600">Suspendidos</p>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card>
-          <CardBody className="text-center">
+          <CardContent className="text-center p-4">
             <p className="text-2xl font-bold text-orange-600">
               {formatearMoneda(clientesFiltrados.reduce((total, c) => total + c.saldoPendiente, 0))}
             </p>
             <p className="text-sm text-gray-600">Saldo total</p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Tabla de clientes */}
       <Card>
-        <CardBody>
-          <Table aria-label="Lista de clientes">
-            <TableHeader>
-              <TableColumn>CLIENTE</TableColumn>
-              <TableColumn>MEDIDOR</TableColumn>
-              <TableColumn>CIUDAD</TableColumn>
-              <TableColumn>ESTADO</TableColumn>
-              <TableColumn>SALDO</TableColumn>
-              <TableColumn>CONSUMO PROM.</TableColumn>
-              <TableColumn>ACCIONES</TableColumn>
-            </TableHeader>
-            <TableBody>
-              {clientesFiltrados.map((cliente) => (
-                <TableRow key={cliente.id}>
-                  <TableCell>
-                    <div>
-                      <p className="font-semibold">{cliente.nombre}</p>
-                      <p className="text-sm text-gray-500">{cliente.direccion}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono bg-gray-100 px-2 py-1 rounded text-sm">
-                      {cliente.medidor}
-                    </span>
-                  </TableCell>
-                  <TableCell>{cliente.ciudad}</TableCell>
-                  <TableCell>
-                    <Chip color={getEstadoColor(cliente.estado)} variant="flat">
-                      {cliente.estado}
-                    </Chip>
-                  </TableCell>
-                  <TableCell>
-                    <span className={cliente.saldoPendiente > 0 ? "text-red-600 font-bold" : "text-green-600"}>
-                      {formatearMoneda(cliente.saldoPendiente)}
-                    </span>
-                  </TableCell>
-                  <TableCell>{cliente.consumoPromedio} m³</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="bordered"
-                        onClick={() => handleVerDetalle(cliente)}
-                      >
-                        Ver
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="primary"
-                        variant="bordered"
-                        onClick={() => handleEditar(cliente)}
-                      >
-                        <EditIcon className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="danger"
-                        variant="bordered"
-                        onClick={() => handleEliminar(cliente)}
-                      >
-                        <EliminarClienteIcon className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent className="p-5">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 dark:border-zinc-800 text-[10px] uppercase font-bold text-slate-400">
+                <tr>
+                  <th className="py-3 px-4">CLIENTE</th>
+                  <th className="py-3 px-4">MEDIDOR</th>
+                  <th className="py-3 px-4">CIUDAD</th>
+                  <th className="py-3 px-4">ESTADO</th>
+                  <th className="py-3 px-4">SALDO</th>
+                  <th className="py-3 px-4">CONSUMO PROM.</th>
+                  <th className="py-3 px-4">ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
+                {clientesFiltrados.map((cliente) => (
+                  <tr key={cliente.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/50">
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="font-semibold">{cliente.nombre}</p>
+                        <p className="text-xs text-gray-500">{cliente.direccion}</p>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="font-mono bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded text-xs">
+                        {cliente.medidor}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">{cliente.ciudad}</td>
+                    <td className="py-3 px-4">
+                      <Chip color={getEstadoColor(cliente.estado)} variant="ghost">
+                        {cliente.estado}
+                      </Chip>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={cliente.saldoPendiente > 0 ? "text-red-600 font-bold" : "text-green-600"}>
+                        {formatearMoneda(cliente.saldoPendiente)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">{cliente.consumoPromedio} m³</td>
+                    <td className="py-3 px-4">
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleVerDetalle(cliente)}
+                        >
+                          Ver
+                        </Button>
+                        <Button
+                          size="sm"
+                          color="primary"
+                          variant="outline"
+                          onClick={() => handleEditar(cliente)}
+                        >
+                          <EditIcon className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          color="danger"
+                          variant="outline"
+                          onClick={() => handleEliminar(cliente)}
+                        >
+                          <EliminarClienteIcon className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           
           {clientesFiltrados.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-500">No se encontraron clientes con los filtros aplicados</p>
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Modal de detalle del cliente */}
-      <Modal isOpen={modalDetalle} onClose={() => setModalDetalle(false)} size="2xl">
-        <ModalContent>
-          <ModalHeader>
-            <h3>Detalle del Cliente - {clienteSeleccionado?.nombre}</h3>
-          </ModalHeader>
-          <ModalBody>
-            {clienteSeleccionado && (
-              <Tabs aria-label="Información del cliente">
-                <Tab key="general" title="Información General">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="font-semibold">Nombre:</span>
-                      <p>{clienteSeleccionado.nombre}</p>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Medidor:</span>
-                      <p>{clienteSeleccionado.medidor}</p>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Dirección:</span>
-                      <p>{clienteSeleccionado.direccion}</p>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Ciudad:</span>
-                      <p>{clienteSeleccionado.ciudad}</p>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Teléfono:</span>
-                      <p>{clienteSeleccionado.telefono}</p>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Correo:</span>
-                      <p>{clienteSeleccionado.correo || "No proporcionado"}</p>
-                    </div>
-                  </div>
-                </Tab>
-                <Tab key="consumo" title="Consumo">
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-3xl font-bold text-blue-600">{clienteSeleccionado.consumoPromedio} m³</p>
-                      <p className="text-sm text-gray-600">Consumo promedio mensual</p>
-                    </div>
-                    {/* Aquí se podría agregar gráfico de consumo histórico */}
-                  </div>
-                </Tab>
-                <Tab key="pagos" title="Pagos">
-                  <div className="space-y-4">
+      <Modal isOpen={modalDetalle}>
+        <ModalBackdrop className="fixed inset-0 bg-slate-900/80 dark:bg-black/80 z-[99999] flex items-center justify-center p-4">
+          <ModalContainer size="lg" placement="center">
+            <ModalDialog className="bg-white dark:bg-zinc-950 shadow-2xl rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden max-w-2xl w-full">
+              <ModalHeader className="p-5 border-b border-slate-100 dark:border-zinc-800 font-bold text-lg">
+                <h3>Detalle del Cliente - {clienteSeleccionado?.nombre}</h3>
+              </ModalHeader>
+              <ModalBody className="p-6">
+                {clienteSeleccionado && (
+                  <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-red-50 rounded-lg">
-                        <p className="text-2xl font-bold text-red-600">{formatearMoneda(clienteSeleccionado.saldoPendiente)}</p>
-                        <p className="text-sm text-gray-600">Saldo pendiente</p>
+                      <div>
+                        <span className="font-semibold text-xs text-slate-400">Nombre:</span>
+                        <p className="font-medium text-slate-800 dark:text-zinc-100">{clienteSeleccionado.nombre}</p>
                       </div>
-                      <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                        <p className="text-2xl font-bold text-yellow-600">{clienteSeleccionado.facturasPendientes}</p>
-                        <p className="text-sm text-gray-600">Facturas pendientes</p>
+                      <div>
+                        <span className="font-semibold text-xs text-slate-400">Medidor:</span>
+                        <p className="font-medium text-slate-800 dark:text-zinc-100">{clienteSeleccionado.medidor}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-xs text-slate-400">Dirección:</span>
+                        <p className="font-medium text-slate-800 dark:text-zinc-100">{clienteSeleccionado.direccion}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-xs text-slate-400">Ciudad:</span>
+                        <p className="font-medium text-slate-800 dark:text-zinc-100">{clienteSeleccionado.ciudad}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-xs text-slate-400">Teléfono:</span>
+                        <p className="font-medium text-slate-800 dark:text-zinc-100">{clienteSeleccionado.telefono}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-xs text-slate-400">Correo:</span>
+                        <p className="font-medium text-slate-800 dark:text-zinc-100">{clienteSeleccionado.correo || "No proporcionado"}</p>
                       </div>
                     </div>
-                    <div>
-                      <span className="font-semibold">Último pago:</span>
-                      <p>{clienteSeleccionado.ultimoPago}</p>
+
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-zinc-800">
+                      <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                        <p className="text-2xl font-bold text-red-600">{formatearMoneda(clienteSeleccionado.saldoPendiente)}</p>
+                        <p className="text-xs text-gray-600 dark:text-zinc-400">Saldo pendiente</p>
+                      </div>
+                      <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+                        <p className="text-2xl font-bold text-yellow-600">{clienteSeleccionado.facturasPendientes}</p>
+                        <p className="text-xs text-gray-600 dark:text-zinc-400">Facturas pendientes</p>
+                      </div>
                     </div>
                   </div>
-                </Tab>
-              </Tabs>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button onClick={() => setModalDetalle(false)}>
-              Cerrar
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+                )}
+              </ModalBody>
+              <ModalFooter className="p-4 border-t border-slate-100 dark:border-zinc-800 flex justify-end">
+                <Button onClick={() => setModalDetalle(false)} variant="outline">
+                  Cerrar
+                </Button>
+              </ModalFooter>
+            </ModalDialog>
+          </ModalContainer>
+        </ModalBackdrop>
       </Modal>
 
       {/* Modal de edición */}
-      <Modal isOpen={modalEditar} onClose={() => setModalEditar(false)}>
-        <ModalContent>
-          <ModalHeader>
-            <h3>Editar Cliente</h3>
-          </ModalHeader>
-          <ModalBody>
-            <p>Formulario de edición - Por implementar</p>
-          </ModalBody>
-          <ModalFooter>
-            <Button onClick={() => setModalEditar(false)}>
-              Cancelar
-            </Button>
-            <Button color="primary">
-              Guardar Cambios
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+      <Modal isOpen={modalEditar}>
+        <ModalBackdrop className="fixed inset-0 bg-slate-900/80 dark:bg-black/80 z-[99999] flex items-center justify-center p-4">
+          <ModalContainer size="md" placement="center">
+            <ModalDialog className="bg-white dark:bg-zinc-950 shadow-2xl rounded-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden max-w-md w-full">
+              <ModalHeader className="p-5 border-b border-slate-100 dark:border-zinc-800 font-bold text-lg">
+                <h3>Editar Cliente</h3>
+              </ModalHeader>
+              <ModalBody className="p-6">
+                <p className="text-sm text-slate-500">Formulario de edición - Por implementar</p>
+              </ModalBody>
+              <ModalFooter className="p-4 border-t border-slate-100 dark:border-zinc-800 flex justify-end gap-2">
+                <Button onClick={() => setModalEditar(false)} variant="outline">
+                  Cancelar
+                </Button>
+                <Button color="primary" onClick={() => setModalEditar(false)}>
+                  Guardar Cambios
+                </Button>
+              </ModalFooter>
+            </ModalDialog>
+          </ModalContainer>
+        </ModalBackdrop>
       </Modal>
     </div>
   );

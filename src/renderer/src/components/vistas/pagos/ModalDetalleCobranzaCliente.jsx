@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiDocumentText, HiUser, HiCash, HiCog } from "react-icons/hi";
 
 const premiumModalTheme = {
@@ -9,7 +9,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-10 pt-8 pb-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "flex-1 overflow-y-auto min-h-0" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-6 px-10 rounded-b-2xl shrink-0" }
@@ -77,7 +77,7 @@ const ModalDetalleCobranzaCliente = ({
 }) => {
   return (
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible size="6xl">
-      <Modal.Header>
+      <ModalHeader>
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
             Detalle de Cobranza
@@ -88,9 +88,9 @@ const ModalDetalleCobranzaCliente = ({
             Predio #{clienteDetalle?.numero_predio}
           </p>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="px-10 py-8 space-y-6">
           {/* KPIs */}
           <div className="flex flex-wrap items-center gap-4">
@@ -550,9 +550,9 @@ const ModalDetalleCobranzaCliente = ({
             </div>
           )}
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={onClose}
@@ -560,7 +560,7 @@ const ModalDetalleCobranzaCliente = ({
         >
           Cerrar Panel
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 };

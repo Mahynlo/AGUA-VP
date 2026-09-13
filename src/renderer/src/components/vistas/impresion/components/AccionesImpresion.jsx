@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardHeader, CardBody, Button } from "@heroui/react";
+import { Card, CardHeader, CardContent, Button } from "@heroui/react";
 import { HiPrinter, HiEye, HiDocumentText, HiCog } from "react-icons/hi";
 import EstadisticasImpresion from "./EstadisticasImpresion";
 
@@ -45,7 +45,7 @@ const AccionesImpresion = ({
               </div>
             </div>
           </CardHeader>
-          <CardBody className="p-6 flex flex-col gap-4">
+          <CardContent className="p-6 flex flex-col gap-4">
             {/* Filtro de Ciudad */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
@@ -78,12 +78,12 @@ const AccionesImpresion = ({
                 <option value="defecto">Orden del Servidor</option>
               </select>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* TARJETA 1: Vista Previa */}
         <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-indigo-200 dark:hover:border-indigo-900/50">
-          <CardBody className="p-6 flex flex-col gap-4">
+          <CardContent className="p-6 flex flex-col gap-4">
 
             {/* Header de la tarjeta */}
             <div className="flex items-center justify-between">
@@ -138,12 +138,12 @@ const AccionesImpresion = ({
             >
               {procesandoAccion === 'vista-previa' ? 'Generando PDF...' : 'Abrir Vista Previa'}
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* TARJETA 2: Imprimir Directamente */}
         <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-emerald-200 dark:hover:border-emerald-900/50">
-          <CardBody className="p-6 flex flex-col gap-4">
+          <CardContent className="p-6 flex flex-col gap-4">
 
             {/* Header de la tarjeta */}
             <div className="flex items-center justify-between">
@@ -198,7 +198,7 @@ const AccionesImpresion = ({
             >
               {procesandoAccion === 'imprimir' ? 'Enviando a impresora...' : 'Imprimir Directamente'}
             </Button>
-          </CardBody>
+          </CardContent>
         </Card>
 
       </div>

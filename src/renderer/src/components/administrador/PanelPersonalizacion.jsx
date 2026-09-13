@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Divider } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { HiCollection, HiPhotograph, HiPlusCircle, HiTrash, HiUpload } from "react-icons/hi";
 import { useAppLogo } from "../../context/LogoContext";
 
@@ -65,7 +65,7 @@ export default function PanelPersonalizacion() {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
+      <div className="h-px bg-slate-100 dark:bg-zinc-800/80 w-full" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 1: IDENTIDAD VISUAL (Logo)                                  */}
@@ -121,7 +121,7 @@ export default function PanelPersonalizacion() {
               {hasCustomLogo && (
                 <Button
                   onPress={clearCustomLogo}
-                  variant="flat"
+                  variant="ghost"
                   className="font-bold bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/20 rounded-xl px-6 h-11"
                   startContent={<HiTrash className="text-lg" />}
                 >
@@ -133,7 +133,7 @@ export default function PanelPersonalizacion() {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
+      <div className="h-px bg-slate-100 dark:bg-zinc-800/80 w-full" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 2: IMÁGENES DEL LOGIN (Carrusel)                            */}
@@ -202,7 +202,7 @@ export default function PanelPersonalizacion() {
             {hasCustomLoginImages && (
               <Button
                 onPress={clearLoginImages}
-                variant="flat"
+                variant="ghost"
                 className="font-bold bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/20 rounded-xl px-6 h-11"
                 startContent={<HiTrash className="text-lg" />}
               >

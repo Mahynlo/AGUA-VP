@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, GeoJSON, useMapEvents, useMap, LayersControl } from "react-leaflet";
-import { Card, CardBody } from "@heroui/react";
 import { HiLocationMarker, HiGlobeAlt, HiMap } from "react-icons/hi";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";

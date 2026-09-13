@@ -1,16 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  Button,
-  Select,
-  SelectItem,
-  User,
-  Pagination,
-  Tooltip,
-  Progress,
-  Spinner,
-  Skeleton,
-  Chip
-} from "@heroui/react";
+import { Skeleton } from "@heroui/react";
 import { 
   HiExclamation, 
   HiBan, 
@@ -22,7 +11,10 @@ import {
   HiClipboardList, 
   HiX,
   HiSearch,
-  HiArrowLeft
+  HiArrowLeft,
+  HiChevronDown,
+  HiChevronLeft,
+  HiChevronRight
 } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useDeudores } from "../../../context/DeudoresContext";
@@ -232,7 +224,7 @@ const TabDeudores = () => {
                   Cartera Vencida y Cortes
               </h3>
               {loading && candidatos.length > 0 && (
-                  <Spinner size="sm" color="danger" className="w-4 h-4 ml-1" />
+                  <div className="w-4 h-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin ml-1" />
               )}
             </div>
             <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
@@ -242,31 +234,29 @@ const TabDeudores = () => {
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
-          <Button
-            variant="flat"
-            onPress={() => navigate(-1)}
-            className="bg-slate-100/70 hover:bg-slate-200 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-[44px] px-4 min-w-0 shadow-sm"
-            startContent={<HiArrowLeft className="w-4 h-4" />}
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-slate-100/70 hover:bg-slate-200 dark:bg-zinc-900/80 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-[44px] px-4 min-w-0 shadow-sm flex items-center gap-2 transition-colors text-xs"
             title="Volver"
           >
+            <HiArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Volver</span>
-          </Button>
-          <Button
-            variant="flat"
-            className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-bold rounded-xl h-[44px] px-5"
-            onPress={fetchDeudores}
-            startContent={!loading && <HiRefresh className="text-lg" />}
-            isLoading={loading}
+          </button>
+          <button
+            className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-bold rounded-xl h-[44px] px-5 shadow-sm flex items-center gap-2 transition-colors text-xs disabled:opacity-50"
+            onClick={fetchDeudores}
+            disabled={loading}
           >
-            Recargar
-          </Button>
-          <Button
-            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[44px] shadow-sm"
-            onPress={() => setShowConfigModal(true)}
-            startContent={<HiCog className="text-lg" />}
+            <HiRefresh className={`text-lg ${loading ? 'animate-spin' : ''}`} />
+            <span>Recargar</span>
+          </button>
+          <button
+            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-800 dark:hover:bg-zinc-100 text-xs"
+            onClick={() => setShowConfigModal(true)}
           >
-            Configuración
-          </Button>
+            <HiCog className="text-lg" />
+            <span>Configuración</span>
+          </button>
         </div>
       </div>
 
@@ -367,27 +357,24 @@ const TabDeudores = () => {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
                     Filas por página:
                 </span>
-                <Select
-                    size="sm"
+                <div className="relative">
+                  <select
+                    value={rowsPerPage}
+                    onChange={(e) => {
+                      setRowsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
                     aria-label="Por página"
-                    className="w-24"
-                    variant="flat"
-                    selectedKeys={[rowsPerPage.toString()]}
-                    onSelectionChange={(keys) => {
-                        setRowsPerPage(Number(Array.from(keys)[0]));
-                        setCurrentPage(1);
-                    }}
-                    classNames={{
-                        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-none h-[36px]",
-                        value: "font-bold text-slate-700 dark:text-zinc-300"
-                    }}
-                >
-                    <SelectItem key="5" value="5">5</SelectItem>
-                    <SelectItem key="10" value="10">10</SelectItem>
-                    <SelectItem key="15" value="15">15</SelectItem>
-                    <SelectItem key="20" value="20">20</SelectItem>
-                    <SelectItem key="50" value="50">50</SelectItem>
-                </Select>
+                    className="h-9 pl-3 pr-7 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 appearance-none cursor-pointer"
+                  >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                  <HiChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
             </div>
         </div>
 
@@ -417,47 +404,36 @@ const TabDeudores = () => {
                             <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-md ${getRowBorderColor(item)} opacity-80`}></div>
 
                             {/* 1. Información del Cliente */}
-                            <div className="flex items-center gap-4 lg:w-1/3 pl-3">
-                                <User
-                                    name={
-                                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                            <span className={`font-black text-sm truncate max-w-[180px] sm:max-w-[250px] ${item.isCortado ? 'text-slate-500 dark:text-zinc-500 line-through decoration-slate-400/50' : 'text-slate-800 dark:text-zinc-100'}`}>
-                                                {item.cliente_nombre}
+                            <div className="flex items-center gap-3.5 lg:w-1/3 pl-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm border border-slate-200 dark:border-zinc-700 shrink-0 ${
+                                    item.isCortado ? "bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500" :
+                                    item.tiene_convenio ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400" :
+                                    item.colorGravedad === 'danger' ? "bg-red-500/10 text-red-600 dark:bg-red-900/20 dark:text-red-400" : 
+                                    item.colorGravedad === 'warning' ? "bg-orange-500/10 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400" : 
+                                    "bg-blue-500/10 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                                }`}>
+                                    {item.cliente_nombre?.charAt(0) || "?"}
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                    <span className={`font-black text-sm truncate max-w-[180px] sm:max-w-[250px] ${item.isCortado ? 'text-slate-500 dark:text-zinc-500 line-through decoration-slate-400/50' : 'text-slate-800 dark:text-zinc-100'}`}>
+                                        {item.cliente_nombre}
+                                    </span>
+                                    <span className="text-[11px] font-medium text-slate-500 truncate max-w-[250px] mt-0.5">
+                                        {item.direccion_cliente}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                        {item.isCortado && (
+                                            <span className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
+                                                CORTADO
                                             </span>
-                                        </div>
-                                    }
-                                    description={
-                                        <div className="flex flex-col gap-1.5 mt-1">
-                                            <span className="text-[11px] font-medium text-slate-500 truncate max-w-[250px]">
-                                                {item.direccion_cliente}
+                                        )}
+                                        {item.tiene_convenio && (
+                                            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                                CONVENIO
                                             </span>
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                {item.isCortado && (
-                                                    <Chip size="sm" className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold text-[9px] uppercase tracking-widest px-1 h-5 border border-slate-200 dark:border-zinc-700">
-                                                        CORTADO
-                                                    </Chip>
-                                                )}
-                                                {item.tiene_convenio && (
-                                                    <Chip size="sm" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-widest px-1 h-5 border border-emerald-500/20">
-                                                        CONVENIO
-                                                    </Chip>
-                                                )}
-                                            </div>
-                                        </div>
-                                    }
-                                    avatarProps={{
-                                        radius: "md",
-                                        size: "sm",
-                                        className: `font-bold text-sm shadow-sm border border-slate-200 dark:border-zinc-700 ${
-                                            item.isCortado ? "bg-slate-100 text-slate-400 dark:bg-zinc-800 dark:text-zinc-500" :
-                                            item.tiene_convenio ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400" :
-                                            item.colorGravedad === 'danger' ? "bg-red-500/10 text-red-600 dark:bg-red-900/20 dark:text-red-400" : 
-                                            item.colorGravedad === 'warning' ? "bg-orange-500/10 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400" : 
-                                            "bg-blue-500/10 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                                        }`,
-                                        name: item.cliente_nombre?.charAt(0) || "?"
-                                    }}
-                                />
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* 2. Información de Deuda y Tiempo */}
@@ -491,14 +467,17 @@ const TabDeudores = () => {
                                         </span>
                                         <span className="text-slate-400 dark:text-zinc-500">Retraso</span>
                                     </div>
-                                    <Progress
-                                        size="sm"
-                                        value={item.dias_retraso > 120 ? 100 : (item.dias_retraso / 120) * 100}
-                                        color={item.tiene_convenio ? "success" : (item.isCortado ? "default" : item.colorGravedad === 'danger' ? 'danger' : item.colorGravedad === 'warning' ? 'warning' : 'success')}
-                                        aria-label="Gravedad de deuda"
-                                        className="h-1.5"
-                                        classNames={{ track: "bg-slate-100 dark:bg-zinc-800" }}
-                                    />
+                                    <div className="w-full bg-slate-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full transition-all duration-300 ${
+                                                item.tiene_convenio ? "bg-emerald-500" :
+                                                item.isCortado ? "bg-slate-400" :
+                                                item.colorGravedad === 'danger' ? "bg-red-500" :
+                                                item.colorGravedad === 'warning' ? "bg-amber-500" : "bg-emerald-500"
+                                            }`}
+                                            style={{ width: `${Math.min(100, (item.dias_retraso / 120) * 100)}%` }}
+                                        />
+                                    </div>
                                     <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-2 truncate">
                                         Sugerido: <span className="text-slate-700 dark:text-zinc-300">{item.accion_sugerida}</span>
                                     </span>
@@ -510,80 +489,59 @@ const TabDeudores = () => {
 
                                 {/* Botón Convenio */}
                                 {item.tiene_convenio ? (
-                                    <Tooltip
-                                        content={
-                                            <div className="px-1 py-2">
-                                                <div className="text-xs font-bold mb-1">Convenio Activo</div>
-                                                <div className="text-[11px] font-medium text-slate-500">Saldo: ${item.convenio?.saldo_restante?.toLocaleString()}</div>
-                                                <div className="text-[11px] font-medium text-slate-500">Avance: {item.convenio?.total_parcialidades - item.convenio?.parcialidades_pendientes}/{item.convenio?.total_parcialidades} cuotas</div>
-                                            </div>
-                                        }
-                                        classNames={{content: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl"}}
+                                    <button
+                                        className="font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg h-9 px-3 flex items-center gap-1.5 text-xs transition-colors"
+                                        title={`Convenio Activo - Saldo: $${item.convenio?.saldo_restante?.toLocaleString()} - Avance: ${item.convenio?.total_parcialidades - item.convenio?.parcialidades_pendientes}/${item.convenio?.total_parcialidades}`}
+                                        onClick={() => {
+                                            setSelectedConvenioId(item.convenio?.id);
+                                            setShowParcialidadesModal(true);
+                                        }}
                                     >
-                                        <Button
-                                            size="sm"
-                                            className="font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg h-9 px-3"
-                                            variant="flat"
-                                            startContent={<HiDocumentText />}
-                                            onPress={() => {
-                                                setSelectedConvenioId(item.convenio?.id);
-                                                setShowParcialidadesModal(true);
-                                            }}
-                                        >
-                                            Ver Convenio
-                                        </Button>
-                                    </Tooltip>
+                                        <HiDocumentText className="text-sm" />
+                                        <span>Ver Convenio</span>
+                                    </button>
                                 ) : (
-                                    <Tooltip content="Crear Convenio de Pago" classNames={{content: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl font-medium text-xs"}}>
-                                        <Button
-                                            size="sm"
-                                            variant="flat"
-                                            className="font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg h-9 px-3"
-                                            startContent={<HiDocumentText />}
-                                            onPress={() => {
-                                                setSelectedDeudor(item);
-                                                setShowConvenioModal(true);
-                                            }}
-                                        >
-                                            Crear Convenio
-                                        </Button>
-                                    </Tooltip>
+                                    <button
+                                        className="font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-lg h-9 px-3 flex items-center gap-1.5 text-xs transition-colors"
+                                        title="Crear Convenio de Pago"
+                                        onClick={() => {
+                                            setSelectedDeudor(item);
+                                            setShowConvenioModal(true);
+                                        }}
+                                    >
+                                        <HiDocumentText className="text-sm" />
+                                        <span>Crear Convenio</span>
+                                    </button>
                                 )}
 
                                 <div className="w-px h-6 bg-slate-200 dark:bg-zinc-700 mx-1 hidden sm:block"></div>
 
                                 {/* Botón Corte / Reconectar */}
                                 {item.isCortado ? (
-                                    <Tooltip content="Reconectar Servicio" color="success" classNames={{content: "font-bold text-xs"}}>
-                                        <Button 
-                                            size="sm" 
-                                            variant="flat" 
-                                            className="font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg h-9 px-3"
-                                            onPress={() => handleReconectar(item)}
-                                            startContent={<HiCheckCircle className="text-lg" />}
-                                        >
-                                            Reconectar
-                                        </Button>
-                                    </Tooltip>
+                                    <button
+                                        className="font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg h-9 px-3 flex items-center gap-1.5 text-xs transition-colors"
+                                        title="Reconectar Servicio"
+                                        onClick={() => handleReconectar(item)}
+                                    >
+                                        <HiCheckCircle className="text-base" />
+                                        <span>Reconectar</span>
+                                    </button>
                                 ) : (
-                                    <Tooltip content="Generar orden de corte" color="danger" classNames={{content: "font-bold text-xs"}}>
-                                        <Button
-                                            size="sm"
-                                            variant="flat"
-                                            className="font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg h-9 px-3"
-                                            startContent={<HiBan className="text-lg" />}
-                                            onPress={() => {
-                                                if (item.isCortado) {
-                                                    alert("El servicio ya está cortado");
-                                                    return;
-                                                }
-                                                setSelectedDeudor(item);
-                                                setShowCorteModal(true);
-                                            }}
-                                        >
-                                            Cortar
-                                        </Button>
-                                    </Tooltip>
+                                    <button
+                                        className="font-bold bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg h-9 px-3 flex items-center gap-1.5 text-xs transition-colors"
+                                        title="Generar orden de corte"
+                                        onClick={() => {
+                                            if (item.isCortado) {
+                                                alert("El servicio ya está cortado");
+                                                return;
+                                            }
+                                            setSelectedDeudor(item);
+                                            setShowCorteModal(true);
+                                        }}
+                                    >
+                                        <HiBan className="text-base" />
+                                        <span>Cortar</span>
+                                    </button>
                                 )}
                             </div>
 
@@ -594,18 +552,45 @@ const TabDeudores = () => {
 
             {/* Paginación Inferior */}
             {totalPages > 1 && (
-                <div className="flex justify-center p-4 bg-slate-50/60 dark:bg-zinc-900/40 border-t border-slate-100 dark:border-zinc-800">
-                    <Pagination
-                        total={totalPages}
-                        page={currentPage}
-                        onChange={setCurrentPage}
-                        showControls
-                        color="default"
-                        variant="flat"
-                        classNames={{
-                            cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold shadow-sm",
-                        }}
-                    />
+                <div className="flex items-center justify-between p-4 bg-slate-50/60 dark:bg-zinc-900/40 border-t border-slate-100 dark:border-zinc-800">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                        Página {currentPage} de {totalPages}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+                        >
+                            <HiChevronLeft className="w-4 h-4" />
+                        </button>
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                .map((p, idx, arr) => (
+                                    <div key={p} className="flex items-center">
+                                        {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                                        <button
+                                            onClick={() => setCurrentPage(p)}
+                                            className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                                                currentPage === p
+                                                    ? 'bg-red-600 text-white shadow-sm'
+                                                    : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                                            }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    </div>
+                                ))}
+                        </div>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+                        >
+                            <HiChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

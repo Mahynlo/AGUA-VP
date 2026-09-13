@@ -1,6 +1,6 @@
 import React from "react";
-import { Card, CardBody, CardHeader, Select, SelectItem } from "@heroui/react";
-import { HiCog, HiUsers } from "react-icons/hi";
+import { Card, CardContent, CardHeader } from "@heroui/react";
+import { HiCog, HiUsers, HiChevronDown } from "react-icons/hi";
 import { generarOpcionesPeriodos } from "../../../../utils/reciboUtils";
 
 /**
@@ -31,37 +31,33 @@ const PeriodoSelector = ({
           </div>
         </div>
       </CardHeader>
-      <CardBody className="pt-4">
+      <CardContent className="pt-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               📅 Período de Facturación
             </label>
-            <Select
-              label="Seleccionar período"
-              placeholder="Elige el mes a imprimir"
-              selectedKeys={periodoSeleccionado ? [periodoSeleccionado] : []}
-              onSelectionChange={(keys) => {
-                const selected = Array.from(keys)[0];
-                onCambioPeriodo(selected);
-              }}
-              className="w-full"
-              size="lg"
-              classNames={{
-                trigger: "h-14 border-2 border-gray-300 hover:border-blue-500 dark:border-gray-600 dark:hover:border-blue-500"
-              }}
-            >
-              {opcionesPeriodos.map((opcion) => (
-                <SelectItem key={opcion.value} value={opcion.value}>
-                  {opcion.label}
-                </SelectItem>
-              ))}
-            </Select>
+            <div className="relative">
+              <select
+                aria-label="Seleccionar período"
+                value={periodoSeleccionado || ""}
+                onChange={(e) => onCambioPeriodo(e.target.value)}
+                className="w-full h-12 pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-100 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+              >
+                <option value="">Elige el mes a imprimir</option>
+                {opcionesPeriodos.map((opcion) => (
+                  <option key={opcion.value} value={opcion.value}>
+                    {opcion.label}
+                  </option>
+                ))}
+              </select>
+              <HiChevronDown className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           </div>
           
           <div className="flex items-end">
             <Card className="w-full shadow-md hover:shadow-lg transition-shadow border-2 border-blue-200 dark:border-blue-800">
-              <CardBody className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/40 dark:to-blue-800/40 p-4">
+              <CardContent className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/40 dark:to-blue-800/40 p-4">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-blue-600 rounded-xl shadow-md">
                     <HiUsers className="w-8 h-8 text-white" />
@@ -82,11 +78,11 @@ const PeriodoSelector = ({
                     </p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };

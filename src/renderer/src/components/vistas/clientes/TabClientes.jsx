@@ -18,7 +18,7 @@ import {
     HiExclamationCircle,
     HiUserCircle
 } from "react-icons/hi";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody } from "flowbite-react";
 import RegistrarClientes from "./RegistrarCliente";
 import EditarClientes from "./EditarCliente";
 import ModalDetalleCliente from "./ModalDetalleCliente";
@@ -890,8 +890,8 @@ export function TabClientes() {
                 popup
                 theme={premiumConfirmModalTheme}
             >
-                <Modal.Header />
-                <Modal.Body>
+                <ModalHeader />
+                <ModalBody>
                     <div className="text-center p-2">
                         <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-rose-500"}`} />
                         <h3 className="mb-4 text-base font-black text-slate-800 dark:text-zinc-100">
@@ -917,7 +917,7 @@ export function TabClientes() {
                             </Button>
                         </div>
                     </div>
-                </Modal.Body>
+                </ModalBody>
             </Modal>
 
             {/* Modal de Configuración de Exportación */}
@@ -928,8 +928,8 @@ export function TabClientes() {
                 popup
                 theme={premiumConfirmModalTheme}
             >
-                <Modal.Header />
-                <Modal.Body>
+                <ModalHeader />
+                <ModalBody>
                     <div className="p-2">
                         <div className="flex items-center gap-3 mb-4 justify-center">
                             <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
@@ -989,7 +989,7 @@ export function TabClientes() {
                             </Button>
                         </div>
                     </div>
-                </Modal.Body>
+                </ModalBody>
             </Modal>
         </div>
     );

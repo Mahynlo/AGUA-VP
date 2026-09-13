@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { 
-  Spinner, 
-  useDisclosure 
+  Spinner 
 } from "@heroui/react";
 import { 
   HiBookOpen, 
@@ -51,7 +50,10 @@ const AyudaVista = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
+  const onOpen = () => setIsOpen(true);
+  const onClose = () => setIsOpen(false);
+  const onOpenChange = (open) => setIsOpen(typeof open === 'boolean' ? open : !isOpen);
   const [modalSearchTerm, setModalSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);

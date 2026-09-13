@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, CardBody, CardHeader, Chip, Spinner } from "@heroui/react";
+import { Card, CardContent, CardHeader, Chip, Spinner } from "@heroui/react";
 import { HiUsers, HiSearch, HiLocationMarker, HiX } from "react-icons/hi";
 import { IoWaterOutline } from "react-icons/io5";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
@@ -67,7 +67,7 @@ const ListadoLecturas = ({
                     </div>
 
                     <div className="flex items-center">
-                        <Chip size="sm" variant="flat" className="bg-sky-500/10 text-sky-600 dark:text-sky-400 font-mono font-black text-xs px-2 h-7 rounded-lg">
+                        <Chip size="sm" variant="ghost" className="bg-sky-500/10 text-sky-600 dark:text-sky-400 font-mono font-black text-xs px-2 h-7 rounded-lg">
                             {filtrados.length} Registros
                         </Chip>
                     </div>
@@ -123,7 +123,7 @@ const ListadoLecturas = ({
             </CardHeader>
 
             {/* ── BODY: Lista de Tarjetas ── */}
-            <CardBody className="p-4 bg-slate-50/40 dark:bg-black/20 flex-1">
+            <CardContent className="p-4 bg-slate-50/40 dark:bg-black/20 flex-1">
                 <div className="max-h-[500px] overflow-y-auto space-y-2.5 pr-1 custom-scrollbar">
                     
                     {/* Estado de Carga */}
@@ -212,7 +212,7 @@ const ListadoLecturas = ({
                         })
                     )}
                 </div>
-            </CardBody>
+            </CardContent>
         </Card>
     );
 };

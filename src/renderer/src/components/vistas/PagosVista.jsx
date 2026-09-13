@@ -11,7 +11,6 @@ import {
   HiHand,
   HiCalculator
 } from "react-icons/hi";
-import { Tabs, Tab } from "@heroui/react";
 import { PagosIcon } from "../../IconsApp/IconsResibos";
 import TabFacturas from "./pagos/TabFacturas";
 import TabPagos from "./pagos/TabPagos";
@@ -279,98 +278,91 @@ const PagosVista = () => {
 
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
         <div className="flex flex-col w-full flex-1 mt-2">
-          {/* Token 7: Pestañas de Navegación SaaS - Tema Esmeralda */}
-          <Tabs
-            aria-label="Opciones de Pagos"
-            selectedKey={selectedTab}
-            onSelectionChange={handleTabChange}
-            variant="underlined"
-            classNames={{
-              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
-              tabList: "gap-6 w-full relative rounded-none p-0",
-              cursor: "w-full bg-emerald-600 dark:bg-emerald-500 h-[2px]", // Cursor Esmeralda
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-emerald-600 dark:group-data-[selected=true]:text-emerald-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
-            }}
-          >
-            {/* TAB: COBRANZA */}
-            <Tab
-              key="cobranza"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiCalculator className="text-lg" />
-                  <span>Cobranza</span>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabCobranzaCliente onCobranzaStatsChange={setCobranzaStats} />
-              </div>
-            </Tab>
+          {/* Pestañas de Navegación SaaS - Tema Esmeralda */}
+          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto">
+            <nav className="flex gap-6 w-full -mb-px">
+              {/* TAB: COBRANZA */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("cobranza")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "cobranza"
+                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiCalculator className="text-lg" />
+                <span>Cobranza</span>
+              </button>
 
-            {/* TAB: DEUDORES — oculto temporalmente (implementación sin probar por completo).
-                Para reactivarlo: descomentar este bloque y quitar el guard de "deudores"
-                en el useState de selectedTab.
-            <Tab
-              key="deudores"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiUserGroup className="text-lg" />
-                  <span>Deudores</span>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabDeudores />
-              </div>
-            </Tab>
-            */}
+              {/* TAB: FACTURAS */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("facturas")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "facturas"
+                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiDocumentText className="text-lg" />
+                <span>Facturas</span>
+              </button>
 
-            {/* TAB: FACTURAS */}
-            <Tab
-              key="facturas"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiDocumentText className="text-lg" />
-                  <span>Facturas</span>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabFacturas />
-              </div>
-            </Tab>
+              {/* TAB: PAGOS */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("pagos")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "pagos"
+                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiCreditCard className="text-lg" />
+                <span>Pagos</span>
+              </button>
 
-            {/* TAB: PAGOS */}
-            <Tab
-              key="pagos"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiCreditCard className="text-lg" />
-                  <span>Pagos</span>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabPagos />
-              </div>
-            </Tab>
+              {/* TAB: ESTADÍSTICAS */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("estadisticas")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "estadisticas"
+                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiChartBar className="text-lg" />
+                <span>Estadísticas</span>
+              </button>
+            </nav>
+          </div>
 
-            {/* TAB: ESTADÍSTICAS */}
-            <Tab
-              key="estadisticas"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiChartBar className="text-lg" />
-                  <span>Estadísticas</span>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabEstadisticas />
-              </div>
-            </Tab>
-          </Tabs>
+          {/* CONTENIDOS */}
+          {selectedTab === "cobranza" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabCobranzaCliente onCobranzaStatsChange={setCobranzaStats} />
+            </div>
+          )}
+
+          {selectedTab === "facturas" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabFacturas />
+            </div>
+          )}
+
+          {selectedTab === "pagos" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabPagos />
+            </div>
+          )}
+
+          {selectedTab === "estadisticas" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabEstadisticas />
+            </div>
+          )}
         </div>
 
       </div>

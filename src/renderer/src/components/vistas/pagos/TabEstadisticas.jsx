@@ -1,5 +1,4 @@
-﻿import { Button } from "@heroui/react";
-import { FlechaReturnIcon } from "../../../IconsApp/IconsAppSystem";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import ReporteFinancieroEstado from "../impresion/components/ReporteFinancieroEstado";
 

@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-import { Select, SelectItem } from "@heroui/react";
-import { HiCurrencyDollar, HiInformationCircle } from "react-icons/hi";
+import { HiCurrencyDollar, HiInformationCircle, HiChevronDown } from "react-icons/hi";
 import { useTarifas } from "../../../../context/TarifasContext";
 
 export const SeccionTarifa = ({ 
@@ -10,7 +9,7 @@ export const SeccionTarifa = ({
   onChange, 
   limpiarError,
   modo = 'crear',
-  tarifaIdOriginal // <--- NUEVA PROP: El ID real de la base de datos
+  tarifaIdOriginal
 }) => {
   const { tarifas, loading } = useTarifas();
   const esEdicion = modo === 'editar';
@@ -63,49 +62,39 @@ export const SeccionTarifa = ({
             {!esEdicion && <span className="text-red-500"> *</span>}
           </label>
 
-          <Select
-            aria-label="Tarifa"
-            placeholder={esEdicion && infoTarifaOriginal 
-              ? `Mantener actual (${infoTarifaOriginal.nombre})` 
-              : "Selecciona una tarifa"}
-            selectedKeys={formData.tarifaSeleccionada ? [formData.tarifaSeleccionada.toString()] : []}
-            onSelectionChange={(keys) => {
-              const selectedKey = Array.from(keys)[0];
-              onChange('tarifaSeleccionada', selectedKey || "");
-              limpiarError('tarifa');
-            }}
-            color="primary"
-            variant="bordered"
-            size="md"
-            isRequired={!esEdicion} 
-            isLoading={loading}
-            isDisabled={loading || !tarifas || tarifas.length === 0}
-            className="w-full"
-            startContent={<HiCurrencyDollar className="text-gray-400 text-lg" />}
-            isInvalid={mostrarErrores && erroresCampos.tarifa}
-            errorMessage={mostrarErrores && erroresCampos.tarifa && "La tarifa es requerida"}
-          >
-            {!loading && tarifas && Array.isArray(tarifas) && tarifas.length > 0 ? (
-              tarifas.map((tarifa) => {
-                const tarifaId = tarifa.id?.toString();
-                return (
-                  <SelectItem 
-                    key={tarifaId} 
-                    textValue={`${tarifa.nombre}`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-small font-bold">{tarifa.nombre}</span>
-                      <span className="text-tiny text-default-500">{tarifa.descripcion}</span>
-                    </div>
-                  </SelectItem>
-                );
-              })
-            ) : (
-              <SelectItem key="no-data" isDisabled>
-                 {loading ? "Cargando..." : "No hay tarifas"}
-              </SelectItem>
-            )}
-          </Select>
+          <div className="relative">
+            <select
+              aria-label="Tarifa"
+              value={formData.tarifaSeleccionada ? formData.tarifaSeleccionada.toString() : ""}
+              onChange={(e) => {
+                onChange('tarifaSeleccionada', e.target.value);
+                limpiarError('tarifa');
+              }}
+              disabled={loading || !tarifas || tarifas.length === 0}
+              className={`w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border ${
+                mostrarErrores && erroresCampos.tarifa 
+                  ? "border-rose-500 focus:ring-rose-500/20 focus:border-rose-500" 
+                  : "border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-blue-500/20 focus:border-blue-500"
+              } focus:outline-none focus:ring-2 shadow-none appearance-none cursor-pointer transition-all`}
+            >
+              <option value="">
+                {loading 
+                  ? "Cargando tarifas..." 
+                  : esEdicion && infoTarifaOriginal 
+                    ? `Mantener actual (${infoTarifaOriginal.nombre})` 
+                    : "-- Selecciona una tarifa --"}
+              </option>
+              {!loading && tarifas && Array.isArray(tarifas) && tarifas.map((tarifa) => (
+                <option key={tarifa.id} value={tarifa.id.toString()}>
+                  {tarifa.nombre} - {tarifa.descripcion}
+                </option>
+              ))}
+            </select>
+            <HiChevronDown className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+          {mostrarErrores && erroresCampos.tarifa && (
+            <p className="text-xs text-rose-500 font-semibold mt-1">La tarifa es requerida</p>
+          )}
         </div>
 
         {esEdicion && (

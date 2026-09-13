@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Button, Select, SelectItem, Divider, Card, CardHeader, CardBody } from "@heroui/react";
-import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog } from "react-icons/hi";
+import { Button, Card, CardHeader, CardContent } from "@heroui/react";
+import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog, HiChevronDown } from "react-icons/hi";
 import ListadoLecturas from "./components/ListadoLecturas";
 import ModalImprimir from "./components/ModalImprimir";
 import { useReportes } from "../../../context/ReportesContext";
@@ -503,7 +503,7 @@ const TabReportes = () => {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardBody className="p-6 flex flex-col gap-4">
+                  <CardContent className="p-6 flex flex-col gap-4">
                     {/* Filtro de Ciudad */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
@@ -545,7 +545,7 @@ const TabReportes = () => {
                         Se generará {ciudadLecturas === "todas" ? "todo el padrón de tomas" : `solo ${ciudadLecturas}`}, ordenado por {ordenLecturas === "numero_predio" ? "N° de Predio" : "ID"}.
                       </p>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
               )}
 
@@ -594,7 +594,7 @@ const TabReportes = () => {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:border-zinc-800/80 my-2" />
+      <div className="h-px bg-slate-200 dark:bg-zinc-800 my-2 w-full" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 2: PADRÓN GENERAL DE CLIENTES                               */}
@@ -619,34 +619,37 @@ const TabReportes = () => {
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
               Ordenar por
             </label>
-            <Select
-              aria-label="Ordenar listado por:"
-              placeholder="Ordenar listado por:"
-              selectedKeys={[ordenPadron]}
-              onChange={(e) => setOrdenPadron(e.target.value || "numero_predio")}
-              startContent={<HiSortAscending className="text-slate-400" />}
-              classNames={selectClassNames}
-            >
-              <SelectItem key="numero_predio" value="numero_predio">N° de Predio</SelectItem>
-              <SelectItem key="nombre" value="nombre">Nombre (A-Z)</SelectItem>
-            </Select>
+            <div className="relative">
+              <select
+                aria-label="Ordenar listado por:"
+                value={ordenPadron}
+                onChange={(e) => setOrdenPadron(e.target.value || "numero_predio")}
+                className="w-full h-[52px] pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
+              >
+                <option value="numero_predio">N° de Predio</option>
+                <option value="nombre">Nombre (A-Z)</option>
+              </select>
+              <HiChevronDown className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
               Agrupación
             </label>
-            <Select
-              aria-label="Agrupar registros por:"
-              placeholder="Agrupar registros por:"
-              selectedKeys={[agrupacion]}
-              onChange={(e) => setAgrupacion(e.target.value || "ciudad")}
-              classNames={selectClassNames}
-            >
-              <SelectItem key="ciudad" value="ciudad">Por Ciudad</SelectItem>
-              <SelectItem key="tarifa" value="tarifa">Por Tarifa</SelectItem>
-              <SelectItem key="ninguna" value="ninguna">Sin agrupar</SelectItem>
-            </Select>
+            <div className="relative">
+              <select
+                aria-label="Agrupar registros por:"
+                value={agrupacion}
+                onChange={(e) => setAgrupacion(e.target.value || "ciudad")}
+                className="w-full h-[52px] pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
+              >
+                <option value="ciudad">Por Ciudad</option>
+                <option value="tarifa">Por Tarifa</option>
+                <option value="ninguna">Sin agrupar</option>
+              </select>
+              <HiChevronDown className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           </div>
 
           <Button
@@ -671,7 +674,7 @@ const TabReportes = () => {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:border-zinc-800/80 my-2" />
+      <div className="h-px bg-slate-200 dark:bg-zinc-800 my-2 w-full" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 3: EXPORTAR DATOS                                           */}
@@ -696,34 +699,38 @@ const TabReportes = () => {
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
               Conjunto de Datos
             </label>
-            <Select
-              aria-label="Conjunto de datos a exportar:"
-              placeholder="Conjunto de datos a exportar:"
-              selectedKeys={[modoExport]}
-              onChange={(e) => setModoExport(e.target.value || "clientes")}
-              classNames={selectClassNames}
-            >
-              <SelectItem key="clientes" value="clientes">Solo Padrón de Clientes</SelectItem>
-              <SelectItem key="medidores" value="medidores">Solo Equipos (Medidores)</SelectItem>
-              <SelectItem key="combinado" value="combinado">Relación Clientes + Medidores</SelectItem>
-              <SelectItem key="cobranza" value="cobranza">Reporte de Cobranza por Cliente</SelectItem>
-            </Select>
+            <div className="relative">
+              <select
+                aria-label="Conjunto de datos a exportar:"
+                value={modoExport}
+                onChange={(e) => setModoExport(e.target.value || "clientes")}
+                className="w-full h-[52px] pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
+              >
+                <option value="clientes">Solo Padrón de Clientes</option>
+                <option value="medidores">Solo Equipos (Medidores)</option>
+                <option value="combinado">Relación Clientes + Medidores</option>
+                <option value="cobranza">Reporte de Cobranza por Cliente</option>
+              </select>
+              <HiChevronDown className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
               Formato de Archivo
             </label>
-            <Select
-              aria-label="Formato de salida:"
-              placeholder="Formato de salida:"
-              selectedKeys={[formatoExport]}
-              onChange={(e) => setFormatoExport(e.target.value || "xlsx")}
-              classNames={selectClassNames}
-            >
-              <SelectItem key="xlsx" value="xlsx">Hoja de Cálculo Excel (.xlsx)</SelectItem>
-              <SelectItem key="csv" value="csv">Archivo de Texto (.csv)</SelectItem>
-            </Select>
+            <div className="relative">
+              <select
+                aria-label="Formato de salida:"
+                value={formatoExport}
+                onChange={(e) => setFormatoExport(e.target.value || "xlsx")}
+                className="w-full h-[52px] pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
+              >
+                <option value="xlsx">Hoja de Cálculo Excel (.xlsx)</option>
+                <option value="csv">Archivo de Texto (.csv)</option>
+              </select>
+              <HiChevronDown className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           </div>
 
           <Button

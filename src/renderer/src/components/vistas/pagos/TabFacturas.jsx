@@ -1,26 +1,13 @@
 import { useState } from "react";
-import {
-  Button,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Select,
-  SelectItem,
-  User,
-  Pagination,
-  Skeleton,
-  Spinner,
-  Chip
-} from "@heroui/react";
-import { Modal, Button as FlowbiteButton } from "flowbite-react";
+import { Skeleton } from "@heroui/react";
+import { Modal, Button as FlowbiteButton, ModalHeader, ModalBody } from "flowbite-react";
 import { 
   HiEye, 
   HiCreditCard, 
   HiDownload, 
   HiChevronDown,
+  HiChevronLeft,
+  HiChevronRight,
   HiX, 
   HiFilter, 
   HiDocumentText, 
@@ -372,7 +359,7 @@ const TabFacturas = () => {
                   Facturas y Cobros
               </h3>
               {loading && !initialLoading && (
-                  <Spinner size="sm" color="primary" className="w-4 h-4 ml-1" />
+                  <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-600 rounded-full animate-spin ml-1" />
               )}
             </div>
             <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">
@@ -382,25 +369,23 @@ const TabFacturas = () => {
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
-          <Button 
-              variant="flat" 
-              onPress={() => navigate(-1)}
-              className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 min-w-0 shadow-sm"
-              startContent={<HiArrowLeft className="w-4 h-4" />}
+          <button 
+              onClick={() => navigate(-1)}
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 min-w-0 shadow-sm flex items-center gap-2 transition-colors text-xs"
               title="Volver"
           >
+            <HiArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Volver</span>
-          </Button>
+          </button>
           
-          <Button
-              variant="flat"
-              className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold rounded-xl h-11 px-5 shadow-sm"
-              onPress={() => actualizarFacturas()}
-              startContent={!loading && <HiRefresh className="text-lg" />}
-              isLoading={loading}
+          <button
+              className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold rounded-xl h-11 px-5 shadow-sm flex items-center gap-2 transition-colors text-xs disabled:opacity-50"
+              onClick={() => actualizarFacturas()}
+              disabled={loading}
           >
-            Recargar
-          </Button>
+            <HiRefresh className={`text-lg ${loading ? 'animate-spin' : ''}`} />
+            <span>Recargar</span>
+          </button>
 
           <ExportDropdown
             onExportCSV={() => setExportModal({ isOpen: true, format: "csv" })}
@@ -496,15 +481,13 @@ const TabFacturas = () => {
             {/* Botón Limpiar */}
             <div className="lg:col-span-2 flex justify-end">
                 {hasActiveFilters ? (
-                    <Button 
-                        variant="flat" 
-                        color="default"
-                        onPress={clearFilters}
-                        className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl"
-                        startContent={<HiFilter className="text-lg" />}
+                    <button 
+                        onClick={clearFilters}
+                        className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors text-xs"
                     >
-                        Limpiar
-                    </Button>
+                        <HiFilter className="text-lg" />
+                        <span>Limpiar</span>
+                    </button>
                 ) : (
                     <div className="w-full h-[52px]"></div> 
                 )}
@@ -522,184 +505,192 @@ const TabFacturas = () => {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
                     Filas por página:
                 </span>
-                <Select
-                    size="sm"
+                <div className="relative">
+                  <select
+                    value={rowsPerPage}
+                    onChange={(e) => handleRowsPerPageChange(e.target.value)}
                     aria-label="Por página"
-                    className="w-24"
-                    variant="flat"
-                    selectedKeys={[rowsPerPage.toString()]}
-                    onSelectionChange={(keys) => {
-                        handleRowsPerPageChange(Array.from(keys)[0]);
-                    }}
-                    classNames={{
-                        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-none h-[36px]",
-                        value: "font-bold text-slate-700 dark:text-zinc-300"
-                    }}
-                >
-                    <SelectItem key="5" value="5">5</SelectItem>
-                    <SelectItem key="10" value="10">10</SelectItem>
-                    <SelectItem key="15" value="15">15</SelectItem>
-                    <SelectItem key="20" value="20">20</SelectItem>
-                    <SelectItem key="50" value="50">50</SelectItem>
-                </Select>
+                    className="h-9 pl-3 pr-7 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 appearance-none cursor-pointer"
+                  >
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                  <HiChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
             </div>
         </div>
 
         {/* Lista de Facturas (Tabla) */}
         <div className="bg-white dark:bg-zinc-950 flex flex-col w-full overflow-x-auto">
-          <Table
-            aria-label="Tabla de facturas"
-            removeWrapper
-            classNames={{
-                base: "min-h-[400px]",
-                table: "min-w-full",
-                th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 py-4 px-6",
-                td: "py-4 px-6 border-b border-slate-100 dark:border-zinc-800/50",
-                tr: "hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors cursor-default"
-            }}
-          >
-            <TableHeader>
-              <TableColumn>DOCUMENTO</TableColumn>
-              <TableColumn>TITULAR</TableColumn>
-              <TableColumn>CONSUMO</TableColumn>
-              <TableColumn>BALANCE</TableColumn>
-              <TableColumn>ESTADO</TableColumn>
-              <TableColumn align="end">ACCIONES</TableColumn>
-            </TableHeader>
-            <TableBody 
-              emptyContent={
-                <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-400 dark:text-zinc-500">
-                  <HiDocumentText className="w-12 h-12 opacity-20 mb-3" />
-                  <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">
-                    {facturas.length === 0 && !loading ? "No hay facturas en este período" : "Sin coincidencias"}
-                  </p>
-                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mt-1 max-w-[250px] text-center">
-                      Intenta cambiar los filtros o recarga la vista.
-                  </p>
-                </div>
-              }
-            >
-              {paginatedData.map((factura) => (
-                <TableRow key={factura.id}>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="font-black text-sm text-slate-800 dark:text-zinc-100">
-                        <span className="text-slate-400 font-normal mr-0.5">#</span>{factura.id}
-                      </div>
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">
-                        Emisión: {formatFechaLocal(factura.fecha_emision, {day: '2-digit', month:'short', year:'numeric'})}
-                      </div>
-                      <div className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
-                        Vence: {formatFechaLocal(factura.fecha_vencimiento, {day: '2-digit', month:'2-digit', year:'numeric'})}
-                      </div>
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-zinc-800">
+                <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">DOCUMENTO</th>
+                <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">TITULAR</th>
+                <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">CONSUMO</th>
+                <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">BALANCE</th>
+                <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ESTADO</th>
+                <th className="text-right text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+              {paginatedData.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-16 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
+                      <HiDocumentText className="w-12 h-12 opacity-20 mb-3" />
+                      <p className="text-sm font-bold text-slate-600 dark:text-zinc-300">
+                        {facturas.length === 0 && !loading ? "No hay facturas en este período" : "Sin coincidencias"}
+                      </p>
+                      <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mt-1 max-w-[250px] text-center">
+                          Intenta cambiar los filtros o recarga la vista.
+                      </p>
                     </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <User
-                      name={<span className="font-bold text-sm text-slate-800 dark:text-zinc-100">{factura.cliente_nombre}</span>}
-                      description={<span className="font-medium text-[11px] text-slate-500 max-w-[200px] truncate block">{factura.direccion_cliente}</span>}
-                      avatarProps={{
-                        name: factura.cliente_nombre?.charAt(0) || "C",
-                        size: "sm",
-                        className: "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold border border-slate-200 dark:border-zinc-700 shadow-sm"
-                      }}
-                    />
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="space-y-1.5">
-                      <div className="font-bold text-sm text-slate-700 dark:text-zinc-200">
-                          {factura.consumo_m3} <span className="text-[10px] uppercase tracking-widest text-slate-400">m³</span>
-                      </div>
-                      <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md w-fit">
-                        ${factura.costo_por_m3} / m³
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="space-y-1.5">
-                      <div className="font-black text-lg text-emerald-600 dark:text-emerald-400 tracking-tight">
-                          ${factura.total?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-                      </div>
-                      {factura.saldo_pendiente > 0 && (
-                        <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
-                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
-                          Resta: ${factura.saldo_pendiente?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              ) : (
+                paginatedData.map((factura) => (
+                  <tr key={factura.id} className="hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="space-y-1">
+                        <div className="font-black text-sm text-slate-800 dark:text-zinc-100">
+                          <span className="text-slate-400 font-normal mr-0.5">#</span>{factura.id}
                         </div>
-                      )}
-                    </div>
-                  </TableCell>
+                        <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">
+                          Emisión: {formatFechaLocal(factura.fecha_emision, {day: '2-digit', month:'short', year:'numeric'})}
+                        </div>
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                          Vence: {formatFechaLocal(factura.fecha_vencimiento, {day: '2-digit', month:'2-digit', year:'numeric'})}
+                        </div>
+                      </div>
+                    </td>
 
-                  <TableCell>
-                    <Chip
-                      size="sm"
-                      variant="flat"
-                      className={`font-bold text-[10px] uppercase tracking-widest px-1 h-6 ${getEstadoBadge(factura.estado)}`}
-                    >
-                      {factura.estado}
-                    </Chip>
-                  </TableCell>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold border border-slate-200 dark:border-zinc-700 shadow-sm flex items-center justify-center text-xs shrink-0">
+                          {factura.cliente_nombre?.charAt(0) || "C"}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm text-slate-800 dark:text-zinc-100">{factura.cliente_nombre}</span>
+                          <span className="font-medium text-[11px] text-slate-500 dark:text-zinc-400 max-w-[200px] truncate block">{factura.direccion_cliente}</span>
+                        </div>
+                      </div>
+                    </td>
 
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="flat"
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 transition-colors rounded-lg"
-                        onClick={() => handleVerDetalle(factura)}
-                        title="Ver Detalle"
-                      >
-                        <HiEye className="w-4 h-4" />
-                      </Button>
+                    <td className="py-4 px-6">
+                      <div className="space-y-1.5">
+                        <div className="font-bold text-sm text-slate-700 dark:text-zinc-200">
+                            {factura.consumo_m3} <span className="text-[10px] uppercase tracking-widest text-slate-400">m³</span>
+                        </div>
+                        <div className="text-[9px] font-bold uppercase tracking-widest text-slate-500 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md w-fit">
+                          ${factura.costo_por_m3} / m³
+                        </div>
+                      </div>
+                    </td>
 
-                      {/* Botón Cobrar Dinámico */}
-                      {factura.saldo_pendiente > 0 && (
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          variant="flat"
-                          className={`rounded-lg transition-colors ${
-                            factura.estado === 'En Convenio' || factura.convenio_id
-                              ? "bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-400"
-                              : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-400"
-                          }`}
-                          onClick={() => handlePagar(factura)}
-                          title={
-                            factura.estado === 'En Convenio' || factura.convenio_id
-                              ? "Cobro Integrado Convenio"
-                              : "Registrar Pago"
-                          }
+                    <td className="py-4 px-6">
+                      <div className="space-y-1.5">
+                        <div className="font-black text-lg text-emerald-600 dark:text-emerald-400 tracking-tight">
+                            ${factura.total?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                        </div>
+                        {factura.saldo_pendiente > 0 && (
+                          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+                            Resta: ${factura.saldo_pendiente?.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-6">
+                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest inline-block ${getEstadoBadge(factura.estado)}`}>
+                        {factura.estado}
+                      </span>
+                    </td>
+
+                    <td className="py-4 px-6">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 transition-colors rounded-lg"
+                          onClick={() => handleVerDetalle(factura)}
+                          title="Ver Detalle"
                         >
-                          {factura.estado === 'En Convenio' || factura.convenio_id
-                            ? <HiCalculator className="w-4 h-4" />
-                            : <HiCreditCard className="w-4 h-4" />}
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                          <HiEye className="w-4 h-4" />
+                        </button>
+
+                        {/* Botón Cobrar Dinámico */}
+                        {factura.saldo_pendiente > 0 && (
+                          <button
+                            className={`p-2 rounded-lg transition-colors ${
+                              factura.estado === 'En Convenio' || factura.convenio_id
+                                ? "bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-400"
+                                : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-400"
+                            }`}
+                            onClick={() => handlePagar(factura)}
+                            title={
+                              factura.estado === 'En Convenio' || factura.convenio_id
+                                ? "Cobro Integrado Convenio"
+                                : "Registrar Pago"
+                            }
+                          >
+                            {factura.estado === 'En Convenio' || factura.convenio_id
+                              ? <HiCalculator className="w-4 h-4" />
+                              : <HiCreditCard className="w-4 h-4" />}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
         {/* Paginación Inferior */}
         {totalPages > 1 && (
-          <div className="flex justify-center p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/60 dark:bg-zinc-900/40">
-            <Pagination
-              total={totalPages}
-              page={currentPage}
-              onChange={setCurrentPage}
-              showControls
-              color="default"
-              variant="flat"
-              classNames={{
-                  cursor: "bg-slate-800 text-white dark:bg-zinc-200 dark:text-slate-900 font-bold shadow-sm",
-              }}
-            />
+          <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/60 dark:bg-zinc-900/40">
+            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+              Página {currentPage} de {totalPages}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+              >
+                <HiChevronLeft className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .map((p, idx, arr) => (
+                    <div key={p} className="flex items-center">
+                      {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                      <button
+                        onClick={() => setCurrentPage(p)}
+                        className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                          currentPage === p
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    </div>
+                  ))}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+              >
+                <HiChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -737,8 +728,8 @@ const TabFacturas = () => {
         popup
         theme={premiumConfirmModalTheme}
       >
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="p-2">
             <div className="flex items-center gap-3 mb-4 justify-center">
               <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
@@ -819,7 +810,7 @@ const TabFacturas = () => {
               </FlowbiteButton>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
     </div>
   );

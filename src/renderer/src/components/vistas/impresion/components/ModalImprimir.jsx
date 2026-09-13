@@ -195,7 +195,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', def
                         {!showPrint && (
                             <>
                                 <Button
-                                    variant="flat" 
+                                    variant="ghost" 
                                     size="sm"
                                     onPress={handleSavePdf}
                                     className="font-bold text-slate-700 dark:text-zinc-200 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl h-10 px-4 text-xs transition-all"
@@ -367,7 +367,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', def
                                 </Button>
                                 <div className="grid grid-cols-2 gap-3">
                                     <Button
-                                        variant="flat"
+                                        variant="ghost"
                                         onPress={handlePrintOS}
                                         isDisabled={isPrinting || !printUrl}
                                         className="font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 rounded-xl h-10 text-xs transition-all"
@@ -375,7 +375,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', def
                                         Diálogo OS
                                     </Button>
                                     <Button
-                                        variant="flat"
+                                        variant="ghost"
                                         onPress={handleSavePdf}
                                         startContent={<HiDownload className="text-sm opacity-70" />}
                                         className="font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 rounded-xl h-10 text-xs transition-all"

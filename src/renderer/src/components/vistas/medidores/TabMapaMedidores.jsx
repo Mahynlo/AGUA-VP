@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Card, CardBody, CardHeader, Divider, Select, SelectItem, Spinner } from "@heroui/react";
-import { HiSearch, HiLocationMarker, HiCog, HiHashtag, HiUser } from "react-icons/hi";
+import { Card, CardContent, CardHeader, Spinner } from "@heroui/react";
+import { HiSearch, HiLocationMarker, HiCog, HiHashtag, HiUser, HiX, HiChevronDown } from "react-icons/hi";
 import MapaMedidores from "../../mapa/MapaMedidores";
 import { useMedidores } from "../../../context/MedidoresContext";
 import LoadingSkeleton from "./components/LoadingSkeleton";
@@ -118,12 +118,6 @@ const TabMapaMedidores = () => {
         return <LoadingSkeleton />;
     }
 
-    const selectClassNames = {
-        trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
-        value: "font-medium text-slate-700 dark:text-zinc-200 text-sm",
-        label: "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500"
-    };
-
     return (
         <div className="w-full animate-in fade-in duration-300">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -146,12 +140,12 @@ const TabMapaMedidores = () => {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardBody className="pt-0 p-0">
+                    <CardContent className="pt-0 p-0">
                         <div className="h-full w-full rounded-b-2xl overflow-hidden border border-slate-200 dark:border-zinc-800">
                             {/* FIX: Pasar medidoresFiltrados al mapa */}
                             <MapaMedidores medidores={medidoresFiltrados} selectedMedidor={selectedMedidor} />
                         </div>
-                    </CardBody>
+                    </CardContent>
                 </Card>
             </div>
 
@@ -177,9 +171,9 @@ const TabMapaMedidores = () => {
                         </div>
                     </CardHeader>
 
-                    <CardBody className="pt-0 flex flex-col gap-4 overflow-hidden">
+                    <CardContent className="pt-0 flex flex-col gap-4 overflow-hidden">
 
-                        {/* Filtros Unificados con NextUI */}
+                        {/* Filtros Unificados */}
                         <div className="space-y-3 flex-none px-1">
                             {/* Buscador */}
                             <div>
@@ -208,53 +202,53 @@ const TabMapaMedidores = () => {
 
                             {/* Filtros Grid */}
                             <div className="grid grid-cols-2 gap-2">
-                                <Select
-                                    label="Pueblo"
-                                    size="sm"
-                                    placeholder="Todos"
-                                    selectedKeys={[filtroPueblo]}
-                                    onChange={(e) => setFiltroPueblo(e.target.value || "todos")}
-                                    variant="flat"
-                                    classNames={selectClassNames}
-                                >
-                                    <SelectItem key="todos" value="todos">Todos</SelectItem>
-                                    {pueblos.map(p => (
-                                        <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
-                                    ))}
-                                </Select>
+                                <div className="relative">
+                                    <select
+                                        aria-label="Pueblo"
+                                        value={filtroPueblo}
+                                        onChange={(e) => setFiltroPueblo(e.target.value || "todos")}
+                                        className="w-full h-11 pl-3 pr-8 text-xs font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                                    >
+                                        <option value="todos">Todos los pueblos</option>
+                                        {pueblos.map(p => (
+                                            <option key={p.key} value={p.key}>{p.label}</option>
+                                        ))}
+                                    </select>
+                                    <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                </div>
 
-                                <Select
-                                    label="Asignación"
-                                    size="sm"
-                                    placeholder="Todos"
-                                    selectedKeys={[filtroAsignacion]}
-                                    onChange={(e) => setFiltroAsignacion(e.target.value || "todos")}
-                                    variant="flat"
-                                    classNames={selectClassNames}
-                                >
-                                    <SelectItem key="todos" value="todos">Todos</SelectItem>
-                                    <SelectItem key="disponibles" value="disponibles">Disponibles</SelectItem>
-                                    <SelectItem key="asignados" value="asignados">Asignados</SelectItem>
-                                </Select>
+                                <div className="relative">
+                                    <select
+                                        aria-label="Asignación"
+                                        value={filtroAsignacion}
+                                        onChange={(e) => setFiltroAsignacion(e.target.value || "todos")}
+                                        className="w-full h-11 pl-3 pr-8 text-xs font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                                    >
+                                        <option value="todos">Todas asignaciones</option>
+                                        <option value="disponibles">Disponibles</option>
+                                        <option value="asignados">Asignados</option>
+                                    </select>
+                                    <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                </div>
                             </div>
 
                             {/* Estado Select */}
-                            <Select
-                                label="Estado"
-                                size="sm"
-                                placeholder="Todos los estados"
-                                selectedKeys={[filtroEstado]}
-                                onChange={(e) => setFiltroEstado(e.target.value || "todos")}
-                                variant="flat"
-                                classNames={selectClassNames}
-                            >
-                                <SelectItem key="todos" value="todos">Todos</SelectItem>
-                                <SelectItem key="Activo" value="Activo">Activos</SelectItem>
-                                <SelectItem key="Inactivo" value="Inactivo">Inactivos</SelectItem>
-                            </Select>
+                            <div className="relative">
+                                <select
+                                    aria-label="Estado"
+                                    value={filtroEstado}
+                                    onChange={(e) => setFiltroEstado(e.target.value || "todos")}
+                                    className="w-full h-11 pl-3 pr-8 text-xs font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                                >
+                                    <option value="todos">Todos los estados</option>
+                                    <option value="Activo">Activos</option>
+                                    <option value="Inactivo">Inactivos</option>
+                                </select>
+                                <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            </div>
                         </div>
 
-                        <Divider className="my-2 flex-none" />
+                        <div className="h-px bg-slate-200 dark:bg-zinc-800 w-full my-2 flex-none" />
 
                         {/* Lista (render incremental para fluidez en equipos sin GPU) */}
                         <div
@@ -353,7 +347,7 @@ const TabMapaMedidores = () => {
                                 </div>
                             )}
                         </div>
-                    </CardBody>
+                    </CardContent>
                 </Card>
             </div>
             </div>

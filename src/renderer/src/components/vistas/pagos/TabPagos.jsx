@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Button as FlowbiteButton } from "flowbite-react";
+import { Modal, Button as FlowbiteButton, ModalHeader, ModalBody } from "flowbite-react";
 import {
   HiEye,
   HiCurrencyDollar,
@@ -728,8 +728,8 @@ const TabPagos = () => {
         popup
         theme={premiumConfirmModalTheme}
       >
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="p-2">
             <div className="flex items-center gap-3 mb-4 justify-center">
               <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
@@ -810,7 +810,7 @@ const TabPagos = () => {
               </FlowbiteButton>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
     </div>
   );

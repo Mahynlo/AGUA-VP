@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiPlus, HiLocationMarker, HiCog, HiHashtag, HiCalendar, HiCheck, HiX, HiInformationCircle, HiUser } from "react-icons/hi";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { usePermissions } from "../../../context/PermissionsContext";
@@ -17,8 +17,7 @@ const premiumModalTheme = {
     },
     header: {
         base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-t-2xl",
-        close: {
-            base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors",
+        close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer",
             icon: "h-5 w-5"
         }
     },
@@ -148,12 +147,12 @@ export default function RegistrarMedidor() {
                 show={isOpen}
                 onClose={handleClose}
                 size="4xl"
-                dismissible={false}
+                dismissible
                 theme={premiumModalTheme}
                 className="mt-5"
             >
                 {/* ── HEADER ── */}
-                <Modal.Header>
+                <ModalHeader>
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
                             <HiCog className="w-7 h-7" />
@@ -163,10 +162,10 @@ export default function RegistrarMedidor() {
                             <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Datos técnicos, asignación de cliente y ubicación</p>
                         </div>
                     </div>
-                </Modal.Header>
+                </ModalHeader>
 
                 {/* ── BODY ── */}
-                <Modal.Body>
+                <ModalBody>
                     <form id="form-registro-medidor" onSubmit={(e) => { e.preventDefault(); handleRegistroMedidor(); }} className="flex flex-col gap-6">
 
                         {/* 1. Datos del Equipo */}
@@ -256,10 +255,10 @@ export default function RegistrarMedidor() {
                             </div>
                         </div>
                     </form>
-                </Modal.Body>
+                </ModalBody>
 
                 {/* ── FOOTER ── */}
-                <Modal.Footer>
+                <ModalFooter>
                     <Button
                         color="gray"
                         onClick={handleClose}
@@ -281,7 +280,7 @@ export default function RegistrarMedidor() {
                             {isUpdating ? "Registrando..." : "Registrar Medidor"}
                         </div>
                     </Button>
-                </Modal.Footer>
+                </ModalFooter>
             </Modal>
         </>
     );

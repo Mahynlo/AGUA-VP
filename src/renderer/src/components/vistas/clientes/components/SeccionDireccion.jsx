@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { Select, SelectItem } from "@heroui/react";
-import { HiLocationMarker } from "react-icons/hi";
+import { HiLocationMarker, HiChevronDown } from "react-icons/hi";
 import { CustomTextarea } from "../../../ui/FormComponents";
 
 const pueblos = [
@@ -42,28 +41,30 @@ export const SeccionDireccion = ({
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
             Pueblo <span className="text-red-500">*</span>
           </label>
-          <Select
-            aria-label="Ciudad"
-            placeholder="Selecciona un pueblo"
-            selectedKeys={formData.ciudad ? [formData.ciudad] : []}
-            onSelectionChange={(keys) => {
-              const selectedKey = Array.from(keys)[0];
-              onChange('ciudad', selectedKey || "");
-              limpiarError('ciudad');
-            }}
-            color="primary"
-            variant="bordered"
-            size="md"
-            isRequired
-            className="w-full"
-            startContent={<HiLocationMarker className="text-gray-400 text-lg" />}
-            isInvalid={mostrarErrores && erroresCampos.ciudad}
-            errorMessage={mostrarErrores && erroresCampos.ciudad && "La ciudad es requerida"}
-          >
-            {pueblos.map((pueblo) => (
-              <SelectItem key={pueblo.key}>{pueblo.label}</SelectItem>
-            ))}
-          </Select>
+          <div className="relative">
+            <select
+              aria-label="Ciudad"
+              value={formData.ciudad || ""}
+              onChange={(e) => {
+                onChange('ciudad', e.target.value);
+                limpiarError('ciudad');
+              }}
+              className={`w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border ${
+                mostrarErrores && erroresCampos.ciudad 
+                  ? "border-rose-500 focus:ring-rose-500/20 focus:border-rose-500" 
+                  : "border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-blue-500/20 focus:border-blue-500"
+              } focus:outline-none focus:ring-2 shadow-none appearance-none cursor-pointer transition-all`}
+            >
+              <option value="">-- Selecciona un pueblo --</option>
+              {pueblos.map((pueblo) => (
+                <option key={pueblo.key} value={pueblo.key}>{pueblo.label}</option>
+              ))}
+            </select>
+            <HiChevronDown className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
+          {mostrarErrores && erroresCampos.ciudad && (
+            <p className="text-xs text-rose-500 font-semibold mt-1">La ciudad es requerida</p>
+          )}
         </div>
 
         {/* Dirección Completa */}

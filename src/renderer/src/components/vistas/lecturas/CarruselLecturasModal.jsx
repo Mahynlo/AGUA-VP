@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import {
   HiLocationMarker,
   HiUser,
@@ -738,12 +738,12 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
       <Modal
         show={isOpen}
         onClose={handleClose}
-        dismissible={false}
+        dismissible
         theme={largeModalTheme}
         size="7xl"
         className="mt-0"
       >
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex gap-4 items-center overflow-visible w-full justify-between">
             {/* Lado Izquierdo: Icono + Título del modal */}
             <div className="flex items-center gap-4 min-w-0">
@@ -866,9 +866,9 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
               </div>
             </div>
           </div>
-        </Modal.Header>
+        </ModalHeader>
 
-        <Modal.Body>
+        <ModalBody>
           <div className="bg-slate-50/40 dark:bg-zinc-950/40">
             <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 lg:gap-8 lg:h-full">
 
@@ -1063,9 +1063,9 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
               </div>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
 
-        <Modal.Footer>
+        <ModalFooter>
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
@@ -1113,7 +1113,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
               <span className="hidden sm:inline">Terminar Ruta</span><HiCheck className="text-lg" />
             </button>
           )}
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </>
   );

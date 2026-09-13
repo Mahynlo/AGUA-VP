@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { HiUserCircle, HiUsers, HiUserAdd, HiTrendingUp, HiMap } from "react-icons/hi";
 import { TabClientes } from "./TabClientes";
 import { TabMetricas } from "./TabMetricas";
-import { Tabs, Tab, Chip, Skeleton } from "@heroui/react";
+import { Skeleton } from "@heroui/react";
 import { MetricasLecturaIcon } from "../../../IconsApp/IconsResibos";
 import { useClientes } from "../../../context/ClientesContext";
 
@@ -183,55 +183,56 @@ const Clientes = () => {
 
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
         <div className="flex flex-col w-full flex-1 mt-2">
-          <Tabs
-            aria-label="Opciones de Clientes"
-            selectedKey={selectedTab}
-            onSelectionChange={handleTabChange}
-            variant="underlined"
-            classNames={{
-              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
-              tabList: "gap-6 w-full relative rounded-none p-0",
-              cursor: "w-full bg-blue-600 dark:bg-blue-500 h-[2px]",
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
-            }}
-          >
-            {/* TAB 1: LISTA DE CLIENTES */}
-            <Tab
-              key="Clientes"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiUserCircle className="text-lg" />
-                  <span>Directorio</span>
-                  <Chip size="sm" variant="flat" className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold h-5 text-[10px] px-1 ml-1 rounded-md">
-                    {estadisticas.total}
-                  </Chip>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabClientes />
-              </div>
-            </Tab>
+          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6 overflow-x-auto">
+            <nav className="flex gap-6 w-full -mb-px">
+              {/* TAB 1: LISTA DE CLIENTES */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("Clientes")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "Clientes"
+                    ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiUserCircle className="text-lg" />
+                <span>Directorio</span>
+                <span className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold h-5 text-[10px] px-1.5 ml-1 rounded-md inline-flex items-center">
+                  {estadisticas.total}
+                </span>
+              </button>
 
-            {/* TAB 2: MÉTRICAS Y ANÁLISIS */}
-            <Tab
-              key="Metricas"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <MetricasLecturaIcon className="text-lg" />
-                  <span>Análisis</span>
-                  <Chip size="sm" variant="flat" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-[9px] h-5 px-1 ml-1 rounded-md">
-                    Gráficos
-                  </Chip>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabMetricas />
-              </div>
-            </Tab>
-          </Tabs>
+              {/* TAB 2: MÉTRICAS Y ANÁLISIS */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("Metricas")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "Metricas"
+                    ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <MetricasLecturaIcon className="text-lg" />
+                <span>Análisis</span>
+                <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-[9px] h-5 px-1.5 ml-1 rounded-md inline-flex items-center">
+                  Gráficos
+                </span>
+              </button>
+            </nav>
+          </div>
+
+          {/* CONTENIDO */}
+          {selectedTab === "Clientes" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabClientes />
+            </div>
+          )}
+
+          {selectedTab === "Metricas" && (
+            <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
+              <TabMetricas />
+            </div>
+          )}
         </div>
 
       </div>

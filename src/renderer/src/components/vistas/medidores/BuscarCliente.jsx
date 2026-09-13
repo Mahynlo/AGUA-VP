@@ -121,7 +121,7 @@ const BuscarCliente = ({ onClienteSeleccionado }) => {
                     <Button
                         isIconOnly
                         size="sm"
-                        variant="flat"
+                        variant="ghost"
                         onPress={limpiarSeleccion}
                         className="w-8 h-8 min-w-8 ml-3 bg-white/80 dark:bg-zinc-900/60 text-slate-400 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors shadow-sm shrink-0"
                         title="Quitar selección"

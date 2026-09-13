@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { useState, useEffect, useMemo } from "react";
 import ModalVistaPrevia from "../impresion/components/ModalVistaPrevia";
 import ModalPagoIntegradoConvenio from "./ModalPagoIntegradoConvenio";
@@ -22,7 +22,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -276,7 +276,7 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
 
   const renderBloqueadoConvenio = () => (
     <>
-      <Modal.Header >
+      <ModalHeader >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
             <HiExclamation className="w-6 h-6 text-amber-600 dark:text-amber-400" />
@@ -288,9 +288,9 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="space-y-4">
           <div className="border-2 border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10 rounded-2xl p-4">
             <div className="flex items-start gap-3">
@@ -357,19 +357,19 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             </div>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button type="button" onClick={handleCerrarModal} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
           Cerrar
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 
   const renderFormulario = () => (
     <>
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-3">
           <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
             <HiCreditCard className="w-6 h-6" />
@@ -381,9 +381,9 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="space-y-5">
           <div className="flex justify-between items-center bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800">
             <div>
@@ -513,22 +513,22 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             </div>
           )}
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button type="button" onClick={handleCerrarModal} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
           Cancelar
         </button>
         <button type="button" onClick={handleConfirmar} className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm transition-colors">
           Cobrar
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 
   const renderConfirmacion = () => (
     <>
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-3">
           <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
             <HiExclamation className="w-6 h-6" />
@@ -540,9 +540,9 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="space-y-4">
           <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5">
             <h4 className="font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2 mb-4 text-xs uppercase tracking-widest">
@@ -595,22 +595,22 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             </div>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button type="button" onClick={handleVolverFormulario} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
           Volver
         </button>
         <button type="button" onClick={handleProcesarPago} className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm transition-colors">
           Confirmar y Procesar Pago
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 
   const renderProcesando = () => (
     <>
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-3">
           <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
             <HiCurrencyDollar className="w-6 h-6" />
@@ -620,19 +620,19 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">Por favor espere</p>
           </div>
         </div>
-      </Modal.Header>
-      <Modal.Body>
+      </ModalHeader>
+      <ModalBody>
         <div className="flex flex-col items-center justify-center py-12 gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-2 border-slate-300 border-t-emerald-600" />
           <p className="text-sm font-semibold text-slate-500 dark:text-zinc-400">Procesando el pago...</p>
         </div>
-      </Modal.Body>
+      </ModalBody>
     </>
   );
 
   const renderExito = () => (
     <>
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-3">
           <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
             <HiCheck className="w-6 h-6" />
@@ -642,8 +642,8 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">El pago se procesó correctamente</p>
           </div>
         </div>
-      </Modal.Header>
-      <Modal.Body>
+      </ModalHeader>
+      <ModalBody>
         <div className="space-y-4">
           <div className="bg-emerald-500/10 dark:bg-emerald-900/20 p-6 rounded-2xl border border-emerald-500/20 flex flex-col items-center text-center">
             <div className="rounded-full bg-emerald-500 text-white p-3 mb-3 shadow-sm">
@@ -676,18 +676,18 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
             }
           </button>
         </div>
-      </Modal.Body>
-      <Modal.Footer>
+      </ModalBody>
+      <ModalFooter>
         <button type="button" onClick={handleCerrarModal} className="w-full font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-11 shadow-sm transition-colors">
           Finalizar
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 
   const renderError = () => (
     <>
-      <Modal.Body>
+      <ModalBody>
         <div className="flex flex-col items-center text-center space-y-4 py-8">
           <div className="p-3 bg-rose-500/10 rounded-full text-rose-600 dark:text-rose-400">
             <HiX className="w-10 h-10" />
@@ -695,15 +695,15 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
           <h3 className="text-xl font-black text-rose-600 dark:text-rose-400">Error al Procesar</h3>
           <p className="text-sm font-medium text-slate-600 dark:text-zinc-300">{resultadoPago?.mensaje || "Error inesperado"}</p>
         </div>
-      </Modal.Body>
-      <Modal.Footer>
+      </ModalBody>
+      <ModalFooter>
         <button type="button" onClick={handleReintentar} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
           Reintentar
         </button>
         <button type="button" onClick={handleCerrarModal} className="font-bold bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-xl px-8 h-11 transition-colors">
           Cerrar
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 

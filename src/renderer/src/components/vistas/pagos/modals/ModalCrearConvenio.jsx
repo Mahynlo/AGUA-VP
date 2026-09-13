@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiClipboardCheck, HiCalculator, HiCurrencyDollar, HiViewGrid, HiCalendar, HiExclamationCircle } from "react-icons/hi";
 
 const premiumModalTheme = {
@@ -10,7 +10,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -110,7 +110,7 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
 
   return (
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex gap-3 items-center">
           <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
             <HiClipboardCheck className="w-6 h-6" />
@@ -124,9 +124,9 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 text-center">
@@ -199,9 +199,9 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
             </div>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={onClose}
@@ -219,7 +219,7 @@ const ModalCrearConvenio = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
           <HiClipboardCheck className="w-4 h-4" />
           {loading ? "Generando..." : "Generar Convenio"}
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 };
