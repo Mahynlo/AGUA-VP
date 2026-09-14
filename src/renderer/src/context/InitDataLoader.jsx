@@ -4,6 +4,7 @@ import { useAuth } from "./AuthContext";
 import { useClientes } from "./ClientesContext";
 import { useMedidores } from "./MedidoresContext";
 import { useTarifas } from "./TarifasContext";
+import { preloadPdfViewer } from "../utils/pdfPreloader";
 
 // Componente para cargar datos iniciales de clientes, medidores y tarifas
 const InitDataLoader = () => {
@@ -28,6 +29,11 @@ const InitDataLoader = () => {
       actualizarMedidores();
       actualizarTarifas();
       localStorage.setItem("datosInicializados", "true");
+    }
+
+    // Precargar el motor de visualización PDF en segundo plano durante tiempo inactivo
+    if (isAuthenticated() && user) {
+      preloadPdfViewer();
     }
   }, [user, isAuthenticated, location.pathname, actualizarClientes, actualizarMedidores, actualizarTarifas]);
 

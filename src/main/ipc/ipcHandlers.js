@@ -273,10 +273,81 @@ export default function IpcHandlers () {
           }
         });
 
-        win.loadURL(url);
+        let captured = false;
+        let fallbackTimer = null;
+        let onPrintReady = null;
+
+        const cleanup = () => {
+          if (fallbackTimer) {
+            clearTimeout(fallbackTimer);
+            fallbackTimer = null;
+          }
+          if (onPrintReady) {
+            ipcMain.removeListener('print-ready', onPrintReady);
+            onPrintReady = null;
+          }
+        };
+
+        const capturePdf = async () => {
+          if (captured) return;
+          captured = true;
+          cleanup();
+
+          try {
+            const pdfOptions = { 
+              ...printOptions, 
+              ...(options || {}), 
+              scaleFactor: 100 
+            };
+
+            // Normalizar pageSize si viene especificado
+            if (pdfOptions.pageSize) {
+              const size = String(pdfOptions.pageSize).toLowerCase();
+              if (size === 'letter') pdfOptions.pageSize = 'Letter';
+              else if (size === 'legal') pdfOptions.pageSize = 'Legal';
+              else if (size === 'a4') pdfOptions.pageSize = 'A4';
+            }
+
+            // Número de página por hoja (opcional, vía footer nativo de Chromium).
+            // Solo se activa cuando el renderer lo pide explícitamente.
+            if (options && options.pageNumbers) {
+              pdfOptions.displayHeaderFooter = true;
+              // Header vacío para que no aparezca el título/URL por defecto.
+              pdfOptions.headerTemplate = '<span></span>';
+              pdfOptions.footerTemplate =
+                '<div style="width:100%; font-size:8px; color:#6b7280; text-align:center; padding:0 10mm;">' +
+                'Página <span class="pageNumber"></span> de <span class="totalPages"></span>' +
+                '</div>';
+              // Márgenes explícitos para reservar espacio al footer nativo (en pulgadas).
+              pdfOptions.margins = { top: 0.3, bottom: 0.55, left: 0.3, right: 0.3 };
+            }
+
+            const data = await win.webContents.printToPDF(pdfOptions);
+            const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`);
+            console.log('PDF generado en:', pdfPath);
+            await fs.promises.writeFile(pdfPath, data);
+
+            try { win.close(); } catch (e) {}
+            resolve({ success: true, path: pathToFileURL(pdfPath).href });
+          } catch (err) {
+            console.error('Error generando PDF temporal:', err);
+            try { win.close(); } catch (e) {}
+            reject(err);
+          }
+        };
+
+        // Escuchar 'print-ready' INMEDIATAMENTE para no perder el evento si React renderiza rápido
+        onPrintReady = (evt) => {
+          if (win && !win.isDestroyed() && (evt.sender === win.webContents || evt.sender?.id === win.webContents?.id)) {
+            console.log('⚡ Señal print-ready recibida vía ipcMain (inmediata)');
+            capturePdf();
+          }
+        };
+        ipcMain.on('print-ready', onPrintReady);
 
         win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
           console.error('Failed to load URL for preview:', errorCode, errorDescription);
+          cleanup();
           try { win.close(); } catch (e) {}
           reject(`Failed to load: ${errorDescription}`);
         });
@@ -295,92 +366,16 @@ export default function IpcHandlers () {
             await win.webContents.executeJavaScript('document.documentElement.classList.remove("dark"); document.body.classList.remove("dark");');
           } catch (e) {}
 
-          let captured = false;
-          let fallbackTimer = null;
-          let onPrintReady = null;
-
-          const cleanup = () => {
-            if (fallbackTimer) {
-              clearTimeout(fallbackTimer);
-              fallbackTimer = null;
-            }
-            if (onPrintReady) {
-              ipcMain.removeListener('print-ready', onPrintReady);
-              onPrintReady = null;
-            }
-          };
-
-          const capturePdf = async () => {
-            if (captured) return;
-            captured = true;
-            cleanup();
-
-            try {
-              const pdfOptions = { 
-                ...printOptions, 
-                ...(options || {}), 
-                scaleFactor: 100 
-              };
-
-              // Normalizar pageSize si viene especificado
-              if (pdfOptions.pageSize) {
-                const size = String(pdfOptions.pageSize).toLowerCase();
-                if (size === 'letter') pdfOptions.pageSize = 'Letter';
-                else if (size === 'legal') pdfOptions.pageSize = 'Legal';
-                else if (size === 'a4') pdfOptions.pageSize = 'A4';
-              }
-
-              // Número de página por hoja (opcional, vía footer nativo de Chromium).
-              // Solo se activa cuando el renderer lo pide explícitamente.
-              if (options && options.pageNumbers) {
-                pdfOptions.displayHeaderFooter = true;
-                // Header vacío para que no aparezca el título/URL por defecto.
-                pdfOptions.headerTemplate = '<span></span>';
-                pdfOptions.footerTemplate =
-                  '<div style="width:100%; font-size:8px; color:#6b7280; text-align:center; padding:0 10mm;">' +
-                  'Página <span class="pageNumber"></span> de <span class="totalPages"></span>' +
-                  '</div>';
-                // Márgenes explícitos para reservar espacio al footer nativo (en pulgadas).
-                pdfOptions.margins = { top: 0.3, bottom: 0.55, left: 0.3, right: 0.3 };
-              }
-
-              const data = await win.webContents.printToPDF(pdfOptions);
-              const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`);
-              console.log('PDF generado en:', pdfPath);
-              await fs.promises.writeFile(pdfPath, data);
-
-              try { win.close(); } catch (e) {}
-              resolve({ success: true, path: pathToFileURL(pdfPath).href });
-            } catch (err) {
-              console.error('Error generando PDF temporal:', err);
-              try { win.close(); } catch (e) {}
-              reject(err);
-            }
-          };
-
-          // Escuchar la señal 'print-ready' vía ipcMain para compatibilidad con ipcRenderer.send
-          onPrintReady = (event) => {
-            if (win && !win.isDestroyed() && (event.sender === win.webContents || event.sender?.id === win.webContents?.id)) {
-              console.log('Señal print-ready recibida vía ipcMain');
+          // Fallback de seguridad de 3.5s (en caso de páginas estáticas sin useNotifyPrintReady)
+          if (!captured) {
+            fallbackTimer = setTimeout(() => {
+              console.log('Usando fallback timer (3.5s) para PDF');
               capturePdf();
-            }
-          };
-          ipcMain.on('print-ready', onPrintReady);
-
-          // Escuchar también vía webContents.ipc si está disponible
-          try {
-            win.webContents?.ipc?.once?.('print-ready', () => {
-              console.log('Señal print-ready recibida vía webContents.ipc');
-              capturePdf();
-            });
-          } catch (e) {}
-
-          // Fallback: si la señal no llega a tiempo, proceder a los 25s
-          fallbackTimer = setTimeout(() => {
-            console.log('Usando fallback timer para PDF');
-            capturePdf();
-          }, 25000);
+            }, 3500);
+          }
         });
+
+        win.loadURL(url);
       });
     });
 

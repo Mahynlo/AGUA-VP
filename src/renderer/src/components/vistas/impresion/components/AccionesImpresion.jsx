@@ -106,13 +106,29 @@ const AccionesImpresion = ({
             {procesandoAccion === 'vista-previa' && progresoGeneracion ? (
               <div className="flex flex-col gap-2.5 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl p-3.5">
                 <div className="flex items-center justify-between text-[11px] font-bold text-indigo-700 dark:text-indigo-400">
-                  <span className="truncate max-w-[70%]">{progresoGeneracion.cliente}</span>
-                  <span className="font-mono">{progresoGeneracion.actual} / {progresoGeneracion.total}</span>
+                  <span className="truncate max-w-[70%]">
+                    {progresoGeneracion.fase === 'compilando'
+                      ? "⚡ Compilando PDF y abriendo visor..."
+                      : progresoGeneracion.cliente}
+                  </span>
+                  <span className="font-mono">
+                    {progresoGeneracion.fase === 'compilando'
+                      ? "PDF..."
+                      : `${progresoGeneracion.actual} / ${progresoGeneracion.total}`}
+                  </span>
                 </div>
                 <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
                   <div 
-                    className="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${(progresoGeneracion.actual / progresoGeneracion.total) * 100}%` }}
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      progresoGeneracion.fase === 'compilando'
+                        ? "bg-indigo-600 dark:bg-indigo-400 animate-pulse w-full"
+                        : "bg-indigo-600 dark:bg-indigo-500"
+                    }`}
+                    style={{
+                      width: progresoGeneracion.fase === 'compilando'
+                        ? '100%'
+                        : `${(progresoGeneracion.actual / progresoGeneracion.total) * 100}%`
+                    }}
                   ></div>
                 </div>
               </div>
@@ -166,13 +182,29 @@ const AccionesImpresion = ({
             {procesandoAccion === 'imprimir' && progresoGeneracion ? (
               <div className="flex flex-col gap-2.5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-3.5">
                 <div className="flex items-center justify-between text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                  <span className="truncate max-w-[70%]">{progresoGeneracion.cliente}</span>
-                  <span className="font-mono">{progresoGeneracion.actual} / {progresoGeneracion.total}</span>
+                  <span className="truncate max-w-[70%]">
+                    {progresoGeneracion.fase === 'compilando'
+                      ? "⚡ Preparando cola de impresión..."
+                      : progresoGeneracion.cliente}
+                  </span>
+                  <span className="font-mono">
+                    {progresoGeneracion.fase === 'compilando'
+                      ? "PDF..."
+                      : `${progresoGeneracion.actual} / ${progresoGeneracion.total}`}
+                  </span>
                 </div>
                 <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
                   <div 
-                    className="bg-emerald-600 dark:bg-emerald-500 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${(progresoGeneracion.actual / progresoGeneracion.total) * 100}%` }}
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      progresoGeneracion.fase === 'compilando'
+                        ? "bg-emerald-600 dark:bg-emerald-400 animate-pulse w-full"
+                        : "bg-emerald-600 dark:bg-emerald-500"
+                    }`}
+                    style={{
+                      width: progresoGeneracion.fase === 'compilando'
+                        ? '100%'
+                        : `${(progresoGeneracion.actual / progresoGeneracion.total) * 100}%`
+                    }}
                   ></div>
                 </div>
               </div>
