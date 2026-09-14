@@ -20,6 +20,7 @@ import WelcomeView from "./ayuda/WelcomeView";
 import ModalImprimirDocumentacion from "./ayuda/ModalImprimirDocumentacion";
 import ModalImprimir from "./impresion/components/ModalImprimir";
 import { sectionIcons } from "./ayuda/sectionConfig.jsx";
+import { preloadPdfViewer } from "../../utils/pdfPreloader";
 
 const sectionOrder = ["clientes", "medidores", "lecturas", "facturas", "pagos", "impresion", "tarifas", "configuracion", "faq"];
 
@@ -67,6 +68,10 @@ const AyudaVista = () => {
   // ==========================================
   // 2. EFECTOS DE INICIALIZACIÓN
   // ==========================================
+  useEffect(() => {
+    preloadPdfViewer();
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {

@@ -388,7 +388,14 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', def
                     )}
 
                     {/* PDF Viewer — siempre montado, nunca se desmonta al cambiar de modo */}
-                    <div className="flex-1 overflow-hidden relative">
+                    <div className="flex-1 overflow-hidden relative bg-slate-100 dark:bg-zinc-900/60">
+                        {/* Estado visual de carga mientras el motor PDFium WebAssembly inicializa y renderiza */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-0 pointer-events-none">
+                            <Spinner size="lg" color="primary" />
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 animate-pulse">
+                                Renderizando vista previa en alta definición...
+                            </p>
+                        </div>
                         <PDFViewer
                             config={{
                                 src: pdfUrl,
@@ -403,7 +410,7 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', def
                                     'insert'
                                 ]
                             }}
-                            style={{ width: '100%', height: '100%' }}
+                            style={{ width: '100%', height: '100%', position: 'relative', zIndex: 1 }}
                         />
                     </div>
                 </div>

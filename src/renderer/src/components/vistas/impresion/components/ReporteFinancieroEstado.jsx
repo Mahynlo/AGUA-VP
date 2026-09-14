@@ -16,6 +16,7 @@ import { generarCatalogoPeriodos, obtenerPeriodoActual } from "../../../../utils
 import ModalVistaPrevia from "./ModalVistaPrevia";
 import ModalImprimir from "./ModalImprimir";
 import { useTheme } from "@renderer/theme/useTheme";
+import { preloadPdfViewer } from "../../../../utils/pdfPreloader";
 
 const ReporteFinancieroEstado = () => {
   const {
@@ -26,6 +27,11 @@ const ReporteFinancieroEstado = () => {
   } = useReportes();
   const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado, ultimoPeriodoFacturado } = useRutas();
   const { theme } = useTheme();
+
+  // Precarga del visor PDF
+  useEffect(() => {
+    preloadPdfViewer();
+  }, []);
 
   const [tipoFiltro, setTipoFiltro] = useState("periodo");
   const [periodo, setPeriodo] = useState(() => ultimoPeriodoFacturado || ultimoPeriodoRegistrado || siguientePeriodo || obtenerPeriodoActual());

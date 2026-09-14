@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Card, CardHeader, CardContent } from "@heroui/react";
 import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog, HiChevronDown } from "react-icons/hi";
 import ListadoLecturas from "./components/ListadoLecturas";
@@ -7,6 +7,7 @@ import { useReportes } from "../../../context/ReportesContext";
 import { useRutas } from "../../../context/RutasContext";
 import { exportData } from "../../../utils/exportUtils";
 import { obtenerPeriodoActual } from "../../../utils/periodoUtils";
+import { preloadPdfViewer } from "../../../utils/pdfPreloader";
 
 const formatearPeriodoTexto = (periodoStr) => {
   if (!periodoStr || !/^\d{4}-\d{2}$/.test(periodoStr)) return periodoStr;
@@ -18,6 +19,11 @@ const formatearPeriodoTexto = (periodoStr) => {
 };
 
 const TabReportes = () => {
+  // Precarga proactiva del visor de PDF
+  useEffect(() => {
+    preloadPdfViewer();
+  }, []);
+
   // --- USO DE CONTEXTO ---
   /* eslint-disable no-unused-vars */
   const {

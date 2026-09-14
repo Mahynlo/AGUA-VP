@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useReportes } from '../context/ReportesContext'; // Importar contexto
 import { useRutas } from '../context/RutasContext';
+import { preloadPdfViewer } from '../utils/pdfPreloader';
 import { 
   construirURLImpresion,
   calcularEstadisticas,
@@ -14,6 +15,12 @@ import {
  */
 const useImpresionRecibos = () => {
   const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado, ultimoPeriodoFacturado } = useRutas();
+
+  // Precargar el motor de visualización PDF de forma preventiva
+  useEffect(() => {
+    preloadPdfViewer();
+  }, []);
+
   // Estado local UI
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState("");
   const [clientesSeleccionados, setClientesSeleccionados] = useState(new Set());
@@ -167,6 +174,7 @@ const useImpresionRecibos = () => {
     setProgresoGeneracion({
       actual: 1,
       total,
+      fase: 'generando',
       cliente: facturasParaImprimir[0] ? `${facturasParaImprimir[0].cliente_nombre} (${facturasParaImprimir[0].numero_predio})` : ""
     });
     
@@ -176,12 +184,19 @@ const useImpresionRecibos = () => {
         setProgresoGeneracion({
           actual: actual + 1,
           total,
+          fase: 'generando',
           cliente: facturasParaImprimir[actual] ? `${facturasParaImprimir[actual].cliente_nombre} (${facturasParaImprimir[actual].numero_predio})` : ""
         });
       } else {
         clearInterval(intervalId);
+        setProgresoGeneracion({
+          actual: total,
+          total,
+          fase: 'compilando',
+          cliente: "Compilando documento PDF..."
+        });
       }
-    }, Math.max(80, Math.min(250, 4000 / total)));
+    }, Math.max(60, Math.min(200, 3000 / total)));
 
     try {
         // Construir URL para impresión silenciosa
@@ -220,6 +235,7 @@ const useImpresionRecibos = () => {
     setProgresoGeneracion({
       actual: 1,
       total,
+      fase: 'generando',
       cliente: facturasParaImprimir[0] ? `${facturasParaImprimir[0].cliente_nombre} (${facturasParaImprimir[0].numero_predio})` : ""
     });
     
@@ -229,12 +245,19 @@ const useImpresionRecibos = () => {
         setProgresoGeneracion({
           actual: actual + 1,
           total,
+          fase: 'generando',
           cliente: facturasParaImprimir[actual] ? `${facturasParaImprimir[actual].cliente_nombre} (${facturasParaImprimir[actual].numero_predio})` : ""
         });
       } else {
         clearInterval(intervalId);
+        setProgresoGeneracion({
+          actual: total,
+          total,
+          fase: 'compilando',
+          cliente: "Compilando documento PDF..."
+        });
       }
-    }, Math.max(80, Math.min(250, 4000 / total)));
+    }, Math.max(60, Math.min(200, 3000 / total)));
 
     try {
         const previewUrl = await construirURLImpresion(facturasParaImprimir, true, ciudadFiltro);

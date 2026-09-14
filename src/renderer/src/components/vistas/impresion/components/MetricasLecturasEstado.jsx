@@ -19,6 +19,7 @@ import {
   obtenerPeriodoActual,
 } from "../../../../utils/periodoUtils";
 import { useTheme } from "@renderer/theme/useTheme";
+import { preloadPdfViewer } from "../../../../utils/pdfPreloader";
 
 const formatearNumero = (valor, decimales = 0) => {
   const n = Number(valor || 0);
@@ -47,6 +48,11 @@ const selectClasses = {
 const MetricasLecturasEstado = () => {
   const { rutas, initialLoading, siguientePeriodo, periodosInfo, ultimoPeriodoRegistrado } = useRutas();
   const { theme } = useTheme();
+
+  // Precarga del visor PDF
+  useEffect(() => {
+    preloadPdfViewer();
+  }, []);
 
   const [vista, setVista] = useState("consumo");
   const [tipoFiltro, setTipoFiltro] = useState("periodo");
