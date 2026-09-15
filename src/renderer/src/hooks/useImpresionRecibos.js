@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useReportes } from '../context/ReportesContext'; // Importar contexto
 import { useRutas } from '../context/RutasContext';
+import { useAppLogo } from '../context/LogoContext';
 import { preloadPdfViewer } from '../utils/pdfPreloader';
 import { 
   construirURLImpresion,
@@ -37,6 +38,7 @@ const useImpresionRecibos = () => {
   // Consumir contexto de reportes
   const { recibos, loading, cargarRecibos } = useReportes();
   const { token } = useAuth();
+  const { logoSrc, hasCustomLogo } = useAppLogo();
 
   // Inicializar automáticamente con el último período facturado/registrado
   useEffect(() => {
@@ -198,11 +200,19 @@ const useImpresionRecibos = () => {
       }
     }, Math.max(60, Math.min(200, 3000 / total)));
 
+    // Dar un tick de render a React para que pinte inmediatamente el overlay/barra de progreso
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     try {
         // Construir URL para impresión silenciosa
         const batchPrintUrl = await construirURLImpresion(facturasParaImprimir, false, ciudadFiltro);
         // Generar PDF de vista previa
-        const response = await window.api.previewComponent(batchPrintUrl);
+        const anuncioGuardado = localStorage.getItem('anuncio_recibo');
+        const options = {
+          ...(hasCustomLogo ? { customLogo: logoSrc } : {}),
+          ...(anuncioGuardado ? { anuncio: anuncioGuardado } : {})
+        };
+        const response = await window.api.previewComponent(batchPrintUrl, options);
 
         if (response && response.success && response.path) {
           setPrintUrl(batchPrintUrl);
@@ -259,6 +269,9 @@ const useImpresionRecibos = () => {
       }
     }, Math.max(60, Math.min(200, 3000 / total)));
 
+    // Dar un tick de render a React para que pinte inmediatamente el overlay/barra de progreso
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     try {
         const previewUrl = await construirURLImpresion(facturasParaImprimir, true, ciudadFiltro);
         
@@ -267,7 +280,12 @@ const useImpresionRecibos = () => {
         console.log('Preview from URL:', previewUrl);
         
         // NOTA: previewComponent ahora devuelve { success: true, path: 'file://...' }
-        const response = await window.api.previewComponent(previewUrl);
+        const anuncioGuardado = localStorage.getItem('anuncio_recibo');
+        const options = {
+          ...(hasCustomLogo ? { customLogo: logoSrc } : {}),
+          ...(anuncioGuardado ? { anuncio: anuncioGuardado } : {})
+        };
+        const response = await window.api.previewComponent(previewUrl, options);
         console.log('Preview response:', response);
 
         if (response && response.success && response.path) {
