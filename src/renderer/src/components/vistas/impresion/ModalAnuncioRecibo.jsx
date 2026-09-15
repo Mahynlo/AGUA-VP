@@ -20,7 +20,7 @@ const anuncioModalTheme = {
 };
 
 const MENSAJE_POR_DEFECTO = "Cuidemos el agua para las futuras generaciones. Reporte cualquier fuga o problema en su medidor al teléfono de la oficina municipal.";
-const MAX_CARACTERES = 150;
+const MAX_CARACTERES = 200;
 
 const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
   const [anuncio, setAnuncio] = useState('');
@@ -49,7 +49,10 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
     try {
       const anuncioFinal = anuncio.trim() || MENSAJE_POR_DEFECTO;
       localStorage.setItem('anuncio_recibo', anuncioFinal);
-      onSave(anuncioFinal);
+      window.dispatchEvent(new CustomEvent('anuncio_recibo_changed', { detail: anuncioFinal }));
+      if (typeof onSave === 'function') {
+        onSave(anuncioFinal);
+      }
       setHasChanges(false);
       onClose();
     } finally {
