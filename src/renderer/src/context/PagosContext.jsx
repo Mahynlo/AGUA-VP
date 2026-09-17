@@ -244,7 +244,7 @@ export function usePagos() {
 // Hook específico para pagos de una factura
 export function usePagosFactura(facturaId) {
   const { obtenerPagosPorFactura } = usePagos();
-  const [pagosFacura, setPagosFactura] = useState([]);
+  const [pagosFactura, setPagosFactura] = useState([]);
 
   useEffect(() => {
     if (facturaId) {
@@ -253,5 +253,5 @@ export function usePagosFactura(facturaId) {
     }
   }, [facturaId, obtenerPagosPorFactura]);
 
-  return { pagosFacura };
+  return { pagosFactura, pagosFacura: pagosFactura };
 }
