@@ -1,5 +1,4 @@
-// context/FeedbackContext.jsx
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 
 const FeedbackContext = createContext();
 
@@ -31,15 +30,15 @@ export const FeedbackProvider = ({ children }) => {
     setMessage({ text: null, type: null, source: null });
   }, []);
 
+  const value = useMemo(() => ({
+    ...message,
+    setSuccess,
+    setError,
+    clearMessage,
+  }), [message, setSuccess, setError, clearMessage]);
+
   return (
-    <FeedbackContext.Provider
-      value={{
-        ...message,
-        setSuccess,
-        setError,
-        clearMessage,
-      }}
-    >
+    <FeedbackContext.Provider value={value}>
       {children}
     </FeedbackContext.Provider>
   );

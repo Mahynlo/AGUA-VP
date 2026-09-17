@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useRef, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFeedback } from "./FeedbackContext";
 
@@ -275,7 +275,7 @@ export const AuthProvider = ({ children }) => {
     // =====================================================
     // Login / Logout
     // =====================================================
-    const login = (token, refreshToken, expiresIn = "15m") => {
+    const login = useCallback((token, refreshToken, expiresIn = "15m") => {
         try {
             localStorage.setItem("token", token);
             if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
@@ -296,15 +296,21 @@ export const AuthProvider = ({ children }) => {
 
             obtenerSesionesActivas(decoded.id);
             programarRenovacion(expiresIn);
+            window.dispatchEvent(new CustomEvent("dashboard-update"));
 
             navigate("/home");
         } catch (error) {
             console.error("Error en login:", error);
             logout();
         }
-    };
+    }, [navigate, obtenerSesionesActivas]);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
+        if (renovacionTimerRef.current) {
+            clearTimeout(renovacionTimerRef.current);
+            renovacionTimerRef.current = null;
+        }
+
         const token = localStorage.getItem("token");
 
         if (token) {
@@ -321,27 +327,36 @@ export const AuthProvider = ({ children }) => {
 
         setUser(null);
         setSesiones([]);
+        window.dispatchEvent(new CustomEvent("dashboard-update"));
         navigate("/");
-    };
+    }, [navigate]);
 
     // =====================================================
     // API pública del contexto
     // =====================================================
-    const isAuthenticated = () => user !== null;
+    const isAuthenticated = useCallback(() => user !== null, [user]);
+
+    const value = useMemo(() => ({
+        user,
+        sesiones,
+        loading,
+        login,
+        logout,
+        renovarAccessToken,
+        obtenerSesionesActivas,
+        isAuthenticated
+    }), [
+        user,
+        sesiones,
+        loading,
+        login,
+        logout,
+        obtenerSesionesActivas,
+        isAuthenticated
+    ]);
 
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                sesiones,
-                loading,
-                login,
-                logout,
-                renovarAccessToken,
-                obtenerSesionesActivas, // Exponer para recargar manualmente
-                isAuthenticated
-            }}
-        >
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useCallback } from "react";
+import { createContext, useState, useContext, useCallback, useMemo } from "react";
 import { useAuth } from "./AuthContext";
 import { useFeedback } from "./FeedbackContext";
 
@@ -47,7 +47,7 @@ export const UsuariosProvider = ({ children }) => {
     }, []);
 
     // Crear usuario
-    const createUser = async (userData) => {
+    const createUser = useCallback(async (userData) => {
         try {
             const token = getToken();
             const res = await window.api.createUser(userData, token);
@@ -57,12 +57,12 @@ export const UsuariosProvider = ({ children }) => {
         } catch (err) {
             console.error("Error creando usuario:", err);
             setFeedbackError(err.message || "Error al crear usuario");
-            throw err; // Re-throw for local handling if needed
+            throw err;
         }
-    };
+    }, [fetchUsuarios, setSuccess, setFeedbackError]);
 
     // Actualizar usuario
-    const updateUser = async (userData) => {
+    const updateUser = useCallback(async (userData) => {
         try {
             const token = getToken();
             const res = await window.api.updateUser(userData, token);
@@ -74,10 +74,10 @@ export const UsuariosProvider = ({ children }) => {
             setFeedbackError(err.message || "Error al actualizar usuario");
             throw err;
         }
-    };
+    }, [fetchUsuarios, setSuccess, setFeedbackError]);
 
     // Eliminar / Desactivar usuario
-    const deleteUser = async (id, razon) => {
+    const deleteUser = useCallback(async (id, razon) => {
         try {
             const token = getToken();
             const res = await window.api.deleteUser({ id, razon }, token);
@@ -89,26 +89,29 @@ export const UsuariosProvider = ({ children }) => {
             setFeedbackError(err.message || "Error al eliminar usuario");
             throw err;
         }
-    };
+    }, [fetchUsuarios, setSuccess, setFeedbackError]);
 
     // Reactivar usuario
-    const reactivateUser = async (id) => {
+    const reactivateUser = useCallback(async (id) => {
         try {
             const token = localStorage.getItem('token');
             const result = await window.api.reactivateUser(id, token);
             if (result.success) {
                 setSuccess("Usuario reactivado correctamente");
                 await fetchUsuarios();
+                return result;
             } else {
                 setFeedbackError(result.error || "Error al reactivar usuario");
+                return result;
             }
         } catch (error) {
             setFeedbackError("Error de conexión al reactivar usuario");
             console.error(error);
+            throw error;
         }
-    };
+    }, [fetchUsuarios, setSuccess, setFeedbackError]);
 
-    const purgeUser = async (id) => {
+    const purgeUser = useCallback(async (id) => {
         try {
             const token = localStorage.getItem('token');
             const result = await window.api.purgeUser(id, token);
@@ -126,65 +129,64 @@ export const UsuariosProvider = ({ children }) => {
             console.error(error);
             throw error;
         }
-    };
+    }, [fetchUsuarios, setSuccess, setFeedbackError]);
 
-        const fetchPermissionsCatalog = async () => {
-            try {
-                const token = getToken();
-                const result = await window.api.fetchPermissionsCatalog(token);
-                return result?.data || [];
-            } catch (error) {
-                console.error("Error fetching permissions catalog:", error);
-                setFeedbackError(error.message || "Error al cargar catálogo de permisos");
-                return [];
+    const fetchPermissionsCatalog = useCallback(async () => {
+        try {
+            const token = getToken();
+            const result = await window.api.fetchPermissionsCatalog(token);
+            return result?.data || [];
+        } catch (error) {
+            console.error("Error fetching permissions catalog:", error);
+            setFeedbackError(error.message || "Error al cargar catálogo de permisos");
+            return [];
+        }
+    }, [setFeedbackError]);
+
+    const fetchUserPermissions = useCallback(async (id) => {
+        try {
+            const token = getToken();
+            const result = await window.api.fetchUserPermissions(id, token);
+            return result?.permissions || [];
+        } catch (error) {
+            console.error("Error fetching user permissions:", error);
+            setFeedbackError(error.message || "Error al cargar permisos del usuario");
+            return [];
+        }
+    }, [setFeedbackError]);
+
+    const updateUserPermissions = useCallback(async (id, overrides) => {
+        try {
+            const token = getToken();
+            const result = await window.api.updateUserPermissions(id, overrides, token);
+            if (!result?.success) {
+                const errMsg = result?.error || "No se pudieron actualizar los permisos";
+                setFeedbackError(errMsg);
+                throw new Error(errMsg);
             }
-        };
 
-        const fetchUserPermissions = async (id) => {
-            try {
-                const token = getToken();
-                const result = await window.api.fetchUserPermissions(id, token);
-                return result?.permissions || [];
-            } catch (error) {
-                console.error("Error fetching user permissions:", error);
-                setFeedbackError(error.message || "Error al cargar permisos del usuario");
-                return [];
-            }
-        };
-
-        const updateUserPermissions = async (id, overrides) => {
-            try {
-                const token = getToken();
-                const result = await window.api.updateUserPermissions(id, overrides, token);
-                if (!result?.success) {
-                    const errMsg = result?.error || "No se pudieron actualizar los permisos";
-                    setFeedbackError(errMsg);
-                    throw new Error(errMsg);
-                }
-
-                setSuccess("Permisos actualizados correctamente");
-                return result;
-            } catch (error) {
-                console.error("Error updating user permissions:", error);
-                setFeedbackError(error.message || "Error al actualizar permisos del usuario");
-                throw error;
-            }
-        };
+            setSuccess("Permisos actualizados correctamente");
+            return result;
+        } catch (error) {
+            console.error("Error updating user permissions:", error);
+            setFeedbackError(error.message || "Error al actualizar permisos del usuario");
+            throw error;
+        }
+    }, [setSuccess, setFeedbackError]);
 
     // Gestión de Sesiones
-    const fetchUserSessions = async (usuarioId) => {
+    const fetchUserSessions = useCallback(async (usuarioId) => {
         try {
             const token = localStorage.getItem('token');
             const result = await window.api.getSession(usuarioId, token);
-            // El backend devuelve { usuario_id, sesiones_activas: [], total: N }
             return result && result.sesiones_activas ? result.sesiones_activas : [];
         } catch (error) {
             console.error("Error fetching sessions:", error);
             return [];
         }
-    };
+    }, []);
 
-    const closeSession = async (sessionId) => {
+    const closeSession = useCallback(async (sessionId) => {
         const token = localStorage.getItem('token');
         try {
             const result = await window.api.closeSpecificSession(sessionId, token);
@@ -199,9 +201,9 @@ export const UsuariosProvider = ({ children }) => {
             setFeedbackError("Error al cerrar la sesión");
             return false;
         }
-    };
+    }, [setSuccess, setFeedbackError]);
 
-    const closeAllSessions = async (usuarioId) => {
+    const closeAllSessions = useCallback(async (usuarioId) => {
         const token = localStorage.getItem('token');
         try {
             const result = await window.api.closeAllUserSessions(usuarioId, token);
@@ -216,27 +218,42 @@ export const UsuariosProvider = ({ children }) => {
             setFeedbackError("Error al cerrar sesiones");
             return false;
         }
-    };
+    }, [setSuccess, setFeedbackError]);
+
+    const value = useMemo(() => ({
+        usuarios,
+        loading,
+        fetchUsuarios,
+        createUser,
+        updateUser,
+        deleteUser,
+        reactivateUser,
+        purgeUser,
+        fetchPermissionsCatalog,
+        fetchUserPermissions,
+        updateUserPermissions,
+        fetchUserSessions,
+        closeSession,
+        closeAllSessions
+    }), [
+        usuarios,
+        loading,
+        fetchUsuarios,
+        createUser,
+        updateUser,
+        deleteUser,
+        reactivateUser,
+        purgeUser,
+        fetchPermissionsCatalog,
+        fetchUserPermissions,
+        updateUserPermissions,
+        fetchUserSessions,
+        closeSession,
+        closeAllSessions
+    ]);
 
     return (
-        <UsuariosContext.Provider
-            value={{
-                usuarios,
-                loading,
-                fetchUsuarios,
-                createUser,
-                updateUser,
-                deleteUser,
-                reactivateUser,
-                purgeUser,
-                fetchPermissionsCatalog,
-                fetchUserPermissions,
-                updateUserPermissions,
-                fetchUserSessions,
-                closeSession,
-                closeAllSessions
-            }}
-        >
+        <UsuariosContext.Provider value={value}>
             {children}
         </UsuariosContext.Provider>
     );
