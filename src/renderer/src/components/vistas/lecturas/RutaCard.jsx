@@ -181,6 +181,7 @@ export default function RutaCard({ ruta }) {
         } else {
           setSuccess(`${n} factura${n !== 1 ? 's' : ''} generada${n !== 1 ? 's' : ''} correctamente.`, 'Facturación');
           setFacturasGeneradas(true);
+          window.dispatchEvent(new CustomEvent('dashboard-update'));
         }
       } else {
         setError(result.message || 'Error al generar facturas', 'Facturación');
@@ -241,6 +242,7 @@ export default function RutaCard({ ruta }) {
       );
       if (generadas > 0 || recalculadas > 0) {
         setFacturasGeneradas(true);
+        window.dispatchEvent(new CustomEvent('dashboard-update'));
       }
     } catch (err) {
       setError('Error inesperado al recalcular facturas', 'Facturación');

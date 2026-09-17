@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "./AuthContext";
 
 // Crear el contexto
@@ -178,24 +178,41 @@ export function RutasProvider({ children }) {
         }));
     }, []);
 
+    const value = useMemo(() => ({
+        rutas,
+        loading,
+        initialLoading,
+        actualizarRutas,
+        actualizarProgresoRuta,
+        obtenerInfoRuta,
+        periodoActual,
+        periodosInfo,
+        ultimoPeriodoRegistrado,
+        ultimoPeriodoCompleto,
+        ultimoPeriodoFacturado: ultimoPeriodoCompleto || ultimoPeriodoRegistrado, // Alias para compatibilidad con reportes e impresión
+        siguientePeriodo,
+        actualizarEstadoPeriodos,
+        pagination, // Exportar paginación
+        fetchRutas // Exponer fetch manual
+    }), [
+        rutas,
+        loading,
+        initialLoading,
+        actualizarRutas,
+        actualizarProgresoRuta,
+        obtenerInfoRuta,
+        periodoActual,
+        periodosInfo,
+        ultimoPeriodoRegistrado,
+        ultimoPeriodoCompleto,
+        siguientePeriodo,
+        actualizarEstadoPeriodos,
+        pagination,
+        fetchRutas
+    ]);
+
     return (
-        <RutasContext.Provider value={{
-            rutas,
-            loading,
-            initialLoading,
-            actualizarRutas,
-            actualizarProgresoRuta,
-            obtenerInfoRuta,
-            periodoActual,
-            periodosInfo,
-            ultimoPeriodoRegistrado,
-            ultimoPeriodoCompleto,
-            ultimoPeriodoFacturado: ultimoPeriodoCompleto || ultimoPeriodoRegistrado, // Alias para compatibilidad con reportes e impresión
-            siguientePeriodo,
-            actualizarEstadoPeriodos,
-            pagination, // Exportar paginación
-            fetchRutas // Exponer fetch manual
-        }}>
+        <RutasContext.Provider value={value}>
             {children}
         </RutasContext.Provider>
     );

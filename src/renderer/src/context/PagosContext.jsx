@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "./AuthContext";
 import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
@@ -211,22 +211,37 @@ export function PagosProvider({ children }) {
     return pagos.filter(pago => pago.factura_id === facturaId);
   }, [pagos]);
 
+  const value = useMemo(() => ({
+    pagos,
+    pagination,
+    resumen,
+    filtros, // Exponer filtros
+    setFiltros,
+    loading,
+    initialLoading,
+    error,
+    actualizarPagos,
+    registrarPago,
+    registrarPagoDistribuido,
+    obtenerPagosPorFactura,
+    fetchPagos
+  }), [
+    pagos,
+    pagination,
+    resumen,
+    filtros,
+    loading,
+    initialLoading,
+    error,
+    actualizarPagos,
+    registrarPago,
+    registrarPagoDistribuido,
+    obtenerPagosPorFactura,
+    fetchPagos
+  ]);
+
   return (
-    <PagosContext.Provider value={{
-      pagos,
-      pagination,
-      resumen,
-      filtros, // Exponer filtros
-      setFiltros,
-      loading,
-      initialLoading,
-      error,
-      actualizarPagos,
-      registrarPago,
-      registrarPagoDistribuido,
-      obtenerPagosPorFactura,
-      fetchPagos
-    }}>
+    <PagosContext.Provider value={value}>
       {children}
     </PagosContext.Provider>
   );

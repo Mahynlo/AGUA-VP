@@ -1,5 +1,4 @@
-// src/context/appAuthContext.jsx
-import React, { createContext, useState, useEffect,useContext } from "react";
+import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react";
 
 const AuthAppContext = createContext();
 
@@ -53,14 +52,14 @@ export const AuthAppProvider = ({ children }) => {
         }
     };
 
-    const registrarApp = async () => {
+    const registrarApp = useCallback(async () => {
         try {
             const res = await window.authApp.registrarApp("Mi App en Producción");
-            if (res?.success && res.token) { //si la respuesta es exitosa y contiene un token
+            if (res?.success && res.token) {
                 setToken(res.token);
                 setModalAbierto(false);
                 console.log("App registrada exitosamente:", res);
-                setError(null); // Limpia cualquier error anterior
+                setError(null);
             } else {
                 setError(res?.message || "No se pudo registrar la app. Verifica tu conexión a internet.");
                 console.error("Error al registrar app:", res?.message || "Error desconocido");
@@ -69,7 +68,7 @@ export const AuthAppProvider = ({ children }) => {
             setError("Error al conectar. Verifica tu conexión a internet.");
             console.error("Excepción al registrar app:", err);
         }
-    };
+    }, []);
 
 
     useEffect(() => {
@@ -107,8 +106,15 @@ export const AuthAppProvider = ({ children }) => {
         };
     }, []);
 
+    const value = useMemo(() => ({
+        token,
+        modalAbierto,
+        registrarApp,
+        error
+    }), [token, modalAbierto, registrarApp, error]);
+
     return (
-        <AuthAppContext.Provider value={{ token, modalAbierto, registrarApp, error }}>
+        <AuthAppContext.Provider value={value}>
             {children}
         </AuthAppContext.Provider>
     );

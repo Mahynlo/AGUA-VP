@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react";
 import { useAuth } from "./AuthContext";
 
 const DeudoresContext = createContext();
@@ -81,8 +81,22 @@ export function DeudoresProvider({ children }) {
         };
     }, [fetchDeudores]);
 
+    const value = useMemo(() => ({
+        deudores,
+        estadisticas,
+        loading,
+        error,
+        fetchDeudores
+    }), [
+        deudores,
+        estadisticas,
+        loading,
+        error,
+        fetchDeudores
+    ]);
+
     return (
-        <DeudoresContext.Provider value={{ deudores, estadisticas, loading, error, fetchDeudores }}>
+        <DeudoresContext.Provider value={value}>
             {children}
         </DeudoresContext.Provider>
     );

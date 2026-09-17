@@ -224,7 +224,7 @@ export function FacturasProvider({ children }) {
     };
   }, [estadisticas, facturasComputadas]);
 
-  const contextValue = {
+  const contextValue = useMemo(() => ({
     // Datos principales
     facturas,
     pagination,
@@ -255,7 +255,28 @@ export function FacturasProvider({ children }) {
     // Funciones de actualización
     actualizarFacturas,
     fetchFacturas
-  };
+  }), [
+    facturas,
+    pagination,
+    loading,
+    initialLoading,
+    error,
+    estadisticas,
+    metadata,
+    filtros,
+    aplicarFiltros,
+    limpiarFiltros,
+    filtrarPorCliente,
+    filtrarPorEstado,
+    filtrarPorPueblo,
+    filtrarPorPeriodo,
+    filtrarPorFechas,
+    facturasComputadas,
+    buscarFacturasCliente,
+    obtenerEstadisticas,
+    actualizarFacturas,
+    fetchFacturas
+  ]);
 
   return (
     <FacturasContext.Provider value={contextValue}>
