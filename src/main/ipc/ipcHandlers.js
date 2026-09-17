@@ -1075,6 +1075,10 @@ export default function IpcHandlers() {
       const values = headers.map((h) => {
         const v = row[h]
         if (colTypes[h] === 'date' && typeof v === 'string') return new Date(v)
+        // Sanitizar si accidentalmente viniera un objeto complejo para evitar interpretaciones erróneas en ExcelJS
+        if (v && typeof v === 'object' && !(v instanceof Date)) {
+          return JSON.stringify(v)
+        }
         return v ?? ''
       })
       const dataRow = sheet.addRow(values)
@@ -1103,15 +1107,24 @@ export default function IpcHandlers() {
     workbook.creator = 'AguaVP'
     workbook.created = new Date()
 
-    const isMultiSheet = !Array.isArray(data) && typeof data === 'object'
+    const MAX_SAFE_ROWS = 100000
+    const isMultiSheet = !Array.isArray(data) && typeof data === 'object' && data !== null
 
     if (isMultiSheet) {
       for (const [sheetName, rows] of Object.entries(data)) {
         if (!Array.isArray(rows) || rows.length === 0) continue
-        const sheet = workbook.addWorksheet(sheetName.substring(0, 31))
+        if (rows.length > MAX_SAFE_ROWS) {
+          throw new Error(`La hoja "${sheetName}" excede el límite máximo seguro (${MAX_SAFE_ROWS} filas)`)
+        }
+        // Excel prohíbe caracteres especiales: \ / ? * : [ ] y máx 31 caracteres
+        const safeSheetName = String(sheetName).replace(/[/\\?*:[\]]/g, '_').trim().substring(0, 31) || 'Hoja'
+        const sheet = workbook.addWorksheet(safeSheetName)
         await setupHoja(sheet, rows)
       }
-    } else {
+    } else if (Array.isArray(data)) {
+      if (data.length > MAX_SAFE_ROWS) {
+        throw new Error(`Los datos exceden el límite máximo seguro (${MAX_SAFE_ROWS} filas)`)
+      }
       const sheet = workbook.addWorksheet('Datos')
       await setupHoja(sheet, data)
     }
@@ -1123,16 +1136,23 @@ export default function IpcHandlers() {
   ipcMain.handle('save-file-dialog', async (event, { data, fileName, format }) => {
     const win = BrowserWindow.fromWebContents(event.sender)
 
+    // Sanitizar formato y nombre de archivo para prevenir Path Traversal y caracteres prohibidos
+    const safeFormat = format === 'csv' ? 'csv' : 'xlsx'
+    const safeBaseName = path
+      .basename(String(fileName || 'exportacion'))
+      .replace(/[/\\?%*:|"<>]/g, '_')
+      .trim() || 'exportacion'
+
     const options = {
       title: 'Guardar Archivo',
       defaultPath: path.join(
         app.getPath('downloads'),
-        `${fileName}.${format === 'csv' ? 'csv' : 'xlsx'}`
+        `${safeBaseName}.${safeFormat}`
       ),
       filters: [
         {
-          name: format === 'csv' ? 'Archivos CSV' : 'Archivos Excel',
-          extensions: [format === 'csv' ? 'csv' : 'xlsx']
+          name: safeFormat === 'csv' ? 'Archivos CSV' : 'Archivos Excel',
+          extensions: [safeFormat]
         }
       ]
     }
@@ -1145,7 +1165,7 @@ export default function IpcHandlers() {
 
     try {
       let buffer
-      if (format === 'xlsx') {
+      if (safeFormat === 'xlsx') {
         buffer = await generarExcelBuffer(data)
       } else {
         // CSV con BOM para soporte UTF-8 en Excel
