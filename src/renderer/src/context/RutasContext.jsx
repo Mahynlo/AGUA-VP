@@ -113,10 +113,11 @@ export function RutasProvider({ children }) {
         }
     }, [user, fetchRutas, actualizarEstadoPeriodos]);
 
-    // Escuchar eventos de cambios en lecturas/rutas para refrescar periodos
+    // Escuchar eventos de cambios en lecturas/rutas para refrescar periodos y lista de rutas
     useEffect(() => {
         const handler = () => {
             actualizarEstadoPeriodos();
+            fetchRutas();
         };
         window.addEventListener('rutas-changed', handler);
         window.addEventListener('lectura-guardada', handler);
@@ -124,7 +125,7 @@ export function RutasProvider({ children }) {
             window.removeEventListener('rutas-changed', handler);
             window.removeEventListener('lectura-guardada', handler);
         };
-    }, [actualizarEstadoPeriodos]);
+    }, [actualizarEstadoPeriodos, fetchRutas]);
 
     // Actualizar cuando se restaura la conexión
     useEffect(() => {
@@ -189,6 +190,7 @@ export function RutasProvider({ children }) {
             periodosInfo,
             ultimoPeriodoRegistrado,
             ultimoPeriodoCompleto,
+            ultimoPeriodoFacturado: ultimoPeriodoCompleto || ultimoPeriodoRegistrado, // Alias para compatibilidad con reportes e impresión
             siguientePeriodo,
             actualizarEstadoPeriodos,
             pagination, // Exportar paginación

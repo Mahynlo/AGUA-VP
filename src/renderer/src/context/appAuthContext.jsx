@@ -22,27 +22,30 @@ export const AuthAppProvider = ({ children }) => {
 
         try {
             const status = await window.api.checkServerStatus();
-            if (status?.success) {
-                const tokenLocal = await window.authApp.leerToken();
-                if (tokenLocal?.success && tokenLocal.token) {
-                    setToken(tokenLocal.token);
+            const tokenLocal = await window.authApp.leerToken();
+
+            // 1. Si ya existe un token local válido, asignarlo
+            if (tokenLocal?.success && tokenLocal.token) {
+                setToken(tokenLocal.token);
+                setModalAbierto(false);
+                setError(null);
+                return;
+            }
+
+            // 2. Si no hay token local pero el servidor está en línea, asegurar/registrar automáticamente
+            if (status?.success || status?.status === "OK") {
+                const res = await window.authApp.ensureToken("Mi App en Producción");
+                if (res?.success && res.token) {
+                    setToken(res.token);
+                    setModalAbierto(false);
+                    setError(null);
+                    return;
                 }
-                setModalAbierto(false);
-                setError(null);
-                return;
             }
 
-            const res = await window.authApp.registrarApp("Mi App en Producción");
-            if (res?.success && res.token) {
-                setToken(res.token);
-                setModalAbierto(false);
-                setError(null);
-                return;
-            }
-
-            // Si no pudo garantizar token, forzar modal de registro.
+            // 3. Si no pudo garantizar token, forzar modal de registro
             setModalAbierto(true);
-            setError(status?.message || res?.message || "No se pudo validar el token de aplicación.");
+            setError(status?.message || "Token de app no disponible. Registra la app para continuar.");
         } catch (err) {
             setModalAbierto(true);
             setError("Error al validar el token de aplicación.");
