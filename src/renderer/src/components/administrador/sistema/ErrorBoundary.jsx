@@ -51,13 +51,13 @@ export default class ErrorBoundary extends Component {
                   size="sm"
                   variant="ghost"
                   className="text-red-500 dark:text-red-400"
-                  endContent={this.state.showDetail
-                    ? <HiChevronUp className="w-4 h-4" />
-                    : <HiChevronDown className="w-4 h-4" />
-                  }
                   onPress={() => this.setState((s) => ({ showDetail: !s.showDetail }))}
                 >
                   {this.state.showDetail ? "Ocultar detalle" : "Ver detalle técnico"}
+                  {this.state.showDetail
+                    ? <HiChevronUp className="w-4 h-4" />
+                    : <HiChevronDown className="w-4 h-4" />
+                  }
                 </Button>
               </div>
 

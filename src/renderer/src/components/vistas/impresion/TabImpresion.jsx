@@ -80,8 +80,8 @@ const TabImpresion = () => {
                 size="sm" 
                 variant="flat" 
                 className="font-bold bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 shadow-sm"
-                startContent={<HiLink className="w-4 h-4" />}
               >
+                <HiLink className="w-4 h-4" />
                 Test URLs
               </Button>
               <Button 
@@ -89,8 +89,8 @@ const TabImpresion = () => {
                 size="sm" 
                 variant="flat" 
                 className="font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-transparent shadow-none"
-                startContent={<HiDatabase className="w-4 h-4" />}
               >
+                <HiDatabase className="w-4 h-4" />
                 Datos Mock
               </Button>
               <Button 
@@ -99,8 +99,8 @@ const TabImpresion = () => {
                 size="sm" 
                 variant="flat" 
                 className="font-bold bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 shadow-sm"
-                startContent={<HiTemplate className="w-4 h-4" />}
               >
+                <HiTemplate className="w-4 h-4" />
                 Ver Plantilla
               </Button>
               <Button 
@@ -109,8 +109,8 @@ const TabImpresion = () => {
                 size="sm" 
                 variant="flat" 
                 className="font-bold bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 shadow-sm"
-                startContent={<HiDocumentText className="w-4 h-4" />}
               >
+                <HiDocumentText className="w-4 h-4" />
                 Reporte
               </Button>
             </div>

@@ -75,10 +75,10 @@ export const SeccionEliminar = ({ clienteId, onEliminar }) => {
               color="danger" 
               variant="ghost"
               className="font-bold bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400"
-              startContent={<HiTrash className="w-4 h-4" />}
               onPress={handleEliminar}
               isDisabled={!confirmacion || razon.trim().length < 10}
             >
+              <HiTrash className="w-4 h-4" />
               Desactivar Cliente
             </Button>
           </Tooltip>

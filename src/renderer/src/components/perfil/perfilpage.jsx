@@ -367,8 +367,8 @@ export default function PerfilPage() {
                     size="sm" 
                     variant="ghost" 
                     className={`font-bold text-[10px] uppercase tracking-widest px-2.5 border ${rolBadgeConfig.bg}`}
-                    startContent={<HiShieldCheck className={`w-3.5 h-3.5 ml-1 ${rolBadgeConfig.iconColor}`} />}
                   >
+                    <HiShieldCheck className={`w-3.5 h-3.5 ml-1 ${rolBadgeConfig.iconColor}`} />
                     {rolBadgeConfig.label}
                   </Chip>
                 </div>
@@ -401,8 +401,8 @@ export default function PerfilPage() {
                     onPress={handleChangeAvatar}
                     isLoading={changingAvatar}
                     className="flex-1 font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm h-11 text-xs transition-transform active:scale-95"
-                    startContent={!changingAvatar && <HiCamera className="text-base" />}
                   >
+                    {!changingAvatar && <HiCamera className="text-base" />}
                     {changingAvatar ? "Cargando..." : "Cambiar foto"}
                   </Button>
                   {avatarSrc && (
@@ -723,8 +723,8 @@ export default function PerfilPage() {
                         className="font-bold text-xs h-9 rounded-xl text-slate-600 dark:text-zinc-400 hover:bg-slate-200/60 dark:hover:bg-zinc-800 self-start sm:self-auto"
                         onPress={handleRefreshSessions}
                         isLoading={refreshingSessions}
-                        startContent={!refreshingSessions && <HiRefresh className="w-4 h-4" />}
                       >
+                        {!refreshingSessions && <HiRefresh className="w-4 h-4" />}
                         Actualizar
                       </Button>
                     </div>
@@ -776,8 +776,8 @@ export default function PerfilPage() {
                                   className="font-bold shrink-0 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-xl h-9 px-3 text-xs"
                                   onPress={() => handleCloseSession(sesion.id)}
                                   isLoading={closingSession === sesion.id}
-                                  startContent={closingSession !== sesion.id && <HiBan className="w-4 h-4" />}
                                 >
+                                  {closingSession !== sesion.id && <HiBan className="w-4 h-4" />}
                                   Cerrar Sesión
                                 </Button>
                               ) : (

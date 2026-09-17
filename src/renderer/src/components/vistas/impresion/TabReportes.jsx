@@ -565,8 +565,8 @@ const TabReportes = () => {
                     onPress={handlePreviewLecturas}
                     isLoading={accion === 'preview-lecturas'}
                     isDisabled={procesando || loadingLecturas}
-                    startContent={accion !== 'preview-lecturas' && <HiEye className="text-lg" />}
                   >
+                    {accion !== 'preview-lecturas' && <HiEye className="text-lg" />}
                     {accion === 'preview-lecturas' ? 'Generando PDF...' : 'Vista Previa del Reporte'}
                   </Button>
 
@@ -576,8 +576,8 @@ const TabReportes = () => {
                     onPress={handlePrintLecturas}
                     isLoading={accion === 'print-lecturas'}
                     isDisabled={procesando || loadingLecturas}
-                    startContent={accion !== 'print-lecturas' && <HiPrinter className="text-lg" />}
                   >
+                    {accion !== 'print-lecturas' && <HiPrinter className="text-lg" />}
                     {accion === 'print-lecturas' ? 'Preparando...' : 'Imprimir Directamente'}
                   </Button>
 
@@ -663,8 +663,8 @@ const TabReportes = () => {
             onPress={handlePreviewPadron}
             isLoading={accion === 'preview-padron'}
             isDisabled={procesando}
-            startContent={accion !== 'preview-padron' && <HiEye className="text-lg" />}
           >
+            {accion !== 'preview-padron' && <HiEye className="text-lg" />}
             {accion === 'preview-padron' ? 'Generando...' : 'Vista Previa'}
           </Button>
 
@@ -673,8 +673,8 @@ const TabReportes = () => {
             onPress={handlePrintPadron}
             isLoading={accion === 'print-padron'}
             isDisabled={procesando}
-            startContent={accion !== 'print-padron' && <HiPrinter className="text-lg" />}
           >
+            {accion !== 'print-padron' && <HiPrinter className="text-lg" />}
             {accion === 'print-padron' ? 'Preparando...' : 'Imprimir Padrón'}
           </Button>
         </div>
@@ -744,8 +744,8 @@ const TabReportes = () => {
             onPress={handleExportar}
             isLoading={accion === 'export'}
             isDisabled={procesando}
-            startContent={accion !== 'export' && <HiDownload className="text-lg" />}
           >
+            {accion !== 'export' && <HiDownload className="text-lg" />}
             {accion === 'export' ? 'Generando...' : 'Generar Archivo'}
           </Button>
         </div>

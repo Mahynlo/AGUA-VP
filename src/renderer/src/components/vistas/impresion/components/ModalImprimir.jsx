@@ -199,17 +199,17 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', def
                                     size="sm"
                                     onPress={handleSavePdf}
                                     className="font-bold text-slate-700 dark:text-zinc-200 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl h-10 px-4 text-xs transition-all"
-                                    startContent={<HiDownload className="text-base" />}
                                 >
+                                    <HiDownload className="text-base" />
                                     <span className="hidden sm:inline">Guardar PDF</span>
                                 </Button>
                                 <Button
                                     size="sm"
                                     onPress={() => setShowPrint(true)}
                                     isDisabled={!printUrl}
-                                    startContent={<HiPrinter className="text-base" />}
                                     className="font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-10 px-5 text-xs shadow-sm shadow-indigo-500/20 transition-all"
                                 >
+                                    <HiPrinter className="text-base" />
                                     Imprimir
                                 </Button>
                                 <div className="w-px h-6 mx-1 bg-slate-200 dark:border-zinc-800" />
@@ -360,9 +360,9 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', def
                                     onPress={handlePrint}
                                     isLoading={isPrinting}
                                     isDisabled={isPrinting || !pdfUrl || printers.length === 0}
-                                    startContent={!isPrinting && <HiPrinter className="text-lg" />}
                                     className="w-full font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 shadow-sm transition-all"
                                 >
+                                    {!isPrinting && <HiPrinter className="text-lg" />}
                                     {isPrinting ? 'Imprimiendo...' : 'Imprimir Ahora'}
                                 </Button>
                                 <div className="grid grid-cols-2 gap-3">
@@ -377,9 +377,9 @@ const ModalImprimir = ({ pdfUrl, printUrl, onClose, initialMode = 'preview', def
                                     <Button
                                         variant="ghost"
                                         onPress={handleSavePdf}
-                                        startContent={<HiDownload className="text-sm opacity-70" />}
                                         className="font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 rounded-xl h-10 text-xs transition-all"
                                     >
+                                        <HiDownload className="text-sm opacity-70" />
                                         Guardar
                                     </Button>
                                 </div>

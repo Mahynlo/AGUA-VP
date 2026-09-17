@@ -153,13 +153,13 @@ export default function PanelConfiguracion() {
         <Button
           onPress={handleSave}
           isLoading={saving}
-          startContent={saved ? null : <HiSave className="text-lg" />}
           className={`font-bold h-[52px] px-8 w-full sm:w-auto shadow-sm rounded-xl transition-all ${
             saved 
               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
               : "bg-slate-900 text-white dark:bg-white dark:text-zinc-950"
           }`}
         >
+          {!saved && <HiSave className="text-lg" />}
           {saved ? "Guardado Exitoso" : "Guardar Cambios"}
         </Button>
       </div>

@@ -327,11 +327,11 @@ const SelectorPeriodoAvanzado = ({
             <div className="flex items-center gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800/80 mt-4">
               <Button
                 variant="ghost"
-                startContent={<HiChevronLeft className="w-4 h-4" />}
                 onPress={() => handleNavegar(periodoAnterior)}
                 isDisabled={isDisabled || !periodoAnterior}
                 className="flex-1 font-bold text-xs bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-xl h-9"
               >
+                <HiChevronLeft className="w-4 h-4" />
                 Anterior
               </Button>
               
@@ -346,12 +346,12 @@ const SelectorPeriodoAvanzado = ({
 
               <Button
                 variant="ghost"
-                endContent={<HiChevronRight className="w-4 h-4" />}
                 onPress={() => handleNavegar(periodoSiguiente)}
                 isDisabled={isDisabled || !periodoSiguiente}
                 className="flex-1 font-bold text-xs bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-xl h-9"
               >
                 Siguiente
+                <HiChevronRight className="w-4 h-4" />
               </Button>
             </div>
 

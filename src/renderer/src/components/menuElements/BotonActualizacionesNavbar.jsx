@@ -136,9 +136,8 @@ export default function BotonActualizacionesNavbar() {
       <div className="relative inline-flex items-center">
         <Button
           onPress={handleClick}
-          radius="full"
           variant="ghost"
-          className={`relative text-white/90 hover:text-white transition-all ${
+          className={`relative text-white/90 hover:text-white transition-all rounded-full ${
             updateAvailable || updateDownloaded
               ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 ring-2 ring-amber-400/50 animate-pulse"
               : ""
