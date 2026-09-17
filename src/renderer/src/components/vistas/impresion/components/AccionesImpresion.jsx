@@ -148,10 +148,10 @@ const AccionesImpresion = ({
             <Button
               className="w-full h-12 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm rounded-xl transition-all active:scale-98"
               onPress={onVistaPrevia}
-              startContent={procesandoAccion !== 'vista-previa' && <HiEye className="text-lg" />}
               isLoading={procesandoAccion === 'vista-previa'}
               isDisabled={isAnyProcessing}
             >
+              {procesandoAccion !== 'vista-previa' && <HiEye className="text-lg" />}
               {procesandoAccion === 'vista-previa' ? 'Generando PDF...' : 'Abrir Vista Previa'}
             </Button>
           </CardContent>
@@ -224,10 +224,10 @@ const AccionesImpresion = ({
             <Button
               className="w-full h-12 font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm rounded-xl transition-all active:scale-98"
               onPress={onImprimir}
-              startContent={procesandoAccion !== 'imprimir' && <HiPrinter className="text-lg" />}
               isLoading={procesandoAccion === 'imprimir'}
               isDisabled={isAnyProcessing}
             >
+              {procesandoAccion !== 'imprimir' && <HiPrinter className="text-lg" />}
               {procesandoAccion === 'imprimir' ? 'Enviando a impresora...' : 'Imprimir Directamente'}
             </Button>
           </CardContent>

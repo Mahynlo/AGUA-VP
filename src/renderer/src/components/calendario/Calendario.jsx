@@ -316,9 +316,8 @@ const CalendarComponent = () => {
                         <Button
                             isIconOnly
                             variant="ghost"
-                            radius="full"
                             onClick={() => changeMonth(-1)}
-                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8"
+                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8 rounded-full"
                         >
                             <HiChevronLeft className="w-5 h-5" />
                         </Button>
@@ -330,9 +329,8 @@ const CalendarComponent = () => {
                         <Button
                             isIconOnly
                             variant="ghost"
-                            radius="full"
                             onClick={() => changeMonth(1)}
-                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8"
+                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8 rounded-full"
                         >
                             <HiChevronRight className="w-5 h-5" />
                         </Button>

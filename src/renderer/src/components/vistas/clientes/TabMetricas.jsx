@@ -147,8 +147,8 @@ export const TabMetricas = () => {
           color="default"
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm"
-          startContent={<HiDownload className="text-lg" />}
         >
+          <HiDownload className="text-lg" />
           Exportar Reporte
         </Button>
         {dropdownOpen && (

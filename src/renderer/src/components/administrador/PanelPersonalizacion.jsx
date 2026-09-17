@@ -113,8 +113,8 @@ export default function PanelPersonalizacion() {
                 onPress={handleSelectLogo}
                 isLoading={savingLogo}
                 className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11"
-                startContent={!savingLogo && <HiUpload className="text-lg" />}
               >
+                {!savingLogo && <HiUpload className="text-lg" />}
                 {savingLogo ? "Cargando..." : "Seleccionar imagen"}
               </Button>
 
@@ -123,8 +123,8 @@ export default function PanelPersonalizacion() {
                   onPress={clearCustomLogo}
                   variant="ghost"
                   className="font-bold bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/20 rounded-xl px-6 h-11"
-                  startContent={<HiTrash className="text-lg" />}
                 >
+                  <HiTrash className="text-lg" />
                   Restaurar predeterminado
                 </Button>
               )}
@@ -194,8 +194,8 @@ export default function PanelPersonalizacion() {
               onPress={handleAddLoginImages}
               isLoading={addingLoginImages}
               className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11"
-              startContent={!addingLoginImages && <HiPlusCircle className="text-lg" />}
             >
+              {!addingLoginImages && <HiPlusCircle className="text-lg" />}
               {addingLoginImages ? "Cargando..." : "Agregar imágenes"}
             </Button>
 
@@ -204,8 +204,8 @@ export default function PanelPersonalizacion() {
                 onPress={clearLoginImages}
                 variant="ghost"
                 className="font-bold bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/20 rounded-xl px-6 h-11"
-                startContent={<HiTrash className="text-lg" />}
               >
+                <HiTrash className="text-lg" />
                 Restaurar predeterminadas
               </Button>
             )}

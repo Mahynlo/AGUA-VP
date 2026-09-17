@@ -82,9 +82,9 @@ const ModalBienvenida = () => {
                 color="primary"
                 onPress={handleRegistrar}
                 isLoading={isRegistering}
-                startContent={!isRegistering && <HiCheck className="text-lg" />}
                 className="w-full sm:w-auto h-12 px-8 font-bold shadow-lg shadow-blue-500/30 text-white rounded-xl"
               >
+                {!isRegistering && <HiCheck className="text-lg" />}
                 {isRegistering ? "Registrando equipo..." : "Registrar y Continuar"}
               </Button>
             </ModalFooter>

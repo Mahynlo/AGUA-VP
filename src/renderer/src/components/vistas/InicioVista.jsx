@@ -110,9 +110,9 @@ const InicioVista = () => {
               variant="ghost"
               onPress={() => refetch && refetch()}
               isLoading={loading}
-              startContent={!loading && <HiRefresh className="text-lg" />}
               className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 font-bold rounded-xl h-11 px-5 shadow-sm"
             >
+              {!loading && <HiRefresh className="text-lg" />}
               Recargar
             </Button>
           </div>
@@ -140,9 +140,9 @@ const InicioVista = () => {
                 size="sm"
                 color={consumo.variacion >= 0 ? "danger" : "success"}
                 variant="ghost"
-                className="font-bold text-[10px] uppercase tracking-wider px-1 h-6"
-                startContent={consumo.variacion >= 0 ? <HiTrendingUp className="w-3 h-3" /> : <HiTrendingDown className="w-3 h-3" />}
+                className="font-bold text-[10px] uppercase tracking-wider px-1.5 h-6"
               >
+                {consumo.variacion >= 0 ? <HiTrendingUp className="w-3 h-3" /> : <HiTrendingDown className="w-3 h-3" />}
                 {consumo.variacion > 0 ? '+' : ''}{consumo.variacion}% vs ant.
               </Chip>
             </div>
@@ -165,9 +165,9 @@ const InicioVista = () => {
               <Chip
                 size="sm"
                 variant="ghost"
-                className="font-bold text-[10px] uppercase tracking-wider px-1 h-6 bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                startContent={<HiTrendingUp className="w-3 h-3" />}
+                className="font-bold text-[10px] uppercase tracking-wider px-1.5 h-6 bg-blue-500/10 text-blue-600 dark:text-blue-400"
               >
+                <HiTrendingUp className="w-3 h-3" />
                 +{clientes.nuevos} nuevos
               </Chip>
               <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Este mes</span>
@@ -220,9 +220,9 @@ const InicioVista = () => {
                 size="sm"
                 color={recaudo.variacion >= 0 ? "success" : "danger"}
                 variant="ghost"
-                className="font-bold text-[10px] uppercase tracking-wider px-1 h-6"
-                startContent={recaudo.variacion >= 0 ? <HiTrendingUp className="w-3 h-3" /> : <HiTrendingDown className="w-3 h-3" />}
+                className="font-bold text-[10px] uppercase tracking-wider px-1.5 h-6"
               >
+                {recaudo.variacion >= 0 ? <HiTrendingUp className="w-3 h-3" /> : <HiTrendingDown className="w-3 h-3" />}
                 {recaudo.variacion > 0 ? '+' : ''}{recaudo.variacion}% vs ant.
               </Chip>
             </div>

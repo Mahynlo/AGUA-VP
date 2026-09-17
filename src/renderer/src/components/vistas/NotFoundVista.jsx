@@ -39,8 +39,8 @@ const NotFoundVista = () => {
                         onClick={() => navigate(-1)}
                         variant="ghost"
                         className="w-full sm:w-auto font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 h-12 px-6 transition-colors"
-                        startContent={<FlechaReturnIcon className="w-5 h-5" />}
                     >
+                        <FlechaReturnIcon className="w-5 h-5" />
                         Regresar
                     </Button>
                     
