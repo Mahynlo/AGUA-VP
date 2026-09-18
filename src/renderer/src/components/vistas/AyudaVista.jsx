@@ -83,15 +83,28 @@ const AyudaVista = () => {
   }, []);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const onKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k' && !isOpen) {
         e.preventDefault();
         onOpen();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onOpen]);
+
+  // Actualizar título de la ventana para reflejar el Centro de Ayuda o el manual activo
+  useEffect(() => {
+    const prevTitle = document.title;
+    if (currentMetadata?.titulo) {
+      document.title = `${currentMetadata.titulo} — Centro de Ayuda AguaVP`;
+    } else {
+      document.title = "Centro de Ayuda - AguaVP";
+    }
+    return () => {
+      document.title = prevTitle;
+    };
+  }, [currentMetadata?.titulo]);
 
   // ==========================================
   // 3. CARGA DE ARCHIVO Y NAVEGACIÓN

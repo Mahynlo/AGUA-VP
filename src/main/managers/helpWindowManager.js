@@ -48,7 +48,18 @@ export function openHelpWindow(section = null, file = null) {
   // Configurar autocorrector en Español
   helpWindow.webContents.session.setSpellCheckerLanguages(['es']);
 
+  // Evitar que index.html sobreescriba el título con el de la ventana principal
+  helpWindow.on('page-title-updated', (event, title) => {
+    event.preventDefault();
+    if (title && title.includes('Centro de Ayuda')) {
+      helpWindow.setTitle(title);
+    } else {
+      helpWindow.setTitle('Centro de Ayuda - AguaVP');
+    }
+  });
+
   helpWindow.on('ready-to-show', () => {
+    helpWindow.setTitle('Centro de Ayuda - AguaVP');
     helpWindow.show();
   });
 
@@ -58,6 +69,7 @@ export function openHelpWindow(section = null, file = null) {
   });
 
   helpWindow.webContents.on('did-finish-load', () => {
+    helpWindow.setTitle('Centro de Ayuda - AguaVP');
     restoreZoom(helpWindow);
     if (section && file) {
       setTimeout(() => {
