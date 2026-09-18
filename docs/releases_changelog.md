@@ -53,10 +53,11 @@
 
 ---
 
-#### ⚡ 4. Optimización Extrema para Equipos de Oficina con Solo CPU
-- **Eliminación de librerías pesadas:**
+#### ⚡ 4. Optimización Extrema para Equipos de Oficina (CPU y Almacenamiento)
+- **Eliminación de librerías pesadas y adelgazamiento de paquete:**
   - Desinstalación completa de `framer-motion`: sustitución por transiciones CSS nativas ligeras de Tailwind, reduciendo el consumo de CPU en reposo a **0 % - 1 %**.
   - Desinstalación de `pdfjs-dist`: reducción sustancial en el peso de empaquetado del bundle final.
+  - Reorganización de dependencias exclusivas del frontend (`mermaid`, `react-icons`, `@heroui/react`, `apexcharts`, etc.) a `devDependencies`: se evita duplicar más de 200 MB de `node_modules` crudos dentro del instalador y en disco.
 - **Carga Diferida (*Lazy Loading*):**
   - Carga diferida con `React.lazy()` y `Suspense` en todas las vistas principales y reportes pesados, reduciendo la memoria RAM inicial a ~140 MB.
 
