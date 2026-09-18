@@ -269,11 +269,61 @@ jobs:
       - name: Build app
         run: npm run build
 
-      - name: Build and publish Windows release
+      - name: Build Windows release
+        run: npx electron-builder --win --publish never
+
+      - name: Publish to GitHub Releases
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_RELEASE_TYPE: ${{ steps.version_check.outputs.release_type }}
-        run: npx electron-builder --win --publish always --config.publish.releaseType=$env:PUBLISH_RELEASE_TYPE
+          TAG: ${{ github.ref_name }}
+          RELEASE_TYPE: ${{ steps.version_check.outputs.release_type }}
+          RELEASE_VERSION: ${{ steps.version_check.outputs.release_version }}
+        run: |
+          $tag = if ($env:TAG) { $env:TAG } else { "v$env:RELEASE_VERSION" }
+          $files = Get-ChildItem -Path "dist" -File | Where-Object { $_.Extension -in @('.exe', '.blockmap', '.yml') }
+
+          Write-Host "Archivos encontrados para publicar:"
+          foreach ($f in $files) {
+            $mb = [math]::Round($f.Length / 1MB, 2)
+            Write-Host " - $($f.Name) ($mb MB)"
+          }
+
+          if ($files.Count -eq 0) {
+            throw "No se encontraron instaladores en dist/"
+          }
+
+          $filePaths = $files | ForEach-Object { $_.FullName }
+
+          # Verificar si el release ya existe en GitHub
+          $releaseExists = $false
+          try {
+            $check = gh release view $tag 2>&1
+            if ($LASTEXITCODE -eq 0) {
+              $releaseExists = $true
+            }
+          } catch {
+            $releaseExists = $false
+          }
+
+          if (-not $releaseExists) {
+            Write-Host "Creando release $tag en GitHub..."
+            $extraArgs = @()
+            if ($env:RELEASE_TYPE -eq 'prerelease') {
+              $extraArgs += '--prerelease'
+            }
+            if (Test-Path "docs/releases_changelog.md") {
+              $extraArgs += '--notes-file'
+              $extraArgs += 'docs/releases_changelog.md'
+            }
+            gh release create $tag @filePaths --title "$tag" @extraArgs
+          } else {
+            Write-Host "El release $tag ya existe. Subiendo archivos con --clobber..."
+            gh release upload $tag @filePaths --clobber
+            if (Test-Path "docs/releases_changelog.md") {
+              gh release edit $tag --notes-file "docs/releases_changelog.md"
+            }
+          }
 
       - name: Upload build outputs
         if: always()
