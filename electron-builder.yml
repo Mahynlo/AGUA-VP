@@ -17,6 +17,8 @@ files: # archivos que se incluirán en la aplicación
 extraResources: # Recursos externos que se copiarán al directorio de recursos
   - from: "ayuda"
     to: "ayuda"
+  - from: "resources"
+    to: "resources"
 asarUnpack: # archivos que no se empaquetarán en el archivo asar
   - resources/**
   - grafos/**

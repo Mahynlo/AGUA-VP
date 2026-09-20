@@ -2,6 +2,8 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import pdfmake from 'pdfmake'
+import { getEffectiveLogoBase64 } from '../managers/logoManager.js'
+import { DEFAULT_LOGO_BASE64 } from './defaultLogoBase64.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -232,145 +234,9 @@ function obtenerIdentificadorRecibo(factura, ciudadFiltro = 'All') {
   return predio || ''
 }
 
-// Resolver de ruta del logo municipal (PDFKit requiere PNG o JPEG nativo)
-function resolveLogoPath() {
-  const candidates = [
-    path.join(__dirname, 'assets', 'Escudo_Villa_Pesqueira_sin_fondo.png'),
-    path.join(
-      process.cwd(),
-      'src',
-      'main',
-      'pdf',
-      'assets',
-      'Escudo_Villa_Pesqueira_sin_fondo.png'
-    ),
-    path.join(
-      process.cwd(),
-      'src',
-      'renderer',
-      'src',
-      'assets',
-      'images',
-      'Escudo_Villa_Pesqueira_sin_fondo.png'
-    ),
-    path.join(
-      process.cwd(),
-      'AguaVP',
-      'src',
-      'renderer',
-      'src',
-      'assets',
-      'images',
-      'Escudo_Villa_Pesqueira_sin_fondo.png'
-    ),
-    path.join(
-      __dirname,
-      '..',
-      'src',
-      'renderer',
-      'src',
-      'assets',
-      'images',
-      'Escudo_Villa_Pesqueira_sin_fondo.png'
-    ),
-    path.join(
-      __dirname,
-      '../..',
-      'src',
-      'renderer',
-      'src',
-      'assets',
-      'images',
-      'Escudo_Villa_Pesqueira_sin_fondo.png'
-    ),
-    path.join(
-      __dirname,
-      '../../..',
-      'src',
-      'renderer',
-      'src',
-      'assets',
-      'images',
-      'Escudo_Villa_Pesqueira_sin_fondo.png'
-    ),
-    path.join(
-      process.resourcesPath || '',
-      'app.asar.unpacked',
-      'src',
-      'main',
-      'pdf',
-      'assets',
-      'Escudo_Villa_Pesqueira_sin_fondo.png'
-    ),
-    path.join(
-      process.resourcesPath || '',
-      'app.asar.unpacked',
-      'src',
-      'renderer',
-      'src',
-      'assets',
-      'images',
-      'Escudo_Villa_Pesqueira_sin_fondo.png'
-    )
-  ]
-
-  try {
-    const electron = globalThis.require ? globalThis.require('electron') : null
-    if (electron?.app?.getAppPath) {
-      candidates.unshift(
-        path.join(
-          electron.app.getAppPath(),
-          'src',
-          'main',
-          'pdf',
-          'assets',
-          'Escudo_Villa_Pesqueira_sin_fondo.png'
-        ),
-        path.join(
-          electron.app.getAppPath(),
-          'src',
-          'renderer',
-          'src',
-          'assets',
-          'images',
-          'Escudo_Villa_Pesqueira_sin_fondo.png'
-        )
-      )
-    }
-  } catch (e) {}
-
-  for (const p of candidates) {
-    if (p && fs.existsSync(p)) {
-      return p
-    }
-  }
-  return null
-}
-
-// Carga del logo del municipio en base64
+// Carga del logo del municipio en base64 (soporta logo personalizado o predeterminado)
 function obtenerLogoBase64(customLogoBase64) {
-  if (
-    customLogoBase64 &&
-    typeof customLogoBase64 === 'string' &&
-    customLogoBase64.startsWith('data:image')
-  ) {
-    return customLogoBase64
-  }
-  const defaultLogoPath = resolveLogoPath()
-  if (defaultLogoPath && fs.existsSync(defaultLogoPath)) {
-    const data = fs.readFileSync(defaultLogoPath)
-    const ext = path.extname(defaultLogoPath).toLowerCase()
-    const mime =
-      ext === '.avif'
-        ? 'image/avif'
-        : ext === '.webp'
-          ? 'image/webp'
-          : ext === '.jpg' || ext === '.jpeg'
-            ? 'image/jpeg'
-            : 'image/png'
-    return `data:${mime};base64,${data.toString('base64')}`
-  }
-  return null
+  return getEffectiveLogoBase64(customLogoBase64)
 }
 
 // Helper para envolver texto en líneas para elementos SVG sin truncamiento
@@ -1391,6 +1257,20 @@ export async function generarRecibosPdf(paginasRecibos = [], opciones = {}) {
   // Ceder control una vez más antes del buffer final de pdfmake
   await new Promise((resolve) => setImmediate(resolve))
 
-  const pdfDoc = pdfmake.createPdf(docDefinition)
-  return await pdfDoc.getBuffer()
+  try {
+    const pdfDoc = pdfmake.createPdf(docDefinition)
+    return await pdfDoc.getBuffer()
+  } catch (pdfErr) {
+    if (hasLogo && logoBase64 !== DEFAULT_LOGO_BASE64) {
+      console.warn(
+        '⚠️ Error al renderizar PDF con logo personalizado, reintentando con logo predeterminado:',
+        pdfErr.message
+      )
+      docDefinition.images = { escudoLogo: DEFAULT_LOGO_BASE64 }
+      const retryPdfDoc = pdfmake.createPdf(docDefinition)
+      return await retryPdfDoc.getBuffer()
+    }
+    throw pdfErr
+  }
 }
+

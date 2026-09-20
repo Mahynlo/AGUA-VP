@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app, shell, dialog } from 'electron'
+import { ipcMain, BrowserWindow, app, shell, dialog, nativeImage } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { execFile } from 'child_process'
@@ -7,6 +7,12 @@ import ExcelJS from 'exceljs'
 import { zoomIn, zoomOut, zoomReset, getZoom } from '../managers/zoomManager.js'
 import { openHelpWindow } from '../managers/helpWindowManager.js'
 import { generarRecibosPdf } from '../pdf/reciboPdfGenerator.js'
+import {
+  saveCustomLogo,
+  clearCustomLogo,
+  getCustomLogoBase64,
+  getDefaultLogoBase64
+} from '../managers/logoManager.js'
 
 const MESES_ES = [
   'enero',
@@ -149,7 +155,9 @@ export default function IpcHandlers() {
       // está desactivada en favor del generador nativo PDF (printSilent con pdfmake).
       const isReciboRoute = url.includes('#/recibo') || url.includes('#/recibo_oficial')
       if (isReciboRoute) {
-        console.log('ℹ️ [printComponent] Impresión de recibos por ventana web desactivada; se utiliza el PDF generado nativamente.')
+        console.log(
+          'ℹ️ [printComponent] Impresión de recibos por ventana web desactivada; se utiliza el PDF generado nativamente.'
+        )
         resolve('Impresión de recibos delegada al motor nativo PDF')
         return
       }
@@ -1114,10 +1122,16 @@ export default function IpcHandlers() {
       for (const [sheetName, rows] of Object.entries(data)) {
         if (!Array.isArray(rows) || rows.length === 0) continue
         if (rows.length > MAX_SAFE_ROWS) {
-          throw new Error(`La hoja "${sheetName}" excede el límite máximo seguro (${MAX_SAFE_ROWS} filas)`)
+          throw new Error(
+            `La hoja "${sheetName}" excede el límite máximo seguro (${MAX_SAFE_ROWS} filas)`
+          )
         }
         // Excel prohíbe caracteres especiales: \ / ? * : [ ] y máx 31 caracteres
-        const safeSheetName = String(sheetName).replace(/[/\\?*:[\]]/g, '_').trim().substring(0, 31) || 'Hoja'
+        const safeSheetName =
+          String(sheetName)
+            .replace(/[/\\?*:[\]]/g, '_')
+            .trim()
+            .substring(0, 31) || 'Hoja'
         const sheet = workbook.addWorksheet(safeSheetName)
         await setupHoja(sheet, rows)
       }
@@ -1138,17 +1152,15 @@ export default function IpcHandlers() {
 
     // Sanitizar formato y nombre de archivo para prevenir Path Traversal y caracteres prohibidos
     const safeFormat = format === 'csv' ? 'csv' : 'xlsx'
-    const safeBaseName = path
-      .basename(String(fileName || 'exportacion'))
-      .replace(/[/\\?%*:|"<>]/g, '_')
-      .trim() || 'exportacion'
+    const safeBaseName =
+      path
+        .basename(String(fileName || 'exportacion'))
+        .replace(/[/\\?%*:|"<>]/g, '_')
+        .trim() || 'exportacion'
 
     const options = {
       title: 'Guardar Archivo',
-      defaultPath: path.join(
-        app.getPath('downloads'),
-        `${safeBaseName}.${safeFormat}`
-      ),
+      defaultPath: path.join(app.getPath('downloads'), `${safeBaseName}.${safeFormat}`),
       filters: [
         {
           name: safeFormat === 'csv' ? 'Archivos CSV' : 'Archivos Excel',
@@ -1239,22 +1251,63 @@ export default function IpcHandlers() {
     return { success: true, data: results }
   })
 
-  // SELECCIONAR LOGO — abre diálogo de archivo, devuelve base64
+  // SELECCIONAR LOGO — abre diálogo de archivo, devuelve base64 y persiste en el sistema
   // ============================================================
   ipcMain.handle('select-logo', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender)
     const { canceled, filePaths } = await dialog.showOpenDialog(win, {
       title: 'Seleccionar Logo de la Aplicación',
-      filters: [{ name: 'Imágenes', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+      filters: [{ name: 'Imágenes (*.png, *.jpg, *.jpeg, *.webp)', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
       properties: ['openFile']
     })
     if (canceled || !filePaths.length) return { canceled: true }
     const filePath = filePaths[0]
-    const ext = path.extname(filePath).slice(1).toLowerCase()
-    const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', png: 'image/png' }
-    const mime = mimeMap[ext] || 'image/png'
-    const data = await fs.promises.readFile(filePath)
-    return { success: true, data: `data:${mime};base64,${data.toString('base64')}` }
+
+    try {
+      // Normalizar siempre a PNG estándar para compatibilidad total con PDFKit/pdfmake
+      const img = nativeImage.createFromPath(filePath)
+      if (img.isEmpty()) {
+        throw new Error('La imagen no se pudo cargar o su formato no es compatible.')
+      }
+      const pngBuffer = img.toPNG()
+      const base64Data = `data:image/png;base64,${pngBuffer.toString('base64')}`
+      saveCustomLogo(base64Data)
+      return { success: true, data: base64Data }
+    } catch (imgErr) {
+      console.warn('⚠️ Error procesando imagen con nativeImage, intentando lectura directa:', imgErr.message)
+      try {
+        const ext = path.extname(filePath).slice(1).toLowerCase()
+        const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', png: 'image/png' }
+        const mime = mimeMap[ext] || 'image/png'
+        const data = await fs.promises.readFile(filePath)
+        const base64Data = `data:${mime};base64,${data.toString('base64')}`
+        saveCustomLogo(base64Data)
+        return { success: true, data: base64Data }
+      } catch (readErr) {
+        return { success: false, error: readErr.message }
+      }
+    }
+  })
+
+  ipcMain.handle('save-custom-logo', async (_event, base64Data) => {
+    try {
+      saveCustomLogo(base64Data)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('get-custom-logo', async () => {
+    return getCustomLogoBase64()
+  })
+
+  ipcMain.handle('clear-custom-logo', async () => {
+    return clearCustomLogo()
+  })
+
+  ipcMain.handle('get-default-logo', async () => {
+    return getDefaultLogoBase64()
   })
 
   // ============================================================

@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { useAppLogo } from "../../context/LogoContext";
 import { useNotifyPrintReady } from "../../hooks/useNotifyPrintReady";
 import { MarkdownRenderer, mermaidCoordinator } from "../vistas/ayuda/MarkdownRenderer";
-import EscudoVillaPesqueira from "../../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png";
 import 'katex/dist/katex.min.css';
 
 const ReporteDocumentacion = () => {
@@ -164,7 +163,7 @@ const ReporteDocumentacion = () => {
     docs = []
   } = data;
 
-  const escudoImg = logoSrc || EscudoVillaPesqueira;
+  const escudoImg = logoSrc;
   const esManualCompleto = alcance === "manual_completo";
 
   return (
