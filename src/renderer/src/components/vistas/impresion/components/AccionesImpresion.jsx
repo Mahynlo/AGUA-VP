@@ -8,8 +8,10 @@ import EstadisticasImpresion from "./EstadisticasImpresion";
  */
 const AccionesImpresion = ({
   estadisticas,
+  onEmitir,
   onVistaPrevia,
   onImprimir,
+  onPruebaRecibo,
   procesandoAccion,
   progresoGeneracion,
   ciudadFiltro,
@@ -81,7 +83,7 @@ const AccionesImpresion = ({
           </CardContent>
         </Card>
 
-        {/* TARJETA 1: Vista Previa */}
+        {/* TARJETA UNIFICADA: Emisión e Impresión de Recibos */}
         <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-indigo-200 dark:hover:border-indigo-900/50">
           <CardContent className="p-6 flex flex-col gap-4">
 
@@ -89,21 +91,21 @@ const AccionesImpresion = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-600 dark:text-indigo-400">
-                  <HiEye className="w-5 h-5" />
+                  <HiPrinter className="w-5 h-5" />
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight">
-                    Vista Previa
+                    Emisión e Impresión
                   </h4>
                   <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
-                    Revisar Documento PDF
+                    Visor y control de impresión
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Info rápida o progreso dinámico */}
-            {procesandoAccion === 'vista-previa' && progresoGeneracion ? (
+            {isAnyProcessing && progresoGeneracion ? (
               <div className="flex flex-col gap-2.5 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl p-3.5">
                 <div className="flex items-center justify-between text-[11px] font-bold text-indigo-700 dark:text-indigo-400">
                   <span className="truncate max-w-[70%]">
@@ -133,103 +135,56 @@ const AccionesImpresion = ({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400">
-                  <HiDocumentText className="w-4 h-4 text-indigo-500" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Recibos a generar:</span>
+              /* Resumen consolidado: Recibos y Hojas calculadas a 2 por hoja */
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400">
+                    <HiDocumentText className="w-4 h-4 text-indigo-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Recibos:</span>
+                  </div>
+                  <span className="text-base font-black font-mono text-slate-800 dark:text-zinc-100">
+                    {estadisticas?.cantidadRecibos || 0}
+                  </span>
                 </div>
-                <span className="text-sm font-black font-mono text-slate-800 dark:text-zinc-100">
-                  {estadisticas?.cantidadRecibos || 0}
-                </span>
+
+                <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400">
+                    <HiPrinter className="w-4 h-4 text-emerald-500" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Hojas:</span>
+                  </div>
+                  <span className="text-base font-black font-mono text-slate-800 dark:text-zinc-100">
+                    {estadisticas?.paginasEstimadas ?? Math.ceil((estadisticas?.cantidadRecibos || 0) / 2)}
+                  </span>
+                </div>
               </div>
             )}
 
-            {/* Botón de Acción */}
+            {/* Botón Principal: Emitir Recibos */}
             <Button
-              className="w-full h-12 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm rounded-xl transition-all active:scale-98"
-              onPress={onVistaPrevia}
-              isLoading={procesandoAccion === 'vista-previa'}
+              className="w-full h-12 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm rounded-xl transition-all active:scale-98 text-sm flex items-center justify-center gap-2"
+              onPress={onEmitir || onVistaPrevia}
+              isLoading={procesandoAccion === 'emitir' || procesandoAccion === 'vista-previa' || procesandoAccion === 'imprimir'}
               isDisabled={isAnyProcessing}
             >
-              {procesandoAccion !== 'vista-previa' && <HiEye className="text-lg" />}
-              {procesandoAccion === 'vista-previa' ? 'Generando PDF...' : 'Abrir Vista Previa'}
+              {!(procesandoAccion === 'emitir' || procesandoAccion === 'vista-previa' || procesandoAccion === 'imprimir') && <HiPrinter className="text-lg" />}
+              <span>{procesandoAccion === 'emitir' || procesandoAccion === 'vista-previa' || procesandoAccion === 'imprimir' ? 'Generando PDF...' : 'Emitir e Imprimir Recibos'}</span>
             </Button>
-          </CardContent>
-        </Card>
 
-        {/* TARJETA 2: Imprimir Directamente */}
-        <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm rounded-2xl overflow-hidden transition-all duration-200 hover:border-emerald-200 dark:hover:border-emerald-900/50">
-          <CardContent className="p-6 flex flex-col gap-4">
-
-            {/* Header de la tarjeta */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-600 dark:text-emerald-400">
-                  <HiPrinter className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight">
-                    Imprimir Lote
-                  </h4>
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
-                    Enviar a cola de impresión
-                  </p>
-                </div>
-              </div>
+            {/* Botón Pequeño de Prueba: 1 Recibo */}
+            <div className="pt-0.5">
+              <Button
+                size="sm"
+                variant="flat"
+                className="w-full h-9 font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200/80 dark:border-zinc-700 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
+                onPress={onPruebaRecibo}
+                isLoading={procesandoAccion === 'prueba-recibo'}
+                isDisabled={isAnyProcessing}
+              >
+                {procesandoAccion !== 'prueba-recibo' && <HiEye className="w-4 h-4 text-slate-500 dark:text-zinc-400" />}
+                <span>{procesandoAccion === 'prueba-recibo' ? 'Generando prueba...' : 'Prueba de Impresión (1 Recibo)'}</span>
+              </Button>
             </div>
 
-            {/* Info rápida o progreso dinámico */}
-            {procesandoAccion === 'imprimir' && progresoGeneracion ? (
-              <div className="flex flex-col gap-2.5 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl p-3.5">
-                <div className="flex items-center justify-between text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                  <span className="truncate max-w-[70%]">
-                    {progresoGeneracion.fase === 'compilando'
-                      ? "⚡ Preparando cola de impresión..."
-                      : progresoGeneracion.cliente}
-                  </span>
-                  <span className="font-mono">
-                    {progresoGeneracion.fase === 'compilando'
-                      ? "PDF..."
-                      : `${progresoGeneracion.actual} / ${progresoGeneracion.total}`}
-                  </span>
-                </div>
-                <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-300 ${
-                      progresoGeneracion.fase === 'compilando'
-                        ? "bg-emerald-600 dark:bg-emerald-400 animate-pulse w-full"
-                        : "bg-emerald-600 dark:bg-emerald-500"
-                    }`}
-                    style={{
-                      width: progresoGeneracion.fase === 'compilando'
-                        ? '100%'
-                        : `${(progresoGeneracion.actual / progresoGeneracion.total) * 100}%`
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400">
-                  <HiDocumentText className="w-4 h-4 text-emerald-500" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider">Hojas estimadas:</span>
-                </div>
-                <span className="text-sm font-black font-mono text-slate-800 dark:text-zinc-100">
-                  {estadisticas?.paginasEstimadas || 0}
-                </span>
-              </div>
-            )}
-
-            {/* Botón de Acción */}
-            <Button
-              className="w-full h-12 font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm rounded-xl transition-all active:scale-98"
-              onPress={onImprimir}
-              isLoading={procesandoAccion === 'imprimir'}
-              isDisabled={isAnyProcessing}
-            >
-              {procesandoAccion !== 'imprimir' && <HiPrinter className="text-lg" />}
-              {procesandoAccion === 'imprimir' ? 'Enviando a impresora...' : 'Imprimir Directamente'}
-            </Button>
           </CardContent>
         </Card>
 
