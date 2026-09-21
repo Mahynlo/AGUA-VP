@@ -222,7 +222,9 @@ const api = {
 
   // Exportar archivos nativamente
   saveFile: (data) => ipcRenderer.invoke('save-file-dialog', data),
-  savePdf: (fileUrl) => ipcRenderer.invoke('save-pdf', fileUrl),
+  savePdf: (fileUrl, options) => ipcRenderer.invoke('save-pdf', fileUrl, options),
+  getPdfMetadata: (fileUrl) => ipcRenderer.invoke('get-pdf-metadata', fileUrl),
+  generatePreviewSlice: (params) => ipcRenderer.invoke('generate-preview-slice', params),
 
   // Logo e imágenes personalizables
   selectLogo: () => ipcRenderer.invoke('select-logo'),
