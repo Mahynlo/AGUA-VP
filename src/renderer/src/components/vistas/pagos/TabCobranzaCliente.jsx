@@ -15,8 +15,7 @@ import {
   HiChevronLeft,
   HiChevronRight,
   HiChevronDown,
-  HiDownload,
-  HiExclamationCircle
+  HiDownload
 } from "react-icons/hi";
 import { Modal, Button, ModalHeader, ModalBody } from "flowbite-react";
 import { useClientes } from "../../../context/ClientesContext";
@@ -885,11 +884,6 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
     }
   }, [construirPayloadDeudoresMayores, setError]);
 
-  const facturaDetalleSeleccionada = useMemo(() => {
-    if (!clienteDetalle || !facturaSeleccionadaDetalle) return null;
-    return clienteDetalle.facturas.find((f) => String(f.id) === String(facturaSeleccionadaDetalle)) || null;
-  }, [clienteDetalle, facturaSeleccionadaDetalle]);
-
   const facturasMapDetalle = useMemo(() => {
     const map = new Map();
     (clienteDetalle?.facturas || []).forEach((f) => {
@@ -962,11 +956,6 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
 
     return porAnio.filter((p) => extraerPeriodoPago(p) === periodoFiltroPagosDetalle);
   }, [pagosClienteDetalle, extraerPeriodoPago, anioFiltroPagosDetalle, periodoFiltroPagosDetalle]);
-
-  const pagoDetalleSeleccionado = useMemo(() => {
-    if (!pagoSeleccionadoDetalle) return null;
-    return pagosClienteDetalleFiltrados.find((p) => String(p.id) === String(pagoSeleccionadoDetalle)) || null;
-  }, [pagosClienteDetalleFiltrados, pagoSeleccionadoDetalle]);
 
   const resumenPagosClienteDetalle = useMemo(() => {
     const totalPagos = pagosClienteDetalleFiltrados.length;
@@ -1381,7 +1370,6 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         periodosClienteDetalle={periodosClienteDetalle}
         facturasDetalleFiltradas={facturasDetalleFiltradas}
         ultimoPagoPorFactura={ultimoPagoPorFactura}
-        facturaDetalleSeleccionada={facturaDetalleSeleccionada}
         anioFiltroPagosDetalle={anioFiltroPagosDetalle}
         setAnioFiltroPagosDetalle={setAnioFiltroPagosDetalle}
         periodoFiltroPagosDetalle={periodoFiltroPagosDetalle}
@@ -1392,7 +1380,6 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         periodosPagosClienteDetalle={periodosPagosClienteDetalle}
         resumenPagosClienteDetalle={resumenPagosClienteDetalle}
         pagosClienteDetalleFiltrados={pagosClienteDetalleFiltrados}
-        pagoDetalleSeleccionado={pagoDetalleSeleccionado}
         pagosClienteDetalle={pagosClienteDetalle}
         toMoney={toMoney}
         formatFecha={formatFecha}
