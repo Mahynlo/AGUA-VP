@@ -332,33 +332,81 @@ function generarLineaPunteada(ancho = 345, alto = 1) {
 // 1. Header SVG con bordes redondeados (rx=10) y círculo de escudo centrado
 function generarSvgHeader(ancho = 345, alto = 66, opciones = {}) {
   const {
-    paddingIzquierdo = 14,
-    espacioLogoTexto = 9,
-    circleSize = 55,
-    interlineado = 1, // factor multiplicador del fontSize de cada línea
-    espacioExtraLineas = 0 // px adicionales fijos entre líneas (encima del interlineado)
+    paddingIzquierdo = 10, // espacio desde el borde izquierdo hasta el inicio del logo
+    espacioLogoTexto = 6, // espacio entre el logo y el texto 
+
+    // Tamaño independiente del logo
+    logoSize = 60,
+
+    interlineado = 1, // interlineado entre líneas de texto
+    espacioExtraLineas = 0, // espacio extra entre líneas de texto
+
+    // Logo en Base64 / Data URI
+    logoBase64 = null
   } = opciones
 
-  const circleCx = paddingIzquierdo + circleSize / 2
-  const circleCy = alto / 2
-  const textX = circleCx + circleSize / 2 + espacioLogoTexto
+  // ------------------------------------------------------------
+  // Posición del logo
+  // ------------------------------------------------------------
+
+  const logoCx = paddingIzquierdo + logoSize / 2
+  const logoCy = alto / 2
+
+  const logoX = logoCx - logoSize / 2
+  const logoY = logoCy - logoSize / 2
+
+  // El texto comienza después del espacio reservado para el logo
+  const textX =
+    paddingIzquierdo +
+    logoSize +
+    espacioLogoTexto
+
+  // ------------------------------------------------------------
+  // Textos
+  // ------------------------------------------------------------
 
   const lineas = [
-    { text: 'CUIDEMOS DEL AGUA', fontSize: 15, bold: true, color: '#ffffff', letterSpacing: 0.3 },
-    { text: 'Comisión Municipal de Agua Potable y Alcantarillado', fontSize: 11, color: '#ffffff' },
-    { text: 'Villa Pesqueira, Sonora', fontSize: 9, color: '#fee2e2' }
+    {
+      text: 'CUIDEMOS DEL AGUA',
+      fontSize: 15,
+      bold: true,
+      color: '#ffffff',
+      letterSpacing: 0.3
+    },
+    {
+      text: 'Comisión Municipal de Agua Potable y Alcantarillado',
+      fontSize: 11,
+      color: '#ffffff'
+    },
+    {
+      text: 'Villa Pesqueira, Sonora',
+      fontSize: 9,
+      color: '#fee2e2'
+    }
   ]
 
-  // Cada línea ocupa: (fontSize * interlineado) + espacio extra fijo
-  const alturas = lineas.map((l) => l.fontSize * interlineado + espacioExtraLineas)
-  const alturaTotal = alturas.reduce((a, b) => a + b, 0)
+  const alturas = lineas.map(
+    (l) =>
+      l.fontSize * interlineado +
+      espacioExtraLineas
+  )
 
-  let cursorY = circleCy - alturaTotal / 2 + alturas[0] * 0.75
+  const alturaTotal = alturas.reduce(
+    (a, b) => a + b,
+    0
+  )
+
+  let cursorY =
+    logoCy -
+    alturaTotal / 2 +
+    alturas[0] * 0.75
 
   const textosSvg = lineas
     .map((l, i) => {
       const y = cursorY
+
       cursorY += alturas[i]
+
       return `<text
         x="${textX}"
         y="${y}"
@@ -367,9 +415,13 @@ function generarSvgHeader(ancho = 345, alto = 66, opciones = {}) {
         font-size="${l.fontSize}"
         ${l.bold ? 'font-weight="bold"' : ''}
         ${l.letterSpacing ? `letter-spacing="${l.letterSpacing}"` : ''}
-      >${l.text}</text>`
+      >${escapeXml(l.text)}</text>`
     })
     .join('\n')
+
+  // ------------------------------------------------------------
+  // SVG
+  // ------------------------------------------------------------
 
   return `
     <svg
@@ -378,6 +430,8 @@ function generarSvgHeader(ancho = 345, alto = 66, opciones = {}) {
       viewBox="0 0 ${ancho} ${alto}"
       xmlns="http://www.w3.org/2000/svg"
     >
+
+      <!-- Fondo -->
       <rect
         x="0.5"
         y="0.5"
@@ -388,16 +442,23 @@ function generarSvgHeader(ancho = 345, alto = 66, opciones = {}) {
         fill="${COLORES.rojoHeader}"
       />
 
-      <circle
-        cx="${circleCx}"
-        cy="${circleCy}"
-        r="${circleSize / 2}"
-        fill="#ffffff"
-        stroke="#fee2e2"
-        stroke-width="0.75"
-      />
+      <!-- Logo -->
+      ${
+        logoBase64
+          ? `<image
+              href="${logoBase64}"
+              x="${logoX}"
+              y="${logoY}"
+              width="${logoSize}"
+              height="${logoSize}"
+              preserveAspectRatio="xMidYMid meet"
+            />`
+          : ''
+      }
 
+      <!-- Textos -->
       ${textosSvg}
+
     </svg>
   `
 }
@@ -658,7 +719,7 @@ function generarSvgCajaInfo(texto, ancho = 167.5, alto = 70) {
   const len = (texto || '').length
   const fontSize = len > 140 ? 7.5 : len > 90 ? 8 : 8.2
   const lineHeight = len > 140 ? 7.5 : len > 90 ? 8.0 : 8.5
-  const maxLineas = 5
+  const maxLineas = 6
 
   // 7 pt a la izquierda + 6 pt de margen derecho
   const maxWidth = ancho - 13
@@ -760,7 +821,7 @@ function generarSvgCajaEquiv(texto, ancho = 167.5, alto = 70) {
   const len = (texto || '').length
   const fontSize = len > 140 ? 6.7 : len > 90 ? 7.2 : 7.8
   const lineHeight = len > 140 ? 7.5 : len > 90 ? 8.0 : 8.5
-  const maxLineas = 5
+  const maxLineas = 6
 
   const maxWidth = ancho - 13
 
@@ -1095,13 +1156,13 @@ function construirReciboPdfMake(factura, logoBase64, anuncioTexto, equivalenciaT
 
   const columnaIzquierda = {
     width: 167.5,
-    svg: generarSvgColumnaIzquierda(factura, 167.5, 250)
+    svg: generarSvgColumnaIzquierda(factura, 167.5, 245)
   }
 
   const columnaDerecha = {
     // Columna derecha SVG con información de consumo, métricas y gráfica
     width: 167.5,
-    svg: generarSvgColumnaDerecha(factura, 167.5, 250)
+    svg: generarSvgColumnaDerecha(factura, 167.5, 245)
   }
 
   const cuerpoMedio = {
