@@ -282,6 +282,7 @@ const api = {
     downloadUpdate: () => ipcRenderer.invoke('system:update-download'),
     getUpdateStatus: () => ipcRenderer.invoke('system:update-status'),
     installUpdate: () => ipcRenderer.invoke('system:update-install'),
+    getChangelog: (forceRefresh) => ipcRenderer.invoke('system:get-changelog', forceRefresh),
     onUpdateProgress: (callback) => {
       ipcRenderer.on('system:update-progress', (_event, progress) => callback(progress))
       return () => ipcRenderer.removeAllListeners('system:update-progress')

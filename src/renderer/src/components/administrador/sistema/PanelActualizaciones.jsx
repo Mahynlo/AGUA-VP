@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import {
   HiRefresh, HiDownload, HiLightningBolt, HiCheckCircle,
-  HiExclamationCircle, HiStar, HiCalendar,
+  HiExclamationCircle, HiCalendar,
   HiChip, HiShieldCheck, HiDesktopComputer,
-  HiClock, HiSparkles, HiInformationCircle
+  HiClock, HiSparkles, HiInformationCircle,
+  HiBookOpen
 } from "react-icons/hi";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { formatBytes } from "../../../utils/formatSystem";
@@ -12,11 +13,15 @@ import { MarkdownRenderer } from "../../vistas/ayuda/MarkdownRenderer";
 export default function PanelActualizaciones() {
   const { setError } = useFeedback();
   const [status, setStatus] = useState(null);
-  const [novedadMostrada, setNovedadMostrada] = useState(false);
   const [cargando, setCargando] = useState(true);
   const cleanupRef = useRef(null);
 
   const [alertasActivas, setAlertasActivas] = useState(true);
+
+  // Estados del Changelog y selección de versión a visualizar
+  const [changelogData, setChangelogData] = useState(null);
+  const [cargandoChangelog, setCargandoChangelog] = useState(true);
+  const [vistaNotas, setVistaNotas] = useState("actual");
 
   // Efecto para verificar el estado de las alertas en localStorage
   useEffect(() => {
@@ -64,7 +69,7 @@ export default function PanelActualizaciones() {
       checking: false,
       error: null
     }));
-    setNovedadMostrada(false);
+    setVistaNotas("nueva");
 
     const event = new CustomEvent("test-update-modal", { detail });
     document.dispatchEvent(event);
@@ -97,26 +102,46 @@ export default function PanelActualizaciones() {
         error: null
       });
     }
-    setNovedadMostrada(true);
+    setVistaNotas("actual");
     // Notificar al modal y navbar para que cierren/apaguen el badge
     const event = new CustomEvent("test-update-reset");
     document.dispatchEvent(event);
   };
 
-  // Cargar estado inicial
+  // Cargar estado inicial y changelog
   useEffect(() => {
+    let isMounted = true;
     const cargar = async () => {
       try {
         const result = await window.api.system.getUpdateStatus();
-        if (result?.success) setStatus(result);
+        if (result?.success && isMounted) {
+          setStatus(result);
+          if (result.updateInfo?.releaseNotes) {
+            setVistaNotas("nueva");
+          }
+        }
       } catch (err) {
         console.error("Error cargando estado de actualizaciones:", err);
         setError("No se pudo cargar el estado de actualizaciones", "Actualizaciones");
       } finally {
-        setCargando(false);
+        if (isMounted) setCargando(false);
+      }
+
+      try {
+        if (window.api?.system?.getChangelog) {
+          const ch = await window.api.system.getChangelog();
+          if (ch?.success && isMounted) {
+            setChangelogData(ch);
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo cargar el changelog extendido:", err);
+      } finally {
+        if (isMounted) setCargandoChangelog(false);
       }
     };
     cargar();
+    return () => { isMounted = false; };
   }, [setError]);
 
   // Suscribirse a eventos de actualización
@@ -125,11 +150,11 @@ export default function PanelActualizaciones() {
       switch (data.event) {
         case "update-available":
           setStatus((prev) => ({ ...prev, updateAvailable: true, updateInfo: data.info, checking: false }));
-          setNovedadMostrada(false);
+          setVistaNotas("nueva");
           break;
         case "update-not-available":
           setStatus((prev) => ({ ...prev, updateAvailable: false, checking: false }));
-          setNovedadMostrada(true);
+          setVistaNotas("actual");
           break;
         case "update-downloaded":
           setStatus((prev) => ({ ...prev, updateDownloaded: true, downloading: false }));
@@ -157,7 +182,7 @@ export default function PanelActualizaciones() {
           checking: false,
           error: null
         }));
-        setNovedadMostrada(false);
+        setVistaNotas("nueva");
       }
     };
 
@@ -172,7 +197,7 @@ export default function PanelActualizaciones() {
         downloadProgress: null,
         error: null
       }));
-      setNovedadMostrada(true);
+      setVistaNotas("actual");
     };
 
     document.addEventListener("test-update-modal", handleTestEvent);
@@ -187,11 +212,15 @@ export default function PanelActualizaciones() {
   }, [setError]);
 
   const verificar = async () => {
-    setNovedadMostrada(false);
     setStatus((prev) => ({ ...prev, checking: true, error: null }));
     try {
-      await window.api.system.checkForUpdates();
+      const res = await window.api.system.checkForUpdates();
+      if (res && !res.success && res.error) {
+        setError(res.error, "Actualizaciones");
+        setStatus((prev) => ({ ...prev, checking: false }));
+      }
     } catch (err) {
+      console.error("Error al verificar actualizaciones:", err);
       setError("Error al verificar actualizaciones", "Actualizaciones");
       setStatus((prev) => ({ ...prev, checking: false }));
     }
@@ -223,10 +252,15 @@ export default function PanelActualizaciones() {
       return;
     }
 
-    setStatus((prev) => ({ ...prev, downloading: true }));
+    setStatus((prev) => ({ ...prev, downloading: true, error: null }));
     try {
-      await window.api.system.downloadUpdate();
+      const res = await window.api.system.downloadUpdate();
+      if (res && !res.success) {
+        setError(res.error || res.message || "Error al descargar la actualización", "Actualizaciones");
+        setStatus((prev) => ({ ...prev, downloading: false }));
+      }
     } catch (err) {
+      console.error("Error al descargar actualización:", err);
       setError("Error al descargar la actualización", "Actualizaciones");
       setStatus((prev) => ({ ...prev, downloading: false }));
     }
@@ -238,8 +272,12 @@ export default function PanelActualizaciones() {
       return;
     }
     try {
-      await window.api.system.installUpdate();
+      const res = await window.api.system.installUpdate();
+      if (res && !res.success) {
+        setError(res.error || res.message || "Error al instalar la actualización", "Actualizaciones");
+      }
     } catch (err) {
+      console.error("Error al instalar actualización:", err);
       setError("Error al instalar la actualización", "Actualizaciones");
     }
   };
@@ -260,6 +298,98 @@ export default function PanelActualizaciones() {
   const isDownloading = Boolean(status?.downloading);
   const isAvailable = Boolean(status?.updateAvailable) && !isDownloaded && !isDownloading;
   const isChecking = Boolean(status?.checking);
+
+  // Lógica para visualización del Changelog / Notas de Versión
+  const versionActual = status?.currentVersion || changelogData?.currentVersion || "1.3.0";
+  const hayNuevaVersion = Boolean(status?.updateAvailable && status?.updateInfo);
+  const releasesList = changelogData?.releases?.length
+    ? changelogData.releases
+    : (status?.releases || []);
+
+  let vistaEfectiva = vistaNotas;
+  if (vistaEfectiva === "nueva" && !hayNuevaVersion) {
+    vistaEfectiva = "actual";
+  }
+
+  let notasActivas = "";
+  let etiquetaVersionActiva = `v${versionActual}`;
+  let fechaLanzamientoActiva = null;
+  let esPreReleaseActiva = false;
+  let tipoBadgeActivo = "actual"; // "nueva" | "actual" | "historica"
+
+  if (vistaEfectiva === "nueva" && hayNuevaVersion) {
+    etiquetaVersionActiva = `v${status?.updateInfo?.version || "Nueva"}`;
+    fechaLanzamientoActiva = status?.updateInfo?.releaseDate;
+    tipoBadgeActivo = "nueva";
+    const rawNotes = status?.updateInfo?.releaseNotes;
+    if (typeof rawNotes === "string") {
+      notasActivas = rawNotes;
+    } else if (Array.isArray(rawNotes)) {
+      notasActivas = rawNotes.map((n) => (typeof n === "string" ? n : n.note || "")).join("\n\n");
+    } else {
+      notasActivas = "Sin notas de versión detalladas para esta actualización.";
+    }
+  } else if (vistaEfectiva === "actual") {
+    etiquetaVersionActiva = `v${versionActual}`;
+    tipoBadgeActivo = "actual";
+    const releaseActual = releasesList.find(
+      (r) =>
+        r.version === versionActual ||
+        r.tag === `v${versionActual}` ||
+        r.tag === versionActual ||
+        r.version?.startsWith(versionActual) ||
+        versionActual.startsWith(r.version)
+    );
+    if (releaseActual) {
+      fechaLanzamientoActiva = releaseActual.releaseDate || releaseActual.publishedAt;
+      esPreReleaseActiva = Boolean(releaseActual.isPrerelease);
+      notasActivas = releaseActual.notes || releaseActual.body || changelogData?.currentReleaseNotes || status?.currentReleaseNotes || "";
+    } else {
+      fechaLanzamientoActiva = changelogData?.currentReleaseInfo?.releaseDate || changelogData?.currentReleaseInfo?.publishedAt || null;
+      esPreReleaseActiva = Boolean(changelogData?.currentReleaseInfo?.isPrerelease);
+      notasActivas = changelogData?.currentReleaseNotes || status?.currentReleaseNotes || changelogData?.fullChangelog || "";
+    }
+  } else {
+    // Versión histórica seleccionada del selector
+    const rel = releasesList.find((r) => r.version === vistaEfectiva || r.tag === vistaEfectiva);
+    if (rel) {
+      etiquetaVersionActiva = rel.tag || `v${rel.version}`;
+      fechaLanzamientoActiva = rel.releaseDate || rel.publishedAt;
+      esPreReleaseActiva = Boolean(rel.isPrerelease);
+      tipoBadgeActivo = "historica";
+      notasActivas = rel.notes || rel.body || "";
+    } else {
+      etiquetaVersionActiva = `v${versionActual}`;
+      tipoBadgeActivo = "actual";
+      notasActivas = changelogData?.currentReleaseNotes || "";
+    }
+  }
+
+  // Lista de versiones anteriores para el selector desplegable
+  const otrasVersiones = releasesList.filter((r) => {
+    const isCurrent =
+      r.version === versionActual ||
+      r.tag === `v${versionActual}` ||
+      r.tag === versionActual;
+    const isNew =
+      hayNuevaVersion &&
+      (r.version === status?.updateInfo?.version || r.tag === `v${status?.updateInfo?.version}`);
+    return !isCurrent && !isNew;
+  });
+
+  const formatearFechaLanzamiento = (fecha) => {
+    if (!fecha) return null;
+    if (typeof fecha === "string" && (fecha.includes("/") || fecha.includes(" de "))) {
+      return fecha;
+    }
+    try {
+      const d = new Date(fecha);
+      if (isNaN(d.getTime())) return typeof fecha === "string" ? fecha : null;
+      return d.toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" });
+    } catch {
+      return typeof fecha === "string" ? fecha : null;
+    }
+  };
 
   return (
     <div className="space-y-6 w-full animate-in fade-in duration-300">
@@ -589,44 +719,122 @@ export default function PanelActualizaciones() {
       </div>
 
       {/* ── 5. DETALLES DE LA VERSIÓN (NOTAS DE LANZAMIENTO / CHANGELOG) ── */}
-      {status?.updateInfo?.releaseNotes && (
-        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden animate-in fade-in">
-          
-          {/* Header de Notas */}
-          <div className="flex items-center justify-between px-6 py-4 bg-slate-50/70 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg">
-                <HiStar className="w-4 h-4" />
-              </div>
-              <span className="font-black text-sm text-slate-800 dark:text-zinc-100 tracking-tight">
-                Detalles y Notas de la Versión
-              </span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold font-mono border border-blue-500/20">
-                v{status.updateInfo.version}
-              </span>
+      <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden animate-in fade-in">
+        
+        {/* Header de Notas con Selector y Pestañas */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 bg-slate-50/70 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+              <HiBookOpen className="w-5 h-5" />
             </div>
-
-            {status.updateInfo.releaseDate && (
-              <span className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 hidden sm:block">
-                Publicado: {new Date(status.updateInfo.releaseDate).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}
-              </span>
-            )}
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-black text-sm text-slate-800 dark:text-zinc-100 tracking-tight">
+                  Notas de Versión y Registro de Cambios
+                </span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold font-mono border border-blue-500/20">
+                  {etiquetaVersionActiva}
+                </span>
+                {esPreReleaseActiva && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">
+                    Pre-release / Beta
+                  </span>
+                )}
+                {tipoBadgeActivo === "actual" && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-zinc-700">
+                    Instalada
+                  </span>
+                )}
+                {tipoBadgeActivo === "nueva" && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+                    Nueva versión
+                  </span>
+                )}
+              </div>
+              {formatearFechaLanzamiento(fechaLanzamientoActiva) && (
+                <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 block mt-0.5">
+                  Publicado el {formatearFechaLanzamiento(fechaLanzamientoActiva)}
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Cuerpo Markdown */}
-          <div className="p-6 max-h-[420px] overflow-y-auto">
-            {typeof status.updateInfo.releaseNotes === "string" ? (
-              <MarkdownRenderer content={status.updateInfo.releaseNotes} />
-            ) : Array.isArray(status.updateInfo.releaseNotes) ? (
-              <MarkdownRenderer content={status.updateInfo.releaseNotes.map(n => n.note || "").join("\n\n")} />
-            ) : (
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 italic">
-                Sin notas de versión detalladas
-              </p>
+          {/* Botones de navegación / selector de notas */}
+          <div className="flex items-center gap-2 flex-wrap sm:ml-auto">
+            {hayNuevaVersion && (
+              <button
+                type="button"
+                onClick={() => setVistaNotas("nueva")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  vistaEfectiva === "nueva"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
+                }`}
+              >
+                ✨ Nueva v{status?.updateInfo?.version}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setVistaNotas("actual")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                vistaEfectiva === "actual"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              📌 Instalada v{versionActual}
+            </button>
+
+            {otrasVersiones.length > 0 && (
+              <select
+                value={vistaEfectiva !== "nueva" && vistaEfectiva !== "actual" ? vistaEfectiva : ""}
+                onChange={(e) => {
+                  if (e.target.value) setVistaNotas(e.target.value);
+                }}
+                className={`text-xs font-semibold rounded-xl border px-2.5 py-1.5 focus:outline-none transition-all cursor-pointer ${
+                  vistaEfectiva !== "nueva" && vistaEfectiva !== "actual"
+                    ? "bg-blue-600 text-white border-blue-600 font-bold"
+                    : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600"
+                }`}
+              >
+                <option value="" disabled className="text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900">
+                  Historial de versiones...
+                </option>
+                {otrasVersiones.map((rel) => (
+                  <option
+                    key={rel.version || rel.tag}
+                    value={rel.version}
+                    className="text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900"
+                  >
+                    {rel.tag || `v${rel.version}`} {(rel.releaseDate || rel.publishedAt) ? `(${formatearFechaLanzamiento(rel.releaseDate || rel.publishedAt)})` : ""} {rel.isPrerelease ? "[Beta]" : ""}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
         </div>
-      )}
+
+        {/* Cuerpo Markdown con scroll independiente */}
+        <div className="p-6 max-h-[500px] overflow-y-auto custom-scrollbar">
+          {notasActivas ? (
+            <MarkdownRenderer content={notasActivas} />
+          ) : cargandoChangelog ? (
+            <div className="py-16 flex flex-col items-center justify-center text-slate-400 dark:text-zinc-500 gap-3">
+              <div className="w-7 h-7 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
+              <span className="text-xs font-medium">Cargando notas de la versión...</span>
+            </div>
+          ) : (
+            <div className="py-12 text-center">
+              <HiInformationCircle className="w-8 h-8 text-slate-400 dark:text-zinc-500 mx-auto mb-2" />
+              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+                No hay notas de lanzamiento disponibles para esta versión.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
     </div>
   );
