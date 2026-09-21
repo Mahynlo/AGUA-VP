@@ -60,7 +60,6 @@ const ModalDetalleCobranzaCliente = ({
   periodosClienteDetalle = [],
   facturasDetalleFiltradas = [],
   ultimoPagoPorFactura = new Map(),
-  facturaDetalleSeleccionada = null,
   anioFiltroPagosDetalle,
   setAnioFiltroPagosDetalle,
   periodoFiltroPagosDetalle,
@@ -71,11 +70,10 @@ const ModalDetalleCobranzaCliente = ({
   periodosPagosClienteDetalle = [],
   resumenPagosClienteDetalle = {},
   pagosClienteDetalleFiltrados = [],
-  pagoDetalleSeleccionado = null,
   pagosClienteDetalle = [],
-  toMoney,
-  formatFecha,
-  formatearPeriodo
+  toMoney = (n) => Number(n) || 0,
+  formatFecha = (f) => (f ? String(f) : "No registrada"),
+  formatearPeriodo = (p) => (p ? String(p) : "-")
 }) => {
   return (
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible size="6xl">
@@ -218,7 +216,7 @@ const ModalDetalleCobranzaCliente = ({
                               <td className={`px-6 py-4 font-mono font-bold ${toMoney(item.saldo_pendiente) > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                                 ${toMoney(item.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                               </td>
-                              <td className="px-6 py-4 text-xs text-slate-500">{formatFecha(ultimoPagoPorFactura.get(Number(item.id)))}</td>
+                              <td className="px-6 py-4 text-xs text-slate-500">{formatFecha(ultimoPagoPorFactura?.get ? ultimoPagoPorFactura.get(Number(item.id)) : null)}</td>
                               <td className="px-6 py-4">
                                 <div className="flex justify-end">
                                   <button
@@ -262,7 +260,7 @@ const ModalDetalleCobranzaCliente = ({
                                         { label: "Vencimiento", value: formatFecha(item.fecha_vencimiento) },
                                         { label: "Consumo", value: `${item.consumo_m3 ?? "-"} m³` },
                                         { label: "Lectura", value: formatFecha(item.fecha_lectura) },
-                                        { label: "Último pago", value: formatFecha(ultimoPagoPorFactura.get(Number(item.id))) }
+                                        { label: "Último pago", value: formatFecha(ultimoPagoPorFactura?.get ? ultimoPagoPorFactura.get(Number(item.id)) : null) }
                                       ].map(({ label, value }) => (
                                         <div key={label} className="flex flex-col gap-1">
                                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">{label}</p>
@@ -480,18 +478,18 @@ const ModalDetalleCobranzaCliente = ({
               <div className="flex flex-wrap items-center gap-4 py-2 border-y border-slate-100 dark:border-zinc-800/80">
                 <div className="flex flex-col gap-0.5 pr-6 border-r border-slate-200 dark:border-zinc-800">
                   <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Total de Pagos</p>
-                  <p className="text-xl font-black text-slate-700 dark:text-zinc-200">{resumenPagosClienteDetalle.totalPagos}</p>
+                  <p className="text-xl font-black text-slate-700 dark:text-zinc-200">{resumenPagosClienteDetalle?.totalPagos ?? 0}</p>
                 </div>
                 <div className="flex flex-col gap-0.5 px-6 border-r border-slate-200 dark:border-zinc-800">
                   <p className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-500/70 uppercase tracking-widest">Monto Total Pagado</p>
                   <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">
-                    ${toMoney(resumenPagosClienteDetalle.montoTotal).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                    ${toMoney(resumenPagosClienteDetalle?.montoTotal || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="flex flex-col gap-0.5 pl-6">
                   <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Último Pago Registrado</p>
                   <p className="text-sm font-bold text-slate-700 dark:text-zinc-300 mt-1">
-                    {formatFecha(resumenPagosClienteDetalle.ultimoPago?.fecha_pago || resumenPagosClienteDetalle.ultimoPago?.fecha_creacion) || "N/A"}
+                    {formatFecha(resumenPagosClienteDetalle?.ultimoPago?.fecha_pago || resumenPagosClienteDetalle?.ultimoPago?.fecha_creacion) || "N/A"}
                   </p>
                 </div>
               </div>

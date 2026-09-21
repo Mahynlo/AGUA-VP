@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app, shell, dialog, nativeImage } from 'electron'
+import { ipcMain, BrowserWindow, app, dialog, nativeImage } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import zlib from 'zlib'
