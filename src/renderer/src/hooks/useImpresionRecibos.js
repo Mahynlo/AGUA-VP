@@ -305,7 +305,7 @@ const useImpresionRecibos = () => {
       if (response && response.success && response.path) {
         setPrintUrl(previewUrl)
         setPdfUrl(response.path)
-        setModoPdf('vista-previa')
+        setModoPdf('imprimir')
       } else {
         console.warn('Respuesta inesperada del preview:', response)
       }
@@ -315,6 +315,37 @@ const useImpresionRecibos = () => {
     } finally {
       clearInterval(intervalId)
       setProgresoGeneracion(null)
+      setProcesandoAccion(null)
+    }
+  }
+
+  // Prueba de impresión: genera únicamente 1 recibo para verificar alineación y tóner
+  const handlePruebaRecibo = async () => {
+    if (procesandoAccion) return
+    if (facturasParaImprimir.length === 0) {
+      alert('No hay clientes seleccionados para generar la prueba')
+      return
+    }
+
+    setProcesandoAccion('prueba-recibo')
+    try {
+      const lotePrueba = [facturasParaImprimir[0]]
+      const previewUrl = await construirURLImpresion(lotePrueba, true, ciudadFiltro)
+      const anuncioGuardado = localStorage.getItem('anuncio_recibo')
+      const options = {
+        customLogo: hasCustomLogo ? logoSrc : false,
+        ...(anuncioGuardado ? { anuncio: anuncioGuardado } : {})
+      }
+      const response = await window.api.previewComponent(previewUrl, options)
+      if (response && response.success && response.path) {
+        setPrintUrl(previewUrl)
+        setPdfUrl(response.path)
+        setModoPdf('imprimir')
+      }
+    } catch (err) {
+      console.error('Error generando prueba de recibo:', err)
+      alert('Hubo un error al generar la prueba de recibo: ' + err)
+    } finally {
       setProcesandoAccion(null)
     }
   }
@@ -381,6 +412,8 @@ const useImpresionRecibos = () => {
     handleToggleTodos,
     handleImprimirRecibos,
     handleVistaPreviaRecibos,
+    handleEmitirRecibos: handleVistaPreviaRecibos,
+    handlePruebaRecibo,
     handlePruebaConDatosMock,
     handleTestUrls,
     setPdfUrl,

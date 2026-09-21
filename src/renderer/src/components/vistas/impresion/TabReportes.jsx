@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Button, Card, CardHeader, CardContent } from "@heroui/react";
-import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog, HiChevronDown } from "react-icons/hi";
+import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog, HiChevronDown, HiDocumentText } from "react-icons/hi";
 import ListadoLecturas from "./components/ListadoLecturas";
 import ModalImprimir from "./components/ModalImprimir";
 import { useReportes } from "../../../context/ReportesContext";
 import { useRutas } from "../../../context/RutasContext";
+import { useClientes } from "../../../context/ClientesContext";
 import { exportData } from "../../../utils/exportUtils";
 import { obtenerPeriodoActual } from "../../../utils/periodoUtils";
 import { preloadPdfViewer } from "../../../utils/pdfPreloader";
@@ -32,6 +33,13 @@ const TabReportes = () => {
     cargarLecturas
   } = useReportes();
   const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
+  const { allClientes, fetchAllClientes } = useClientes();
+
+  useEffect(() => {
+    if (!allClientes || allClientes.length === 0) {
+      fetchAllClientes?.();
+    }
+  }, [allClientes, fetchAllClientes]);
 
   const [periodo, setPeriodo] = useState(() => ultimoPeriodoRegistrado || siguientePeriodo || obtenerPeriodoActual());
 
@@ -109,8 +117,33 @@ const TabReportes = () => {
     });
   }, [lecturasData, ciudadLecturas, ordenLecturas]);
 
-  const getUrlLecturas = async () => {
-    const dataKey = await window.api.savePrintData(JSON.stringify(lecturasDataFiltradas));
+  // --- MÉTRICAS ESTIMADAS (Tomas y Hojas) ---
+  const totalTomas = React.useMemo(() => {
+    return lecturasDataFiltradas.reduce((acc, g) => acc + (g.clientes ? g.clientes.length : 0), 0);
+  }, [lecturasDataFiltradas]);
+
+  const hojasLecturasEstimadas = React.useMemo(() => {
+    if (totalTomas === 0) return 0;
+    return totalTomas <= 18 ? 1 : 1 + Math.ceil((totalTomas - 18) / 24);
+  }, [totalTomas]);
+
+  const totalClientesPadron = allClientes?.length || 0;
+  const hojasPadronEstimadas = React.useMemo(() => {
+    if (totalClientesPadron === 0) return 0;
+    return 1 + Math.ceil(totalClientesPadron / 22);
+  }, [totalClientesPadron]);
+
+  const getUrlLecturas = async (soloPrueba = false) => {
+    let dataToSend = lecturasDataFiltradas;
+    if (soloPrueba && dataToSend.length > 0) {
+      // 1 sola página de prueba (primer grupo, máx 8 tomas)
+      const primerGrupo = dataToSend[0];
+      dataToSend = [{
+        ...primerGrupo,
+        clientes: (primerGrupo.clientes || []).slice(0, 8)
+      }];
+    }
+    const dataKey = await window.api.savePrintData(JSON.stringify(dataToSend));
 
     const { protocol, origin, href } = window.location;
     const params = `mes=${periodo}&dataKey=${dataKey}&ordenarPor=${ordenLecturas}&print=true`;
@@ -122,23 +155,29 @@ const TabReportes = () => {
   };
 
   // --- FUNCIONES PADRÓN GENERAL ---
-  const getUrlPadron = async () => {
+  const getUrlPadron = async (soloPrueba = false) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error("No hay token de sesión");
 
-      const response = await window.api.fetchClientes(token);
-      let clientesData = [];
-
-      if (response && response.data) {
-        clientesData = response.data;
-      } else if (Array.isArray(response)) {
-        clientesData = response;
+      let clientesData = allClientes && allClientes.length > 0 ? allClientes : [];
+      if (clientesData.length === 0) {
+        const response = await window.api.fetchClientes(token);
+        if (response && response.data) {
+          clientesData = response.data;
+        } else if (Array.isArray(response)) {
+          clientesData = response;
+        }
       }
 
       if (clientesData.length === 0) {
         alert("No hay clientes registrados para generar el padrón");
         return null;
+      }
+
+      if (soloPrueba) {
+        // 1 sola página de prueba (primeros 15 clientes)
+        clientesData = clientesData.slice(0, 15);
       }
 
       const dataKey = await window.api.savePrintData(JSON.stringify(clientesData));
@@ -154,29 +193,10 @@ const TabReportes = () => {
     }
   };
 
-  const handlePreviewPadron = async () => {
-    setAccion('preview-padron');
+  const handleGenerarPadron = async () => {
+    setAccion('generar-padron');
     try {
-      const url = await getUrlPadron();
-      if (!url) return;
-      const response = await window.api.previewComponent(url, { pageNumbers: true });
-      if (response && response.success && response.path) {
-        setPrintUrl(url);
-        setPdfUrl(response.path);
-        setModoPdf('vista-previa');
-      }
-    } catch (err) {
-      console.error("Error generating padron preview:", err);
-      alert("Error al generar vista previa del padrón");
-    } finally {
-      setAccion(null);
-    }
-  };
-
-  const handlePrintPadron = async () => {
-    setAccion('print-padron');
-    try {
-      const url = await getUrlPadron();
+      const url = await getUrlPadron(false);
       if (!url) return;
       const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response && response.success && response.path) {
@@ -186,7 +206,26 @@ const TabReportes = () => {
       }
     } catch (err) {
       console.error("Error preparing padron print:", err);
-      alert("Error al preparar la impresión del padrón");
+      alert("Error al preparar la emisión del padrón");
+    } finally {
+      setAccion(null);
+    }
+  };
+
+  const handlePruebaPadron = async () => {
+    setAccion('prueba-padron');
+    try {
+      const url = await getUrlPadron(true);
+      if (!url) return;
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf('imprimir');
+      }
+    } catch (err) {
+      console.error("Error preparing padron test print:", err);
+      alert("Error al generar prueba del padrón");
     } finally {
       setAccion(null);
     }
@@ -397,30 +436,11 @@ const TabReportes = () => {
     }
   };
 
-  const handlePreviewLecturas = async () => {
+  const handleGenerarLecturas = async () => {
     if (lecturasData.length === 0) return;
-    setAccion('preview-lecturas');
+    setAccion('generar-lecturas');
     try {
-      const url = await getUrlLecturas();
-      const response = await window.api.previewComponent(url, { pageNumbers: true });
-      if (response && response.success && response.path) {
-        setPrintUrl(url);
-        setPdfUrl(response.path);
-        setModoPdf('vista-previa');
-      }
-    } catch (err) {
-      console.error("Error generating preview:", err);
-      alert("Error al generar vista previa");
-    } finally {
-      setAccion(null);
-    }
-  };
-
-  const handlePrintLecturas = async () => {
-    if (lecturasData.length === 0) return;
-    setAccion('print-lecturas');
-    try {
-      const url = await getUrlLecturas();
+      const url = await getUrlLecturas(false);
       const response = await window.api.previewComponent(url, { pageNumbers: true });
       if (response && response.success && response.path) {
         setPrintUrl(url);
@@ -428,8 +448,27 @@ const TabReportes = () => {
         setModoPdf('imprimir');
       }
     } catch (err) {
-      console.error("Error preparing print:", err);
-      alert("Error al preparar la impresión");
+      console.error("Error generating reading report:", err);
+      alert("Error al generar el reporte de lecturas");
+    } finally {
+      setAccion(null);
+    }
+  };
+
+  const handlePruebaLecturas = async () => {
+    if (lecturasData.length === 0) return;
+    setAccion('prueba-lecturas');
+    try {
+      const url = await getUrlLecturas(true);
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf('imprimir');
+      }
+    } catch (err) {
+      console.error("Error generating reading test print:", err);
+      alert("Error al generar prueba de lecturas");
     } finally {
       setAccion(null);
     }
@@ -478,15 +517,23 @@ const TabReportes = () => {
             <div className="sticky top-4 space-y-4">
               
               {/* Tarjeta KPI */}
-              <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 transition-all duration-200 grid grid-cols-2 gap-4 text-center divide-x divide-slate-200 dark:divide-zinc-800 shadow-sm">
+              <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 transition-all duration-200 grid grid-cols-3 gap-2 text-center divide-x divide-slate-200 dark:divide-zinc-800 shadow-sm">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Periodo</p>
-                  <p className="text-sm font-black tracking-tight text-slate-800 dark:text-zinc-100 uppercase">{formatearPeriodoTexto(periodo)}</p>
+                  <p className="text-xs font-black tracking-tight text-slate-800 dark:text-zinc-100 uppercase truncate" title={formatearPeriodoTexto(periodo)}>
+                    {formatearPeriodoTexto(periodo)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Total Tomas</p>
-                  <p className="text-xl font-black tracking-tight text-sky-600 dark:text-sky-400 font-mono">
-                    {lecturasDataFiltradas.reduce((acc, g) => acc + (g.clientes ? g.clientes.length : 0), 0)}
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Tomas</p>
+                  <p className="text-lg font-black tracking-tight text-sky-600 dark:text-sky-400 font-mono">
+                    {totalTomas}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Hojas Est.</p>
+                  <p className="text-lg font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
+                    {hojasLecturasEstimadas}
                   </p>
                 </div>
               </div>
@@ -559,26 +606,51 @@ const TabReportes = () => {
               {lecturasData.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   
-                  {/* Vista Previa */}
+                  {/* Resumen de Tomas y Hojas (Mismo patrón que Recibos) */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
+                      <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400">
+                        <HiDocumentText className="w-4 h-4 text-sky-500" />
+                        <span className="text-[11px] font-bold uppercase tracking-wider">Tomas:</span>
+                      </div>
+                      <span className="text-base font-black font-mono text-slate-800 dark:text-zinc-100">
+                        {totalTomas}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3">
+                      <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400">
+                        <HiPrinter className="w-4 h-4 text-emerald-500" />
+                        <span className="text-[11px] font-bold uppercase tracking-wider">Hojas:</span>
+                      </div>
+                      <span className="text-base font-black font-mono text-slate-800 dark:text-zinc-100">
+                        {hojasLecturasEstimadas}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Botón Principal: Emitir Reporte */}
                   <Button
-                    className="w-full h-12 font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm rounded-xl transition-all active:scale-98"
-                    onPress={handlePreviewLecturas}
-                    isLoading={accion === 'preview-lecturas'}
+                    className="w-full h-12 font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm rounded-xl transition-all active:scale-98 text-sm flex items-center justify-center gap-2"
+                    onPress={handleGenerarLecturas}
+                    isLoading={accion === 'generar-lecturas'}
                     isDisabled={procesando || loadingLecturas}
                   >
-                    {accion !== 'preview-lecturas' && <HiEye className="text-lg" />}
-                    {accion === 'preview-lecturas' ? 'Generando PDF...' : 'Vista Previa del Reporte'}
+                    {accion !== 'generar-lecturas' && <HiPrinter className="text-lg" />}
+                    <span>{accion === 'generar-lecturas' ? 'Generando Reporte...' : 'Emitir Reporte de Lecturas'}</span>
                   </Button>
 
-                  {/* Imprimir Directamente */}
+                  {/* Botón Pequeño de Prueba: 1 Página */}
                   <Button
-                    className="w-full h-12 font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm rounded-xl transition-all active:scale-98"
-                    onPress={handlePrintLecturas}
-                    isLoading={accion === 'print-lecturas'}
+                    size="sm"
+                    variant="flat"
+                    className="w-full h-9 font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200/80 dark:border-zinc-700 rounded-xl transition-all text-xs flex items-center justify-center gap-2"
+                    onPress={handlePruebaLecturas}
+                    isLoading={accion === 'prueba-lecturas'}
                     isDisabled={procesando || loadingLecturas}
                   >
-                    {accion !== 'print-lecturas' && <HiPrinter className="text-lg" />}
-                    {accion === 'print-lecturas' ? 'Preparando...' : 'Imprimir Directamente'}
+                    {accion !== 'prueba-lecturas' && <HiEye className="w-4 h-4 text-slate-500 dark:text-zinc-400" />}
+                    <span>{accion === 'prueba-lecturas' ? 'Generando prueba...' : 'Prueba de Impresión (1 Página)'}</span>
                   </Button>
 
                 </div>
@@ -606,21 +678,37 @@ const TabReportes = () => {
       {/* SECCIÓN 2: PADRÓN GENERAL DE CLIENTES                               */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0">
-            <HiUsers className="w-6 h-6" />
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0">
+              <HiUsers className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+                Listado base para impresión institucional
+              </h3>
+              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                Padrón General de Clientes
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
-              Listado base para impresión institucional
-            </h3>
-            <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
-              Padrón General de Clientes
-            </p>
-          </div>
+
+          {totalClientesPadron > 0 && (
+            <div className="flex items-center gap-3 bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Padrón:</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 font-mono">{totalClientesPadron} clientes</span>
+              </div>
+              <span className="text-slate-300 dark:text-zinc-700">•</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Estimado:</span>
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">{hojasPadronEstimadas} hojas</span>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end bg-slate-50/60 dark:bg-zinc-900/40 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start bg-slate-50/60 dark:bg-zinc-900/40 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
               Ordenar por
@@ -658,25 +746,57 @@ const TabReportes = () => {
             </div>
           </div>
 
-          <Button
-            className="w-full font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 h-[52px] rounded-xl shadow-none transition-all"
-            onPress={handlePreviewPadron}
-            isLoading={accion === 'preview-padron'}
-            isDisabled={procesando}
-          >
-            {accion !== 'preview-padron' && <HiEye className="text-lg" />}
-            {accion === 'preview-padron' ? 'Generando...' : 'Vista Previa'}
-          </Button>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">
+              Acciones de Emisión
+            </label>
+            <div className="flex flex-col gap-2">
+              {/* Resumen de Clientes y Hojas */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center justify-between bg-white dark:bg-zinc-900/90 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400">
+                    <HiUsers className="w-3.5 h-3.5 text-indigo-500" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Clientes:</span>
+                  </div>
+                  <span className="text-sm font-black font-mono text-slate-800 dark:text-zinc-100">
+                    {totalClientesPadron}
+                  </span>
+                </div>
 
-          <Button
-            className="w-full font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 shadow-sm h-[52px] transition-all"
-            onPress={handlePrintPadron}
-            isLoading={accion === 'print-padron'}
-            isDisabled={procesando}
-          >
-            {accion !== 'print-padron' && <HiPrinter className="text-lg" />}
-            {accion === 'print-padron' ? 'Preparando...' : 'Imprimir Padrón'}
-          </Button>
+                <div className="flex items-center justify-between bg-white dark:bg-zinc-900/90 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400">
+                    <HiPrinter className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Hojas:</span>
+                  </div>
+                  <span className="text-sm font-black font-mono text-slate-800 dark:text-zinc-100">
+                    {hojasPadronEstimadas}
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                className="w-full font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-6 shadow-sm h-12 transition-all active:scale-98 text-sm flex items-center justify-center gap-2"
+                onPress={handleGenerarPadron}
+                isLoading={accion === 'generar-padron'}
+                isDisabled={procesando}
+              >
+                {accion !== 'generar-padron' && <HiPrinter className="text-lg" />}
+                <span>{accion === 'generar-padron' ? 'Preparando...' : 'Emitir Padrón General'}</span>
+              </Button>
+
+              <Button
+                size="sm"
+                variant="flat"
+                className="w-full h-8 font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-200/80 dark:border-zinc-700 rounded-xl transition-all text-xs flex items-center justify-center gap-1.5"
+                onPress={handlePruebaPadron}
+                isLoading={accion === 'prueba-padron'}
+                isDisabled={procesando}
+              >
+                {accion !== 'prueba-padron' && <HiEye className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />}
+                <span>{accion === 'prueba-padron' ? 'Generando prueba...' : 'Prueba de Impresión (1 Página)'}</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

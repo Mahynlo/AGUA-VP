@@ -33,6 +33,8 @@ const TabImpresion = () => {
     handleToggleTodos,
     handleImprimirRecibos,
     handleVistaPreviaRecibos,
+    handleEmitirRecibos,
+    handlePruebaRecibo,
     handlePruebaConDatosMock,
     handleTestUrls,
     procesandoAccion,
@@ -125,8 +127,8 @@ const TabImpresion = () => {
             {facturasParaImprimir.length > 0 ? (
               <AccionesImpresion
                 estadisticas={estadisticas}
-                onVistaPrevia={handleVistaPreviaRecibos}
-                onImprimir={handleImprimirRecibos}
+                onEmitir={handleEmitirRecibos || handleVistaPreviaRecibos}
+                onPruebaRecibo={handlePruebaRecibo}
                 procesandoAccion={procesandoAccion}
                 progresoGeneracion={progresoGeneracion}
                 ciudadFiltro={ciudadFiltro}
