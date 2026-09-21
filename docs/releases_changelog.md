@@ -2,6 +2,89 @@
 
 ---
 
+## 🧪 Notas de la versión — v1.3.0-beta.2 [Beta]
+
+**📅 Fecha de lanzamiento:** 21/09/2026  
+**🚀 Versión:** `v1.3.0-beta.2` [Pre-release / Versión Beta de Evaluación]  
+**📌 Versión base anterior estable:** `v1.2.802`  
+**🔖 Pre-release precedente:** `v1.3.0-beta.1`
+
+> ⚠️ **Aviso de Pre-release:** Esta es la segunda versión **Beta de evaluación** de la línea `v1.3.x`. Consolida la integración del nuevo Centro de Actualizaciones con visualizador persistente de notas de versión y resolución de scroll, gestión centralizada del DPI y zoom en toda la aplicación (bloqueo de Ctrl+Rueda involuntario), rediseño interactivo en tarjetas desplegables para el Detalle de Cobranza de Clientes, soporte dinámico de logos institucionales y mejoras clave en la estimación de hojas e impresión de recibos y reportes.
+
+---
+
+### 🔥 Novedades y Mejoras Principales
+
+#### 🔄 1. Centro de Actualizaciones y Visor Interactivo de Changelog
+- **Restablecimiento del Desplazamiento (Scroll) en `/actualizaciones`:**
+  - Corrección estructural en el contenedor principal (`ActualizacionesVista.jsx`), estableciendo altura exacta de viewport `h-[calc(100vh-4rem)]` con `overflow-y-auto` y `scroll-smooth`, habilitando el desplazamiento vertical continuo sin recortes de contenido.
+- **Visor Permanente de Notas de Lanzamiento en `PanelActualizaciones.jsx`:**
+  - Visualización predeterminada y persistente de las notas de la versión instalada (`v1.3.0`), eliminando la condición previa que ocultaba la sección cuando no había actualizaciones pendientes.
+  - Pestañas dinámicas (`[✨ Nueva v...]`, `[📌 Instalada v...]`) y selector de historial para alternar entre la versión actual instalada, actualizaciones entrantes detectadas y releases históricos (`v1.2.802`, etc.).
+  - Soporte de renderizado Markdown completo (`MarkdownRenderer`) con scroll interno personalizado y formato localizado de fechas en español.
+- **Arquitectura de Changelog en Proceso Principal (`updateManager.js`):**
+  - Lectura y parseo de changelogs locales empaquetados en `resources/releases_changelog.md` y `docs/releases_changelog.md`.
+  - Integración asíncrona con GitHub Releases (timeout de 3.5s con fallback seguro) y canal IPC `system:get-changelog` con caché en memoria.
+  - Habilitación de `forceDevUpdateConfig` para pruebas de actualización en entorno de desarrollo con `dev-app-update.yml`.
+  - Respaldo de base de datos automático garantizado (`pre-update`) previo a la ejecución de reinicio e instalación.
+
+---
+
+#### 🔍 2. Gestión Centralizada de Zoom y Bloqueo de Escala Involuntaria
+- **Aislamiento de Atajos de Teclado y Rueda del Ratón:**
+  - Bloqueo de gestos accidentales de zoom mediante `Ctrl + Rueda del ratón` y gestos táctiles *pinch-to-zoom*, protegiendo la escala y distribución de la interfaz.
+- **Manejador Centralizado (`zoomManager.js`):**
+  - Control unificado del factor de escala del viewport y sincronización automática entre la ventana principal y ventanas auxiliares (Ayuda/Soporte).
+  - Persistencia de la escala personalizada en configuración local y aplicación limpia desde el arranque de Electron.
+- **Selector de Escala en Panel de Configuración (`Config.jsx`):**
+  - Ajuste ergonómico de DPI / Escala con opciones preestablecidas y retroalimentación en tiempo real.
+
+---
+
+#### 💳 3. Rediseño del Detalle de Cobranza en Tarjetas Desplegables
+- **Despliegue Vertical Tipo Acordeón (`ModalDetalleCobranzaCliente.jsx`):**
+  - Transformación del visualizador de pagos: en lugar de mostrar los datos en una tabla estática al fondo, ahora cada pago se presenta en tarjetas individuales que se expanden verticalmente de arriba a abajo.
+  - Preservación íntegra de los tokens y estética corporativa de HeroUI y Tailwind del sistema.
+- **Depuración Lógica y Eliminación de Referencias Huérfanas:**
+  - Corrección de excepciones en tiempo de ejecución (`pagoSeleccionadoDetalle is not defined`) y limpieza exhaustiva de imports y variables no utilizadas.
+  - Sincronización precisa con el desglose de conceptos, abonos, descuentos y saldos restantes.
+
+---
+
+#### 🖨️ 4. Emisión de Recibos, Reportes y Estimación de Hojas
+- **Estimación y Desglose de Hojas en Impresión de Reportes (`TabReportes.jsx`):**
+  - Cálculo previo y visualización explícita de la cantidad de hojas estimadas antes del envío a la impresora, brindando previsibilidad al operador antes de mandar a imprimir.
+- **Módulo de Pruebas de Impresión y Emisión de Recibos:**
+  - Incorporación de rutinas de prueba y validación de conectividad en `TabImpresion.jsx` y `AccionesImpresion.jsx`.
+  - Optimización en el hook `useImpresionRecibos.js` para la selección masiva de predios y cola de impresión.
+- **Overhaul de `ModalImprimir.jsx` e IPC de Impresión:**
+  - Refactorización de componentes de formulario, cálculo de paginación e integración robusta de impresión térmica.
+
+---
+
+#### 🏛️ 5. Gestión Dinámica de Identidad Institucional y Logos (`LogoContext` & `logoManager`)
+- **Gestión Desacoplada del Logo Municipal (`logoManager.js`):**
+  - Almacenamiento, validación y sincronización de logos personalizados entre el proceso principal y los procesos de renderizado.
+  - Integración del Escudo Institucional oficial como recurso de reserva (*fallback*) de alta fidelidad (`Escudo_Villa_Pesqueira_sin_fondo.png`).
+- **Integración en Documentos PDF y Vista de Documentación:**
+  - Vinculación del logo dinámico con los generadores PDF de recibos térmicos y reportes impresos (`reciboPdfGenerator.js`, `PrintableDocContainer.jsx`, `ReporteDocumentacion.jsx`).
+
+---
+
+#### 📖 6. Ventana Independiente de Soporte y Ayuda
+- **Gestión Dinámica de Título de Ventana (`helpWindowManager.js` & `AyudaVista.jsx`):**
+  - Actualización reactiva del título de la ventana y de la barra superior según el tema, guía o manual técnico que se esté consultando.
+
+---
+
+### 🔖 Trazabilidad de Versiones
+- **Versión actual:** `v1.3.0-beta.2` [Pre-release]
+- **Pre-release previo:** `v1.3.0-beta.1` (17/09/2026)
+- **Versión base estable previa:** `v1.2.802`
+- **Punto de control arquitectónico:** `v1.2.900`
+
+---
+
 ## 🧪 Notas de la versión — v1.3.0-beta.1 [Beta]
 
 **📅 Fecha de lanzamiento:** 17/09/2026  
