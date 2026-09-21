@@ -1386,6 +1386,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         setAnioFiltroPagosDetalle={setAnioFiltroPagosDetalle}
         periodoFiltroPagosDetalle={periodoFiltroPagosDetalle}
         setPeriodoFiltroPagosDetalle={setPeriodoFiltroPagosDetalle}
+        pagoSeleccionadoDetalle={pagoSeleccionadoDetalle}
         setPagoSeleccionadoDetalle={setPagoSeleccionadoDetalle}
         aniosPagosClienteDetalle={aniosPagosClienteDetalle}
         periodosPagosClienteDetalle={periodosPagosClienteDetalle}
