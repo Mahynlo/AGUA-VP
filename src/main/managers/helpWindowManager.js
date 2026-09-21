@@ -2,7 +2,7 @@ import { BrowserWindow, shell } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 import icon from '../../../resources/icon.png?asset';
-import { restoreZoom } from './zoomManager.js';
+import { restoreZoom, getSavedZoom } from './zoomManager.js';
 
 let helpWindow = null;
 
@@ -41,7 +41,8 @@ export function openHelpWindow(section = null, file = null) {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       webSecurity: !is.dev,
-      spellcheck: true
+      spellcheck: true,
+      zoomFactor: getSavedZoom()
     }
   });
 
@@ -59,6 +60,7 @@ export function openHelpWindow(section = null, file = null) {
   });
 
   helpWindow.on('ready-to-show', () => {
+    restoreZoom(helpWindow);
     helpWindow.setTitle('Centro de Ayuda - AguaVP');
     helpWindow.show();
   });

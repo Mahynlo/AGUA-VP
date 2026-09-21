@@ -9,7 +9,7 @@ import initUpdateManager from './managers/updateManager.js'
 import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
 import { startApiServer, stopApiServer } from './managers/apiManager.js'
 import { setupWindowState } from './windowState.js'
-import { zoomIn, zoomOut, zoomReset, restoreZoom } from './managers/zoomManager.js'
+import { restoreZoom, getSavedZoom } from './managers/zoomManager.js'
 import contextMenu from 'electron-context-menu';
 
 // Configurar menú contextual en Español
@@ -38,13 +38,6 @@ const createMenu = () => {
       submenu: [
         { role: 'reload' },
         { role: 'forceReload' },
-        { type: 'separator' },
-        // Usamos click + zoomManager (en vez de los roles nativos) para compartir
-        // límites (50%–300%), persistencia y notificación con el panel de Configuración.
-        { label: 'Restablecer Zoom', accelerator: 'CommandOrControl+0', click: (_, win) => zoomReset(win || BrowserWindow.getFocusedWindow()) },
-        { label: 'Acercar', accelerator: 'CommandOrControl+Plus', click: (_, win) => zoomIn(win || BrowserWindow.getFocusedWindow()) }, // Algunos teclados requieren Shift
-        { label: 'Acercar (Alt)', accelerator: 'CommandOrControl+=', click: (_, win) => zoomIn(win || BrowserWindow.getFocusedWindow()) }, // Alternativa sin Shift
-        { label: 'Alejar', accelerator: 'CommandOrControl+-', click: (_, win) => zoomOut(win || BrowserWindow.getFocusedWindow()) },
         { type: 'separator' },
         { role: 'togglefullscreen' }
       ]
@@ -87,7 +80,8 @@ function createWindow() {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false, // Deshabilitar el aislamiento del contexto
       webSecurity: !is.dev, // Permitir carga de archivos locales en iframe durante desarrollo
-      spellcheck: true
+      spellcheck: true,
+      zoomFactor: getSavedZoom()
     }
 
   })
@@ -100,6 +94,7 @@ function createWindow() {
 
 
   mainWindow.on('ready-to-show', () => { // Mostrar la ventana cuando esté lista 
+    restoreZoom(mainWindow);
     mainWindow.show();      // Muestra la app
   })
 

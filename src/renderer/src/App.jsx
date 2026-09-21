@@ -151,26 +151,39 @@ function MainApp() {
     }
   }, [location, hideSidebarRoutes, isPrintMode]);
 
-  // CONTROL DE ZOOM MANUAL (DPI AWARENESS)
+  // PREVENCIÓN DE ZOOM ACCIDENTAL (TECLADO Y RUEDA DE RATÓN)
+  // La escala de la pantalla se gestiona exclusivamente desde el panel de Configuración.
   React.useEffect(() => {
     const handleKeyDown = (e) => {
-      // Detectar Ctrl (Windows) o Command (Mac)
+      // Bloquear atajos nativos de zoom de Chromium (Ctrl +, Ctrl -, Ctrl 0)
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === '=' || e.key === '+') {
+        if (
+          e.key === '=' ||
+          e.key === '+' ||
+          e.key === '-' ||
+          e.key === '0' ||
+          e.code === 'NumpadAdd' ||
+          e.code === 'NumpadSubtract' ||
+          e.code === 'Numpad0'
+        ) {
           e.preventDefault();
-          window.api.zoomIn();
-        } else if (e.key === '-') {
-          e.preventDefault();
-          window.api.zoomOut();
-        } else if (e.key === '0') {
-          e.preventDefault();
-          window.api.zoomReset();
         }
       }
     };
 
+    const handleWheel = (e) => {
+      // Bloquear completamente cualquier zoom accidental de Chromium con Ctrl + rueda de ratón
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('wheel', handleWheel);
+    };
   }, []);
 
   // Si está cargando y NO estamos en modo impresión ni en ayuda, mostrar pantalla de carga

@@ -60,9 +60,21 @@ export function Config() {
 
     // Escuchar cambios globales de zoom (atajos de teclado / menú de Electron)
     useEffect(() => {
+        if (window.api?.getZoomLevel) {
+            window.api.getZoomLevel()
+                .then((level) => {
+                    if (Number.isFinite(level)) {
+                        setZoomLevel(Math.round(level * 100));
+                    }
+                })
+                .catch((e) => console.error("Error obteniendo zoom inicial:", e));
+        }
+
         if (!window.api?.onZoomLevelChanged) return;
         const unsubscribe = window.api.onZoomLevelChanged((newLevel) => {
-            setZoomLevel(Math.round(newLevel * 100));
+            if (Number.isFinite(newLevel)) {
+                setZoomLevel(Math.round(newLevel * 100));
+            }
         });
         return () => {
             if (typeof unsubscribe === "function") unsubscribe();
@@ -73,7 +85,9 @@ export function Config() {
         if (window.api?.zoomIn) {
             try {
                 const newLevel = await window.api.zoomIn();
-                setZoomLevel(Math.round(newLevel * 100));
+                if (Number.isFinite(newLevel)) {
+                    setZoomLevel(Math.round(newLevel * 100));
+                }
             } catch (e) {
                 console.error("Error aumentando zoom:", e);
             }
@@ -84,7 +98,9 @@ export function Config() {
         if (window.api?.zoomOut) {
             try {
                 const newLevel = await window.api.zoomOut();
-                setZoomLevel(Math.round(newLevel * 100));
+                if (Number.isFinite(newLevel)) {
+                    setZoomLevel(Math.round(newLevel * 100));
+                }
             } catch (e) {
                 console.error("Error reduciendo zoom:", e);
             }
@@ -95,7 +111,9 @@ export function Config() {
         if (window.api?.zoomReset) {
             try {
                 const newLevel = await window.api.zoomReset();
-                setZoomLevel(Math.round(newLevel * 100));
+                if (Number.isFinite(newLevel)) {
+                    setZoomLevel(Math.round(newLevel * 100));
+                }
             } catch (e) {
                 console.error("Error restableciendo zoom:", e);
             }

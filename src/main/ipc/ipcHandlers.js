@@ -167,6 +167,7 @@ export default function IpcHandlers() {
         show: false,
         backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
         webPreferences: {
+          zoomFactor: 1.0,
           sandbox: false,
           nodeIntegration: false,
           contextIsolation: true,
@@ -347,6 +348,7 @@ export default function IpcHandlers() {
         backgroundColor: '#ffffff',
         autoHideMenuBar: true,
         webPreferences: {
+          zoomFactor: 1.0,
           sandbox: false,
           nodeIntegration: false,
           contextIsolation: true,
@@ -519,6 +521,7 @@ export default function IpcHandlers() {
       show: false,
       backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
       webPreferences: {
+        zoomFactor: 1.0,
         nodeIntegration: false,
         contextIsolation: true,
         // Deshabilitar cache para evitar problemas de carga
@@ -595,6 +598,7 @@ export default function IpcHandlers() {
       backgroundColor: '#ffffff', // FORCE WHITE BACKGROUND
       autoHideMenuBar: true,
       webPreferences: {
+        zoomFactor: 1.0,
         nodeIntegration: false,
         contextIsolation: true,
         // Deshabilitar cache para evitar problemas de carga
