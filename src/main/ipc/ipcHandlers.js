@@ -1,6 +1,7 @@
 import { ipcMain, BrowserWindow, app, shell, dialog, nativeImage } from 'electron'
 import path from 'path'
 import fs from 'fs'
+import zlib from 'zlib'
 import { execFile } from 'child_process'
 import { pathToFileURL, fileURLToPath } from 'url'
 import ExcelJS from 'exceljs'
@@ -1192,20 +1193,298 @@ export default function IpcHandlers() {
     }
   })
 
-  // ============================================================
-  // GUARDAR PDF — copiar el PDF temporal a ubicación elegida por el usuario
-  // ============================================================
-  ipcMain.handle('save-pdf', async (event, fileUrl) => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    // Convertir file:// URL a path local
-    let sourcePath
-    try {
-      sourcePath = fileURLToPath(fileUrl)
-    } catch {
-      sourcePath = fileUrl.replace(/^file:\/\/\//, '')
+  // Helper para resolver rutas locales de PDF a partir de cualquier URL o formato en Windows
+  const resolveLocalPdfPath = (fileUrl) => {
+    if (!fileUrl) return null
+    let p = String(fileUrl).trim()
+    // Remover query parameters o hashes (ej: file:///...pdf?t=123#page=1)
+    p = p.split('#')[0].split('?')[0]
+    if (p.startsWith('file:')) {
+      try {
+        p = fileURLToPath(p)
+      } catch {
+        p = p.replace(/^file:\/{1,3}/i, '')
+        p = decodeURIComponent(p)
+      }
+    } else {
+      p = decodeURIComponent(p)
+    }
+    p = p.replace(/\//g, path.sep)
+    if (/^[\\\/][a-zA-Z]:/.test(p)) {
+      p = p.slice(1)
+    }
+    return p
+  }
+
+  // Helper para interpretar rangos de páginas (ej. '1-3, 5') a índices 0-based
+  const parsePageRange = (rangeStr, maxPages) => {
+    const pages = new Set()
+    const parts = String(rangeStr || '').split(',')
+    for (const part of parts) {
+      const trimmed = part.trim()
+      if (!trimmed) continue
+      if (trimmed.includes('-')) {
+        const [startStr, endStr] = trimmed.split('-')
+        const start = Math.max(1, parseInt(startStr, 10) || 1)
+        const end = Math.min(maxPages, parseInt(endStr, 10) || maxPages)
+        for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+          pages.add(i - 1)
+        }
+      } else {
+        const p = parseInt(trimmed, 10)
+        if (p >= 1 && p <= maxPages) {
+          pages.add(p - 1)
+        }
+      }
+    }
+    return Array.from(pages).sort((a, b) => a - b)
+  }
+
+  // Convierte un documento PDF a escala de grises real (monocromático) transformando
+  // flujos vectoriales (páginas y Form XObjects), gradientes (Shadings/Patterns) e imágenes (/DeviceRGB / ICCBased).
+  const convertDocToGrayscale = async (doc) => {
+    const { PDFName, PDFRawStream, PDFStream } = await import('pdf-lib')
+
+    const processContentStream = (stream) => {
+      if (!stream || !stream.contents) return
+
+      const filter = stream.dict?.get(PDFName.of('Filter'))?.toString()
+      let decompressed
+      const isFlate = filter === '/FlateDecode'
+      if (isFlate) {
+        try {
+          decompressed = zlib.inflateSync(Buffer.from(stream.contents))
+        } catch {
+          return
+        }
+      } else if (!filter) {
+        decompressed = Buffer.from(stream.contents)
+      } else {
+        return
+      }
+
+      let contentStr = decompressed.toString('latin1')
+
+      // Transformar operadores RGB: r g b (rg|RG|scn|SCN|sc|SC)
+      contentStr = contentStr.replace(
+        /(-?[0-9.]+)\s+(-?[0-9.]+)\s+(-?[0-9.]+)\s+(scn|SCN|rg|RG|sc|SC)\b/g,
+        (match, rStr, gStr, bStr, op) => {
+          const r = parseFloat(rStr)
+          const g = parseFloat(gStr)
+          const b = parseFloat(bStr)
+          if (isNaN(r) || isNaN(g) || isNaN(b)) return match
+          const gray = Math.max(0, Math.min(1, 0.299 * r + 0.587 * g + 0.114 * b)).toFixed(4)
+          return `${gray} ${gray} ${gray} ${op}`
+        }
+      )
+
+      // Transformar operadores CMYK: c m y k (k|K)
+      contentStr = contentStr.replace(
+        /(-?[0-9.]+)\s+(-?[0-9.]+)\s+(-?[0-9.]+)\s+(-?[0-9.]+)\s+(k|K)\b/g,
+        (match, cStr, mStr, yStr, kStr, op) => {
+          const c = parseFloat(cStr)
+          const m = parseFloat(mStr)
+          const y = parseFloat(yStr)
+          const k = parseFloat(kStr)
+          if (isNaN(c) || isNaN(m) || isNaN(y) || isNaN(k)) return match
+          const grayK = Math.max(0, Math.min(1, 0.299 * c + 0.587 * m + 0.114 * y + k)).toFixed(4)
+          return `0 0 0 ${grayK} ${op}`
+        }
+      )
+
+      const newBuffer = Buffer.from(contentStr, 'latin1')
+      if (isFlate) {
+        stream.contents = zlib.deflateSync(newBuffer)
+      } else {
+        stream.contents = new Uint8Array(newBuffer)
+      }
     }
 
-    if (!fs.existsSync(sourcePath)) {
+    const convertFunctionColors = (fnTarget) => {
+      if (!fnTarget) return
+      const resolved = (fnTarget.tag === 'Ref' || fnTarget._objectNumber !== undefined)
+        ? doc.context.lookup(fnTarget)
+        : fnTarget
+      if (!resolved) return
+      const d = resolved.dict || (typeof resolved.get === 'function' ? resolved : null)
+      if (!d) return
+
+      // Manejar funciones compuestas / stitching (Tipo 3)
+      const childFunctions = d.get(PDFName.of('Functions'))
+      if (childFunctions && typeof childFunctions.asArray === 'function') {
+        for (const child of childFunctions.asArray()) {
+          convertFunctionColors(child)
+        }
+      } else if (Array.isArray(childFunctions)) {
+        for (const child of childFunctions) {
+          convertFunctionColors(child)
+        }
+      }
+
+      // Procesar puntos extremos de color de gradientes C0 y C1
+      for (const key of ['C0', 'C1']) {
+        const cArr = d.get(PDFName.of(key))
+        if (cArr && typeof cArr.asArray === 'function') {
+          const arr = cArr.asArray()
+          if (arr.length === 3) {
+            const r = parseFloat(arr[0].toString())
+            const g = parseFloat(arr[1].toString())
+            const b = parseFloat(arr[2].toString())
+            if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+              const gray = Math.round(Math.max(0, Math.min(1, 0.299 * r + 0.587 * g + 0.114 * b)) * 10000) / 10000
+              d.set(PDFName.of(key), doc.context.obj([gray, gray, gray]))
+            }
+          }
+        }
+      }
+    }
+
+    // 1. Convertir flujos de contenido de todas las páginas
+    for (const page of doc.getPages()) {
+      const contentsRef = page.node.Contents()
+      if (!contentsRef) continue
+
+      let streams = []
+      if (typeof contentsRef.asArray === 'function') {
+        streams = contentsRef.asArray().map((r) => doc.context.lookup(r) || r)
+      } else if (Array.isArray(contentsRef)) {
+        streams = contentsRef.map((r) => doc.context.lookup(r) || r)
+      } else {
+        const resolved = (contentsRef.tag === 'Ref' || contentsRef._objectNumber !== undefined)
+          ? doc.context.lookup(contentsRef)
+          : contentsRef
+        streams = [resolved || contentsRef]
+      }
+
+      for (const s of streams) {
+        processContentStream(s)
+      }
+    }
+
+    // 2. Procesar todos los objetos indirectos (Form XObjects, Imágenes e iluminación/degradados Shading)
+    for (const [ref, obj] of doc.context.enumerateIndirectObjects()) {
+      if (!obj) continue
+
+      // 2A. Flujos (Form XObjects, imágenes y patrones)
+      const isStream = (PDFRawStream && obj instanceof PDFRawStream) ||
+                       (PDFStream && obj instanceof PDFStream) ||
+                       (obj && obj.contents !== undefined && obj.dict !== undefined)
+      if (isStream) {
+        const subtype = obj.dict?.get(PDFName.of('Subtype'))?.toString()
+        const type = obj.dict?.get(PDFName.of('Type'))?.toString()
+
+        // Imágenes raster (/DeviceRGB, /ICCBased, etc.)
+        if (subtype === '/Image') {
+          const filter = obj.dict?.get(PDFName.of('Filter'))?.toString()
+          const w = parseInt(obj.dict?.get(PDFName.of('Width'))?.toString() || '0', 10)
+          const h = parseInt(obj.dict?.get(PDFName.of('Height'))?.toString() || '0', 10)
+
+          if (filter === '/FlateDecode' && w > 0 && h > 0) {
+            try {
+              const raw = zlib.inflateSync(Buffer.from(obj.contents))
+              // Buffer RGB de 3 canales (DeviceRGB, ICCBased, CalRGB)
+              if (raw.length === w * h * 3) {
+                for (let i = 0; i < raw.length; i += 3) {
+                  const gray = Math.round(0.299 * raw[i] + 0.587 * raw[i + 1] + 0.114 * raw[i + 2])
+                  raw[i] = gray
+                  raw[i + 1] = gray
+                  raw[i + 2] = gray
+                }
+                obj.contents = zlib.deflateSync(raw)
+              } else if (raw.length === h * (1 + w * 3)) {
+                // Buffer con predictor PNG (3 canales)
+                const rowBytes = 1 + w * 3
+                for (let y = 0; y < h; y++) {
+                  const rowStart = y * rowBytes + 1
+                  for (let x = 0; x < w; x++) {
+                    const idx = rowStart + x * 3
+                    const gray = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2])
+                    raw[idx] = gray
+                    raw[idx + 1] = gray
+                    raw[idx + 2] = gray
+                  }
+                }
+                obj.contents = zlib.deflateSync(raw)
+              } else if (raw.length === w * h * 4) {
+                // Buffer RGBA de 4 canales (preserva canal alfa)
+                for (let i = 0; i < raw.length; i += 4) {
+                  const gray = Math.round(0.299 * raw[i] + 0.587 * raw[i + 1] + 0.114 * raw[i + 2])
+                  raw[i] = gray
+                  raw[i + 1] = gray
+                  raw[i + 2] = gray
+                }
+                obj.contents = zlib.deflateSync(raw)
+              } else if (raw.length === h * (1 + w * 4)) {
+                // Buffer RGBA de 4 canales con predictor PNG (preserva canal alfa)
+                const rowBytes = 1 + w * 4
+                for (let y = 0; y < h; y++) {
+                  const rowStart = y * rowBytes + 1
+                  for (let x = 0; x < w; x++) {
+                    const idx = rowStart + x * 4
+                    const gray = Math.round(0.299 * raw[idx] + 0.587 * raw[idx + 1] + 0.114 * raw[idx + 2])
+                    raw[idx] = gray
+                    raw[idx + 1] = gray
+                    raw[idx + 2] = gray
+                  }
+                }
+                obj.contents = zlib.deflateSync(raw)
+              }
+            } catch (imgErr) {
+              console.warn('⚠️ Error al transformar imagen a escala de grises:', imgErr.message)
+            }
+          }
+          continue
+        }
+
+        // Form XObjects (cabeceras, componentes visuales de Chromium) y flujos de patrones
+        if (subtype === '/Form' || type === '/Pattern') {
+          processContentStream(obj)
+        }
+      }
+
+      // 2B. Diccionarios de Degradados (Shadings) y Patrones con Shading (cabeceras y fondos con gradientes CSS)
+      const dict = obj.dict || (typeof obj.get === 'function' ? obj : null)
+      if (dict) {
+        let shading = dict.get(PDFName.of('Shading'))
+        if (shading) {
+          shading = (shading.tag === 'Ref' || shading._objectNumber !== undefined) ? doc.context.lookup(shading) : shading
+        } else if (dict.get(PDFName.of('ShadingType'))) {
+          shading = obj
+        }
+
+        if (shading) {
+          const sDict = shading.dict || shading
+          const fn = sDict.get(PDFName.of('Function'))
+          if (fn) {
+            convertFunctionColors(fn)
+          }
+          const bg = sDict.get(PDFName.of('Background'))
+          if (bg && typeof bg.asArray === 'function') {
+            const arr = bg.asArray()
+            if (arr.length === 3) {
+              const r = parseFloat(arr[0].toString())
+              const g = parseFloat(arr[1].toString())
+              const b = parseFloat(arr[2].toString())
+              if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+                const gray = Math.round((0.299 * r + 0.587 * g + 0.114 * b) * 10000) / 10000
+                sDict.set(PDFName.of('Background'), doc.context.obj([gray, gray, gray]))
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ============================================================
+  // GUARDAR PDF — copiar o exportar el PDF a ubicación elegida por el usuario
+  // Soporta filtrado nativo de rangos de páginas, rotación y conversión B/N
+  // ============================================================
+  ipcMain.handle('save-pdf', async (event, fileUrl, options = {}) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const sourcePath = resolveLocalPdfPath(fileUrl)
+
+    if (!sourcePath || !fs.existsSync(sourcePath)) {
       return { success: false, error: 'El archivo temporal ya no existe' }
     }
 
@@ -1220,11 +1499,148 @@ export default function IpcHandlers() {
     }
 
     try {
+      const isMonochrome = options.colorMode === 'monochrome'
+      const hasCustomPages = options.pages && typeof options.pages === 'string' && options.pages !== 'all'
+      const hasRotation = typeof options.rotateAngle === 'number' && options.rotateAngle !== 0
+
+      if (isMonochrome || hasCustomPages || hasRotation) {
+        const { PDFDocument, degrees } = await import('pdf-lib')
+        const fileBytes = await fs.promises.readFile(sourcePath)
+        const srcDoc = await PDFDocument.load(fileBytes, { ignoreEncryption: true })
+        const total = srcDoc.getPageCount()
+        const pageIndices = hasCustomPages ? parsePageRange(options.pages, total) : Array.from({ length: total }, (_, i) => i)
+
+        if (hasCustomPages && pageIndices.length === 0) {
+          return { success: false, error: 'El rango de páginas especificado no coincide con ninguna página del documento.' }
+        }
+
+        if (pageIndices.length > 0) {
+          const newDoc = await PDFDocument.create()
+          const copiedPages = await newDoc.copyPages(srcDoc, pageIndices)
+          copiedPages.forEach((p) => {
+            if (hasRotation) {
+              const currentRot = p.getRotation ? (p.getRotation().angle || 0) : 0
+              p.setRotation(degrees((currentRot + options.rotateAngle) % 360))
+            }
+            newDoc.addPage(p)
+          })
+          if (isMonochrome) {
+            await convertDocToGrayscale(newDoc)
+          }
+          const newPdfBytes = await newDoc.save()
+          await fs.promises.writeFile(filePath, newPdfBytes)
+          return { success: true, filePath }
+        }
+      }
+
       await fs.promises.copyFile(sourcePath, filePath)
       return { success: true, filePath }
     } catch (error) {
       console.error('Error guardando PDF:', error)
       return { success: false, error: error.message }
+    }
+  })
+
+  // Obtener metadatos nativos del documento (orientación y total de páginas con detección real de rotación)
+  ipcMain.handle('get-pdf-metadata', async (_event, fileUrl) => {
+    try {
+      const sourcePath = resolveLocalPdfPath(fileUrl)
+      if (!sourcePath || !fs.existsSync(sourcePath)) {
+        console.warn('⚠️ [get-pdf-metadata] Archivo no existe:', sourcePath)
+        return null
+      }
+
+      const { PDFDocument } = await import('pdf-lib')
+      const fileBytes = await fs.promises.readFile(sourcePath)
+      const doc = await PDFDocument.load(fileBytes, { ignoreEncryption: true })
+      const pageCount = doc.getPageCount()
+      if (pageCount === 0) {
+        return {
+          success: true,
+          pageCount: 0,
+          orientation: 'portrait',
+          isLandscape: false,
+          width: 612,
+          height: 792
+        }
+      }
+
+      const firstPage = doc.getPage(0)
+      const size = firstPage.getSize()
+      const rot = firstPage.getRotation ? (firstPage.getRotation().angle || 0) : 0
+      const effectiveWidth = (rot === 90 || rot === 270) ? size.height : size.width
+      const effectiveHeight = (rot === 90 || rot === 270) ? size.width : size.height
+      const isLandscape = effectiveWidth >= effectiveHeight
+      const orientation = isLandscape ? 'landscape' : 'portrait'
+
+      const result = {
+        success: true,
+        pageCount,
+        orientation,
+        isLandscape,
+        width: Math.round(effectiveWidth),
+        height: Math.round(effectiveHeight),
+        rotation: rot
+      }
+      console.log('✅ [get-pdf-metadata]:', result)
+      return result
+    } catch (err) {
+      console.warn('⚠️ Error al obtener metadatos de PDF:', err.message)
+      return null
+    }
+  })
+
+  // Generar corte o transformación temporal de vista previa (filtrado de páginas, rotación y/o monocromático)
+  ipcMain.handle('generate-preview-slice', async (_event, { fileUrl, pages, rotateAngle = 0, colorMode = 'color' }) => {
+    try {
+      const sourcePath = resolveLocalPdfPath(fileUrl)
+      if (!sourcePath || !fs.existsSync(sourcePath)) {
+        return { success: false, error: 'Archivo PDF de origen no encontrado' }
+      }
+
+      const { PDFDocument, degrees } = await import('pdf-lib')
+      const fileBytes = await fs.promises.readFile(sourcePath)
+      const srcDoc = await PDFDocument.load(fileBytes, { ignoreEncryption: true })
+      const total = srcDoc.getPageCount()
+
+      let pageIndices = []
+      if (!pages || pages === 'all') {
+        pageIndices = Array.from({ length: total }, (_, i) => i)
+      } else {
+        pageIndices = parsePageRange(pages, total)
+      }
+
+      if (pageIndices.length === 0) {
+        pageIndices = Array.from({ length: total }, (_, i) => i)
+      }
+
+      const newDoc = await PDFDocument.create()
+      const copiedPages = await newDoc.copyPages(srcDoc, pageIndices)
+      copiedPages.forEach((p) => {
+        if (rotateAngle !== 0) {
+          const currentRot = p.getRotation ? (p.getRotation().angle || 0) : 0
+          p.setRotation(degrees((currentRot + rotateAngle) % 360))
+        }
+        newDoc.addPage(p)
+      })
+
+      if (colorMode === 'monochrome') {
+        await convertDocToGrayscale(newDoc)
+      }
+
+      const tempSlicePath = path.join(app.getPath('temp'), `preview_slice_${Date.now()}.pdf`)
+      const newBytes = await newDoc.save()
+      await fs.promises.writeFile(tempSlicePath, newBytes)
+
+      return {
+        success: true,
+        url: pathToFileURL(tempSlicePath).href,
+        pageCount: pageIndices.length,
+        path: tempSlicePath
+      }
+    } catch (err) {
+      console.error('Error generando corte de vista previa:', err)
+      return { success: false, error: err.message }
     }
   })
 
@@ -1330,9 +1746,33 @@ export default function IpcHandlers() {
     return path.join(distDir, entries[0])
   }
 
-  ipcMain.handle('print-silent', (event, pdfFileUrl, config = {}) => {
-    const { printer = '', copies = 1, landscape = false, pageSize = 'Letter' } = config
-    console.log('print-silent (SumatraPDF):', { printer, copies, landscape, pageSize })
+  ipcMain.handle('print-silent', async (event, pdfFileUrl, config = {}) => {
+    const {
+      printer = '',
+      copies = 1,
+      landscape = false,
+      pageSize = 'Letter',
+      colorMode = 'color',
+      pages = '',
+      duplex = 'simplex',
+      scale = 'fit',
+      collate = true,
+      pagesPerSheet = 1,
+      rotateAngle = 0
+    } = config
+    console.log('print-silent (SumatraPDF):', {
+      printer,
+      copies,
+      landscape,
+      pageSize,
+      colorMode,
+      pages,
+      duplex,
+      scale,
+      collate,
+      pagesPerSheet,
+      rotateAngle
+    })
 
     const VIRTUAL_PRINTERS = [
       'microsoft print to pdf',
@@ -1340,16 +1780,72 @@ export default function IpcHandlers() {
       'onenote',
       'fax'
     ]
-    const isVirtual = VIRTUAL_PRINTERS.some((v) => printer.toLowerCase().includes(v))
+    const isVirtual = VIRTUAL_PRINTERS.some((v) => (printer || '').toLowerCase().includes(v))
 
-    return new Promise((resolve, reject) => {
-      let pdfPath
+    const pdfPath = resolveLocalPdfPath(pdfFileUrl)
+    if (!pdfPath || !fs.existsSync(pdfPath)) {
+      throw new Error('El archivo PDF a imprimir no existe: ' + pdfFileUrl)
+    }
+
+    const isMonochrome = colorMode === 'monochrome'
+    const hasCustomPages = pages && typeof pages === 'string' && pages !== 'all'
+    const hasRotation = typeof rotateAngle === 'number' && rotateAngle !== 0
+
+    // Si el usuario seleccionó una impresora virtual de PDF (ej. Microsoft Print to PDF):
+    // En lugar de enviar un PDF a través del spooler de Windows para volverlo a convertir a PDF
+    // (lo que genera archivos EMF de 44MB+ y falla por timeout en PORTPROMPT:),
+    // guardamos directamente el archivo PDF de alta fidelidad aplicando las opciones (páginas, B/N, rotación).
+    if (isVirtual && (printer.toLowerCase().includes('pdf') || !printer)) {
       try {
-        pdfPath = fileURLToPath(pdfFileUrl)
-      } catch {
-        pdfPath = decodeURIComponent(pdfFileUrl.replace(/^file:\/\/\//, '')).replace(/\//g, '\\')
-      }
+        const win = BrowserWindow.fromWebContents(event.sender)
+        const { canceled, filePath } = await dialog.showSaveDialog(win, {
+          title: 'Guardar Salida de Impresión',
+          defaultPath: path.basename(pdfPath),
+          filters: [{ name: 'Documentos PDF', extensions: ['pdf'] }]
+        })
+        if (canceled || !filePath) {
+          return { success: false, canceled: true }
+        }
+        if (hasCustomPages || isMonochrome || hasRotation) {
+          const { PDFDocument, degrees } = await import('pdf-lib')
+          const fileBytes = await fs.promises.readFile(pdfPath)
+          const srcDoc = await PDFDocument.load(fileBytes, { ignoreEncryption: true })
+          const total = srcDoc.getPageCount()
+          const pageIndices = hasCustomPages ? parsePageRange(pages, total) : Array.from({ length: total }, (_, i) => i)
 
+          if (hasCustomPages && pageIndices.length === 0) {
+            throw new Error('El rango de páginas especificado no coincide con ninguna página del documento.')
+          }
+
+          if (pageIndices.length > 0) {
+            const newDoc = await PDFDocument.create()
+            const copiedPages = await newDoc.copyPages(srcDoc, pageIndices)
+            copiedPages.forEach((p) => {
+              if (hasRotation) {
+                const currentRot = p.getRotation ? (p.getRotation().angle || 0) : 0
+                p.setRotation(degrees((currentRot + rotateAngle) % 360))
+              }
+              newDoc.addPage(p)
+            })
+            if (isMonochrome) {
+              await convertDocToGrayscale(newDoc)
+            }
+            const newPdfBytes = await newDoc.save()
+            await fs.promises.writeFile(filePath, newPdfBytes)
+            console.log('print-silent: guardado directo virtual exitoso (páginas y color transformados) en:', filePath)
+            return { success: true, savedPath: filePath }
+          }
+        }
+        await fs.promises.copyFile(pdfPath, filePath)
+        console.log('print-silent: guardado directo exitoso en:', filePath)
+        return { success: true, savedPath: filePath }
+      } catch (saveErr) {
+        console.warn('print-silent: error en guardado directo virtual:', saveErr.message)
+        throw saveErr
+      }
+    }
+
+    return new Promise(async (resolve, reject) => {
       let sumatraPath
       try {
         sumatraPath = getSumatraPath()
@@ -1357,12 +1853,86 @@ export default function IpcHandlers() {
         return reject('SumatraPDF no encontrado: ' + e.message)
       }
 
-      // Configuración de impresión: tamaño, orientación, copias
-      const settings = [
+      // Si hay selección de páginas específica, rotación o modo monocromático, generamos un archivo transformado
+      // para que SumatraPDF y el Windows Print Spooler solo procesen esas páginas en B/N real (ahorrando memoria y tóner)
+      let fileToPrint = pdfPath
+      let tempPrintFile = null
+
+      try {
+        if (hasCustomPages || isMonochrome || hasRotation) {
+          const { PDFDocument, degrees } = await import('pdf-lib')
+          const fileBytes = await fs.promises.readFile(pdfPath)
+          const srcDoc = await PDFDocument.load(fileBytes, { ignoreEncryption: true })
+          const total = srcDoc.getPageCount()
+          const pageIndices = hasCustomPages ? parsePageRange(pages, total) : Array.from({ length: total }, (_, i) => i)
+
+          if (hasCustomPages && pageIndices.length === 0) {
+            return reject('El rango de páginas especificado no coincide con ninguna página del documento.')
+          }
+
+          if (pageIndices.length > 0) {
+            const newDoc = await PDFDocument.create()
+            const copiedPages = await newDoc.copyPages(srcDoc, pageIndices)
+            copiedPages.forEach((p) => {
+              if (hasRotation) {
+                const currentRot = p.getRotation ? (p.getRotation().angle || 0) : 0
+                p.setRotation(degrees((currentRot + rotateAngle) % 360))
+              }
+              newDoc.addPage(p)
+            })
+            if (isMonochrome) {
+              await convertDocToGrayscale(newDoc)
+            }
+            const newPdfBytes = await newDoc.save()
+            tempPrintFile = path.join(app.getPath('temp'), `print_job_${Date.now()}.pdf`)
+            await fs.promises.writeFile(tempPrintFile, newPdfBytes)
+            fileToPrint = tempPrintFile
+            console.log('print-silent: enviando archivo pre-procesado a SumatraPDF:', { tempPrintFile, isMonochrome, pagesCount: pageIndices.length })
+          }
+        }
+      } catch (sliceErr) {
+        console.warn('print-silent: no se pudo pre-procesar PDF previo a impresión, usando original:', sliceErr.message)
+      }
+
+      const cleanupTempPrintFile = async () => {
+        if (tempPrintFile) {
+          try {
+            await fs.promises.unlink(tempPrintFile)
+          } catch {}
+        }
+      }
+
+      // Configuración de impresión avanzada para SumatraPDF
+      const settingsList = [
         `paper=${pageSize.toLowerCase()}`,
         landscape ? 'landscape' : 'portrait',
-        `copies=${Math.max(1, parseInt(copies) || 1)}`
-      ].join(',')
+        `copies=${Math.max(1, parseInt(copies) || 1)}`,
+        isMonochrome ? 'monochrome' : 'color'
+      ]
+
+      if (scale === 'fit' || scale === 'shrink' || scale === 'noscale') {
+        settingsList.push(scale)
+      }
+
+      if (duplex === 'duplex' || duplex === true) {
+        settingsList.push('duplex')
+      } else if (duplex === 'duplexshort') {
+        settingsList.push('duplexshort')
+      } else if (duplex === 'duplexlong') {
+        settingsList.push('duplexlong')
+      } else if (duplex === 'simplex') {
+        settingsList.push('simplex')
+      }
+
+      if (parseInt(copies) > 1) {
+        settingsList.push(collate ? 'collate' : 'nocolla')
+      }
+
+      if (pagesPerSheet === 2 || pagesPerSheet === 4) {
+        settingsList.push(`nup=${pagesPerSheet}`)
+      }
+
+      const settings = settingsList.join(',')
 
       const args = [
         printer ? `-print-to` : `-print-to-default`,
@@ -1370,10 +1940,12 @@ export default function IpcHandlers() {
         `-print-settings`,
         settings,
         `-silent`,
-        pdfPath
+        fileToPrint
       ]
 
-      execFile(sumatraPath, args, { timeout: 60000 }, (error, stdout, stderr) => {
+      // Timeout generoso de 10 minutos (600,000 ms) para soportar lotes grandes de 44, 80 o más páginas sin corte prematuro
+      execFile(sumatraPath, args, { timeout: 600000, maxBuffer: 50 * 1024 * 1024 }, async (error, stdout, stderr) => {
+        await cleanupTempPrintFile()
         if (!error) {
           console.log('print-silent: SumatraPDF OK')
           resolve({ success: true })
@@ -1389,9 +1961,8 @@ export default function IpcHandlers() {
             errText || '(vacío)'
           )
           if (error.killed || exitCode === null) {
-            reject('La impresora no respondió a tiempo.')
+            reject('La impresora no respondió a tiempo después de 10 minutos.')
           } else if (exitCode === 1 && !errText && isVirtual) {
-            // Impresora virtual (PDF, XPS, OneNote): código 1 puede ser cancelación del diálogo
             reject(
               'El documento no fue guardado. Selecciona una impresora física para imprimir silenciosamente.'
             )
@@ -1412,9 +1983,11 @@ export default function IpcHandlers() {
   // Elimina el PDF temporal al cerrar el modal.
   ipcMain.handle('delete-temp-pdf', async (event, fileUrl) => {
     try {
-      const filePath = fileURLToPath(fileUrl)
-      await fs.promises.unlink(filePath)
-      console.log('Temp PDF eliminado:', filePath)
+      const filePath = resolveLocalPdfPath(fileUrl)
+      if (filePath && fs.existsSync(filePath)) {
+        await fs.promises.unlink(filePath)
+        console.log('Temp PDF eliminado:', filePath)
+      }
     } catch (e) {
       // El archivo puede no existir si ya fue borrado — no es error
     }
