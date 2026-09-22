@@ -2,6 +2,85 @@
 
 ---
 
+## 🚀 Notas de la versión — v1.3.0 [Estable]
+
+**📅 Fecha de lanzamiento:** 22/09/2026  
+**🚀 Versión:** `v1.3.0` [Versión Oficial de Producción / Release Estable]  
+**📌 Versión base anterior estable:** `v1.2.802`  
+**🔖 Pre-releases precedentes:** `v1.3.0-beta.1`, `v1.3.0-beta.2`
+
+> ✅ **Lanzamiento Oficial Estable:** La versión `v1.3.0` culmina con éxito el ciclo de modernización más exhaustivo de **AGUA-VP**. Esta entrega resuelve de forma definitiva la trazabilidad histórica de medidores en períodos cerrados, la preservación íntegra de lecturas y facturas pasadas ante reemplazos de hardware, y la sincronización logística de rutas con ordenamiento numérico natural por predio. Todo el núcleo operativo ha sido certificado mediante una suite de 165 pruebas automatizadas al 100% de aprobación, acompañada de una interfaz en Electron refinada, reactiva y alineada al sistema de diseño unificado.
+
+---
+
+### 🔥 Novedades y Mejoras Principales (Cambios desde v1.3.0-beta.2)
+
+#### 🛡️ 1. Motor de Trazabilidad e Integridad Histórica de Medidores
+- **Preservación Total de Lecturas y Recibos Históricos:**
+  - Resolución del problema de desvinculación al sustituir o retirar medidores: las lecturas pasadas y recibos emitidos se mantienen íntegros y accesibles permanentemente en sus períodos correspondientes (161/161 registros comprobados).
+  - Consulta unificada mediante cláusulas relacionales `COALESCE` para reconstruir vínculos entre lecturas, medidores históricos y clientes sin depender exclusivamente del medidor activo actual.
+- **Trigger `0022_fix_medidor_historial_triggers.sql` y Soft Delete:**
+  - Implementación de triggers robustos en SQLite/Turso que gestionan adecuadamente valores `NULL` y eventos de sustitución en la tabla `cliente_medidor_historial`.
+  - El proceso de retiro de medidores (`eliminarMedidor`) ahora preserva el `cliente_id`, asigna estado `'Retirado'`, registra la fecha y motivo de retiro, y cierra limpiamente los registros en el historial sin destruir la memoria contable.
+- **Rutina de Autorreparación de Trazabilidad (`auto-repair`):**
+  - Módulo proactivo de saneamiento en arranque que audita y repara discrepancias históricas en la base de datos sin requerir intervención manual del operador.
+
+---
+
+#### 🗺️ 2. Logística de Rutas y Estabilidad de Períodos Cerrados
+- **CTE Unificada de Puntos de Ruta en Backend (`obtenerRutaConMedidores`):**
+  - Fusión relacional inteligente (`UNION`) entre los puntos activos en `rutas_puntos` y las lecturas tomadas en el período consultado.
+  - Los períodos cerrados mantienen su fotografía histórica inmutable: si un medidor fue reemplazado con posterioridad, la ruta del período cerrado continúa reflejando el medidor exacto que fue leído en ese mes.
+- **Enriquecimiento de Metadatos Operativos:**
+  - La API expone de manera nativa los campos `es_retirado`, `medidor_actual_reemplazo` y `cliente_numero_predio` en cada punto de ruta.
+- **Ordenamiento Numérico Natural:**
+  - Algoritmo de ordenamiento por posición en ruta (`orden`) con desempate natural por número de predio (`NG-1` antes que `NG-2` y `NG-10`), eliminando discrepancias alfanuméricas.
+
+---
+
+#### 🖥️ 3. Experiencia de Usuario y Señalización en Electron
+- **Retiro de Medidores Guiado y Seguro (`TabInventarioMedidores.jsx`):**
+  - Eliminación del bloqueo restrictivo que impedía retirar medidores asignados a clientes.
+  - Incorporación de aviso informativo de trazabilidad en el modal de confirmación, explicando al operador que el historial de lecturas y facturas pasadas permanecerá intacto.
+- **Carrusel de Toma de Lecturas con Detección Histórica (`CarruselLecturasModal.jsx`):**
+  - Identificación visual clara de medidores reemplazados mediante chips `# Predio` y badge de estado `Retirado`.
+  - Banner explicativo de alerta institucional al posicionarse sobre un medidor histórico:
+    > *"Medidor Histórico de este Período (NUM_SERIE). Este equipo fue reemplazado o retirado (actualmente el cliente tiene el medidor NUM_NUEVO). La lectura de este período corresponde al medidor anterior."*
+  - Buscador integrado optimizado para filtrar por número de serie, nombre de titular o número de predio.
+- **Sincronización Total en Detalle de Ruta (`ModalDetalleRuta.jsx`):**
+  - Filtro adaptativo en períodos cerrados que oculta puntos sin lectura en ese ciclo y alinea el ordenamiento 1:1 con el mapa GPS y el carrusel de campo.
+
+---
+
+#### 🧪 4. Cobertura Exhaustiva de Pruebas Automatizadas (165 tests unitarios al 100%)
+- **Suite Integral de Pruebas en Backend (`npm run test:v2`):**
+  - **Trazabilidad de Medidores (10 tests):** Validación de triggers, soft-delete, preservación de lecturas 161/161 y recuperación de facturas pasadas.
+  - **Pagos y Facturación (12 tests):** Distribución FIFO de cobros, triggers de validación contra sobrepago, amortización de convenios y pagos parciales.
+  - **Lecturas de Consumo (13 tests):** Lectura base inicial cero, cálculo de rollover de odómetro `(cap - ant) + act` y bloqueo de edición en períodos cerrados.
+  - **Logística de Rutas (27 tests):** CTE unificada, estabilidad de rutas históricas, reordenamiento atómico por transacción y restricciones en cascada.
+  - **Directorio de Clientes (39 tests):** Normalización de predios (`NG-0012` ➔ `NG-12`), migración de ruta 1 a 1 ante reemplazo de medidor, bloqueos de baja con adeudos o medidores activos y candados de purga física.
+  - **Tarifas y Simulación (37 tests):** Facturación escalonada progresiva por rangos de m³, validación de huecos o solapamientos en rangos y vigencias temporales.
+  - **Seguridad, Roles y Permisos (27 tests):** Inmunidad de Superadministrador, RBAC con granularidad de permisos `allow`/`deny`, revocación de tokens y bloqueo por fuerza bruta a 5 intentos.
+
+---
+
+#### ⚙️ 5. Empaquetado, Correos y Respaldo Preventivo
+- **Servidor Embebido `@aguavp/api-server: 1.0.2`:**
+  - Empaquetado y resolución de rutas relativas corregida en `package.json` para despliegues locales y producción.
+  - Ejecución garantizada de migraciones automáticas (`autoMigrate: true`) con backup pre-arranque cifrado.
+- **Plantillas de Correo Electrónico:**
+  - Modernización visual y semántica de las plantillas HTML de recuperación de contraseña y confirmación de cambios de credenciales.
+
+---
+
+### 🔖 Trazabilidad de Versiones
+- **Versión actual:** `v1.3.0` [Lanzamiento Oficial Estable]
+- **Pre-releases precedentes:** `v1.3.0-beta.2` (21/09/2026), `v1.3.0-beta.1` (17/09/2026)
+- **Versión base estable previa:** `v1.2.802`
+- **Punto de control arquitectónico:** `v1.2.900`
+
+---
+
 ## 🧪 Notas de la versión — v1.3.0-beta.2 [Beta]
 
 **📅 Fecha de lanzamiento:** 21/09/2026  
