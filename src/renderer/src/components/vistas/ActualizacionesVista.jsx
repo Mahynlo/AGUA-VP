@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { HiArrowLeft, HiRefresh, HiShieldCheck, HiLockClosed } from "react-icons/hi";
 import { useAuth } from "../../context/AuthContext";
@@ -19,7 +18,7 @@ export default function ActualizacionesVista() {
 
   return (
     <div
-      className={`min-h-[calc(100vh-4rem)] mt-16 p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-zinc-950 overflow-y-auto transition-all scroll-smooth relative ${
+      className={`h-[calc(100vh-4rem)] mt-16 p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-zinc-950 overflow-y-auto transition-all scroll-smooth relative ${
         loggedIn ? "sm:ml-24" : "flex flex-col items-center justify-start"
       }`}
     >

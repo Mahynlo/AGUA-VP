@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useRef, useMemo } from "react";
 import { useAuth } from "./AuthContext";
 
 // =====================================================
@@ -176,23 +176,35 @@ export function ClientesProvider({ children }) {
     window.dispatchEvent(new CustomEvent('dashboard-update'));
   }, [fetchClientes, fetchEstadisticas, fetchAllClientes]);
 
+  const value = useMemo(() => ({
+    clientes,
+    allClientes,      // Dataset completo sin paginación
+    pagination,       // Exportar paginación
+    estadisticas,
+    estadisticasServidor: estadisticas, // Alias para compatibilidad con TabMetricas
+    loading,
+    initialLoading,
+    error,
+    actualizarClientes,
+    fetchClientes,    // Expose direct fetcher for pagination
+    fetchAllClientes,
+    fetchEstadisticas
+  }), [
+    clientes,
+    allClientes,
+    pagination,
+    estadisticas,
+    loading,
+    initialLoading,
+    error,
+    actualizarClientes,
+    fetchClientes,
+    fetchAllClientes,
+    fetchEstadisticas
+  ]);
+
   return (
-    <ClientesContext.Provider
-      value={{
-        clientes,
-        allClientes,      // Dataset completo sin paginación
-        pagination, // Exportar paginación
-        estadisticas,
-        estadisticasServidor: estadisticas, // Alias para compatibilidad con TabMetricas
-        loading,
-        initialLoading,
-        error,
-        actualizarClientes,
-        fetchClientes, // Expose direct fetcher for pagination
-        fetchAllClientes,
-        fetchEstadisticas
-      }}
-    >
+    <ClientesContext.Provider value={value}>
       {children}
     </ClientesContext.Provider>
   );

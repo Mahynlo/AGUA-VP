@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiSpeakerphone, HiRefresh, HiCheck, HiPencilAlt, HiInformationCircle } from "react-icons/hi";
 
 const anuncioModalTheme = {
@@ -20,7 +20,7 @@ const anuncioModalTheme = {
 };
 
 const MENSAJE_POR_DEFECTO = "Cuidemos el agua para las futuras generaciones. Reporte cualquier fuga o problema en su medidor al teléfono de la oficina municipal.";
-const MAX_CARACTERES = 150;
+const MAX_CARACTERES = 200;
 
 const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
   const [anuncio, setAnuncio] = useState('');
@@ -49,7 +49,10 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
     try {
       const anuncioFinal = anuncio.trim() || MENSAJE_POR_DEFECTO;
       localStorage.setItem('anuncio_recibo', anuncioFinal);
-      onSave(anuncioFinal);
+      window.dispatchEvent(new CustomEvent('anuncio_recibo_changed', { detail: anuncioFinal }));
+      if (typeof onSave === 'function') {
+        onSave(anuncioFinal);
+      }
       setHasChanges(false);
       onClose();
     } finally {
@@ -86,7 +89,7 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
       dismissible={!isLoading}
     >
       {/* ── HEADER ── */}
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-4">
           <div className="p-3 bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-2xl shrink-0">
             <HiSpeakerphone className="w-6 h-6" />
@@ -100,10 +103,10 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
       {/* ── BODY ── */}
-      <Modal.Body>
+      <ModalBody>
         <div className="flex flex-col gap-5">
           {/* Vista previa */}
           <div className="relative bg-orange-500/10 rounded-2xl p-5 overflow-hidden">
@@ -177,10 +180,10 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
             </button>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
       {/* ── FOOTER ── */}
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={handleCancelar}
@@ -200,7 +203,7 @@ const ModalAnuncioRecibo = ({ isOpen, onClose, onSave }) => {
             : <><HiCheck className="w-4 h-4" />Guardar Cambios</>
           }
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 };

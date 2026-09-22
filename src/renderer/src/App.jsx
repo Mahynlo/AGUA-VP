@@ -1,28 +1,31 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { HashRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { Spinner } from "@heroui/react";
 import { LogoProvider } from './context/LogoContext';
 
-//Vista de navegación y rutas
+// Vista de navegación y rutas
 import NavbarApp from './components/menuElements/navbar';
 import SidebarApp from './components/menuElements/sidebar';
 
-//vistas y paginas Principales de la aplicación
-import InicioVista from './components/vistas/InicioVista';
-import Clientes from './components/vistas/clientes/ClientesVista';
-import Historial from './components/vistas/HistorialVista';
-import Ayuda from './components/vistas/AyudaVista';
-import Resibos from './components/vistas/ResibosVista';
-import Impresion from './components/vistas/ImpresionVista';
+// Carga directa de la pantalla de inicio de sesión para arranque inmediato
 import LoginApp from './components/login/login';
-import PerfilPage from './components/perfil/perfilpage';
-import NotFoundVista from './components/vistas/NotFoundVista';
-import ActualizacionesVista from './components/vistas/ActualizacionesVista';
 
-import Medidores from "./components/vistas/medidores/MedidoresVista";
-import Administrador from "./components/administrador/Administrador";
-import Lecturas from "./components/vistas/LecturasVista";
-import Tarifas from "./components/vistas/TarifasVista";
-import Pagos from "./components/vistas/PagosVista";
+// Vistas y páginas principales con Carga Diferida (Lazy Loading / Code Splitting)
+const InicioVista = React.lazy(() => import('./components/vistas/InicioVista'));
+const Clientes = React.lazy(() => import('./components/vistas/clientes/ClientesVista'));
+const Historial = React.lazy(() => import('./components/vistas/HistorialVista'));
+const Ayuda = React.lazy(() => import('./components/vistas/AyudaVista'));
+const Resibos = React.lazy(() => import('./components/vistas/ResibosVista'));
+const Impresion = React.lazy(() => import('./components/vistas/ImpresionVista'));
+const PerfilPage = React.lazy(() => import('./components/perfil/perfilpage'));
+const NotFoundVista = React.lazy(() => import('./components/vistas/NotFoundVista'));
+const ActualizacionesVista = React.lazy(() => import('./components/vistas/ActualizacionesVista'));
+
+const Medidores = React.lazy(() => import("./components/vistas/medidores/MedidoresVista"));
+const Administrador = React.lazy(() => import("./components/administrador/Administrador"));
+const Lecturas = React.lazy(() => import("./components/vistas/LecturasVista"));
+const Tarifas = React.lazy(() => import("./components/vistas/TarifasVista"));
+const Pagos = React.lazy(() => import("./components/vistas/PagosVista"));
 
 // Contextos de la aplicación para manejar el estado global
 import { useAuth } from "./context/AuthContext";
@@ -37,20 +40,23 @@ import { PagosProvider } from "./context/PagosContext";
 import { DeudoresProvider } from "./context/DeudoresContext";
 import { UsuariosProvider } from "./context/UsuariosContext";
 import { PermissionsProvider } from "./context/PermissionsContext";
+import { DashboardProvider } from "./context/DashboardContext";
+import { ReportesProvider } from "./context/ReportesContext";
 
 // Rutas protegidas
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoute";
 
-import RecuperarPassword from "./components/AdministrarPassword/Recuperacion";
+const RecuperarPassword = React.lazy(() => import("./components/AdministrarPassword/Recuperacion"));
 
-//Impresion de recibos
-import Recibo from "./components/recibo/Recibo";
-import ReporteLecturas from "./components/recibo/ReporteLecturas";
-import ReporteLecturasMetricas from "./components/recibo/ReporteLecturasMetricas";
-import ReporteClientesCompleto from "./components/recibo/ReporteClientes"
-import ComprobantePago from "./components/recibo/ComprobantePago";
-import ReporteFinancieroPagos from "./components/recibo/ReporteFinancieroPagos";
-import ReporteDeudoresMayores from "./components/recibo/ReporteDeudoresMayores";
+// Impresión de recibos y reportes (Lazy Loading de módulos pesados)
+const Recibo = React.lazy(() => import("./components/recibo/Recibo"));
+const ReporteLecturas = React.lazy(() => import("./components/recibo/ReporteLecturas"));
+const ReporteLecturasMetricas = React.lazy(() => import("./components/recibo/ReporteLecturasMetricas"));
+const ReporteClientesCompleto = React.lazy(() => import("./components/recibo/ReporteClientes"));
+const ComprobantePago = React.lazy(() => import("./components/recibo/ComprobantePago"));
+const ReporteFinancieroPagos = React.lazy(() => import("./components/recibo/ReporteFinancieroPagos"));
+const ReporteDeudoresMayores = React.lazy(() => import("./components/recibo/ReporteDeudoresMayores"));
+const ReporteDocumentacion = React.lazy(() => import("./components/recibo/ReporteDocumentacion"));
 
 // Pantalla de carga de la aplicación
 import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
@@ -71,33 +77,35 @@ function App() {
 
         <AuthProvider>
           <PermissionsProvider>
-            <ClientesProvider>
-              <MedidoresProvider>
-                <TarifasProvider>
-                  <RutasProvider>
-                    <FacturasProvider>
-                      <PagosProvider>
-                        <UsuariosProvider>
-                          <DeudoresProvider>
+            <DashboardProvider>
+              <ReportesProvider>
+                <ClientesProvider>
+                  <MedidoresProvider>
+                    <TarifasProvider>
+                      <RutasProvider>
+                        <FacturasProvider>
+                          <PagosProvider>
+                            <UsuariosProvider>
+                              <DeudoresProvider>
 
-                            <InitDataLoader /> {/* Compoennete de carga de datos al iniciar seccion*/}
+                                <InitDataLoader /> {/* Componente de carga de datos al iniciar sesión */}
 
+                                <MainApp /> {/* Aqui se cargan las rutas de la aplicacion */}
+                                {/* Componente global de mensajes */}
+                                <FeedbackMessages position="bottom-right" />
 
-                            <MainApp /> {/* Aqui se cargan las rutas de al apalicacion*/}
-                            {/* Componente global de mensajes */}
-                            <FeedbackMessages position="bottom-right" />
-
-                            <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
-                            <ModalActualizacionDisponible /> {/* Modal global para alertar actualizaciones disponibles */}
-                          </DeudoresProvider>
-                        </UsuariosProvider>
-                      </PagosProvider>
-
-                    </FacturasProvider>
-                  </RutasProvider>
-                </TarifasProvider>
-              </MedidoresProvider>
-            </ClientesProvider>
+                                <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
+                                <ModalActualizacionDisponible /> {/* Modal global para alertar actualizaciones disponibles */}
+                              </DeudoresProvider>
+                            </UsuariosProvider>
+                          </PagosProvider>
+                        </FacturasProvider>
+                      </RutasProvider>
+                    </TarifasProvider>
+                  </MedidoresProvider>
+                </ClientesProvider>
+              </ReportesProvider>
+            </DashboardProvider>
           </PermissionsProvider>
         </AuthProvider>
       </AuthAppProvider>
@@ -108,10 +116,21 @@ function App() {
 }
 
 
+function ViewFallback() {
+  return (
+    <div className="flex-1 w-full h-full min-h-[350px] flex flex-col items-center justify-center gap-3 bg-transparent">
+      <Spinner size="lg" color="primary" />
+      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 animate-pulse">
+        Cargando módulo...
+      </span>
+    </div>
+  );
+}
+
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores'];
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores'];
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/ayuda'];
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/ayuda'];
 
   const { loading } = useAuth();
 
@@ -121,8 +140,6 @@ function MainApp() {
     ? window.location.hash.split('?')[1]
     : '';
   const isPrintMode = new URLSearchParams(hashSearch).get('print') === 'true';
-
-
 
   // PERSISTENCIA DE RUTA: Guardar la última ruta visitada
   React.useEffect(() => {
@@ -134,35 +151,48 @@ function MainApp() {
     }
   }, [location, hideSidebarRoutes, isPrintMode]);
 
-  // CONTROL DE ZOOM MANUAL (DPI AWARENESS)
+  // PREVENCIÓN DE ZOOM ACCIDENTAL (TECLADO Y RUEDA DE RATÓN)
+  // La escala de la pantalla se gestiona exclusivamente desde el panel de Configuración.
   React.useEffect(() => {
     const handleKeyDown = (e) => {
-      // Detectar Ctrl (Windows) o Command (Mac)
+      // Bloquear atajos nativos de zoom de Chromium (Ctrl +, Ctrl -, Ctrl 0)
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === '=' || e.key === '+') {
+        if (
+          e.key === '=' ||
+          e.key === '+' ||
+          e.key === '-' ||
+          e.key === '0' ||
+          e.code === 'NumpadAdd' ||
+          e.code === 'NumpadSubtract' ||
+          e.code === 'Numpad0'
+        ) {
           e.preventDefault();
-          window.api.zoomIn();
-        } else if (e.key === '-') {
-          e.preventDefault();
-          window.api.zoomOut();
-        } else if (e.key === '0') {
-          e.preventDefault();
-          window.api.zoomReset();
         }
       }
     };
 
+    const handleWheel = (e) => {
+      // Bloquear completamente cualquier zoom accidental de Chromium con Ctrl + rueda de ratón
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('wheel', handleWheel);
+    };
   }, []);
 
-  // Si está cargando y NO estamos en modo impresión, mostrar pantalla de carga
-  if (loading && !isPrintMode) {
+  // Si está cargando y NO estamos en modo impresión ni en ayuda, mostrar pantalla de carga
+  if (loading && !isPrintMode && location.pathname !== '/ayuda') {
     return <PantallaCarga tiempo={4000} />; // Aquí puedes colocar un componente de carga mientras esperas
   }
 
   return (
-    <main className='dark:bg-gray-900 bg-gray-200 h-[calc(100vh-4rem)]'>
+    <main className={isPrintMode ? 'bg-white h-auto overflow-visible min-h-0' : 'bg-slate-50 dark:bg-zinc-950 h-screen overflow-hidden'}>
 
       {/* Navbar solo si no está en rutas ocultas Y no está en modo impresión */}
       {!hideNavbarRoutes.includes(location.pathname) && !isPrintMode && <NavbarApp />}
@@ -170,35 +200,38 @@ function MainApp() {
       {/* Sidebar solo si no está en rutas ocultas Y no está en modo impresión */}
       {!hideSidebarRoutes.includes(location.pathname) && !isPrintMode && <SidebarApp />}
 
-      <Routes>
-        <Route element={<ProtectedRoute />}>
-          <Route path="/home" element={<InicioVista />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/resibos/historial" element={<Historial />} />
-          <Route path="/resibos" element={<Resibos />} />
-          <Route path="/resibos/impresion" element={<Impresion />} />
-          <Route path="/resibos/pagos" element={<Pagos />} />
-          <Route path="/resibos/lecturas" element={<Lecturas />} />
-          <Route path="/resibos/tarifas" element={<Tarifas />} />
-          <Route path="/ayuda" element={<Ayuda />} />
-          <Route path='/perfil' element={<PerfilPage />} />
-          <Route path="/medidores" element={<Medidores />} />
-          <Route path="/administrador" element={<Administrador />} />
+      <Suspense fallback={<ViewFallback />}>
+        <Routes>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/home" element={<InicioVista />} />
+            <Route path="/clientes" element={<Clientes />} />
+            <Route path="/resibos/historial" element={<Historial />} />
+            <Route path="/resibos" element={<Resibos />} />
+            <Route path="/resibos/impresion" element={<Impresion />} />
+            <Route path="/resibos/pagos" element={<Pagos />} />
+            <Route path="/resibos/lecturas" element={<Lecturas />} />
+            <Route path="/resibos/tarifas" element={<Tarifas />} />
+            <Route path='/perfil' element={<PerfilPage />} />
+            <Route path="/medidores" element={<Medidores />} />
+            <Route path="/administrador" element={<Administrador />} />
 
-        </Route>
-        <Route path="/recibo" element={<Recibo />} />
-        <Route path="/reporteLecturas" element={<ReporteLecturas />} />
-        <Route path="/reporteLecturasMetricas" element={<ReporteLecturasMetricas />} />
-        <Route path="/reporteClientes" element={<ReporteClientesCompleto />} />
-        <Route path="/comprobante-pago" element={<ComprobantePago />} />
-        <Route path="/reporteFinancieroPagos" element={<ReporteFinancieroPagos />} />
-        <Route path="/reporteDeudoresMayores" element={<ReporteDeudoresMayores />} />
-        {/* Rutas públicas */}
-        <Route path='/' element={<LoginApp />} />
-        <Route path='/actualizaciones' element={<ActualizacionesVista />} />
-        <Route path='/recuperarPassword' element={<RecuperarPassword />} />
-        <Route path='*' element={<NotFoundVista />} />
-      </Routes>
+          </Route>
+          <Route path="/ayuda" element={<Ayuda />} />
+          <Route path="/recibo" element={<Recibo />} />
+          <Route path="/reporteLecturas" element={<ReporteLecturas />} />
+          <Route path="/reporteLecturasMetricas" element={<ReporteLecturasMetricas />} />
+          <Route path="/reporteClientes" element={<ReporteClientesCompleto />} />
+          <Route path="/comprobante-pago" element={<ComprobantePago />} />
+          <Route path="/reporteFinancieroPagos" element={<ReporteFinancieroPagos />} />
+          <Route path="/reporteDeudoresMayores" element={<ReporteDeudoresMayores />} />
+          <Route path="/reporteDocumentacion" element={<ReporteDocumentacion />} />
+          {/* Rutas públicas */}
+          <Route path='/' element={<LoginApp />} />
+          <Route path='/actualizaciones' element={<ActualizacionesVista />} />
+          <Route path='/recuperarPassword' element={<RecuperarPassword />} />
+          <Route path='*' element={<NotFoundVista />} />
+        </Routes>
+      </Suspense>
     </main>
   );
 }

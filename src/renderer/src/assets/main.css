@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@heroui/styles";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Sincronización de esquema de color y cursor para Chromium / Windows
@@ -93,7 +92,9 @@ label:has(input[type="radio"]) * {
   cursor: grabbing !important;
 }
 
-/* Estilos para impresión de recibos */
+/* ═══════════════════════════════════════════════════════════════════════
+   Estilos base de Impresión y Vista Previa
+   ═══════════════════════════════════════════════════════════════════════ */
 @media print {
   .page-break {
     break-after: page;
@@ -102,14 +103,29 @@ label:has(input[type="radio"]) * {
   .page-break:last-child {
     break-after: auto;
   }
+
+  .print-page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
   
-  /* Ocultar elementos no necesarios en impresión */
-  .no-print {
+  /* Ocultar elementos de UI no necesarios en impresión */
+  .no-print,
+  .help-titlebar,
+  .docs-sidebar,
+  .doc-toc,
+  .search-modal,
+  .nextui-modal {
     display: none !important;
+  }
+
+  .avoid-page-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 
-/* Estilos para vista previa de impresión */
+/* Estilos para vista previa de impresión en pantalla */
 .page-break {
   margin-bottom: 2rem;
   padding: 1rem;

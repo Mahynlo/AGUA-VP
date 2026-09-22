@@ -15,10 +15,9 @@ import {
   HiChevronLeft,
   HiChevronRight,
   HiChevronDown,
-  HiDownload,
-  HiExclamationCircle
+  HiDownload
 } from "react-icons/hi";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody } from "flowbite-react";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
 import { useFeedback } from "../../../context/FeedbackContext";
@@ -885,11 +884,6 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
     }
   }, [construirPayloadDeudoresMayores, setError]);
 
-  const facturaDetalleSeleccionada = useMemo(() => {
-    if (!clienteDetalle || !facturaSeleccionadaDetalle) return null;
-    return clienteDetalle.facturas.find((f) => String(f.id) === String(facturaSeleccionadaDetalle)) || null;
-  }, [clienteDetalle, facturaSeleccionadaDetalle]);
-
   const facturasMapDetalle = useMemo(() => {
     const map = new Map();
     (clienteDetalle?.facturas || []).forEach((f) => {
@@ -962,11 +956,6 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
 
     return porAnio.filter((p) => extraerPeriodoPago(p) === periodoFiltroPagosDetalle);
   }, [pagosClienteDetalle, extraerPeriodoPago, anioFiltroPagosDetalle, periodoFiltroPagosDetalle]);
-
-  const pagoDetalleSeleccionado = useMemo(() => {
-    if (!pagoSeleccionadoDetalle) return null;
-    return pagosClienteDetalleFiltrados.find((p) => String(p.id) === String(pagoSeleccionadoDetalle)) || null;
-  }, [pagosClienteDetalleFiltrados, pagoSeleccionadoDetalle]);
 
   const resumenPagosClienteDetalle = useMemo(() => {
     const totalPagos = pagosClienteDetalleFiltrados.length;
@@ -1381,17 +1370,16 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         periodosClienteDetalle={periodosClienteDetalle}
         facturasDetalleFiltradas={facturasDetalleFiltradas}
         ultimoPagoPorFactura={ultimoPagoPorFactura}
-        facturaDetalleSeleccionada={facturaDetalleSeleccionada}
         anioFiltroPagosDetalle={anioFiltroPagosDetalle}
         setAnioFiltroPagosDetalle={setAnioFiltroPagosDetalle}
         periodoFiltroPagosDetalle={periodoFiltroPagosDetalle}
         setPeriodoFiltroPagosDetalle={setPeriodoFiltroPagosDetalle}
+        pagoSeleccionadoDetalle={pagoSeleccionadoDetalle}
         setPagoSeleccionadoDetalle={setPagoSeleccionadoDetalle}
         aniosPagosClienteDetalle={aniosPagosClienteDetalle}
         periodosPagosClienteDetalle={periodosPagosClienteDetalle}
         resumenPagosClienteDetalle={resumenPagosClienteDetalle}
         pagosClienteDetalleFiltrados={pagosClienteDetalleFiltrados}
-        pagoDetalleSeleccionado={pagoDetalleSeleccionado}
         pagosClienteDetalle={pagosClienteDetalle}
         toMoney={toMoney}
         formatFecha={formatFecha}
@@ -1436,8 +1424,8 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         popup
         theme={premiumConfirmModalTheme}
       >
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="p-2">
             <div className="flex items-center gap-3 mb-4 justify-center">
               <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
@@ -1497,7 +1485,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
               </Button>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       {pdfUrl && modoPdf && (

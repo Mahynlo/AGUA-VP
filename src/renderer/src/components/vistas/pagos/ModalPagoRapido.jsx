@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiX, HiCreditCard, HiCash, HiExclamationCircle, HiArrowLeft, HiShieldCheck } from "react-icons/hi";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { useFeedback } from "../../../context/FeedbackContext";
@@ -12,7 +12,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -474,7 +474,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
       theme={premiumModalTheme}
       dismissible={!procesandoPagoRapido}
     >
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-4">
           <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl p-3">
             <HiCash className="w-6 h-6" />
@@ -492,9 +492,9 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         {fase === "seleccion" ? (
           <div className="space-y-8">
             {/* KPIs */}
@@ -813,9 +813,9 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
             </div>
           </div>
         )}
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         {fase === "seleccion" ? (
           <>
             <button
@@ -881,7 +881,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
             </>
           )
         )}
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 };

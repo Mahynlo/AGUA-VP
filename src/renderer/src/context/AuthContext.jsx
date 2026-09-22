@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext, useRef } from "react";
+import { createContext, useState, useEffect, useContext, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFeedback } from "./FeedbackContext";
 
@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }) => {
     // --------------------
     const renovacionTimerRef = useRef(null);
     const refreshPromiseRef = useRef(null);
+    const isFetchingSesionesRef = useRef(false);
 
     // =====================================================
     // Servidor
@@ -139,17 +140,17 @@ export const AuthProvider = ({ children }) => {
     // =====================================================
     // Sesiones
     // =====================================================
-    // =====================================================
-    // Sesiones
-    // =====================================================
-    const obtenerSesionesActivas = async (usuarioId) => {
+    const obtenerSesionesActivas = useCallback(async (usuarioId) => {
+        if (!usuarioId) return;
+        if (isFetchingSesionesRef.current) return;
+        isFetchingSesionesRef.current = true;
         try {
             // Obtener token (puede ser del state o localStorage para asegurar)
             const token = localStorage.getItem("token");
             if (!token) return;
 
             const response = await window.api.getSession(usuarioId, token);
-            console.log("🔍 Respuesta obtenerSesionesActivas:", response); // Debug Log
+            console.log("🔍 Respuesta obtenerSesionesActivas:", response);
 
             // Fix: Permitir si success es true O si contiene el array directamente (fallback)
             if (response?.success || Array.isArray(response?.sesiones_activas)) {
@@ -160,8 +161,10 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             console.error("💥 Error al obtener sesiones:", error);
             setSesiones([]);
+        } finally {
+            isFetchingSesionesRef.current = false;
         }
-    };
+    }, []);
 
     // =====================================================
     // Bootstrap inicial (incluye modo impresión)
@@ -272,7 +275,7 @@ export const AuthProvider = ({ children }) => {
     // =====================================================
     // Login / Logout
     // =====================================================
-    const login = (token, refreshToken, expiresIn = "15m") => {
+    const login = useCallback((token, refreshToken, expiresIn = "15m") => {
         try {
             localStorage.setItem("token", token);
             if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
@@ -293,15 +296,21 @@ export const AuthProvider = ({ children }) => {
 
             obtenerSesionesActivas(decoded.id);
             programarRenovacion(expiresIn);
+            window.dispatchEvent(new CustomEvent("dashboard-update"));
 
-            navigate(decoded.rol === "administrador" ? "/home" : "/ayuda");
+            navigate("/home");
         } catch (error) {
             console.error("Error en login:", error);
             logout();
         }
-    };
+    }, [navigate, obtenerSesionesActivas]);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
+        if (renovacionTimerRef.current) {
+            clearTimeout(renovacionTimerRef.current);
+            renovacionTimerRef.current = null;
+        }
+
         const token = localStorage.getItem("token");
 
         if (token) {
@@ -318,27 +327,36 @@ export const AuthProvider = ({ children }) => {
 
         setUser(null);
         setSesiones([]);
+        window.dispatchEvent(new CustomEvent("dashboard-update"));
         navigate("/");
-    };
+    }, [navigate]);
 
     // =====================================================
     // API pública del contexto
     // =====================================================
-    const isAuthenticated = () => user !== null;
+    const isAuthenticated = useCallback(() => user !== null, [user]);
+
+    const value = useMemo(() => ({
+        user,
+        sesiones,
+        loading,
+        login,
+        logout,
+        renovarAccessToken,
+        obtenerSesionesActivas,
+        isAuthenticated
+    }), [
+        user,
+        sesiones,
+        loading,
+        login,
+        logout,
+        obtenerSesionesActivas,
+        isAuthenticated
+    ]);
 
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                sesiones,
-                loading,
-                login,
-                logout,
-                renovarAccessToken,
-                obtenerSesionesActivas, // Exponer para recargar manualmente
-                isAuthenticated
-            }}
-        >
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

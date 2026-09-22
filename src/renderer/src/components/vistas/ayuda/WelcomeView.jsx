@@ -1,73 +1,178 @@
 import React from "react";
-import { Chip } from "@nextui-org/react";
-import { HiBookOpen, HiArrowRight } from "react-icons/hi";
+import {
+  HiBookOpen,
+  HiArrowRight,
+  HiSearch,
+  HiDocumentText,
+  HiLightningBolt,
+  HiChevronRight
+} from "react-icons/hi";
 
-const WelcomeView = ({ sections, sectionIcons, navegarA }) => {
+const WelcomeView = ({
+  sections = {},
+  sectionIcons = {},
+  navegarA,
+  onOpenSearch
+}) => {
+  const totalSections = Object.keys(sections).length;
+  const totalArticles = Object.values(sections).reduce((acc, curr) => acc + curr.length, 0);
+
   return (
-    <div className="max-w-5xl mx-auto py-8 sm:py-2 animate-in fade-in zoom-in-95 duration-500">
+    <div className="max-w-6xl mx-auto py-2 sm:py-4 animate-in fade-in zoom-in-95 duration-300 space-y-8">
       
-      {/* ── 1. HEADER (HERO SECTION) ── */}
-      <div className="text-center mb-12 sm:mb-12 px-4">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner border border-blue-200/50 dark:border-blue-700/30">
-          <HiBookOpen className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400 drop-shadow-sm" />
+      {/* ── 1. HERO BANNER PRINCIPAL ── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white p-5 sm:p-9 shadow-lg">
+        {/* Adornos visuales de fondo */}
+        <div className="absolute -right-10 -bottom-10 w-72 h-72 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+        <div className="absolute left-1/2 -top-12 w-60 h-60 rounded-full bg-blue-400/10 blur-xl pointer-events-none" />
+
+        <div className="relative z-10 max-w-3xl space-y-3.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-bold uppercase tracking-wider text-blue-100">
+            <HiLightningBolt className="w-3.5 h-3.5 text-amber-300" />
+            <span>Documentación Oficial AguaVP</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white leading-tight">
+            Centro de Ayuda y Manuales de Uso
+          </h1>
+
+          <p className="text-xs sm:text-sm text-blue-100/90 font-medium leading-relaxed max-w-2xl">
+            Consulta los manuales de usuario y guías operativas paso a paso para la captura de lecturas, cobro de recibos, administración de medidores y facturación del sistema.
+          </p>
+
+          <div className="pt-2 flex flex-wrap items-center gap-2.5">
+            {onOpenSearch && (
+              <button
+                onClick={onOpenSearch}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs transition-all shadow-sm"
+              >
+                <HiSearch className="w-4 h-4" />
+                <span>Buscar en la documentación (Ctrl+K)</span>
+              </button>
+            )}
+          </div>
         </div>
-        <h2 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-zinc-100 tracking-tight mb-4 leading-tight">
-          Centro de Conocimiento
-        </h2>
-        <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-zinc-400 max-w-xl mx-auto leading-relaxed">
-          Encuentra guías, manuales y respuestas a preguntas frecuentes. Selecciona una categoría a continuación o utiliza el buscador para comenzar.
-        </p>
       </div>
 
-      {/* ── 2. GRID DE CATEGORÍAS ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 px-4">
-        {Object.entries(sections).map(([sectionKey, files]) => {
-          const sectionConfig = sectionIcons[sectionKey];
-          if (!sectionConfig) return null;
+      {/* ── 2. GRID DE CATEGORÍAS Y MÓDULOS ── */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+          <div>
+            <h2 className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+              <span>Módulos del Sistema</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 font-mono">
+                ({totalSections} módulos)
+              </span>
+            </h2>
+            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+              Explora las guías de uso organizadas por módulos operativos
+            </p>
+          </div>
+        </div>
 
-          return (
-            <button
-              key={sectionKey}
-              onClick={() => {
-                if (files.length > 0) {
-                  navegarA(sectionKey, files[0].fileName);
-                }
-              }}
-              className="flex flex-col items-start p-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl shadow-sm hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300 group text-left outline-none focus:ring-2 focus:ring-blue-500/50 hover:-translate-y-1"
-            >
-              {/* Parte Superior de la Tarjeta */}
-              <div className="flex items-start justify-between w-full mb-5">
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-800/80 border border-slate-100 dark:border-zinc-700/50 text-slate-600 dark:text-zinc-300 group-hover:scale-110 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all duration-300 shadow-sm">
-                  {/* Clonamos el icono para asegurarnos de que tenga un tamaño estándar */}
-                  {React.cloneElement(sectionConfig.icon, { className: "w-6 h-6" })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Object.entries(sections).map(([sectionKey, files]) => {
+            const sectionConfig = sectionIcons[sectionKey] || {
+              title: sectionKey,
+              subtitle: "Manuales y guías de uso",
+              badgeClass: "bg-blue-500/10 text-blue-600 border-blue-200",
+              icon: <HiBookOpen className="w-5 h-5" />
+            };
+
+            const firstFile = files.length > 0 ? files[0] : null;
+
+            return (
+              <div
+                key={sectionKey}
+                className="flex flex-col bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-2xs hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300 group"
+              >
+                {/* Cabecera de la Tarjeta */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`p-3 rounded-2xl shrink-0 flex items-center justify-center border shadow-2xs group-hover:scale-105 transition-transform duration-300 ${
+                        sectionConfig.badgeClass ||
+                        "bg-blue-500/10 text-blue-600 border-blue-200"
+                      }`}
+                    >
+                      {React.cloneElement(sectionConfig.icon, { className: "w-5 h-5" })}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {sectionConfig.title}
+                      </h3>
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                        {files.length} {files.length === 1 ? "tema" : "temas"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                
-                <Chip 
-                  size="sm" 
-                  variant="flat" 
-                  color={sectionConfig.color || "primary"} 
-                  className="font-bold text-[10px] tracking-widest uppercase px-1 h-6"
-                >
-                  {files.length} {files.length === 1 ? 'Art.' : 'Arts.'}
-                </Chip>
-              </div>
 
-              {/* Título y Descripción */}
-              <h3 className="text-lg font-bold text-slate-800 dark:text-zinc-100 mb-1.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                {sectionConfig.title}
-              </h3>
-              <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 line-clamp-2 mb-6">
-                Explora la documentación y guías relacionadas con el módulo de {sectionConfig.title.toLowerCase()}.
-              </p>
+                {/* Subtítulo / Descripción corta */}
+                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 leading-relaxed mb-4 line-clamp-2">
+                  {sectionConfig.subtitle || `Explora las guías de ${sectionConfig.title.toLowerCase()}.`}
+                </p>
 
-              {/* Flecha "Leer más" que aparece al hacer hover */}
-              <div className="mt-auto flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                Ver manuales
-                <HiArrowRight className="w-3.5 h-3.5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                {/* Vista previa de artículos destacados */}
+                {files.length > 0 && (
+                  <div className="space-y-1.5 mb-5 flex-1">
+                    {files.slice(0, 3).map((file) => {
+                      return (
+                        <button
+                          key={file.fileName}
+                          onClick={() => navegarA(sectionKey, file.fileName)}
+                          className="w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50/80 dark:bg-zinc-800/50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-100 dark:border-zinc-800/80 group/item"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <HiDocumentText className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-blue-500 shrink-0" />
+                            <span className="text-xs font-semibold truncate">
+                              {file.metadata?.titulo || file.fileName.replace(".md", "")}
+                            </span>
+                          </div>
+                          <HiChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover/item:text-blue-500 shrink-0" />
+                        </button>
+                      );
+                    })}
+
+                    {files.length > 3 && (
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2 pt-0.5">
+                        + {files.length - 3} temas adicionales
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Botón Explorar */}
+                <div className="mt-auto pt-3 border-t border-slate-100 dark:border-zinc-800/80">
+                  <button
+                    onClick={() => {
+                      if (firstFile) {
+                        navegarA(sectionKey, firstFile.fileName);
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-100 hover:bg-blue-600 text-slate-700 hover:text-white dark:bg-zinc-800 dark:hover:bg-blue-600 dark:text-zinc-300 dark:hover:text-white text-xs font-bold transition-all shadow-2xs group/btn"
+                  >
+                    <span>Explorar {sectionConfig.title}</span>
+                    <HiArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-1" />
+                  </button>
+                </div>
               </div>
-            </button>
-          );
-        })}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 3. FOOTER TIP / SHORTCUT ── */}
+      <div className="p-4 rounded-2xl bg-slate-100/80 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 dark:text-zinc-400">
+        <div className="flex items-center gap-2 font-medium">
+          <span className="text-base">💡</span>
+          <span>
+            <strong>Atajo rápido:</strong> Presiona <kbd className="px-1.5 py-0.5 font-mono text-[10px] font-bold bg-white dark:bg-zinc-800 rounded border border-slate-300 dark:border-zinc-700">Ctrl + K</kbd> para buscar en títulos, descripciones y contenido de cualquier guía.
+          </span>
+        </div>
+        <div className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500">
+          AguaVP Documentation System v1.0
+        </div>
       </div>
 
     </div>

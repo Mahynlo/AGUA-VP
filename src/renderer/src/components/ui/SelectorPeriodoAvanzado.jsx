@@ -1,24 +1,34 @@
-import React, { useMemo, useState, useEffect } from "react";
-import {
-  Button,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Select,
-  SelectItem,
-  Chip,
-} from "@nextui-org/react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { Button, Chip, Tooltip } from "@heroui/react";
 import {
   HiCalendar,
   HiChevronLeft,
   HiChevronRight,
   HiChevronDown,
+  HiCheck,
+  HiSparkles,
+  HiOutlineClock
 } from "react-icons/hi";
 import {
   generarCatalogoPeriodos,
   formatearPeriodo,
   obtenerPeriodoActual,
 } from "../../utils/periodoUtils";
+
+const MESES = [
+  { num: "01", corto: "Ene", nombre: "Enero" },
+  { num: "02", corto: "Feb", nombre: "Febrero" },
+  { num: "03", corto: "Mar", nombre: "Marzo" },
+  { num: "04", corto: "Abr", nombre: "Abril" },
+  { num: "05", corto: "May", nombre: "Mayo" },
+  { num: "06", corto: "Jun", nombre: "Junio" },
+  { num: "07", corto: "Jul", nombre: "Julio" },
+  { num: "08", corto: "Ago", nombre: "Agosto" },
+  { num: "09", corto: "Sep", nombre: "Septiembre" },
+  { num: "10", corto: "Oct", nombre: "Octubre" },
+  { num: "11", corto: "Nov", nombre: "Noviembre" },
+  { num: "12", corto: "Dic", nombre: "Diciembre" }
+];
 
 const SelectorPeriodoAvanzado = ({
   value,
@@ -32,9 +42,14 @@ const SelectorPeriodoAvanzado = ({
   siguientePeriodo = null,
   ultimoPeriodoRegistrado = null
 }) => {
-  const currentYear = String(new Date().getFullYear());
+  const currentActual = obtenerPeriodoActual();
+  const currentActualYear = currentActual.split("-")[0];
   const [isOpen, setIsOpen] = useState(false);
-  const [yearFilter, setYearFilter] = useState(currentYear);
+  const [yearFilter, setYearFilter] = useState(() => {
+    if (value) return value.split("-")[0] || currentActualYear;
+    return currentActualYear;
+  });
+  const containerRef = useRef(null);
 
   // Mantiene el filtro de año sincronizado cuando el valor controlado cambia desde afuera
   useEffect(() => {
@@ -44,23 +59,36 @@ const SelectorPeriodoAvanzado = ({
     }
   }, [value]);
 
+  // Click outside listener
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
   const periodos = useMemo(() => generarCatalogoPeriodos({ startYear }), [startYear]);
 
-  const years = useMemo(
-    () => [...new Set(periodos.map((p) => p.year))],
-    [periodos]
-  );
+  const years = useMemo(() => {
+    const setYears = new Set(periodos.map((p) => p.year));
+    setYears.add(currentActualYear);
+    return Array.from(setYears).sort((a, b) => Number(b) - Number(a));
+  }, [periodos, currentActualYear]);
 
-  const periodosFiltrados = useMemo(
-    () => periodos.filter((p) => p.year === yearFilter),
-    [periodos, yearFilter]
-  );
+  const minYear = useMemo(() => Math.min(...years.map(Number)), [years]);
+  const maxYear = useMemo(() => Math.max(...years.map(Number)), [years]);
 
   const currentIndex = periodos.findIndex((p) => p.value === value);
   const periodoAnterior = currentIndex >= 0 ? periodos[currentIndex + 1]?.value : null;
   const periodoSiguiente = currentIndex > 0 ? periodos[currentIndex - 1]?.value : null;
   const periodoActualLabel = formatearPeriodo(value) || placeholder;
-  const esPeriodoActual = value === obtenerPeriodoActual();
 
   const infoActual = periodosInfo[value];
   const esSiguiente = siguientePeriodo && value === siguientePeriodo;
@@ -75,226 +103,274 @@ const SelectorPeriodoAvanzado = ({
     if (yr && yr !== yearFilter) setYearFilter(yr);
   };
 
-  // Clases estandarizadas para los selects internos
-  const selectClassNames = {
-    trigger: "bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none",
-    value: "font-bold text-slate-700 dark:text-zinc-200 text-sm"
+  const handleSelectMes = (mesNum) => {
+    const nuevoPeriodo = `${yearFilter}-${mesNum}`;
+    onChange(nuevoPeriodo);
+    setIsOpen(false);
+  };
+
+  const cambiarAno = (delta) => {
+    const nuevoAno = String(Number(yearFilter) + delta);
+    if (Number(nuevoAno) >= minYear && Number(nuevoAno) <= maxYear) {
+      setYearFilter(nuevoAno);
+    }
+  };
+
+  const handleIrMesActual = () => {
+    onChange(currentActual);
+    setYearFilter(currentActualYear);
+    setIsOpen(false);
   };
 
   return (
-    <div className={className}>
-      <Popover
-        placement="bottom-start"
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        shouldCloseOnBlur
-        classNames={{
-          content: "p-0 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden"
-        }}
+    <div className={`relative ${isOpen ? 'z-[999]' : 'z-20'} ${className}`} ref={containerRef}>
+      {/* Botón Disparador Principal */}
+      <button
+        type="button"
+        disabled={isDisabled}
+        onClick={() => !isDisabled && setIsOpen(!isOpen)}
+        className={`w-full h-full flex items-center justify-between px-4 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-none ${
+          isDisabled 
+            ? "opacity-50 cursor-not-allowed" 
+            : "hover:border-slate-300 dark:hover:border-zinc-700 cursor-pointer"
+        } ${isOpen ? "border-blue-500 dark:border-blue-500 ring-2 ring-blue-500/10" : ""}`}
       >
-        <PopoverTrigger>
-          <button
-            type="button"
-            disabled={isDisabled}
-            className={`w-full h-full flex items-center justify-between px-4 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-none ${
-              isDisabled 
-                ? "opacity-50 cursor-not-allowed" 
-                : "hover:border-slate-300 dark:hover:border-zinc-700 cursor-pointer"
-            } ${isOpen ? "border-blue-500 dark:border-blue-500 ring-2 ring-blue-500/10" : ""}`}
-          >
-            <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1 mr-2">
-              <HiCalendar className={`shrink-0 text-lg transition-colors ${isOpen ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-zinc-500"}`} />
-              <span className={`truncate text-sm tracking-tight ${value ? "font-bold text-slate-800 dark:text-zinc-100" : "font-medium text-slate-500 dark:text-zinc-400"}`}>
-                {periodoActualLabel}
+        <div className="flex items-center gap-3 overflow-hidden min-w-0 flex-1 mr-2">
+          <HiCalendar className={`shrink-0 text-lg transition-colors ${isOpen ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-zinc-500"}`} />
+          <span className={`truncate text-sm tracking-tight ${value ? "font-bold text-slate-800 dark:text-zinc-100" : "font-medium text-slate-500 dark:text-zinc-400"}`}>
+            {periodoActualLabel}
+          </span>
+          {esSiguiente && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-500/20 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+              Siguiente
+            </span>
+          )}
+          {tieneFacturasActual && !esSiguiente && (
+            infoActual?.vencida ? (
+              <span className="hidden sm:inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-500/25 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                Facturado (Vencido)
               </span>
-              {esSiguiente && (
-                <span className="hidden sm:inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-500/20 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                  Siguiente
-                </span>
-              )}
-              {tieneFacturasActual && !esSiguiente && (
-                infoActual?.vencida ? (
-                  <span className="hidden sm:inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-500/25 shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    Facturado (Vencido)
-                  </span>
-                ) : (
-                  <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    Facturado (Vigente)
-                  </span>
-                )
-              )}
-              {esCompletado && !tieneFacturasActual && !esSiguiente && (
-                <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  Completado
-                </span>
-              )}
-              {esParcial && !tieneFacturasActual && !esSiguiente && (
-                <span className="hidden sm:inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-500/20 shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                  En Progreso
-                </span>
-              )}
-            </div>
+            ) : (
+              <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Facturado (Vigente)
+              </span>
+            )
+          )}
+          {esCompletado && !tieneFacturasActual && !esSiguiente && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Completado
+            </span>
+          )}
+          {esParcial && !tieneFacturasActual && !esSiguiente && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-500/20 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              En Progreso
+            </span>
+          )}
+        </div>
 
-            <div className="flex items-center shrink-0">
-              <HiChevronDown
-                className={`text-slate-400 dark:text-zinc-500 shrink-0 transition-transform duration-300 text-base ${isOpen ? "rotate-180 text-blue-500" : ""}`}
-              />
-            </div>
-          </button>
-        </PopoverTrigger>
+        <div className="flex items-center shrink-0">
+          <HiChevronDown
+            className={`text-slate-400 dark:text-zinc-500 shrink-0 transition-transform duration-300 text-base ${isOpen ? "rotate-180 text-blue-500" : ""}`}
+          />
+        </div>
+      </button>
 
-        <PopoverContent className="w-[350px]">
-          {/* Header del Popover */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/30">
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 bg-blue-500/10 rounded-lg">
-                <HiCalendar className="text-blue-600 dark:text-blue-400 w-4 h-4" />
+      {/* Popover Dropdown Panel Visual (Cuadrícula 12 Meses) */}
+      {isOpen && (
+        <div className="absolute top-[calc(100%+8px)] left-0 z-[999] w-[360px] sm:w-[390px] bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          
+          {/* Header del Popover con Navegación y Selector Directo de Año */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/50">
+            <button
+              type="button"
+              onClick={() => cambiarAno(-1)}
+              disabled={Number(yearFilter) <= minYear}
+              className="p-1.5 rounded-xl hover:bg-slate-200/70 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              title="Año anterior"
+            >
+              <HiChevronLeft className="w-5 h-5" />
+            </button>
+
+            {/* Selector Rápido de Año */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex items-center group">
+                <select
+                  value={yearFilter}
+                  onChange={(e) => setYearFilter(e.target.value)}
+                  className="appearance-none bg-slate-200/50 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-100 font-black text-sm pl-3 pr-7 py-1.5 rounded-xl cursor-pointer border border-slate-300/60 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all text-center shadow-none"
+                  aria-label="Seleccionar año"
+                >
+                  {years.map((y) => (
+                    <option key={y} value={y} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 font-bold py-1">
+                      {y} {y === currentActualYear ? "• Actual" : ""}
+                    </option>
+                  ))}
+                </select>
+                <HiChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400 absolute right-2 pointer-events-none group-hover:text-blue-500 transition-colors" />
               </div>
-              <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
-                {label}
-              </p>
+
+              {yearFilter === currentActualYear && (
+                <span className="hidden sm:inline-flex bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-md border border-blue-500/20">
+                  Actual
+                </span>
+              )}
             </div>
-            {esSiguiente ? (
-              <Chip size="sm" className="bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold text-[9px] uppercase tracking-widest px-2 h-5 border border-blue-500/20">
-                Siguiente Período
-              </Chip>
-            ) : tieneFacturasActual ? (
-              infoActual?.vencida ? (
-                <Chip size="sm" className="bg-amber-500/15 text-amber-700 dark:text-amber-400 font-bold text-[9px] uppercase tracking-widest px-2 h-5 border border-amber-500/25">
-                  Facturas (Vencidas)
-                </Chip>
-              ) : (
-                <Chip size="sm" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-widest px-2 h-5 border border-emerald-500/20">
-                  Facturas (Vigentes)
-                </Chip>
-              )
-            ) : esCompletado ? (
-              <Chip size="sm" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold text-[9px] uppercase tracking-widest px-2 h-5 border border-emerald-500/20">
-                Lecturas Registradas
-              </Chip>
-            ) : esPeriodoActual ? (
-              <Chip size="sm" className="bg-slate-500/10 text-slate-600 dark:text-zinc-400 font-bold text-[9px] uppercase tracking-widest px-2 h-5">
-                Mes Actual
-              </Chip>
-            ) : null}
+
+            <button
+              type="button"
+              onClick={() => cambiarAno(1)}
+              disabled={Number(yearFilter) >= maxYear}
+              className="p-1.5 rounded-xl hover:bg-slate-200/70 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              title="Año siguiente"
+            >
+              <HiChevronRight className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="p-5 flex flex-col gap-4">
-            {/* Filtro de Año */}
-            <Select
-              label={<span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Año fiscal</span>}
-              labelPlacement="outside"
-              placeholder="Seleccionar año"
-              selectedKeys={[yearFilter]}
-              onSelectionChange={(keys) => {
-                const selected = Array.from(keys)[0];
-                if (selected) setYearFilter(selected);
-              }}
-              isDisabled={isDisabled}
-              variant="flat"
-              disallowEmptySelection
-              classNames={selectClassNames}
-            >
-              {years.map((year) => (
-                <SelectItem key={year} value={year} className="font-semibold">
-                  {year}
-                </SelectItem>
-              ))}
-            </Select>
-
-            {/* Selector de Período (Mes) */}
-            <Select
-              label={<span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Mes facturado</span>}
-              labelPlacement="outside"
-              placeholder={placeholder}
-              selectedKeys={value ? [value] : []}
-              onSelectionChange={(keys) => {
-                const selected = Array.from(keys)[0];
-                if (selected) {
-                  onChange(selected);
-                  setIsOpen(false);
-                }
-              }}
-              isDisabled={isDisabled}
-              disallowEmptySelection
-              variant="flat"
-              classNames={selectClassNames}
-            >
-              {periodosFiltrados.map((periodo) => {
-                const infoMes = periodosInfo[periodo.value];
-                const isSig = siguientePeriodo && periodo.value === siguientePeriodo;
+          {/* Cuadrícula Visual de los 12 Meses */}
+          <div className="p-4">
+            <div className="grid grid-cols-3 gap-2">
+              {MESES.map((m) => {
+                const periodoKey = `${yearFilter}-${m.num}`;
+                const isSelected = value === periodoKey;
+                const isCurrentMonth = periodoKey === currentActual;
+                const infoMes = periodosInfo[periodoKey];
+                const isSig = siguientePeriodo && periodoKey === siguientePeriodo;
                 const hasFacturas = infoMes?.tieneFacturas;
                 const isVencido = infoMes?.vencida;
-                const isCompletado = infoMes?.completado || infoMes?.estado === 'completado';
-                const isParcial = infoMes?.estado === 'parcial' || (!isCompletado && Number(infoMes?.totalLecturas || 0) > 0);
+                const isComp = infoMes?.completado || infoMes?.estado === 'completado';
+                const isParc = infoMes?.estado === 'parcial' || (!isComp && Number(infoMes?.totalLecturas || 0) > 0);
 
                 return (
-                  <SelectItem 
-                    key={periodo.value} 
-                    value={periodo.value} 
-                    textValue={periodo.label}
-                    className="font-semibold"
+                  <button
+                    key={m.num}
+                    type="button"
+                    onClick={() => handleSelectMes(m.num)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150 relative cursor-pointer group ${
+                      isSelected
+                        ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20"
+                        : isCurrentMonth
+                          ? "bg-blue-500/5 dark:bg-blue-500/10 border-blue-300 dark:border-blue-900/50 hover:bg-blue-500/10"
+                          : "bg-slate-50/50 dark:bg-zinc-900/40 border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100 dark:hover:bg-zinc-800/80 hover:border-slate-300 dark:hover:border-zinc-700"
+                    }`}
                   >
-                    <div className="flex items-center justify-between w-full py-0.5">
-                      <span>{periodo.label}</span>
+                    {/* Nombre del mes */}
+                    <span className={`text-sm font-black tracking-tight ${
+                      isSelected
+                        ? "text-white"
+                        : "text-slate-800 dark:text-zinc-200"
+                    }`}>
+                      {m.corto}
+                    </span>
+
+                    {/* Estado descriptivo del mes */}
+                    <div className="mt-1 flex items-center justify-center gap-1 min-h-[16px]">
                       {isSig ? (
-                        <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0 ml-2">
-                          ⚡ Siguiente
+                        <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                          isSelected ? "text-blue-100" : "text-blue-600 dark:text-blue-400"
+                        }`}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                          Próximo
                         </span>
                       ) : hasFacturas ? (
-                        isVencido ? (
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 shrink-0 ml-2">
-                            ⚠️ Facturado (Vencido)
-                          </span>
-                        ) : (
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 ml-2">
-                            ✓ Facturado (Vigente)
-                          </span>
-                        )
-                      ) : isCompletado ? (
-                        <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 ml-2">
-                          ✓ Completado
+                        <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                          isSelected 
+                            ? "text-emerald-100" 
+                            : isVencido 
+                              ? "text-amber-600 dark:text-amber-400" 
+                              : "text-emerald-600 dark:text-emerald-400"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            isSelected ? "bg-white" : isVencido ? "bg-amber-500" : "bg-emerald-500"
+                          }`} />
+                          {isVencido ? "Vencido" : "Facturas"}
                         </span>
-                      ) : isParcial ? (
-                        <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0 ml-2">
-                          ● En Progreso
+                      ) : isComp ? (
+                        <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                          isSelected ? "text-emerald-100" : "text-emerald-600 dark:text-emerald-400"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? "bg-white" : "bg-emerald-500"}`} />
+                          Listo
                         </span>
-                      ) : null}
+                      ) : isParc ? (
+                        <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                          isSelected ? "text-amber-100" : "text-amber-600 dark:text-amber-400"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isSelected ? "bg-white" : "bg-amber-500"}`} />
+                          En curso
+                        </span>
+                      ) : isCurrentMonth ? (
+                        <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                          isSelected ? "text-blue-100" : "text-slate-400 dark:text-zinc-500"
+                        }`}>
+                          Mes en curso
+                        </span>
+                      ) : (
+                        <span className={`text-[9px] font-medium ${
+                          isSelected ? "text-white/70" : "text-slate-400 dark:text-zinc-500"
+                        }`}>
+                          {m.nombre}
+                        </span>
+                      )}
                     </div>
-                  </SelectItem>
+                  </button>
                 );
               })}
-            </Select>
+            </div>
 
-            {/* Navegación Rápida */}
-            <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-zinc-800/80 mt-1">
+            {/* Acciones de Navegación Rápida */}
+            <div className="flex items-center gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800/80 mt-4">
               <Button
-                variant="flat"
-                startContent={<HiChevronLeft className="w-4 h-4" />}
+                variant="ghost"
                 onPress={() => handleNavegar(periodoAnterior)}
                 isDisabled={isDisabled || !periodoAnterior}
-                className="flex-1 font-bold text-xs bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl"
+                className="flex-1 font-bold text-xs bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-xl h-9"
               >
+                <HiChevronLeft className="w-4 h-4" />
                 Anterior
               </Button>
+              
               <Button
                 variant="flat"
-                endContent={<HiChevronRight className="w-4 h-4" />}
+                color="primary"
+                onPress={handleIrMesActual}
+                className="font-bold text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 rounded-xl h-9 px-3"
+              >
+                Mes Actual
+              </Button>
+
+              <Button
+                variant="ghost"
                 onPress={() => handleNavegar(periodoSiguiente)}
                 isDisabled={isDisabled || !periodoSiguiente}
-                className="flex-1 font-bold text-xs bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl"
+                className="flex-1 font-bold text-xs bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-xl h-9"
               >
                 Siguiente
+                <HiChevronRight className="w-4 h-4" />
               </Button>
             </div>
+
+            {/* Leyenda Compacta */}
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 pt-3 mt-3 border-t border-slate-100 dark:border-zinc-800/60 text-[10px] font-bold text-slate-400 dark:text-zinc-500">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500" /> Próximo
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" /> Facturado
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500" /> En curso / Vencido
+              </span>
+            </div>
+
           </div>
-        </PopoverContent>
-      </Popover>
+        </div>
+      )}
     </div>
   );
 };

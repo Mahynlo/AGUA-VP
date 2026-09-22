@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Card, CardBody, Chip } from '@nextui-org/react';
+import { Card, CardContent, Chip } from '@heroui/react';
 import { HiLocationMarker, HiUser, HiHashtag } from 'react-icons/hi';
 import MarkerMap from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 import municipiojson from "../../../../public/VillaPesqueira.json";
@@ -174,7 +174,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
         {/* Información del cliente overlay */}
         <div className="absolute top-4 left-4 z-10">
           <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-            <CardBody className="p-3">
+            <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-xs font-semibold text-gray-800 dark:text-white">
@@ -184,16 +184,16 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
               <div className="text-xs text-gray-600 dark:text-gray-300">
                 Medidor: {cliente?.medidor}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
 
         {/* Información de ubicación */}
         <div className="absolute bottom-4 left-4 z-10">
           <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-            <CardBody className="p-3">
+            <CardContent className="p-3">
               <div className="flex items-center gap-2 text-xs">
-                <Chip size="sm" color="warning" variant="flat">
+                <Chip size="sm" color="warning" variant="ghost">
                   MAPA ESTÁTICO
                 </Chip>
                 <span className="text-gray-600 dark:text-gray-300 font-mono">
@@ -203,14 +203,14 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
               <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 📍 {cliente?.ciudad}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
 
         {/* Información detallada */}
         <div className="absolute bottom-4 right-4 z-10">
           <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg max-w-xs">
-            <CardBody className="p-3">
+            <CardContent className="p-3">
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
                   <HiUser className="text-blue-500" />
@@ -235,7 +235,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
                   </div>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -268,9 +268,9 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
       {!isLoading && (
         <div className="absolute bottom-4 left-4 z-[1000]">
           <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-            <CardBody className="p-3">
+            <CardContent className="p-3">
               <div className="flex items-center gap-2 text-xs">
-                <Chip size="sm" color="success" variant="flat">
+                <Chip size="sm" color="success" variant="ghost">
                   GPS
                 </Chip>
                 <span className="text-gray-600 dark:text-gray-300 font-mono">
@@ -280,7 +280,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
               <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 📍 {cliente?.ciudad}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}
@@ -289,7 +289,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
       {!isLoading && (
         <div className="absolute top-4 right-4 z-[1000]">
           <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg">
-            <CardBody className="p-3">
+            <CardContent className="p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-xs font-semibold text-gray-800 dark:text-white">
@@ -299,7 +299,7 @@ const MapaLecturas = ({ lat, lng, cliente }) => {
               <div className="text-xs text-gray-600 dark:text-gray-300">
                 Medidor: {cliente?.medidor}
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}

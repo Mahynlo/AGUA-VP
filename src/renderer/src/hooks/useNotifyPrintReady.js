@@ -5,9 +5,9 @@ import { useEffect } from 'react';
  * renderizar sus datos y gráficas.
  *
  * @param {boolean} isReady  - Condición que indica que los datos ya están cargados.
- * @param {number}  chartDelay - Milisegundos extra para que las gráficas terminen de pintar (default 800ms).
+ * @param {number}  chartDelay - Milisegundos extra para que las gráficas y DOM terminen de pintar (default 200ms).
  */
-export function useNotifyPrintReady(isReady, chartDelay = 800) {
+export function useNotifyPrintReady(isReady, chartDelay = 200) {
     useEffect(() => {
         if (!isReady) return;
 
@@ -16,6 +16,7 @@ export function useNotifyPrintReady(isReady, chartDelay = 800) {
 
         raf = requestAnimationFrame(() => {
             timer = setTimeout(() => {
+                console.log('⚡ [useNotifyPrintReady] Señal de impresión lista enviada');
                 window.api?.notifyPrintReady?.();
             }, chartDelay);
         });
@@ -24,5 +25,5 @@ export function useNotifyPrintReady(isReady, chartDelay = 800) {
             cancelAnimationFrame(raf);
             clearTimeout(timer);
         };
-    }, [isReady]);
+    }, [isReady, chartDelay]);
 }

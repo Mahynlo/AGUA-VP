@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Tooltip, Button } from "@nextui-org/react";
+import { Tooltip, Button } from "@heroui/react";
 import { HiRefresh, HiLightningBolt, HiDownload } from "react-icons/hi";
 
 export default function BotonActualizacionesNavbar() {
@@ -136,9 +136,8 @@ export default function BotonActualizacionesNavbar() {
       <div className="relative inline-flex items-center">
         <Button
           onPress={handleClick}
-          radius="full"
-          variant="light"
-          className={`relative text-white/90 hover:text-white transition-all ${
+          variant="ghost"
+          className={`relative text-white/90 hover:text-white transition-all rounded-full ${
             updateAvailable || updateDownloaded
               ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 ring-2 ring-amber-400/50 animate-pulse"
               : ""

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Modal } from "flowbite-react";
-import { Avatar } from "@nextui-org/react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
+import { Avatar } from "@heroui/react";
 import defaultAvatar from "../../assets/images/Avatar.png";
 import {
     HiDeviceMobile, HiDesktopComputer, HiClock, HiBan,
@@ -109,14 +109,19 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
             dismissible
         >
             {/* ── HEADER ── */}
-            <Modal.Header>
+            <ModalHeader>
                 <div className="flex items-center justify-between w-full pr-8">
                     <div className="flex items-center gap-4">
                         <Avatar
-                            src={usuarioAvatarSrc || defaultAvatar}
                             size="md"
                             className="border-2 border-slate-100 dark:border-zinc-800 shadow-sm shrink-0"
-                        />
+                        >
+                            <Avatar.Image
+                                src={usuarioAvatarSrc || defaultAvatar}
+                                alt={usuario?.nombre || "Avatar"}
+                            />
+                            <Avatar.Fallback>{(usuario?.nombre || "U").charAt(0).toUpperCase()}</Avatar.Fallback>
+                        </Avatar>
                         <div className="flex flex-col gap-0.5">
                             <span className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
                                 Sesiones Activas
@@ -136,10 +141,10 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
                         <HiRefresh className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
                     </button>
                 </div>
-            </Modal.Header>
+            </ModalHeader>
 
             {/* ── BODY ── */}
-            <Modal.Body>
+            <ModalBody>
                 <div className="flex flex-col gap-4">
                     {/* Banner de confirmación inline */}
                     {confirmCerrar && (
@@ -277,10 +282,10 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
                         </div>
                     )}
                 </div>
-            </Modal.Body>
+            </ModalBody>
 
             {/* ── FOOTER ── */}
-            <Modal.Footer>
+            <ModalFooter>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                     {sesiones.length} {sesiones.length === 1 ? 'Sesión activa' : 'Sesiones activas'}
                 </span>
@@ -304,7 +309,7 @@ const ModalSesionesUsuario = ({ isOpen, onClose, usuario }) => {
                         </button>
                     )}
                 </div>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     );
 };

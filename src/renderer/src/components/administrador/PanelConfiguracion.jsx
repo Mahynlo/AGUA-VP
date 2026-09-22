@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button, Spinner, Divider } from "@nextui-org/react";
+import { Button, Spinner } from "@heroui/react";
 // Aquí está la corrección: se agregó HiCheck
 import { HiCog, HiSave, HiBan, HiExclamation, HiCalendar, HiBell, HiClock, HiCheck } from "react-icons/hi";
 import { usePermissions } from "../../context/PermissionsContext";
@@ -153,18 +153,18 @@ export default function PanelConfiguracion() {
         <Button
           onPress={handleSave}
           isLoading={saving}
-          startContent={saved ? null : <HiSave className="text-lg" />}
           className={`font-bold h-[52px] px-8 w-full sm:w-auto shadow-sm rounded-xl transition-all ${
             saved 
               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
               : "bg-slate-900 text-white dark:bg-white dark:text-zinc-950"
           }`}
         >
+          {!saved && <HiSave className="text-lg" />}
           {saved ? "Guardado Exitoso" : "Guardar Cambios"}
         </Button>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
+      <div className="h-px bg-slate-100 dark:bg-zinc-800/80 w-full" />
 
       {/* Nota informativa Superior */}
       <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 flex items-start gap-4">
@@ -289,7 +289,7 @@ export default function PanelConfiguracion() {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80 my-2" />
+      <div className="h-px bg-slate-100 dark:bg-zinc-800/80 my-2 w-full" />
 
       {/* ── SECCIÓN 4: CORRECCIÓN DE VENCIMIENTOS ── */}
       <div className="flex flex-col gap-6">
@@ -307,7 +307,7 @@ export default function PanelConfiguracion() {
           </div>
         </div>
 
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6 sm:p-8 space-y-6">
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6 sm:p-8 space-y-6 relative z-30">
           <p className="text-sm font-medium text-amber-900 dark:text-amber-200 leading-relaxed max-w-3xl">
             Use esta acción para corregir facturas generadas con lógica anterior. Solo afecta facturas no pagadas del período seleccionado.
           </p>
@@ -361,7 +361,7 @@ export default function PanelConfiguracion() {
             </label>
 
             <Button
-              variant="flat"
+              variant="ghost"
               onPress={handleRecalcularVencimientos}
               isLoading={loadingRecalculo}
               isDisabled={!canRecalcularLecturas || saving || loadingRecalculo || !periodoRecalculo || (actualizarFechaEmision && !fechaEmisionObjetivo)}

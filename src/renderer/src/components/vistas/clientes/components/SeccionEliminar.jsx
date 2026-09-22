@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Tooltip } from "@nextui-org/react";
+import { Button, Tooltip } from "@heroui/react";
 import { HiTrash } from "react-icons/hi";
 import { useFeedback } from "../../../../context/FeedbackContext";
 
@@ -73,12 +73,12 @@ export const SeccionEliminar = ({ clienteId, onEliminar }) => {
           <Tooltip color="danger" content="Desactivar Cliente" delay={1000}>
             <Button 
               color="danger" 
-              variant="flat"
+              variant="ghost"
               className="font-bold bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400"
-              startContent={<HiTrash className="w-4 h-4" />}
               onPress={handleEliminar}
               isDisabled={!confirmacion || razon.trim().length < 10}
             >
+              <HiTrash className="w-4 h-4" />
               Desactivar Cliente
             </Button>
           </Tooltip>

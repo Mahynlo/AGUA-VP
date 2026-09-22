@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiUser, HiPlus, HiCheck } from "react-icons/hi";
 import { useClienteForm } from "../../../hooks/useClienteForm";
 import { usePermissions } from "../../../context/PermissionsContext";
@@ -24,8 +24,7 @@ const premiumModalTheme = {
     header: {
         // CAMBIO: Ajustamos el borde superior a rounded-t-2xl
         base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-t-2xl",
-        close: {
-            base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors",
+        close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer",
             icon: "h-5 w-5"
         }
     },
@@ -112,12 +111,12 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                 show={isOpen}
                 size="4xl"
                 onClose={handleCloseModal}
-                dismissible={false}
+                dismissible
                 theme={premiumModalTheme}
                 className="mt-5"
             >
                 {/* ── HEADER DEL MODAL ── */}
-                <Modal.Header>
+                <ModalHeader>
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
                             <HiUser className="w-7 h-7" />
@@ -131,10 +130,10 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                             </p>
                         </div>
                     </div>
-                </Modal.Header>
+                </ModalHeader>
 
                 {/* ── CUERPO DEL MODAL (FORMULARIO) ── */}
-                <Modal.Body>
+                <ModalBody>
                     {!renderForm ? (
                         <div className="flex justify-center items-center h-48 text-slate-400 font-medium">
                             Preparando formulario...
@@ -172,10 +171,10 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                             />
                         </form>
                     )}
-                </Modal.Body>
+                </ModalBody>
 
                 {/* ── FOOTER Y ACCIONES ── */}
-                <Modal.Footer>
+                <ModalFooter>
                     {/* Botón Cancelar (Estilo variant="light" original) */}
                     <Button
                         color="gray"
@@ -192,15 +191,18 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                         type="submit"
                         form="form-registro-cliente"
                         disabled={isUpdating || !canCrearClientes}
-                        isProcessing={isUpdating}
                         className="font-bold bg-slate-900 border-transparent text-white dark:bg-white dark:text-zinc-950 rounded-xl h-11 px-2 shadow-sm transition-transform active:scale-95"
                     >
                         <div className="flex items-center gap-2">
-                            {!isUpdating && <HiCheck className="text-lg" />}
+                            {isUpdating ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white dark:border-zinc-950/30 dark:border-t-zinc-950 rounded-full animate-spin" />
+                            ) : (
+                                <HiCheck className="text-lg" />
+                            )}
                             {isUpdating ? "Registrando..." : "Guardar Cliente"}
                         </div>
                     </Button>
-                </Modal.Footer>
+                </ModalFooter>
             </Modal>
         </>
     );

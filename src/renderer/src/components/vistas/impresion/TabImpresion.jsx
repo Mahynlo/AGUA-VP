@@ -1,7 +1,5 @@
 import React from "react";
-import { Button, Card, CardBody, CardHeader } from "@nextui-org/react";
-import { HiPrinter, HiCog, HiDocumentText, HiLink, HiDatabase, HiTemplate } from "react-icons/hi";
-import { Link } from "react-router-dom";
+import { HiPrinter } from "react-icons/hi";
 import useImpresionRecibos from "../../../hooks/useImpresionRecibos";
 import ClientesList from "./components/ClientesList";
 import AccionesImpresion from "./components/AccionesImpresion";
@@ -35,6 +33,8 @@ const TabImpresion = () => {
     handleToggleTodos,
     handleImprimirRecibos,
     handleVistaPreviaRecibos,
+    handleEmitirRecibos,
+    handlePruebaRecibo,
     handlePruebaConDatosMock,
     handleTestUrls,
     procesandoAccion,
@@ -82,8 +82,8 @@ const TabImpresion = () => {
                 size="sm" 
                 variant="flat" 
                 className="font-bold bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 shadow-sm"
-                startContent={<HiLink className="w-4 h-4" />}
               >
+                <HiLink className="w-4 h-4" />
                 Test URLs
               </Button>
               <Button 
@@ -91,8 +91,8 @@ const TabImpresion = () => {
                 size="sm" 
                 variant="flat" 
                 className="font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-transparent shadow-none"
-                startContent={<HiDatabase className="w-4 h-4" />}
               >
+                <HiDatabase className="w-4 h-4" />
                 Datos Mock
               </Button>
               <Button 
@@ -101,8 +101,8 @@ const TabImpresion = () => {
                 size="sm" 
                 variant="flat" 
                 className="font-bold bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 shadow-sm"
-                startContent={<HiTemplate className="w-4 h-4" />}
               >
+                <HiTemplate className="w-4 h-4" />
                 Ver Plantilla
               </Button>
               <Button 
@@ -111,8 +111,8 @@ const TabImpresion = () => {
                 size="sm" 
                 variant="flat" 
                 className="font-bold bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 shadow-sm"
-                startContent={<HiDocumentText className="w-4 h-4" />}
               >
+                <HiDocumentText className="w-4 h-4" />
                 Reporte
               </Button>
             </div>
@@ -127,8 +127,8 @@ const TabImpresion = () => {
             {facturasParaImprimir.length > 0 ? (
               <AccionesImpresion
                 estadisticas={estadisticas}
-                onVistaPrevia={handleVistaPreviaRecibos}
-                onImprimir={handleImprimirRecibos}
+                onEmitir={handleEmitirRecibos || handleVistaPreviaRecibos}
+                onPruebaRecibo={handlePruebaRecibo}
                 procesandoAccion={procesandoAccion}
                 progresoGeneracion={progresoGeneracion}
                 ciudadFiltro={ciudadFiltro}

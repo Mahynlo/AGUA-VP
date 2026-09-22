@@ -98,15 +98,19 @@ export function FacturasProvider({ children }) {
     }
   }, [user, fetchFacturas]); // Se ejecuta una sola vez cuando el usuario está autenticado
 
-  // Actualizar cuando se restaura la conexión
+  // Actualizar cuando se restaura la conexión o cuando ocurre una actualización global (ej. cobro de pago)
   useEffect(() => {
-    const handleConnectionRestored = () => {
-      console.log("🔄 Reconexión detectada en FacturasContext, actualizando...");
+    const handleUpdate = () => {
+      console.log("🔄 Actualización detectada en FacturasContext, refrescando facturas...");
       fetchFacturas({ ...filtrosRef.current, force: true });
     };
 
-    window.addEventListener('connection-restored', handleConnectionRestored);
-    return () => window.removeEventListener('connection-restored', handleConnectionRestored);
+    window.addEventListener('connection-restored', handleUpdate);
+    window.addEventListener('dashboard-update', handleUpdate);
+    return () => {
+      window.removeEventListener('connection-restored', handleUpdate);
+      window.removeEventListener('dashboard-update', handleUpdate);
+    };
   }, [fetchFacturas]);
 
   // Función para actualizar filtros y recargar datos
@@ -131,7 +135,7 @@ export function FacturasProvider({ children }) {
     };
     setFiltros(filtrosVacios);
     await fetchFacturas(filtrosVacios);
-  }, []);
+  }, [fetchFacturas]);
 
   // Función para actualizar facturas después de cambios
   const actualizarFacturas = useCallback(async () => {
@@ -179,9 +183,9 @@ export function FacturasProvider({ children }) {
         return fechaVencimiento < hoy && f.saldo_pendiente > 0;
       }),
 
-      // Facturas por pueblo
+      // Facturas por pueblo/localidad
       facturasPorPueblo: facturas.reduce((acc, factura) => {
-        const ciudad = factura.cliente_nombre; // Necesitaríamos el campo ciudad del cliente
+        const ciudad = factura.ciudad || factura.pueblo || factura.localidad || factura.ruta_nombre || "General";
         acc[ciudad] = (acc[ciudad] || 0) + 1;
         return acc;
       }, {}),
@@ -220,7 +224,7 @@ export function FacturasProvider({ children }) {
     };
   }, [estadisticas, facturasComputadas]);
 
-  const contextValue = {
+  const contextValue = useMemo(() => ({
     // Datos principales
     facturas,
     pagination,
@@ -251,7 +255,28 @@ export function FacturasProvider({ children }) {
     // Funciones de actualización
     actualizarFacturas,
     fetchFacturas
-  };
+  }), [
+    facturas,
+    pagination,
+    loading,
+    initialLoading,
+    error,
+    estadisticas,
+    metadata,
+    filtros,
+    aplicarFiltros,
+    limpiarFiltros,
+    filtrarPorCliente,
+    filtrarPorEstado,
+    filtrarPorPueblo,
+    filtrarPorPeriodo,
+    filtrarPorFechas,
+    facturasComputadas,
+    buscarFacturasCliente,
+    obtenerEstadisticas,
+    actualizarFacturas,
+    fetchFacturas
+  ]);
 
   return (
     <FacturasContext.Provider value={contextValue}>

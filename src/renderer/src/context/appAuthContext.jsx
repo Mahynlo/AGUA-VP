@@ -1,5 +1,4 @@
-// src/context/appAuthContext.jsx
-import React, { createContext, useState, useEffect,useContext } from "react";
+import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react";
 
 const AuthAppContext = createContext();
 
@@ -9,29 +8,43 @@ export const AuthAppProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     const verificarToken = async () => {
+        // En ventanas de solo lectura / auxiliares (ayuda, reportes, recibos), omitir verificación
+        const hash = window.location.hash || '';
+        if (
+            hash.startsWith('#/ayuda') || 
+            hash.includes('/recibo') || 
+            hash.includes('/reporte') || 
+            hash.includes('/comprobante')
+        ) {
+            return;
+        }
+
         try {
             const status = await window.api.checkServerStatus();
-            if (status?.success) {
-                const tokenLocal = await window.authApp.leerToken();
-                if (tokenLocal?.success && tokenLocal.token) {
-                    setToken(tokenLocal.token);
+            const tokenLocal = await window.authApp.leerToken();
+
+            // 1. Si ya existe un token local válido, asignarlo
+            if (tokenLocal?.success && tokenLocal.token) {
+                setToken(tokenLocal.token);
+                setModalAbierto(false);
+                setError(null);
+                return;
+            }
+
+            // 2. Si no hay token local pero el servidor está en línea, asegurar/registrar automáticamente
+            if (status?.success || status?.status === "OK") {
+                const res = await window.authApp.ensureToken("Mi App en Producción");
+                if (res?.success && res.token) {
+                    setToken(res.token);
+                    setModalAbierto(false);
+                    setError(null);
+                    return;
                 }
-                setModalAbierto(false);
-                setError(null);
-                return;
             }
 
-            const res = await window.authApp.registrarApp("Mi App en Producción");
-            if (res?.success && res.token) {
-                setToken(res.token);
-                setModalAbierto(false);
-                setError(null);
-                return;
-            }
-
-            // Si no pudo garantizar token, forzar modal de registro.
+            // 3. Si no pudo garantizar token, forzar modal de registro
             setModalAbierto(true);
-            setError(status?.message || res?.message || "No se pudo validar el token de aplicación.");
+            setError(status?.message || "Token de app no disponible. Registra la app para continuar.");
         } catch (err) {
             setModalAbierto(true);
             setError("Error al validar el token de aplicación.");
@@ -39,14 +52,14 @@ export const AuthAppProvider = ({ children }) => {
         }
     };
 
-    const registrarApp = async () => {
+    const registrarApp = useCallback(async () => {
         try {
             const res = await window.authApp.registrarApp("Mi App en Producción");
-            if (res?.success && res.token) { //si la respuesta es exitosa y contiene un token
+            if (res?.success && res.token) {
                 setToken(res.token);
                 setModalAbierto(false);
                 console.log("App registrada exitosamente:", res);
-                setError(null); // Limpia cualquier error anterior
+                setError(null);
             } else {
                 setError(res?.message || "No se pudo registrar la app. Verifica tu conexión a internet.");
                 console.error("Error al registrar app:", res?.message || "Error desconocido");
@@ -55,7 +68,7 @@ export const AuthAppProvider = ({ children }) => {
             setError("Error al conectar. Verifica tu conexión a internet.");
             console.error("Excepción al registrar app:", err);
         }
-    };
+    }, []);
 
 
     useEffect(() => {
@@ -66,6 +79,16 @@ export const AuthAppProvider = ({ children }) => {
         if (!window?.authApp?.onTokenMissing) return;
 
         const unsubscribe = window.authApp.onTokenMissing(async () => {
+            const hash = window.location.hash || '';
+            if (
+                hash.startsWith('#/ayuda') || 
+                hash.includes('/recibo') || 
+                hash.includes('/reporte') || 
+                hash.includes('/comprobante')
+            ) {
+                return;
+            }
+
             const ensureResult = await window.authApp.ensureToken("Mi App en Producción");
             if (ensureResult?.success && ensureResult.token) {
                 setToken(ensureResult.token);
@@ -83,8 +106,15 @@ export const AuthAppProvider = ({ children }) => {
         };
     }, []);
 
+    const value = useMemo(() => ({
+        token,
+        modalAbierto,
+        registrarApp,
+        error
+    }), [token, modalAbierto, registrarApp, error]);
+
     return (
-        <AuthAppContext.Provider value={{ token, modalAbierto, registrarApp, error }}>
+        <AuthAppContext.Provider value={value}>
             {children}
         </AuthAppContext.Provider>
     );

@@ -4,7 +4,7 @@
  */
 
 import { Component } from "react";
-import { Button } from "@nextui-org/react";
+import { Button } from "@heroui/react";
 import { HiExclamationCircle, HiChevronDown, HiChevronUp } from "react-icons/hi";
 
 export default class ErrorBoundary extends Component {
@@ -42,22 +42,22 @@ export default class ErrorBoundary extends Component {
                 <Button
                   size="sm"
                   color="danger"
-                  variant="flat"
+                  variant="ghost"
                   onPress={() => this.setState({ hasError: false, error: null, errorInfo: null, showDetail: false })}
                 >
                   Reintentar
                 </Button>
                 <Button
                   size="sm"
-                  variant="light"
+                  variant="ghost"
                   className="text-red-500 dark:text-red-400"
-                  endContent={this.state.showDetail
-                    ? <HiChevronUp className="w-4 h-4" />
-                    : <HiChevronDown className="w-4 h-4" />
-                  }
                   onPress={() => this.setState((s) => ({ showDetail: !s.showDetail }))}
                 >
                   {this.state.showDetail ? "Ocultar detalle" : "Ver detalle técnico"}
+                  {this.state.showDetail
+                    ? <HiChevronUp className="w-4 h-4" />
+                    : <HiChevronDown className="w-4 h-4" />
+                  }
                 </Button>
               </div>
 

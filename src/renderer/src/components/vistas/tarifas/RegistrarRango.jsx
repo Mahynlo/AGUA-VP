@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiDocumentText, HiPlus, HiTrash } from "react-icons/hi";
 import { useState } from "react";
 import { useTarifas } from "../../../context/TarifasContext";
@@ -13,7 +13,7 @@ const premiumModalTheme = {
     },
     header: {
         base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-        close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+        close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
     },
     body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
     footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -193,9 +193,9 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
         show={isOpen}
         onClose={() => setIsOpen(false)}
         theme={premiumModalTheme}
-        dismissible={false}
+        dismissible
       >
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex items-center gap-4">
             <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-2xl shrink-0">
               <HiDocumentText className="w-6 h-6" />
@@ -209,9 +209,9 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
               </p>
             </div>
           </div>
-        </Modal.Header>
+        </ModalHeader>
 
-        <Modal.Body>
+        <ModalBody>
           <form id="form-registrar-rango" onSubmit={handleSubmit} className="flex flex-col gap-6">
             <div className="space-y-4">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
@@ -295,9 +295,9 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
               </div>
             </div>
           </form>
-        </Modal.Body>
+        </ModalBody>
 
-        <Modal.Footer>
+        <ModalFooter>
           <button
             type="button"
             onClick={() => setIsOpen(false)}
@@ -315,7 +315,7 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
             {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
             {isSaving ? "Guardando..." : "Guardar Rangos"}
           </button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </>
   );

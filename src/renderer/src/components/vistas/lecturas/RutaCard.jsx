@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import {
   HiDotsVertical,
   HiEye,
@@ -33,7 +33,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-t-3xl",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "p-8 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-b-3xl" }
@@ -181,6 +181,7 @@ export default function RutaCard({ ruta }) {
         } else {
           setSuccess(`${n} factura${n !== 1 ? 's' : ''} generada${n !== 1 ? 's' : ''} correctamente.`, 'Facturación');
           setFacturasGeneradas(true);
+          window.dispatchEvent(new CustomEvent('dashboard-update'));
         }
       } else {
         setError(result.message || 'Error al generar facturas', 'Facturación');
@@ -241,6 +242,7 @@ export default function RutaCard({ ruta }) {
       );
       if (generadas > 0 || recalculadas > 0) {
         setFacturasGeneradas(true);
+        window.dispatchEvent(new CustomEvent('dashboard-update'));
       }
     } catch (err) {
       setError('Error inesperado al recalcular facturas', 'Facturación');
@@ -547,15 +549,15 @@ export default function RutaCard({ ruta }) {
         size="md"
         theme={premiumModalTheme}
       >
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex flex-col gap-1">
             <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Generar Facturas</span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
               Ruta {ruta.nombre} · Período {ruta.periodo_mostrado}
             </span>
           </div>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-4">
             <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5">
               <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
@@ -572,17 +574,22 @@ export default function RutaCard({ ruta }) {
               </p>
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button color="light" onClick={() => setModalGenerarOpen(false)} className="font-bold text-slate-500">Cancelar</Button>
           <Button
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl"
-            isProcessing={isGenerando}
+            disabled={isGenerando}
             onClick={ejecutarGenerarFacturas}
           >
-            Confirmar Generación
+            <div className="flex items-center gap-2">
+              {isGenerando && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              {isGenerando ? "Generando..." : "Confirmar Generación"}
+            </div>
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       {/* Modal Recalcular */}
@@ -592,15 +599,15 @@ export default function RutaCard({ ruta }) {
         size="md"
         theme={premiumModalTheme}
       >
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex flex-col gap-1">
             <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Recalcular Facturación</span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
               Ruta {ruta.nombre} · Período {ruta.periodo_mostrado}
             </span>
           </div>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-5">
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
               <p className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1.5">
@@ -624,19 +631,24 @@ export default function RutaCard({ ruta }) {
               />
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button color="light" onClick={() => setModalRecalculoOpen(false)} className="font-bold text-slate-500">
             Cancelar
           </Button>
           <Button
             className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl"
-            isProcessing={isGenerando}
+            disabled={isGenerando}
             onClick={ejecutarRecalculoFacturas}
           >
-            Confirmar Recálculo
+            <div className="flex items-center gap-2">
+              {isGenerando && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              )}
+              {isGenerando ? "Recalculando..." : "Confirmar Recálculo"}
+            </div>
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       {/* Modal Visualizador de Resultados */}
@@ -646,15 +658,15 @@ export default function RutaCard({ ruta }) {
         size="4xl"
         theme={premiumModalTheme}
       >
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex flex-col gap-1">
             <span className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Resultado de Facturación</span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
               Ruta {ruta.nombre} · Período {ruta.periodo_mostrado}
             </span>
           </div>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-6">
             {!ultimoResultadoFacturacion ? (
               <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 p-6 text-center">
@@ -755,10 +767,10 @@ export default function RutaCard({ ruta }) {
               </>
             )}
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button color="light" onClick={() => setModalResultadoOpen(false)} className="font-bold text-slate-500">Cerrar Visualizador</Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       {/* Modal Alerta Cobranza */}
@@ -768,15 +780,15 @@ export default function RutaCard({ ruta }) {
         size="md"
         theme={premiumModalTheme}
       >
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex flex-col gap-1">
             <span className="text-xl font-black tracking-tight text-red-600 dark:text-red-500">Alerta de Precaución</span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
               Ruta {ruta.nombre} · Período Anterior {datosAlertaCobranza?.periodoAnterior}
             </span>
           </div>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-4">
             <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5">
               <p className="text-sm font-bold text-red-700 dark:text-red-400 mb-2">
@@ -790,8 +802,8 @@ export default function RutaCard({ ruta }) {
               </p>
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button color="light" onClick={() => setModalAlertaCobranzaOpen(false)} className="font-bold text-slate-500">
             Cancelar Generación
           </Button>
@@ -804,7 +816,7 @@ export default function RutaCard({ ruta }) {
           >
             Continuar de todos modos
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
     </div>

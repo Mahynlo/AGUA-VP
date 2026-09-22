@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { Card, CardBody } from '@nextui-org/react';
+import { Card, CardContent } from '@heroui/react';
 import { HiLocationMarker, HiCog, HiHashtag, HiCheck, HiX, HiWifi } from 'react-icons/hi';
 import MarkerMap from "../../assets/svgs/Markador_azul_Agua_VP.svg";
 import municipiojson from "../../../../public/VillaPesqueira.json";
@@ -370,7 +370,7 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
           <div className="relative z-10 p-8">
             <Card className="max-w-md mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-2xl">
-              <CardBody className="p-8 text-center">
+              <CardContent className="p-8 text-center">
                 <div className="mb-6">
                   <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
                     <HiLocationMarker className="text-white text-3xl" />
@@ -400,7 +400,7 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
                     <div className="text-lg font-bold text-blue-700">{estadisticas.asignados}</div>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
         </div>
@@ -409,13 +409,13 @@ const MapaMedidores = ({ medidores = [], selectedMedidor }) => {
       {!isLoading && (
         <div className="absolute top-4 right-4 z-[400]">
           <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl">
-            <CardBody className="p-3">
+            <CardContent className="p-3">
               <div className="flex items-center gap-2">
                 <HiWifi className="text-blue-500 text-sm" />
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Villa Pesqueira</span>
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       )}

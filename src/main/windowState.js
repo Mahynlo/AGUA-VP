@@ -1,4 +1,5 @@
 import Store from 'electron-store';
+import { screen } from 'electron';
 
 /**
  * Gestiona la persistencia de la posición y tamaño de la ventana.
@@ -6,15 +7,35 @@ import Store from 'electron-store';
  */
 export function setupWindowState() {
   const store = new Store();
-  
+
   // Valores por defecto
   const defaultBounds = {
     width: 1200,
     height: 750,
   };
 
+  // Verifica que el bound guardado realmente quepa en alguna pantalla conectada
+  const isVisibleOnAnyDisplay = (bounds) => {
+    if (bounds.x == null || bounds.y == null) return false;
+
+    return screen.getAllDisplays().some((display) => {
+      const area = display.workArea;
+      return (
+        bounds.x >= area.x &&
+        bounds.y >= area.y &&
+        bounds.x + bounds.width <= area.x + area.width &&
+        bounds.y + bounds.height <= area.y + area.height
+      );
+    });
+  };
+
   // Recuperar estado (o usar default)
-  const state = store.get('window-state', defaultBounds);
+  let state = store.get('window-state', defaultBounds);
+
+  // Si el estado guardado no es visible en ninguna pantalla actual, descartarlo
+  if (!state.isMaximized && !isVisibleOnAnyDisplay(state)) {
+    state = defaultBounds;
+  }
 
   const saveState = (win) => {
     if (!win.isDestroyed()) {
@@ -30,26 +51,17 @@ export function setupWindowState() {
     }
   };
 
-  /**
-   * Vincula la ventana a los eventos de guardado.
-   * @param {BrowserWindow} win 
-   */
   const track = (win) => {
-    // Restaurar si estaba maximizada
     if (state.isMaximized) {
       win.maximize();
     }
-    
-    // Escuchar eventos (debounced es manejado por el sistema operativo realmente, 
-    // pero aquí guardamos en cada movimiento por simplicidad. 
-    // electron-store es síncrono al sistema de archivos pero rápido en JSON pequeño).
-    // Debounce manual para evitar escritura excesiva en disco
+
     let timeoutId = null;
     const debouncedSave = () => {
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         saveState(win);
-      }, 1000); // Guardar 1 segundo después del último cambio
+      }, 1000);
     };
 
     const events = ['resize', 'move'];
@@ -57,7 +69,6 @@ export function setupWindowState() {
        win.on(event, debouncedSave);
     });
 
-    // Guardar inmediatamente al cerrar para no perder el último estado
     win.on('close', () => {
       if (timeoutId) clearTimeout(timeoutId);
       saveState(win);

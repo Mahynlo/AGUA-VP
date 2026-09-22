@@ -1,11 +1,11 @@
 const flowbite = require("flowbite-react/tailwind");
-const {nextui} = require("@nextui-org/react");
+const { heroui } = require("@heroui/react");
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     "./src/**/*.{html,js,jsx}",
     flowbite.content(),
-    "./node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
 
   ],
   "darkMode": "class",
@@ -23,7 +23,7 @@ module.exports = {
   },
   plugins: [
     flowbite.plugin(),
-    nextui()
+    heroui()
   ],
 }
 

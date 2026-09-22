@@ -1,17 +1,4 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import {
-  Button,
-  Select,
-  SelectItem,
-  Chip,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Spinner,
-} from "@nextui-org/react";
 import Chart from "react-apexcharts";
 import {
   HiCurrencyDollar,
@@ -20,6 +7,7 @@ import {
   HiCalendar,
   HiUsers,
   HiPrinter,
+  HiChevronDown
 } from "react-icons/hi";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
 import { useReportes } from "../../../../context/ReportesContext";
@@ -28,6 +16,7 @@ import { generarCatalogoPeriodos, obtenerPeriodoActual } from "../../../../utils
 import ModalVistaPrevia from "./ModalVistaPrevia";
 import ModalImprimir from "./ModalImprimir";
 import { useTheme } from "@renderer/theme/useTheme";
+import { preloadPdfViewer } from "../../../../utils/pdfPreloader";
 
 const ReporteFinancieroEstado = () => {
   const {
@@ -38,6 +27,11 @@ const ReporteFinancieroEstado = () => {
   } = useReportes();
   const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado, ultimoPeriodoFacturado } = useRutas();
   const { theme } = useTheme();
+
+  // Precarga del visor PDF
+  useEffect(() => {
+    preloadPdfViewer();
+  }, []);
 
   const [tipoFiltro, setTipoFiltro] = useState("periodo");
   const [periodo, setPeriodo] = useState(() => ultimoPeriodoFacturado || ultimoPeriodoRegistrado || siguientePeriodo || obtenerPeriodoActual());
@@ -345,30 +339,33 @@ const ReporteFinancieroEstado = () => {
         </div>
 
         <div className="w-full sm:w-auto flex items-center gap-2 print:hidden">
-          <Chip color="default" variant="bordered" className="border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-bold tracking-widest uppercase text-[10px] rounded-lg px-2" startContent={<HiCalendar className="w-4 h-4" />}>
-            {financiero?.filtro_aplicado?.etiqueta || "Sin filtro"}
-          </Chip>
+          <div className="border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-bold tracking-widest uppercase text-[10px] rounded-lg px-2.5 py-1 flex items-center gap-1.5 bg-slate-50 dark:bg-zinc-900/50">
+            <HiCalendar className="w-4 h-4" />
+            <span>{financiero?.filtro_aplicado?.etiqueta || "Sin filtro"}</span>
+          </div>
         </div>
       </div>
 
       {/* ── FILTER CONTROLS ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 items-end print:hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 items-end print:hidden relative z-30">
         
         <div className="lg:col-span-3 flex flex-col gap-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
             Vista del Reporte
           </label>
-          <Select
-            selectedKeys={[tipoFiltro]}
-            onChange={(e) => setTipoFiltro(e.target.value || "periodo")}
-            variant="bordered"
-            aria-label="Tipo de filtro"
-            classNames={selectClasses}
-          >
-            <SelectItem key="periodo" value="periodo">Periodo puntual</SelectItem>
-            <SelectItem key="ultimos_meses" value="ultimos_meses">Últimos meses</SelectItem>
-            <SelectItem key="anio" value="anio">Año específico</SelectItem>
-          </Select>
+          <div className="relative">
+            <select
+              value={tipoFiltro}
+              onChange={(e) => setTipoFiltro(e.target.value || "periodo")}
+              aria-label="Tipo de filtro"
+              className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+            >
+              <option value="periodo">Periodo puntual</option>
+              <option value="ultimos_meses">Últimos meses</option>
+              <option value="anio">Año específico</option>
+            </select>
+            <HiChevronDown className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          </div>
         </div>
 
         <div className="lg:col-span-6 flex flex-col gap-1.5">
@@ -394,17 +391,19 @@ const ReporteFinancieroEstado = () => {
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
                 Rango de meses
               </label>
-              <Select
-                selectedKeys={[ultimosMeses]}
-                onChange={(e) => setUltimosMeses(e.target.value || "3")}
-                variant="bordered"
-                aria-label="Últimos meses"
-                classNames={selectClasses}
-              >
-                <SelectItem key="3" value="3">Últimos 3 meses</SelectItem>
-                <SelectItem key="6" value="6">Últimos 6 meses</SelectItem>
-                <SelectItem key="12" value="12">Últimos 12 meses</SelectItem>
-              </Select>
+              <div className="relative">
+                <select
+                  value={ultimosMeses}
+                  onChange={(e) => setUltimosMeses(e.target.value || "3")}
+                  aria-label="Últimos meses"
+                  className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                >
+                  <option value="3">Últimos 3 meses</option>
+                  <option value="6">Últimos 6 meses</option>
+                  <option value="12">Últimos 12 meses</option>
+                </select>
+                <HiChevronDown className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
             </>
           )}
 
@@ -413,32 +412,37 @@ const ReporteFinancieroEstado = () => {
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
                 Año Fiscal
               </label>
-              <Select
-                selectedKeys={[anioEspecifico]}
-                onChange={(e) => setAnioEspecifico(e.target.value || String(new Date().getFullYear()))}
-                variant="bordered"
-                aria-label="Año específico"
-                classNames={selectClasses}
-              >
-                {opcionesAnio.map((anio) => (
-                  <SelectItem key={anio} value={anio}>{anio}</SelectItem>
-                ))}
-              </Select>
+              <div className="relative">
+                <select
+                  value={anioEspecifico}
+                  onChange={(e) => setAnioEspecifico(e.target.value || String(new Date().getFullYear()))}
+                  aria-label="Año específico"
+                  className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                >
+                  {opcionesAnio.map((anio) => (
+                    <option key={anio} value={anio}>{anio}</option>
+                  ))}
+                </select>
+                <HiChevronDown className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
             </>
           )}
         </div>
 
         <div className="lg:col-span-3 flex items-end h-[52px]">
-          {/* Token 4: Botón Primario */}
-          <Button
-            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-full shadow-sm transition-transform active:scale-95"
-            onPress={handlePrint}
-            isLoading={loadingImprimir}
-            isDisabled={!financiero || loadingFinanciero || loadingImprimir}
-            startContent={!loadingImprimir && <HiPrinter className="text-lg" />}
+          <button
+            type="button"
+            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-full shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 text-xs disabled:opacity-50 cursor-pointer"
+            onClick={handlePrint}
+            disabled={!financiero || loadingFinanciero || loadingImprimir}
           >
-            {loadingImprimir ? "Preparando..." : "Imprimir Reporte"}
-          </Button>
+            {loadingImprimir ? (
+              <div className="w-4 h-4 rounded-full border-2 border-white dark:border-zinc-950 border-t-transparent animate-spin" />
+            ) : (
+              <HiPrinter className="text-lg" />
+            )}
+            <span>Imprimir Reporte</span>
+          </button>
         </div>
       </div>
 
@@ -487,7 +491,7 @@ const ReporteFinancieroEstado = () => {
 
       {loadingFinanciero && !financiero ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4 print:hidden">
-          <Spinner size="lg" color="default" />
+          <div className="w-8 h-8 border-3 border-blue-500/30 border-t-blue-600 rounded-full animate-spin" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 animate-pulse">
             Cargando estado financiero...
           </span>
@@ -550,7 +554,7 @@ const ReporteFinancieroEstado = () => {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 print:block">
             
             {/* Tabla 1: Deudores */}
-            <div className="bg-white dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 print:border-none print:bg-transparent print:p-0 print:mb-6">
+            <div className="bg-white dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 print:border-none print:bg-transparent print:p-0">
               <div className="flex items-center justify-between mb-6">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Lista de deudores</p>
                 <div className="bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-md flex items-center gap-1.5">
@@ -558,33 +562,34 @@ const ReporteFinancieroEstado = () => {
                   {(listados.deudores || []).length}
                 </div>
               </div>
-              <Table 
-                aria-label="Tabla de deudores" 
-                removeWrapper 
-                className="max-h-[350px] overflow-auto print:max-h-none scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2" 
-                classNames={{ 
-                  th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3", 
-                  td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4",
-                  tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors"
-                }}
-              >
-                <TableHeader>
-                  <TableColumn>Cliente</TableColumn>
-                  <TableColumn>Localidad</TableColumn>
-                  <TableColumn>Facturas</TableColumn>
-                  <TableColumn align="end">Deuda</TableColumn>
-                </TableHeader>
-                <TableBody emptyContent="Sin deudores en el rango" items={listados.deudores || []}>
-                  {(item) => (
-                    <TableRow key={item.cliente_id}>
-                      <TableCell className="font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
-                      <TableCell>{item.localidad || "-"}</TableCell>
-                      <TableCell>{item.facturas_con_deuda}</TableCell>
-                      <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{moneda(item.deuda_total)}</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <div className="max-h-[350px] overflow-auto print:max-h-none scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-slate-200 dark:border-zinc-800 text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
+                    <tr>
+                      <th className="pb-3 px-2">Cliente</th>
+                      <th className="pb-3 px-2">Localidad</th>
+                      <th className="pb-3 px-2">Facturas</th>
+                      <th className="pb-3 px-2 text-right">Deuda</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+                    {(!listados.deudores || listados.deudores.length === 0) ? (
+                      <tr>
+                        <td colSpan={4} className="py-6 text-center text-sm font-medium text-slate-400 dark:text-zinc-500">Sin deudores en el rango</td>
+                      </tr>
+                    ) : (
+                      listados.deudores.map((item) => (
+                        <tr key={item.cliente_id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
+                          <td className="py-4 px-2 font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</td>
+                          <td className="py-4 px-2 text-slate-600 dark:text-zinc-300">{item.localidad || "-"}</td>
+                          <td className="py-4 px-2 text-slate-600 dark:text-zinc-300">{item.facturas_con_deuda}</td>
+                          <td className="py-4 px-2 font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{moneda(item.deuda_total)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Tabla 2: Pagadores */}
@@ -596,33 +601,34 @@ const ReporteFinancieroEstado = () => {
                   {(listados.pagadores || []).length}
                 </div>
               </div>
-              <Table 
-                aria-label="Tabla de pagadores" 
-                removeWrapper 
-                className="max-h-[350px] overflow-auto print:max-h-none scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2" 
-                classNames={{ 
-                  th: "bg-transparent text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 border-b border-slate-200 dark:border-zinc-800 pb-3", 
-                  td: "text-sm font-medium text-slate-600 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800/50 py-4",
-                  tr: "hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors"
-                }}
-              >
-                <TableHeader>
-                  <TableColumn>Cliente</TableColumn>
-                  <TableColumn>Pagado</TableColumn>
-                  <TableColumn>Pagos</TableColumn>
-                  <TableColumn align="end">Deuda actual</TableColumn>
-                </TableHeader>
-                <TableBody emptyContent="Sin pagos en el rango" items={listados.pagadores || []}>
-                  {(item) => (
-                    <TableRow key={item.cliente_id}>
-                      <TableCell className="font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</TableCell>
-                      <TableCell className="font-black tracking-tight text-emerald-600 dark:text-emerald-400">{moneda(item.total_pagado)}</TableCell>
-                      <TableCell>{item.pagos_realizados}</TableCell>
-                      <TableCell className="font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{moneda(item.deuda_total_actual)}</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <div className="max-h-[350px] overflow-auto print:max-h-none scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent pr-2">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-slate-200 dark:border-zinc-800 text-[10px] uppercase font-bold text-slate-400 dark:text-zinc-500">
+                    <tr>
+                      <th className="pb-3 px-2">Cliente</th>
+                      <th className="pb-3 px-2">Pagado</th>
+                      <th className="pb-3 px-2">Pagos</th>
+                      <th className="pb-3 px-2 text-right">Deuda actual</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+                    {(!listados.pagadores || listados.pagadores.length === 0) ? (
+                      <tr>
+                        <td colSpan={4} className="py-6 text-center text-sm font-medium text-slate-400 dark:text-zinc-500">Sin pagos en el rango</td>
+                      </tr>
+                    ) : (
+                      listados.pagadores.map((item) => (
+                        <tr key={item.cliente_id} className="hover:bg-slate-50 dark:hover:bg-zinc-900/30 transition-colors">
+                          <td className="py-4 px-2 font-bold text-slate-800 dark:text-zinc-100">{item.cliente_nombre}</td>
+                          <td className="py-4 px-2 font-black tracking-tight text-emerald-600 dark:text-emerald-400">{moneda(item.total_pagado)}</td>
+                          <td className="py-4 px-2 text-slate-600 dark:text-zinc-300">{item.pagos_realizados}</td>
+                          <td className="py-4 px-2 font-black tracking-tight text-slate-800 dark:text-zinc-100 text-right">{moneda(item.deuda_total_actual)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

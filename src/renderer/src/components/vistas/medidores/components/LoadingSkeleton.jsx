@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader, Skeleton, Divider } from "@nextui-org/react";
+import { Card, CardContent, CardHeader, Skeleton } from "@heroui/react";
 
 const LoadingSkeleton = () => (
     <div className="h-full w-full"> {/* Adjusted container to fit inside Tab */}
@@ -8,9 +8,9 @@ const LoadingSkeleton = () => (
                     <CardHeader>
                         <Skeleton className="w-48 h-6 rounded-lg" />
                     </CardHeader>
-                    <CardBody className="p-4">
+                    <CardContent className="p-4">
                         <Skeleton className="w-full h-full rounded-lg" />
-                    </CardBody>
+                    </CardContent>
                 </Card>
             </div>
             <div className="flex flex-col h-[750px]">
@@ -18,16 +18,16 @@ const LoadingSkeleton = () => (
                     <CardHeader>
                         <Skeleton className="w-40 h-6 rounded-lg" />
                     </CardHeader>
-                    <CardBody className="space-y-4 h-full flex flex-col">
+                    <CardContent className="space-y-4 h-full flex flex-col">
                         <div className="space-y-3 flex-none">
                             <Skeleton className="w-full h-10 rounded-lg" />
                             <Skeleton className="w-full h-10 rounded-lg" />
                         </div>
-                        <Divider />
+                        <div className="h-px bg-slate-200 dark:bg-zinc-800 w-full" />
                         <div className="space-y-3 flex-1">
                             {Array.from({ length: 5 }).map((_, i) => (
                                 <Card key={i} className="border">
-                                    <CardBody className="p-3">
+                                    <CardContent className="p-3">
                                         <div className="flex items-center gap-3">
                                             <Skeleton className="w-8 h-8 rounded-full" />
                                             <div className="flex-1 space-y-1">
@@ -36,11 +36,11 @@ const LoadingSkeleton = () => (
                                             </div>
                                             <Skeleton className="w-12 h-6 rounded-lg" />
                                         </div>
-                                    </CardBody>
+                                    </CardContent>
                                 </Card>
                             ))}
                         </div>
-                    </CardBody>
+                    </CardContent>
                 </Card>
             </div>
         </div>
