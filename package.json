@@ -27,7 +27,7 @@
     "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
-    "@aguavp/api-server": "file:../api-AguaVP/aguavp-api-server-1.0.2.tgz",
+    "@aguavp/api-server": "file:../../api-AguaVP/aguavp-api-server-1.0.2.tgz",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "bcryptjs": "^3.0.2",
