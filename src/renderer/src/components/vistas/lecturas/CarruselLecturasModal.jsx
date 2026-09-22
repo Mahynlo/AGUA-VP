@@ -334,6 +334,19 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
           return true;
         });
 
+        // Ordenamiento consistente por orden en ruta y número de predio
+        puntosValidos.sort((a, b) => {
+          const ordA = a.orden !== null && a.orden !== undefined ? Number(a.orden) : null;
+          const ordB = b.orden !== null && b.orden !== undefined ? Number(b.orden) : null;
+          if (ordA !== null && ordB !== null && ordA !== ordB) {
+            return ordA - ordB;
+          }
+          if (a.numero_predio && b.numero_predio) {
+            return String(a.numero_predio).localeCompare(String(b.numero_predio), undefined, { numeric: true });
+          }
+          return 0;
+        });
+
         setRuta({
           ...rutaData,
           puntos: puntosValidos
@@ -401,6 +414,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
         (p) =>
           norm(p.cliente_nombre || "").includes(term) ||
           norm(p.numero_serie || "").includes(term) ||
+          norm(p.numero_predio || "").includes(term) ||
           String(p.orden ?? p.idx + 1).includes(term)
       )
       .slice(0, 10);
@@ -803,9 +817,21 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
                                 #{punto.orden ?? punto.idx + 1}
                               </span>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight mb-0.5 whitespace-normal break-words">
-                                  {punto.cliente_nombre || "Cliente"}
-                                </p>
+                                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                  <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight whitespace-normal break-words">
+                                    {punto.cliente_nombre || "Cliente"}
+                                  </p>
+                                  {punto.numero_predio && (
+                                    <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                                      Predio #{punto.numero_predio}
+                                    </span>
+                                  )}
+                                  {punto.es_retirado && (
+                                    <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                      Retirado
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 whitespace-normal break-words">
                                   <span className="font-mono text-sky-700 dark:text-sky-400 mr-2">{punto.numero_serie}</span>
                                   {punto.ubicacion ? ` ${punto.ubicacion}` : ""}
@@ -883,21 +909,55 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
                             <div className="p-1.5 sm:p-2 bg-sky-500/10 rounded-xl text-sky-600 dark:text-sky-400 hidden sm:block">
                                 <HiUser className="text-lg" />
                             </div>
-                            <h4 className="font-bold text-base sm:text-lg text-slate-800 dark:text-zinc-100">Información del Cliente</h4>
+                            <div>
+                                <h4 className="font-bold text-base sm:text-lg text-slate-800 dark:text-zinc-100 leading-tight">Información del Cliente</h4>
+                                <span className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500">
+                                    Punto #{puntoActual?.orden ?? currentIndex + 1} en ruta {puntoActual?.numero_predio ? `• Predio #${puntoActual.numero_predio}` : ""}
+                                </span>
+                            </div>
                         </div>
-                        {isLecturaCompletada && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                <HiCheck className="text-xs" />Registrado
-                            </span>
-                        )}
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                            {puntoActual?.estado_medidor === 'Retirado' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50">
+                                    Medidor Reemplazado
+                                </span>
+                            )}
+                            {isLecturaCompletada && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <HiCheck className="text-xs" />Registrado
+                                </span>
+                            )}
+                        </div>
                     </div>
                   </div>
                   <div className="p-4 sm:p-5">
+                    {puntoActual?.estado_medidor === 'Retirado' && (
+                      <div className="mb-3.5 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 rounded-xl flex items-start gap-2.5">
+                        <HiExclamation className="text-amber-500 text-lg shrink-0 mt-0.5" />
+                        <div className="text-xs">
+                          <p className="font-black text-amber-800 dark:text-amber-300">
+                            Medidor Histórico de este Período ({puntoActual.numero_serie})
+                          </p>
+                          <p className="font-medium text-amber-700 dark:text-amber-400/90 mt-0.5 leading-snug">
+                            Este equipo fue reemplazado o retirado{puntoActual.medidor_actual_reemplazo ? ` (actualmente el cliente tiene el medidor ${puntoActual.medidor_actual_reemplazo})` : ""}. La lectura de este período corresponde al medidor anterior.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex flex-col gap-1">
                         <InfoRow label="Cliente Titular" value={puntoActual?.cliente_nombre} icon={HiUser} colorClass="text-sky-600 dark:text-sky-400" />
+                        <InfoRow label="No. de Predio" value={puntoActual?.numero_predio ? `#${puntoActual.numero_predio}` : "Sin predio"} icon={HiHashtag} colorClass="text-indigo-600 dark:text-indigo-400" valueClass="font-bold text-slate-700 dark:text-zinc-200 font-mono" />
                         <InfoRow label="Dirección Física" value={puntoActual?.cliente_direccion} icon={HiLocationMarker} colorClass="text-violet-600 dark:text-violet-400" valueClass="truncate max-w-[180px] sm:max-w-[250px]" />
                         <InfoRow label="Número Teléfono" value={puntoActual?.cliente_telefono} icon={HiPhone} colorClass="text-emerald-600 dark:text-emerald-400" />
-                        <InfoRow label="Serie de Medidor" value={puntoActual?.numero_serie} icon={HiHashtag} colorClass="text-amber-600 dark:text-amber-400" valueClass="font-mono text-sky-700 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-200/70 dark:border-sky-900/40" />
+                        <InfoRow 
+                            label="Serie de Medidor" 
+                            value={puntoActual?.estado_medidor === 'Retirado' ? `${puntoActual?.numero_serie} (Retirado)` : puntoActual?.numero_serie} 
+                            icon={HiHashtag} 
+                            colorClass={puntoActual?.estado_medidor === 'Retirado' ? "text-amber-600 dark:text-amber-400" : "text-amber-600 dark:text-amber-400"} 
+                            valueClass={puntoActual?.estado_medidor === 'Retirado' 
+                                ? "font-mono text-amber-800 dark:text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800/60 font-bold" 
+                                : "font-mono text-sky-700 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-200/70 dark:border-sky-900/40"} 
+                        />
                         <InfoRow label="Ubicación Medidor" value={puntoActual?.ubicacion} icon={HiMap} colorClass="text-indigo-600 dark:text-indigo-400" />
                         {periodoTexto && (
                           <InfoRow label="Período Facturado" value={periodoTexto} icon={HiCalendar} colorClass="text-blue-600 dark:text-blue-400" valueClass="font-black text-blue-600 dark:text-blue-400" />

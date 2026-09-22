@@ -62,6 +62,18 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                         return true;
                     });
 
+                    puntosValidos.sort((a, b) => {
+                        const ordA = a.orden !== null && a.orden !== undefined ? Number(a.orden) : null;
+                        const ordB = b.orden !== null && b.orden !== undefined ? Number(b.orden) : null;
+                        if (ordA !== null && ordB !== null && ordA !== ordB) {
+                            return ordA - ordB;
+                        }
+                        if (a.numero_predio && b.numero_predio) {
+                            return String(a.numero_predio).localeCompare(String(b.numero_predio), undefined, { numeric: true });
+                        }
+                        return 0;
+                    });
+
                     setDetalleRuta({
                         ...data,
                         puntos: puntosValidos

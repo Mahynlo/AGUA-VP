@@ -355,10 +355,6 @@ const TabInventarioMedidores = () => {
             setError("No tienes permisos para eliminar medidores.", "Eliminar Medidor"); 
             return; 
         }
-        if (medidor.cliente_id) {
-            setError("No se puede eliminar el medidor porque está asignado a un cliente activo. Libérelo primero.", "Eliminar Medidor");
-            return;
-        }
         setMedidorToDelete(medidor);
         setDeleteReason("");
         setIsDeleteReasonOpen(true);
@@ -757,7 +753,14 @@ const TabInventarioMedidores = () => {
                 <ModalBody className="p-6 bg-white dark:bg-zinc-950">
                     <div className="space-y-4">
                         <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Desactivar Medidor</h3>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400">¿Está seguro de desactivar el medidor con número de serie <strong className="text-slate-800 dark:text-zinc-100 font-mono">{medidorToDelete?.numero_serie}</strong>? Se moverá a la papelera.</p>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400">¿Está seguro de desactivar el medidor con número de serie <strong className="text-slate-800 dark:text-zinc-100 font-mono">{medidorToDelete?.numero_serie}</strong>? Se marcará como retirado y se moverá a la papelera.</p>
+                        
+                        {medidorToDelete?.cliente_id && (
+                            <div className="p-3.5 bg-amber-500/10 border border-amber-200/70 dark:border-amber-900/40 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex flex-col gap-1">
+                                <span className="font-bold">Nota de trazabilidad:</span>
+                                <span>Este medidor está vinculado al cliente <strong>{medidorToDelete.cliente_nombre || `#${medidorToDelete.cliente_id}`}</strong>. Sus lecturas y facturas pasadas se conservarán intactas. Podrás registrar y asignar un nuevo medidor al cliente desde la vista de clientes.</span>
+                            </div>
+                        )}
                         
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 block mb-1">
