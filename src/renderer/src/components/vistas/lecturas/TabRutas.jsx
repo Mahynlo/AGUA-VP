@@ -223,7 +223,7 @@ export default function TabRutas() {
       </div>
 
       {/* ── 2. BARRA DE HERRAMIENTAS: BÚSQUEDA, PERÍODO, FILTROS Y ACCIÓN ── */}
-      <div className="bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+      <div className="bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex flex-col gap-4 relative z-30">
         
         {/* Fila Principal de Filtros */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center">

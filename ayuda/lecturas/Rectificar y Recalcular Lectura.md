@@ -1,42 +1,55 @@
 ---
-titulo: "Rectificar y Recalcular Lectura"
+titulo: "Rectificación de Lecturas y Corrección de Consumos"
 seccion: "lecturas"
-orden: 3
-descripcion: "Aprende cómo corregir una lectura antes de facturar"
-tags: ["lectura", "rectificar", "recalcular", "factura"]
+orden: 5
+descripcion: "Procedimiento para editar lecturas erróneas, activar el modo rectificación y corregir consumos antes y después de facturar."
+tags: ["lecturas", "rectificar", "corregir", "consumo", "recalcular", "auditoría"]
 ---
 
-# Rectificar y Recalcular Lectura
+# ✏️ Rectificación de Lecturas y Corrección de Consumos
 
-Esta opción sirve para corregir una lectura cuando todavía no debe cerrarse como definitiva.
+Es común que durante la jornada de campo se presenten números invertidos por error de captura, tomas con carátulas empañadas o lecturas rectificadas tras una segunda visita de inspección. El sistema **AguaVP** provee herramientas para rectificar lecturas con total trazabilidad.
 
-## Cuándo usarla
+---
 
-- Cuando el dato se capturó mal.
-- Cuando el consumo no coincide con lo que muestra el medidor.
-- Cuando detecta que la lectura debe ajustarse antes de facturar.
+## 📋 Escenarios Comunes de Rectificación
 
-## Pasos
+1. **Error Tipográfico Inmediato**: El capturista escribió $1540 \ m^3$ en lugar de $1450 \ m^3$.
+2. **Consumo Desproporcionado**: El usuario o la administración detectan una variación atípica y se realiza una segunda lectura de verificación.
+3. **Sustitución de Medidor en Mitad de Ciclo**: Se ajusta la lectura de arranque de un equipo reemplazado.
 
-1. Abra la lista de lecturas.
-2. Ubique la lectura que desea corregir.
-3. Presione la opción de edición o rectificación.
-4. Ajuste el valor necesario.
-5. Guarde los cambios.
+---
 
-## Qué pasa al rectificar
+## 🛠️ Procedimiento de Rectificación en el Carrusel
 
-- La lectura se actualiza con el nuevo dato.
-- El consumo mostrado también se ajusta.
-- Si todavía no se ha generado la factura, la información corregida se usará en el cobro posterior.
+Si la ruta aún está en proceso de captura o no se ha emitido la facturación definitiva:
 
-## Recalcular
+![Modo Rectificar lectura en el carrusel interactivo](../imagenes/lecturas/rectificacion/modo_rectificar_lectura.avif)
 
-Cuando una lectura ya no coincide con la realidad, el sistema puede volver a calcular el consumo para que el cobro refleje el dato correcto.
+1. Abra el **Carrusel de Lecturas** de la ruta.
+2. Utilice el buscador **🔍** para saltar al medidor del cliente.
+3. Si la lectura ya estaba registrada, verá la tarjeta verde de confirmación con el valor actual.
+4. Presione el botón **"✏️ Rectificar Lectura"**.
+5. La caja de entrada se habilitará nuevamente.
+6. Escriba el valor numérico correcto y presione **"Guardar Rectificación"**.
 
-Este recalculo es útil cuando:
-- Hubo un error al leer el medidor.
-- Se corrigió una captura anterior.
-- Se necesita dejar listo el consumo para facturación.
+![Ajuste y confirmación de la nueva lectura rectificada](../imagenes/lecturas/rectificacion/confirmacion_rectificacion.avif)
 
-> Si ya existe una factura cerrada, revise primero si procede una corrección administrativa antes de cambiar la lectura.
+7. El sistema recalculará instantáneamente el volumen de consumo en $m^3$ y actualizará el registro histórico.
+
+---
+
+## ⚠️ Rectificación Posterior a la Facturación
+
+Si la ruta ya fue facturada y los recibos ya fueron generados:
+
+> [!CAUTION]
+> **Integridad Contable**: Modificar una lectura en una ruta ya facturada no altera mágicamente los recibos anteriores para evitar descuadres en el libro contable de caja.  
+> Tras corregir la lectura, es **obligatorio ejecutar la función de Recalcular Facturación** desde la tarjeta de la ruta.
+
+---
+
+## 🛡️ Permisos Requeridos
+
+* Para capturar lecturas estándar: permiso **`lecturas.tomar`**.
+* Para modificar o rectificar lecturas previamente guardadas: permiso **`lecturas.modificar`**.

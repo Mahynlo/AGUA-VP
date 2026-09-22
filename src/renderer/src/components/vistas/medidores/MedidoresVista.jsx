@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { Tabs, Tab, Chip } from "@nextui-org/react";
 import { HiCog, HiCheck, HiX, HiLocationMarker, HiMap, HiTable, HiCube, HiSparkles } from "react-icons/hi";
 
 import { useMedidores } from "../../../context/MedidoresContext";
@@ -66,7 +65,7 @@ const Medidores = () => {
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
 
       {/* CONTENEDOR DE LA VISTA: 'w-full min-h-full' para ocupar todo el espacio disponible */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8 animate-in fade-in duration-300">
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8">
 
         {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8 pb-2">
@@ -147,52 +146,53 @@ const Medidores = () => {
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
         <div className="flex flex-col w-full flex-1">
           {/* Pestañas de Navegación SaaS Unificadas */}
-          <Tabs
-            aria-label="Opciones de Medidores"
-            selectedKey={selectedTab}
-            onSelectionChange={handleTabChange}
-            variant="underlined"
-            classNames={{
-              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
-              tabList: "gap-8 w-full relative rounded-none p-0",
-              cursor: "w-full bg-blue-600 dark:bg-blue-500 h-[2px]",
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
-            }}
-          >
-            {/* TAB 1: MAPA */}
-            <Tab
-              key="mapa"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiMap className="text-lg" />
-                  <span>Mapa y Ubicaciones</span>
-                </div>
-              }
-            >
-              <div className="pt-1 animate-in fade-in duration-300 h-full flex flex-col">
-                <TabMapaMedidores />
-              </div>
-            </Tab>
+          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6">
+            <nav className="flex gap-8 w-full -mb-px">
+              {/* TAB 1: MAPA */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("mapa")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "mapa"
+                    ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiMap className="text-lg" />
+                <span>Mapa y Ubicaciones</span>
+              </button>
 
-            {/* TAB 2: INVENTARIO */}
-            <Tab
-              key="inventario"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiTable className="text-lg" />
-                  <span>Inventario General</span>
-                  <Chip size="sm" variant="flat" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black h-5 text-[10px] px-2 ml-1 rounded-md border border-blue-500/20">
-                    {estadisticas.total}
-                  </Chip>
-                </div>
-              }
-            >
-              <div className="pt-1 animate-in fade-in duration-300 h-full flex flex-col">
-                <TabInventarioMedidores />
-              </div>
-            </Tab>
-          </Tabs>
+              {/* TAB 2: INVENTARIO */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("inventario")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "inventario"
+                    ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiTable className="text-lg" />
+                <span>Inventario General</span>
+                <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black h-5 text-[10px] px-2 ml-1 rounded-md border border-blue-500/20 inline-flex items-center">
+                  {estadisticas.total}
+                </span>
+              </button>
+            </nav>
+          </div>
+
+          {/* CONTENIDOS */}
+          {selectedTab === "mapa" && (
+            <div className="pt-1 h-full flex flex-col">
+              <TabMapaMedidores />
+            </div>
+          )}
+
+          {selectedTab === "inventario" && (
+            <div className="pt-1 h-full flex flex-col">
+              <TabInventarioMedidores />
+            </div>
+          )}
         </div>
 
       </div>

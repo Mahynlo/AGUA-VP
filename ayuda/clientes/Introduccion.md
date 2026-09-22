@@ -1,72 +1,86 @@
 ---
-titulo: "Introducción"
-seccion: "Clientes"
+titulo: "Introducción al Módulo de Clientes"
+seccion: "clientes"
 orden: 1
-descripcion: "Introducción al módulo de clientes"
-tags: ["cliente", "registro", "modificación", "baja", "asignación", "cancelar"]
+descripcion: "Visión general, navegación del módulo, directorio general de usuarios, métricas y ciclo de vida de la cuenta."
+tags: ["clientes", "directorio", "padrón", "métricas", "resumen", "navegación", "exportación"]
 ---
 
-# Introducción
+# 👥 Introducción al Módulo de Clientes
 
-El módulo de **Clientes** es el lugar donde se administra la información principal de cada persona que recibe el servicio. Desde aquí puede registrar a un cliente nuevo, revisar su ficha, hacer cambios, asignarle un medidor o liberar ese medidor cuando ya no corresponda.
+El módulo de **Clientes** es el núcleo administrativo del padrón de usuarios del sistema **AguaVP**. Desde este espacio se gestiona la totalidad de los contratos de suministro de agua potable para las localidades de **Nácori Grande**, **Mátape** y **Adivino**.
 
----
-
-## Vista principal
-
-Al abrir el módulo verá una **tabla de clientes** con la información más importante organizada por filas. También encontrará herramientas para buscar, filtrar y revisar estadísticas.
-
-Puede buscar clientes por:
-- Nombre
-- Pueblo
-- Estado
-- Texto libre si necesita ubicar algo específico
-
-### Qué significa cada columna
-
-- **Cliente**: muestra el nombre completo y su identificación interna.
-- **Contacto**: muestra el teléfono registrado.
-- **Ubicación**: muestra el pueblo y la dirección principal.
-- **Estado**: indica si el cliente está activo o no.
-- **Acciones**: abre las opciones disponibles para ese cliente.
-
-> Nota: si una persona tiene más de una residencia, aquí se muestra la residencia principal para mantener la tabla clara.
+Este módulo centraliza la identidad de los usuarios, sus domicilios físicos, su esquema tarifario, la vinculación de medidores de agua y el historial financiero y de consumo.
 
 ---
 
-## Acciones rápidas
+## 🗺️ Ciclo de Vida del Contrato de Agua
 
-Las acciones que aparecen en cada fila sirven para trabajar sin tener que abrir varias pantallas.
-
-- **Ver información**: abre una ventana con el resumen completo del cliente.
-- **Ver detalle**: permite revisar la tarifa asignada, los medidores vinculados y los datos principales sin hacer cambios.
-- **Modificar información**: permite corregir nombres, teléfono, dirección o tarifa.
-- **Asignar o liberar medidor**: vincula un medidor al cliente o lo deja disponible para otro usuario.
-- **Eliminar cliente**: borra el registro cuando realmente ya no debe seguir en el sistema.
-
-Cuando un cliente ya tiene medidores asociados, el sistema muestra esa relación dentro de su ficha para evitar reasignaciones por error.
-
----
-
-## Estadísticas
-
-La parte inferior del módulo muestra indicadores que ayudan a entender cómo va la base de clientes.
-
-Los principales indicadores mostrados son:
-- **Total de clientes**.
-- **Clientes activos** frente a inactivos.
-- **Nuevos registros del mes**.
-- **Crecimiento mensual**.
-
-También puede ver gráficas para reconocer en qué pueblos hay más clientes y cómo ha crecido el padrón con el tiempo.
+```mermaid
+flowchart LR
+    A[1. Registro del Cliente] --> B[2. Asignación de Tarifa]
+    B --> C[3. Vinculación de Medidor]
+    C --> D[4. Asignación a Ruta de Lectura]
+    D --> E[5. Toma de Lecturas y Cobro]
+    E -.-> F[Mantenimiento o Baja]
+```
 
 ---
 
-## Recomendación de uso
+## 🧭 Estructura y Navegación del Módulo
 
-Primero busque al cliente, después revise su información y al final aplique el cambio que necesite. Si solo quiere corregir un dato, use el botón de edición; si lo que necesita es reasignar el medidor, hágalo desde el mismo modal para evitar errores.
+El módulo de Clientes se divide en **dos vistas operativas principales** accesibles mediante las pestañas superiores:
 
-Si va a cambiar un medidor, primero confirme cuál está actualmente asignado y verifique que el nuevo equipo esté disponible antes de guardar.
+### 1. Directorio de Clientes (`TabClientes`)
+Es la mesa de trabajo principal donde se visualiza la tabla completa del padrón:
 
+![Vista principal del Directorio de Clientes con tabla, buscador y filtros](../imagenes/clientes/directorio_clientes_vista_principal.png)
 
+* **Barra de Búsqueda Reactiva Multicriterio**: Permite localizar instantáneamente a cualquier usuario escribiendo su nombre, número de predio, teléfono, correo electrónico o número de serie de medidor.
+* **Filtros Rápidos por Localidad y Estado**:
+  * **Selector de Pueblo**: Filtra clientes exclusivamente de *Nácori Grande*, *Mátape* o *Adivino*.
+  * **Selector de Estado**: Segmenta entre *Activos*, *Inactivos*, *Con Medidor Asignado* y *Sin Medidor*.
+* **Tabla de Datos Interactiva**:
+  * **Identidad**: Avatar, nombre completo del titular y badge distintivo del Número de Predio.
+  * **Contacto**: Teléfono formateado a 10 dígitos y correo electrónico.
+  * **Ubicación**: Pueblo y dirección domiciliaria completa.
+  * **Tarifa**: Tipo de esquema de cobro asignado (Doméstica, Comercial, etc.).
+  * **Medidor**: Número de serie del equipo vinculado y chip de estado.
+  * **Acciones**: Botones directos para ver ficha técnica, editar datos o gestionar medidores.
+* **Exportación Corporativa**: Botón para exportar el padrón filtrado a **Excel (.xlsx)** con formato formal de celdas o a **CSV (UTF-8)** para nóminas y auditorías municipales.
 
+---
+
+### 2. Métricas y Resumen (`TabMetricas`)
+Panel analítico con indicadores en tiempo real sobre la salud del padrón:
+
+![Pestaña de Métricas y Analítica de Padrón Municipal](../imagenes/clientes/metricas_clientes_dashboard.png)
+
+* **Total de Clientes Registrados**: Volumen general de cuentas en el sistema.
+* **Usuarios Activos vs. Inactivos**: Balance de cuentas al corriente contra bajas temporales o definitivas.
+* **Cobertura de Micromedición**: Porcentaje de clientes que cuentan con medidor operativo vs. tomas con cuota fija.
+* **Distribución Geográfica**: Concentración de usuarios por localidad (Nácori Grande, Mátape, Adivino).
+* **Distribución Tarifaria**: Desglose de contratos según su categoría (Doméstica, Comercial, Preferencial).
+
+---
+
+## 📁 Expediente Digital del Cliente (`ModalDetalleCliente`)
+
+Al hacer clic sobre cualquier fila de la tabla o en el botón de **Ver Ficha**, se despliega el expediente digital completo del usuario con 4 secciones clave:
+
+![Expediente Digital del Cliente con historial de recibos, pagos y consumos](../imagenes/clientes/modal_detalle_expediente_cliente.png)
+
+1. **Resumen General**: Estado de la cuenta, número de predio, teléfono y tarifa activa.
+2. **Historial de Facturación**: Relación cronológica de todos los recibos emitidos con sus consumos en $m^3$ e importes.
+3. **Historial de Pagos y Liquidaciones**: Registro de transacciones en caja, folios de pago y métodos de cobro.
+4. **Ficha del Medidor Actual**: Número de serie, marca, fecha de instalación y lectura inicial de arranque.
+
+---
+
+## ⚡ Buenas Prácticas de Operación
+
+> [!TIP]
+> **Antes de registrar una nueva toma**: Compruebe en el buscador si el titular o el predio ya existen para evitar duplicar contratos.
+
+> [!IMPORTANT]
+> **Consistencia Geográfica**: Asegúrese de que el pueblo asignado en la dirección coincida con la ruta de lectura de campo para que el medidor aparezca en la lista física de lecturas mensual.

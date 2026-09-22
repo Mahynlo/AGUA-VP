@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, CardBody, Button, Chip, Input, Divider } from "@nextui-org/react";
+import { Card, CardContent, Button, Chip } from "@heroui/react";
 import { HiBeaker, HiLightningBolt, HiCheckCircle, HiInformationCircle } from "react-icons/hi";
 import useEquivalenciaConsumo from "../../../hooks/useEquivalenciaConsumo";
 
@@ -37,7 +37,7 @@ const PruebaEquivalencias = () => {
       
       {/* 1. Cabecera */}
       <Card className="border-none bg-blue-50 dark:bg-blue-900/20 shadow-sm rounded-2xl">
-        <CardBody className="p-5 flex flex-row items-center gap-4">
+        <CardContent className="p-5 flex flex-row items-center gap-4">
           <div className="p-3 bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl flex-shrink-0">
             <HiBeaker className="w-6 h-6" />
           </div>
@@ -49,28 +49,30 @@ const PruebaEquivalencias = () => {
               Verifica las frases generadas por tu hook de consumo de agua.
             </p>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         
         {/* 2. Prueba Interactiva en Tiempo Real */}
         <Card className="md:col-span-5 border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl h-fit">
-          <CardBody className="p-5 space-y-4">
+          <CardContent className="p-5 space-y-4">
             <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
               <HiLightningBolt className="text-amber-500" /> Prueba en Vivo
             </h4>
             
-            <Input
-              type="number"
-              label="Ingresa un consumo (m³)"
-              placeholder="Ej. 18"
-              value={consumoPersonalizado}
-              onValueChange={handlePruebaPersonalizada}
-              variant="bordered"
-              color="primary"
-              size="lg"
-            />
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
+                Ingresa un consumo (m³)
+              </label>
+              <input
+                type="number"
+                placeholder="Ej. 18"
+                value={consumoPersonalizado}
+                onChange={(e) => handlePruebaPersonalizada(e.target.value)}
+                className="w-full px-4 py-3 text-base font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
 
             <div className={`p-4 rounded-xl border transition-all duration-300 min-h-[80px] flex items-center ${
                 resultadoPersonalizado 
@@ -88,12 +90,12 @@ const PruebaEquivalencias = () => {
                 </div>
               )}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         {/* 3. Pruebas Masivas */}
         <Card className="md:col-span-7 border-none shadow-sm bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl">
-          <CardBody className="p-5">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                 <HiCheckCircle className="text-emerald-500" /> Batería de Pruebas
@@ -101,8 +103,8 @@ const PruebaEquivalencias = () => {
               <Button 
                 color="primary" 
                 size="sm" 
-                variant="flat"
-                className="font-bold"
+                variant="ghost"
+                className="font-bold bg-blue-500/10 text-blue-600 hover:bg-blue-500/20"
                 onPress={probarTodosLosConsumos}
               >
                 Ejecutar {consumos.length} pruebas
@@ -119,8 +121,8 @@ const PruebaEquivalencias = () => {
                     <Chip 
                         size="sm" 
                         color="success" 
-                        variant="flat" 
-                        className="font-mono font-bold shrink-0 min-w-[55px] text-center"
+                        variant="ghost" 
+                        className="font-mono font-bold shrink-0 min-w-[55px] text-center bg-emerald-500/10 text-emerald-600"
                     >
                       {item.valor} m³
                     </Chip>
@@ -137,7 +139,7 @@ const PruebaEquivalencias = () => {
                 </p>
               </div>
             )}
-          </CardBody>
+          </CardContent>
         </Card>
 
       </div>

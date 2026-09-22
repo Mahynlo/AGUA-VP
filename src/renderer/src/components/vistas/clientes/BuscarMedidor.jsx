@@ -3,9 +3,8 @@ import { useMedidores } from "../../../context/MedidoresContext";
 import {
     Chip,
     Button,
-    Avatar,
     Spinner
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
     HiSearch,
     HiCog,
@@ -175,14 +174,9 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                     className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800/60 bg-white dark:bg-zinc-950 hover:border-slate-300 dark:hover:border-zinc-700 transition-colors flex items-center justify-between gap-3 shadow-sm"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <Avatar
-                                            icon={<HiCog className="text-base" />}
-                                            classNames={{
-                                                base: "bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex-shrink-0 shadow-sm",
-                                                icon: "text-slate-500 dark:text-zinc-400"
-                                            }}
-                                            size="sm"
-                                        />
+                                        <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center shrink-0 shadow-sm text-slate-500 dark:text-zinc-400">
+                                            <HiCog className="text-base" />
+                                        </div>
                                         <div className="flex flex-col min-w-0">
                                             <h5 className="text-xs font-bold text-slate-800 dark:text-zinc-100 truncate uppercase">
                                                 {medidor.numero_serie}
@@ -198,7 +192,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                     <Button
                                         size="sm"
                                         color={medidoresLiberados.has(medidor.id) ? "danger" : "default"}
-                                        variant={medidoresLiberados.has(medidor.id) ? "flat" : "bordered"}
+                                        variant={medidoresLiberados.has(medidor.id) ? "ghost" : "outline"}
                                         onPress={() => manejarLiberacion(medidor.id)}
                                         className={`h-7 px-2 rounded-lg text-[9px] font-bold uppercase tracking-widest flex-shrink-0 transition-all ${
                                             !medidoresLiberados.has(medidor.id) 
@@ -344,7 +338,7 @@ const BuscarMedidor = ({ onMedidorSeleccionado, clienteId, onLiberarMedidor }) =
                                             <Button
                                                 isIconOnly
                                                 size="sm"
-                                                variant="flat"
+                                                variant="ghost"
                                                 onPress={() => quitarMedidor(medidor.id)}
                                                 className="w-7 h-7 min-w-7 ml-3 bg-white/80 dark:bg-zinc-900/60 text-slate-400 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
                                             >

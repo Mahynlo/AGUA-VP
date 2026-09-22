@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, useCallback } from "react";
+import { createContext, useState, useContext, useEffect, useCallback, useMemo } from "react";
 
 const DashboardContext = createContext();
 
@@ -11,7 +11,8 @@ export function DashboardProvider({ children }) {
         try {
             const token = localStorage.getItem("token");
             if (!token) {
-                throw new Error("No hay sesión activa");
+                setDashboardData(null);
+                return;
             }
 
             setLoading(true);
@@ -19,7 +20,6 @@ export function DashboardProvider({ children }) {
 
             const data = await window.api.fetchDashboardStats(token);
 
-            console.log("Datos del dashboard:", data);
             if (data) {
                 setDashboardData(data);
             } else {
@@ -33,13 +33,11 @@ export function DashboardProvider({ children }) {
         }
     }, []);
 
-    // Cargar datos al montar
+    // Cargar datos al montar y escuchar eventos de sincronización
     useEffect(() => {
         fetchDashboardStats();
 
-        // Escuchar evento de reconexión y eventos de actualización
         const handleUpdate = () => {
-            console.log("🔄 Actualizando dashboard por evento...");
             fetchDashboardStats();
         };
 
@@ -54,12 +52,17 @@ export function DashboardProvider({ children }) {
         };
     }, [fetchDashboardStats]);
 
-    const value = {
+    const value = useMemo(() => ({
         dashboardData,
         loading,
         error,
         refetch: fetchDashboardStats
-    };
+    }), [
+        dashboardData,
+        loading,
+        error,
+        fetchDashboardStats
+    ]);
 
     return (
         <DashboardContext.Provider value={value}>

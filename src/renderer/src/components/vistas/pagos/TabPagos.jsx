@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Modal, Button as FlowbiteButton, ModalHeader, ModalBody } from "flowbite-react";
 import {
   HiEye,
   HiCurrencyDollar,
   HiDownload,
+  HiChevronDown,
   HiX,
   HiFilter,
   HiRefresh,
@@ -20,6 +22,56 @@ import { formatearPeriodo } from "../../../utils/periodoUtils";
 import ModalDetallePago from "./ModalDetallePago";
 import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
+
+const toMoney = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  return Math.round(num * 100) / 100;
+};
+
+const formatFechaSimple = (valor) => {
+  if (!valor) return "-";
+  const match = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  const d = new Date(valor);
+  return Number.isNaN(d.getTime()) ? String(valor) : d.toLocaleDateString("es-MX");
+};
+
+const normalizarPagosParaExport = (lista) => {
+  return (lista || []).map((pago, index) => ({
+    "No.": index + 1,
+    "Folio Pago": `#P-${pago.id}`,
+    "Folio Factura": `#${pago.factura_id}`,
+    "Cliente": pago.cliente_nombre || "",
+    "Dirección": pago.direccion_cliente || "-",
+    "Medidor": pago.medidor_numero_serie || "-",
+    "Período Facturado": pago.periodo_facturado ? formatearPeriodo(pago.periodo_facturado) : "-",
+    "Monto Pagado ($)": toMoney(pago.monto),
+    "Cantidad Entregada ($)": toMoney(pago.cantidad_entregada),
+    "Cambio ($)": toMoney(pago.cambio),
+    "Método de Pago": pago.metodo_pago || "-",
+    "Fecha de Pago": formatFechaSimple(pago.fecha_pago),
+    "Registrado Por": pago.modificado_por_nombre || "-",
+    "Comentario": pago.comentario || "-"
+  }));
+};
+
+const premiumConfirmModalTheme = {
+  root: {
+    show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" }
+  },
+  content: {
+    base: "relative h-full w-full p-4 md:h-auto",
+    inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-md w-full"
+  },
+  header: {
+    base: "hidden",
+    close: { base: "hidden", icon: "hidden" }
+  },
+  body: { base: "pt-10 pb-6 px-6 flex-1 overflow-y-auto bg-transparent" }
+};
 
 // ── SKELETON DE CARGA (animate-pulse nativo, sin librerías) ───────────────────
 const LoadingSkeleton = () => (
@@ -74,28 +126,29 @@ function ExportDropdown({ onExportCSV, onExportExcel }) {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-11 px-5 shadow-sm flex items-center gap-2 transition-colors"
+        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-11 px-5 shadow-sm flex items-center gap-2 transition-colors border border-emerald-500/10"
       >
         <HiDownload className="text-lg" />
         Exportar
+        <HiChevronDown className="w-4 h-4 opacity-70" />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-56 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden">
+          <div className="absolute right-0 z-20 mt-2 w-56 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
             <button
               onClick={() => { onExportCSV(); setOpen(false); }}
               className="w-full px-4 py-3 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left"
             >
-              <span className="text-xl">📄</span>
-              Exportar CSV (Página actual)
+              <span className="text-lg">📄</span>
+              Exportar a CSV
             </button>
             <button
               onClick={() => { onExportExcel(); setOpen(false); }}
-              className="w-full px-4 py-3 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left"
+              className="w-full px-4 py-3 flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors text-left border-t border-slate-100 dark:border-zinc-800/80"
             >
-              <span className="text-xl">📊</span>
-              Exportar Excel (.xlsx)
+              <span className="text-lg">📊</span>
+              Exportar a Excel (.xlsx)
             </button>
           </div>
         </>
@@ -211,11 +264,85 @@ const TabPagos = () => {
   } = useTabPagos();
 
   const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
-  const { setSuccess } = useFeedback();
+  const { setSuccess, setError } = useFeedback();
 
   // Estados para modales
   const [modalDetalle, setModalDetalle] = useState(false);
   const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
+
+  // Estado para exportación premium
+  const [exportModal, setExportModal] = useState({
+    isOpen: false,
+    format: "csv"
+  });
+  const [exportando, setExportando] = useState(false);
+
+  const handleExecuteExport = async (type) => {
+    setExportModal((prev) => ({ ...prev, isOpen: false }));
+    setExportando(true);
+    try {
+      let rawData = [];
+      let prefix = "";
+      const token = localStorage.getItem("token");
+
+      if (type === "page") {
+        rawData = paginatedData;
+        prefix = "Pagina_";
+      } else if (type === "filtered") {
+        prefix = "Filtrados_";
+        if (token && window.api?.fetchPagos) {
+          const resp = await window.api.fetchPagos(token, {
+            periodo: filtroPeriodo,
+            search: search,
+            metodo_pago: filtroMetodo === "All" ? "" : filtroMetodo,
+            ciudad: cityFilter === "All" ? "" : cityFilter,
+            page: 1,
+            limit: 10000
+          });
+          rawData = Array.isArray(resp) ? resp : (resp?.pagos || pagos);
+        } else {
+          rawData = pagos;
+        }
+      } else {
+        // Todos los registros
+        prefix = "Todos_";
+        if (token && window.api?.fetchPagos) {
+          const resp = await window.api.fetchPagos(token, {
+            periodo: "",
+            search: "",
+            metodo_pago: "",
+            ciudad: "",
+            page: 1,
+            limit: 20000
+          });
+          rawData = Array.isArray(resp) ? resp : (resp?.pagos || pagos);
+        } else {
+          rawData = pagos;
+        }
+      }
+
+      if (!rawData || rawData.length === 0) {
+        setError("No hay pagos disponibles para exportar", "Exportación");
+        return;
+      }
+
+      const normalizedData = normalizarPagosParaExport(rawData);
+      const format = exportModal.format;
+      const filename = `Pagos_${prefix}${new Date().toISOString().split("T")[0]}`;
+
+      const ok = await exportData(normalizedData, filename, format);
+      if (ok) {
+        setSuccess(`Pagos exportados correctamente en formato ${format.toUpperCase()}`);
+      } else {
+        setError("Error o cancelación al exportar pagos", "Exportación");
+      }
+    } catch (err) {
+      console.error("Error al exportar pagos:", err);
+      setError("Error al exportar pagos", "Exportación");
+    } finally {
+      setExportando(false);
+    }
+  };
 
   // Funciones de utilidad
   const periodoLabel = formatearPeriodo(filtroPeriodo);
@@ -299,23 +426,17 @@ const TabPagos = () => {
           </button>
 
           <ExportDropdown
-            onExportCSV={async () => {
-              const ok = await exportData(paginatedData, `Pagos_${new Date().toISOString().split("T")[0]}`, "csv");
-              if (ok) setSuccess("Archivo CSV generado exitosamente");
-            }}
-            onExportExcel={async () => {
-              const ok = await exportData(paginatedData, `Pagos_${new Date().toISOString().split("T")[0]}`, "xlsx");
-              if (ok) setSuccess("Archivo Excel generado exitosamente");
-            }}
+            onExportCSV={() => setExportModal({ isOpen: true, format: "csv" })}
+            onExportExcel={() => setExportModal({ isOpen: true, format: "xlsx" })}
           />
         </div>
       </div>
 
       {/* ── CONTENEDOR PRINCIPAL ── */}
-      <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-hidden flex flex-col">
+      <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-visible flex flex-col relative z-20">
 
         {/* Filtros */}
-        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
+        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 rounded-t-2xl relative z-30">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
 
             {/* Buscador */}
@@ -431,7 +552,7 @@ const TabPagos = () => {
         </div>
 
         {/* Tabla nativa */}
-        <div className="bg-white dark:bg-zinc-950 overflow-x-auto">
+        <div className="bg-white dark:bg-zinc-950 overflow-x-auto rounded-b-2xl">
           <table className="min-w-full">
             <thead>
               <tr className="border-b border-slate-200 dark:border-zinc-800">
@@ -598,6 +719,99 @@ const TabPagos = () => {
         obtenerInfoPagosPorFactura={obtenerInfoPagosPorFactura}
         getMetodoColor={getMetodoColor}
       />
+
+      {/* Modal de Configuración de Exportación */}
+      <Modal
+        show={exportModal.isOpen}
+        onClose={() => setExportModal((prev) => ({ ...prev, isOpen: false }))}
+        size="md"
+        popup
+        theme={premiumConfirmModalTheme}
+      >
+        <ModalHeader />
+        <ModalBody>
+          <div className="p-2">
+            <div className="flex items-center gap-3 mb-4 justify-center">
+              <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                <HiDownload className="w-8 h-8" />
+              </div>
+            </div>
+            <h3 className="mb-2 text-center text-lg font-black text-slate-800 dark:text-zinc-100">
+              Opciones de Exportación ({exportModal.format.toUpperCase()})
+            </h3>
+            <p className="mb-6 text-center text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed">
+              Selecciona el conjunto de datos que deseas descargar en tu archivo.
+            </p>
+
+            <div className="flex flex-col gap-3 mb-6">
+              {/* Opción 1: Página Actual */}
+              <button
+                type="button"
+                disabled={exportando}
+                onClick={() => handleExecuteExport("page")}
+                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500 dark:hover:border-emerald-500 bg-slate-50/50 hover:bg-emerald-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full disabled:opacity-60"
+              >
+                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                  <span>Página actual (tabla)</span>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-md">
+                    {paginatedData.length} registros
+                  </span>
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                  Exporta únicamente las transacciones visibles en esta página.
+                </span>
+              </button>
+
+              {/* Opción 2: Filtrados / Período */}
+              <button
+                type="button"
+                disabled={exportando}
+                onClick={() => handleExecuteExport("filtered")}
+                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500 dark:hover:border-emerald-500 bg-slate-50/50 hover:bg-emerald-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full disabled:opacity-60"
+              >
+                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                  <span>Filtrados / Período actual</span>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md">
+                    {totalItems} registros
+                  </span>
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                  Exporta todos los pagos correspondientes al período y filtros aplicados.
+                </span>
+              </button>
+
+              {/* Opción 3: Todos */}
+              <button
+                type="button"
+                disabled={exportando}
+                onClick={() => handleExecuteExport("all")}
+                className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500 dark:hover:border-emerald-500 bg-slate-50/50 hover:bg-emerald-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full disabled:opacity-60"
+              >
+                <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                  <span>Historial completo de pagos</span>
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 rounded-md">
+                    Todos los períodos
+                  </span>
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                  Exporta la totalidad de las transacciones de pago registradas en el sistema.
+                </span>
+              </button>
+            </div>
+
+            <div className="flex justify-center gap-3">
+              <FlowbiteButton
+                color="gray"
+                onClick={() => setExportModal((prev) => ({ ...prev, isOpen: false }))}
+                disabled={exportando}
+                className="font-bold text-slate-500"
+              >
+                Cancelar
+              </FlowbiteButton>
+            </div>
+          </div>
+        </ModalBody>
+      </Modal>
     </div>
   );
 };

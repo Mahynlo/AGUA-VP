@@ -1,70 +1,133 @@
-import { createContext, useContext, useState } from 'react';
-import defaultLogo from '../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react'
+import defaultLogo from '../assets/images/Escudo_Villa_Pesqueira_sin_fondo.png'
 
-const LOGO_KEY = 'app_custom_logo';
-const LOGIN_IMAGES_KEY = 'app_login_images';
+const LOGO_KEY = 'app_custom_logo'
+const LOGIN_IMAGES_KEY = 'app_login_images'
 
-const LogoContext = createContext();
+const LogoContext = createContext()
 
 export const LogoProvider = ({ children }) => {
-  const [customLogo, setCustomLogoState] = useState(() =>
-    localStorage.getItem(LOGO_KEY) || null
-  );
+  const [customLogo, setCustomLogoState] = useState(() => localStorage.getItem(LOGO_KEY) || null)
+
+  // Sincronizar el logo con el proceso principal al montar
+  useEffect(() => {
+    let isMounted = true
+    const syncLogo = async () => {
+      try {
+        if (window.api?.getCustomLogo) {
+          const storedMain = await window.api.getCustomLogo()
+          if (storedMain && storedMain.startsWith('data:image')) {
+            if (isMounted) {
+              setCustomLogoState(storedMain)
+              localStorage.setItem(LOGO_KEY, storedMain)
+            }
+          } else {
+            // Si el proceso principal no lo tiene aún pero el renderer sí, sincronizar al main
+            const local = localStorage.getItem(LOGO_KEY)
+            if (local && local.startsWith('data:image')) {
+              await window.api?.saveCustomLogo?.(local)
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('⚠️ Error al sincronizar logo con proceso principal:', err)
+      }
+    }
+    syncLogo()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const [customLoginImages, setCustomLoginImagesState] = useState(() => {
     try {
-      const stored = localStorage.getItem(LOGIN_IMAGES_KEY);
-      return stored ? JSON.parse(stored) : null;
+      const stored = localStorage.getItem(LOGIN_IMAGES_KEY)
+      return stored ? JSON.parse(stored) : null
     } catch {
-      return null;
+      return null
     }
-  });
+  })
 
   // Si hay logo personalizado lo usa, si no usa el logo por defecto del bundle
-  const logoSrc = customLogo || defaultLogo;
+  const logoSrc = customLogo || defaultLogo
 
-  const setCustomLogo = (base64DataUrl) => {
-    localStorage.setItem(LOGO_KEY, base64DataUrl);
-    setCustomLogoState(base64DataUrl);
-  };
-
-  const clearCustomLogo = () => {
-    localStorage.removeItem(LOGO_KEY);
-    setCustomLogoState(null);
-  };
-
-  const addLoginImages = (base64Array) => {
-    const existing = customLoginImages || [];
-    const updated = [...existing, ...base64Array];
-    localStorage.setItem(LOGIN_IMAGES_KEY, JSON.stringify(updated));
-    setCustomLoginImagesState(updated);
-  };
-
-  const removeLoginImage = (index) => {
-    const updated = (customLoginImages || []).filter((_, i) => i !== index);
-    if (updated.length === 0) {
-      localStorage.removeItem(LOGIN_IMAGES_KEY);
-      setCustomLoginImagesState(null);
-    } else {
-      localStorage.setItem(LOGIN_IMAGES_KEY, JSON.stringify(updated));
-      setCustomLoginImagesState(updated);
+  const setCustomLogo = useCallback((base64DataUrl) => {
+    localStorage.setItem(LOGO_KEY, base64DataUrl)
+    setCustomLogoState(base64DataUrl)
+    if (window.api?.saveCustomLogo) {
+      window.api.saveCustomLogo(base64DataUrl).catch((err) => {
+        console.warn('Error guardando logo en proceso principal:', err)
+      })
     }
-  };
+  }, [])
 
-  const clearLoginImages = () => {
-    localStorage.removeItem(LOGIN_IMAGES_KEY);
-    setCustomLoginImagesState(null);
-  };
+  const clearCustomLogo = useCallback(() => {
+    localStorage.removeItem(LOGO_KEY)
+    setCustomLogoState(null)
+    if (window.api?.clearCustomLogo) {
+      window.api.clearCustomLogo().catch((err) => {
+        console.warn('Error limpiando logo en proceso principal:', err)
+      })
+    }
+  }, [])
 
-  return (
-    <LogoContext.Provider value={{
-      logoSrc, hasCustomLogo: !!customLogo, setCustomLogo, clearCustomLogo,
-      loginImages: customLoginImages, hasCustomLoginImages: !!customLoginImages,
-      addLoginImages, removeLoginImage, clearLoginImages,
-    }}>
-      {children}
-    </LogoContext.Provider>
-  );
-};
+  const addLoginImages = useCallback((base64Array) => {
+    setCustomLoginImagesState((prev) => {
+      const existing = prev || []
+      const updated = [...existing, ...base64Array]
+      try {
+        localStorage.setItem(LOGIN_IMAGES_KEY, JSON.stringify(updated))
+      } catch (err) {
+        console.error('Error al persistir imágenes de login:', err)
+      }
+      return updated
+    })
+  }, [])
 
-export const useAppLogo = () => useContext(LogoContext);
+  const removeLoginImage = useCallback((index) => {
+    setCustomLoginImagesState((prev) => {
+      const updated = (prev || []).filter((_, i) => i !== index)
+      if (updated.length === 0) {
+        localStorage.removeItem(LOGIN_IMAGES_KEY)
+        return null
+      } else {
+        localStorage.setItem(LOGIN_IMAGES_KEY, JSON.stringify(updated))
+        return updated
+      }
+    })
+  }, [])
+
+  const clearLoginImages = useCallback(() => {
+    localStorage.removeItem(LOGIN_IMAGES_KEY)
+    setCustomLoginImagesState(null)
+  }, [])
+
+  const value = useMemo(
+    () => ({
+      logoSrc,
+      defaultLogoSrc: defaultLogo,
+      hasCustomLogo: !!customLogo,
+      setCustomLogo,
+      clearCustomLogo,
+      loginImages: customLoginImages,
+      hasCustomLoginImages: !!customLoginImages,
+      addLoginImages,
+      removeLoginImage,
+      clearLoginImages
+    }),
+    [
+      logoSrc,
+      customLogo,
+      setCustomLogo,
+      clearCustomLogo,
+      customLoginImages,
+      addLoginImages,
+      removeLoginImage,
+      clearLoginImages
+    ]
+  )
+
+  return <LogoContext.Provider value={value}>{children}</LogoContext.Provider>
+}
+
+export const useAppLogo = () => useContext(LogoContext)

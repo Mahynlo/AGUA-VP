@@ -37,11 +37,13 @@ export function MedidoresProvider({ children }) {
     }
   }, []);
 
+  const isFirstLoadRef = useRef(true);
+
   // Función para obtener medidores paginados (para tabla de inventario)
   const fetchMedidores = useCallback(async (params = {}) => {
     try {
       // Solo mostrar loading completo en updates o primera carga
-      if (!initialLoading) {
+      if (!isFirstLoadRef.current) {
         setLoading(true);
       }
       const token_session = localStorage.getItem("token");
@@ -84,9 +86,12 @@ export function MedidoresProvider({ children }) {
       setError(error);
     } finally {
       setLoading(false);
-      setInitialLoading(false);
+      if (isFirstLoadRef.current) {
+        setInitialLoading(false);
+        isFirstLoadRef.current = false;
+      }
     }
-  }, [initialLoading]);
+  }, []);
 
   // Cargar medidores al iniciar — gated on auth user
   useEffect(() => {
@@ -153,20 +158,34 @@ export function MedidoresProvider({ children }) {
     );
   }, [allMedidores]);
 
+  const value = useMemo(() => ({
+    medidores,
+    allMedidores,
+    loading,
+    initialLoading,
+    actualizarMedidores,
+    fetchMedidores, // Exponer para control manual
+    pagination,
+    medidoresAsignados,
+    medidoresNoAsignados,
+    filtrarMedidores,
+    error
+  }), [
+    medidores,
+    allMedidores,
+    loading,
+    initialLoading,
+    actualizarMedidores,
+    fetchMedidores,
+    pagination,
+    medidoresAsignados,
+    medidoresNoAsignados,
+    filtrarMedidores,
+    error
+  ]);
+
   return (
-    <MedidoresContext.Provider value={{
-      medidores,
-      allMedidores,
-      loading,
-      initialLoading,
-      actualizarMedidores,
-      fetchMedidores, // Exponer para control manual
-      pagination,
-      medidoresAsignados,
-      medidoresNoAsignados,
-      filtrarMedidores,
-      error
-    }}>
+    <MedidoresContext.Provider value={value}>
       {children}
     </MedidoresContext.Provider>
   );

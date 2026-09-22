@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import {
   HiCurrencyDollar,
   HiCash,
@@ -21,7 +21,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "px-6 py-6 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-between gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -98,7 +98,7 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
     <>
       <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible size="4xl">
         {/* HEADER */}
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400 rounded-2xl">
               <HiCurrencyDollar className="w-7 h-7" />
@@ -114,10 +114,10 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
               </div>
             </div>
           </div>
-        </Modal.Header>
+        </ModalHeader>
 
         {/* BODY */}
-        <Modal.Body>
+        <ModalBody>
           <div className="space-y-6">
             {/* 1. Resumen Financiero */}
             <div className="bg-green-50/50 dark:bg-green-900/10 rounded-2xl p-5">
@@ -282,10 +282,10 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
               </div>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
 
         {/* FOOTER */}
-        <Modal.Footer>
+        <ModalFooter>
           <button
             type="button"
             onClick={handleImprimirComprobante}
@@ -303,7 +303,7 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
           >
             Cerrar
           </button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       {comprobanteUrl && modoPdf && (

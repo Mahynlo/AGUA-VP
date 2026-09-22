@@ -42,8 +42,16 @@ export const exportData = async (data, filename, format = 'csv') => {
                     let value = row[header];
                     if (value === null || value === undefined) {
                         value = "";
+                    } else if (typeof value === 'number') {
+                        value = String(value);
                     } else {
-                        value = String(value).replace(/"/g, '""');
+                        let str = String(value);
+                        // Mitigación de Formula Injection (CWE-1236):
+                        // Neutralizar valores que comiencen con =, @, tab, retorno de carro, o +/- no numéricos
+                        if (/^[=@\t\r]/.test(str) || (/^[+\-]/.test(str) && isNaN(Number(str)))) {
+                            str = `'${str}`;
+                        }
+                        value = str.replace(/"/g, '""');
                     }
                     if (/[",\n]/.test(value)) value = `"${value}"`;
                     return value;

@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   HiCreditCard,
@@ -17,7 +17,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -146,7 +146,7 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
 
   const renderFormulario = () => (
     <>
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-4">
           <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl p-3">
             <HiCreditCard className="w-6 h-6" />
@@ -160,9 +160,9 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="space-y-6">
           {/* Tarjeta Superior: KPIs y Entrada principal */}
           <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6">
@@ -325,22 +325,22 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
             </div>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button type="button" onClick={handleCerrar} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11">
           Cancelar
         </button>
         <button type="button" onClick={handleConfirmar} className="font-bold bg-slate-900 dark:bg-white text-white dark:text-zinc-950 rounded-xl px-8 h-11 shadow-sm">
           Revisar y Cobrar
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 
   const renderConfirmacion = () => (
     <>
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-4">
           <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl p-4">
             <HiExclamation className="w-8 h-8" />
@@ -352,9 +352,9 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
             <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Verifique los montos antes de procesar</p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8">
           <div className="flex items-center gap-2 mb-6 text-slate-600 dark:text-zinc-300">
             <HiUser className="w-5 h-5" />
@@ -374,32 +374,32 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
             </div>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button type="button" onClick={() => setEstadoPago("formulario")} className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 rounded-xl px-6 h-11">
           Atrás
         </button>
         <button type="button" onClick={handleProcesar} className="font-bold bg-blue-600 text-white rounded-xl px-8 h-11 shadow-sm">
           Confirmar Pago
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 
   const renderProcesando = () => (
-    <Modal.Body>
+    <ModalBody>
       <div className="flex flex-col items-center justify-center py-24 gap-4">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600" />
         <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Procesando Transacción</h3>
         <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">Aplicando distribución FIFO...</p>
       </div>
-    </Modal.Body>
+    </ModalBody>
   );
 
   const renderExito = () => (
     <>
-      <Modal.Body>
+      <ModalBody>
         <div className="py-12 flex flex-col items-center text-center">
           <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full p-6 mb-6">
             <HiCheck className="w-16 h-16" />
@@ -426,18 +426,18 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
             </div>
           </div>
         </div>
-      </Modal.Body>
-      <Modal.Footer>
+      </ModalBody>
+      <ModalFooter>
         <button type="button" onClick={handleCerrar} className="w-full font-bold bg-slate-900 dark:bg-white text-white dark:text-zinc-950 rounded-xl h-11 shadow-sm text-lg">
           Finalizar y Cerrar
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 
   const renderError = () => (
     <>
-      <Modal.Body>
+      <ModalBody>
         <div className="py-12 flex flex-col items-center text-center">
           <div className="bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-full p-6 mb-6">
             <HiX className="w-16 h-16" />
@@ -449,15 +449,15 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
             {resultadoPago?.mensaje || "Ocurrió un error inesperado al procesar."}
           </p>
         </div>
-      </Modal.Body>
-      <Modal.Footer>
+      </ModalBody>
+      <ModalFooter>
         <button type="button" onClick={() => setEstadoPago("confirmacion")} className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 rounded-xl px-8 h-11">
           Reintentar
         </button>
         <button type="button" onClick={handleCerrar} className="font-bold bg-rose-600 text-white rounded-xl px-8 h-11 shadow-sm">
           Cancelar Cobro
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </>
   );
 

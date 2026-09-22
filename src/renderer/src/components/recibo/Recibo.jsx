@@ -383,13 +383,13 @@ const Recibo = ({ facturaData = null }) => {
                             <div className='basis-64 ml-5 m-2 gap-8'>
                                 <p className='text-[11px]'>Información de Nota: </p>
                                 <p className='text-[11px] flex'>
-                                    Usuario: <p className='px-2'>{factura.cliente_nombre}</p>
+                                    Usuario: <span className='px-2 font-normal'>{factura.cliente_nombre}</span>
                                 </p>
                                 <p className='text-[11px] flex'>
-                                    Dirección: <p className='px-2'>{factura.direccion_cliente}</p>
+                                    Dirección: <span className='px-2 font-normal'>{factura.direccion_cliente}</span>
                                 </p>
                                 <p className='text-[11px] flex'>
-                                    Mes facturado: <p className='px-2'>{factura.mes_facturado}</p>
+                                    Mes facturado: <span className='px-2 font-normal uppercase'>{factura.mes_facturado}</span>
                                 </p>
                                 <p className='text-[11px]'>Fecha de pago:__________________________</p>
                                 <p className='text-[11px]'>Total pagado:$_______________________</p>

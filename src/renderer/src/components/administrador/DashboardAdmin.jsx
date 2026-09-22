@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardBody, Badge, Progress, Button } from "@nextui-org/react";
+import { Card, CardContent, Button } from "@heroui/react";
 import { EstadisticasIcon, AlertaIcon } from "../../IconsApp/IconsAdmin";
 import { FlechaReturnIcon } from "../../IconsApp/IconsAppSystem";
 import { useNavigate } from "react-router-dom";
@@ -70,42 +70,42 @@ const DashboardAdmin = () => {
       {/* Métricas principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-          <CardBody className="text-center">
+          <CardContent className="text-center p-5">
             <EstadisticasIcon className="w-8 h-8 mx-auto mb-2" />
             <p className="text-3xl font-bold">{metricas.clientesActivos || 0}</p>
             <p className="text-sm opacity-90">Clientes Activos</p>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-          <CardBody className="text-center">
+          <CardContent className="text-center p-5">
             <EstadisticasIcon className="w-8 h-8 mx-auto mb-2" />
             <p className="text-3xl font-bold">{metricas.lecturasMes || 0}</p>
             <p className="text-sm opacity-90">Lecturas del Mes</p>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-          <CardBody className="text-center">
+          <CardContent className="text-center p-5">
             <EstadisticasIcon className="w-8 h-8 mx-auto mb-2" />
             <p className="text-3xl font-bold">{formatearMoneda(metricas.totalRecaudado || 0)}</p>
             <p className="text-sm opacity-90">Recaudado del Mes</p>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-          <CardBody className="text-center">
+          <CardContent className="text-center p-5">
             <EstadisticasIcon className="w-8 h-8 mx-auto mb-2" />
             <p className="text-3xl font-bold">{metricas.eficienciaCobranza?.toFixed(1) || 0}%</p>
             <p className="text-sm opacity-90">Eficiencia Cobranza</p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Indicadores de progreso */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardBody>
+          <CardContent className="p-6">
             <h3 className="text-xl font-bold mb-4">Facturación vs Pagos</h3>
             <div className="space-y-4">
               <div>
@@ -113,11 +113,9 @@ const DashboardAdmin = () => {
                   <span>Facturas Pagadas</span>
                   <span className="font-bold">{metricas.facturasPagadas}/{metricas.facturasEmitidas}</span>
                 </div>
-                <Progress 
-                  value={porcentajePago} 
-                  color="success"
-                  className="mb-2"
-                />
+                <div className="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden mb-2">
+                  <div className="bg-emerald-500 h-2.5 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, Math.max(0, porcentajePago))}%` }} />
+                </div>
                 <p className="text-sm text-gray-600">{porcentajePago.toFixed(1)}% de facturas pagadas</p>
               </div>
               
@@ -138,11 +136,11 @@ const DashboardAdmin = () => {
                 </div>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <Card>
-          <CardBody>
+          <CardContent className="p-6">
             <h3 className="text-xl font-bold mb-4">Progreso de Lecturas</h3>
             <div className="space-y-4">
               <div>
@@ -150,11 +148,9 @@ const DashboardAdmin = () => {
                   <span>Lecturas Capturadas</span>
                   <span className="font-bold">{metricas.lecturasMes}/156</span>
                 </div>
-                <Progress 
-                  value={porcentajeLecturas} 
-                  color="primary"
-                  className="mb-2"
-                />
+                <div className="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden mb-2">
+                  <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, Math.max(0, porcentajeLecturas))}%` }} />
+                </div>
                 <p className="text-sm text-gray-600">{porcentajeLecturas.toFixed(1)}% del total de medidores</p>
               </div>
 
@@ -169,13 +165,13 @@ const DashboardAdmin = () => {
                 </div>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
 
       {/* Alertas y notificaciones */}
       <Card>
-        <CardBody>
+        <CardContent className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <AlertaIcon className="w-6 h-6 text-orange-500" />
             <h3 className="text-xl font-bold">Alertas y Notificaciones</h3>
@@ -187,48 +183,48 @@ const DashboardAdmin = () => {
                 key={alerta.id} 
                 className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
               >
-                <Badge color={getColorAlerta(alerta.tipo)} className="mt-1" />
+                <span className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${alerta.tipo === 'danger' ? 'bg-red-500' : alerta.tipo === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
                 <div className="flex-1">
                   <p className="font-semibold text-gray-900 dark:text-white">{alerta.mensaje}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-300">{alerta.detalle}</p>
                 </div>
-                <Button size="sm" variant="bordered" color={getColorAlerta(alerta.tipo)}>
+                <Button size="sm" variant="outline" color={getColorAlerta(alerta.tipo)}>
                   Ver más
                 </Button>
               </div>
             ))}
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {/* Resumen financiero rápido */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardBody className="text-center">
+          <CardContent className="text-center p-5">
             <p className="text-sm text-gray-600 mb-1">Crecimiento Mensual</p>
             <p className="text-3xl font-bold text-green-600">+{metricas.crecimientoMensual}%</p>
             <p className="text-xs text-gray-500">vs mes anterior</p>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card>
-          <CardBody className="text-center">
+          <CardContent className="text-center p-5">
             <p className="text-sm text-gray-600 mb-1">Promedio por Cliente</p>
             <p className="text-3xl font-bold text-blue-600">
               {formatearMoneda(metricas.clientesActivos ? (metricas.totalRecaudado / metricas.clientesActivos) : 0)}
             </p>
             <p className="text-xs text-gray-500">recaudo mensual</p>
-          </CardBody>
+          </CardContent>
         </Card>
         
         <Card>
-          <CardBody className="text-center">
+          <CardContent className="text-center p-5">
             <p className="text-sm text-gray-600 mb-1">Medidores Activos</p>
             <p className="text-3xl font-bold text-purple-600">
               {156 - (metricas.medidoresInactivos || 0)}
             </p>
             <p className="text-xs text-gray-500">de 156 totales</p>
-          </CardBody>
+          </CardContent>
         </Card>
       </div>
     </div>

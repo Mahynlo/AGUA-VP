@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import {
   HiUser,
   HiCreditCard,
@@ -19,7 +19,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "px-6 py-6 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -62,7 +62,7 @@ const ModalDetalleFactura = ({ isOpen, onClose, factura }) => {
   return (
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
       {/* HEADER */}
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center justify-between gap-4 w-full pr-8">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-2xl ${estadoConfig.bg} ${estadoConfig.iconText}`}>
@@ -81,10 +81,10 @@ const ModalDetalleFactura = ({ isOpen, onClose, factura }) => {
             {estadoConfig.label}
           </span>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
       {/* BODY */}
-      <Modal.Body>
+      <ModalBody>
         <div className="space-y-6">
           {/* 1. Desglose Económico */}
           <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-2xl p-5">
@@ -197,9 +197,9 @@ const ModalDetalleFactura = ({ isOpen, onClose, factura }) => {
             </div>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={onClose}
@@ -207,7 +207,7 @@ const ModalDetalleFactura = ({ isOpen, onClose, factura }) => {
         >
           Cerrar
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 };

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Chip, Tabs, Tab, Skeleton } from "@nextui-org/react";
+import { Skeleton } from "@heroui/react";
 import { HiMap, HiDocumentText, HiChartBar, HiClock, HiCheckCircle } from "react-icons/hi";
 import React, { useState, useMemo } from "react";
 
@@ -77,7 +77,7 @@ const Lecturas = () => {
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
 
       {/* CONTENEDOR DE LA VISTA: 'w-full min-h-full' para ocupar todo el espacio disponible */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-10 animate-in fade-in duration-500">
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-10">
 
         {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8">
@@ -151,53 +151,54 @@ const Lecturas = () => {
 
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
         <div className="flex flex-col w-full flex-1 mt-2">
-          {/* Token 7: Pestañas de Navegación SaaS - Ahora unificadas en color Ámbar */}
-          <Tabs
-            aria-label="Opciones de Lecturas"
-            selectedKey={selectedTab}
-            onSelectionChange={handleTabChange}
-            variant="underlined"
-            classNames={{
-              base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
-              tabList: "gap-6 w-full relative rounded-none p-0",
-              cursor: "w-full bg-amber-600 dark:bg-amber-500 h-[2px]", // Cursor Ámbar
-              tab: "max-w-fit px-0 h-12",
-              tabContent: "group-data-[selected=true]:text-amber-600 dark:group-data-[selected=true]:text-amber-500 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors", // Texto Ámbar activo
-            }}
-          >
-            {/* TAB 1: REGISTRO DE LECTURAS */}
-            <Tab
-              key="lecturas"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiDocumentText className="text-lg" />
-                  <span>Registro de Lecturas</span>
-                  <Chip size="sm" variant="flat" className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold h-5 text-[10px] px-1 ml-1 rounded-md">
-                    Rutas
-                  </Chip>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabRutas />
-              </div>
-            </Tab>
+          {/* Pestañas de Navegación SaaS - Tema Ámbar */}
+          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6">
+            <nav className="flex gap-6 w-full -mb-px">
+              {/* TAB 1: REGISTRO DE LECTURAS */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("lecturas")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "lecturas"
+                    ? "border-amber-600 text-amber-600 dark:border-amber-500 dark:text-amber-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiDocumentText className="text-lg" />
+                <span>Registro de Lecturas</span>
+                <span className="bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 font-bold h-5 text-[10px] px-1.5 ml-1 rounded-md inline-flex items-center">
+                  Rutas
+                </span>
+              </button>
 
-            {/* TAB 2: MÉTRICAS Y REPORTES */}
-            <Tab
-              key="metricas"
-              title={
-                <div className="flex items-center gap-2.5">
-                  <HiChartBar className="text-lg" />
-                  <span>Métricas y Reportes</span>
-                </div>
-              }
-            >
-              <div className="pt-2 animate-in fade-in duration-500 h-full flex flex-col">
-                <TabMetricas />
-              </div>
-            </Tab>
-          </Tabs>
+              {/* TAB 2: MÉTRICAS Y REPORTES */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("metricas")}
+                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                  selectedTab === "metricas"
+                    ? "border-amber-600 text-amber-600 dark:border-amber-500 dark:text-amber-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                }`}
+              >
+                <HiChartBar className="text-lg" />
+                <span>Métricas y Reportes</span>
+              </button>
+            </nav>
+          </div>
+
+          {/* CONTENIDOS */}
+          {selectedTab === "lecturas" && (
+            <div className="pt-2 h-full flex flex-col">
+              <TabRutas />
+            </div>
+          )}
+
+          {selectedTab === "metricas" && (
+            <div className="pt-2 h-full flex flex-col">
+              <TabMetricas />
+            </div>
+          )}
         </div>
 
       </div>

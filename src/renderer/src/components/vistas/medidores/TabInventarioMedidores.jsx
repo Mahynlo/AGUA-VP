@@ -6,7 +6,7 @@ import {
 } from "react-icons/hi";
 import { useTabMedidores } from "../../../hooks/useTabMedidores";
 import { useMedidores } from "../../../context/MedidoresContext";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { normalizarTexto } from "../../../utils/textUtils";
 
 const premiumModalTheme = {
@@ -19,8 +19,7 @@ const premiumModalTheme = {
     },
     header: {
         base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/80 px-8 py-6 rounded-t-2xl",
-        close: {
-            base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors",
+        close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer",
             icon: "h-5 w-5"
         }
     },
@@ -355,10 +354,6 @@ const TabInventarioMedidores = () => {
         if (!canModificarMedidores) { 
             setError("No tienes permisos para eliminar medidores.", "Eliminar Medidor"); 
             return; 
-        }
-        if (medidor.cliente_id) {
-            setError("No se puede eliminar el medidor porque está asignado a un cliente activo. Libérelo primero.", "Eliminar Medidor");
-            return;
         }
         setMedidorToDelete(medidor);
         setDeleteReason("");
@@ -754,11 +749,18 @@ const TabInventarioMedidores = () => {
 
             {/* Modal de Confirmación de Eliminación con Razón (Flowbite React) */}
             <Modal show={isDeleteReasonOpen} onClose={() => setIsDeleteReasonOpen(false)} size="md" popup theme={premiumModalTheme}>
-                <Modal.Header />
-                <Modal.Body className="p-6 bg-white dark:bg-zinc-950">
+                <ModalHeader />
+                <ModalBody className="p-6 bg-white dark:bg-zinc-950">
                     <div className="space-y-4">
                         <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100">Desactivar Medidor</h3>
-                        <p className="text-sm text-slate-500 dark:text-zinc-400">¿Está seguro de desactivar el medidor con número de serie <strong className="text-slate-800 dark:text-zinc-100 font-mono">{medidorToDelete?.numero_serie}</strong>? Se moverá a la papelera.</p>
+                        <p className="text-sm text-slate-500 dark:text-zinc-400">¿Está seguro de desactivar el medidor con número de serie <strong className="text-slate-800 dark:text-zinc-100 font-mono">{medidorToDelete?.numero_serie}</strong>? Se marcará como retirado y se moverá a la papelera.</p>
+                        
+                        {medidorToDelete?.cliente_id && (
+                            <div className="p-3.5 bg-amber-500/10 border border-amber-200/70 dark:border-amber-900/40 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex flex-col gap-1">
+                                <span className="font-bold">Nota de trazabilidad:</span>
+                                <span>Este medidor está vinculado al cliente <strong>{medidorToDelete.cliente_nombre || `#${medidorToDelete.cliente_id}`}</strong>. Sus lecturas y facturas pasadas se conservarán intactas. Podrás registrar y asignar un nuevo medidor al cliente desde la vista de clientes.</span>
+                            </div>
+                        )}
                         
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 block mb-1">
@@ -777,8 +779,8 @@ const TabInventarioMedidores = () => {
                             />
                         </div>
                     </div>
-                </Modal.Body>
-                <Modal.Footer className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
+                </ModalBody>
+                <ModalFooter className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
                     <button
                         onClick={() => setIsDeleteReasonOpen(false)}
                         className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
@@ -792,7 +794,7 @@ const TabInventarioMedidores = () => {
                     >
                         Desactivar Medidor
                     </button>
-                </Modal.Footer>
+                </ModalFooter>
             </Modal>
 
             {/* Modal de Confirmación Premium */}
@@ -803,8 +805,8 @@ const TabInventarioMedidores = () => {
                 popup
                 theme={premiumConfirmModalTheme}
             >
-                <Modal.Header />
-                <Modal.Body>
+                <ModalHeader />
+                <ModalBody>
                     <div className="text-center p-2">
                         <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-rose-500"}`} />
                         <h3 className="mb-4 text-base font-black text-slate-800 dark:text-zinc-100">
@@ -830,7 +832,7 @@ const TabInventarioMedidores = () => {
                             </Button>
                         </div>
                     </div>
-                </Modal.Body>
+                </ModalBody>
             </Modal>
 
             {/* Modal de Configuración de Exportación */}
@@ -841,8 +843,8 @@ const TabInventarioMedidores = () => {
                 popup
                 theme={premiumConfirmModalTheme}
             >
-                <Modal.Header />
-                <Modal.Body>
+                <ModalHeader />
+                <ModalBody>
                     <div className="p-2">
                         <div className="flex items-center gap-3 mb-4 justify-center">
                             <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
@@ -902,7 +904,7 @@ const TabInventarioMedidores = () => {
                             </Button>
                         </div>
                     </div>
-                </Modal.Body>
+                </ModalBody>
             </Modal>
         </div>
     );

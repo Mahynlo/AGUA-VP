@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import {
     HiMap,
     HiLocationMarker,
@@ -60,6 +60,18 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                             return p.tiene_lectura === 1 || p.lectura_id || (p.lectura_actual !== null && p.lectura_actual !== undefined);
                         }
                         return true;
+                    });
+
+                    puntosValidos.sort((a, b) => {
+                        const ordA = a.orden !== null && a.orden !== undefined ? Number(a.orden) : null;
+                        const ordB = b.orden !== null && b.orden !== undefined ? Number(b.orden) : null;
+                        if (ordA !== null && ordB !== null && ordA !== ordB) {
+                            return ordA - ordB;
+                        }
+                        if (a.numero_predio && b.numero_predio) {
+                            return String(a.numero_predio).localeCompare(String(b.numero_predio), undefined, { numeric: true });
+                        }
+                        return 0;
                     });
 
                     setDetalleRuta({
@@ -140,11 +152,11 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
         <Modal
             show={isOpen}
             onClose={onClose}
-            dismissible={false}
+            dismissible
             theme={largeModalTheme}
             size="7xl"
         >
-            <Modal.Header>
+            <ModalHeader>
                 <div className="flex items-center justify-between gap-4 w-full">
                     <div className="flex items-center gap-4 min-w-0">
                         <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0">
@@ -171,9 +183,9 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                         {chipLabel}
                     </span>
                 </div>
-            </Modal.Header>
+            </ModalHeader>
 
-            <Modal.Body>
+            <ModalBody>
                 <div className="space-y-6">
 
                     {/* 1. Panel de Métricas Rápidas */}
@@ -313,16 +325,16 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                     </div>
 
                 </div>
-            </Modal.Body>
+            </ModalBody>
 
-            <Modal.Footer>
+            <ModalFooter>
                 <button
                     onClick={onClose}
                     className="font-black bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 rounded-xl h-11 px-6 shadow-sm transition-transform active:scale-95 ml-auto"
                 >
                     Cerrar Panel
                 </button>
-            </Modal.Footer>
+            </ModalFooter>
         </Modal>
     );
 };

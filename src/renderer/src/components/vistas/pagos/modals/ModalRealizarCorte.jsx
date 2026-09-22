@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiBan, HiExclamation, HiChat } from "react-icons/hi";
 
 const premiumModalTheme = {
@@ -10,7 +10,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -64,7 +64,7 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
 
   return (
     <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex gap-3 items-center">
           <div className="p-3 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl">
             <HiBan className="w-6 h-6" />
@@ -78,9 +78,9 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         <div className="space-y-5">
           <div className="bg-rose-500/10 dark:bg-rose-900/20 p-5 rounded-2xl border border-rose-500/20">
             <div className="flex gap-3.5">
@@ -132,9 +132,9 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
             </div>
           </div>
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={onClose}
@@ -152,7 +152,7 @@ const ModalRealizarCorte = ({ isOpen, onClose, selectedDeudor, onSuccess }) => {
           <HiBan className="w-4 h-4" />
           {loading ? "Ejecutando..." : "Ejecutar Corte"}
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 };

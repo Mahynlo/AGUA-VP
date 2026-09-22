@@ -19,11 +19,12 @@ const PieChart = ({ data, unit = "", type = "donut" }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Procesar datos o usar defaults ilustrativos
-  const chartData = data && data.length > 0
+  // Procesar datos dinámicos o usar defaults ilustrativos
+  const isDynamic = Array.isArray(data) && data.length > 0;
+  const chartData = isDynamic
     ? {
-        series: data.map((item) => Number(item.cantidad) || 0),
-        labels: data.map((item) => item.estado || "Sin clasificar")
+        series: data.map((item) => Number(item.cantidad ?? item.valor ?? item.total ?? item.consumo ?? 0)),
+        labels: data.map((item) => String(item.estado ?? item.nombre ?? item.ruta ?? item.label ?? "Sin clasificar"))
       }
     : {
         series: [120, 180, 240],
@@ -151,15 +152,17 @@ const PieChart = ({ data, unit = "", type = "donut" }) => {
     ],
   };
 
+  const dynamicChartKey = `${isDarkMode ? "dark" : "light"}-${chartData.series.join('-')}-${chartData.labels.join('-')}`;
+
   return (
-    <div className="w-full h-full min-h-[260px] flex items-center justify-center">
+    <div className="w-full h-full min-h-[280px] flex items-center justify-center">
       <Chart
         options={options}
         series={chartData.series}
         type={type}
         width="100%"
-        height="100%"
-        key={isDarkMode ? "dark" : "light"}
+        height={280}
+        key={dynamicChartKey}
       />
     </div>
   );

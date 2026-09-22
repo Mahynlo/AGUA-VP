@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Button } from "flowbite-react";
+import { Modal, Button, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiPlus, HiMap, HiInformationCircle, HiCollection, HiX, HiCheck } from "react-icons/hi";
 
 import MapaRutas from "../../mapa/MapaRutas";
@@ -136,11 +136,11 @@ export default function ModalRegistrarRuta() {
       <Modal
         show={isOpen}
         onClose={handleCloseModal}
-        dismissible={false}
+        dismissible
         theme={largeModalTheme}
         size="7xl"
       >
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex items-center gap-4">
               <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0">
                   <HiMap className="w-7 h-7" />
@@ -154,9 +154,9 @@ export default function ModalRegistrarRuta() {
                   </p>
               </div>
           </div>
-        </Modal.Header>
+        </ModalHeader>
 
-        <Modal.Body>
+        <ModalBody>
           <div className="flex flex-col min-h-0 h-full">
             {/* Tabs header */}
             <div className="flex border-b border-slate-200 dark:border-zinc-800 gap-6 shrink-0">
@@ -254,9 +254,9 @@ export default function ModalRegistrarRuta() {
               )}
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
 
-        <Modal.Footer>
+        <ModalFooter>
           <button
               onClick={handleCloseModal}
               className="font-bold text-slate-500 border-transparent bg-transparent hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl h-11 px-4 flex items-center gap-2 transition-colors"
@@ -274,7 +274,7 @@ export default function ModalRegistrarRuta() {
               <><HiCheck className="text-lg" />Guardar Nueva Ruta</>
             )}
           </button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </>
   );

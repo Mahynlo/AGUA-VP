@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Divider } from "@nextui-org/react";
+import { Button } from "@heroui/react";
 import { HiCollection, HiPhotograph, HiPlusCircle, HiTrash, HiUpload } from "react-icons/hi";
 import { useAppLogo } from "../../context/LogoContext";
 
@@ -65,7 +65,7 @@ export default function PanelPersonalizacion() {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
+      <div className="h-px bg-slate-100 dark:bg-zinc-800/80 w-full" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 1: IDENTIDAD VISUAL (Logo)                                  */}
@@ -113,18 +113,18 @@ export default function PanelPersonalizacion() {
                 onPress={handleSelectLogo}
                 isLoading={savingLogo}
                 className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11"
-                startContent={!savingLogo && <HiUpload className="text-lg" />}
               >
+                {!savingLogo && <HiUpload className="text-lg" />}
                 {savingLogo ? "Cargando..." : "Seleccionar imagen"}
               </Button>
 
               {hasCustomLogo && (
                 <Button
                   onPress={clearCustomLogo}
-                  variant="flat"
+                  variant="ghost"
                   className="font-bold bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/20 rounded-xl px-6 h-11"
-                  startContent={<HiTrash className="text-lg" />}
                 >
+                  <HiTrash className="text-lg" />
                   Restaurar predeterminado
                 </Button>
               )}
@@ -133,7 +133,7 @@ export default function PanelPersonalizacion() {
         </div>
       </div>
 
-      <Divider className="bg-slate-100 dark:bg-zinc-800/80" />
+      <div className="h-px bg-slate-100 dark:bg-zinc-800/80 w-full" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 2: IMÁGENES DEL LOGIN (Carrusel)                            */}
@@ -194,18 +194,18 @@ export default function PanelPersonalizacion() {
               onPress={handleAddLoginImages}
               isLoading={addingLoginImages}
               className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11"
-              startContent={!addingLoginImages && <HiPlusCircle className="text-lg" />}
             >
+              {!addingLoginImages && <HiPlusCircle className="text-lg" />}
               {addingLoginImages ? "Cargando..." : "Agregar imágenes"}
             </Button>
 
             {hasCustomLoginImages && (
               <Button
                 onPress={clearLoginImages}
-                variant="flat"
+                variant="ghost"
                 className="font-bold bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/20 rounded-xl px-6 h-11"
-                startContent={<HiTrash className="text-lg" />}
               >
+                <HiTrash className="text-lg" />
                 Restaurar predeterminadas
               </Button>
             )}

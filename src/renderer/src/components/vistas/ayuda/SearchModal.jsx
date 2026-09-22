@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import {
   HiSearch,
   HiX,
@@ -47,7 +47,7 @@ const SearchModal = React.memo(({
       theme={searchModalTheme}
       dismissible
     >
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
             <HiSearch className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -61,9 +61,9 @@ const SearchModal = React.memo(({
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         {/* ── CAMPO DE BÚSQUEDA FLOTANTE ── */}
         <div className="sticky top-0 z-20 bg-white dark:bg-zinc-950 p-5 border-b border-slate-100 dark:border-zinc-800/50 shadow-sm">
           <div className="relative w-full flex items-center group">
@@ -236,9 +236,9 @@ const SearchModal = React.memo(({
             </div>
           )}
         </div>
-      </Modal.Body>
+      </ModalBody>
 
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={() => onOpenChange(false)}
@@ -246,7 +246,7 @@ const SearchModal = React.memo(({
         >
           Cerrar Búsqueda
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 });

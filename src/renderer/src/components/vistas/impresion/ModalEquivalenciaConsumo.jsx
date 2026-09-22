@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { useState } from "react";
 import { HiScale, HiBeaker, HiCollection, HiX, HiInformationCircle, HiCheckCircle } from "react-icons/hi";
 import useEquivalenciaConsumo from "../../../hooks/useEquivalenciaConsumo";
@@ -46,7 +46,7 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
       dismissible
     >
       {/* ── HEADER ── */}
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-4">
           <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0">
             <HiScale className="w-6 h-6" />
@@ -60,10 +60,10 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
             </p>
           </div>
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
       {/* ── BODY ── */}
-      <Modal.Body>
+      <ModalBody>
         {loading ? (
           /* Estado de carga */
           <div className="flex flex-col items-center justify-center py-16 gap-4">
@@ -209,10 +209,10 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
             )}
           </div>
         )}
-      </Modal.Body>
+      </ModalBody>
 
       {/* ── FOOTER ── */}
-      <Modal.Footer>
+      <ModalFooter>
         <button
           type="button"
           onClick={onClose}
@@ -220,7 +220,7 @@ const ModalEquivalenciaConsumo = ({ isOpen, onClose }) => {
         >
           Cerrar Panel
         </button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 };

@@ -1,11 +1,10 @@
-import { createContext, useState, useContext, useCallback, useEffect, useRef } from "react";
+import { createContext, useState, useContext, useCallback, useEffect, useRef, useMemo } from "react";
 import { adaptarReciboAPI } from "../utils/reciboUtils";
 
 const ReportesContext = createContext();
 
 export function ReportesProvider({ children }) {
-    // Cache para recibos: { '2024-11': [...data], '2024-12': [...data] }
-    const [cacheRecibos, setCacheRecibos] = useState({});
+    // Cache en memoria para recibos: { '2024-11': [...data], '2024-12': [...data] }
     const cacheRecibosRef = useRef({});
 
     // Estado actual visualizado para recibos
@@ -15,13 +14,11 @@ export function ReportesProvider({ children }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // --- NUEVO: Cache para lecturas ---
-    const [cacheLecturas, setCacheLecturas] = useState({});
+    // Cache en memoria para lecturas
     const cacheLecturasRef = useRef({});
     const [lecturasActuales, setLecturasActuales] = useState([]);
 
-    // --- NUEVO: Cache y estado para reporte financiero ---
-    const [cacheFinanciero, setCacheFinanciero] = useState({});
+    // Cache en memoria y estado para reporte financiero
     const cacheFinancieroRef = useRef({});
     const [financieroActual, setFinancieroActual] = useState(null);
     const [loadingFinanciero, setLoadingFinanciero] = useState(false);
@@ -61,7 +58,6 @@ export function ReportesProvider({ children }) {
                     ...cacheRecibosRef.current,
                     [periodo]: recibosAdaptados
                 };
-                setCacheRecibos(cacheRecibosRef.current);
             } else {
                 setRecibosActuales([]);
             }
@@ -99,7 +95,6 @@ export function ReportesProvider({ children }) {
 
             setLecturasActuales(datos);
             cacheLecturasRef.current = { ...cacheLecturasRef.current, [periodo]: datos };
-            setCacheLecturas(cacheLecturasRef.current);
         } catch (err) {
             console.error("Error cargando lecturas:", err);
             setLecturasActuales([]);
@@ -126,7 +121,6 @@ export function ReportesProvider({ children }) {
             const data = await window.api.fetchReporteFinanciero(token, filtros);
             setFinancieroActual(data || null);
             cacheFinancieroRef.current = { ...cacheFinancieroRef.current, [cacheKey]: data || null };
-            setCacheFinanciero(cacheFinancieroRef.current);
             return data;
         } catch (err) {
             console.error("Error cargando reporte financiero:", err);
@@ -146,9 +140,6 @@ export function ReportesProvider({ children }) {
         cacheRecibosRef.current = {};
         cacheLecturasRef.current = {};
         cacheFinancieroRef.current = {};
-        setCacheRecibos({});
-        setCacheLecturas({});
-        setCacheFinanciero({});
         setRecibosActuales([]);
         setLecturasActuales([]);
         setFinancieroActual(null);
@@ -163,16 +154,19 @@ export function ReportesProvider({ children }) {
             cacheRecibosRef.current = {};
             cacheLecturasRef.current = {};
             cacheFinancieroRef.current = {};
-            setCacheRecibos({});
-            setCacheLecturas({});
-            setCacheFinanciero({});
+            if (!localStorage.getItem("token")) {
+                setRecibosActuales([]);
+                setLecturasActuales([]);
+                setFinancieroActual(null);
+                setPeriodoActual("");
+            }
         };
 
         window.addEventListener('dashboard-update', handleInvalidate);
         return () => window.removeEventListener('dashboard-update', handleInvalidate);
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         recibos: recibosActuales,
         lecturas: lecturasActuales,
         periodo: periodoActual,
@@ -185,7 +179,20 @@ export function ReportesProvider({ children }) {
         cargarLecturas,
         cargarReporteFinanciero,
         limpiarCache
-    };
+    }), [
+        recibosActuales,
+        lecturasActuales,
+        periodoActual,
+        loading,
+        error,
+        financieroActual,
+        loadingFinanciero,
+        errorFinanciero,
+        cargarRecibos,
+        cargarLecturas,
+        cargarReporteFinanciero,
+        limpiarCache
+    ]);
 
     return (
         <ReportesContext.Provider value={value}>

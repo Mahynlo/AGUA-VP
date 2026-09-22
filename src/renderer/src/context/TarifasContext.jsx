@@ -1,5 +1,4 @@
-// src/context/TarifasContext.jsx
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react";
 import { useAuth } from "./AuthContext";
 
 // Crear el contexto
@@ -67,19 +66,36 @@ export function TarifasProvider({ children }) {
     return () => window.removeEventListener('connection-restored', handleConnectionRestored);
   }, [fetchTarifas]);
 
+  // Escuchar eventos de actualización de tarifas
+  useEffect(() => {
+    const handleChanged = () => {
+      fetchTarifas();
+    };
+    window.addEventListener('tarifas-changed', handleChanged);
+    return () => window.removeEventListener('tarifas-changed', handleChanged);
+  }, [fetchTarifas]);
+
   // Función para actualizar las tarifas (después de agregar o editar una)
   const actualizarTarifas = useCallback(async () => {
     await fetchTarifas();
   }, [fetchTarifas]);
 
+  const value = useMemo(() => ({
+    tarifas,
+    pagination,
+    loading,
+    fetchTarifas,
+    actualizarTarifas
+  }), [
+    tarifas,
+    pagination,
+    loading,
+    fetchTarifas,
+    actualizarTarifas
+  ]);
+
   return (
-    <TarifasContext.Provider value={{
-      tarifas,
-      pagination,
-      loading,
-      fetchTarifas,
-      actualizarTarifas
-    }}>
+    <TarifasContext.Provider value={value}>
       {children}
     </TarifasContext.Provider>
   );

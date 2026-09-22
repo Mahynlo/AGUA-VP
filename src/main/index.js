@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -9,7 +9,7 @@ import initUpdateManager from './managers/updateManager.js'
 import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
 import { startApiServer, stopApiServer } from './managers/apiManager.js'
 import { setupWindowState } from './windowState.js'
-import { zoomIn, zoomOut, zoomReset, restoreZoom } from './managers/zoomManager.js'
+import { restoreZoom, getSavedZoom } from './managers/zoomManager.js'
 import contextMenu from 'electron-context-menu';
 
 // Configurar menú contextual en Español
@@ -39,13 +39,6 @@ const createMenu = () => {
         { role: 'reload' },
         { role: 'forceReload' },
         { type: 'separator' },
-        // Usamos click + zoomManager (en vez de los roles nativos) para compartir
-        // límites (50%–300%), persistencia y notificación con el panel de Configuración.
-        { label: 'Restablecer Zoom', accelerator: 'CommandOrControl+0', click: (_, win) => zoomReset(win || BrowserWindow.getFocusedWindow()) },
-        { label: 'Acercar', accelerator: 'CommandOrControl+Plus', click: (_, win) => zoomIn(win || BrowserWindow.getFocusedWindow()) }, // Algunos teclados requieren Shift
-        { label: 'Acercar (Alt)', accelerator: 'CommandOrControl+=', click: (_, win) => zoomIn(win || BrowserWindow.getFocusedWindow()) }, // Alternativa sin Shift
-        { label: 'Alejar', accelerator: 'CommandOrControl+-', click: (_, win) => zoomOut(win || BrowserWindow.getFocusedWindow()) },
-        { type: 'separator' },
         { role: 'togglefullscreen' }
       ]
     },
@@ -62,6 +55,8 @@ const createMenu = () => {
   Menu.setApplicationMenu(menu);
 }
 
+let mainWindow = null;
+
 function createWindow() {
   createMenu();
   
@@ -69,7 +64,7 @@ function createWindow() {
   const windowState = setupWindowState();
 
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: windowState.width, 
     height: windowState.height,
     x: windowState.x,
@@ -85,7 +80,8 @@ function createWindow() {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false, // Deshabilitar el aislamiento del contexto
       webSecurity: !is.dev, // Permitir carga de archivos locales en iframe durante desarrollo
-      spellcheck: true
+      spellcheck: true,
+      zoomFactor: getSavedZoom()
     }
 
   })
@@ -98,6 +94,7 @@ function createWindow() {
 
 
   mainWindow.on('ready-to-show', () => { // Mostrar la ventana cuando esté lista 
+    restoreZoom(mainWindow);
     mainWindow.show();      // Muestra la app
   })
 
@@ -130,80 +127,107 @@ function createWindow() {
 }
 
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(async () => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+// Bloqueo de instancia única (Single Instance Lock)
+// Evita múltiples procesos concurrentes que choquen con la API embebida o SQLite
+const gotTheLock = app.requestSingleInstanceLock();
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
-
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
-  // Iniciar servidor API embebido (aplica migraciones y crea backup automáticamente)
-  try {
-    await startApiServer();
-  } catch (err) {
-    console.error('❌ Error al iniciar el servidor API:', err);
-    // La app continúa — el renderer mostrará error de conexión
-  }
-
-  createWindow() // crea la ventana
-
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', async () => {
-  await stopApiServer();
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
-
-
-//Botones para el titleBar personalizado
-ipcMain.on("minimize", (event) => { // Minimizar la ventana
-  const window = BrowserWindow.getFocusedWindow();
-  if (window) window.minimize();
-});
-
-ipcMain.on("maximize", (event) => { // Maximizar la ventana
-  const window = BrowserWindow.getFocusedWindow();
-  if (window) {
-    if (window.isMaximized()) {
-      window.unmaximize();
-    } else {
-      window.maximize();
+if (!gotTheLock) {
+  // Si ya hay una instancia en ejecución, salir de inmediato
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    // Si el usuario intenta abrir otra instancia, restaurar y enfocar la ventana existente
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      if (!mainWindow.isVisible()) mainWindow.show();
+      mainWindow.focus();
     }
-  }
-});
+  });
 
-ipcMain.on("close", (event) => { // Cerrar la ventana
-  if (process.platform !== 'darwin') { // Solo cerrar en Windows y Linux (no en macOS)
-    app.quit() // Cierra la aplicación por completo
-  }
-});
+  // This method will be called when Electron has finished
+  // initialization and is ready to create browser windows.
+  // Some APIs can only be used after this event occurs.
+  app.whenReady().then(async () => {
+    // Set app user model id for windows (coincide con appId de electron-builder)
+    electronApp.setAppUserModelId('com.electron.app')
 
+    // Default open or close DevTools by F12 in development
+    // and ignore CommandOrControl + R in production.
+    // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
+    app.on('browser-window-created', (_, window) => {
+      optimizer.watchWindowShortcuts(window)
+    })
 
-// Handlers de aplicaicon
-AllIpcHandlers()
+    // IPC test
+    ipcMain.on('ping', () => console.log('pong'))
+
+    // Iniciar servidor API embebido (aplica migraciones y crea backup automáticamente)
+    try {
+      await startApiServer();
+    } catch (err) {
+      console.error('❌ Error al iniciar el servidor API:', err);
+      // La app continúa — el renderer mostrará error de conexión
+    }
+
+    createWindow() // crea la ventana
+
+    app.on('activate', function () {
+      // On macOS it's common to re-create a window in the app when the
+      // dock icon is clicked and there are no other windows open.
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  })
+
+  // Quit when all windows are closed, except on macOS. There, it's common
+  // for applications and their menu bar to stay active until the user quits
+  // explicitly with Cmd + Q.
+  app.on('window-all-closed', async () => {
+    await stopApiServer();
+    if (process.platform !== 'darwin') {
+      app.quit()
+    }
+  })
+
+  // In this file you can include the rest of your app"s specific main process
+  // code. You can also put them in separate files and require them here.
+
+  //Botones para el titleBar personalizado
+  ipcMain.on("minimize", (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getFocusedWindow();
+    if (win) win.minimize();
+  });
+
+  ipcMain.on("maximize", (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getFocusedWindow();
+    if (win) {
+      if (win.isMaximized()) {
+        win.unmaximize();
+      } else {
+        win.maximize();
+      }
+    }
+  });
+
+  ipcMain.on("close", (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getFocusedWindow();
+    if (win) {
+      if (mainWindow && win === mainWindow) {
+        if (process.platform !== 'darwin') {
+          app.quit();
+        }
+      } else {
+        win.close();
+      }
+    } else {
+      if (process.platform !== 'darwin') {
+        app.quit();
+      }
+    }
+  });
+
+  // Handlers de aplicación
+  AllIpcHandlers();
+}
 
 
 

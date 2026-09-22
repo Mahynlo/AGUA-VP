@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Avatar, Chip, Button, Tooltip, Tabs, Tab } from "@nextui-org/react";
+import { Avatar, Chip, Button, Tooltip } from "@heroui/react";
 import {
   HiUser, HiMail, HiShieldCheck, HiKey, HiDesktopComputer,
   HiClock, HiCheckCircle, HiExclamationCircle, HiGlobeAlt, HiInformationCircle,
   HiCamera, HiTrash, HiEye, HiEyeOff, HiBan, HiCalendar, HiCheck,
-  HiLockClosed, HiSparkles, HiOutlineIdentification
+  HiLockClosed, HiSparkles, HiOutlineIdentification, HiRefresh
 } from "react-icons/hi";
 import defaultAvatar from "../../assets/images/Avatar.png";
 import { useAuth } from "../../context/AuthContext";
@@ -96,7 +96,7 @@ export default function PerfilPage() {
     if (user?.id) {
       obtenerSesionesActivas(user.id);
     }
-  }, [user, obtenerSesionesActivas]);
+  }, [user?.id, obtenerSesionesActivas]);
 
   // Estados para cambio de contraseña
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
@@ -182,6 +182,20 @@ export default function PerfilPage() {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
+  const [refreshingSessions, setRefreshingSessions] = useState(false);
+
+  const handleRefreshSessions = async () => {
+    if (!user?.id) return;
+    setRefreshingSessions(true);
+    try {
+      await obtenerSesionesActivas(user.id);
+    } catch (error) {
+      console.error("Error al actualizar sesiones:", error);
+    } finally {
+      setRefreshingSessions(false);
+    }
+  };
+
   const handleCloseSession = async (sesionId) => {
     setClosingSession(sesionId);
     try {
@@ -191,9 +205,11 @@ export default function PerfilPage() {
       const response = await window.api.closeSpecificSession(sesionId, token);
 
       if (response.success) {
-        window.location.reload();
+        if (user?.id) {
+          await obtenerSesionesActivas(user.id);
+        }
       } else {
-        alert("Error: " + response.message);
+        alert("Error: " + (response.message || response.error || "No se pudo cerrar la sesión"));
       }
     } catch (error) {
       console.error("Error cerrar sesión:", error);
@@ -231,7 +247,7 @@ export default function PerfilPage() {
     <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
       
       {/* CONTENEDOR MAESTRO DE LA VISTA */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8 animate-in fade-in duration-300">
+      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-8">
 
         {/* ── 1. HEADER Y TARJETAS DE ESTADO (KPIs) ── */}
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8 pb-2">
@@ -324,9 +340,14 @@ export default function PerfilPage() {
                 {/* Avatar con Anillo y Beacon de Estado */}
                 <div className="relative mb-4 mt-2">
                   <Avatar
-                    src={avatarSrc || defaultAvatar}
                     className="w-28 h-28 text-large border-4 border-white dark:border-zinc-950 shadow-md bg-slate-200 dark:bg-zinc-800"
-                  />
+                  >
+                    <Avatar.Image
+                      src={avatarSrc || defaultAvatar}
+                      alt={user?.nombre || "Avatar"}
+                    />
+                    <Avatar.Fallback>{(user?.nombre || "U").charAt(0).toUpperCase()}</Avatar.Fallback>
+                  </Avatar>
                   <div className="absolute bottom-1 right-1 p-1 bg-white dark:bg-zinc-950 rounded-full shadow-sm">
                     <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 block border-2 border-white dark:border-zinc-950" />
                   </div>
@@ -344,10 +365,10 @@ export default function PerfilPage() {
                 <div className="mb-6">
                   <Chip 
                     size="sm" 
-                    variant="flat" 
+                    variant="ghost" 
                     className={`font-bold text-[10px] uppercase tracking-widest px-2.5 border ${rolBadgeConfig.bg}`}
-                    startContent={<HiShieldCheck className={`w-3.5 h-3.5 ml-1 ${rolBadgeConfig.iconColor}`} />}
                   >
+                    <HiShieldCheck className={`w-3.5 h-3.5 ml-1 ${rolBadgeConfig.iconColor}`} />
                     {rolBadgeConfig.label}
                   </Chip>
                 </div>
@@ -380,8 +401,8 @@ export default function PerfilPage() {
                     onPress={handleChangeAvatar}
                     isLoading={changingAvatar}
                     className="flex-1 font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm h-11 text-xs transition-transform active:scale-95"
-                    startContent={!changingAvatar && <HiCamera className="text-base" />}
                   >
+                    {!changingAvatar && <HiCamera className="text-base" />}
                     {changingAvatar ? "Cargando..." : "Cambiar foto"}
                   </Button>
                   {avatarSrc && (
@@ -404,31 +425,58 @@ export default function PerfilPage() {
           {/* ── COLUMNA DERECHA: Pestañas de Gestión (8 columnas) ── */}
           <div className="lg:col-span-8 flex flex-col w-full">
             
-            <Tabs
-              aria-label="Opciones de Perfil"
-              selectedKey={selectedTab}
-              onSelectionChange={handleTabChange}
-              variant="underlined"
-              classNames={{
-                base: "w-full border-b border-slate-200 dark:border-zinc-800 mb-6",
-                tabList: "gap-6 sm:gap-8 w-full relative rounded-none p-0",
-                cursor: "w-full bg-blue-600 dark:bg-blue-500 h-[2px]",
-                tab: "max-w-fit px-0 h-12",
-                tabContent: "group-data-[selected=true]:text-blue-600 dark:group-data-[selected=true]:text-blue-400 group-data-[selected=true]:font-bold text-slate-500 dark:text-zinc-400 font-medium text-sm transition-colors",
-              }}
-            >
-              
-              {/* TAB 1: DATOS DE IDENTIDAD */}
-              <Tab
-                key="identidad"
-                title={
-                  <div className="flex items-center gap-2">
-                    <HiOutlineIdentification className="text-lg" />
-                    <span>Datos de Cuenta</span>
-                  </div>
-                }
-              >
-                <div className="flex flex-col gap-6 pt-1 animate-in fade-in duration-300">
+            <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6">
+              <nav className="flex gap-6 sm:gap-8 w-full -mb-px">
+                {/* TAB 1: DATOS DE IDENTIDAD */}
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("identidad")}
+                  className={`flex items-center gap-2 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                    selectedTab === "identidad"
+                      ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold"
+                      : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                  }`}
+                >
+                  <HiOutlineIdentification className="text-lg" />
+                  <span>Datos de Cuenta</span>
+                </button>
+
+                {/* TAB 2: SEGURIDAD */}
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("seguridad")}
+                  className={`flex items-center gap-2 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                    selectedTab === "seguridad"
+                      ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold"
+                      : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                  }`}
+                >
+                  <HiKey className="text-lg" />
+                  <span>Seguridad y Contraseña</span>
+                </button>
+
+                {/* TAB 3: SESIONES */}
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("sesiones")}
+                  className={`flex items-center gap-2 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
+                    selectedTab === "sesiones"
+                      ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 font-bold"
+                      : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
+                  }`}
+                >
+                  <HiDesktopComputer className="text-lg" />
+                  <span>Dispositivos</span>
+                  <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black h-5 text-[10px] px-1.5 ml-1 rounded-md border border-blue-500/20 inline-flex items-center">
+                    {displaySessions.length || 1}
+                  </span>
+                </button>
+              </nav>
+            </div>
+
+            {/* TAB 1: DATOS DE IDENTIDAD */}
+            {selectedTab === "identidad" && (
+              <div className="flex flex-col gap-6 pt-1">
                   
                   {/* Card de Información de Cuenta */}
                   <div className="bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 flex flex-col gap-6">
@@ -495,7 +543,7 @@ export default function PerfilPage() {
                           <p className="text-sm font-black text-slate-800 dark:text-zinc-100 uppercase tracking-widest">
                             {user?.rol || 'No asignado'}
                           </p>
-                          <Chip size="sm" variant="flat" className={`text-[9px] font-bold uppercase tracking-widest h-5 px-1.5 ${rolBadgeConfig.bg}`}>
+                          <Chip size="sm" variant="ghost" className={`text-[9px] font-bold uppercase tracking-widest h-5 px-1.5 ${rolBadgeConfig.bg}`}>
                             Nivel Activo
                           </Chip>
                         </div>
@@ -509,19 +557,11 @@ export default function PerfilPage() {
                   </div>
 
                 </div>
-              </Tab>
+            )}
 
-              {/* TAB 2: SEGURIDAD Y CONTRASEÑA */}
-              <Tab
-                key="seguridad"
-                title={
-                  <div className="flex items-center gap-2">
-                    <HiKey className="text-lg" />
-                    <span>Seguridad y Contraseña</span>
-                  </div>
-                }
-              >
-                <div className="flex flex-col gap-6 pt-1 animate-in fade-in duration-300">
+            {/* TAB 2: SEGURIDAD Y CONTRASEÑA */}
+            {selectedTab === "seguridad" && (
+              <div className="flex flex-col gap-6 pt-1">
                   
                   <div className="bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 flex flex-col gap-6">
                     
@@ -655,37 +695,38 @@ export default function PerfilPage() {
                   </div>
 
                 </div>
-              </Tab>
+            )}
 
-              {/* TAB 3: DISPOSITIVOS Y SESIONES */}
-              <Tab
-                key="sesiones"
-                title={
-                  <div className="flex items-center gap-2">
-                    <HiDesktopComputer className="text-lg" />
-                    <span>Dispositivos</span>
-                    <Chip size="sm" variant="flat" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black h-5 text-[10px] px-1.5 ml-1 rounded-md border border-blue-500/20">
-                      {displaySessions.length || 1}
-                    </Chip>
-                  </div>
-                }
-              >
-                <div className="flex flex-col gap-6 pt-1 animate-in fade-in duration-300">
+            {/* TAB 3: DISPOSITIVOS Y SESIONES */}
+            {selectedTab === "sesiones" && (
+              <div className="flex flex-col gap-6 pt-1">
                   
                   <div className="bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 flex flex-col gap-6">
                     
-                    <div className="flex items-center gap-3 border-b border-slate-200 dark:border-zinc-800 pb-4">
-                      <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
-                        <HiDesktopComputer className="w-5 h-5" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                          <HiDesktopComputer className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-widest">
+                            Sesiones Activas y Dispositivos
+                          </h3>
+                          <p className="text-xs text-slate-400 dark:text-zinc-500 font-medium">
+                            Monitorea los equipos que han iniciado sesión con tu cuenta institucional.
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-widest">
-                          Sesiones Activas y Dispositivos
-                        </h3>
-                        <p className="text-xs text-slate-400 dark:text-zinc-500 font-medium">
-                          Monitorea los equipos que han iniciado sesión con tu cuenta institucional.
-                        </p>
-                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="font-bold text-xs h-9 rounded-xl text-slate-600 dark:text-zinc-400 hover:bg-slate-200/60 dark:hover:bg-zinc-800 self-start sm:self-auto"
+                        onPress={handleRefreshSessions}
+                        isLoading={refreshingSessions}
+                      >
+                        {!refreshingSessions && <HiRefresh className="w-4 h-4" />}
+                        Actualizar
+                      </Button>
                     </div>
                     
                     <div className="flex flex-col gap-4">
@@ -735,8 +776,8 @@ export default function PerfilPage() {
                                   className="font-bold shrink-0 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 rounded-xl h-9 px-3 text-xs"
                                   onPress={() => handleCloseSession(sesion.id)}
                                   isLoading={closingSession === sesion.id}
-                                  startContent={closingSession !== sesion.id && <HiBan className="w-4 h-4" />}
                                 >
+                                  {closingSession !== sesion.id && <HiBan className="w-4 h-4" />}
                                   Cerrar Sesión
                                 </Button>
                               ) : (
@@ -785,9 +826,7 @@ export default function PerfilPage() {
                   </div>
 
                 </div>
-              </Tab>
-
-            </Tabs>
+            )}
           </div>
 
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, CardBody, CardHeader, Chip, Checkbox, Button, Spinner } from "@nextui-org/react";
+import { Card, CardContent, CardHeader, Chip, Checkbox, Button, Spinner } from "@heroui/react";
 import { HiUsers, HiSearch, HiX, HiLocationMarker } from "react-icons/hi";
 import { IoWaterOutline } from "react-icons/io5";
 import SelectorPeriodoAvanzado from "../../../ui/SelectorPeriodoAvanzado";
@@ -35,10 +35,10 @@ const ClientesList = ({
   const todosSeleccionados = totalClientes > 0 && clientesSeleccionados.size === totalClientes;
 
   return (
-    <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm flex flex-col h-full min-h-[600px]">
+    <Card className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl shadow-sm flex flex-col h-full min-h-[600px] overflow-visible relative z-20">
       
       {/* ── HEADER: Título, Filtros y Selección ── */}
-      <CardHeader className="flex flex-col gap-5 pt-6 px-6 pb-5 border-b border-slate-100 dark:border-zinc-800/80">
+      <CardHeader className="flex flex-col gap-5 pt-6 px-6 pb-5 border-b border-slate-100 dark:border-zinc-800/80 overflow-visible relative z-30">
 
         {/* Fila 1: Título y Selección Masiva */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
@@ -59,7 +59,7 @@ const ClientesList = ({
           <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
             <Chip
               size="sm"
-              variant="flat"
+              variant="ghost"
               className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-mono font-black text-xs px-2 h-7 rounded-lg"
             >
               {clientesSeleccionados.size} / {totalClientes}
@@ -129,7 +129,7 @@ const ClientesList = ({
       </CardHeader>
 
       {/* ── BODY: Lista de Tarjetas ── */}
-      <CardBody className="p-4 bg-slate-50/40 dark:bg-black/20 flex-1">
+      <CardContent className="p-4 bg-slate-50/40 dark:bg-black/20 flex-1">
         <div className="max-h-[560px] overflow-y-auto space-y-2.5 pr-1 custom-scrollbar">
           
           {/* Estado de Carga */}
@@ -235,7 +235,7 @@ const ClientesList = ({
             })
           )}
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };

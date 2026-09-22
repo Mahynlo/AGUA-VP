@@ -1,4 +1,4 @@
-import { Modal } from "flowbite-react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { useState, useEffect } from "react";
 import {
   HiCurrencyDollar,
@@ -21,7 +21,7 @@ const premiumModalTheme = {
   },
   header: {
     base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
-    close: { base: "absolute top-6 right-6 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors", icon: "h-5 w-5" }
+    close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
   body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
   footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
@@ -121,7 +121,7 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
   return (
     <>
       <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible>
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl">
               <HiDocumentText className="w-6 h-6" />
@@ -135,9 +135,9 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
               )}
             </div>
           </div>
-        </Modal.Header>
+        </ModalHeader>
 
-        <Modal.Body>
+        <ModalBody>
           {loading && (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-300 border-t-blue-600" />
@@ -288,13 +288,13 @@ const ModalParcialidadesConvenio = ({ isOpen, onClose, convenioId, onPagoExitoso
               </div>
             </div>
           )}
-        </Modal.Body>
+        </ModalBody>
 
-        <Modal.Footer>
+        <ModalFooter>
           <button type="button" onClick={onClose} className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-6 h-11 transition-colors">
             Cerrar
           </button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <ModalPagoParcialidad

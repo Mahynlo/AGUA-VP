@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Spinner } from "@nextui-org/react";
+import { Button, Spinner } from "@heroui/react";
 import { 
   HiMail, 
   HiKey, 
@@ -336,7 +336,7 @@ export default function RecuperarPassword() {
                 {/* Botones de acción en grid horizontal */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <Button
-                    variant="flat"
+                    variant="ghost"
                     className="h-[50px] w-full font-bold text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 rounded-xl transition-colors border border-slate-200/80 dark:border-zinc-800 order-2 sm:order-1"
                     onPress={() => setStep('request')}
                     isDisabled={loading}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Card, CardBody, Button, Chip } from "@nextui-org/react";
+import { Card, CardContent, Button, Chip } from "@heroui/react";
 import { HiChevronLeft, HiChevronRight, HiCalendar, HiClock } from "react-icons/hi";
 import { useTarifas } from "../../context/TarifasContext";
 import { obtenerFeriadosMexico, esDiaHabil } from "../../utils/diasHabiles";
@@ -296,7 +296,7 @@ const CalendarComponent = () => {
             
             {/* ---------------- CALENDARIO PRINCIPAL ---------------- */}
             <Card className="flex-1 w-full min-h-[450px] lg:h-full border-none bg-white dark:bg-zinc-950 shadow-sm border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
-                <CardBody className="p-4 sm:p-5 lg:p-6 h-full flex flex-col">
+                <CardContent className="p-4 sm:p-5 lg:p-6 h-full flex flex-col">
                     
                     <div className="flex items-center gap-3 mb-4 flex-shrink-0">
                         <div className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
@@ -315,10 +315,9 @@ const CalendarComponent = () => {
                     <div className="flex justify-between items-center mb-4 bg-slate-50/80 dark:bg-zinc-900/50 p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 flex-shrink-0">
                         <Button
                             isIconOnly
-                            variant="light"
-                            radius="full"
+                            variant="ghost"
                             onClick={() => changeMonth(-1)}
-                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8"
+                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8 rounded-full"
                         >
                             <HiChevronLeft className="w-5 h-5" />
                         </Button>
@@ -329,10 +328,9 @@ const CalendarComponent = () => {
                         
                         <Button
                             isIconOnly
-                            variant="light"
-                            radius="full"
+                            variant="ghost"
                             onClick={() => changeMonth(1)}
-                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8"
+                            className="text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-xs h-8 w-8 min-w-8 rounded-full"
                         >
                             <HiChevronRight className="w-5 h-5" />
                         </Button>
@@ -409,12 +407,12 @@ const CalendarComponent = () => {
                             );
                         })}
                     </div>
-                </CardBody>
+                </CardContent>
             </Card>
 
             {/* ---------------- PANEL DE EVENTOS LATERAL ---------------- */}
             <Card className="w-full min-h-[300px] lg:min-h-0 lg:w-72 xl:w-80 border-none bg-white dark:bg-zinc-950 shadow-sm border border-slate-200 dark:border-zinc-800 rounded-2xl flex-shrink-0">
-                <CardBody className="p-4 sm:p-5 h-full flex flex-col">
+                <CardContent className="p-4 sm:p-5 h-full flex flex-col">
                     
                     <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0">
                         <div className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl">
@@ -465,7 +463,7 @@ const CalendarComponent = () => {
                                             {event.title}
                                         </h4>
                                     </div>
-                                    <Chip size="sm" color={event.color} variant="flat" className="h-5 px-1.5 text-[9px] font-bold uppercase mb-2">
+                                    <Chip size="sm" color={event.color} variant="ghost" className="h-5 px-1.5 text-[9px] font-bold uppercase mb-2">
                                         {event.tipo === 'vencimiento' ? 'Vencimiento'
                                             : event.tipo === 'corte' ? 'Corte'
                                             : event.tipo === 'lectura' ? 'Lectura'
@@ -493,7 +491,7 @@ const CalendarComponent = () => {
                             </div>
                         )}
                     </div>
-                </CardBody>
+                </CardContent>
             </Card>
 
         </div>
