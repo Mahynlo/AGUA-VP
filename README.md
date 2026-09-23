@@ -1,123 +1,121 @@
-# AGUA-VP
+<div align="center">
+  <img src="resources/icon.png" width="120" height="120" alt="AGUA-VP" style="border-radius: 24px;" />
 
-**AGUA-VP** es un sistema de escritorio para la gestión administrativa de comités o entidades locales de agua potable. Digitaliza el ciclo completo del servicio: desde registrar clientes y medidores, tomar lecturas en campo, generar facturas y cobrar pagos, hasta imprimir recibos y producir reportes financieros.
+  # AGUA-VP
+  ### Sistema de Gestión de Agua Potable
 
-La aplicación corre completamente en la computadora del usuario — no requiere internet para operar. Toda la información se guarda localmente en una base de datos SQLite embebida.
-
----
-
-## Módulos principales
-
-| Módulo | Qué hace |
-|---|---|
-| [Clientes](docs/modulo-clientes.md) | Registro y gestión de usuarios del servicio |
-| [Medidores](docs/modulo-medidores.md) | Inventario de medidores físicos y su ubicación |
-| [Lecturas y Rutas](docs/modulo-lecturas.md) | Captura de consumo mensual por rutas |
-| [Tarifas](docs/modulo-tarifas.md) | Configuración de precios por rangos de consumo |
-| [Pagos y Facturación](docs/modulo-pagos.md) | Cobros, convenios, cortes y deudores |
-| [Impresión y Reportes](docs/modulo-impresion.md) | Recibos individuales y reportes generales |
-| [Administración](docs/modulo-administracion.md) | Usuarios del sistema, permisos, respaldos y logs |
+  [![Versión](https://img.shields.io/badge/versión-1.3.0%20Estable-0078D6.svg)](docs/releases_changelog.md)
+  [![Plataforma](https://img.shields.io/badge/plataforma-Windows-0078D6.svg?logo=windows)]()
+  [![Modo](https://img.shields.io/badge/modo-Offline--First-10B981.svg)]()
+</div>
 
 ---
 
-## Flujo de trabajo típico
+## 📌 ¿Qué es AGUA-VP?
+
+**AGUA-VP** es una aplicación de escritorio diseñada para la administración de comités y organismos locales de agua potable. Permite gestionar el ciclo operativo del servicio: padrón de clientes, control de medidores, captura de lecturas por rutas, cálculo de consumos, cobro de recibos y emisión de reportes.
+
+La aplicación funciona de forma **local (offline)**; no requiere conexión a internet para su operación diaria y almacena sus datos en una base de datos SQLite integrada en el equipo.
+
+---
+
+## 🏛️ Estructura general de la aplicación
+
+La aplicación está compuesta por tres partes principales:
+
+- **Interfaz de usuario (Frontend):** Desarrollada con React, Vite y Tailwind CSS, ofreciendo una navegación ágil y modular con soporte de modo oscuro.
+- **Proceso de escritorio (Electron):** Controla la ventana de la aplicación, el ciclo de vida del sistema, respaldos automáticos y la comunicación segura con el sistema operativo.
+- **Base de datos y lógica local (Backend embebido):** Servidor local interno con Express y base de datos SQLite (Better-SQLite3) con migraciones automáticas para el resguardo de la información.
+
+---
+
+## 📦 Módulos del sistema
+
+Si requieres conocer a detalle el funcionamiento de cada apartado, consulta su documentación:
+
+| Módulo | Descripción general | Documentación |
+|---|---|:---:|
+| **Clientes** | Registro de usuarios, asignación de predios, medidores y tarifas | [Ver guía](docs/modulo-clientes.md) |
+| **Medidores** | Inventario de equipos físicos, ubicación y estado | [Ver guía](docs/modulo-medidores.md) |
+| **Lecturas y Rutas** | Organización de recorridos y captura de consumo | [Ver guía](docs/modulo-lecturas.md) |
+| **Tarifas** | Configuración de precios por rangos de consumo | [Ver guía](docs/modulo-tarifas.md) |
+| **Pagos y Facturación** | Cobranza en ventanilla, abonos y convenios | [Ver guía](docs/modulo-pagos.md) |
+| **Impresión y Reportes** | Emisión de recibos de pago y reportes generales | [Ver guía](docs/modulo-impresion.md) |
+| **Administración** | Usuarios del sistema, permisos y respaldos | [Ver guía](docs/modulo-administracion.md) |
+
+---
+
+## 🔄 Flujo de trabajo básico
 
 ```
-1. Registrar clientes y asignarles un medidor + tarifa
+1. Registrar clientes y vincularles su medidor y tarifa
         ↓
-2. Crear una ruta de lectura (agrupación de medidores)
+2. Organizar la ruta de recorrido
         ↓
-3. Capturar las lecturas del mes → el sistema calcula el consumo
+3. Capturar las lecturas del período (el sistema calcula el consumo)
         ↓
-4. Generar los Recibos de la ruta
+4. Generar las facturas del mes
         ↓
-5. Registrar los pagos cuando los clientes acuden a pagar
+5. Registrar los pagos en ventanilla
         ↓
-6. Imprimir recibos de pago y reportes del período
+6. Imprimir recibos y reportes
 ```
 
 ---
 
-## Tecnologías
+## 💻 Requisitos del sistema
 
-- **Electron** — empaqueta la app como programa de escritorio nativo
-- **React + Vite** — interfaz de usuario dinámica y rápida
-- **Tailwind CSS + Flowbite** — diseño visual moderno con modo oscuro
-- **SQLite** (vía API embebida) — base de datos local, sin servidor externo
-- **Node.js / Express** — lógica de negocio embebida en el proceso principal
+- **Sistema operativo:** Windows 10 o Windows 11 (64 bits).
+- **Memoria RAM:** 4 GB mínimo (8 GB recomendado).
+- **Espacio en disco:** 500 MB libres.
+- **Para desarrollo:** Node.js 18+ y npm 9+.
 
 ---
 
-## Configuración del proyecto
-
-### Requisitos previos
-
-- Node.js 18 o superior
-- npm 9 o superior
-
-### Instalar dependencias
+## 🛠️ Comandos de desarrollo
 
 ```bash
+# Instalar dependencias
 npm install
-```
 
-### Correr en modo desarrollo
-
-```bash
+# Iniciar en modo desarrollo
 npm run dev
-```
 
-Abre la ventana de Electron con hot-reload para React y recarga automática del proceso principal.
-
-### Compilar para producción (Windows)
-
-```bash
+# Compilar instalador para Windows (.exe)
 npm run build:win
+
+# Revisar formato y código
+npm run lint
+npm run format
 ```
 
-Genera un instalador `.exe` en la carpeta `dist/`.
-
-### Otros comandos
-
-```bash
-npm run lint       # Revisa y corrige el código con ESLint
-npm run format     # Formatea el código con Prettier
-```
+Los instaladores generados se guardan en la carpeta `dist/`.
 
 ---
 
-## Publicar una nueva versión
-
-1. Editar el campo `"version"` en `package.json`
-2. Hacer commit y push del cambio
-3. Ejecutar `npm run release:push` — crea el tag y lo sube a GitHub
-4. GitHub Actions compila y publica el instalador automáticamente
-
-Ver más detalles en [docs/releases.md](docs/releases.md).
-
----
-
-## Estructura del proyecto
+## 📁 Estructura del proyecto
 
 ```
 AguaVP/
+├── build/               # Recursos de empaquetado (iconos del instalador)
+├── docs/                # Documentación detallada por módulo
+├── resources/           # Recursos estáticos de la aplicación
 ├── src/
-│   ├── main/           — Proceso principal de Electron (Node.js)
-│   │   ├── ipc/        — Comunicación con la interfaz (un archivo por módulo)
-│   │   └── managers/   — API embebida, logs, actualizaciones
-│   ├── preload/        — Puente seguro entre main y renderer
-│   └── renderer/       — Interfaz React (SPA)
+│   ├── main/            # Proceso principal de Electron (Node.js)
+│   │   ├── ipc/         # Canales de comunicación por módulo
+│   │   └── managers/    # Servidor embebido, respaldos y logs
+│   ├── preload/         # Puente seguro entre el sistema y la interfaz
+│   └── renderer/        # Interfaz de usuario (React + Vite)
 │       └── src/
-│           ├── components/vistas/  — Páginas de cada módulo
-│           ├── context/            — Estado global por dominio
-│           ├── hooks/              — Lógica reutilizable
-│           └── utils/              — Funciones auxiliares
-├── docs/               — Documentación detallada por módulo
-└── package.json
+│           ├── components/  # Vistas y componentes visuales
+│           ├── context/     # Estado global por dominio
+│           └── hooks/       # Lógica reutilizable
+├── package.json         # Dependencias y scripts
+└── electron-builder.yml # Configuración de empaquetado para Windows
 ```
 
 ---
 
-## IDE recomendado
+## 📄 Notas de versión
 
-[Visual Studio Code](https://code.visualstudio.com/) con las extensiones **ESLint** y **Prettier**.
+El historial de cambios y notas de cada lanzamiento se encuentra en el [Registro de Versiones (Changelog)](docs/releases_changelog.md).
