@@ -12,3 +12,5 @@ cache_rutas*
 claude.md
 CLAUDE.md
 .claude*
+test-results/
+playwright-report/
