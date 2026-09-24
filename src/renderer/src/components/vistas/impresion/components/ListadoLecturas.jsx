@@ -151,7 +151,12 @@ const ListadoLecturas = ({
 
                         /* Lista de Elementos */
                         filtrados.map((item, idx) => {
-                            const lecturaAteriorValor = typeof item.lectura_anterior === 'object' ? (item.lectura_anterior?.valor ?? 0) : (item.lectura_anterior ?? 0);
+                            const lecturaAteriorValor = typeof item.lectura_anterior === 'object' 
+                                ? (item.lectura_anterior?.lectura_fisica ?? item.lectura_anterior?.valor ?? 0) 
+                                : (item.lectura_anterior ?? 0);
+                            const esCambio = typeof item.lectura_anterior === 'object' && !!item.lectura_anterior?.es_cambio_medidor;
+                            const esNuevo = typeof item.lectura_anterior === 'object' && !!item.lectura_anterior?.es_medidor_nuevo;
+                            const medidorAnterior = item.lectura_anterior?.medidor_anterior_serie;
                             
                             return (
                                 <div
@@ -185,11 +190,35 @@ const ListadoLecturas = ({
                                                         </span>
                                                     )}
                                                     
-                                                    <span className="flex items-center gap-1 shrink-0">
+                                                    <span className="flex items-center gap-1.5 shrink-0">
                                                         <span className="text-slate-400 dark:text-zinc-500">Medidor:</span> 
-                                                        <span className="font-mono font-bold text-slate-700 dark:text-zinc-300">
-                                                            {item.medidor?.serie || item.medidor || "S/N"}
-                                                        </span>
+                                                        {item.sin_medidor || (!item.medidor && item.medidor !== 0) ? (
+                                                            <span className="text-xs font-semibold text-amber-600 dark:text-amber-500">
+                                                                Sin medidor
+                                                            </span>
+                                                        ) : (
+                                                            <>
+                                                                <span className="font-mono font-bold text-slate-700 dark:text-zinc-300">
+                                                                    {item.medidor?.serie || item.medidor || "S/N"}
+                                                                </span>
+                                                                {esCambio && (
+                                                                    <span 
+                                                                        className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 uppercase tracking-wider"
+                                                                        title={medidorAnterior ? `Cambio de medidor (Anterior: ${medidorAnterior})` : 'Cambio de medidor'}
+                                                                    >
+                                                                        Cambio
+                                                                    </span>
+                                                                )}
+                                                                {!esCambio && esNuevo && (
+                                                                    <span 
+                                                                        className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wider"
+                                                                        title="Medidor nuevo"
+                                                                    >
+                                                                        Nuevo
+                                                                    </span>
+                                                                )}
+                                                            </>
+                                                        )}
                                                     </span>
                                                 </div>
                                             </div>
@@ -200,10 +229,16 @@ const ListadoLecturas = ({
                                             <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-widest">
                                                 Lec. Anterior
                                             </span>
-                                            <div className="flex items-center gap-1.5 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-xl text-sky-700 dark:text-sky-400 font-mono font-bold text-sm">
-                                                <IoWaterOutline className="text-sky-500" />
-                                                {lecturaAteriorValor}
-                                            </div>
+                                            {item.sin_medidor || !item.lectura_anterior ? (
+                                                <span className="text-xs font-bold text-slate-400 dark:text-zinc-600 px-3 py-1">
+                                                    —
+                                                </span>
+                                            ) : (
+                                                <div className="flex items-center gap-1.5 bg-sky-500/10 border border-sky-500/20 px-2.5 py-1 rounded-xl text-sky-700 dark:text-sky-400 font-mono font-bold text-sm">
+                                                    <IoWaterOutline className="text-sky-500" />
+                                                    {lecturaAteriorValor}
+                                                </div>
+                                            )}
                                         </div>
 
                                     </div>

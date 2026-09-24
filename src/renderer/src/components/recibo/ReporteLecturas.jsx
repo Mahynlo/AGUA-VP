@@ -163,13 +163,12 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
                 const serie      = sinMedidor ? null : (medidorObj ? (medidorObj.serie || medidorObj.numero_serie || 'S/N') : (item.medidor || 'S/N'));
                 const direccion  = medidorObj?.ubicacion || item.direccion || '';
                 
-                // Extraemos consumo y preparamos la variable para los 5 dígitos
+                // Extraemos consumo y lectura física anterior del medidor activo
                 const lectAntObj = typeof item.lectura_anterior === 'object' ? item.lectura_anterior : null;
                 const consumoAnt = sinMedidor ? '' : (lectAntObj?.consumo_registrado ?? (typeof item.lectura_anterior === 'number' ? item.lectura_anterior : ''));
-                
-                // NOTA: Esta variable "lecturaFisicaAnt" está lista para cuando la extraigas de la BD. 
-                // Por ahora será vacía (o mostrará un guión si no existe).
-                const lecturaFisicaAnt = sinMedidor ? '' : (lectAntObj?.lectura_fisica ?? '');
+                const lecturaFisicaAnt = sinMedidor ? '' : (lectAntObj?.lectura_fisica ?? lectAntObj?.valor ?? '');
+                const esCambioMedidor = !sinMedidor && !!lectAntObj?.es_cambio_medidor;
+                const esMedidorNuevo = !sinMedidor && !esCambioMedidor && !!lectAntObj?.es_medidor_nuevo;
 
                 const isEven     = idx % 2 === 0;
                 const bgBase     = sinMedidor ? '#fff7ed' : (isEven ? '#ffffff' : '#f5f8ff');
@@ -202,7 +201,7 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
                                         stroke="currentColor" 
                                         strokeWidth="2.5" 
                                         strokeLinecap="round" 
-                                        strokeLinejoin="round"
+                                        strokeLinejoin="round" 
                                         style={{ flexShrink: 0 }}
                                     >
                                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -218,7 +217,43 @@ const DataTable = ({ items, offset = 0, ordenarPor = 'numero_predio' }) => (
                             {sinMedidor ? (
                                 <span style={{ fontSize: '8px', fontWeight: 700, color: '#c2410c', textTransform: 'uppercase' }}>Sin medidor</span>
                             ) : (
-                                <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{serie}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                                    <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{serie}</span>
+                                    {esCambioMedidor && (
+                                        <span style={{
+                                            fontSize: '6.5px',
+                                            fontWeight: 800,
+                                            color: '#92400e',
+                                            background: '#fef3c7',
+                                            border: '1px solid #fde68a',
+                                            padding: '0.5px 3px',
+                                            borderRadius: '2px',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.04em',
+                                            width: 'fit-content',
+                                            lineHeight: '1.2'
+                                        }}>
+                                            Cambio
+                                        </span>
+                                    )}
+                                    {esMedidorNuevo && (
+                                        <span style={{
+                                            fontSize: '6.5px',
+                                            fontWeight: 800,
+                                            color: '#065f46',
+                                            background: '#d1fae5',
+                                            border: '1px solid #a7f3d0',
+                                            padding: '0.5px 3px',
+                                            borderRadius: '2px',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.04em',
+                                            width: 'fit-content',
+                                            lineHeight: '1.2'
+                                        }}>
+                                            Nuevo
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </td>
                         
