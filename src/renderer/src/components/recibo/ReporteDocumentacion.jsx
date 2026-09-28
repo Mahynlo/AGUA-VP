@@ -86,7 +86,16 @@ const ReporteDocumentacion = () => {
                           (renderedFigures.length >= totalExpectedDiagrams) || 
                           (status.rendered + status.failed >= totalExpectedDiagrams);
 
-      const isReady = noPendingInCoordinator && noLoadingInDom && expectedMet;
+      // 4. Comprobación de que todas las imágenes <img> hayan terminado de cargar
+      const docImages = Array.from(document.querySelectorAll('.doc-print-root img'));
+      const pendingImages = docImages.filter(img => !img.complete || img.naturalWidth === 0);
+      const noPendingImages = pendingImages.length === 0;
+
+      // 5. Comprobación de que no haya elementos cargando imágenes activamente
+      const imageLoadingElements = document.querySelectorAll('[data-image-loading="true"]');
+      const noLoadingImagesInDom = imageLoadingElements.length === 0;
+
+      const isReady = noPendingInCoordinator && noLoadingInDom && expectedMet && noPendingImages && noLoadingImagesInDom;
 
       if (isReady) {
         readyTriggered = true;
@@ -248,6 +257,15 @@ const ReporteDocumentacion = () => {
             margin-bottom: 8px !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
+          }
+          img {
+            max-width: 100% !important;
+            height: auto !important;
+            display: block !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .mermaid-svg-container {
             padding: 4px !important;

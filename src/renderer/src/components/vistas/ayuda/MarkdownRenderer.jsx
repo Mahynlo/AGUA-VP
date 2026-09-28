@@ -40,25 +40,29 @@ export const extractTextFromChildren = (node) => {
 
 // Componente para imágenes con soporte de rutas relativas, Lightbox Zoom y Placeholder Informativo
 const DocImage = ({ src, alt, ...props }) => {
+  const isDirect = src && (src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://'));
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [imgSrc, setImgSrc] = useState(src);
-  const [loading, setLoading] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(isDirect ? src : null);
+  const [loading, setLoading] = useState(!isDirect && Boolean(src));
+  const [hasError, setHasError] = useState(!src);
 
   useEffect(() => {
-    setHasError(false);
     if (!src) {
       setHasError(true);
+      setLoading(false);
       return;
     }
     if (src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) {
       setImgSrc(src);
+      setHasError(false);
+      setLoading(false);
       return;
     }
 
     // Si es una ruta relativa local, cargar vía IPC si está disponible
     if (window.docsApp?.loadDocumentationImage) {
       setLoading(true);
+      setHasError(false);
       window.docsApp.loadDocumentationImage(src)
         .then((res) => {
           if (res?.success && res.dataUri) {
@@ -75,6 +79,7 @@ const DocImage = ({ src, alt, ...props }) => {
         .finally(() => setLoading(false));
     } else {
       setImgSrc(src);
+      setLoading(false);
     }
   }, [src]);
 
@@ -116,23 +121,23 @@ const DocImage = ({ src, alt, ...props }) => {
           className="relative group cursor-zoom-in overflow-hidden rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-slate-100/50 dark:bg-zinc-900/50 shadow-md hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300"
         >
           {loading ? (
-            <div className="h-48 flex items-center justify-center bg-slate-100 dark:bg-zinc-900 animate-pulse">
+            <div className="h-48 flex items-center justify-center bg-slate-100 dark:bg-zinc-900 animate-pulse" data-image-loading="true">
               <span className="text-xs font-bold text-slate-400">Cargando captura...</span>
             </div>
-          ) : (
+          ) : imgSrc ? (
             <img
               src={imgSrc}
               alt={alt || "Captura del sistema"}
-              loading="lazy"
-              decoding="async"
+              loading="eager"
+              decoding="sync"
               onError={() => setHasError(true)}
               className="w-full h-auto object-contain max-h-[520px] transition-transform duration-300 group-hover:scale-[1.015]"
               {...props}
             />
-          )}
+          ) : null}
 
-          {/* Overlay hover con botón de zoom */}
-          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+          {/* Overlay hover con botón de zoom (oculto en impresión) */}
+          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none print:hidden">
             <span className="px-3.5 py-2 rounded-xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-slate-800 dark:text-zinc-100 text-xs font-bold shadow-lg flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
               <HiZoomIn className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               Clic para ampliar captura
