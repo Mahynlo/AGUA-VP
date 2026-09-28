@@ -1069,6 +1069,44 @@ export default function IpcHandlers() {
         '.ico': 'image/x-icon'
       }
 
+      const altExtensions = ['.avif', '.webp', '.png', '.jpg', '.jpeg', '.svg']
+
+      const resolveImageFile = (candPath) => {
+        if (!candPath) return null
+        if (fs.existsSync(candPath) && fs.statSync(candPath).isFile()) {
+          return candPath
+        }
+        const dir = path.dirname(candPath)
+        const baseNoExt = path.basename(candPath, path.extname(candPath))
+        for (const ext of altExtensions) {
+          const altCand = path.join(dir, `${baseNoExt}${ext}`)
+          if (fs.existsSync(altCand) && fs.statSync(altCand).isFile()) {
+            return altCand
+          }
+        }
+        return null
+      }
+
+      const findImageRecursive = (dir, targetBaseNoExt) => {
+        try {
+          if (!fs.existsSync(dir)) return null
+          const entries = fs.readdirSync(dir, { withFileTypes: true })
+          for (const ent of entries) {
+            const full = path.join(dir, ent.name)
+            if (ent.isDirectory()) {
+              const res = findImageRecursive(full, targetBaseNoExt)
+              if (res) return res
+            } else if (ent.isFile()) {
+              const entBaseNoExt = path.basename(ent.name, path.extname(ent.name)).toLowerCase()
+              if (entBaseNoExt === targetBaseNoExt.toLowerCase()) {
+                return full
+              }
+            }
+          }
+        } catch {}
+        return null
+      }
+
       const tryFindImage = (imgPath) => {
         if (
           !imgPath ||
@@ -1103,17 +1141,33 @@ export default function IpcHandlers() {
         ]
 
         for (const cand of candidates) {
-          if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
-            const ext = path.extname(cand).toLowerCase()
+          const resolved = resolveImageFile(cand)
+          if (resolved) {
+            const ext = path.extname(resolved).toLowerCase()
             const mime = mimeTypes[ext] || 'image/png'
             try {
-              const buf = fs.readFileSync(cand)
+              const buf = fs.readFileSync(resolved)
               return `data:${mime};base64,${buf.toString('base64')}`
             } catch (e) {
-              console.warn(`Error leyendo imagen ${cand}:`, e)
+              console.warn(`Error leyendo imagen ${resolved}:`, e)
             }
           }
         }
+
+        // Búsqueda exhaustiva en la carpeta imágenes de ayuda
+        const baseNoExt = path.basename(clean, path.extname(clean))
+        const found = findImageRecursive(path.join(ayudaPath, 'imagenes'), baseNoExt)
+        if (found) {
+          const ext = path.extname(found).toLowerCase()
+          const mime = mimeTypes[ext] || 'image/png'
+          try {
+            const buf = fs.readFileSync(found)
+            return `data:${mime};base64,${buf.toString('base64')}`
+          } catch (e) {
+            console.warn(`Error leyendo imagen encontrada ${found}:`, e)
+          }
+        }
+
         return null
       }
 
@@ -1208,16 +1262,65 @@ export default function IpcHandlers() {
         '.gif': 'image/gif',
         '.ico': 'image/x-icon'
       }
+      const altExtensions = ['.avif', '.webp', '.png', '.jpg', '.jpeg', '.svg']
 
       for (const cand of candidates) {
+        let fileToRead = null
         if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
-          const ext = path.extname(cand).toLowerCase()
+          fileToRead = cand
+        } else {
+          const dir = path.dirname(cand)
+          const baseNoExt = path.basename(cand, path.extname(cand))
+          for (const ext of altExtensions) {
+            const altCand = path.join(dir, `${baseNoExt}${ext}`)
+            if (fs.existsSync(altCand) && fs.statSync(altCand).isFile()) {
+              fileToRead = altCand
+              break
+            }
+          }
+        }
+
+        if (fileToRead) {
+          const ext = path.extname(fileToRead).toLowerCase()
           const mime = mimeTypes[ext] || 'image/png'
-          const buf = fs.readFileSync(cand)
+          const buf = fs.readFileSync(fileToRead)
           return {
             success: true,
             dataUri: `data:${mime};base64,${buf.toString('base64')}`
           }
+        }
+      }
+
+      // Búsqueda recursiva en ayudaPath/imagenes
+      const baseNoExt = path.basename(clean, path.extname(clean))
+      const findImageRecursive = (dir, targetBaseNoExt) => {
+        try {
+          if (!fs.existsSync(dir)) return null
+          const entries = fs.readdirSync(dir, { withFileTypes: true })
+          for (const ent of entries) {
+            const full = path.join(dir, ent.name)
+            if (ent.isDirectory()) {
+              const res = findImageRecursive(full, targetBaseNoExt)
+              if (res) return res
+            } else if (ent.isFile()) {
+              const entBaseNoExt = path.basename(ent.name, path.extname(ent.name)).toLowerCase()
+              if (entBaseNoExt === targetBaseNoExt.toLowerCase()) {
+                return full
+              }
+            }
+          }
+        } catch {}
+        return null
+      }
+
+      const found = findImageRecursive(path.join(ayudaPath, 'imagenes'), baseNoExt)
+      if (found) {
+        const ext = path.extname(found).toLowerCase()
+        const mime = mimeTypes[ext] || 'image/png'
+        const buf = fs.readFileSync(found)
+        return {
+          success: true,
+          dataUri: `data:${mime};base64,${buf.toString('base64')}`
         }
       }
 
