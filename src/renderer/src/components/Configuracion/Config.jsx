@@ -148,7 +148,7 @@ export function Config() {
                 <div className="fixed top-16 inset-x-0 bottom-0 z-[9990] overflow-hidden" style={{ WebkitAppRegion: "no-drag" }}>
                     {/* Backdrop Oscuro confinado bajo el navbar */}
                     <div 
-                        className="fixed top-16 inset-x-0 bottom-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200"
+                        className="fixed top-16 inset-x-0 bottom-0 bg-slate-900/60 dark:bg-black/80 transition-opacity animate-in fade-in duration-200"
                         onClick={onClose}
                         aria-hidden="true"
                     />
