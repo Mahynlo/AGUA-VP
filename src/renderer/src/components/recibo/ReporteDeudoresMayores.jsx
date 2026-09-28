@@ -263,6 +263,41 @@ const ReporteDeudoresMayores = () => {
     [rows]
   );
 
+  const totalRecibosRezago = useMemo(
+    () => rows.reduce((acc, r) => acc + Number(r.recibosConDeuda || 0), 0),
+    [rows]
+  );
+
+  const deudaPromedio = useMemo(
+    () => (rows.length > 0 ? totalAdeudoGeneral / rows.length : 0),
+    [rows, totalAdeudoGeneral]
+  );
+
+  const maxDeuda = useMemo(
+    () => rows.reduce((max, r) => Math.max(max, Number(r.totalAdeudo || 0)), 0),
+    [rows]
+  );
+
+  const fechaHoyLarga = useMemo(() => {
+    const f = new Date().toLocaleDateString("es-MX", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    return f.charAt(0).toUpperCase() + f.slice(1);
+  }, []);
+
+  const fechaHoyCorta = useMemo(
+    () => new Date().toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" }),
+    []
+  );
+
+  const horaHoy = useMemo(
+    () => new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }),
+    []
+  );
+
   if (!isReady) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
@@ -270,6 +305,8 @@ const ReporteDeudoresMayores = () => {
       </div>
     );
   }
+
+  let globalRowCounter = 0;
 
   return (
     <>
@@ -305,17 +342,16 @@ const ReporteDeudoresMayores = () => {
 
       <div className="bg-slate-50 dark:bg-black/20 min-h-screen py-8 px-4 flex justify-center print:p-0 print:bg-white print:block">
         <div
-          className="reporte-deudores-wrap w-full max-w-[980px] bg-white rounded-2xl shadow-2xl overflow-hidden p-6 print:p-0 print:shadow-none print:rounded-none print:max-w-none"
-          style={{ fontFamily: "'Segoe UI', Arial, sans-serif", color: "#111827" }}
+          className="reporte-deudores-wrap w-full max-w-[960px] bg-white rounded-2xl shadow-2xl overflow-hidden p-6 print:p-0 print:shadow-none print:rounded-none print:max-w-none"
+          style={{ fontFamily: "'Segoe UI', Arial, sans-serif", color: "#0f172a" }}
         >
-          
           {/* TABLA MAESTRA PARA CONTROLAR EL FLUJO DE IMPRESIÓN */}
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               <tr>
                 <td>
-                  {/* --- INICIO DEL CONTENIDO ORIGINAL --- */}
-                  <div style={{ marginBottom: "14px" }}>
+                  {/* ── 1. ENCABEZADO INSTITUCIONAL OFICIAL ── */}
+                  <div style={{ marginBottom: "8px" }}>
                     <div
                       style={{
                         background: "linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #1d4ed8 100%)",
@@ -327,13 +363,19 @@ const ReporteDeudoresMayores = () => {
                         borderRadius: "8px 8px 0 0",
                       }}
                     >
-                      <img src={logoSrc} alt="Escudo" style={{ height: "76px", width: "76px", objectFit: "contain", flexShrink: 0 }} />
+                      {logoSrc ? (
+                        <img src={logoSrc} alt="Escudo" style={{ height: "68px", width: "68px", objectFit: "contain", flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ height: "68px", width: "68px", background: "rgba(255,255,255,0.2)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>
+                          AGUA VP
+                        </div>
+                      )}
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                        <div style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "0.03em", textTransform: "uppercase" }}>
                           Comisión Municipal de Agua Potable y Alcantarillado
                         </div>
-                        <div style={{ fontSize: "11px", opacity: 0.88, marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                          Villa Pesqueira, Sonora — Reporte de mayores deudores
+                        <div style={{ fontSize: "11px", color: "#dbeafe", marginTop: "3px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                          Villa Pesqueira, Sonora — Reporte de Mayores Deudores (Cartera Vencida)
                         </div>
                       </div>
                       <div
@@ -341,149 +383,167 @@ const ReporteDeudoresMayores = () => {
                           background: "rgba(255,255,255,0.15)",
                           border: "1px solid rgba(255,255,255,0.35)",
                           borderRadius: "8px",
-                          padding: "8px 14px",
+                          padding: "8px 16px",
                           textAlign: "center",
                         }}
                       >
-                        <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.8 }}>Deudores</div>
-                        <div style={{ fontWeight: 800, fontSize: "14px", marginTop: "2px" }}>{rows.length}</div>
+                        <div style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#bfdbfe", fontWeight: 700 }}>Total Deudores</div>
+                        <div style={{ fontWeight: 800, fontSize: "18px", marginTop: "1px", color: "#ffffff" }}>{rows.length}</div>
                       </div>
                     </div>
 
+                    {/* ── 2. CINTILLO DE METADATOS Y CRITERIOS ── */}
                     <div
                       style={{
-                        background: "#f0f9ff",
-                        borderLeft: "4px solid #1e40af",
-                        borderRight: "1px solid #bfdbfe",
-                        borderBottom: "1px solid #bfdbfe",
-                        padding: "8px 20px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        borderRadius: "0 0 6px 6px",
+                        background: "#f8fafc",
+                        borderLeft: "4px solid #991b1b",
+                        borderRight: "1px solid #cbd5e1",
+                        borderBottom: "1px solid #cbd5e1",
+                        padding: "8px 16px",
+                        display: "grid",
+                        gridTemplateColumns: "repeat(4, 1fr)",
+                        gap: "12px",
+                        borderRadius: "0 0 8px 8px",
                       }}
                     >
-                      <div style={{ fontWeight: 800, fontSize: "14px", color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                        Cartera Vencida Prioritaria
+                      <div>
+                        <div style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Objeto del Control</div>
+                        <div style={{ fontSize: "10.5px", fontWeight: 800, color: "#991b1b", textTransform: "uppercase" }}>Cartera Vencida Prioritaria</div>
                       </div>
-                      <div style={{ fontSize: "10px", color: "#6b7280", display: "flex", gap: "16px", alignItems: "center" }}>
-                        <span>Orden: <span style={{ fontWeight: 700, color: "#1f2937" }}>{ordenLabel}</span></span>
-                        <span>Total adeudo: <span style={{ fontWeight: 800, color: "#1f2937" }}>{money(totalAdeudoGeneral)}</span></span>
+                      <div>
+                        <div style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Criterio de Secuencia</div>
+                        <div style={{ fontSize: "10.5px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase" }}>{ordenLabel}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Cobertura Geográfica</div>
+                        <div style={{ fontSize: "10.5px", fontWeight: 800, color: "#475569", textTransform: "uppercase" }}>{Object.keys(deudoresPorCiudad).length} Sector(es) / Localidad(es)</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: "8px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Expedición Oficial</div>
+                        <div style={{ fontSize: "10px", fontWeight: 700, color: "#475569" }}>{fechaHoyLarga}</div>
                       </div>
                     </div>
                   </div>
 
+                  {/* ── 3. TARJETAS DE KPIS FINANCIEROS Y OPERATIVOS ── */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(5, 1fr)",
+                      gap: "8px",
+                      marginBottom: "14px",
+                    }}
+                  >
+                    <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px 10px", borderTop: "3px solid #991b1b" }}>
+                      <div style={{ fontSize: "8px", fontWeight: 700, color: "#991b1b", textTransform: "uppercase" }}>Cartera Vencida Total</div>
+                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#991b1b", marginTop: "2px" }}>{money(totalAdeudoGeneral)}</div>
+                      <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Saldo total pendiente</div>
+                    </div>
+                    <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px 10px", borderTop: "3px solid #1e3a8a" }}>
+                      <div style={{ fontSize: "8px", fontWeight: 700, color: "#1e3a8a", textTransform: "uppercase" }}>Clientes con Rezago</div>
+                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#1e3a8a", marginTop: "2px" }}>{rows.length}</div>
+                      <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Padrón con adeudo activo</div>
+                    </div>
+                    <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px 10px", borderTop: "3px solid #475569" }}>
+                      <div style={{ fontSize: "8px", fontWeight: 700, color: "#475569", textTransform: "uppercase" }}>Deuda Promedio</div>
+                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", marginTop: "2px" }}>{money(deudaPromedio)}</div>
+                      <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Por cliente deudor</div>
+                    </div>
+                    <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px 10px", borderTop: "3px solid #d97706" }}>
+                      <div style={{ fontSize: "8px", fontWeight: 700, color: "#d97706", textTransform: "uppercase" }}>Máxima Deuda</div>
+                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#d97706", marginTop: "2px" }}>{money(maxDeuda)}</div>
+                      <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Caso prioritario mayor</div>
+                    </div>
+                    <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "8px 10px", borderTop: "3px solid #2563eb" }}>
+                      <div style={{ fontSize: "8px", fontWeight: 700, color: "#2563eb", textTransform: "uppercase" }}>Recibos con Rezago</div>
+                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#2563eb", marginTop: "2px" }}>{totalRecibosRezago}</div>
+                      <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Facturas pendientes</div>
+                    </div>
+                  </div>
+
+                  {/* ── 4. TABLAS DE REZAGO POR SECTOR / LOCALIDAD ── */}
                   {rows.length === 0 ? (
-                    <div style={{ padding: "20px", textAlign: "center", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: "8px" }}>
-                      No hay deudores para mostrar en este reporte.
+                    <div style={{ padding: "20px", textAlign: "center", color: "#6b7280", border: "1px solid #e5e7eb", borderRadius: "8px", background: "#f8fafc" }}>
+                      No se encontraron deudores con saldo pendiente para mostrar en este reporte.
                     </div>
                   ) : (
                     Object.keys(deudoresPorCiudad).map((ciudad) => {
                       const deudoresCiudad = deudoresPorCiudad[ciudad];
                       const totalDeudaCiudad = deudoresCiudad.reduce((sum, d) => sum + Number(d.totalAdeudo || 0), 0);
-                      
+
                       return (
-                        <div key={ciudad} style={{ marginBottom: "22px" }}>
-                          {/* Cabecera del Pueblo / Ciudad */}
+                        <div key={ciudad} style={{ marginBottom: "16px" }}>
+                          {/* Barra de cabecera de la Localidad / Ciudad */}
                           <div
                             style={{
-                              background: "#f1f5f9",
-                              borderLeft: "4px solid #1e3a8a",
-                              padding: "3px 8px",
+                              background: "#eff6ff",
+                              border: "1px solid #bfdbfe",
+                              borderRadius: "6px 6px 0 0",
+                              padding: "6px 12px",
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
-                              borderRadius: "4px",
-                              marginBottom: "4px"
                             }}
                           >
-                            <span style={{ fontWeight: 800, fontSize: "9.5px", color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: "4px" }}>
-                              <svg 
-                                viewBox="0 0 24 24" 
-                                width="11" 
-                                height="11" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2.5" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round"
-                                style={{ flexShrink: 0 }}
-                              >
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                <circle cx="12" cy="10" r="3" />
-                              </svg>
-                              {ciudad}
-                            </span>
-                            <span style={{ fontSize: "8.5px", fontWeight: 700, color: "#475569" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#1e3a8a" }} />
+                              <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                                SECTOR / LOCALIDAD: {ciudad}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: "9px", fontWeight: 800, color: "#991b1b" }}>
                               Deudores: {deudoresCiudad.length} | Cartera Vencida: {money(totalDeudaCiudad)}
                             </span>
                           </div>
 
-                          <table className="reporte-deudores-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "9.5px" }}>
-                            <colgroup>
-                              <col style={{ width: "9%" }} />
-                              <col style={{ width: "27%" }} />
-                              <col style={{ width: "11%" }} />
-                              <col style={{ width: "28%" }} />
-                              <col style={{ width: "13%" }} />
-                              <col style={{ width: "12%" }} />
-                            </colgroup>
+                          <table className="reporte-deudores-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: "9.5px", border: "1px solid #cbd5e1", borderTop: "none" }}>
                             <thead>
                               <tr>
-                                {["No. Predio", "Nombre del Cliente", "Medidor", "Meses de Deuda", "Total Adeudo", "Abono/Pago"].map((title, idx) => (
-                                  <th
-                                    key={title}
-                                    style={{
-                                      padding: "6px 5px",
-                                      background: "#1e3a8a",
-                                      color: "#fff",
-                                      fontSize: "8.5px",
-                                      fontWeight: 700,
-                                      textTransform: "uppercase",
-                                      letterSpacing: "0.05em",
-                                      textAlign: idx === 4 ? "right" : idx === 5 ? "center" : idx === 3 ? "center" : "left",
-                                      borderRight: idx === 5 ? "none" : "1px solid rgba(255,255,255,0.18)",
-                                    }}
-                                  >
-                                    {title}
-                                  </th>
-                                ))}
+                                <th style={{ background: "#1e293b", color: "#ffffff", padding: "5px 3px", textAlign: "center", width: "24px", fontSize: "9px" }}>#</th>
+                                <th style={{ background: "#1e293b", color: "#ffffff", padding: "5px 4px", textAlign: "center", width: "55px", fontSize: "9px" }}>Predio</th>
+                                <th style={{ background: "#1e293b", color: "#ffffff", padding: "5px 8px", textAlign: "left", fontSize: "9px" }}>Nombre del Cliente / Titular</th>
+                                <th style={{ background: "#1e293b", color: "#ffffff", padding: "5px 6px", textAlign: "center", width: "75px", fontSize: "9px" }}>N° Medidor</th>
+                                <th style={{ background: "#1e293b", color: "#ffffff", padding: "5px 6px", textAlign: "center", width: "115px", fontSize: "9px" }}>Meses con Rezago</th>
+                                <th style={{ background: "#1e293b", color: "#ffffff", padding: "5px 6px", textAlign: "right", width: "95px", fontSize: "9px" }}>Total Adeudo</th>
+                                <th style={{ background: "#1e293b", color: "#ffffff", padding: "5px 4px", textAlign: "center", width: "65px", fontSize: "9px" }}>Abono / Pago</th>
                               </tr>
                             </thead>
                             <tbody>
                               {deudoresCiudad.map((r, idx) => {
+                                globalRowCounter++;
                                 const even = idx % 2 === 0;
                                 const bg = even ? "#ffffff" : "#f8fafc";
-                                const td = {
-                                  padding: "6px 6px",
-                                  borderRight: "1px solid #e5e7eb",
-                                  borderBottom: "1px solid #e5e7eb",
-                                  verticalAlign: "top",
-                                  background: bg,
-                                };
+                                const mesesStr = r.meses && r.meses.length > 0 ? r.meses.join(", ") : "—";
 
                                 return (
-                                  <tr key={r.id}>
-                                    <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.noPredio || "—"}</td>
-                                    <td style={td}>
-                                      <div style={{ fontWeight: 700, textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  <tr key={r.id} style={{ background: bg, borderBottom: "1px solid #e2e8f0" }}>
+                                    <td style={{ border: "1px solid #e2e8f0", padding: "4px 2px", textAlign: "center", color: "#64748b", fontWeight: 700, fontSize: "9px" }}>
+                                      {globalRowCounter}
+                                    </td>
+                                    <td style={{ border: "1px solid #e2e8f0", padding: "4px 3px", textAlign: "center", fontFamily: "monospace", fontWeight: 800, fontSize: "10px", color: "#1e40af", background: even ? "#eff6ff" : "#dbeafe" }}>
+                                      {r.noPredio || "—"}
+                                    </td>
+                                    <td style={{ border: "1px solid #e2e8f0", padding: "4px 8px" }}>
+                                      <div style={{ fontWeight: 800, fontSize: "10px", color: "#0f172a", textTransform: "uppercase", lineHeight: 1.2 }}>
                                         {r.nombreCliente}
                                       </div>
-                                      <div style={{ marginTop: "3px", fontSize: "9px", color: "#475569", fontWeight: 700 }}>
-                                        Recibos con deuda: {r.recibosConDeuda}
+                                      <div style={{ marginTop: "1px", fontSize: "8px", color: r.recibosConDeuda >= 3 ? "#991b1b" : "#64748b", fontWeight: 700 }}>
+                                        Recibos pendientes: {r.recibosConDeuda}
                                       </div>
                                     </td>
-                                    <td style={{ ...td, textAlign: "center", fontFamily: "monospace", fontWeight: 700 }}>{r.medidor || "S/N"}</td>
-                                    <td style={{ ...td, textAlign: "center" }}>
-                                      <span style={{ fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.04em" }}>
-                                        {r.meses.length ? r.meses.join(", ") : "—"}
-                                      </span>
+                                    <td style={{ border: "1px solid #e2e8f0", padding: "4px 6px", textAlign: "center", fontFamily: "monospace", fontWeight: 700, fontSize: "9.5px", color: r.medidor && r.medidor !== "S/N" ? "#0f172a" : "#c2410c" }}>
+                                      {r.medidor || "S/N"}
                                     </td>
-                                    <td style={{ ...td, textAlign: "right", fontWeight: 800, color: "#991b1b" }}>{money(r.totalAdeudo)}</td>
-                                    <td style={{ ...td, textAlign: "center", borderRight: "none" }}>
-                                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                                        <span style={{ width: "11px", height: "11px", border: "1.5px solid #64748b", borderRadius: "2px", display: "inline-block" }} />
-                                        <span style={{ display: "inline-block", width: "38px", borderBottom: "1px solid #94a3b8", height: "12px" }} />
+                                    <td style={{ border: "1px solid #e2e8f0", padding: "4px 6px", textAlign: "center", fontFamily: "monospace", fontWeight: 700, fontSize: "9px", color: "#475569" }}>
+                                      {mesesStr}
+                                    </td>
+                                    <td style={{ border: "1px solid #e2e8f0", padding: "4px 6px", textAlign: "right", fontWeight: 800, color: "#991b1b", fontSize: "11px" }}>
+                                      {money(r.totalAdeudo)}
+                                    </td>
+                                    <td style={{ border: "1px solid #e2e8f0", padding: "4px 4px", textAlign: "center" }}>
+                                      <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                                        <span style={{ width: "10px", height: "10px", border: "1.5px solid #94a3b8", borderRadius: "2px", display: "inline-block" }} />
+                                        <span style={{ display: "inline-block", width: "32px", borderBottom: "1px solid #94a3b8", height: "10px" }} />
                                       </div>
                                     </td>
                                   </tr>
@@ -495,7 +555,7 @@ const ReporteDeudoresMayores = () => {
                       );
                     })
                   )}
-                  {/* --- FIN DEL CONTENIDO ORIGINAL --- */}
+                  {/* --- FIN DEL CONTENIDO --- */}
                 </td>
               </tr>
             </tbody>
@@ -515,18 +575,17 @@ const ReporteDeudoresMayores = () => {
             className="page-footer"
             style={{
               marginTop: "8px",
-              paddingTop: "8px",
-              borderTop: "1px dashed #d1d5db",
+              paddingTop: "6px",
+              borderTop: "1px solid #cbd5e1",
               display: "flex",
               justifyContent: "space-between",
-              fontSize: "9px",
-              color: "#9ca3af",
+              fontSize: "8px",
+              color: "#64748b",
               background: "#ffffff",
             }}
           >
-            <span>Sistema AguaVP — Comisaría de Agua Potable Villa Pesqueira</span>
-            <span style={{ fontWeight: 700, color: "#374151" }}>{rows.length} deudores listados</span>
-            <span>Documento generado automáticamente — no requiere firma</span>
+            <span>AGUA VILLA PESQUEIRA · Reporte Oficial de Mayores Deudores · Emisión: {fechaHoyCorta} {horaHoy}</span>
+            <span style={{ fontWeight: 700, color: "#991b1b" }}>DOCUMENTO OFICIAL DE CONTROL FINANCIERO Y COBRANZA</span>
           </div>
         </div>
       </div>

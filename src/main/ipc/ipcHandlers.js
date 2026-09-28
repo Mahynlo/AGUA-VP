@@ -8,6 +8,12 @@ import ExcelJS from 'exceljs'
 import { zoomIn, zoomOut, zoomReset, getZoom } from '../managers/zoomManager.js'
 import { openHelpWindow } from '../managers/helpWindowManager.js'
 import { generarRecibosPdf } from '../pdf/reciboPdfGenerator.js'
+import { generarReporteGeneralPdf } from '../pdf/reporteGeneralPdfGenerator.js'
+import { generarReporteFinancieroPdf } from '../pdf/reporteFinancieroPdfGenerator.js'
+import { generarReporteLecturasMetricasPdf } from '../pdf/reporteLecturasMetricasPdfGenerator.js'
+import { generarReporteLecturasPdf } from '../pdf/reporteLecturasPdfGenerator.js'
+import { generarReporteDeudoresMayoresPdf } from '../pdf/reporteDeudoresMayoresPdfGenerator.js'
+import { generarComprobantePagoPdf } from '../pdf/comprobantePagoPdfGenerator.js'
 import {
   saveCustomLogo,
   clearCustomLogo,
@@ -39,7 +45,9 @@ const ROUTE_NOMBRES = {
   reportelecturas: 'reporte_lecturas',
   reportedeudoresmayores: 'reporte_deudores_mayores',
   reportefinanciero: 'reporte_financiero',
-  reportelecturasmetricas: 'reporte_metricas_lecturas'
+  reportefinancieropagos: 'reporte_financiero',
+  reportelecturasmetricas: 'reporte_metricas_lecturas',
+  reportegeneral: 'reporte_general'
 }
 
 const buildPdfFilename = (url) => {
@@ -340,7 +348,178 @@ export default function IpcHandlers() {
       }
     }
 
-    // Pipeline estándar con BrowserWindow solo para reportes (reporteLecturas, etc.)
+    // ⚡ VÍA ULTRA-RÁPIDA (pdfmake): Generación nativa de Reporte General Ejecutivo
+    if (route === 'reportegeneral') {
+      try {
+        if (dataKey) {
+          const tempPath = path.join(app.getPath('temp'), `print_data_${dataKey}.json`)
+          if (fs.existsSync(tempPath)) {
+            const rawData = await fs.promises.readFile(tempPath, 'utf8')
+            const reporteData = JSON.parse(rawData)
+            if (reporteData) {
+              console.log('⚡ [pdfmake] Generando Reporte General Ejecutivo con pdfmake...')
+              const pdfBuffer = await generarReporteGeneralPdf(reporteData, {
+                customLogo: options.customLogo
+              })
+              const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`)
+              await fs.promises.writeFile(pdfPath, pdfBuffer)
+              console.log(
+                `✅ [pdfmake] Reporte General PDF generado en: ${pdfPath} (${(pdfBuffer.length / 1024).toFixed(0)} KB)`
+              )
+              return { success: true, path: pathToFileURL(pdfPath).href }
+            }
+          }
+        }
+      } catch (pdfMakeErr) {
+        console.error('❌ Error en generador nativo pdfmake para Reporte General, usando fallback web:', pdfMakeErr)
+        // Permite continuar al pipeline de BrowserWindow si ocurre algún fallo
+      }
+    }
+
+    // ⚡ VÍA ULTRA-RÁPIDA (pdfmake): Generación nativa de Reporte Financiero de Pagos
+    if (route === 'reportefinancieropagos' || route === 'reportefinanciero') {
+      try {
+        if (dataKey) {
+          const tempPath = path.join(app.getPath('temp'), `print_data_${dataKey}.json`)
+          if (fs.existsSync(tempPath)) {
+            const rawData = await fs.promises.readFile(tempPath, 'utf8')
+            const reporteData = JSON.parse(rawData)
+            if (reporteData) {
+              console.log('⚡ [pdfmake] Generando Reporte Financiero de Pagos con pdfmake...')
+              const pdfBuffer = await generarReporteFinancieroPdf(reporteData, {
+                customLogo: options.customLogo
+              })
+              const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`)
+              await fs.promises.writeFile(pdfPath, pdfBuffer)
+              console.log(
+                `✅ [pdfmake] Reporte Financiero PDF generado en: ${pdfPath} (${(pdfBuffer.length / 1024).toFixed(0)} KB)`
+              )
+              return { success: true, path: pathToFileURL(pdfPath).href }
+            }
+          }
+        }
+      } catch (pdfMakeErr) {
+        console.error('❌ Error en generador nativo pdfmake para Reporte Financiero, usando fallback web:', pdfMakeErr)
+        // Permite continuar al pipeline de BrowserWindow si ocurre algún fallo
+      }
+    }
+
+    // ⚡ VÍA ULTRA-RÁPIDA (pdfmake): Generación nativa de Reporte de Métricas de Lecturas
+    if (route === 'reportelecturasmetricas') {
+      try {
+        if (dataKey) {
+          const tempPath = path.join(app.getPath('temp'), `print_data_${dataKey}.json`)
+          if (fs.existsSync(tempPath)) {
+            const rawData = await fs.promises.readFile(tempPath, 'utf8')
+            const reporteData = JSON.parse(rawData)
+            if (reporteData) {
+              console.log('⚡ [pdfmake] Generando Reporte de Métricas de Lecturas con pdfmake...')
+              const pdfBuffer = await generarReporteLecturasMetricasPdf(reporteData, {
+                customLogo: options.customLogo
+              })
+              const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`)
+              await fs.promises.writeFile(pdfPath, pdfBuffer)
+              console.log(
+                `✅ [pdfmake] Reporte de Métricas de Lecturas PDF generado en: ${pdfPath} (${(pdfBuffer.length / 1024).toFixed(0)} KB)`
+              )
+              return { success: true, path: pathToFileURL(pdfPath).href }
+            }
+          }
+        }
+      } catch (pdfMakeErr) {
+        console.error('❌ Error en generador nativo pdfmake para Reporte de Métricas de Lecturas, usando fallback web:', pdfMakeErr)
+        // Permite continuar al pipeline de BrowserWindow si ocurre algún fallo
+      }
+    }
+
+    // ⚡ VÍA ULTRA-RÁPIDA (pdfmake): Generación nativa de Reporte / Formato de Toma de Lecturas
+    if (route === 'reportelecturas') {
+      try {
+        if (dataKey) {
+          const tempPath = path.join(app.getPath('temp'), `print_data_${dataKey}.json`)
+          if (fs.existsSync(tempPath)) {
+            const rawData = await fs.promises.readFile(tempPath, 'utf8')
+            const reporteData = JSON.parse(rawData)
+            if (reporteData) {
+              console.log('⚡ [pdfmake] Generando Formato de Toma de Lecturas con pdfmake...')
+              const pdfBuffer = await generarReporteLecturasPdf(reporteData, {
+                mes: params.get('mes') || '',
+                ordenarPor: params.get('ordenarPor') || 'numero_predio',
+                customLogo: options.customLogo
+              })
+              const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`)
+              await fs.promises.writeFile(pdfPath, pdfBuffer)
+              console.log(
+                `✅ [pdfmake] Reporte de Toma de Lecturas PDF generado en: ${pdfPath} (${(pdfBuffer.length / 1024).toFixed(0)} KB)`
+              )
+              return { success: true, path: pathToFileURL(pdfPath).href }
+            }
+          }
+        }
+      } catch (pdfMakeErr) {
+        console.error('❌ Error en generador nativo pdfmake para Reporte de Lecturas, usando fallback web:', pdfMakeErr)
+        // Permite continuar al pipeline de BrowserWindow si ocurre algún fallo
+      }
+    }
+
+    // ⚡ VÍA ULTRA-RÁPIDA (pdfmake): Generación nativa de Reporte de Mayores Deudores
+    if (route === 'reportedeudoresmayores') {
+      try {
+        if (dataKey) {
+          const tempPath = path.join(app.getPath('temp'), `print_data_${dataKey}.json`)
+          if (fs.existsSync(tempPath)) {
+            const rawData = await fs.promises.readFile(tempPath, 'utf8')
+            const reporteData = JSON.parse(rawData)
+            if (reporteData) {
+              console.log('⚡ [pdfmake] Generando Reporte de Mayores Deudores con pdfmake...')
+              const pdfBuffer = await generarReporteDeudoresMayoresPdf(reporteData, {
+                orden: params.get('orden') || params.get('ordenarPor') || '',
+                customLogo: options.customLogo
+              })
+              const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`)
+              await fs.promises.writeFile(pdfPath, pdfBuffer)
+              console.log(
+                `✅ [pdfmake] Reporte de Mayores Deudores PDF generado en: ${pdfPath} (${(pdfBuffer.length / 1024).toFixed(0)} KB)`
+              )
+              return { success: true, path: pathToFileURL(pdfPath).href }
+            }
+          }
+        }
+      } catch (pdfMakeErr) {
+        console.error('❌ Error en generador nativo pdfmake para Reporte de Deudores Mayores, usando fallback web:', pdfMakeErr)
+        // Permite continuar al pipeline de BrowserWindow si ocurre algún fallo
+      }
+    }
+
+    // ⚡ VÍA ULTRA-RÁPIDA (pdfmake): Generación nativa de Comprobante de Pago
+    if (route === 'comprobante-pago' || route === 'comprobantepago') {
+      try {
+        if (dataKey) {
+          const tempPath = path.join(app.getPath('temp'), `print_data_${dataKey}.json`)
+          if (fs.existsSync(tempPath)) {
+            const rawData = await fs.promises.readFile(tempPath, 'utf8')
+            const comprobanteData = JSON.parse(rawData)
+            if (comprobanteData) {
+              console.log('⚡ [pdfmake] Generando Comprobante de Pago con pdfmake...')
+              const pdfBuffer = await generarComprobantePagoPdf(comprobanteData, {
+                customLogo: options.customLogo
+              })
+              const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`)
+              await fs.promises.writeFile(pdfPath, pdfBuffer)
+              console.log(
+                `✅ [pdfmake] Comprobante de Pago PDF generado en: ${pdfPath} (${(pdfBuffer.length / 1024).toFixed(0)} KB)`
+              )
+              return { success: true, path: pathToFileURL(pdfPath).href }
+            }
+          }
+        }
+      } catch (pdfMakeErr) {
+        console.error('❌ Error en generador nativo pdfmake para Comprobante de Pago, usando fallback web:', pdfMakeErr)
+        // Permite continuar al pipeline de BrowserWindow si ocurre algún fallo
+      }
+    }
+
+    // Pipeline estándar con BrowserWindow solo para reportes (reporteClientes, etc.)
     return new Promise((resolve, reject) => {
       let win = new BrowserWindow({
         title: 'Preview',

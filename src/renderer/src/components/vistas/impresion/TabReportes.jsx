@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button, Card, CardHeader, CardContent } from "@heroui/react";
-import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog, HiChevronDown, HiDocumentText } from "react-icons/hi";
+import { HiPrinter, HiEye, HiUsers, HiSortAscending, HiLocationMarker, HiDownload, HiDocumentReport, HiCog, HiChevronDown, HiDocumentText, HiPresentationChartBar } from "react-icons/hi";
 import ListadoLecturas from "./components/ListadoLecturas";
 import ModalImprimir from "./components/ModalImprimir";
 import { useReportes } from "../../../context/ReportesContext";
 import { useRutas } from "../../../context/RutasContext";
 import { useClientes } from "../../../context/ClientesContext";
 import { exportData } from "../../../utils/exportUtils";
-import { obtenerPeriodoActual } from "../../../utils/periodoUtils";
+import { obtenerPeriodoActual, generarCatalogoPeriodos } from "../../../utils/periodoUtils";
+import SelectorPeriodoAvanzado from "../../ui/SelectorPeriodoAvanzado";
 import { preloadPdfViewer } from "../../../utils/pdfPreloader";
 
 const formatearPeriodoTexto = (periodoStr) => {
@@ -226,6 +227,129 @@ const TabReportes = () => {
     } catch (err) {
       console.error("Error preparing padron test print:", err);
       alert("Error al generar prueba del padrón");
+    } finally {
+      setAccion(null);
+    }
+  };
+
+  // ─── REPORTE GENERAL EJECUTIVO ──────────────────────────────────────────────
+  const [tipoFiltroGeneral, setTipoFiltroGeneral] = useState("periodo");
+  const [periodoGeneral, setPeriodoGeneral] = useState(() => ultimoPeriodoRegistrado || siguientePeriodo || obtenerPeriodoActual());
+  const [ultimosMesesGeneral, setUltimosMesesGeneral] = useState("3");
+  const [anioEspecificoGeneral, setAnioEspecificoGeneral] = useState(String(new Date().getFullYear()));
+
+  const opcionesAnioGeneral = React.useMemo(() => {
+    const catalogo = generarCatalogoPeriodos({ startYear: 2020 });
+    return [...new Set(catalogo.map((item) => item.year))];
+  }, []);
+
+  const getUrlReporteGeneral = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error("No hay token de sesión");
+
+      const filtrosActivos =
+        tipoFiltroGeneral === "periodo"
+          ? { tipo: "periodo", periodo: periodoGeneral }
+          : tipoFiltroGeneral === "ultimos_meses"
+            ? { tipo: "ultimos_meses", meses: Number(ultimosMesesGeneral || 3) }
+            : { tipo: "anio", anio: anioEspecificoGeneral };
+
+      // Cargar datos operativos, financieros y catálogos en paralelo
+      const [consumoResp, finResp, clientesResp, medidoresResp, tarifasResp] = await Promise.all([
+        window.api.fetchReporteConsumoAgua(token, filtrosActivos),
+        window.api.fetchReporteFinanciero(token, filtrosActivos),
+        window.api.fetchClientes(token),
+        window.api.fetchMedidores(token),
+        window.tarifasApp
+          ? window.tarifasApp.fetchTarifas({ token_session: token, params: { limit: 100 } })
+          : window.api.fetchTarifas
+            ? window.api.fetchTarifas({ token_session: token })
+            : null
+      ]);
+
+      const clientes = clientesResp?.data || (Array.isArray(clientesResp) ? clientesResp : []);
+      const medidores = medidoresResp?.data || (Array.isArray(medidoresResp) ? medidoresResp : []);
+      const tarifas = tarifasResp?.tarifas || (Array.isArray(tarifasResp) ? tarifasResp : []);
+
+      // Contar usuarios por tarifa
+      const conteoTarifas = {};
+      clientes.forEach((c) => {
+        const tarifaNom = c.tarifa_nombre || c.tarifa || 'Doméstica';
+        conteoTarifas[tarifaNom] = (conteoTarifas[tarifaNom] || 0) + 1;
+      });
+
+      const totalClientesCount = Math.max(1, clientes.length);
+      const tarifasDistribucion = Object.entries(conteoTarifas).map(([nombre, count]) => ({
+        nombre,
+        cantidadClientes: count,
+        porcentaje: Number(((count / totalClientesCount) * 100).toFixed(1))
+      }));
+
+      if (tarifasDistribucion.length === 0 && tarifas.length > 0) {
+        tarifas.forEach((t) => {
+          tarifasDistribucion.push({
+            nombre: t.nombre,
+            cantidadClientes: 0,
+            porcentaje: 0
+          });
+        });
+      }
+
+      const clientesConMedidor = clientes.filter(
+        (c) => c.medidor_id || c.numero_serie_medidor || c.medidor_numero_serie
+      ).length;
+
+      const paqueteGeneral = {
+        filtro_aplicado: consumoResp?.filtro_aplicado || finResp?.filtro_aplicado || filtrosActivos,
+        fechaGeneracion: new Date().toISOString(),
+        consumoAgua: consumoResp || {},
+        financiero: finResp || {},
+        clientesResumen: {
+          total: clientes.length,
+          activos: clientes.filter((c) => (c.estado_cliente || c.estado || 'Activo') === 'Activo').length,
+          inactivos: clientes.filter(
+            (c) => (c.estado_cliente || c.estado) && (c.estado_cliente || c.estado) !== 'Activo'
+          ).length,
+          conMedidor: clientesConMedidor,
+          sinMedidor: Math.max(0, clientes.length - clientesConMedidor)
+        },
+        medidoresResumen: {
+          total: medidores.length,
+          activos: medidores.filter((m) => (m.estado_medidor || m.estado) === 'Activo').length,
+          retirados: medidores.filter((m) => (m.estado_medidor || m.estado) === 'Retirado').length,
+          sinAsignar: medidores.filter((m) => !m.cliente_id).length
+        },
+        tarifasDistribucion
+      };
+
+      const dataKey = await window.api.savePrintData(JSON.stringify(paqueteGeneral));
+
+      const { protocol, origin, href } = window.location;
+      const base = protocol === 'file:' ? href.split('#')[0] : origin + '/';
+      const hashBase = protocol === 'file:' ? `${base}#` : `${origin}/#`;
+      return `${hashBase}/reporteGeneral?dataKey=${dataKey}&print=true`;
+    } catch (err) {
+      console.error("Error al preparar Reporte General:", err);
+      alert("Error al recopilar datos para el informe general: " + err.message);
+      return null;
+    }
+  };
+
+  const handleGenerarReporteGeneral = async () => {
+    setAccion('generar-general');
+    try {
+      const url = await getUrlReporteGeneral();
+      if (!url) return;
+      const response = await window.api.previewComponent(url, { pageNumbers: true });
+      if (response && response.success && response.path) {
+        setPrintUrl(url);
+        setPdfUrl(response.path);
+        setModoPdf('imprimir');
+      }
+    } catch (err) {
+      console.error("Error al generar el informe general:", err);
+      alert("Error al generar el informe general");
     } finally {
       setAccion(null);
     }
@@ -803,7 +927,146 @@ const TabReportes = () => {
       <div className="h-px bg-slate-200 dark:bg-zinc-800 my-2 w-full" />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN 3: EXPORTAR DATOS                                           */}
+      {/* SECCIÓN 3: INFORME GENERAL EJECUTIVO (OPERACIÓN, CONSUMO Y FINANZAS) */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
+              <HiPresentationChartBar className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+                Balance Integral del Organismo Operador
+              </h3>
+              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+                Informe General Ejecutivo (Operación, Consumo y Finanzas)
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Formato:</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">Formato Ejecutivo (4 Páginas)</span>
+            </div>
+            <span className="text-slate-300 dark:text-zinc-700">•</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Incluye:</span>
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400">Portada, Rutas, Finanzas y Firmas</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end bg-slate-50/60 dark:bg-zinc-900/40 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm relative z-30">
+          
+          {/* Columna 1: Vista del Reporte (3 cols) */}
+          <div className="lg:col-span-3 flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+              Vista del Reporte
+            </label>
+            <div className="relative">
+              <select
+                value={tipoFiltroGeneral}
+                onChange={(e) => setTipoFiltroGeneral(e.target.value || "periodo")}
+                aria-label="Tipo de filtro general"
+                className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+              >
+                <option value="periodo">Periodo puntual</option>
+                <option value="ultimos_meses">Últimos meses</option>
+                <option value="anio">Año específico</option>
+              </select>
+              <HiChevronDown className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Columna 2: Selector Dinámico (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col gap-1.5">
+            {tipoFiltroGeneral === "periodo" && (
+              <>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+                  Seleccionar Periodo
+                </label>
+                <SelectorPeriodoAvanzado
+                  value={periodoGeneral}
+                  onChange={setPeriodoGeneral}
+                  placeholder="Seleccionar periodo"
+                  className="h-[52px] w-full"
+                  periodosInfo={periodosInfo}
+                  siguientePeriodo={siguientePeriodo}
+                  ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
+                />
+              </>
+            )}
+
+            {tipoFiltroGeneral === "ultimos_meses" && (
+              <>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+                  Rango de meses
+                </label>
+                <div className="relative">
+                  <select
+                    value={ultimosMesesGeneral}
+                    onChange={(e) => setUltimosMesesGeneral(e.target.value || "3")}
+                    aria-label="Últimos meses"
+                    className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                  >
+                    <option value="3">Últimos 3 meses</option>
+                    <option value="6">Últimos 6 meses</option>
+                    <option value="12">Últimos 12 meses</option>
+                  </select>
+                  <HiChevronDown className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </>
+            )}
+
+            {tipoFiltroGeneral === "anio" && (
+              <>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+                  Año Fiscal
+                </label>
+                <div className="relative">
+                  <select
+                    value={anioEspecificoGeneral}
+                    onChange={(e) => setAnioEspecificoGeneral(e.target.value || String(new Date().getFullYear()))}
+                    aria-label="Año específico"
+                    className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                  >
+                    {opcionesAnioGeneral.map((year) => (
+                      <option key={year} value={year}>
+                        Año Fiscal {year}
+                      </option>
+                    ))}
+                  </select>
+                  <HiChevronDown className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Columna 3: Botón de Emisión (4 cols) */}
+          <div className="lg:col-span-4 flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+              Acción
+            </label>
+            <Button
+              className="w-full font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 shadow-sm h-[52px] transition-all active:scale-98 text-sm flex items-center justify-center gap-2"
+              onPress={handleGenerarReporteGeneral}
+              isLoading={accion === 'generar-general'}
+              isDisabled={procesando}
+            >
+              {accion !== 'generar-general' && <HiPrinter className="text-lg" />}
+              <span>{accion === 'generar-general' ? 'Compilando Informe...' : 'Emitir Informe General'}</span>
+            </Button>
+          </div>
+
+        </div>
+      </div>
+
+      <div className="h-px bg-slate-200 dark:bg-zinc-800 my-2 w-full" />
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* SECCIÓN 4: EXPORTAR DATOS                                           */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">

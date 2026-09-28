@@ -57,6 +57,7 @@ const ComprobantePago = React.lazy(() => import("./components/recibo/Comprobante
 const ReporteFinancieroPagos = React.lazy(() => import("./components/recibo/ReporteFinancieroPagos"));
 const ReporteDeudoresMayores = React.lazy(() => import("./components/recibo/ReporteDeudoresMayores"));
 const ReporteDocumentacion = React.lazy(() => import("./components/recibo/ReporteDocumentacion"));
+const ReporteGeneral = React.lazy(() => import("./components/recibo/ReporteGeneral"));
 
 // Pantalla de carga de la aplicación
 import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
@@ -129,8 +130,8 @@ function ViewFallback() {
 
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/ayuda'];
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/ayuda'];
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/reporteGeneral', '/ayuda'];
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/reporteGeneral', '/ayuda'];
 
   const { loading } = useAuth();
 
@@ -225,6 +226,7 @@ function MainApp() {
           <Route path="/reporteFinancieroPagos" element={<ReporteFinancieroPagos />} />
           <Route path="/reporteDeudoresMayores" element={<ReporteDeudoresMayores />} />
           <Route path="/reporteDocumentacion" element={<ReporteDocumentacion />} />
+          <Route path="/reporteGeneral" element={<ReporteGeneral />} />
           {/* Rutas públicas */}
           <Route path='/' element={<LoginApp />} />
           <Route path='/actualizaciones' element={<ActualizacionesVista />} />
