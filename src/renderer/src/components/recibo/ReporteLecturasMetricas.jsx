@@ -9,6 +9,8 @@ const fmt = (n, dec = 0) =>
     maximumFractionDigits: dec,
   });
 
+const percent = (value) => `${Number(value || 0).toFixed(1)}%`;
+
 const shortMonth = (periodoMes) => {
   if (!periodoMes || !/^\d{4}-\d{2}$/.test(periodoMes)) return periodoMes || "";
   const [anio, mes] = periodoMes.split("-");
@@ -60,7 +62,8 @@ const ReporteLecturasMetricas = () => {
   }, [searchParams]);
 
   const consumo = data?.consumo || {};
-  const rutasResumen = data?.rutas?.resumen || {};
+  const rutasData = data?.rutas || {};
+  const rutasResumen = rutasData?.resumen || {};
   const filtro = data?.filtro_aplicado || {};
   const resumen = consumo?.resumen || {};
 
@@ -71,6 +74,11 @@ const ReporteLecturasMetricas = () => {
 
   const distribucionRutas = useMemo(
     () => consumo?.distribucion_rutas || [],
+    [consumo],
+  );
+
+  const menorConsumo = useMemo(
+    () => consumo?.listados?.menor_consumo || [],
     [consumo],
   );
 
@@ -93,22 +101,97 @@ const ReporteLecturasMetricas = () => {
   );
 
   const rangoFiltro = useMemo(() => {
-    const inicio = filtro.inicio_periodo;
-    const fin = filtro.fin_periodo;
+    const inicio = filtro.inicio_periodo || filtro.fecha_inicio;
+    const fin = filtro.fin_periodo || filtro.fecha_fin;
     if (inicio && fin && inicio !== fin) {
       return `${formatMonthYearLong(inicio)} a ${formatMonthYearLong(fin)}`;
     }
     if (inicio) return formatMonthYearLong(inicio);
     if (fin) return formatMonthYearLong(fin);
-    return "Sin rango";
+    return "Consolidado General";
   }, [filtro]);
 
   const periodoPrincipal = useMemo(() => {
     if (filtro.periodo) return formatMonthYearLong(filtro.periodo);
-    if (filtro.anio) return `Año ${filtro.anio}`;
-    if (filtro.meses) return `Últimos ${filtro.meses} meses`;
-    return "-";
+    if (filtro.anio) return `Ejercicio Fiscal ${filtro.anio}`;
+    if (filtro.meses) return `Últimos ${filtro.meses} Meses`;
+    return filtro.etiqueta || "Período Ordinario";
   }, [filtro]);
+
+  // Cálculos de variaciones mes a mes
+  const deltasConsumo = useMemo(() => {
+    if (!consumoMensual || consumoMensual.length < 2) return [];
+    return consumoMensual.map((currRow, i) => {
+      const curr = Number(currRow.consumo_total_m3 || 0);
+      if (i === 0) {
+        return {
+          periodo: currRow.periodo,
+          diff: 0,
+          pct: 0,
+          isBase: true,
+          consumo: curr,
+        };
+      }
+      const prev = Number(consumoMensual[i - 1].consumo_total_m3 || 0);
+      const diff = curr - prev;
+      const pct = prev > 0 ? (diff / prev) * 100 : 0;
+      return {
+        periodo: currRow.periodo,
+        diff,
+        pct,
+        isBase: false,
+        consumo: curr,
+      };
+    });
+  }, [consumoMensual]);
+
+  const maxAbsDiff = useMemo(() => {
+    if (!deltasConsumo.length) return 1;
+    return Math.max(...deltasConsumo.map((d) => Math.abs(d.diff)), 1);
+  }, [deltasConsumo]);
+
+  // Totales de tablas
+  const totalRecibosTabla = useMemo(
+    () => consumoMensual.reduce((acc, r) => acc + Number(r.recibos || 0), 0),
+    [consumoMensual],
+  );
+
+  const totalConsumoTabla = useMemo(
+    () => consumoMensual.reduce((acc, r) => acc + Number(r.consumo_total_m3 || 0), 0),
+    [consumoMensual],
+  );
+
+  const totalConsumoRutas = useMemo(
+    () => distribucionRutas.reduce((acc, r) => acc + Number(r.consumo_total_m3 || 0), 0),
+    [distribucionRutas],
+  );
+
+  const totalRecibosRutas = useMemo(
+    () => distribucionRutas.reduce((acc, r) => acc + Number(r.recibos || 0), 0),
+    [distribucionRutas],
+  );
+
+  const fechaHoyLarga = useMemo(() => {
+    const f = new Date().toLocaleDateString("es-MX", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    return f.charAt(0).toUpperCase() + f.slice(1);
+  }, []);
+
+  const fechaHoyCorta = useMemo(() => {
+    return new Date().toLocaleDateString("es-MX", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  }, []);
+
+  const horaHoy = useMemo(() => {
+    return new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+  }, []);
 
   if (!ready) {
     return (
@@ -134,13 +217,10 @@ const ReporteLecturasMetricas = () => {
           body { margin: 0; padding: 0; background: white; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           .no-break { page-break-inside: avoid; break-inside: avoid; }
-          
-          /* Reglas maestras para la estructura de impresión */
+          .page-break { page-break-before: always; break-before: page; }
           thead { display: table-header-group; }
           tfoot { display: table-footer-group; }
           tr { page-break-inside: avoid; }
-          
-          /* Pie fijo: se repite al final de CADA hoja impresa. */
           .page-footer {
             position: fixed;
             bottom: 0;
@@ -160,18 +240,15 @@ const ReporteLecturasMetricas = () => {
           margin: "0 auto",
           padding: "18px",
           fontFamily: "'Segoe UI', Arial, sans-serif",
-          color: "#111827",
+          color: "#0f172a",
           background: "#ffffff",
         }}
       >
-        {/* TABLA MAESTRA PARA CONTROLAR EL FLUJO DE IMPRESIÓN */}
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <tbody>
             <tr>
               <td>
-                {/* ── INICIO DEL CONTENIDO PRINCIPAL ── */}
-                
-                {/* ── HEADER ── */}
+                {/* ── ENCABEZADO INSTITUCIONAL OFICIAL ── */}
                 <div className="no-break" style={{ marginBottom: "10px" }}>
                   <div
                     style={{
@@ -184,14 +261,20 @@ const ReporteLecturasMetricas = () => {
                       borderRadius: "8px 8px 0 0",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <img src={logoSrc} alt="Logo" style={{ width: "76px", height: "76px", objectFit: "contain" }} />
-                      <div>
-                        <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                          Comision Municipal de Agua Potable y Alcantarillado
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                      {logoSrc ? (
+                        <img src={logoSrc} alt="Logo" style={{ width: "68px", height: "68px", objectFit: "contain" }} />
+                      ) : (
+                        <div style={{ width: "68px", height: "68px", background: "rgba(255,255,255,0.2)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>
+                          AGUA VP
                         </div>
-                        <div style={{ fontSize: "11px", opacity: 0.88, marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                          Villa Pesqueira, Sonora — Reporte de metricas de lecturas
+                      )}
+                      <div>
+                        <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "0.03em", textTransform: "uppercase" }}>
+                          Comisión Municipal de Agua Potable y Alcantarillado
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#dbeafe", marginTop: "3px", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                          Villa Pesqueira, Sonora — Reporte de Métricas de Lecturas
                         </div>
                       </div>
                     </div>
@@ -201,308 +284,563 @@ const ReporteLecturasMetricas = () => {
                         background: "rgba(255,255,255,0.15)",
                         border: "1px solid rgba(255,255,255,0.35)",
                         borderRadius: "8px",
-                        padding: "8px 14px",
+                        padding: "8px 16px",
                         textAlign: "center",
                       }}
                     >
-                      <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.8 }}>Periodos</div>
-                      <div style={{ fontWeight: 800, fontSize: "14px", marginTop: "2px" }}>{consumoMensual.length}</div>
+                      <div style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#bfdbfe", fontWeight: 700 }}>
+                        Períodos
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: "18px", marginTop: "1px", color: "#ffffff" }}>
+                        {consumoMensual.length || 1}
+                      </div>
                     </div>
                   </div>
 
+                  {/* ── CINTILLO DE METADATOS ── */}
                   <div
                     style={{
-                      background: "#f0f9ff",
-                      borderLeft: "4px solid #1e40af",
-                      borderRight: "1px solid #bfdbfe",
-                      borderBottom: "1px solid #bfdbfe",
+                      background: "#f8fafc",
+                      border: "1px solid #cbd5e1",
+                      borderTop: "none",
                       borderRadius: "0 0 8px 8px",
-                      padding: "7px 12px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "6px",
+                      padding: "8px 14px",
+                      display: "grid",
+                      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                      gap: "10px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ fontSize: "13px", color: "#1e3a8a", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                        Metricas de Lecturas y Rutas
+                    <div>
+                      <div style={{ fontSize: "7px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
+                        Filtro aplicado
                       </div>
-                      <div>
-                        <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
-                          Filtro aplicado
-                        </div>
-                        <div style={{ fontSize: "11px", fontWeight: 800, color: "#1f2937", textTransform: "uppercase" }}>
-                          {filtro.etiqueta || "General"}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
-                          Periodo principal
-                        </div>
-                        <div style={{ fontSize: "11px", fontWeight: 700, color: "#334155" }}>
-                          {periodoPrincipal}
-                        </div>
+                      <div style={{ fontSize: "10px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase" }}>
+                        {filtro.etiqueta || "General"}
                       </div>
                     </div>
-                    <div style={{ fontSize: "10px", color: "#475569", fontWeight: 600 }}>
-                      {rangoFiltro} · Tendencia mensual, consumo por ruta y rendimiento operativo
+                    <div>
+                      <div style={{ fontSize: "7px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
+                        Período principal
+                      </div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, color: "#1e3a8a" }}>
+                        {periodoPrincipal}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "7px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
+                        Rango de cobertura
+                      </div>
+                      <div style={{ fontSize: "10px", fontWeight: 600, color: "#475569" }}>
+                        {rangoFiltro}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: "7px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748b", fontWeight: 700 }}>
+                        Expedición
+                      </div>
+                      <div style={{ fontSize: "9px", fontWeight: 600, color: "#475569" }}>
+                        {fechaHoyLarga}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* ── KPIs (5 cols) ── */}
+                {/* ── 5 TARJETAS DE KPIS OPERATIVOS ── */}
                 <div
                   className="no-break"
                   style={{
-                    marginTop: "12px",
+                    marginBottom: "12px",
                     display: "grid",
                     gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
                     gap: "8px",
                   }}
                 >
-                  <div style={{ border: "1px solid #c7d2fe", background: "#eef2ff", borderRadius: "6px", padding: "8px" }}>
-                    <div style={{ fontSize: "9px", textTransform: "uppercase", color: "#4338ca", fontWeight: 700 }}>Recibos</div>
-                    <div style={{ fontSize: "14px", fontWeight: 800 }}>{fmt(resumen.total_recibos)}</div>
+                  <div style={{ border: "1px solid #cbd5e1", background: "#ffffff", borderRadius: "8px", padding: "10px" }}>
+                    <div style={{ fontSize: "8px", textTransform: "uppercase", color: "#475569", fontWeight: 700 }}>Recibos Emitidos</div>
+                    <div style={{ fontSize: "15px", fontWeight: 800, color: "#0f172a", marginTop: "2px" }}>{fmt(resumen.total_recibos)}</div>
+                    <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Padrón activo facturado</div>
                   </div>
-                  <div style={{ border: "1px solid #bae6fd", background: "#f0f9ff", borderRadius: "6px", padding: "8px" }}>
-                    <div style={{ fontSize: "9px", textTransform: "uppercase", color: "#0369a1", fontWeight: 700 }}>Agua consumida</div>
-                    <div style={{ fontSize: "14px", fontWeight: 800 }}>{fmt(resumen.consumo_total_m3, 2)} m³</div>
+
+                  <div style={{ border: "1px solid #cbd5e1", background: "#ffffff", borderRadius: "8px", padding: "10px" }}>
+                    <div style={{ fontSize: "8px", textTransform: "uppercase", color: "#2563eb", fontWeight: 700 }}>Agua Consumida</div>
+                    <div style={{ fontSize: "15px", fontWeight: 800, color: "#2563eb", marginTop: "2px" }}>{fmt(resumen.consumo_total_m3, 2)} m³</div>
+                    <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Volumen total medido</div>
                   </div>
-                  <div style={{ border: "1px solid #a7f3d0", background: "#ecfdf5", borderRadius: "6px", padding: "8px" }}>
-                    <div style={{ fontSize: "9px", textTransform: "uppercase", color: "#047857", fontWeight: 700 }}>Promedio por recibo</div>
-                    <div style={{ fontSize: "14px", fontWeight: 800 }}>{fmt(resumen.consumo_promedio_m3, 2)} m³</div>
+
+                  <div style={{ border: "1px solid #cbd5e1", background: "#ffffff", borderRadius: "8px", padding: "10px" }}>
+                    <div style={{ fontSize: "8px", textTransform: "uppercase", color: "#059669", fontWeight: 700 }}>Promedio por Recibo</div>
+                    <div style={{ fontSize: "15px", fontWeight: 800, color: "#059669", marginTop: "2px" }}>{fmt(resumen.consumo_promedio_m3, 2)} m³</div>
+                    <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Media mensual por toma</div>
                   </div>
-                  <div style={{ border: "1px solid #fed7aa", background: "#fff7ed", borderRadius: "6px", padding: "8px" }}>
-                    <div style={{ fontSize: "9px", textTransform: "uppercase", color: "#c2410c", fontWeight: 700 }}>Clientes</div>
-                    <div style={{ fontSize: "14px", fontWeight: 800 }}>{fmt(resumen.total_clientes)}</div>
+
+                  <div style={{ border: "1px solid #cbd5e1", background: "#ffffff", borderRadius: "8px", padding: "10px" }}>
+                    <div style={{ fontSize: "8px", textTransform: "uppercase", color: "#d97706", fontWeight: 700 }}>Clientes en Padrón</div>
+                    <div style={{ fontSize: "15px", fontWeight: 800, color: "#d97706", marginTop: "2px" }}>{fmt(resumen.total_clientes)}</div>
+                    <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Tomas registradas</div>
                   </div>
-                  <div style={{ border: "1px solid #ddd6fe", background: "#f5f3ff", borderRadius: "6px", padding: "8px" }}>
-                    <div style={{ fontSize: "9px", textTransform: "uppercase", color: "#6d28d9", fontWeight: 700 }}>Promedio cliente</div>
-                    <div style={{ fontSize: "14px", fontWeight: 800 }}>{fmt(resumen.promedio_consumo_por_cliente_m3, 2)} m³</div>
+
+                  <div style={{ border: "1px solid #cbd5e1", background: "#ffffff", borderRadius: "8px", padding: "10px" }}>
+                    <div style={{ fontSize: "8px", textTransform: "uppercase", color: "#1e3a8a", fontWeight: 700 }}>Promedio Cliente</div>
+                    <div style={{ fontSize: "15px", fontWeight: 800, color: "#1e3a8a", marginTop: "2px" }}>{fmt(resumen.promedio_consumo_por_cliente_m3, 2)} m³</div>
+                    <div style={{ fontSize: "7.5px", color: "#64748b", marginTop: "2px" }}>Intensidad de uso</div>
                   </div>
                 </div>
 
-                {/* ── GRAFICA SVG ── */}
+                {/* ── GRÁFICA 1: TENDENCIA MENSUAL DE CONSUMO (SOLO m³) ── */}
                 <div
                   className="no-break"
                   style={{
-                    border: "1px solid #dbeafe",
+                    border: "1px solid #e2e8f0",
                     borderRadius: "8px",
-                    padding: "10px",
-                    background: "#f8fafc",
-                    marginTop: "12px",
+                    padding: "10px 12px",
+                    background: "#ffffff",
+                    marginBottom: "10px",
                   }}
                 >
-                  <h3 style={{ margin: "0 0 8px", fontSize: "11px", color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Tendencia mensual de consumo
-                  </h3>
-                  <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 600 }}>
-                    Rango del eje Y izq: 0 - {fmt(maxConsumo, 2)} m³ · Rango eje der: 0 - {fmt(maxRecibos)} recibos
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                    <h3 style={{ margin: 0, fontSize: "11px", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 800 }}>
+                      Tendencia Mensual de Consumo de Agua Potable (m³)
+                    </h3>
+                    <span style={{ fontSize: "10px", fontWeight: 800, color: "#2563eb" }}>
+                      VOLUMEN TOTAL: {fmt(resumen.consumo_total_m3, 2)} m³
+                    </span>
                   </div>
-                  <div style={{ display: "grid", gap: "6px" }}>
-                    {consumoMensual.length === 0 && (
-                      <div style={{ fontSize: "10px", color: "#6b7280" }}>Sin datos de tendencia para el periodo seleccionado.</div>
-                    )}
-                    {consumoMensual.length > 0 && (
-                      <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", background: "white", padding: "10px" }}>
-                        <svg
-                          width="100%"
-                          viewBox={`0 0 ${Math.max(420, consumoMensual.length * 44 + 90)} 220`}
-                          preserveAspectRatio="none"
-                          style={{ height: "210px", display: "block" }}
-                        >
-                          {(() => {
-                            const width = Math.max(420, consumoMensual.length * 44 + 90);
-                            const chartTop = 16;
-                            const chartBottom = 170;
-                            const chartHeight = chartBottom - chartTop;
-                            const left = 44;
-                            const right = 36;
-                            const plotWidth = width - left - right;
-                            const groupWidth = plotWidth / consumoMensual.length;
-                            const barWidth = Math.max(6, Math.min(16, groupWidth / 2.2));
-                            const baseConsumo = maxConsumo > 0 ? maxConsumo : 1;
-                            const baseRecibos = maxRecibos > 0 ? maxRecibos : 1;
+                  <div style={{ fontSize: "8px", color: "#64748b", marginBottom: "6px" }}>
+                    Volumen hidráulico mensual medido y facturado en metros cúbicos para los períodos analizados.
+                  </div>
 
-                            const linePoints = consumoMensual.map((row, idx) => {
-                              const x = left + idx * groupWidth + groupWidth / 2;
-                              const recibos = Number(row.recibos || 0);
-                              const y = chartBottom - (recibos / baseRecibos) * chartHeight;
-                              return { x, y };
-                            });
+                  {consumoMensual.length === 0 ? (
+                    <div style={{ padding: "14px", textAlign: "center", color: "#64748b", fontSize: "9px", background: "#f8fafc", borderRadius: "6px" }}>
+                      Sin datos de consumo mensual para el período seleccionado.
+                    </div>
+                  ) : (
+                    <div>
+                      <svg
+                        width="100%"
+                        viewBox={`0 0 ${Math.max(480, consumoMensual.length * 48 + 90)} 160`}
+                        preserveAspectRatio="none"
+                        style={{ height: "145px", display: "block" }}
+                      >
+                        {(() => {
+                          const width = Math.max(480, consumoMensual.length * 48 + 90);
+                          const chartTop = 16;
+                          const chartBottom = 136;
+                          const chartHeight = chartBottom - chartTop;
+                          const left = 46;
+                          const right = 24;
+                          const plotWidth = width - left - right;
+                          const groupWidth = plotWidth / consumoMensual.length;
+                          const barWidth = Math.max(8, Math.min(22, groupWidth / 2.3));
+                          const baseConsumo = maxConsumo > 0 ? maxConsumo : 1;
 
-                            return (
-                              <>
-                                {[0, 1, 2, 3, 4].map((step) => {
-                                  const y = chartBottom - (step / 4) * chartHeight;
-                                  const axisConsumo = (baseConsumo * step) / 4;
-                                  const axisRecibos = (baseRecibos * step) / 4;
-                                  return (
-                                    <g key={`grid-${step}`}>
-                                      <line x1={left} y1={y} x2={width - right} y2={y} stroke="#dbeafe" strokeDasharray="2 2" strokeWidth="1" />
-                                      <text x={left - 5} y={y + 3} textAnchor="end" fontSize="7" fill="#0369a1" fontWeight="700">
-                                        {axisConsumo.toLocaleString("es-MX", { notation: "compact", maximumFractionDigits: 1 })}
-                                      </text>
-                                      <text x={width - right + 5} y={y + 3} textAnchor="start" fontSize="7" fill="#4338ca" fontWeight="700">
-                                        {Math.round(axisRecibos)}
-                                      </text>
-                                    </g>
-                                  );
-                                })}
+                          return (
+                            <>
+                              {[0, 1, 2, 3, 4].map((step) => {
+                                const y = chartBottom - (step / 4) * chartHeight;
+                                const axisConsumo = (baseConsumo * step) / 4;
+                                return (
+                                  <g key={`grid-c-${step}`}>
+                                    <line x1={left} y1={y} x2={width - right} y2={y} stroke="#e2e8f0" strokeDasharray="2 2" strokeWidth="0.8" />
+                                    <text x={left - 6} y={y + 3} textAnchor="end" fontSize="7" fill="#475569" fontWeight="700">
+                                      {axisConsumo.toLocaleString("es-MX", { notation: "compact", maximumFractionDigits: 1 })}
+                                    </text>
+                                  </g>
+                                );
+                              })}
 
-                                {consumoMensual.map((row, idx) => {
-                                  const consumoVal = Number(row.consumo_total_m3 || 0);
-                                  const x = left + idx * groupWidth + groupWidth / 2;
-                                  const hCon = (consumoVal / baseConsumo) * chartHeight;
+                              {consumoMensual.map((row, idx) => {
+                                const consumoVal = Number(row.consumo_total_m3 || 0);
+                                const x = left + idx * groupWidth + groupWidth / 2;
+                                const hCon = (consumoVal / baseConsumo) * (chartHeight - 8);
+                                const barTop = chartBottom - hCon;
+                                const valLabel = consumoVal >= 1000 ? (consumoVal / 1000).toFixed(1) + "k" : Math.round(consumoVal);
 
-                                  return (
-                                    <g key={`bar-${row.periodo}-${idx}`}>
-                                      <rect
-                                        x={x - barWidth / 2}
-                                        y={chartBottom - hCon}
-                                        width={barWidth}
-                                        height={hCon}
-                                        fill="#0ea5e9"
-                                        rx="2"
-                                      />
-                                      <text x={x} y="188" textAnchor="middle" fontSize="8" fill="#475569" fontWeight="700">
-                                        {shortMonth(row.periodo)}
-                                      </text>
-                                    </g>
-                                  );
-                                })}
+                                return (
+                                  <g key={`bar-c-${row.periodo}-${idx}`}>
+                                    <rect
+                                      x={x - barWidth / 2}
+                                      y={barTop}
+                                      width={barWidth}
+                                      height={Math.max(2, hCon)}
+                                      fill="#2563eb"
+                                      rx="2"
+                                    />
+                                    <text x={x} y={barTop - 4} textAnchor="middle" fontSize="6.5" fill="#2563eb" fontWeight="700">
+                                      {valLabel}
+                                    </text>
+                                    <text x={x} y="152" textAnchor="middle" fontSize="7.5" fill="#0f172a" fontWeight="700">
+                                      {shortMonth(row.periodo)}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </>
+                          );
+                        })()}
+                      </svg>
 
-                                {linePoints.length > 1 && (
-                                  <polyline
-                                    fill="none"
-                                    stroke="#6366f1"
-                                    strokeWidth="2.5"
-                                    points={linePoints.map((p) => `${p.x},${p.y}`).join(" ")}
-                                  />
-                                )}
-                                {linePoints.map((p, idx) => (
-                                  <circle key={`pt-${idx}`} cx={p.x} cy={p.y} r="3" fill="#6366f1" stroke="white" strokeWidth="1.5" />
-                                ))}
-                              </>
-                            );
-                          })()}
-                        </svg>
-
-                        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "6px", fontSize: "9px", color: "#334155" }}>
-                          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span style={{ width: "8px", height: "8px", background: "#0ea5e9", borderRadius: "2px", display: "inline-block" }} />
-                            Consumo (m³)
-                          </span>
-                          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span style={{ width: "12px", height: "2px", background: "#6366f1", display: "inline-block" }} />
-                            Recibos
-                          </span>
-                        </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "8px", color: "#334155" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: "5px", fontWeight: 700, color: "#2563eb" }}>
+                          <span style={{ width: "9px", height: "9px", background: "#2563eb", borderRadius: "2px", display: "inline-block" }} />
+                          ■ Consumo Medido Facturado (m³)
+                        </span>
+                        <span style={{ color: "#64748b" }}>
+                          Promedio: {fmt(resumen.consumo_promedio_m3, 2)} m³/recibo
+                        </span>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* ── DESGLOSE MENSUAL ── */}
-                <div style={{ marginTop: "14px" }} className="no-break">
-                  <h3 style={{ margin: "0 0 6px", fontSize: "12px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Desglose mensual de consumo
-                  </h3>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px" }}>
-                    <thead>
-                      <tr>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "left" }}>Periodo</th>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Recibos</th>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Consumo total (m³)</th>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Promedio (m³)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {consumoMensual.map((row, idx) => (
-                        <tr key={`${row.periodo}-${idx}`}>
-                          <td style={{ border: "1px solid #e5e7eb", padding: "5px", textTransform: "capitalize" }}>{formatMonthYearLong(row.periodo)}</td>
-                          <td style={{ border: "1px solid #e5e7eb", padding: "5px", textAlign: "right" }}>{fmt(row.recibos)}</td>
-                          <td style={{ border: "1px solid #e5e7eb", padding: "5px", textAlign: "right" }}>{fmt(row.consumo_total_m3, 2)}</td>
-                          <td style={{ border: "1px solid #e5e7eb", padding: "5px", textAlign: "right" }}>{fmt(row.consumo_promedio_m3, 2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* ── RESUMEN OPERATIVO DE RUTAS ── */}
+                {/* ── GRÁFICA 2: ANÁLISIS DE VARIACIÓN INTERMENSUAL DE CONSUMO ── */}
                 <div
                   className="no-break"
                   style={{
-                    border: "1px solid #dbeafe",
+                    border: "1px solid #e2e8f0",
                     borderRadius: "8px",
-                    padding: "10px",
-                    background: "#f8fafc",
-                    marginTop: "12px",
+                    padding: "10px 12px",
+                    background: "#ffffff",
+                    marginBottom: "10px",
                   }}
                 >
-                  <h3 style={{ margin: "0 0 8px", fontSize: "11px", color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    Resumen operativo de rutas
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                    <h3 style={{ margin: 0, fontSize: "11px", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 800 }}>
+                      Análisis de Variación Intermensual de Consumo (Incremento / Decremento)
+                    </h3>
+                    <span style={{ fontSize: "8.5px", fontWeight: 700, color: "#64748b" }}>
+                      TENDENCIA RELATIVA MES A MES
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "8px", color: "#64748b", marginBottom: "6px" }}>
+                    Fluctuación porcentual y neta en m³ respecto al mes inmediato anterior. Identifica picos estacionales o descensos de demanda.
+                  </div>
+
+                  {deltasConsumo.length < 2 ? (
+                    <div style={{ padding: "14px", textAlign: "center", color: "#64748b", fontSize: "9px", background: "#f8fafc", borderRadius: "6px" }}>
+                      Se requieren al menos dos períodos para calcular la variación intermensual.
+                    </div>
+                  ) : (
+                    <div>
+                      <svg
+                        width="100%"
+                        viewBox={`0 0 ${Math.max(480, deltasConsumo.length * 48 + 90)} 140`}
+                        preserveAspectRatio="none"
+                        style={{ height: "125px", display: "block" }}
+                      >
+                        {(() => {
+                          const width = Math.max(480, deltasConsumo.length * 48 + 90);
+                          const chartTop = 16;
+                          const chartBottom = 118;
+                          const chartHeight = chartBottom - chartTop;
+                          const zeroY = chartTop + chartHeight / 2;
+                          const availableHalf = chartHeight / 2 - 10;
+                          const left = 46;
+                          const right = 24;
+                          const plotWidth = width - left - right;
+                          const groupWidth = plotWidth / deltasConsumo.length;
+                          const barWidth = Math.max(8, Math.min(22, groupWidth / 2.3));
+
+                          return (
+                            <>
+                              <line x1={left} y1={chartTop} x2={width - right} y2={chartTop} stroke="#e2e8f0" strokeDasharray="2 2" strokeWidth="0.8" />
+                              <text x={left - 5} y={chartTop + 3} textAnchor="end" fontSize="6.5" fill="#64748b" fontWeight="700">
+                                +{fmt(maxAbsDiff, 1)} m³
+                              </text>
+                              <line x1={left} y1={zeroY} x2={width - right} y2={zeroY} stroke="#94a3b8" strokeWidth="1.2" />
+                              <text x={left - 5} y={zeroY + 3} textAnchor="end" fontSize="6.5" fill="#0f172a" fontWeight="700">
+                                0 m³
+                              </text>
+                              <line x1={left} y1={chartBottom} x2={width - right} y2={chartBottom} stroke="#e2e8f0" strokeDasharray="2 2" strokeWidth="0.8" />
+                              <text x={left - 5} y={chartBottom + 3} textAnchor="end" fontSize="6.5" fill="#64748b" fontWeight="700">
+                                -{fmt(maxAbsDiff, 1)} m³
+                              </text>
+
+                              {deltasConsumo.map((d, idx) => {
+                                const x = left + idx * groupWidth + groupWidth / 2;
+                                if (d.isBase) {
+                                  return (
+                                    <g key={`delta-${idx}`}>
+                                      <circle cx={x} cy={zeroY} r="3" fill="#64748b" />
+                                      <text x={x} y={zeroY - 5} textAnchor="middle" fontSize="6.5" fill="#64748b" fontWeight="700">
+                                        Base
+                                      </text>
+                                      <text x={x} y="134" textAnchor="middle" fontSize="7.5" fill="#0f172a" fontWeight="700">
+                                        {shortMonth(d.periodo)}
+                                      </text>
+                                    </g>
+                                  );
+                                }
+                                if (d.diff >= 0) {
+                                  const h = (d.diff / maxAbsDiff) * availableHalf;
+                                  const barTop = zeroY - h;
+                                  return (
+                                    <g key={`delta-${idx}`}>
+                                      <rect x={x - barWidth / 2} y={barTop} width={barWidth} height={Math.max(2, h)} fill="#2563eb" rx="2" />
+                                      <text x={x} y={barTop - 3} textAnchor="middle" fontSize="6.5" fill="#2563eb" fontWeight="700">
+                                        +{d.pct.toFixed(1)}%
+                                      </text>
+                                      <text x={x} y="134" textAnchor="middle" fontSize="7.5" fill="#0f172a" fontWeight="700">
+                                        {shortMonth(d.periodo)}
+                                      </text>
+                                    </g>
+                                  );
+                                }
+                                const h = (Math.abs(d.diff) / maxAbsDiff) * availableHalf;
+                                const barBottom = zeroY + h;
+                                return (
+                                  <g key={`delta-${idx}`}>
+                                    <rect x={x - barWidth / 2} y={zeroY} width={barWidth} height={Math.max(2, h)} fill="#dc2626" rx="2" />
+                                    <text x={x} y={barBottom + 8} textAnchor="middle" fontSize="6.5" fill="#dc2626" fontWeight="700">
+                                      {d.pct.toFixed(1)}%
+                                    </text>
+                                    <text x={x} y="134" textAnchor="middle" fontSize="7.5" fill="#0f172a" fontWeight="700">
+                                      {shortMonth(d.periodo)}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </>
+                          );
+                        })()}
+                      </svg>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "8px" }}>
+                        <span style={{ fontWeight: 700, color: "#2563eb" }}>■ Incremento de Consumo (%)</span>
+                        <span style={{ fontWeight: 700, color: "#dc2626" }}>■ Reducción de Consumo (%)</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── GRÁFICA 3: EVOLUCIÓN MENSUAL DE CLIENTES Y RECIBOS FACTURADOS ── */}
+                <div
+                  className="no-break"
+                  style={{
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    padding: "10px 12px",
+                    background: "#ffffff",
+                    marginBottom: "14px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                    <h3 style={{ margin: 0, fontSize: "11px", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 800 }}>
+                      Evolución Mensual de Clientes y Recibos Facturados
+                    </h3>
+                    <span style={{ fontSize: "10px", fontWeight: 800, color: "#1e3a8a" }}>
+                      TOTAL PADRÓN: {fmt(resumen.total_recibos)} RECIBOS
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "8px", color: "#64748b", marginBottom: "6px" }}>
+                    Total de tomas y usuarios activos censados con recibo emitido en cada ciclo operativo.
+                  </div>
+
+                  {consumoMensual.length === 0 ? (
+                    <div style={{ padding: "14px", textAlign: "center", color: "#64748b", fontSize: "9px", background: "#f8fafc", borderRadius: "6px" }}>
+                      Sin datos de recibos para el período seleccionado.
+                    </div>
+                  ) : (
+                    <div>
+                      <svg
+                        width="100%"
+                        viewBox={`0 0 ${Math.max(480, consumoMensual.length * 48 + 90)} 150`}
+                        preserveAspectRatio="none"
+                        style={{ height: "135px", display: "block" }}
+                      >
+                        {(() => {
+                          const width = Math.max(480, consumoMensual.length * 48 + 90);
+                          const chartTop = 16;
+                          const chartBottom = 126;
+                          const chartHeight = chartBottom - chartTop;
+                          const left = 46;
+                          const right = 24;
+                          const plotWidth = width - left - right;
+                          const groupWidth = plotWidth / consumoMensual.length;
+                          const barWidth = Math.max(8, Math.min(22, groupWidth / 2.3));
+                          const baseRecibos = maxRecibos > 0 ? maxRecibos : 1;
+
+                          return (
+                            <>
+                              {[0, 1, 2, 3, 4].map((step) => {
+                                const y = chartBottom - (step / 4) * chartHeight;
+                                const axisRecibos = (baseRecibos * step) / 4;
+                                return (
+                                  <g key={`grid-r-${step}`}>
+                                    <line x1={left} y1={y} x2={width - right} y2={y} stroke="#e2e8f0" strokeDasharray="2 2" strokeWidth="0.8" />
+                                    <text x={left - 6} y={y + 3} textAnchor="end" fontSize="7" fill="#475569" fontWeight="700">
+                                      {Math.round(axisRecibos)}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+
+                              {consumoMensual.map((row, idx) => {
+                                const recibos = Number(row.recibos || 0);
+                                const x = left + idx * groupWidth + groupWidth / 2;
+                                const hRec = (recibos / baseRecibos) * (chartHeight - 8);
+                                const barTop = chartBottom - hRec;
+
+                                return (
+                                  <g key={`bar-r-${row.periodo}-${idx}`}>
+                                    <rect
+                                      x={x - barWidth / 2}
+                                      y={barTop}
+                                      width={barWidth}
+                                      height={Math.max(2, hRec)}
+                                      fill="#1e3a8a"
+                                      rx="2"
+                                    />
+                                    <text x={x} y={barTop - 4} textAnchor="middle" fontSize="6.5" fill="#1e3a8a" fontWeight="700">
+                                      {fmt(recibos)}
+                                    </text>
+                                    <text x={x} y="142" textAnchor="middle" fontSize="7.5" fill="#0f172a" fontWeight="700">
+                                      {shortMonth(row.periodo)}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </>
+                          );
+                        })()}
+                      </svg>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "8px", color: "#334155" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: "5px", fontWeight: 700, color: "#1e3a8a" }}>
+                          <span style={{ width: "9px", height: "9px", background: "#1e3a8a", borderRadius: "2px", display: "inline-block" }} />
+                          ■ Tomas y Clientes Facturados por Período
+                        </span>
+                        <span style={{ color: "#64748b" }}>
+                          Total clientes en padrón: {fmt(resumen.total_clientes)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── SALTO DE PÁGINA PARA TABLAS ── */}
+                <div className="page-break" style={{ height: "1px" }} />
+
+                {/* ── DESGLOSE CRONOLÓGICO DE CONSUMO MENSUAL ── */}
+                <div style={{ marginTop: "14px", marginBottom: "14px" }} className="no-break">
+                  <h3 style={{ margin: "0 0 6px", fontSize: "11px", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 800 }}>
+                    Desglose Cronológico y Rendimiento Mensual de Consumo
                   </h3>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px", background: "white", border: "1px solid #e2e8f0", borderRadius: "6px", overflow: "hidden" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px" }}>
                     <thead>
                       <tr>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Total rutas</th>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Completadas</th>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>En progreso</th>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Sin iniciar</th>
-                        <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Avance</th>
+                        <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "left" }}>Período / Mes</th>
+                        <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Recibos / Tomas</th>
+                        <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Consumo Total (m³)</th>
+                        <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Promedio por Recibo (m³)</th>
+                        <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Variación vs Anterior</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td style={{ border: "1px solid #e5e7eb", padding: "6px", textAlign: "right", fontWeight: 700 }}>{fmt(rutasResumen.total_rutas)}</td>
-                        <td style={{ border: "1px solid #e5e7eb", padding: "6px", textAlign: "right", fontWeight: 700, color: "#047857" }}>{fmt(rutasResumen.rutas_completadas)}</td>
-                        <td style={{ border: "1px solid #e5e7eb", padding: "6px", textAlign: "right", fontWeight: 700, color: "#c2410c" }}>{fmt(rutasResumen.rutas_en_progreso)}</td>
-                        <td style={{ border: "1px solid #e5e7eb", padding: "6px", textAlign: "right", fontWeight: 700, color: "#b91c1c" }}>{fmt(rutasResumen.rutas_sin_iniciar)}</td>
-                        <td style={{ border: "1px solid #e5e7eb", padding: "6px", textAlign: "right", fontWeight: 800, background: "#eff6ff" }}>{fmt(rutasResumen.promedio_completado)}%</td>
+                      {consumoMensual.map((row, idx) => {
+                        const rec = Number(row.recibos || 0);
+                        const con = Number(row.consumo_total_m3 || 0);
+                        const prom = Number(row.consumo_promedio_m3 || 0);
+
+                        let varStr = "-";
+                        let varColor = "#64748b";
+                        if (idx > 0) {
+                          const prevCon = Number(consumoMensual[idx - 1].consumo_total_m3 || 0);
+                          const diff = con - prevCon;
+                          const pct = prevCon > 0 ? (diff / prevCon) * 100 : 0;
+                          if (diff > 0) {
+                            varStr = `+${fmt(diff, 1)} m³ (+${pct.toFixed(1)}%)`;
+                            varColor = "#2563eb";
+                          } else if (diff < 0) {
+                            varStr = `${fmt(diff, 1)} m³ (${pct.toFixed(1)}%)`;
+                            varColor = "#dc2626";
+                          } else {
+                            varStr = "0.0 m³ (0.0%)";
+                            varColor = "#475569";
+                          }
+                        }
+
+                        const isEven = idx % 2 === 0;
+                        return (
+                          <tr key={`${row.periodo}-${idx}`} style={{ background: isEven ? "#f8fafc" : "#ffffff" }}>
+                            <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", fontWeight: 700 }}>{formatMonthYearLong(row.periodo)}</td>
+                            <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right" }}>{fmt(rec)}</td>
+                            <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontWeight: 700, color: "#2563eb" }}>{fmt(con, 2)}</td>
+                            <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right" }}>{fmt(prom, 2)}</td>
+                            <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontWeight: 700, color: varColor }}>{varStr}</td>
+                          </tr>
+                        );
+                      })}
+                      {/* Fila Total Consolidado */}
+                      <tr style={{ background: "#eff6ff", fontWeight: 800 }}>
+                        <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px" }}>TOTAL CONSOLIDADO</td>
+                        <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "right" }}>{fmt(totalRecibosTabla)}</td>
+                        <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "right", color: "#2563eb" }}>{fmt(totalConsumoTabla, 2)}</td>
+                        <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "right", color: "#059669" }}>
+                          {fmt(totalRecibosTabla > 0 ? totalConsumoTabla / totalRecibosTabla : 0, 2)}
+                        </td>
+                        <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "right", color: "#1e3a8a" }}>100.0% COBERTURA</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
-                {/* ── CONSUMO POR RUTA ── */}
-                <div style={{ marginTop: "14px" }} className="no-break">
-                  <h3 style={{ margin: "0 0 6px", fontSize: "12px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Consumo por ruta
+                {/* ── DISTRIBUCIÓN HIDRÁULICA Y CONSUMO POR RUTA / SECTOR ── */}
+                <div style={{ marginTop: "14px", marginBottom: "14px" }} className="no-break">
+                  <h3 style={{ margin: "0 0 6px", fontSize: "11px", color: "#0f172a", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 800 }}>
+                    Distribución Hidráulica y Consumo por Ruta / Sector
                   </h3>
                   {distribucionRutas.length === 0 ? (
-                    <div style={{ fontSize: "10px", color: "#6b7280" }}>Sin consumo facturado por ruta en el filtro seleccionado.</div>
+                    <div style={{ fontSize: "9px", color: "#6b7280", padding: "10px", background: "#f8fafc", borderRadius: "6px" }}>
+                      Sin consumo facturado por ruta en el filtro seleccionado.
+                    </div>
                   ) : (
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px" }}>
                       <thead>
                         <tr>
-                          <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "left" }}>Ruta</th>
-                          <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Recibos</th>
-                          <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Consumo total (m³)</th>
-                          <th style={{ background: "#1e3a8a", color: "white", padding: "6px", textAlign: "right" }}>Promedio (m³)</th>
+                          <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "left" }}>Ruta / Sector Operativo</th>
+                          <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Recibos / Tomas</th>
+                          <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Consumo Total (m³)</th>
+                          <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Promedio por Toma (m³)</th>
+                          <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>% del Consumo Total</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {distribucionRutas.map((row, idx) => (
-                          <tr key={`${row.ruta_id}-${idx}`}>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "5px", fontWeight: 700 }}>{row.ruta_nombre}</td>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "5px", textAlign: "right" }}>{fmt(row.recibos)}</td>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "5px", textAlign: "right" }}>{fmt(row.consumo_total_m3, 2)}</td>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "5px", textAlign: "right" }}>{fmt(row.consumo_promedio_m3, 2)}</td>
-                          </tr>
-                        ))}
+                        {distribucionRutas.map((row, idx) => {
+                          const rec = Number(row.recibos || 0);
+                          const con = Number(row.consumo_total_m3 || 0);
+                          const prom = Number(row.consumo_promedio_m3 || 0);
+                          const pct = totalConsumoRutas > 0 ? (con / totalConsumoRutas) * 100 : 0;
+                          const isEven = idx % 2 === 0;
+
+                          return (
+                            <tr key={`${row.ruta_id}-${idx}`} style={{ background: isEven ? "#f8fafc" : "#ffffff" }}>
+                              <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", fontWeight: 700 }}>{row.ruta_nombre || `Ruta ${row.ruta_id}`}</td>
+                              <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right" }}>{fmt(rec)}</td>
+                              <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontWeight: 700, color: "#2563eb" }}>{fmt(con, 2)}</td>
+                              <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right" }}>{fmt(prom, 2)}</td>
+                              <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontWeight: 700 }}>{percent(pct)}</td>
+                            </tr>
+                          );
+                        })}
+                        {/* Fila Total Rutas */}
+                        <tr style={{ background: "#eff6ff", fontWeight: 800 }}>
+                          <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px" }}>TOTAL RUTAS Y SECTORES</td>
+                          <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "right" }}>{fmt(totalRecibosRutas)}</td>
+                          <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "right", color: "#2563eb" }}>{fmt(totalConsumoRutas, 2)}</td>
+                          <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "right", color: "#059669" }}>
+                            {fmt(totalRecibosRutas > 0 ? totalConsumoRutas / totalRecibosRutas : 0, 2)}
+                          </td>
+                          <td style={{ border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "right" }}>100.0%</td>
+                        </tr>
                       </tbody>
                     </table>
                   )}
                 </div>
-
-                {/* ── FIN DEL CONTENIDO PRINCIPAL ── */}
               </td>
             </tr>
           </tbody>
 
-          {/* FOOTER INVISIBLE PARA RESERVAR ESPACIO */}
+          {/* ESPACIO PARA PIE DE PÁGINA */}
           <tfoot>
             <tr>
               <td>
@@ -512,22 +850,22 @@ const ReporteLecturasMetricas = () => {
           </tfoot>
         </table>
 
-        {/* ── FOOTER (fijo al pie de cada hoja en impresión) ── */}
+        {/* ── FOOTER ESTANDARIZADO OFICIAL ── */}
         <div
           className="page-footer"
           style={{
             marginTop: "8px",
-            borderTop: "1px solid #e5e7eb",
-            paddingTop: "8px",
-            fontSize: "9px",
-            color: "#6b7280",
+            borderTop: "1px solid #cbd5e1",
+            paddingTop: "6px",
+            fontSize: "8px",
+            color: "#64748b",
             display: "flex",
             justifyContent: "space-between",
             background: "#ffffff",
           }}
         >
-          <span>Generado: {new Date().toLocaleString("es-MX")}</span>
-          <span>AGUA VP · Reporte de Métricas de Lecturas</span>
+          <span>AGUA VILLA PESQUEIRA · Reporte de Métricas de Lecturas · Emisión: {fechaHoyCorta} {horaHoy}</span>
+          <span style={{ fontWeight: 700, color: "#1e3a8a" }}>DOCUMENTO OFICIAL DE CONTROL OPERATIVO</span>
         </div>
       </div>
     </>
