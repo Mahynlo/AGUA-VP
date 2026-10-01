@@ -109,27 +109,31 @@ const AccionesImpresion = ({
               <div className="flex flex-col gap-2.5 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-xl p-3.5">
                 <div className="flex items-center justify-between text-[11px] font-bold text-indigo-700 dark:text-indigo-400">
                   <span className="truncate max-w-[70%]">
-                    {progresoGeneracion.fase === 'compilando'
-                      ? "⚡ Compilando PDF y abriendo visor..."
-                      : progresoGeneracion.cliente}
+                    {progresoGeneracion.mensaje || (progresoGeneracion.fase === 'compilando' || progresoGeneracion.fase === 'ensamblando'
+                      ? "⚡ Ensamblando PDF y abriendo visor..."
+                      : progresoGeneracion.cliente || "Generando recibos...")}
                   </span>
                   <span className="font-mono">
-                    {progresoGeneracion.fase === 'compilando'
-                      ? "PDF..."
-                      : `${progresoGeneracion.actual} / ${progresoGeneracion.total}`}
+                    {progresoGeneracion.porcentaje !== undefined
+                      ? `${progresoGeneracion.porcentaje}%`
+                      : progresoGeneracion.fase === 'compilando' || progresoGeneracion.fase === 'ensamblando'
+                        ? "PDF..."
+                        : `${progresoGeneracion.actual} / ${progresoGeneracion.total}`}
                   </span>
                 </div>
                 <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
                   <div 
                     className={`h-full rounded-full transition-all duration-300 ${
-                      progresoGeneracion.fase === 'compilando'
-                        ? "bg-indigo-600 dark:bg-indigo-400 animate-pulse w-full"
+                      progresoGeneracion.fase === 'compilando' || progresoGeneracion.fase === 'ensamblando'
+                        ? "bg-indigo-600 dark:bg-indigo-400 animate-pulse"
                         : "bg-indigo-600 dark:bg-indigo-500"
                     }`}
                     style={{
-                      width: progresoGeneracion.fase === 'compilando'
-                        ? '100%'
-                        : `${(progresoGeneracion.actual / progresoGeneracion.total) * 100}%`
+                      width: progresoGeneracion.porcentaje !== undefined
+                        ? `${Math.max(5, Math.min(100, progresoGeneracion.porcentaje))}%`
+                        : progresoGeneracion.fase === 'compilando'
+                          ? '100%'
+                          : `${(progresoGeneracion.actual / (progresoGeneracion.total || 1)) * 100}%`
                     }}
                   ></div>
                 </div>

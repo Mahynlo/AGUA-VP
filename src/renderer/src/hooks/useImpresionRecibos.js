@@ -19,6 +19,18 @@ const useImpresionRecibos = () => {
     preloadPdfViewer()
   }, [])
 
+  // Escuchar progreso real emitido por el proceso principal durante la generación de PDFs
+  useEffect(() => {
+    if (!window.api?.onImpresionProgreso) return
+    const unsubscribe = window.api.onImpresionProgreso((info) => {
+      setProgresoGeneracion((prev) => ({
+        ...(prev || {}),
+        ...info
+      }))
+    })
+    return () => unsubscribe()
+  }, [])
+
   // Estado local UI
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState('')
   const [clientesSeleccionados, setClientesSeleccionados] = useState(new Set())
@@ -170,42 +182,15 @@ const useImpresionRecibos = () => {
 
     setProcesandoAccion('imprimir')
 
-    // Iniciar temporizador de progreso
-    const total = facturasParaImprimir.length
-    let actual = 0
+    const totalRecibos = facturasParaImprimir.length
+    const totalHojas = Math.ceil(totalRecibos / 2)
     setProgresoGeneracion({
-      actual: 1,
-      total,
-      fase: 'generando',
-      cliente: facturasParaImprimir[0]
-        ? `${facturasParaImprimir[0].cliente_nombre} (${facturasParaImprimir[0].numero_predio})`
-        : ''
+      actual: 0,
+      total: totalHojas,
+      porcentaje: 0,
+      fase: 'iniciando',
+      mensaje: `Preparando ${totalRecibos} recibos (${totalHojas} hojas)...`
     })
-
-    const intervalId = setInterval(
-      () => {
-        actual += 1
-        if (actual < total) {
-          setProgresoGeneracion({
-            actual: actual + 1,
-            total,
-            fase: 'generando',
-            cliente: facturasParaImprimir[actual]
-              ? `${facturasParaImprimir[actual].cliente_nombre} (${facturasParaImprimir[actual].numero_predio})`
-              : ''
-          })
-        } else {
-          clearInterval(intervalId)
-          setProgresoGeneracion({
-            actual: total,
-            total,
-            fase: 'compilando',
-            cliente: 'Compilando documento PDF...'
-          })
-        }
-      },
-      Math.max(60, Math.min(200, 3000 / total))
-    )
 
     // Dar un tick de render a React para que pinte inmediatamente el overlay/barra de progreso
     await new Promise((resolve) => setTimeout(resolve, 50))
@@ -230,7 +215,6 @@ const useImpresionRecibos = () => {
       console.error('Error preparing print:', err)
       alert('Hubo un error al preparar la impresión: ' + err)
     } finally {
-      clearInterval(intervalId)
       setProgresoGeneracion(null)
       setProcesandoAccion(null)
     }
@@ -246,42 +230,15 @@ const useImpresionRecibos = () => {
 
     setProcesandoAccion('vista-previa')
 
-    // Iniciar temporizador de progreso
-    const total = facturasParaImprimir.length
-    let actual = 0
+    const totalRecibos = facturasParaImprimir.length
+    const totalHojas = Math.ceil(totalRecibos / 2)
     setProgresoGeneracion({
-      actual: 1,
-      total,
-      fase: 'generando',
-      cliente: facturasParaImprimir[0]
-        ? `${facturasParaImprimir[0].cliente_nombre} (${facturasParaImprimir[0].numero_predio})`
-        : ''
+      actual: 0,
+      total: totalHojas,
+      porcentaje: 0,
+      fase: 'iniciando',
+      mensaje: `Preparando ${totalRecibos} recibos (${totalHojas} hojas)...`
     })
-
-    const intervalId = setInterval(
-      () => {
-        actual += 1
-        if (actual < total) {
-          setProgresoGeneracion({
-            actual: actual + 1,
-            total,
-            fase: 'generando',
-            cliente: facturasParaImprimir[actual]
-              ? `${facturasParaImprimir[actual].cliente_nombre} (${facturasParaImprimir[actual].numero_predio})`
-              : ''
-          })
-        } else {
-          clearInterval(intervalId)
-          setProgresoGeneracion({
-            actual: total,
-            total,
-            fase: 'compilando',
-            cliente: 'Compilando documento PDF...'
-          })
-        }
-      },
-      Math.max(60, Math.min(200, 3000 / total))
-    )
 
     // Dar un tick de render a React para que pinte inmediatamente el overlay/barra de progreso
     await new Promise((resolve) => setTimeout(resolve, 50))
@@ -313,7 +270,6 @@ const useImpresionRecibos = () => {
       console.error('Error in preview:', err)
       alert('Hubo un error al generar la vista previa: ' + err)
     } finally {
-      clearInterval(intervalId)
       setProgresoGeneracion(null)
       setProcesandoAccion(null)
     }
@@ -328,6 +284,17 @@ const useImpresionRecibos = () => {
     }
 
     setProcesandoAccion('prueba-recibo')
+    setProgresoGeneracion({
+      actual: 1,
+      total: 1,
+      porcentaje: 30,
+      fase: 'generando',
+      mensaje: 'Generando prueba de 1 recibo...'
+    })
+
+    // Dar un tick de render a React
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
     try {
       const lotePrueba = [facturasParaImprimir[0]]
       const previewUrl = await construirURLImpresion(lotePrueba, true, ciudadFiltro)
@@ -346,6 +313,7 @@ const useImpresionRecibos = () => {
       console.error('Error generando prueba de recibo:', err)
       alert('Hubo un error al generar la prueba de recibo: ' + err)
     } finally {
+      setProgresoGeneracion(null)
       setProcesandoAccion(null)
     }
   }
