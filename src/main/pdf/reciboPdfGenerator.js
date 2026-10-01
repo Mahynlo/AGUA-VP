@@ -1201,112 +1201,87 @@ function construirReciboPdfMake(factura, logoBase64, anuncioTexto, equivalenciaT
 }
 
 /**
- * Genera el documento PDF completo para todas las páginas de recibos usando pdfmake de forma nativa e instantánea.
- * @param {Array} paginasRecibos - Array de páginas, cada una con hasta 2 recibos
- * @param {Object} opciones - Configuración adicional (logo, anuncio, equivalencia, ciudad, etc.)
- * @returns {Promise<Buffer>} Buffer del archivo PDF generado
+ * Construye los componentes estructurales de una hoja de recibos para pdfmake.
+ * Cada hoja contiene cabecera con folio, dos recibos (izq/der), divisor central punteado y subfooter.
  */
-export async function generarRecibosPdf(paginasRecibos = [], opciones = {}) {
-  ensureFonts()
-  const logoBase64 = obtenerLogoBase64(opciones.customLogo)
-  const hasLogo = !!logoBase64
-  const content = []
+function construirElementosHojaRecibos(pagina, indexPagina, totalHojas, hasLogo, opciones) {
+  const r1 = pagina[0] || null
+  const r2 = pagina[1] || null
 
-  for (let indexPagina = 0; indexPagina < paginasRecibos.length; indexPagina++) {
-    const pagina = paginasRecibos[indexPagina]
-    const r1 = pagina[0] || null
-    const r2 = pagina[1] || null
-
-    // Header superior de emisión / folio de la hoja
-    const cabeceraHoja = {
-      columns: [
-        {
-          text: r1
-            ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(r1)} • Recibo No: ${obtenerIdentificadorRecibo(r1, opciones.ciudadFiltro) || indexPagina * 2 + 1} • Folio Factura: #${r1.id}`
-            : '',
-          fontSize: 6.4,
-          color: '#6b7280'
-        },
-        {
-          text: r2
-            ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(r2)} • Recibo No: ${obtenerIdentificadorRecibo(r2, opciones.ciudadFiltro) || indexPagina * 2 + 2} • Folio Factura: #${r2.id}`
-            : '',
-          fontSize: 6.4,
-          color: '#6b7280',
-          alignment: 'right'
-        }
-      ],
-      margin: [0, 0, 0, 4]
-    }
-
-    const recibo1 = construirReciboPdfMake(r1, hasLogo, opciones.anuncio, opciones.equivalencia)
-    const recibo2 = construirReciboPdfMake(r2, hasLogo, opciones.anuncio, opciones.equivalencia)
-
-    // Layout de 2 recibos por página horizontal (Letter Landscape)
-    // Nota: la columna central ya no dibuja la línea; solo reserva el espacio
-    const paginaRecibosLayout = {
-      columns: [
-        { width: 345, stack: [recibo1] },
-        { width: 30, text: '' },
-        { width: 345, stack: [recibo2] }
-      ]
-    }
-
-    // Línea divisoria vertical, borde a borde de la hoja (posición absoluta)
-    // x = margen izq (36) + ancho recibo1 (345) + mitad del gap (15) = 396
-    // height = 612 = alto total de hoja LETTER en landscape
-    const lineaDivisoriaCompleta = {
-      svg: `
-        <svg width="30" height="612" viewBox="0 0 30 612" xmlns="http://www.w3.org/2000/svg">
-          <line x1="15" y1="0" x2="15" y2="612" stroke="#fca5a5" stroke-width="1" stroke-dasharray="4,4" />
-        </svg>
-      `,
-      absolutePosition: { x: 381, y: 0 }
-    }
-
-    // Pie de página institucional — duplicado bajo cada recibo (izq. y der.)
-    const subFooterHoja = {
-      columns: [
-        {
-          width: 345,
-          text: [
-            { text: 'AGUA VILLA PESQUEIRA', bold: true, fontSize: 6.5, color: '#9ca3af' },
-            { text: '    Sistema de Gestión Municipal', fontSize: 6.5, color: '#9ca3af' }
-          ]
-        },
-        { width: 30, text: '' },
-        {
-          width: 345,
-          text: [
-            { text: 'AGUA VILLA PESQUEIRA', bold: true, fontSize: 6.5, color: '#9ca3af' },
-            { text: '    Sistema de Gestión Municipal', fontSize: 6.5, color: '#9ca3af' }
-          ]
-        }
-      ],
-      margin: [0, 6, 0, 0]
-    }
-
-    content.push(cabeceraHoja)
-    content.push(paginaRecibosLayout)
-    content.push(lineaDivisoriaCompleta)
-    content.push(subFooterHoja)
-
-    // Si no es la última página, insertar salto de página
-    if (indexPagina < paginasRecibos.length - 1) {
-      content.push({ text: '', pageBreak: 'after' })
-    }
-
-    // Ceder el hilo al event loop cada 2 páginas para mantener Windows y la interfaz 100% responsivos
-    if (indexPagina % 2 === 0) {
-      await new Promise((resolve) => setImmediate(resolve))
-    }
+  const cabeceraHoja = {
+    columns: [
+      {
+        text: r1
+          ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(r1)} • Recibo No: ${obtenerIdentificadorRecibo(r1, opciones.ciudadFiltro) || indexPagina * 2 + 1} • Folio Factura: #${r1.id}`
+          : '',
+        fontSize: 6.4,
+        color: '#6b7280'
+      },
+      {
+        text: r2
+          ? `Fecha de emisión: ${formatearFechaHoraEmisionCabecera(r2)} • Recibo No: ${obtenerIdentificadorRecibo(r2, opciones.ciudadFiltro) || indexPagina * 2 + 2} • Folio Factura: #${r2.id}`
+          : '',
+        fontSize: 6.4,
+        color: '#6b7280',
+        alignment: 'right'
+      }
+    ],
+    margin: [0, 0, 0, 4]
   }
 
+  const recibo1 = construirReciboPdfMake(r1, hasLogo, opciones.anuncio, opciones.equivalencia)
+  const recibo2 = construirReciboPdfMake(r2, hasLogo, opciones.anuncio, opciones.equivalencia)
+
+  const paginaRecibosLayout = {
+    columns: [
+      { width: 345, stack: [recibo1] },
+      { width: 30, text: '' },
+      { width: 345, stack: [recibo2] }
+    ]
+  }
+
+  const lineaDivisoriaCompleta = {
+    svg: `
+      <svg width="30" height="612" viewBox="0 0 30 612" xmlns="http://www.w3.org/2000/svg">
+        <line x1="15" y1="0" x2="15" y2="612" stroke="#fca5a5" stroke-width="1" stroke-dasharray="4,4" />
+      </svg>
+    `,
+    absolutePosition: { x: 381, y: 0 }
+  }
+
+  const subFooterHoja = {
+    columns: [
+      {
+        width: 345,
+        text: [
+          { text: 'AGUA VILLA PESQUEIRA', bold: true, fontSize: 6.5, color: '#9ca3af' },
+          { text: '    Sistema de Gestión Municipal', fontSize: 6.5, color: '#9ca3af' }
+        ]
+      },
+      { width: 30, text: '' },
+      {
+        width: 345,
+        text: [
+          { text: 'AGUA VILLA PESQUEIRA', bold: true, fontSize: 6.5, color: '#9ca3af' },
+          { text: '    Sistema de Gestión Municipal', fontSize: 6.5, color: '#9ca3af' }
+        ]
+      }
+    ],
+    margin: [0, 6, 0, 0]
+  }
+
+  return [cabeceraHoja, paginaRecibosLayout, lineaDivisoriaCompleta, subFooterHoja]
+}
+
+/**
+ * Compila un bloque pequeño de contenido en un buffer PDF mediante pdfmake.
+ */
+async function compilarChunkPdfMake(contentChunk, hasLogo, logoBase64) {
   const docDefinition = {
     pageSize: 'LETTER',
     pageOrientation: 'landscape',
     pageMargins: [36, 14, 36, 12],
-    content,
+    content: contentChunk,
     images: hasLogo ? { escudoLogo: logoBase64 } : {},
     defaultStyle: {
       font: 'Roboto',
@@ -1314,9 +1289,6 @@ export async function generarRecibosPdf(paginasRecibos = [], opciones = {}) {
       color: COLORES.textoOscuro
     }
   }
-
-  // Ceder control una vez más antes del buffer final de pdfmake
-  await new Promise((resolve) => setImmediate(resolve))
 
   try {
     const pdfDoc = pdfmake.createPdf(docDefinition)
@@ -1334,4 +1306,161 @@ export async function generarRecibosPdf(paginasRecibos = [], opciones = {}) {
     throw pdfErr
   }
 }
+
+/**
+ * Genera el documento PDF completo para todas las páginas de recibos usando pdfmake y pdf-lib.
+ * Utiliza paginación cooperativa por lotes (chunking) y cesión de hilo (yield) para garantizar
+ * que el proceso principal de Electron y la ventana de Windows mantengan 60 FPS sin congelarse jamás,
+ * incluso al procesar cientos de recibos en computadoras de recursos limitados.
+ *
+ * @param {Array} paginasRecibos - Array de páginas, cada una con hasta 2 recibos
+ * @param {Object} opciones - Configuración adicional (logo, anuncio, equivalencia, ciudad, onProgreso, etc.)
+ * @returns {Promise<Buffer>} Buffer del archivo PDF final unificado
+ */
+export async function generarRecibosPdf(paginasRecibos = [], opciones = {}) {
+  ensureFonts()
+  const logoBase64 = obtenerLogoBase64(opciones.customLogo)
+  const hasLogo = !!logoBase64
+  const totalHojas = paginasRecibos.length
+
+  if (totalHojas === 0) {
+    throw new Error('No hay páginas de recibos para generar.')
+  }
+
+  // Tamaño de bloque óptimo: 4 hojas (8 recibos). En hardware modesto toma ~100-150ms por bloque,
+  // permitiendo intercalar ciclos de refresco de interfaz y atender el message pump de Windows.
+  const CHUNK_SIZE = 4
+
+  // CASO 1: Lote pequeño (≤ 4 hojas, p. ej. 1 recibo de prueba o hasta 8 recibos).
+  // Se compila directamente en un solo bloque ultrarrápido (<100ms) sin overhead de unión.
+  if (totalHojas <= CHUNK_SIZE) {
+    const content = []
+    for (let indexPagina = 0; indexPagina < totalHojas; indexPagina++) {
+      const elementosHoja = construirElementosHojaRecibos(
+        paginasRecibos[indexPagina],
+        indexPagina,
+        totalHojas,
+        hasLogo,
+        opciones
+      )
+      content.push(...elementosHoja)
+      if (indexPagina < totalHojas - 1) {
+        content.push({ text: '', pageBreak: 'after' })
+      }
+    }
+
+    if (typeof opciones.onProgreso === 'function') {
+      opciones.onProgreso({
+        fase: 'generando',
+        hojaActual: totalHojas,
+        totalHojas,
+        porcentaje: 85,
+        mensaje: `Generando ${totalHojas} ${totalHojas === 1 ? 'hoja' : 'hojas'} de recibos...`
+      })
+    }
+
+    const buffer = await compilarChunkPdfMake(content, hasLogo, logoBase64)
+
+    if (typeof opciones.onProgreso === 'function') {
+      opciones.onProgreso({
+        fase: 'finalizando',
+        hojaActual: totalHojas,
+        totalHojas,
+        porcentaje: 100,
+        mensaje: 'Abriendo visor de impresión...'
+      })
+    }
+
+    return buffer
+  }
+
+  // CASO 2: Lote masivo (> 4 hojas).
+  // Procesamiento por bloques cooperativos con cesión de hilo (yield) al sistema operativo.
+  const chunkBuffers = []
+  const totalChunks = Math.ceil(totalHojas / CHUNK_SIZE)
+
+  for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
+    const inicio = chunkIdx * CHUNK_SIZE
+    const fin = Math.min(inicio + CHUNK_SIZE, totalHojas)
+    const contentChunk = []
+
+    for (let indexPagina = inicio; indexPagina < fin; indexPagina++) {
+      const elementosHoja = construirElementosHojaRecibos(
+        paginasRecibos[indexPagina],
+        indexPagina,
+        totalHojas,
+        hasLogo,
+        opciones
+      )
+      contentChunk.push(...elementosHoja)
+      if (indexPagina < fin - 1) {
+        contentChunk.push({ text: '', pageBreak: 'after' })
+      }
+    }
+
+    // Compilar el bloque actual de pdfmake (pequeño y ligero)
+    const chunkBuffer = await compilarChunkPdfMake(contentChunk, hasLogo, logoBase64)
+    chunkBuffers.push(chunkBuffer)
+
+    // Reportar progreso real a la interfaz de usuario
+    if (typeof opciones.onProgreso === 'function') {
+      const porcentaje = Math.round((fin / totalHojas) * 85)
+      opciones.onProgreso({
+        fase: 'generando',
+        hojaActual: fin,
+        totalHojas,
+        porcentaje,
+        mensaje: `Generando hoja ${fin} de ${totalHojas}...`
+      })
+    }
+
+    // Cesión cooperativa del Event Loop al sistema operativo Windows (25ms)
+    // Esto garantiza que el hilo principal atienda los mensajes Win32 (WM_PAINT, clics, movimiento)
+    // impidiendo que Windows marque la aplicación como "(No responde)".
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+
+  // Notificar fase de ensamblado
+  if (typeof opciones.onProgreso === 'function') {
+    opciones.onProgreso({
+      fase: 'ensamblando',
+      hojaActual: totalHojas,
+      totalHojas,
+      porcentaje: 90,
+      mensaje: 'Ensamblando documento PDF final...'
+    })
+  }
+
+  // Fusión ultrarrápida en memoria con pdf-lib (copia de objetos binarios sin re-renderizar vectores)
+  const { PDFDocument } = await import('pdf-lib')
+  const mergedPdf = await PDFDocument.create()
+
+  for (let i = 0; i < chunkBuffers.length; i++) {
+    const chunkBuf = chunkBuffers[i]
+    const docLote = await PDFDocument.load(chunkBuf)
+    const pages = await mergedPdf.copyPages(docLote, docLote.getPageIndices())
+    for (const p of pages) {
+      mergedPdf.addPage(p)
+    }
+
+    // Ceder el hilo brevemente para mantener la UI 100% responsiva durante la unión
+    if (i % 3 === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 15))
+    }
+  }
+
+  if (typeof opciones.onProgreso === 'function') {
+    opciones.onProgreso({
+      fase: 'finalizando',
+      hojaActual: totalHojas,
+      totalHojas,
+      porcentaje: 99,
+      mensaje: 'Abriendo visor de impresión...'
+    })
+  }
+
+  const finalBytes = await mergedPdf.save()
+  return Buffer.from(finalBytes)
+}
+
 

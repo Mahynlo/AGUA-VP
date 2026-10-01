@@ -244,6 +244,13 @@ const api = {
   // Limpieza del PDF temporal al cerrar el modal de impresión
   deleteTempPdf: (fileUrl) => ipcRenderer.invoke('delete-temp-pdf', fileUrl),
 
+  // Escuchar progreso en tiempo real de generación de PDFs
+  onImpresionProgreso: (callback) => {
+    const listener = (_event, data) => callback(data)
+    ipcRenderer.on('impresion:progreso-real', listener)
+    return () => ipcRenderer.removeListener('impresion:progreso-real', listener)
+  },
+
   // Servidor embebido (estado, backup manual)
   serverStatus: () => ipcRenderer.invoke('server:status'),
   serverBackup: () => ipcRenderer.invoke('server:backup'),

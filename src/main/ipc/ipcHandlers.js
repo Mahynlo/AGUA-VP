@@ -326,7 +326,14 @@ export default function IpcHandlers() {
                 ciudadFiltro,
                 customLogo: options.customLogo,
                 anuncio: options.anuncio,
-                equivalencia: options.equivalencia
+                equivalencia: options.equivalencia,
+                onProgreso: (progreso) => {
+                  try {
+                    if (event.sender && !event.sender.isDestroyed()) {
+                      event.sender.send('impresion:progreso-real', progreso)
+                    }
+                  } catch (e) {}
+                }
               })
 
               const pdfPath = path.join(app.getPath('temp'), `${buildPdfFilename(url)}.pdf`)
