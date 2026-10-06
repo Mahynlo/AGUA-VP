@@ -47,13 +47,23 @@ El sistema guarda un historial de lo que ocurre en la aplicación:
 - Estado del servidor interno
 - Información de la base de datos (tamaño, número de registros)
 
+### Sincronización en la Nube (Turso Cloud)
+
+Permite mantener una réplica viva de la base de datos en la nube sin depender de copias manuales físicas:
+
+- **Configuración segura**: Ingreso de URL y Token de Turso cifrados mediante `safeStorage` (DPAPI de Windows), sin almacenar credenciales en archivos planos.
+- **Carga semilla inicial**: Respaldo completo de todas las tablas, catálogos, lecturas y facturas históricas hacia Turso.
+- **Sincronización incremental automática**: Envío periódico (cada 15 minutos) de cobros y lecturas en segundo plano.
+- **Consumo Zero-Waste**: Análisis local previo para no consumir ancho de banda si no hay cambios, cuidando la cuota mensual de 3 GB de Turso.
+- **Consistencia y recuperación**: Si se cambia de equipo, la base de datos descargada de Turso restaura automáticamente todos los disparadores de cobro y validación al iniciar la aplicación.
+
 ---
 
 ## Roles de usuario
 
 | Rol | Nivel de acceso |
 |---|---|
-| Administrador | Acceso total, incluyendo gestión de usuarios |
+| Administrador / Superadmin | Acceso total, incluyendo gestión de usuarios, consola del sistema y sincronización en la nube |
 | Operador / Cajero | Acceso a las funciones operativas según permisos asignados |
 
 ---
@@ -61,4 +71,5 @@ El sistema guarda un historial de lo que ocurre en la aplicación:
 ## Relación con otros módulos
 
 - Los permisos configurados aquí controlan qué puede hacer cada usuario en **todos los demás módulos**
-- Los respaldos protegen toda la información del sistema: clientes, pagos, facturas, lecturas y configuración
+- Los respaldos locales y la sincronización con Turso protegen toda la información del sistema: clientes, pagos, facturas, lecturas y configuración
+- Para detalles técnicos sobre la réplica en la nube, consultar [sincronizacion-turso-cloud.md](https://github.com/Mahynlo/Api-AguaVp/blob/pruebas/docs/SINCRONIZACION_TURSO_CLOUD.md)

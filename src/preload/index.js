@@ -281,6 +281,17 @@ const api = {
     getDatabaseInfo: () => ipcRenderer.invoke('system:db-info'),
     getMigrations: () => ipcRenderer.invoke('system:migrations'),
 
+    // Sincronización Turso Cloud
+    getTursoConfig: () => ipcRenderer.invoke('system:turso-config-get'),
+    saveTursoConfig: (config, userToken) =>
+      ipcRenderer.invoke('system:turso-config-save', config, userToken),
+    clearTursoConfig: (userToken) => ipcRenderer.invoke('system:turso-config-clear', userToken),
+    testTursoConnection: (tursoUrl, tursoToken) =>
+      ipcRenderer.invoke('system:turso-test', tursoUrl, tursoToken),
+    syncTursoNow: (seed, userToken) =>
+      ipcRenderer.invoke('system:turso-sync-now', seed, userToken),
+    getTursoSyncStatus: () => ipcRenderer.invoke('system:turso-sync-status'),
+
     // Estado del servidor
     getServerStatus: () => ipcRenderer.invoke('system:server-status'),
 
