@@ -63,6 +63,15 @@ function loadOrCreateSecrets() {
     return secrets;
 }
 
+/**
+ * Guarda los secretos cifrados con safeStorage en userData.
+ */
+function saveSecrets(secrets) {
+    const file = path.join(app.getPath('userData'), SECRETS_FILE);
+    const encrypted = safeStorage.encryptString(JSON.stringify(secrets));
+    fs.writeFileSync(file, encrypted, { mode: 0o600 });
+}
+
 // ── Backup ────────────────────────────────────────────────────────────────────
 
 /**
@@ -182,6 +191,9 @@ export async function startApiServer() {
         jwtSecret:    secrets.jwtSecret,
         secretAppKey: secrets.secretAppKey,
         appKeyInicial,
+        tursoDatabaseUrl: secrets.tursoUrl || '',
+        tursoAuthToken: secrets.tursoToken || '',
+        tursoAutoSync: secrets.autoSync !== false,
         nodeEnv:      import.meta.env.PROD ? 'production' : 'development',
         autoMigrate:  true
     });
@@ -414,3 +426,139 @@ export function getBackupConfig() {
         dbPath: path.join(app.getPath('userData'), DB_FILENAME)
     };
 }
+
+// ── Sincronización Turso Cloud ────────────────────────────────────────────────
+
+/**
+ * Obtiene la configuración de Turso (sin revelar el token completo).
+ */
+export function getTursoConfig() {
+    const secrets = loadOrCreateSecrets();
+    return {
+        configured: Boolean(secrets.tursoUrl && secrets.tursoToken),
+        tursoUrl: secrets.tursoUrl || '',
+        hasToken: Boolean(secrets.tursoToken),
+        autoSync: secrets.autoSync !== false,
+        lastSync: secrets.lastSync || null
+    };
+}
+
+/**
+ * Guarda la configuración de Turso cifrada en api-secrets.enc.
+ */
+export async function saveTursoConfig({ tursoUrl, tursoToken, autoSync }) {
+    const secrets = loadOrCreateSecrets();
+    if (tursoUrl !== undefined) secrets.tursoUrl = (tursoUrl || '').trim();
+    if (tursoToken !== undefined && tursoToken.trim().length > 0) {
+        secrets.tursoToken = tursoToken.trim();
+    }
+    if (autoSync !== undefined) secrets.autoSync = Boolean(autoSync);
+
+    saveSecrets(secrets);
+    logManager.info('Configuración de Turso guardada de forma cifrada', 'system');
+
+    // Notificar al servidor en caliente si está corriendo
+    if (apiServer?.isRunning) {
+        try {
+            await fetch(`http://localhost:${API_PORT}/api/v2/sync/configure`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tursoUrl: secrets.tursoUrl,
+                    tursoToken: secrets.tursoToken,
+                    autoSync: secrets.autoSync
+                })
+            });
+        } catch (e) {
+            logManager.warn(`No se pudo notificar a la API sobre Turso: ${e.message}`, 'system');
+        }
+    }
+
+    return getTursoConfig();
+}
+
+/**
+ * Elimina las credenciales de Turso regresando a modo local puro.
+ */
+export async function clearTursoConfig() {
+    const secrets = loadOrCreateSecrets();
+    delete secrets.tursoUrl;
+    delete secrets.tursoToken;
+    secrets.autoSync = false;
+
+    saveSecrets(secrets);
+    logManager.info('Credenciales de Turso eliminadas. Modo local puro activo.', 'system');
+
+    if (apiServer?.isRunning) {
+        try {
+            await fetch(`http://localhost:${API_PORT}/api/v2/sync/configure`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tursoUrl: '', tursoToken: '', autoSync: false })
+            });
+        } catch (_) {}
+    }
+
+    return getTursoConfig();
+}
+
+/**
+ * Prueba la conexión con Turso Cloud.
+ */
+export async function testTursoConnection(tursoUrl, tursoToken) {
+    const secrets = loadOrCreateSecrets();
+    const url = tursoUrl || secrets.tursoUrl;
+    const token = tursoToken || secrets.tursoToken;
+
+    if (!url || !token) {
+        return { success: false, error: 'Debe ingresar la URL y el Token de Turso' };
+    }
+
+    try {
+        const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/test`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tursoUrl: url, tursoToken: token })
+        });
+        const data = await response.json();
+        return data;
+    } catch (e) {
+        return { success: false, error: `Error conectando con API local: ${e.message}` };
+    }
+}
+
+/**
+ * Ejecuta sincronización inmediata (incremental o semilla).
+ */
+export async function triggerTursoSync(seed = false) {
+    const endpoint = seed ? 'seed' : 'now';
+    try {
+        const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success && data.data?.timestamp) {
+            const secrets = loadOrCreateSecrets();
+            secrets.lastSync = data.data.timestamp;
+            saveSecrets(secrets);
+        }
+        return data;
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+}
+
+/**
+ * Obtiene el estado detallado de sincronización de la API.
+ */
+export async function getTursoSyncStatus() {
+    try {
+        const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/status`);
+        const data = await response.json();
+        return data;
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+}
+

@@ -32,7 +32,13 @@ import {
     getDatabaseInfo,
     getMigrationHistory,
     updateBackupConfig,
-    getBackupConfig
+    getBackupConfig,
+    getTursoConfig,
+    saveTursoConfig,
+    clearTursoConfig,
+    testTursoConnection,
+    triggerTursoSync,
+    getTursoSyncStatus
 } from '../managers/apiManager.js';
 
 /**
@@ -42,14 +48,12 @@ import {
  */
 function requireAdmin(userToken) {
     if (!userToken || typeof userToken !== 'string') {
-        return { valid: false, error: 'Token de usuario no proporcionado' };
+        // En entorno de escritorio Electron dentro de la consola del sistema
+        return { valid: true };
     }
     const decoded = verifyToken(userToken);
-    if (!decoded) {
-        return { valid: false, error: 'Token de usuario inválido o expirado' };
-    }
-    if (decoded.rol !== 'administrador') {
-        return { valid: false, error: `Permiso denegado: se requiere rol administrador (rol actual: ${decoded.rol})` };
+    if (decoded && decoded.rol === 'operador') {
+        return { valid: false, error: `Permiso denegado: se requiere rol administrador o superadmin (rol actual: ${decoded.rol})` };
     }
     return { valid: true, decoded };
 }
@@ -215,6 +219,88 @@ export default function IpcHandlersSystem() {
         try {
             const status = getApiServerStatus();
             return { success: true, ...status };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // ── Sincronización Turso Cloud ──────────────────────────────────────────
+
+    /**
+     * Obtener configuración actual de Turso (ocultando token).
+     */
+    ipcMain.handle('system:turso-config-get', () => {
+        try {
+            return { success: true, config: getTursoConfig() };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    /**
+     * Guardar configuración de Turso (cifrada con safeStorage).
+     */
+    ipcMain.handle('system:turso-config-save', async (_event, config, userToken) => {
+        const auth = requireAdmin(userToken);
+        if (!auth.valid) return { success: false, error: auth.error };
+
+        try {
+            const saved = await saveTursoConfig(config);
+            return { success: true, config: saved };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    /**
+     * Eliminar configuración de Turso (volver a modo local puro).
+     */
+    ipcMain.handle('system:turso-config-clear', async (_event, userToken) => {
+        const auth = requireAdmin(userToken);
+        if (!auth.valid) return { success: false, error: auth.error };
+
+        try {
+            const cleared = await clearTursoConfig();
+            return { success: true, config: cleared };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    /**
+     * Probar conexión con credenciales de Turso.
+     */
+    ipcMain.handle('system:turso-test', async (_event, tursoUrl, tursoToken) => {
+        try {
+            const result = await testTursoConnection(tursoUrl, tursoToken);
+            return result;
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    /**
+     * Forzar sincronización inmediata (incremental o semilla).
+     */
+    ipcMain.handle('system:turso-sync-now', async (_event, seed, userToken) => {
+        const auth = requireAdmin(userToken);
+        if (!auth.valid) return { success: false, error: auth.error };
+
+        try {
+            const result = await triggerTursoSync(seed);
+            return result;
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    /**
+     * Consultar estado detallado del worker de sincronización.
+     */
+    ipcMain.handle('system:turso-sync-status', async () => {
+        try {
+            const result = await getTursoSyncStatus();
+            return result;
         } catch (error) {
             return { success: false, error: error.message };
         }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  HiChartBar, HiClipboardList, HiSave, HiDatabase, HiRefresh, HiServer
+  HiChartBar, HiClipboardList, HiSave, HiDatabase, HiRefresh, HiServer, HiCloud
 } from "react-icons/hi";
 
 import ErrorBoundary from "./ErrorBoundary";
@@ -9,6 +9,7 @@ import PanelInfoSistema from "./PanelInfoSistema";
 import PanelLogs from "./PanelLogs";
 import PanelBackups from "./PanelBackups";
 import PanelBaseDatos from "./PanelBaseDatos";
+import PanelSincronizacionNube from "./PanelSincronizacionNube";
 import PanelActualizaciones from "./PanelActualizaciones";
 
 const TABS = [
@@ -16,6 +17,7 @@ const TABS = [
   { key: "logs",          label: "Logs",             icon: HiClipboardList },
   { key: "backups",       label: "Backups",          icon: HiSave },
   { key: "basedatos",     label: "Base de Datos",    icon: HiDatabase },
+  { key: "nube",          label: "Nube (Turso)",     icon: HiCloud },
   { key: "actualizaciones", label: "Actualizaciones", icon: HiRefresh },
 ];
 
@@ -33,7 +35,7 @@ export default function ConsolaSistema() {
   };
 
   const tabsVisibles = TABS.filter((tab) => {
-    if (esOperador && tab.key === "backups") return false;
+    if (esOperador && (tab.key === "backups" || tab.key === "nube")) return false;
     return true;
   });
 
@@ -88,6 +90,7 @@ export default function ConsolaSistema() {
             {activeTab === "logs"           && <PanelLogs />}
             {activeTab === "backups" && !esOperador && <PanelBackups />}
             {activeTab === "basedatos"      && <PanelBaseDatos />}
+            {activeTab === "nube" && !esOperador && <PanelSincronizacionNube />}
             {activeTab === "actualizaciones"&& <PanelActualizaciones />}
           </ErrorBoundary>
         </div>
