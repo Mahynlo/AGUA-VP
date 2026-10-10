@@ -1,10 +1,10 @@
 import { ipcMain} from 'electron';
 
 //Fetch de clientes
-import { fetchClientes, fetchClientesEstadisticas, fetchClientesEliminados } from '../../fetch/clientes.js';
+import { fetchClientes, fetchClientesEstadisticas, fetchClientesEliminados } from '../api-client/clientes/consultas.js';
 //registro y actualizar
-import { registerClientes } from '../../register/cliente.js'; // Importa la función registerClientes
-import { updateCliente, asignarTarifaCliente, deleteCliente, reactivateCliente, purgeCliente } from '../../update/cliente.js'; // Importa la función updateCliente
+import { registerClientes } from '../api-client/clientes/registro.js'; // Importa la función registerClientes
+import { updateCliente, asignarTarifaCliente, deleteCliente, reactivateCliente, purgeCliente } from '../api-client/clientes/actualizacion.js'; // Importa la función updateCliente
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlerClientes () {

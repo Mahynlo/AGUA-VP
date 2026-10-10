@@ -1,6 +1,6 @@
 
 import { ipcMain } from 'electron';
-import { fetchReporteRecibos, fetchReporteLecturas, fetchReporteFinanciero, fetchReporteConsumoAgua } from '../../fetch/reports.js';
+import { fetchReporteRecibos, fetchReporteLecturas, fetchReporteFinanciero, fetchReporteConsumoAgua } from '../api-client/reportes.js';
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlerReports() {

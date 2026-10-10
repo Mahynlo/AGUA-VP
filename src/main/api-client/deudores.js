@@ -1,6 +1,6 @@
 // fetch/deudores.js
-import { leerToken } from '../appConfig/authApp';
-import { authHeaders } from '../main/api-client/http.js';
+import { leerToken } from '../auth/appKey.js';
+import { authHeaders } from './http.js';
 
 // USAR LA MISMA VARIABLE DE ENTORNO QUE reports.js
 const API_URL = import.meta.env.VITE_URL_BASE_API_AGUAVP || 'http://localhost:3000';

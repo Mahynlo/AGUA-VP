@@ -23,7 +23,7 @@
 
 import { ipcMain } from 'electron';
 import logManager from '../managers/logManager.js';
-import { verifyToken } from '../../auth/auth.js';
+import { verifyToken } from '../auth/verifyToken.js';
 import {
     getApiServerStatus,
     createBackup,

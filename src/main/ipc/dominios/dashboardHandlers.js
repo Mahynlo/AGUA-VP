@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { fetchDashboardStats } from '../../fetch/dashboard.js';
+import { fetchDashboardStats } from '../api-client/dashboard.js';
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlerDashboard() {

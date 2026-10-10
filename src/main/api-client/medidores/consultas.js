@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { getJson, appendDefinedParams } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { getJson, appendDefinedParams } from '../http.js';
 const URL_MEDIDORES = import.meta.env.VITE_API_FETCH_MEDIDORES; // URL del endpoint de medidores
 // Asumiendo que VITE_API_FETCH_MEDIDORES apunta a /api/v2/medidores
 

@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { apiFetch } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { apiFetch } from '../http.js';
 const URL_REGISTRAR_LECTURA = import.meta.env.VITE_API_REGISTRAR_LECTURAS; // URL del endpoint de registro de lecturas
 /**************************************************************************************************************
  * registro de lectura

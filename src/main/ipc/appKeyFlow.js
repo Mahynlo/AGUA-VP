@@ -1,4 +1,4 @@
-import { ensureFreshAppToken, recuperarORegistrarTokenForzado } from '../../appConfig/authApp';
+import { ensureFreshAppToken, recuperarORegistrarTokenForzado } from '../auth/appKey.js';
 
 function hasAppKeyError(value) {
   if (!value) return false;

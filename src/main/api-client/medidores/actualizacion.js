@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { apiFetch } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { apiFetch } from '../http.js';
 
 // Env var for updating meter
 const URL_ACTUALIZAR_MEDIDOR = import.meta.env.VITE_API_ACTUALIZAR_MEDIDOR;

@@ -9,7 +9,7 @@ import {
   ensureAppToken,
   recuperarORegistrarTokenApp,
   recuperarORegistrarTokenForzado
-} from '../../appConfig/authApp'; // Ajusta la ruta si es necesario
+} from '../auth/appKey.js'; // Ajusta la ruta si es necesario
 import { appKeyHeaders } from '../api-client/http.js';
 
 const URL_BASE_API_AGUAVP = (import.meta.env.VITE_URL_BASE_API_AGUAVP || 'http://localhost:3000').replace(/\/$/, '');

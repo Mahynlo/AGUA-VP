@@ -1,7 +1,7 @@
 import { ipcMain} from 'electron';
-import { registerMedidor  } from '../../register/medidor.js'; // Importa la función registerMedidor
-import { fetchMedidores, fetchMedidoresEliminados } from '../../fetch/medidores.js';
-import { updateMedidor, deleteMedidor, reactivateMedidor, purgeMedidor } from '../../update/medidores.js';
+import { registerMedidor  } from '../api-client/medidores/registro.js'; // Importa la función registerMedidor
+import { fetchMedidores, fetchMedidoresEliminados } from '../api-client/medidores/consultas.js';
+import { updateMedidor, deleteMedidor, reactivateMedidor, purgeMedidor } from '../api-client/medidores/actualizacion.js';
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlersMedidores () {

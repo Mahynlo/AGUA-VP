@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { apiFetch } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { apiFetch } from '../http.js';
 
 const URL_TARIFAS_ACTUALIZAR = import.meta.env.VITE_API_ACTUALIZAR_TARIFA; // URL del endpoint de tarifas
 const URL_RANGOS_ACTUALIZAR = import.meta.env.VITE_API_ACTUALIZAR_RANGOS_TARIFAS; // URL del endpoint para registrar rangos de tarifas

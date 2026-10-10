@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { apiFetch } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { apiFetch } from '../http.js';
 const URL_CLIENTES_ACTUALIZAR = import.meta.env.VITE_API_ACTUALIZAR_CLIENTE; // URL del endpoint de clientes
 const URL_TARIFA_CLIENTE = import.meta.env.VITE_API_ACTUALIZAR_TARIFA_CLINTE; // URL del endpoint de asignar tarifa a cliente
 

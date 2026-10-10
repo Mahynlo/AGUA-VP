@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { apiFetch } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { apiFetch } from '../http.js';
 const URL_REGISTRAR_PAGOS = import.meta.env.VITE_API_REGISTRAR_PAGOS; // URL del endpoint de registro de pagos
 const URL_DISTRIBUIR_PAGOS = import.meta.env.VITE_API_DISTRIBUIR_PAGOS
     || (URL_REGISTRAR_PAGOS?.includes('/registrar')
