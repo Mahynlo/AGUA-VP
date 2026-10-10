@@ -152,6 +152,14 @@ export function createBackup(reason = 'manual', { strict = false } = {}) {
         }
     }
 
+    // -wal / -shm sin su .db (quedan si un respaldo en modo WAL se abrió en solo lectura antes de rotarse)
+    for (const f of fs.readdirSync(backupDir)) {
+        const m = /^(agua-vp-backup-.+\.db)-(wal|shm)$/.exec(f);
+        if (m && !fs.existsSync(path.join(backupDir, m[1]))) {
+            try { fs.rmSync(path.join(backupDir, f), { force: true }); } catch (_) { /* en uso: siguiente respaldo */ }
+        }
+    }
+
     return dest;
 }
 
