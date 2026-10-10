@@ -8,7 +8,7 @@ import {
   allPageIndices,
   loadPdf,
   buildPdfFromPages
-} from '../../pdf/pdfTools.js'
+} from '../../pdf/tools/pdfTools.js'
 
 // ============================================================
 // IMPRESIÓN SILENCIOSA vía SumatraPDF (pdf-to-printer) — sin BrowserWindow, sin React.

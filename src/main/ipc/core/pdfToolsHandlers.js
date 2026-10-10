@@ -8,7 +8,7 @@ import {
   allPageIndices,
   loadPdf,
   buildPdfFromPages
-} from '../../pdf/pdfTools.js'
+} from '../../pdf/tools/pdfTools.js'
 
 // Operaciones sobre PDFs ya generados: guardar copia, metadatos y cortes de vista previa
 export default function registerPdfToolsHandlers() {

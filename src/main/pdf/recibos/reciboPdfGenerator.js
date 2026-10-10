@@ -1,12 +1,8 @@
-import path from 'path'
-import fs from 'fs'
-import { fileURLToPath } from 'url'
 import pdfmake from 'pdfmake'
-import { getEffectiveLogoBase64 } from '../managers/logoManager.js'
-import { DEFAULT_LOGO_BASE64 } from './defaultLogoBase64.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+import { getEffectiveLogoBase64 } from '../../managers/logoManager.js'
+import { DEFAULT_LOGO_BASE64 } from '../shared/defaultLogoBase64.js'
+import { ensureFonts } from '../shared/fonts.js'
+import { escapeXml } from '../shared/format.js'
 
 // Colores oficiales exactos de Recibo_diseno.png y Recibo.jsx
 const COLORES = {
@@ -23,126 +19,6 @@ const COLORES = {
   tealGrafica: '#27afa7', // Turquesa idéntico al diseño de ApexCharts / Recibo_diseno.png
   guiaGrafica: '#af272f', // Rojo guía de la gráfica
   guiaGraficaClaro: '#fca5a5' // Rojo claro punteado
-}
-
-// Escape de caracteres especiales para strings dentro de SVG
-function escapeXml(unsafe) {
-  if (unsafe === null || unsafe === undefined) return ''
-  return String(unsafe)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
-}
-
-// Resolver seguro de la carpeta de fuentes (Segoe UI, Consolas, Roboto)
-function resolveCustomFontsDir() {
-  const candidates = [
-    path.join(__dirname, 'fonts'),
-    path.join(process.cwd(), 'src', 'main', 'pdf', 'fonts'),
-    path.join(process.cwd(), 'AguaVP', 'src', 'main', 'pdf', 'fonts'),
-    path.join(__dirname, '..', 'fonts'),
-    path.join(__dirname, '../..', 'src', 'main', 'pdf', 'fonts'),
-    path.join(process.resourcesPath || '', 'app.asar.unpacked', 'src', 'main', 'pdf', 'fonts'),
-    'C:/Windows/Fonts'
-  ]
-
-  for (const p of candidates) {
-    if (p && fs.existsSync(p) && fs.existsSync(path.join(p, 'segoeui.ttf'))) {
-      return p
-    }
-  }
-  return null
-}
-
-function resolveRobotoFonts() {
-  const candidates = [
-    path.join(process.cwd(), 'node_modules', 'pdfmake', 'fonts', 'Roboto'),
-    path.join(process.cwd(), 'AguaVP', 'node_modules', 'pdfmake', 'fonts', 'Roboto'),
-    path.join(__dirname, '..', 'node_modules', 'pdfmake', 'fonts', 'Roboto'),
-    path.join(__dirname, '../..', 'node_modules', 'pdfmake', 'fonts', 'Roboto'),
-    path.join(__dirname, '../../..', 'node_modules', 'pdfmake', 'fonts', 'Roboto'),
-    path.join(
-      process.resourcesPath || '',
-      'app.asar.unpacked',
-      'node_modules',
-      'pdfmake',
-      'fonts',
-      'Roboto'
-    )
-  ]
-
-  try {
-    const electron = globalThis.require ? globalThis.require('electron') : null
-    if (electron?.app?.getAppPath) {
-      candidates.unshift(
-        path.join(electron.app.getAppPath(), 'node_modules', 'pdfmake', 'fonts', 'Roboto')
-      )
-    }
-  } catch (e) {}
-
-  for (const p of candidates) {
-    if (p && fs.existsSync(path.join(p, 'Roboto-Regular.ttf'))) {
-      return p
-    }
-  }
-  return null
-}
-
-// Configurar fuentes Segoe UI, Consolas y Roboto en pdfmake
-let fontsConfigured = false
-function ensureFonts() {
-  if (fontsConfigured) return
-  const robotoDir = resolveRobotoFonts()
-  const customFontsDir = resolveCustomFontsDir()
-
-  const robotoNormal = robotoDir ? path.join(robotoDir, 'Roboto-Regular.ttf') : ''
-  const robotoBold = robotoDir ? path.join(robotoDir, 'Roboto-Medium.ttf') : ''
-  const robotoItalic = robotoDir ? path.join(robotoDir, 'Roboto-Italic.ttf') : ''
-  const robotoBoldItalic = robotoDir ? path.join(robotoDir, 'Roboto-MediumItalic.ttf') : ''
-
-  const getCustomFont = (filename, fallback) => {
-    if (customFontsDir) {
-      const p = path.join(customFontsDir, filename)
-      if (fs.existsSync(p)) return p
-    }
-    return fallback
-  }
-
-  const fonts = {
-    SegoeUI: {
-      normal: getCustomFont('segoeui.ttf', robotoNormal),
-      bold: getCustomFont('segoeuib.ttf', robotoBold),
-      italics: getCustomFont('segoeuii.ttf', robotoItalic),
-      bolditalics: getCustomFont('segoeuiz.ttf', robotoBoldItalic)
-    },
-    Consolas: {
-      normal: getCustomFont('consola.ttf', robotoNormal),
-      bold: getCustomFont('consolab.ttf', robotoBold),
-      italics: getCustomFont('consola.ttf', robotoItalic),
-      bolditalics: getCustomFont('consolab.ttf', robotoBoldItalic)
-    }
-  }
-
-  if (robotoDir) {
-    fonts.Roboto = {
-      normal: robotoNormal,
-      bold: robotoBold,
-      italics: robotoItalic,
-      bolditalics: robotoBoldItalic
-    }
-  }
-
-  pdfmake.addFonts(fonts)
-
-  if (typeof pdfmake.setUrlAccessPolicy === 'function') {
-    pdfmake.setUrlAccessPolicy(() => true)
-  }
-  if (typeof pdfmake.setLocalAccessPolicy === 'function') {
-    pdfmake.setLocalAccessPolicy(() => true)
-  }
-  fontsConfigured = true
 }
 
 // Utilidades de formateo de fecha sincronizadas con Recibo.jsx
