@@ -303,7 +303,12 @@ export default function PanelSincronizacionNube() {
                 ? "⛔ Copia protegida: conflicto pendiente"
                 : statusDetalle?.lastSyncSuccess === false
                   ? "⚠️ Último intento con aviso de red"
-                  : "Respaldo remoto verificado"}
+                  : statusDetalle?.verificacion && !statusDetalle.verificacion.ok
+                    ? `⚠️ Diferencias en: ${(statusDetalle.verificacion.diferencias || []).map((d) => d.tabla).join(", ")}`
+                    : statusDetalle?.verificacion?.ok
+                      ? "Respaldo remoto verificado"
+                      : "Respaldo remoto"}
+              {statusDetalle?.cambiosPendientes > 0 && ` · ${statusDetalle.cambiosPendientes} cambio(s) por subir`}
             </p>
           </div>
         </div>

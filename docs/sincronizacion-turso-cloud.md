@@ -2,7 +2,7 @@
 
 Este documento describe la arquitectura, configuración, medidas de seguridad y procedimientos operativos del sistema de sincronización y respaldo en la nube integrado en **AguaVP**.
 
-> Versión documentada: app con `@aguavp/api-server` **1.0.7**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md).
+> Versión documentada: app con `@aguavp/api-server` **1.0.8**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md).
 
 ---
 
@@ -68,19 +68,19 @@ flowchart TD
 
 ## 4. Consumo Eficiente y Cuota de 3 GB / Mes
 
-* **Inspección local previa:** antes de cualquier petición de red se analiza el SQLite local (`historial_cambios` y columnas de fecha).
-* **Cero red en reposo:** si no hubo cambios desde la última sincronización, no se hace ninguna llamada a Turso.
-* **Ciclo cada 15 minutos.**
-* **Estado persistente:** la fecha de la última sincronización se guarda en la propia base local (tabla `sync_estado`). La carga completa **ya no se repite en cada arranque**; solo se ejecuta la primera vez, al vincular otra base o cuando la nube no corresponde a esta base.
+* **Registro local de cambios:** cada alta, edición o borrado se anota en la tabla local `sync_cambios`. Antes de cualquier petición de red se revisa ese registro.
+* **Cero red en reposo:** si no hubo cambios desde la última sincronización, no se hace ninguna llamada a Turso. Las tablas de sesiones y tokens no se registran (cambian en cada renovación de sesión).
+* **Ciclo cada 15 minutos**, más una **verificación completa** de la copia una vez al día (pocas consultas de conteo).
+* **Estado persistente:** la última sincronización y el punto de avance del registro se guardan en la base local (`sync_estado`). La carga completa **no se repite en cada arranque**; solo se ejecuta la primera vez, al vincular otra base, cuando la nube no corresponde a esta base, o cuando la app activa el registro de cambios por primera vez (al actualizar a 1.0.8) o en una tabla nueva.
 
-Estimación: carga completa de una base típica = unos cientos de KB a pocos MB (una sola vez); operación mensual = 2–10 MB.
+Estimación: carga completa de una base típica = unos cientos de KB a pocos MB; operación mensual = pocos MB (solo se suben los registros modificados).
 
 ---
 
 ## 5. Protección de la Copia en la Nube
 
 ### Identidad de la base
-Cada base local tiene un identificador (`instancia_id`) guardado en `sync_estado`. La nube guarda el mismo identificador, la fecha de la última sincronización, la versión del esquema y los conteos de registros en la tabla `_aguavp_sync_meta`.
+Cada base local tiene un identificador (`instancia_id`) guardado en `sync_estado`. Las tablas `sync_estado` y `sync_cambios` son solo locales: nunca se suben. La nube guarda el mismo identificador, la fecha de la última sincronización, la versión del esquema y los conteos de registros en la tabla `_aguavp_sync_meta`.
 
 ### Carga completa protegida
 Antes de copiar, se compara la base local con la nube. La carga se **bloquea** si:
@@ -103,13 +103,23 @@ Si una nueva versión agrega columnas o tablas a la base local, se crean automá
 
 ## 6. Ciclo de Vida de Datos
 
-* **Altas:** se detectan por `fecha_creacion` posterior a la última sincronización.
-* **Modificaciones:** se detectan a través de `historial_cambios` (hoy lo registran clientes, medidores y facturas).
-* **Bajas lógicas:** se replican como modificaciones (`estado = 'Eliminado'`).
-* **Bajas físicas (`HARD_DELETE`):** registradas en `historial_cambios`, se borran en Turso. Además, cada carga completa elimina en la nube todo registro que ya no exista en local.
-* **Marca de tiempo:** se toma al inicio del ciclo, así los cambios hechos durante la subida entran en el siguiente ciclo.
+Mientras la nube está vinculada, la base local tiene triggers de registro (`_sync_<tabla>_ins/upd/del`) en **todas** las tablas que se sincronizan. Cada alta, edición o borrado —hecho por la app, por un trigger de negocio (p. ej. el saldo que se descuenta al registrar un pago) o por un borrado en cascada— queda anotado en `sync_cambios`.
 
-> **Limitación conocida (se corrige en el Paso 2 del plan):** la sincronización incremental no detecta todavía ediciones de tarifas, rangos, configuración, rutas, usuarios, convenios, cortes y lecturas, ni tarifas/rutas nuevas ni borrados de puntos de ruta. Esos cambios llegan a la nube con la siguiente **carga completa** ("Subir Base Completa a Turso"). Recomendación mientras tanto: ejecutar la carga completa después de cambios de tarifas o rutas y al cierre de cada periodo.
+En cada ciclo se sube el **estado actual** de los registros anotados:
+* si el registro existe en local, se inserta o reemplaza en la nube;
+* si ya no existe (se borró), se borra en la nube.
+
+Luego se marcan como subidos y se eliminan del registro. Si internet falla a mitad, el registro conserva los cambios y se reintentan en el siguiente ciclo.
+
+* **Bajas lógicas** (`estado = 'Eliminado'`) se suben como ediciones.
+* **Carga completa:** además de copiar todo, elimina en la nube los registros que ya no existen en local.
+* Al **desvincular** la nube se quitan los triggers de registro; al volver a vincular se hace una carga completa.
+
+### Verificación de la copia
+Después de subir cambios se comparan, en una sola consulta, la cantidad de registros y el id más alto de las tablas tocadas (una vez al día, de todas las tablas). Si una tabla no coincide, se vuelve a subir completa y se borran en la nube los registros sobrantes, **excepto** en clientes, medidores, lecturas, facturas, pagos, tarifas y usuarios: ahí los registros que solo existan en la nube se **conservan** y el panel lo indica ("⚠️ Diferencias en: …").
+
+### Qué no se sube
+`sesiones`, `refresh_tokens`, `tokens_revocados` y `password_recovery_tokens` (credenciales de sesión de vida corta). Las copias anteriores a 1.0.8 que las contenían se vacían en la siguiente carga completa. Tras restaurar desde la nube, los usuarios solo vuelven a iniciar sesión.
 
 ---
 
@@ -158,6 +168,7 @@ Una prueba automática (`api-AguaVP/src/test/unit/core-triggers.test.js`) garant
 
 ## 9. Diagnóstico
 
-* **Panel "Nube (Turso)":** fecha de la última copia, estado (correcto / aviso de red / conflicto pendiente).
+* **Panel "Nube (Turso)":** fecha de la última copia, estado (verificado / diferencias en tablas / aviso de red / conflicto pendiente) y cambios por subir.
+* **Integridad:** la carga completa ejecuta `PRAGMA quick_check` sobre la base local; si falla, **no se sube** (ni siquiera con reemplazo forzado) y el error aparece en el panel. En ese caso, restaurar un respaldo local o la copia de la nube.
 * **Consola del proceso principal** (terminal de `npm run dev`): mensajes `[TursoSync]` con el inicio y resultado de cada carga y el motivo de cada bloqueo. Todavía no llegan al visor de Mantenimiento → Logs (Paso 4 del plan).
 * **Errores de red** no detienen la app: se reintenta en el siguiente ciclo.
