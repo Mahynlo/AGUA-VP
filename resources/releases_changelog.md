@@ -2,6 +2,89 @@
 
 ---
 
+## 🧪 Notas de la versión — v1.3.1-rc.1 [Release Candidate]
+
+**📅 Fecha de lanzamiento:** 10/10/2026  
+**🚀 Versión:** `v1.3.1-rc.1` [Pre-release / Versión Candidata de Evaluación]  
+**📌 Versión base anterior estable:** `v1.3.0`  
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.12` (antes `1.0.2`)
+
+> ⚠️ **Aviso de Pre-release:** Versión candidata de la línea `v1.3.x` para pruebas en producción. Incorpora el **respaldo opcional en la nube (Turso)** con restauración verificada, un sistema de **respaldos locales más seguro** (copias consistentes, restauración al reiniciar y retención por motivo), el nuevo **Reporte General Ejecutivo** y la generación nativa en PDF de todos los reportes. El diseño y los cálculos de recibos y reportes existentes no cambian. **La nube es opcional:** sin configurarla, la app funciona en modo local exactamente como antes.
+
+---
+
+### 🔥 Novedades y Mejoras Principales (Cambios desde v1.3.0)
+
+#### ☁️ 1. Respaldo Opcional en la Nube (Turso Cloud)
+- **Copia automática de un solo sentido (local ➔ nube):**
+  - Se configura desde **Administrador ➔ Mantenimiento ➔ Nube** (URL y token de Turso, guardados cifrados en el equipo). Sin configurar, la app trabaja en *modo local puro*.
+  - Tras una carga completa inicial, solo se suben los cambios registrados (altas, ediciones y bajas) cada 15 minutos; si no hay internet los cambios quedan pendientes y se suben al reconectar.
+  - Las tablas de sesiones y tokens no se suben a la nube.
+- **Protección de la copia en la nube:**
+  - Nunca se vacía la nube antes de copiar. La carga completa se **bloquea** si la nube pertenece a otra base de datos, si tiene más registros de negocio que la base local, si tiene columnas que la local no tiene o si la escribió **otra computadora**.
+  - Antes de un reemplazo forzado se muestra, por tabla, **cuántos registros e ids se eliminarían** de la nube, con doble confirmación.
+  - Cada computadora tiene un identificador propio: dos equipos no pueden mezclar sus datos en la misma copia.
+- **Verificación de la copia:**
+  - Después de cada subida se comparan conteos e ids de las tablas modificadas.
+  - Una vez al día (y tras cada carga completa) se compara el **contenido de todas las tablas fila por fila** y se reparan las diferencias; también se revisa la integridad de la base local y no se sube nada si está dañada.
+- **Restaurar desde la Nube:**
+  - Descarga la copia, la valida (integridad, conteos y contenido) y la aplica **al reiniciar la app**, después de un respaldo local automático `pre-restore`.
+  - Conserva columnas y tablas que el esquema actual no conoce, para no perder datos heredados.
+- **Avisos y bitácora:**
+  - Cada 30 minutos se revisa el estado de la copia; los administradores reciben un aviso si está detenida por un conflicto, si falló 3 veces seguidas, si no hay copia correcta en 24 horas o si la verificación encontró diferencias.
+  - Los mensajes de sincronización aparecen en **Mantenimiento ➔ Logs** (fuente `nube`).
+  - El panel muestra última copia, última sincronización correcta, cambios por subir, intentos fallidos y referencias huérfanas.
+  - Probar la conexión con Turso requiere sesión de administrador.
+
+---
+
+#### 💾 2. Respaldos Locales Más Seguros
+- **Copias consistentes:** los respaldos se generan con `VACUUM INTO`, incluyendo los cambios recientes que aún estaban en el archivo `-wal` (antes podían omitirse).
+- **Restauración segura:** restaurar un respaldo ya no copia el archivo encima de la base abierta; se prepara, se verifica y se aplica al reiniciar, antes de abrir la base, protegido ante cortes de energía.
+- **Retención por motivo:** el motivo va en el nombre del archivo (`agua-vp-backup-<fecha>-<motivo>.db`). Se conservan los más recientes (configurable y guardado entre reinicios), **uno por día de los últimos 14 días** y los **10 últimos previos a restaurar y a actualizar**, que ya no se pierden por abrir la app varias veces.
+- Limpieza automática al arrancar de restos de restauraciones anteriores.
+
+---
+
+#### 📊 3. Reportes e Impresión
+- **Nuevo Reporte General Ejecutivo (`TabReportes.jsx`):**
+  - Consolida consumo de agua y situación financiera con filtros por **período**, **últimos meses** o **año**.
+- **Generación nativa en PDF (pdfmake) de los reportes:** General, Financiero de Pagos, Lecturas, Lecturas con Métricas, Deudores Mayores y Comprobante de Pago se generan en el proceso principal, con mayor rapidez y fidelidad; la vista web queda como respaldo.
+- **Progreso real al generar recibos:** la barra de avance refleja el progreso efectivo de la generación del PDF.
+- **Impresión en escala de grises / blanco y negro** desde la vista previa, incluidas páginas sueltas.
+- Mejor carga de imágenes en el Reporte de Documentación y en la Ayuda.
+
+---
+
+#### 📋 4. Lecturas
+- **Indicadores de medidor en la toma de lecturas:** el reporte y el listado de lecturas marcan con **Cambio** o **Nuevo** los medidores sustituidos o recién instalados, y toman la lectura anterior correcta en esos casos (API: seguimiento de medidor en el reporte, con pruebas unitarias).
+
+---
+
+#### 🧱 5. Calidad Interna (sin cambios visibles)
+- Reorganización de los manejadores IPC por dominio (`ipc/core`, `ipc/auth`, `ipc/dominios`) y cliente HTTP unificado hacia la API (`api-client/http.js`).
+- Reorganización de vistas y componentes compartidos del renderer.
+- Generadores PDF con fuentes y formatos compartidos (`pdf/shared`), sin alterar el diseño de recibos ni reportes.
+- Limpieza del módulo de autenticación y del preload.
+- Pruebas E2E (Playwright) para autenticación, navegación, clientes, medidores, lecturas, tarifas, pagos y administración.
+- Se eliminó el desenfoque (`backdrop-blur`) del panel de configuración, que se veía negro en algunas tarjetas gráficas.
+
+---
+
+### ⚠️ Notas Importantes
+- **Haga un respaldo manual** antes de instalar esta versión en el equipo de producción.
+- Para usar la nube en producción, utilice **una base de Turso exclusiva** para ese equipo (no la de pruebas).
+- En la primera vinculación se realiza una carga completa protegida; si aparece un aviso de conflicto, revise la lista de registros antes de forzar cualquier reemplazo.
+
+---
+
+### 🔖 Trazabilidad de Versiones
+- **Versión actual:** `v1.3.1-rc.1` [Pre-release]
+- **Versión base estable previa:** `v1.3.0` (22/09/2026)
+- **Servidor embebido:** `@aguavp/api-server 1.0.12`
+
+---
+
 ## 🚀 Notas de la versión — v1.3.0 [Estable]
 
 **📅 Fecha de lanzamiento:** 22/09/2026  
