@@ -2,7 +2,7 @@
 
 Este documento describe la arquitectura, configuración, medidas de seguridad y procedimientos operativos del sistema de sincronización y respaldo en la nube integrado en **AguaVP**.
 
-> Versión documentada: app con `@aguavp/api-server` **1.0.12**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md). Prueba real y pendientes: [turso-caso-prueba-restauracion.md](turso-caso-prueba-restauracion.md).
+> Versión documentada: app con `@aguavp/api-server` **1.0.13**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md). Prueba real y pendientes: [turso-caso-prueba-restauracion.md](turso-caso-prueba-restauracion.md).
 
 ---
 

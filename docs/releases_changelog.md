@@ -2,6 +2,35 @@
 
 ---
 
+## 🧪 Notas de la versión — v1.3.1-rc.2 [Release Candidate]
+
+**📅 Fecha de lanzamiento:** 10/10/2026
+**🚀 Versión:** `v1.3.1-rc.2` [Pre-release / Versión Candidata de Evaluación]
+**📌 Versión base anterior estable:** `v1.3.0`
+**🔖 Pre-release precedente:** `v1.3.1-rc.1`
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.13`
+
+> ⚠️ **Aviso de Pre-release:** Corrección de la primera copia en la nube detectada al probar `v1.3.1-rc.1` instalada. Incluye todas las novedades de `v1.3.1-rc.1` (ver más abajo).
+
+---
+
+### 🐞 Correcciones
+
+#### ☁️ Primera copia en una nube vacía (`FOREIGN KEY constraint failed`)
+- **Problema:** al vincular una base de Turso **vacía**, la carga completa fallaba en cada intento con `SQLITE_CONSTRAINT: FOREIGN KEY constraint failed`: se creaba la estructura de las tablas pero no se subían los datos. Turso valida cada referencia al insertar la fila, y algunas apuntan a un registro que todavía no estaba en la nube: un usuario a otro con número mayor (`usuarios.eliminado_por`), o una factura o un pago a un convenio o una parcialidad, tablas que se suben después.
+- **Corrección:** esas referencias se escriben en un segundo paso, cuando todas las filas ya están en la nube. Aplica a la carga completa, al ciclo automático de cambios (p. ej. crear un convenio y asignarlo a facturas en el mismo ciclo) y a las reparaciones de la verificación diaria.
+- **Datos:** no se recalcula nada. Se suben los valores tal como están en la base local (saldos, totales, estados). Probado con una copia de la base real: 11 229 registros subidos a una nube vacía con llaves foráneas activas, contenido idéntico fila por fila y 0 referencias rotas.
+
+---
+
+### 🔖 Trazabilidad de Versiones
+- **Versión actual:** `v1.3.1-rc.2` [Pre-release]
+- **Pre-release previo:** `v1.3.1-rc.1` (10/10/2026)
+- **Versión base estable previa:** `v1.3.0` (22/09/2026)
+- **Servidor embebido:** `@aguavp/api-server 1.0.13`
+
+---
+
 ## 🧪 Notas de la versión — v1.3.1-rc.1 [Release Candidate]
 
 **📅 Fecha de lanzamiento:** 10/10/2026  
