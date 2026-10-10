@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import {
   HiExclamationCircle, HiSave, HiRefresh, HiDatabase,
-  HiClock, HiDownload
+  HiClock, HiInformationCircle
 } from "react-icons/hi";
 import { useFeedback } from "../../../../context/FeedbackContext";
 import { formatSize, formatDate } from "../../../../utils/formatSystem";
@@ -31,6 +31,15 @@ const extraerRazon = (nombre) => {
   if (nombre.includes("pre-restore")) return "Pre-restauración";
   if (nombre.includes("manual"))      return "Manual";
   return "Automático";
+};
+
+const RAZON_DESCRIPCION = (nombre) => {
+  if (!nombre) return "";
+  if (nombre.includes("pre-update"))  return "Copia automática antes de instalar una actualización";
+  if (nombre.includes("pre-arranque")) return "Copia automática al abrir AguaVP";
+  if (nombre.includes("pre-restore")) return "Base como estaba antes de una restauración: permite deshacerla";
+  if (nombre.includes("manual"))      return "Creado con el botón «Crear Backup Manual»";
+  return "Respaldo de una versión anterior de AguaVP";
 };
 
 const RAZON_COLOR = (nombre) => {
@@ -140,23 +149,52 @@ export default function PanelBackups() {
     <div className="space-y-5 w-full">
 
       {/* ── ACCIONES ── */}
-      <div className="flex flex-wrap items-center gap-4 p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
-        <button
-          type="button"
-          onClick={crearBackup}
-          disabled={creando}
-          className="inline-flex items-center gap-2 font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60 rounded-xl px-5 h-10 text-sm shadow-sm transition-all active:scale-95"
-        >
-          {creando
-            ? <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />Creando...</>
-            : <><HiSave className="w-4 h-4" />Crear Backup Manual</>
-          }
-        </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Crear respaldo */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl shrink-0 bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <HiSave className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">Crear respaldo ahora</h4>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                Guarda una copia completa de la base de datos en esta computadora, sin cerrar la app.
+                Úsalo antes de cambios importantes (tarifas, cierre de periodo, depuración de clientes).
+              </p>
+            </div>
+          </div>
+          <div className="mt-auto pt-1">
+            <button
+              type="button"
+              onClick={crearBackup}
+              disabled={creando}
+              className="w-full inline-flex items-center justify-center gap-2 font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60 rounded-xl px-5 h-10 text-sm shadow-sm transition-all active:scale-95"
+            >
+              {creando
+                ? <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />Creando...</>
+                : <><HiSave className="w-4 h-4" />Crear Backup Manual</>
+              }
+            </button>
+          </div>
+        </div>
 
-        <div className="w-px h-8 bg-slate-200 dark:bg-zinc-700" />
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-600 dark:text-zinc-400">Máx. backups:</span>
+        {/* Retención */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col gap-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2.5 rounded-xl shrink-0 bg-slate-500/10 text-slate-600 dark:text-zinc-300">
+              <HiClock className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">Cuántos respaldos se conservan</h4>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                Se conservan los {config.maxBackups} más recientes, uno por día de los últimos {config.diasDiarios || 14} días
+                y los {config.maxProtegidos || 10} últimos previos a restaurar o actualizar. Los demás se borran solos.
+              </p>
+            </div>
+          </div>
+          <div className="mt-auto pt-1 flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-slate-600 dark:text-zinc-400">Recientes a conservar:</span>
           <input
             type="number"
             min={1}
@@ -173,19 +211,25 @@ export default function PanelBackups() {
           >
             Guardar
           </button>
+          <span className="ml-auto text-[11px] font-bold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-3 py-1 rounded-full">
+            {backups.length} backup{backups.length !== 1 ? "s" : ""} almacenado{backups.length !== 1 ? "s" : ""}
+          </span>
+          </div>
         </div>
+      </div>
 
-        <span
-          className="text-[11px] text-slate-500 dark:text-zinc-400"
-          title="Los respaldos previos a restaurar o actualizar no se cuentan en este límite"
-        >
-          Se conservan los {config.maxBackups} más recientes, uno por día de los últimos {config.diasDiarios || 14} días
-          y los {config.maxProtegidos || 10} últimos previos a restaurar o actualizar.
-        </span>
-
-        <span className="ml-auto text-[11px] font-bold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-3 py-1 rounded-full">
-          {backups.length} backup{backups.length !== 1 ? "s" : ""} almacenado{backups.length !== 1 ? "s" : ""}
-        </span>
+      {/* ── CÓMO FUNCIONAN ── */}
+      <div className="p-5 rounded-2xl bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 flex items-start gap-3">
+        <HiInformationCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+        <div className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+          <p className="font-bold text-slate-700 dark:text-zinc-200 mb-2">Cómo funcionan los respaldos</p>
+          <ul className="space-y-1.5 list-disc pl-4">
+            <li>AguaVP crea respaldos solo: al abrir la app (<span className="font-semibold">Pre-arranque</span>), antes de instalar una actualización (<span className="font-semibold">Pre-actualización</span>) y antes de restaurar (<span className="font-semibold">Pre-restauración</span>).</li>
+            <li><span className="font-semibold">Restaurar</span> reemplaza la base actual por la del respaldo elegido. Primero se verifica el archivo y se guarda un respaldo Pre-restauración de la base actual; después AguaVP se reinicia para aplicarlo.</li>
+            <li>Si restauraste el respaldo equivocado, restaura el <span className="font-semibold">Pre-restauración</span> más reciente para volver a como estabas.</li>
+            <li>Los respaldos se guardan en esta misma computadora. Para protegerte de una falla del disco, usa también la copia en la nube (pestaña Nube) o copia la carpeta de respaldos a una memoria USB.</li>
+          </ul>
+        </div>
       </div>
 
       {/* ── TABLA DE BACKUPS ── */}
@@ -224,7 +268,10 @@ export default function PanelBackups() {
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${RAZON_COLOR(backup.name)}`}>
+                    <span
+                      title={RAZON_DESCRIPCION(backup.name)}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${RAZON_COLOR(backup.name)}`}
+                    >
                       {extraerRazon(backup.name)}
                     </span>
                   </td>
@@ -239,7 +286,7 @@ export default function PanelBackups() {
                   <td className="px-5 py-3.5 text-right">
                     <button
                       type="button"
-                      title="Restaurar este backup (operación destructiva)"
+                      title="Reemplazar la base actual por este respaldo (antes se guarda un respaldo de la base actual)"
                       onClick={() => abrirRestauracion(backup)}
                       className="inline-flex items-center gap-1.5 font-bold text-xs bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/20 rounded-lg px-3 h-7 transition-colors"
                     >
@@ -271,7 +318,7 @@ export default function PanelBackups() {
                 Confirmar Restauración
               </h3>
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mt-0.5">
-                Operación destructiva e irreversible
+                Reemplaza la base de datos actual
               </p>
             </div>
           </div>
@@ -287,13 +334,13 @@ export default function PanelBackups() {
             </div>
 
             <div className="p-4 rounded-2xl bg-red-500/10 border border-red-200 dark:border-red-900/40">
-              <p className="text-sm font-bold text-red-700 dark:text-red-400 mb-2">¡ADVERTENCIA! Esta operación:</p>
+              <p className="text-sm font-bold text-red-700 dark:text-red-400 mb-2">Esta operación:</p>
               <ul className="space-y-1">
                 {[
-                  "Detendrá el servidor API temporalmente",
-                  "Reemplazará TODOS los datos de la base de datos actual",
-                  "Se creará un backup de seguridad antes de restaurar",
-                  "No se puede deshacer",
+                  "Reemplazará TODOS los datos actuales por los de este respaldo",
+                  "Lo registrado después de la fecha del respaldo dejará de estar en la base activa",
+                  "Antes se guarda un respaldo Pre-restauración de la base actual, con el que puedes deshacer este cambio",
+                  "AguaVP se reiniciará para aplicarlo y habrá que iniciar sesión de nuevo",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm font-medium text-red-600 dark:text-red-400">
                     <span className="text-red-500 mt-0.5">•</span>

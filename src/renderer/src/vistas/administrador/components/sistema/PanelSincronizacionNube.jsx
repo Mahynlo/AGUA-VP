@@ -313,13 +313,13 @@ export default function PanelSincronizacionNube() {
   return (
     <div className="flex flex-col gap-6">
 
-      {/* ── TARJETA RESUMEN DE ESTADO ── */}
+      {/* ── TARJETAS DE ESTADO ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Estado Conexión */}
+        {/* Estado de la vinculación */}
         <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              Estado del Espejo
+              Estado
             </span>
             <HiCloud className={`w-5 h-5 ${configured ? "text-emerald-500" : "text-slate-400"}`} />
           </div>
@@ -331,18 +331,18 @@ export default function PanelSincronizacionNube() {
                 }`}
               />
               <span className="text-lg font-black text-slate-800 dark:text-zinc-100">
-                {configured ? "Nube Vinculada" : "Modo Local Puro"}
+                {configured ? "Nube Vinculada" : "Modo Local"}
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
               {configured
-                ? "La copia espejo se mantiene actualizada en Turso"
-                : "La app opera de forma 100% autónoma en disco"}
+                ? "Esta computadora guarda una copia de respaldo en Turso"
+                : "Sin copia en la nube. La app funciona igual con los respaldos locales"}
             </p>
           </div>
         </div>
 
-        {/* Última Sincronización */}
+        {/* Última copia */}
         <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
@@ -362,8 +362,8 @@ export default function PanelSincronizacionNube() {
                   : statusDetalle?.verificacion && !statusDetalle.verificacion.ok
                     ? `⚠️ Diferencias en: ${(statusDetalle.verificacion.diferencias || []).map((d) => d.tabla).join(", ")}`
                     : statusDetalle?.verificacion?.ok
-                      ? "Respaldo remoto verificado"
-                      : "Respaldo remoto"}
+                      ? "Copia verificada"
+                      : "Copia de respaldo"}
               {statusDetalle?.cambiosPendientes > 0 && ` · ${statusDetalle.cambiosPendientes} cambio(s) por subir`}
             </p>
             {statusDetalle?.ultimaSincronizacionCorrecta && (
@@ -385,20 +385,24 @@ export default function PanelSincronizacionNube() {
           </div>
         </div>
 
-        {/* Sincronización Automática */}
+        {/* Sincronización automática */}
         <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              Auto-Sincronización
+              Sincronización Automática
             </span>
             <HiLightningBolt className="w-5 h-5 text-amber-500" />
           </div>
           <div>
             <span className="text-lg font-black text-slate-800 dark:text-zinc-100">
-              {configured && autoSync ? "Activa (Cada 15 min)" : "Manual"}
+              {!configured ? "Inactiva" : autoSync ? "Cada 15 minutos" : "Manual"}
             </span>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-              Delta inteligente: 0 bytes si no hay cambios (cuida cuota 3GB)
+              {!configured
+                ? "Se activa al vincular una base de Turso"
+                : autoSync
+                  ? "Solo sube lo que cambió; si no hay cambios no usa internet"
+                  : "Usa «Sincronizar ahora» para subir los cambios"}
             </p>
           </div>
         </div>
@@ -413,6 +417,10 @@ export default function PanelSincronizacionNube() {
             {(statusDetalle.conflicto.motivos || []).map((m, i) => (
               <p key={i} className="text-xs mt-1">{m.mensaje}</p>
             ))}
+            <p className="text-xs mt-2">
+              No se ha borrado nada. «Revisar» muestra qué registros se eliminarían de la nube si decides reemplazarla.
+              Si perdiste la base de esta computadora, no la reemplaces: usa «Restaurar desde la nube».
+            </p>
           </div>
           <button
             onClick={() => resolverConflicto(statusDetalle.conflicto)}
@@ -424,16 +432,15 @@ export default function PanelSincronizacionNube() {
         </div>
       )}
 
-      {/* ── FORMULARIO DE CREDENCIALES TURSO ── */}
+      {/* ── 1. CONEXIÓN CON TURSO ── */}
       <div className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col gap-6">
-        <div>
-          <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100 tracking-tight">
-            Credenciales de la Base de Datos en Turso
-          </h3>
-          <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
-            Configura la dirección única y el token de acceso para la réplica en la nube de este cliente.
-          </p>
-        </div>
+        <EncabezadoSeccion
+          numero="1"
+          titulo="Conexión con Turso"
+          descripcion={configured
+            ? "Esta computadora ya está vinculada. Solo cambia estos datos si vas a usar otra base de Turso."
+            : "Escribe la dirección y el token de la base de Turso donde se guardará la copia de esta computadora. Usa una base exclusiva para cada computadora."}
+        />
 
         <div className="flex flex-col gap-4">
           {/* URL de Turso */}
@@ -449,7 +456,7 @@ export default function PanelSincronizacionNube() {
               className="w-full h-[50px] px-4 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono"
             />
             <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">
-              Dirección generada en tu consola de Turso para esta base de datos.
+              Se copia de la consola de Turso (empieza con <code>libsql://</code>).
             </p>
           </div>
 
@@ -476,104 +483,206 @@ export default function PanelSincronizacionNube() {
               </button>
             </div>
             <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-1">
-              El token se almacena de forma cifrada en disco mediante <code>safeStorage</code> (DPAPI).
+              Se guarda cifrado en esta computadora y no se vuelve a mostrar.
+              {configured && " Déjalo vacío para conservar el token actual."}
             </p>
           </div>
 
           {/* Checkbox autoSync */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex items-start gap-3 pt-2">
             <input
               type="checkbox"
               id="checkAutoSync"
               checked={autoSync}
               onChange={(e) => setAutoSync(e.target.checked)}
-              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-zinc-700 dark:bg-zinc-800 cursor-pointer"
+              className="w-4 h-4 mt-0.5 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-zinc-700 dark:bg-zinc-800 cursor-pointer"
             />
-            <label htmlFor="checkAutoSync" className="text-sm font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer">
-              Sincronizar automáticamente en segundo plano cuando haya conexión a internet
+            <label htmlFor="checkAutoSync" className="cursor-pointer">
+              <span className="block text-sm font-semibold text-slate-700 dark:text-zinc-300">
+                Sincronizar automáticamente en segundo plano
+              </span>
+              <span className="block text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                Cada 15 minutos sube los cambios mientras la app está abierta. Recomendado.
+              </span>
             </label>
           </div>
         </div>
 
-        {/* ── BOTONERA DE ACCIÓN ── */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
-          <div className="flex flex-wrap items-center gap-3">
+        {/* Botones de conexión */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-zinc-800/80">
+          <div className="flex flex-col gap-1.5">
             <button
               onClick={probarConexion}
               disabled={probandoConexion || !tursoUrl}
-              className="h-[44px] px-4 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="h-[44px] px-4 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <HiLightningBolt className="w-4 h-4" />
               {probandoConexion ? "Probando..." : "Probar Conexión"}
             </button>
-
+            <p className="text-[11px] text-slate-400 dark:text-zinc-500 text-center">
+              Comprueba que la URL y el token funcionan. No guarda nada.
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
             <button
               onClick={guardarConfiguracion}
               disabled={guardando || !tursoUrl}
-              className="h-[44px] px-5 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="h-[44px] px-5 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <HiSave className="w-4 h-4" />
-              {guardando ? "Guardando..." : "Guardar y Vincular"}
+              {guardando ? "Guardando..." : configured ? "Guardar Cambios" : "Guardar y Vincular"}
             </button>
+            <p className="text-[11px] text-slate-400 dark:text-zinc-500 text-center">
+              {configured
+                ? "Guarda la nueva configuración y reconecta."
+                : "Guarda la conexión. La primera copia completa se hace en el siguiente ciclo automático o al pulsar «Subir base completa»."}
+            </p>
           </div>
+        </div>
+      </div>
 
-          {configured && (
-            <div className="flex flex-wrap items-center gap-2">
+      {/* ── 2. ACCIONES SOBRE LA COPIA ── */}
+      <div className="flex flex-col gap-4">
+        <EncabezadoSeccion
+          numero="2"
+          titulo="Acciones sobre la copia"
+          descripcion={configured
+            ? "Normalmente no necesitas usarlas: la copia se mantiene sola. Úsalas en los casos que indica cada una."
+            : "Disponibles al vincular una base de Turso en el paso 1."}
+        />
+
+        {configured && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <AccionNube
+              icon={HiRefresh}
+              color="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              titulo="Sincronizar ahora"
+              descripcion="Sube a la nube solo los registros que cambiaron desde la última copia. Es lo mismo que hace la sincronización automática, pero en este momento."
+              cuando="antes de apagar la computadora después de muchos cobros, o para confirmar que la copia está al día."
+            >
               <button
                 onClick={sincronizarAhora}
                 disabled={sincronizando}
-                className="h-[44px] px-4 rounded-xl text-sm font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-colors flex items-center gap-2 disabled:opacity-50"
-                title="Sube los cambios locales más recientes a Turso Cloud"
+                className="w-full h-[42px] px-4 rounded-xl text-sm font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <HiRefresh className={`w-4 h-4 ${sincronizando ? "animate-spin" : ""}`} />
                 {sincronizando ? "Sincronizando..." : "Sincronizar Ahora"}
               </button>
+            </AccionNube>
 
+            <AccionNube
+              icon={HiUpload}
+              color="bg-blue-500/10 text-blue-600 dark:text-blue-400"
+              titulo="Subir base completa"
+              descripcion="Vuelve a copiar todas las tablas a la nube y compara la copia fila por fila. Si la nube tiene datos de otra base o más registros que esta computadora, se detiene y te muestra qué se borraría antes de hacer nada."
+              cuando="la primera vez, o si el estado muestra diferencias en la copia."
+            >
               <button
                 onClick={ejecutarCargaSemilla}
                 disabled={sembrando}
-                className="h-[44px] px-4 rounded-xl text-sm font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 transition-colors flex items-center gap-2 disabled:opacity-50"
-                title="Copia completa inicial de la base de datos local hacia Turso"
+                className="w-full h-[42px] px-4 rounded-xl text-sm font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <HiUpload className="w-4 h-4" />
-                {sembrando ? "Subiendo base..." : "Subir Base Completa a Turso"}
+                {sembrando ? "Subiendo base..." : "Subir Base Completa"}
               </button>
+            </AccionNube>
 
+            <AccionNube
+              icon={HiDownload}
+              color="bg-amber-500/10 text-amber-700 dark:text-amber-400"
+              titulo="Restaurar desde la nube"
+              descripcion="Reemplaza la base de esta computadora con la copia de la nube. Antes guarda un respaldo local de la base actual, verifica la copia descargada y reinicia la app para aplicarla."
+              cuando="en una computadora nueva, o si la base de esta computadora se perdió o se dañó."
+            >
               <button
                 onClick={restaurarDesdeNube}
                 disabled={restaurando || sembrando || sincronizando}
-                className="h-[44px] px-4 rounded-xl text-sm font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 transition-colors flex items-center gap-2 disabled:opacity-50"
-                title="Reemplaza la base de esta computadora con la copia de la nube (se reinicia la app)"
+                className="w-full h-[42px] px-4 rounded-xl text-sm font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <HiDownload className="w-4 h-4" />
                 {restaurando ? "Preparando copia..." : "Restaurar desde la Nube"}
               </button>
+            </AccionNube>
+          </div>
+        )}
 
-              <button
-                onClick={desvincularNube}
-                disabled={guardando}
-                className="h-[44px] px-3 rounded-xl text-sm font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                title="Desvincular la nube y volver a modo local puro"
-              >
-                <HiTrash className="w-4 h-4" />
-                Desvincular
-              </button>
+        {/* Desvincular: separado de las acciones habituales */}
+        {configured && (
+          <div className="p-5 rounded-2xl border border-rose-500/20 bg-rose-500/5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="p-2.5 rounded-xl shrink-0 bg-rose-500/10 text-rose-600 dark:text-rose-400 self-start sm:self-center">
+              <HiTrash className="w-5 h-5" />
             </div>
-          )}
-        </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">Desvincular la nube</h4>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                Deja de enviar copias y borra la conexión guardada en esta computadora. No borra los datos locales ni la copia que ya está en la nube.
+                Úsalo para cambiar a otra base de Turso o dejar de usar la nube.
+              </p>
+            </div>
+            <button
+              onClick={desvincularNube}
+              disabled={guardando}
+              className="h-[42px] px-4 rounded-xl text-sm font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0"
+            >
+              <HiTrash className="w-4 h-4" />
+              Desvincular
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ── NOTA DE ARQUITECTURA / INFORMATIVA ── */}
-      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 flex items-start gap-3">
+      {/* ── CÓMO FUNCIONA ── */}
+      <div className="p-5 rounded-2xl bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 flex items-start gap-3">
         <HiInformationCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
         <div className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
-          <p className="font-bold text-slate-700 dark:text-zinc-200 mb-0.5">
-            Arquitectura Local-First con Espejo en la Nube y Consumo Zero-Waste
-          </p>
-          La base de datos local (<code>agua-vp.db</code>) procesa el 100% de las operaciones de cobro, impresión y lecturas de manera instantánea y autónoma. La base de Turso Cloud funciona como una copia viva accesible remotamente por los administradores para consultas, auditoría y respaldo. El sincronizador inteligente analiza primero la base local: si no se generaron cambios nuevos, no envía peticiones por red (0 bytes consumidos), protegiendo holgadamente el límite mensual de 3 GB de Turso.
+          <p className="font-bold text-slate-700 dark:text-zinc-200 mb-2">Cómo funciona la copia en la nube</p>
+          <ul className="space-y-1.5 list-disc pl-4">
+            <li>Todo el trabajo (cobros, lecturas, impresión) se hace en esta computadora. La nube es solo una copia de respaldo: sin internet la app funciona igual y los cambios se suben al reconectar.</li>
+            <li>Una vez al día la copia completa se compara fila por fila con la base local y se corrige si hay diferencias.</li>
+            <li>La copia nunca se vacía ni se reemplaza sin avisarte. Si algo no cuadra, la sincronización se detiene y aparece un aviso aquí y para los administradores.</li>
+            <li>Las sesiones y los tokens de acceso no se suben: después de restaurar hay que iniciar sesión de nuevo.</li>
+            <li>La nube guarda el estado actual, no un historial. Para volver a una fecha anterior usa la pestaña <span className="font-semibold">Backups</span>.</li>
+          </ul>
         </div>
       </div>
 
+    </div>
+  );
+}
+
+/** Título de sección numerado (pasos del panel). */
+function EncabezadoSeccion({ numero, titulo, descripcion }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="w-7 h-7 rounded-full bg-slate-800 dark:bg-zinc-200 text-white dark:text-zinc-900 text-xs font-black flex items-center justify-center shrink-0">
+        {numero}
+      </span>
+      <div>
+        <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-tight">{titulo}</h3>
+        <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">{descripcion}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Tarjeta de una acción: qué hace, cuándo usarla y su botón. */
+function AccionNube({ icon: Icon, color, titulo, descripcion, cuando, children }) {
+  return (
+    <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col gap-3">
+      <div className="flex items-start gap-3">
+        <div className={`p-2.5 rounded-xl shrink-0 ${color}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+        <div>
+          <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">{titulo}</h4>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">{descripcion}</p>
+        </div>
+      </div>
+      <p className="text-[11px] text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800/50 rounded-lg px-3 py-2">
+        <span className="font-bold text-slate-600 dark:text-zinc-300">Cuándo usarlo: </span>
+        {cuando}
+      </p>
+      <div className="mt-auto pt-1">{children}</div>
     </div>
   );
 }
