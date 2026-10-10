@@ -23,7 +23,6 @@
 
 import { ipcMain } from 'electron';
 import logManager from '../../managers/logManager.js';
-import { verifyToken } from '../../auth/verifyToken.js';
 import {
     getApiServerStatus,
     createBackup,
@@ -38,22 +37,25 @@ import {
     clearTursoConfig,
     testTursoConnection,
     triggerTursoSync,
-    getTursoSyncStatus
+    getTursoSyncStatus,
+    verifySessionToken
 } from '../../managers/apiManager.js';
 
+const ADMIN_ROLES = ['administrador', 'superadmin'];
+
 /**
- * Verifica que el token JWT pertenezca a un usuario con rol administrador.
- * @param {string} userToken - Token JWT del usuario
+ * Verifica que el token de sesión sea válido (firmado por la API embebida y vigente)
+ * y pertenezca a un usuario con rol administrador o superadmin.
+ * @param {string} userToken - Token JWT de la sesión del usuario
  * @returns {{ valid: boolean, error?: string, decoded?: object }}
  */
 function requireAdmin(userToken) {
-    if (!userToken || typeof userToken !== 'string') {
-        // En entorno de escritorio Electron dentro de la consola del sistema
-        return { valid: true };
+    const decoded = verifySessionToken(userToken);
+    if (!decoded) {
+        return { valid: false, error: 'Sesión no válida o expirada. Vuelve a iniciar sesión e inténtalo de nuevo.' };
     }
-    const decoded = verifyToken(userToken);
-    if (decoded && decoded.rol === 'operador') {
-        return { valid: false, error: `Permiso denegado: se requiere rol administrador o superadmin (rol actual: ${decoded.rol})` };
+    if (!ADMIN_ROLES.includes(decoded.rol)) {
+        return { valid: false, error: `Permiso denegado: se requiere rol administrador o superadmin (rol actual: ${decoded.rol || 'desconocido'})` };
     }
     return { valid: true, decoded };
 }
@@ -282,12 +284,12 @@ export default function IpcHandlersSystem() {
     /**
      * Forzar sincronización inmediata (incremental o semilla).
      */
-    ipcMain.handle('system:turso-sync-now', async (_event, seed, userToken) => {
+    ipcMain.handle('system:turso-sync-now', async (_event, seed, userToken, force = false) => {
         const auth = requireAdmin(userToken);
         if (!auth.valid) return { success: false, error: auth.error };
 
         try {
-            const result = await triggerTursoSync(seed);
+            const result = await triggerTursoSync(seed, force === true);
             return result;
         } catch (error) {
             return { success: false, error: error.message };

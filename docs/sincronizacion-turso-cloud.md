@@ -2,127 +2,162 @@
 
 Este documento describe la arquitectura, configuración, medidas de seguridad y procedimientos operativos del sistema de sincronización y respaldo en la nube integrado en **AguaVP**.
 
+> Versión documentada: app con `@aguavp/api-server` **1.0.7**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md).
+
 ---
 
 ## 1. Visión General y Arquitectura
 
-AguaVP opera bajo un modelo **Local-First con Réplica Viva en la Nube**:
+AguaVP opera bajo un modelo **Local-First con Réplica en la Nube** (copia de seguridad de un solo sentido):
 
 ```mermaid
 flowchart TD
     subgraph Local["Computadora Local (Caja / Administración)"]
         UI["Interfaz AguaVP (React / Electron)"]
+        Main["Proceso principal (apiManager)"]
         Server["API Server Local (@aguavp/api-server)"]
         DB[("SQLite Local (agua-vp.db)<br/>MAESTRO AUTÓNOMO")]
         SafeStore["Electron safeStorage (DPAPI Cifrado)"]
-        
+
         UI -->|Cobros / Lecturas / Reportes| Server
-        Server -->|Transacciones 0ms Offline| DB
-        UI -->|Guarda Credenciales| SafeStore
+        Server -->|Transacciones offline| DB
+        UI -->|IPC system:turso-*| Main
+        Main -->|Guarda credenciales| SafeStore
+        Main -->|/api/v2/sync/* + clave interna| Server
     end
 
     subgraph Nube["Nube (Turso Cloud / LibSQL)"]
-        TursoClient["Servicio TursoSyncService"]
-        TursoCloud[("Turso Cloud Database<br/>RÉPLICA VIVA / CONSULTA")]
-        
-        Server -->|Sincronización Inteligente Cada 15m| TursoClient
-        TursoClient -->|Deltas / Lotes HTTPS| TursoCloud
+        TursoCloud[("Turso Cloud Database<br/>COPIA DE RESPALDO")]
     end
+
+    Server -->|Cambios cada 15 min, HTTPS| TursoCloud
 ```
 
-### Principios Fundamentales:
-1. **Autonomía Local Total:** El 100% de los cobros, impresión de recibos, tomas de lecturas y consultas operativas se ejecutan contra la base de datos SQLite local (`agua-vp.db`). Si no hay internet o el enlace es lento, el sistema no se congela ni interrumpe su operación.
-2. **Réplica Viva Remota:** La base de datos en Turso Cloud es una copia de respaldo accesible vía internet para los administradores, auditorías o dashboards externos.
-3. **Un Solo Escritor Maestro:** Todas las escrituras de negocio nacen en el SQLite local y se replican hacia Turso. Esto elimina conflictos de concurrencia y sobreescrituras accidentales.
+### Principios Fundamentales
+1. **Autonomía Local Total:** cobros, impresión, lecturas y consultas se ejecutan contra el SQLite local (`agua-vp.db`). Sin internet, la app funciona igual.
+2. **Un Solo Escritor:** todas las escrituras nacen en la base local y se copian a Turso. La nube nunca escribe en la base local.
+3. **La copia de la nube no se pone en riesgo:** ninguna operación de sincronización vacía la nube antes de copiar, y la carga completa se **bloquea** si la base local parece perdida, vacía o antigua (sección 5).
 
 ---
 
 ## 2. Seguridad y Protección de Credenciales
 
-Para mantener el software seguro y apto para distribución abierta:
-* **Cero Credenciales en Código o `.env`:** La URL de la base de Turso y el Token JWT **nunca** se queman en el repositorio ni en archivos de texto plano.
-* **Cifrado con Electron `safeStorage`:** En Windows, las credenciales se cifran mediante la API criptográfica nativa del sistema operativo (**DPAPI** de Windows) antes de guardarse en disco (`api-secrets.enc`).
-* **Control de Acceso (RBAC):** Únicamente usuarios con rol de `superadmin` o `administrador` tienen permiso para ver la configuración, vincular credenciales o disparar sincronizaciones manuales.
-* **Ocultación Visual del Token:** La interfaz oculta el token por defecto con selector para mostrar/ocultar y limpia el campo en pantalla tras ser guardado.
+* **Cero credenciales en código o `.env`:** la URL y el token de Turso se capturan en la interfaz.
+* **Cifrado con Electron `safeStorage`:** en Windows se cifran con **DPAPI** antes de guardarse en `api-secrets.enc` (carpeta de datos del usuario).
+* **Control de acceso real:** guardar o eliminar credenciales, sincronizar y restaurar respaldos locales exigen una sesión **válida y vigente** de `administrador` o `superadmin`. El token se verifica con el secreto JWT real de la API embebida (`verifySessionToken` en `apiManager`). Sin sesión, con sesión expirada o con rol `operador`, la acción se rechaza.
+* **Endpoints protegidos:** `/api/v2/sync/*` solo acepta peticiones con la clave interna de la app (header `x-aguavp-internal-key`) o con el JWT de un administrador. Nadie en la red local puede reconfigurar ni disparar la sincronización.
+* **Ocultación del token** en pantalla y limpieza del campo tras guardarlo.
 
 ---
 
 ## 3. Configuración en la Interfaz (Paso a Paso)
 
 1. Ingresar a AguaVP con una cuenta de **Administrador**.
-2. Navegar al menú lateral: **Administrador** ➔ **Consola del Sistema**.
-3. Seleccionar la pestaña **"Nube (Turso)"**.
-4. Completar los campos:
-   * **URL de la Base de Datos Remota:** Formato `libsql://nombre-base-usuario.turso.io`.
-   * **Token de Autenticación (Auth Token):** Token JWT generado desde la consola web de Turso o Turso CLI.
-   * **Auto-Sincronización:** Casilla activada para permitir el respaldo en segundo plano.
-5. Hacer clic en **"Probar Conexión"**: Verifica la latencia y la conectividad sin guardar.
-6. Hacer clic en **"Guardar y Vincular"**: Cifra y guarda las credenciales en el almacén seguro.
-7. Para la primera vinculación, hacer clic en **"Subir Base Completa a Turso"**: Realiza la carga semilla de todas las tablas y registros históricos.
+2. Ir a **Administrador** ➔ **Mantenimiento** ➔ pestaña **"Nube (Turso)"**.
+3. Completar:
+   * **URL de la Base de Datos Remota:** `libsql://nombre-base-usuario.turso.io`.
+   * **Token de Autenticación:** generado en la consola web o con la CLI de Turso.
+   * **Auto-Sincronización:** sincronización en segundo plano cada 15 minutos.
+4. **"Probar Conexión"**: verifica conectividad y latencia sin guardar.
+5. **"Guardar y Vincular"**: cifra y guarda las credenciales.
+6. **"Sincronizar Ahora"** o esperar el ciclo automático: la primera vez con una base de Turso se ejecuta la **carga completa** (todas las tablas). "Subir Base Completa a Turso" fuerza esa carga completa en cualquier momento.
+
+> Vincular **otra** URL de Turso provoca automáticamente una carga completa hacia la nueva base.
 
 ---
 
-## 4. Consumo Eficiente y Cuota de 3 GB / Mes (Zero-Waste)
+## 4. Consumo Eficiente y Cuota de 3 GB / Mes
 
-El plan gratuito de Turso incluye una cuota mensual de transferencia de **3 GB**. Para garantizar que el uso se mantenga en menos del 1% de dicha cuota:
+* **Inspección local previa:** antes de cualquier petición de red se analiza el SQLite local (`historial_cambios` y columnas de fecha).
+* **Cero red en reposo:** si no hubo cambios desde la última sincronización, no se hace ninguna llamada a Turso.
+* **Ciclo cada 15 minutos.**
+* **Estado persistente:** la fecha de la última sincronización se guarda en la propia base local (tabla `sync_estado`). La carga completa **ya no se repite en cada arranque**; solo se ejecuta la primera vez, al vincular otra base o cuando la nube no corresponde a esta base.
 
-* **Inspección Delta Local Previa:** Antes de realizar cualquier petición HTTP a Turso, el sincronizador incremental analiza el SQLite local (`historial_cambios`, `fecha_creacion` y `fecha_modificacion`).
-* **Consumo Cero en Reposo:** Si no se han registrado cobros, altas ni lecturas nuevas desde la última sincronización, **no se realiza ninguna llamada de red (0 bytes consumidos)**.
-* **Frecuencia Balanceada:** El ciclo en segundo plano corre cada **15 minutos** (en lugar de cada 1 o 5 minutos).
-* **Catálogos bajo demanda:** Tablas casi estáticas como tarifas o configuración del servicio solo se sincronizan si sufrieron modificaciones registradas.
-
-### Estimación de Consumo Real:
-* **Carga Semilla Inicial:** ~390 KB (una sola vez).
-* **Operación Mensual Estándar:** ~2 a 10 MB al mes.
-* **Margen de Seguridad:** Más del **99.7%** de la cuota mensual de 3 GB queda libre.
+Estimación: carga completa de una base típica = unos cientos de KB a pocos MB (una sola vez); operación mensual = 2–10 MB.
 
 ---
 
-## 5. Ciclo de Vida de Datos (Altas, Bajas y Modificaciones)
+## 5. Protección de la Copia en la Nube
 
-El sincronizador soporta el ciclo de vida completo de las operaciones de negocio:
+### Identidad de la base
+Cada base local tiene un identificador (`instancia_id`) guardado en `sync_estado`. La nube guarda el mismo identificador, la fecha de la última sincronización, la versión del esquema y los conteos de registros en la tabla `_aguavp_sync_meta`.
 
-* **Altas (`INSERT`):** Se identifican por `datetime(fecha_creacion) >= datetime(lastSync)` y se replican en orden de dependencias foráneas.
-* **Modificaciones (`UPDATE`):** Se identifican a través de `historial_cambios` y actualizan la réplica en Turso mediante `INSERT OR REPLACE`.
-* **Bajas Lógicas (Papelera / `SOFT_DELETE`):** Se actualizan con `estado_cliente = 'Eliminado'`, preservando el historial en ambas bases.
-* **Bajas Físicas (Purgado / `HARD_DELETE`):** Se detectan en `historial_cambios` y ejecutan inmediatamente un `DELETE FROM [tabla] WHERE id = ?` en Turso Cloud, garantizando que los registros eliminados definitivamente no persistan en la nube.
-* **Blindaje contra Condiciones de Carrera:** El marcador `lastSync` se captura al inicio del ciclo de sincronización (`syncStartTime`), evitando que transacciones realizadas durante la subida queden fuera del siguiente ciclo.
-* **Normalización de Fechas:** Las consultas utilizan la función canónica `datetime(?)` de SQLite para neutralizar diferencias de representación (`YYYY-MM-DD HH:MM:SS` vs ISO-8601 con `T`).
+### Carga completa protegida
+Antes de copiar, se compara la base local con la nube. La carga se **bloquea** si:
+* la nube pertenece a **otra base** (otra instalación, o una base nueva creada tras perder la original), o
+* la nube tiene **más registros** que la local en alguna tabla de negocio: clientes, medidores, lecturas, facturas, pagos, tarifas o usuarios.
 
----
+En ese caso la sincronización se detiene, **la nube conserva sus datos** y el panel muestra el aviso *"La sincronización está detenida para proteger la copia en la nube"* con la comparación de registros.
 
-## 6. Arquitectura de Disparadores (Triggers) y Restauración
+### Qué hacer ante el aviso
+* **Si la base local se perdió, se dañó o se restauró un respaldo antiguo:** NO reemplazar la nube. Recuperar los datos desde la nube (sección 8).
+* **Si los datos de la nube ya no sirven** (por ejemplo se borraron registros a propósito, o se quiere apuntar a esta base): botón **"Revisar"** ➔ dos confirmaciones ➔ la nube se reemplaza con la base local.
 
-### ¿Por qué se desactivan los triggers en la réplica de Turso?
-En SQLite, los triggers de negocio (`validar_pago_contra_saldo`, `actualizar_saldo_factura`, etc.) validan que un pago no supere el saldo pendiente. Al copiar facturas históricas que ya fueron saldadas (`saldo_pendiente = 0.00`), intentar insertar sus pagos originales haría que los triggers abortaran la inserción con un error de restricción (`SQLITE_CONSTRAINT`).
+### Sin vaciar la nube
+La carga completa inserta/actualiza todas las filas y **al final** borra en la nube solo los registros que ya no existen en local. Si se corta internet a mitad, la nube queda con sus datos anteriores más una parte de los nuevos; la siguiente sincronización la completa.
 
-Por tal motivo, **Turso almacena los datos en bruto ya calculados por el maestro local**, sin disparadores que re-calculen o bloqueen transacciones históricas.
-
-### ¿Qué pasa si descargo la base de datos de Turso a una computadora nueva?
-Si el equipo local sufre un daño o se migra de computadora:
-1. Se descarga la base de datos desde Turso y se ubica como `agua-vp.db` en el nuevo equipo.
-2. Al iniciar AguaVP, el módulo de arranque (`sqlite-migrator.js`) detecta automáticamente la ausencia de los disparadores esenciales.
-3. El sistema ejecuta `ensureCoreTriggers()`, **recreando todos los triggers de cobro, validación de saldos y auditoría en menos de 5 milisegundos**.
-4. La aplicación queda 100% operativa y autónoma de inmediato.
+### Actualizaciones de la app
+Si una nueva versión agrega columnas o tablas a la base local, se crean automáticamente en la nube antes de copiar.
 
 ---
 
-## 7. Procedimiento de Recuperación ante Desastres (Disaster Recovery)
+## 6. Ciclo de Vida de Datos
 
-Si la computadora principal queda inoperativa:
+* **Altas:** se detectan por `fecha_creacion` posterior a la última sincronización.
+* **Modificaciones:** se detectan a través de `historial_cambios` (hoy lo registran clientes, medidores y facturas).
+* **Bajas lógicas:** se replican como modificaciones (`estado = 'Eliminado'`).
+* **Bajas físicas (`HARD_DELETE`):** registradas en `historial_cambios`, se borran en Turso. Además, cada carga completa elimina en la nube todo registro que ya no exista en local.
+* **Marca de tiempo:** se toma al inicio del ciclo, así los cambios hechos durante la subida entran en el siguiente ciclo.
 
-1. **Obtener el respaldo de la nube:**
-   * Desde la consola de Turso CLI:
-     ```bash
-     turso db shell mi-base-aguavp .dump > respaldo_recuperado.sql
-     sqlite3 agua-vp.db < respaldo_recuperado.sql
-     ```
-   * O bien utilizando la herramienta de exportación de base de datos de Turso.
-2. **Instalar AguaVP en la nueva máquina:** Instalar el ejecutable de la versión actual.
-3. **Copiar la base de datos:**
-   * Pegar el archivo restaurado en la ruta de datos del usuario:
-     * Windows: `%APPDATA%\AguaVP\database\agua-vp.db` (o ruta configurada en `DB_PATH`).
-4. **Iniciar AguaVP:**
-   * La aplicación aplicará las verificaciones automáticas de esquema e índices.
-   * Todos los clientes, lecturas, facturas, cobros y usuarios estarán disponibles.
-   * En el panel de administrador, re-ingresar las credenciales de Turso para reactivar la sincronización continua.
+> **Limitación conocida (se corrige en el Paso 2 del plan):** la sincronización incremental no detecta todavía ediciones de tarifas, rangos, configuración, rutas, usuarios, convenios, cortes y lecturas, ni tarifas/rutas nuevas ni borrados de puntos de ruta. Esos cambios llegan a la nube con la siguiente **carga completa** ("Subir Base Completa a Turso"). Recomendación mientras tanto: ejecutar la carga completa después de cambios de tarifas o rutas y al cierre de cada periodo.
+
+---
+
+## 7. Triggers (Disparadores) y Restauración
+
+### ¿Por qué no hay triggers en la nube?
+Los triggers de negocio (`validar_pago_contra_saldo`, `actualizar_saldo_factura`, etc.) recalculan saldos o rechazan pagos. Al copiar pagos históricos de facturas ya saldadas, esos triggers los rechazarían o volverían a descontar los saldos. Por eso **Turso almacena los datos ya calculados por la base local, sin triggers**.
+
+### ¿Qué pasa al usar una base descargada de Turso?
+Al iniciar, el migrador de la API (`ensureCoreTriggers`) recrea los **9 triggers** de negocio con su definición vigente:
+
+| Trigger | Función |
+|---|---|
+| `validar_pago_contra_saldo` | Un pago no puede exceder el saldo de la factura |
+| `validar_pago_parcialidad` | El pago de una parcialidad debe ser exactamente el monto esperado |
+| `validar_tipo_pago` | Un pago va a una factura o a una parcialidad, no a ambas |
+| `actualizar_saldo_factura` | Descuenta el pago del saldo de la factura |
+| `actualizar_estado_factura` | Saldo 0 → factura "Pagado" |
+| `actualizar_estado_factura_parcial` | Pago incompleto → factura "Parcial" |
+| `registrar_cambios_facturas` | Auditoría de cambios en facturas |
+| `cerrar_historial_asignacion_anterior` | Cierra el historial al retirar/reasignar un medidor |
+| `registrar_historial_asignacion` | Registra la asignación de un medidor a un cliente |
+
+Una prueba automática (`api-AguaVP/src/test/unit/core-triggers.test.js`) garantiza que estas definiciones sean iguales a las de las migraciones.
+
+---
+
+## 8. Recuperación ante Desastres
+
+> Mientras no exista el botón "Restaurar desde la nube" (Paso 3 del plan), la recuperación es manual. **Antes de recuperar, NO usar "Revisar → reemplazar la nube"**: la copia en la nube es la que contiene tus datos.
+
+1. **Obtener la copia de la nube** (CLI de Turso + sqlite3):
+   ```bash
+   turso db shell mi-base-aguavp .dump > respaldo_recuperado.sql
+   sqlite3 agua-vp.db < respaldo_recuperado.sql
+   ```
+2. **Instalar AguaVP** (versión igual o posterior a la que generó la copia).
+3. **Copiar la base** a la carpeta de datos del usuario con la app cerrada:
+   * Carpeta de datos de la app dentro de `%APPDATA%`, archivo `agua-vp.db` (la ruta exacta se ve en **Mantenimiento → Base de datos**).
+4. **Iniciar AguaVP:** se aplican las migraciones pendientes y se recrean los triggers.
+5. **Volver a vincular Turso** en el panel. La base descargada **hereda la identidad** de la copia en la nube (`_aguavp_sync_meta` viaja dentro del volcado), así que la sincronización continúa sin conflicto.
+
+> **Límite actual:** si la copia en la nube se generó con una versión anterior del esquema, el volcado trae esa estructura y la tabla de migraciones de la nube, por lo que las columnas añadidas después podrían faltar. El Paso 3 del plan resuelve esto restaurando sobre una base creada con el esquema actual.
+
+---
+
+## 9. Diagnóstico
+
+* **Panel "Nube (Turso)":** fecha de la última copia, estado (correcto / aviso de red / conflicto pendiente).
+* **Consola del proceso principal** (terminal de `npm run dev`): mensajes `[TursoSync]` con el inicio y resultado de cada carga y el motivo de cada bloqueo. Todavía no llegan al visor de Mantenimiento → Logs (Paso 4 del plan).
+* **Errores de red** no detienen la app: se reintenta en el siguiente ciclo.

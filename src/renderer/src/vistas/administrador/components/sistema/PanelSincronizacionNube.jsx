@@ -152,12 +152,54 @@ export default function PanelSincronizacionNube() {
     }
   };
 
+  // La API bloqueó la carga completa para proteger la copia en la nube (base local vacía,
+  // de otra instalación o con menos registros). Solo se reemplaza la nube con doble confirmación.
+  const resolverConflicto = async (conflicto) => {
+    const motivos = (conflicto?.motivos || []).map((m) => `• ${m.mensaje}`).join("\n");
+    const tabla = (conflicto?.comparacion || [])
+      .map((c) => `   ${c.tabla}: local ${c.local} / nube ${c.nube}`)
+      .join("\n");
+
+    setError("Sincronización bloqueada para proteger la copia en la nube", "Nube");
+
+    const revisar = window.confirm(
+      "⛔ La sincronización se detuvo para proteger tu copia en la nube.\n\n" +
+        `${motivos}\n\nRegistros:\n${tabla}\n\n` +
+        "Si perdiste o restauraste la base local, NO reemplaces la nube: usa la copia de la nube para recuperar tus datos.\n\n" +
+        "¿Quieres REEMPLAZAR la copia de la nube con la base local actual?"
+    );
+    if (!revisar) return;
+
+    const confirmarReemplazo = window.confirm(
+      "Confirmación final: los datos que existen en la nube y no en esta base local se PERDERÁN de la copia en la nube.\n\n" +
+        "¿Reemplazar la copia en la nube?"
+    );
+    if (!confirmarReemplazo) return;
+
+    try {
+      setSembrando(true);
+      const res = await window.api.system.syncTursoNow(true, getUserToken(), true);
+      if (res?.success) {
+        setSuccess(`Copia en la nube reemplazada (${res.data?.totalRows || 0} registros)`, "Nube");
+      } else {
+        setError(res?.error || "No se pudo reemplazar la copia en la nube", "Nube");
+      }
+    } catch (err) {
+      setError(`Error al reemplazar la copia en la nube: ${err.message}`, "Nube");
+    } finally {
+      setSembrando(false);
+      await cargarConfiguracion();
+    }
+  };
+
   // Forzar sincronización inmediata de cambios
   const sincronizarAhora = async () => {
     try {
       setSincronizando(true);
       const res = await window.api.system.syncTursoNow(false, getUserToken());
-      if (res?.success) {
+      if (res?.conflict) {
+        await resolverConflicto(res);
+      } else if (res?.success) {
         setSuccess("Sincronización completada exitosamente", "Nube");
         await cargarConfiguracion();
       } else {
@@ -180,7 +222,9 @@ export default function PanelSincronizacionNube() {
     try {
       setSembrando(true);
       const res = await window.api.system.syncTursoNow(true, getUserToken());
-      if (res?.success) {
+      if (res?.conflict) {
+        await resolverConflicto(res);
+      } else if (res?.success) {
         const total = res.data?.totalRows || 0;
         setSuccess(`Carga inicial completada exitosamente (${total} registros respaldados)`, "Nube");
         await cargarConfiguracion();
@@ -255,9 +299,11 @@ export default function PanelSincronizacionNube() {
               {formatearFecha(lastSync)}
             </span>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-              {statusDetalle?.lastSyncSuccess === false
-                ? "⚠️ Último intento con aviso de red"
-                : "Respaldo remoto verificado"}
+              {statusDetalle?.conflicto
+                ? "⛔ Copia protegida: conflicto pendiente"
+                : statusDetalle?.lastSyncSuccess === false
+                  ? "⚠️ Último intento con aviso de red"
+                  : "Respaldo remoto verificado"}
             </p>
           </div>
         </div>
@@ -280,6 +326,26 @@ export default function PanelSincronizacionNube() {
           </div>
         </div>
       </div>
+
+      {/* ── AVISO DE CONFLICTO (carga completa bloqueada para proteger la nube) ── */}
+      {statusDetalle?.conflicto && (
+        <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center gap-4">
+          <HiXCircle className="w-6 h-6 text-rose-600 dark:text-rose-400 shrink-0" />
+          <div className="flex-1 text-sm text-rose-700 dark:text-rose-300">
+            <p className="font-bold">La sincronización está detenida para proteger la copia en la nube</p>
+            {(statusDetalle.conflicto.motivos || []).map((m, i) => (
+              <p key={i} className="text-xs mt-1">{m.mensaje}</p>
+            ))}
+          </div>
+          <button
+            onClick={() => resolverConflicto(statusDetalle.conflicto)}
+            disabled={sembrando}
+            className="h-[40px] px-4 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors disabled:opacity-50 shrink-0"
+          >
+            Revisar
+          </button>
+        </div>
+      )}
 
       {/* ── FORMULARIO DE CREDENCIALES TURSO ── */}
       <div className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex flex-col gap-6">

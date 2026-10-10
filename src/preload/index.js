@@ -275,8 +275,8 @@ const api = {
     clearTursoConfig: (userToken) => ipcRenderer.invoke('system:turso-config-clear', userToken),
     testTursoConnection: (tursoUrl, tursoToken) =>
       ipcRenderer.invoke('system:turso-test', tursoUrl, tursoToken),
-    syncTursoNow: (seed, userToken) =>
-      ipcRenderer.invoke('system:turso-sync-now', seed, userToken),
+    syncTursoNow: (seed, userToken, force = false) =>
+      ipcRenderer.invoke('system:turso-sync-now', seed, userToken, force),
     getTursoSyncStatus: () => ipcRenderer.invoke('system:turso-sync-status'),
 
     // Estado del servidor
