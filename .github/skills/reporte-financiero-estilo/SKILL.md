@@ -17,7 +17,7 @@ No usar para:
 
 ## Fuente de verdad
 El estilo base SIEMPRE parte del patron canonico:
-- src/renderer/src/components/vistas/impresion/components/ReporteFinancieroEstado.jsx
+- src/renderer/src/vistas/pagos/components/ReporteFinancieroEstado.jsx
 
 Debe respetar esta jerarquia:
 - Contenedor general

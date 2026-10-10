@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import LoadingVistas from "../components/pantalladecarga/LoadingVistas";
+import LoadingVistas from "../components/carga/LoadingVistas";
 import { useEffect, useState } from "react";
 
 import { useClientes } from "../context/ClientesContext";
