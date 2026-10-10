@@ -1,7 +1,7 @@
 import { ipcMain} from 'electron';
-import {fetchFacturas} from '../api-client/facturas/consultas.js'; // Importa la función fetchFacturas
-import {registerFacturas} from '../api-client/facturas/registro.js'; // Importa la función registerFacturas
-import { runWithAppKeyFlow } from './appKeyFlow.js';
+import {fetchFacturas} from '../../api-client/facturas/consultas.js'; // Importa la función fetchFacturas
+import {registerFacturas} from '../../api-client/facturas/registro.js'; // Importa la función registerFacturas
+import { runWithAppKeyFlow } from '../appKeyFlow.js';
 
 export default function IpcHandlerFacturas () {
     /**************************************************************************************************************

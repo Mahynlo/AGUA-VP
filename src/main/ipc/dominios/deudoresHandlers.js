@@ -11,8 +11,8 @@ import {
     pagarParcialidad,
     fetchResumenCobroConvenio,
     pagarIntegradoConvenio
-} from '../api-client/deudores.js';
-import { runWithAppKeyFlow } from './appKeyFlow.js';
+} from '../../api-client/deudores.js';
+import { runWithAppKeyFlow } from '../appKeyFlow.js';
 
 export default function IpcHandlerDeudores() {
     

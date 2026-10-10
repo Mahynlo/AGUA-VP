@@ -1,7 +1,7 @@
 import { ipcMain} from 'electron';
-import {fetchPagos } from "../api-client/pagos/consultas.js"; // Importa la función fetchPagos
-import {registerPagos, registerPagoDistribuido } from "../api-client/pagos/registro.js"; // Importa funciones de registro de pagos
-import { runWithAppKeyFlow } from './appKeyFlow.js';
+import {fetchPagos } from "../../api-client/pagos/consultas.js"; // Importa la función fetchPagos
+import {registerPagos, registerPagoDistribuido } from "../../api-client/pagos/registro.js"; // Importa funciones de registro de pagos
+import { runWithAppKeyFlow } from '../appKeyFlow.js';
 export default function IpcHandlerPagos () {
     /**************************************************************************************************************
      * Fetch pagos

@@ -1,8 +1,8 @@
 import { ipcMain} from 'electron';
-import { registerTarifas,registrarRangosTarifa  } from '../api-client/tarifas/registro.js'; // Importa las funciones registerTarifa y registrarRangosTarifa
-import  {fetchTarifas } from '../api-client/tarifas/consultas.js'; // Importa la función fetchTarifas
-import  {updateTarifa,updateRangosTarifa } from '../api-client/tarifas/actualizacion.js'; // Importa las funciones updateTarifa y updateRangosTarifa
-import { runWithAppKeyFlow } from './appKeyFlow.js';
+import { registerTarifas,registrarRangosTarifa  } from '../../api-client/tarifas/registro.js'; // Importa las funciones registerTarifa y registrarRangosTarifa
+import  {fetchTarifas } from '../../api-client/tarifas/consultas.js'; // Importa la función fetchTarifas
+import  {updateTarifa,updateRangosTarifa } from '../../api-client/tarifas/actualizacion.js'; // Importa las funciones updateTarifa y updateRangosTarifa
+import { runWithAppKeyFlow } from '../appKeyFlow.js';
 
 
 /**************************************************************************************************************
