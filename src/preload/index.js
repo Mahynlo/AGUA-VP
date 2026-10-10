@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
@@ -192,18 +191,6 @@ const api = {
     return await ipcRenderer.invoke('previewComponent', url, safeOptions)
   },
 
-  printReport: async (url, callback) => {
-    let response = await ipcRenderer.invoke('printReport', url)
-    callback(response) // Aquí pasas el resultado de la operación al callback
-  },
-  previewReport: async (url, callback) => {
-    let response = await ipcRenderer.invoke('previewReport', url)
-    callback(response) // Aquí pasas el resultado de la operación al callback
-  },
-
-  // NOTA: previewRecibohtml eliminado - no se usaba
-  // El sistema ahora usa solo componentes React para consistencia
-
   // Transferencia de datos segura (FileSystem)
   savePrintData: (data) => ipcRenderer.invoke('savePrintData', data),
   getPrintData: (id) => ipcRenderer.invoke('getPrintData', id),
@@ -362,7 +349,6 @@ const electronWindowControls = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
     contextBridge.exposeInMainWorld('authApp', authApp)
     contextBridge.exposeInMainWorld('tarifasApp', tarifasApp)
@@ -372,7 +358,6 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  window.electron = electronAPI
   window.api = api
   window.authApp = authApp
   window.tarifasApp = tarifasApp

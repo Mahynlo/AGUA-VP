@@ -158,9 +158,6 @@ if (!gotTheLock) {
       optimizer.watchWindowShortcuts(window)
     })
 
-    // IPC test
-    ipcMain.on('ping', () => console.log('pong'))
-
     // Iniciar servidor API embebido (aplica migraciones y crea backup automáticamente)
     try {
       await startApiServer();
