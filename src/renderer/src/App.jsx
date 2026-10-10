@@ -69,6 +69,7 @@ import ModalActualizacionDisponible from "./components/actualizaciones/ModalActu
 import InitDataLoader from "./context/InitDataLoader";
 
 import FeedbackMessages from "./components/feedback/FeedbackMessages"; // Importar el componente de mensajes de feedback
+import AlertaSincronizacion from "./components/feedback/AlertaSincronizacion";
 
 function App() {
   return (
@@ -94,6 +95,7 @@ function App() {
                                 <MainApp /> {/* Aqui se cargan las rutas de la aplicacion */}
                                 {/* Componente global de mensajes */}
                                 <FeedbackMessages position="bottom-right" />
+                                <AlertaSincronizacion /> {/* Avisos de fallo de la copia en la nube (solo administradores) */}
 
                                 <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
                                 <ModalActualizacionDisponible /> {/* Modal global para alertar actualizaciones disponibles */}

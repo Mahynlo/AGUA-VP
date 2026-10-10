@@ -277,7 +277,9 @@ export default function IpcHandlersSystem() {
     /**
      * Probar conexión con credenciales de Turso.
      */
-    ipcMain.handle('system:turso-test', async (_event, tursoUrl, tursoToken) => {
+    ipcMain.handle('system:turso-test', async (_event, tursoUrl, tursoToken, userToken) => {
+        const auth = requireAdmin(userToken);
+        if (!auth.valid) return { success: false, error: auth.error };
         try {
             const result = await testTursoConnection(tursoUrl, tursoToken);
             return result;

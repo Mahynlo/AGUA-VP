@@ -16,7 +16,10 @@ import crypto from 'crypto';
 import Database from 'better-sqlite3';
 import jwt from 'jsonwebtoken';
 import logManager from './logManager.js';
-import { snapshotDatabase, stageRestore, applyPendingRestore } from './dbFiles.js';
+import {
+    snapshotDatabase, stageRestore, applyPendingRestore, cleanupRestoreLeftovers,
+    planBackupRotation, backupReason, PROTECTED_REASONS
+} from './dbFiles.js';
 // AguaVPServer se carga con dynamic import para evitar que electron-vite
 // transforme el import ESM a require() (que falla con módulos ES puros).
 
@@ -28,7 +31,23 @@ const API_PORT      = 3000;
 
 // ── Configuración mutable ─────────────────────────────────────────────────────
 
-let maxBackups = 5; // Configurable desde la UI
+const BACKUP_CONFIG_FILE = 'backup-config.json';
+const DEFAULT_BACKUP_CONFIG = { maxBackups: 5, diasDiarios: 14, maxProtegidos: 10 };
+
+/** Configuración de respaldos guardada en userData (sobrevive a reinicios). */
+function loadBackupConfig() {
+    try {
+        const file = path.join(app.getPath('userData'), BACKUP_CONFIG_FILE);
+        if (fs.existsSync(file)) return { ...DEFAULT_BACKUP_CONFIG, ...JSON.parse(fs.readFileSync(file, 'utf-8')) };
+    } catch (err) {
+        logManager.warn(`Configuración de respaldos ilegible, se usan valores por defecto: ${err.message}`, 'backup');
+    }
+    return { ...DEFAULT_BACKUP_CONFIG };
+}
+
+function saveBackupConfig(config) {
+    fs.writeFileSync(path.join(app.getPath('userData'), BACKUP_CONFIG_FILE), JSON.stringify(config, null, 2));
+}
 
 // ── Estado del módulo ─────────────────────────────────────────────────────────
 
@@ -97,10 +116,12 @@ export function createBackup(reason = 'manual', { strict = false } = {}) {
         fs.mkdirSync(backupDir, { recursive: true });
     }
 
+    // El motivo va en el nombre: los respaldos previos a restaurar/actualizar se conservan aparte
+    const motivo = ['pre-arranque', 'manual', 'pre-update', 'pre-restore'].includes(reason) ? reason : 'manual';
     const ts   = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    let dest = path.join(backupDir, `agua-vp-backup-${ts}.db`);
+    let dest = path.join(backupDir, `agua-vp-backup-${ts}-${motivo}.db`);
     for (let n = 1; fs.existsSync(dest); n++) {
-        dest = path.join(backupDir, `agua-vp-backup-${ts}-${n}.db`);
+        dest = path.join(backupDir, `agua-vp-backup-${ts}-${n}-${motivo}.db`);
     }
     try {
         snapshotDatabase(dbPath, dest);
@@ -112,16 +133,23 @@ export function createBackup(reason = 'manual', { strict = false } = {}) {
     }
     logManager.info(`Backup creado (${reason}): ${dest}`, 'backup');
 
-    // Limpiar backups viejos
+    // Rotación: recientes + uno por día + protegidos (pre-restore / pre-update) aparte
+    const config = loadBackupConfig();
     const all = fs.readdirSync(backupDir)
         .filter(f => f.startsWith('agua-vp-backup-') && f.endsWith('.db'))
-        .map(f => ({ name: f, mtimeMs: fs.statSync(path.join(backupDir, f)).mtimeMs }))
-        .sort((a, b) => a.mtimeMs - b.mtimeMs);
-
-    while (all.length > maxBackups) {
-        const oldest = all.shift();
-        fs.unlinkSync(path.join(backupDir, oldest.name));
-        logManager.info(`Backup antiguo eliminado: ${oldest.name}`, 'backup');
+        .map(f => ({ name: f, mtimeMs: fs.statSync(path.join(backupDir, f)).mtimeMs }));
+    for (const name of planBackupRotation(all, {
+        maxRecientes: config.maxBackups,
+        diasDiarios: config.diasDiarios,
+        maxProtegidos: config.maxProtegidos
+    })) {
+        if (path.join(backupDir, name) === dest) continue;
+        try {
+            fs.unlinkSync(path.join(backupDir, name));
+            logManager.info(`Backup antiguo eliminado: ${name}`, 'backup');
+        } catch (err) {
+            logManager.warn(`No se pudo eliminar el backup ${name}: ${err.message}`, 'backup');
+        }
     }
 
     return dest;
@@ -140,11 +168,14 @@ export function listBackups() {
         .map(f => {
             const fullPath = path.join(backupDir, f);
             const stat     = fs.statSync(fullPath);
+            const motivo = backupReason(f);
             return {
                 name:      f,
                 path:      fullPath,
                 size:      stat.size,
-                createdAt: stat.mtime.toISOString()
+                createdAt: stat.mtime.toISOString(),
+                motivo,
+                protegido: PROTECTED_REASONS.includes(motivo)
             };
         })
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -185,6 +216,11 @@ export async function startApiServer() {
         logManager.error(`No se pudo aplicar la restauración pendiente: ${err.message}. La base actual no se modificó.`, 'backup');
     }
 
+    // Restos de restauraciones anteriores (archivos temporales, bases preparadas no aplicadas)
+    for (const f of cleanupRestoreLeftovers(dbPath, path.join(userDataPath, 'restauraciones'))) {
+        logManager.info(`Archivo temporal de restauración eliminado: ${path.basename(f)}`, 'backup');
+    }
+
     // Backup antes de migraciones
     createBackup('pre-arranque');
 
@@ -221,6 +257,7 @@ export async function startApiServer() {
         tursoDatabaseUrl: secrets.tursoUrl || '',
         tursoAuthToken: secrets.tursoToken || '',
         tursoAutoSync: secrets.autoSync !== false,
+        tursoEquipoId: getEquipoId(),
         nodeEnv:      import.meta.env.PROD ? 'production' : 'development',
         autoMigrate:  true
     });
@@ -228,6 +265,12 @@ export async function startApiServer() {
     // Redirigir logs del servidor API al LogManager
     apiServer.on('log',     msg => logManager.info(msg, 'api'));
     apiServer.on('error',   err => logManager.error(String(err), 'api'));
+    // Sincronización con Turso → visor de logs (fuente 'nube'); antes solo iba a la consola
+    apiServer.on('sync-log', ({ nivel, mensaje } = {}) => {
+        if (nivel === 'error') logManager.error(mensaje, 'nube');
+        else if (nivel === 'warn') logManager.warn(mensaje, 'nube');
+        else logManager.info(mensaje, 'nube');
+    });
     apiServer.on('started', info => logManager.info(`Servidor listo en http://localhost:${info.port}`, 'api'));
 
     await apiServer.start();
@@ -401,25 +444,42 @@ export function getMigrationHistory() {
  * @param {{ maxBackups?: number }} config
  */
 export function updateBackupConfig(config) {
-    if (config.maxBackups && config.maxBackups >= 1 && config.maxBackups <= 50) {
-        maxBackups = config.maxBackups;
-        logManager.info(`Configuración de backups actualizada: maxBackups=${maxBackups}`, 'backup');
-    }
-    return { maxBackups };
+    const actual = loadBackupConfig();
+    if (config.maxBackups && config.maxBackups >= 1 && config.maxBackups <= 50) actual.maxBackups = config.maxBackups;
+    if (config.diasDiarios && config.diasDiarios >= 1 && config.diasDiarios <= 365) actual.diasDiarios = config.diasDiarios;
+    saveBackupConfig(actual);
+    logManager.info(`Configuración de backups actualizada: ${actual.maxBackups} recientes, ${actual.diasDiarios} días`, 'backup');
+    return { maxBackups: actual.maxBackups, diasDiarios: actual.diasDiarios };
 }
 
 /**
  * Obtiene la configuración actual de backups.
  */
 export function getBackupConfig() {
+    const config = loadBackupConfig();
     return {
-        maxBackups,
+        maxBackups: config.maxBackups,
+        diasDiarios: config.diasDiarios,
+        maxProtegidos: config.maxProtegidos,
         backupDir: path.join(app.getPath('userData'), 'backups'),
         dbPath: path.join(app.getPath('userData'), DB_FILENAME)
     };
 }
 
 // ── Sincronización Turso Cloud ────────────────────────────────────────────────
+
+/**
+ * Identificador de ESTA computadora para la copia en la nube. Se guarda en api-secrets.enc (fuera de la base
+ * de datos): si la misma base se usa en otra computadora, la API detecta que otro equipo escribe en la copia.
+ */
+export function getEquipoId() {
+    const secrets = loadOrCreateSecrets();
+    if (!secrets.equipoId) {
+        secrets.equipoId = crypto.randomUUID();
+        saveSecrets(secrets);
+    }
+    return secrets.equipoId;
+}
 
 /**
  * Headers para /api/v2/sync/*: la API acepta la clave interna (el mismo secretAppKey que
@@ -483,7 +543,8 @@ export async function saveTursoConfig({ tursoUrl, tursoToken, autoSync }) {
                 body: JSON.stringify({
                     tursoUrl: secrets.tursoUrl,
                     tursoToken: secrets.tursoToken,
-                    autoSync: secrets.autoSync
+                    autoSync: secrets.autoSync,
+                    equipoId: getEquipoId()
                 })
             });
         } catch (e) {

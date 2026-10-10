@@ -100,6 +100,8 @@ Las tablas de sesión no se suben por diseño (credenciales temporales; tras res
 
 ## 7. Análisis de la implementación: qué falta
 
+> **Actualización (API 1.0.12):** P1, P2, P3, P4, P5, P6, P10 y P11 están implementados y probados; ver sección 9. P8 y P9 se cerraron tras investigar (sección 10). Quedan P7 y P12.
+
 Revisado: núcleo (`tursoSyncCore.js`), servicio, rutas, `dbFiles.js`, `apiManager`, handlers IPC y panel.
 
 **Funciona como se espera:** registro de cambios (incluye cambios hechos por triggers de negocio y por cascadas), `last_insert_rowid`/`changes` intactos, escrituras concurrentes durante un ciclo (quedan para el siguiente), reintento sin pérdida ante fallos de red, columnas nuevas, tablas excluidas, autenticación de `/sync`, guarda anti-sobrescritura, restauración preparada y aplicada al arrancar.
@@ -120,8 +122,8 @@ Revisado: núcleo (`tursoSyncCore.js`), servicio, rutas, `dbFiles.js`, `apiManag
 | P5 | La verificación (sync diaria y validación de la restauración) compara `COUNT` y `MAX(id)`: **no detecta campos cambiados** (el defecto 4 pasó sin aviso) | Huella por tabla calculada en ambos lados (p. ej. `SUM` de columnas numéricas y `total(length(...))` de texto) en la verificación diaria y al restaurar |
 | P6 | Turso valida llaves foráneas: una referencia huérfana en local (p. ej. datos antiguos con FK desactivadas) haría fallar la carga completa en cada intento | Hoy hay 0 violaciones. Mostrar `fkViolaciones` en el panel y el nombre de la tabla que falla |
 | P7 | Probado solo con `npm run dev`: falta el reinicio automático (`app.relaunch`) en la app **instalada** | Generar el instalador y repetir una restauración |
-| P8 | `facturas.fecha_entrega_recibo` y 4 entradas de `__drizzle_migrations` no existen en el repositorio | Averiguar su origen; incorporarla como migración oficial o descartarla conscientemente |
-| P9 | Columnas conservadas al restaurar solo traen nombre y tipo (sin NOT NULL/DEFAULT/CHECK) | Se resuelve con P8 (migración oficial) |
+| P8 | `facturas.fecha_entrega_recibo` y 4 entradas de `__drizzle_migrations` no existen en el repositorio | **Cerrado** (sección 10): columna heredada de una migración local no versionada; ningún código la usa; se conserva tal cual |
+| P9 | Columnas conservadas al restaurar solo traen nombre y tipo (sin NOT NULL/DEFAULT/CHECK) | **Cerrado** (sección 10): la única columna afectada no tenía restricciones (`DATE` sin NOT NULL/DEFAULT) |
 
 ### Prioridad baja
 
@@ -141,3 +143,34 @@ Revisado: núcleo (`tursoSyncCore.js`), servicio, rutas, `dbFiles.js`, `apiManag
 4. Resultado esperado: el primer cambio está, el segundo no (está en el respaldo previo); solo difieren las tablas de sesión.
 5. **No** usar el reemplazo forzado salvo que se quiera descartar lo que tiene la nube.
 6. **No** borrar la carpeta `backups/` hasta confirmar el resultado.
+
+---
+
+## 9. Pendientes resueltos (API 1.0.12)
+
+| # | Implementación | Prueba |
+|---|---|---|
+| P1 | Respaldos con el motivo en el nombre (`agua-vp-backup-<fecha>-<motivo>.db`). Rotación (`planBackupRotation` en `dbFiles.js`): los N más recientes (configurable, se guarda en `userData/backup-config.json`) + uno por día de los últimos 14 días + los 10 últimos `pre-restore` y los 10 últimos `pre-update`, que no compiten con los de arranque | 30 arranques seguidos ya no borran el respaldo previo a una restauración; 14 días conservados; protegidos por motivo |
+| P2 | Al bloquear una carga completa, la API calcula `eliminaria` (por tabla: total e ids que un reemplazo forzado borraría de la nube); el panel lo muestra en las dos confirmaciones | Base con 1 cliente contra nube con 3 → `clientes: 2 (ids 2, 3)`, `pagos: 2` |
+| P3 | `equipoId` por computadora (en `api-secrets.enc`, fuera de la base). La nube guarda qué equipo escribió por última vez; si escribe otro, el ciclo incremental se detiene y la carga completa se bloquea con el motivo `equipo`. Restaurar desde la nube en una computadora la convierte en la que respalda (`tomar_control_equipo`) y bloquea a la anterior | PC-B con la misma base → bloqueada; PC-B tras restaurar → toma el control y PC-A queda bloqueada; con la API real: 409 `equipo` |
+| P4 | Mensajes `[TursoSync]` al visor de logs (fuente `nube`, evento `sync-log` de la API). `syncMonitor.js` revisa cada 30 min y avisa a los administradores (`sync:alerta`): conflicto, ≥ 3 fallos seguidos, sin copia correcta en 24 h, diferencias en la verificación, referencias huérfanas. El mismo aviso se repite como máximo cada 6 h | Reglas en `syncHealth.js` (8 casos); 3 mensajes recibidos en el visor con la API real |
+| P5 | Verificación por **contenido** (`verifyContent`: hash de cada fila, columnas comunes) en la verificación diaria, tras cada carga completa y al validar una restauración; `repairContent` corrige filas distintas o faltantes y conserva las filas extra de tablas protegidas. La verificación diaria también ejecuta `quick_check` y no sube nada si la base local está dañada | `updated_by` vaciado y un nombre alterado en la nube: la verificación rápida no los ve, la diaria los detecta y repara |
+| P6 | `fkViolaciones` en el estado y en el panel; incluido en los avisos | Base real: 0 |
+| P10 | `system:turso-test` exige administrador | — |
+| P11 | `cleanupRestoreLeftovers` al arrancar: `.anterior`, `.restaurar.tmp`, archivos de `restauraciones/` con más de un día (los `.invalido` se conservan) | Prueba de archivos |
+
+Pruebas: API `npm run test:sync` 46/46; app (retención, limpieza, reglas de aviso) 6/6; humo con la API real en dos procesos (restauración, re-vinculación verificada por contenido, estado, logs, bloqueo por otro equipo).
+
+---
+
+## 10. Origen de `facturas.fecha_entrega_recibo` (P8–P9, cerrados)
+
+Investigación de solo lectura sobre la base real y el respaldo previo a la restauración (`…T17-52-51-pre-restore.db`):
+
+* **Código:** no aparece en la app, la API (código actual, historial de git de todas las ramas, stashes, paquetes `.tgz` 1.0.6–1.0.12) ni en los proyectos hermanos (`app_movil`, `querys_SQL`, `api-agua-vp_2`, `AguaVP` anterior).
+* **Origen:** la base anterior a las pruebas tenía 24 entradas en `__drizzle_migrations`; la n.º 20, aplicada el **2026-04-11 09:33 UTC**, no corresponde a ninguna migración del repositorio. Es una migración local que nunca se versionó. (Las entradas 0021 y 0022 tienen otro hash porque sus `.sql` se editaron después de aplicarse; no afecta, Drizzle solo compara fechas.) La base restaurada tiene las 23 del repositorio, todas con hash coincidente.
+* **Definición:** `"fecha_entrega_recibo" DATE`, sin NOT NULL, DEFAULT ni CHECK; por eso conservarla solo con nombre y tipo (P9) no pierde nada.
+* **Datos:** 316 de 1 119 facturas; una sola fecha por lote (marzo: 2026-03-09, abril: 2026-04-15); de mayo en adelante, vacía.
+* **Uso:** ninguno. El vencimiento se calcula como `fecha_emision + dias_vencimiento_factura` (`recalcularVencimientosPorPeriodo`): marzo 03-07 + 18 = 03-25, abril 04-11 + 10 = 04-21. No interviene en recargos, cortes, recibos ni reportes. Coincide con los cambios de configuración del 11–12 de abril (31 → 10 → 15 → 18 → 10 días): un experimento de contar el plazo desde la entrega que se descartó.
+
+**Decisión:** se deja como está, sin incorporarla al esquema oficial (sería una columna oficial sin uso, y una migración `ADD COLUMN` fallaría en esta base por estar duplicada). El sistema de copias la conserva al restaurar y la guarda `columnas` impide que se pierda en la nube. Si en el futuro se quiere registrar la entrega de recibos, se diseña como función nueva con una migración que tenga en cuenta la columna existente.
