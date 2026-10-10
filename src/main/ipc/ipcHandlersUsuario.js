@@ -7,6 +7,7 @@ import { app, BrowserWindow } from 'electron';
 // NOTA: Funciones locales comentadas para usar exclusivamente API V2.
 
 import { leerToken, ensureAppToken, recuperarORegistrarTokenApp } from '../../appConfig/authApp';
+import { authHeaders, appKeyHeaders } from '../api-client/http.js';
 
 export default function IpcHandlerUsuario () {
     // Definir URL Base y asegurar que no tenga slash final extra si se concatenan
@@ -62,12 +63,9 @@ export default function IpcHandlerUsuario () {
             return { success: false, error: 'Token de app no disponible', message: 'Token de app no disponible' };
         }
 
-        const headers = { 
-            "Content-Type": "application/json",
-            "x-app-key": `AppKey ${appToken}` // Header requerido por middleware
-        };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        
+        // x-app-key requerido por el middleware; Authorization solo si hay sesión
+        const headers = token ? authHeaders(appToken, token) : appKeyHeaders(appToken);
+
         const options = { method, headers };
         if (body) options.body = JSON.stringify(body);
 
