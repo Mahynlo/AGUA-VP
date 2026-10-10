@@ -2,7 +2,7 @@
 
 Este documento describe la arquitectura, configuración, medidas de seguridad y procedimientos operativos del sistema de sincronización y respaldo en la nube integrado en **AguaVP**.
 
-> Versión documentada: app con `@aguavp/api-server` **1.0.8**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md).
+> Versión documentada: app con `@aguavp/api-server` **1.0.11**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md). Prueba real y pendientes: [turso-caso-prueba-restauracion.md](turso-caso-prueba-restauracion.md).
 
 ---
 
@@ -106,7 +106,7 @@ Si una nueva versión agrega columnas o tablas a la base local, se crean automá
 Mientras la nube está vinculada, la base local tiene triggers de registro (`_sync_<tabla>_ins/upd/del`) en **todas** las tablas que se sincronizan. Cada alta, edición o borrado —hecho por la app, por un trigger de negocio (p. ej. el saldo que se descuenta al registrar un pago) o por un borrado en cascada— queda anotado en `sync_cambios`.
 
 En cada ciclo se sube el **estado actual** de los registros anotados:
-* si el registro existe en local, se inserta o reemplaza en la nube;
+* si el registro existe en local, se inserta o se **actualiza en su lugar** en la nube (sin borrarlo: así Turso no aplica borrados en cascada a tablas relacionadas);
 * si ya no existe (se borró), se borra en la nube.
 
 Luego se marcan como subidos y se eliminan del registro. Si internet falla a mitad, el registro conserva los cambios y se reintentan en el siguiente ciclo.
@@ -149,20 +149,39 @@ Una prueba automática (`api-AguaVP/src/test/unit/core-triggers.test.js`) garant
 
 ## 8. Recuperación ante Desastres
 
-> Mientras no exista el botón "Restaurar desde la nube" (Paso 3 del plan), la recuperación es manual. **Antes de recuperar, NO usar "Revisar → reemplazar la nube"**: la copia en la nube es la que contiene tus datos.
+> **Antes de recuperar, NO usar "Revisar → reemplazar la nube"**: la copia en la nube es la que contiene tus datos.
 
-1. **Obtener la copia de la nube** (CLI de Turso + sqlite3):
+### Restaurar desde la app (recomendado)
+
+1. **Si la computadora es nueva o se reinstaló AguaVP:** instalar la versión actual e iniciar sesión. Con una base nueva existe el usuario administrador inicial.
+2. Ir a **Administrador → Mantenimiento → Nube (Turso)**. Si las credenciales no están, capturar la URL y el token y pulsar **"Guardar y Vincular"** (no se sube nada: la base vacía nunca reemplaza la nube).
+3. Pulsar **"Restaurar desde la Nube"**. Se muestra la fecha de la copia y la comparación de registros nube / esta computadora. Confirmar dos veces.
+4. La app (sin tocar todavía la base en uso):
+   * crea una base **nueva con el esquema de la versión instalada** y sus 9 triggers de negocio;
+   * copia los datos de la nube (las columnas que la nube no tenga toman su valor por defecto; las tablas y columnas que estén en la nube pero no en esta versión se **conservan**);
+   * la **valida**: integridad, misma cantidad de registros que la nube por tabla y triggers completos. Si algo falla, se cancela y la base actual queda igual.
+5. AguaVP se **reinicia**. Antes de abrir la base:
+   * guarda un **respaldo de la base actual** en `backups/` (incluye los cambios recientes);
+   * reemplaza la base por la restaurada.
+6. Iniciar sesión de nuevo (las sesiones no se respaldan). La base restaurada **hereda la identidad** de la copia: la primera sincronización hace una carga completa protegida y verificada, sin conflicto.
+
+> En desarrollo (`npm run dev`) la app se cierra en lugar de reiniciarse; vuelve a ejecutar `npm run dev` y la restauración se aplica al arrancar.
+
+### Restauración manual (si la app no arranca)
+
+1. Obtener la copia con la CLI de Turso y sqlite3:
    ```bash
    turso db shell mi-base-aguavp .dump > respaldo_recuperado.sql
    sqlite3 agua-vp.db < respaldo_recuperado.sql
    ```
-2. **Instalar AguaVP** (versión igual o posterior a la que generó la copia).
-3. **Copiar la base** a la carpeta de datos del usuario con la app cerrada:
-   * Carpeta de datos de la app dentro de `%APPDATA%`, archivo `agua-vp.db` (la ruta exacta se ve en **Mantenimiento → Base de datos**).
-4. **Iniciar AguaVP:** se aplican las migraciones pendientes y se recrean los triggers.
-5. **Volver a vincular Turso** en el panel. La base descargada **hereda la identidad** de la copia en la nube (`_aguavp_sync_meta` viaja dentro del volcado), así que la sincronización continúa sin conflicto.
+2. Con la app **cerrada**, copiar `agua-vp.db` a la carpeta de datos de la app (`%APPDATA%`, ruta exacta en **Mantenimiento → Base de datos**) y **borrar** `agua-vp.db-wal` y `agua-vp.db-shm` si existen.
+3. Iniciar AguaVP: se aplican migraciones pendientes y se recrean los triggers. Volver a vincular Turso.
 
-> **Límite actual:** si la copia en la nube se generó con una versión anterior del esquema, el volcado trae esa estructura y la tabla de migraciones de la nube, por lo que las columnas añadidas después podrían faltar. El Paso 3 del plan resuelve esto restaurando sobre una base creada con el esquema actual.
+> Límite de la vía manual: el volcado trae el esquema de la nube; si la copia se hizo antes de una actualización que agregó columnas, esas columnas pueden quedar sin valor por defecto. La restauración desde la app no tiene este problema.
+
+### Respaldos locales
+
+Además de la nube, la app guarda respaldos en `backups/` (al arrancar, antes de actualizar y antes de restaurar; 5 por defecto). Desde esta versión (API 1.0.9) se generan con `VACUUM INTO`, que incluye los cambios recientes que aún estaban en el archivo `-wal`; antes eran una copia del archivo principal y podían omitirlos. Restaurar un respaldo local también se aplica **al reiniciar** la app: copiar un archivo encima de la base abierta podía deshacer la restauración. Después de restaurar un respaldo local, la siguiente sincronización hace una **carga completa protegida**: si la nube tiene más datos que el respaldo, pide confirmación; si no, vuelve a subir todo y corrige la copia.
 
 ---
 

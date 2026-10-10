@@ -10,7 +10,8 @@ import {
   HiXCircle,
   HiInformationCircle,
   HiLightningBolt,
-  HiUpload
+  HiUpload,
+  HiDownload
 } from "react-icons/hi";
 import { useFeedback } from "../../../../context/FeedbackContext";
 import { useAuth } from "../../../../context/AuthContext";
@@ -33,6 +34,7 @@ export default function PanelSincronizacionNube() {
   const [guardando, setGuardando] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);
   const [sembrando, setSembrando] = useState(false);
+  const [restaurando, setRestaurando] = useState(false);
   const [mostrarToken, setMostrarToken] = useState(false);
   const [statusDetalle, setStatusDetalle] = useState(null);
 
@@ -189,6 +191,51 @@ export default function PanelSincronizacionNube() {
     } finally {
       setSembrando(false);
       await cargarConfiguracion();
+    }
+  };
+
+  // Restaurar la base local desde la copia de la nube (se aplica al reiniciar la app)
+  const restaurarDesdeNube = async () => {
+    try {
+      setRestaurando(true);
+      const prev = await window.api.system.previewCloudRestore(getUserToken());
+      if (!prev?.success) {
+        setError(prev?.error || "No se pudo consultar la copia en la nube", "Nube");
+        return;
+      }
+      if (!prev.data?.disponible) {
+        setError("La nube no contiene una copia de AguaVP para restaurar", "Nube");
+        return;
+      }
+
+      const tabla = (prev.data.comparacion || [])
+        .map((c) => `   ${c.tabla}: nube ${c.nube} / esta computadora ${c.local}`)
+        .join("\n");
+      const continuar = window.confirm(
+        "Restaurar desde la nube\n\n" +
+          `Copia de la nube actualizada: ${formatearFecha(prev.data.lastSyncNube)}\n` +
+          (prev.data.mismaBase ? "" : "⚠️ La copia pertenece a otra base o a una instalación anterior.\n") +
+          `\nRegistros:\n${tabla}\n\n` +
+          "La base de esta computadora será REEMPLAZADA por la copia de la nube. Antes se guardará un respaldo local de la base actual.\n" +
+          "AguaVP se reiniciará y los usuarios deberán iniciar sesión de nuevo.\n\n¿Continuar?"
+      );
+      if (!continuar) return;
+
+      const confirmar = window.confirm(
+        "Confirmación final: los cambios hechos en esta computadora que no estén en la copia de la nube se perderán (seguirán en el respaldo local).\n\n¿Restaurar desde la nube?"
+      );
+      if (!confirmar) return;
+
+      const res = await window.api.system.restoreFromCloud(getUserToken());
+      if (res?.success) {
+        setSuccess(res.message || "Copia de la nube verificada. AguaVP se reiniciará para aplicarla.", "Nube");
+      } else {
+        setError(res?.error || res?.message || "No se pudo restaurar desde la nube", "Nube");
+      }
+    } catch (err) {
+      setError(`Error al restaurar desde la nube: ${err.message}`, "Nube");
+    } finally {
+      setRestaurando(false);
     }
   };
 
@@ -465,6 +512,16 @@ export default function PanelSincronizacionNube() {
               >
                 <HiUpload className="w-4 h-4" />
                 {sembrando ? "Subiendo base..." : "Subir Base Completa a Turso"}
+              </button>
+
+              <button
+                onClick={restaurarDesdeNube}
+                disabled={restaurando || sembrando || sincronizando}
+                className="h-[44px] px-4 rounded-xl text-sm font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 transition-colors flex items-center gap-2 disabled:opacity-50"
+                title="Reemplaza la base de esta computadora con la copia de la nube (se reinicia la app)"
+              >
+                <HiDownload className="w-4 h-4" />
+                {restaurando ? "Preparando copia..." : "Restaurar desde la Nube"}
               </button>
 
               <button
