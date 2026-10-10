@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { apiFetch, getJson } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { apiFetch, getJson } from '../http.js';
 const URL_LECTURAS = import.meta.env.VITE_API_FETCH_LECTURAS; // URL del endpoint de lecturas
 const URL_BASE = import.meta.env.VITE_URL_BASE_API_AGUAVP;
 

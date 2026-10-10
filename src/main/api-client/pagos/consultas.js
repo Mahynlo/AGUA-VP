@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { getJson } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { getJson } from '../http.js';
 const URL_PAGOS = import.meta.env.VITE_API_FETCH_PAGOS; // URL del endpoint de pagos
 
 /**************************************************************************************************************

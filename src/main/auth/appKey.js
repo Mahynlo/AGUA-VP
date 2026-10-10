@@ -2,7 +2,7 @@
 import { app, safeStorage } from "electron"; // Asegúrate de tener instalado electron
 import path from "path"; // Asegúrate de tener instalado el módulo 'path'
 import fs from "fs"; // Asegúrate de tener instalado el módulo 'fs'
-import { appKeyHeaders } from "../main/api-client/http.js";
+import { appKeyHeaders } from "../api-client/http.js";
 
 const tokenPath = path.join(app.getPath("userData"), "Token_Key_App.enc"); // Ruta para guardar el token encriptado
 const appId = path.join(app.getPath("userData"), "Id_App.enc"); // Ruta para guardar el ID de la app

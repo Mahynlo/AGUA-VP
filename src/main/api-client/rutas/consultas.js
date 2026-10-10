@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { apiFetch, getJson } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { apiFetch, getJson } from '../http.js';
 
 export const fetchRutas = async (token_session, periodo, isRetry = false) => {
   try {

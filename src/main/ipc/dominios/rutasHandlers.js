@@ -1,9 +1,9 @@
 // File: src/main/ipc/ipcHandlersRutas.js
 const { ipcMain } = require("electron");
 import { GenerarRutaLectura } from "../../generador_rutas/generar_ruta.js";
-import {registrarRutas} from "../../register/rutas.js"; // Asegúrate de que esta ruta sea correcta
-import {fetchRutas} from "../../fetch/rutas.js"; // Asegúrate de que esta ruta sea correcta
-import {fetchRutasInfoMedidores} from "../../fetch/infoRutas.js"; // Asegúrate de que esta ruta sea correcta
+import {registrarRutas} from "../api-client/rutas/registro.js"; // Asegúrate de que esta ruta sea correcta
+import {fetchRutas} from "../api-client/rutas/consultas.js"; // Asegúrate de que esta ruta sea correcta
+import {fetchRutasInfoMedidores} from "../api-client/rutas/infoMedidores.js"; // Asegúrate de que esta ruta sea correcta
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 export default function IpcHandlersRutas() {
 
@@ -108,7 +108,7 @@ export default function IpcHandlersRutas() {
       }
 
       // Importar dinámicamente la función de actualización
-      const { actualizarRuta } = await import("../../fetch/rutas.js");
+      const { actualizarRuta } = await import("../api-client/rutas/consultas.js");
       
       const result = await runWithAppKeyFlow(
         () => actualizarRuta(token_session, id_ruta, datosActualizados)

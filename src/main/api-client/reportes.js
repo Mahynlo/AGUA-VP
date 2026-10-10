@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { getJson, appendDefinedParams } from '../main/api-client/http.js';
+import { leerToken } from '../auth/appKey.js';
+import { getJson, appendDefinedParams } from './http.js';
 
 const BASE_URL = import.meta.env.VITE_URL_BASE_API_AGUAVP;
 

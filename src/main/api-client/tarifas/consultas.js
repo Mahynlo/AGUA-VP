@@ -1,5 +1,5 @@
-import { leerToken } from '../appConfig/authApp';
-import { getJson } from '../main/api-client/http.js';
+import { leerToken } from '../../auth/appKey.js';
+import { getJson } from '../http.js';
 
 const URL_TARIFAS = import.meta.env.VITE_API_FETCH_TARIFAS; // URL del endpoint de tarifas
 

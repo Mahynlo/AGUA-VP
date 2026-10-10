@@ -1,10 +1,10 @@
 import { ipcMain } from 'electron';
 
 // Fetch de facturas
-import { fetchLecturas, modificarLectura, validarCobranzaPeriodoAnterior, obtenerEstadoPeriodosLecturas } from '../../fetch/lecturas.js';
+import { fetchLecturas, modificarLectura, validarCobranzaPeriodoAnterior, obtenerEstadoPeriodosLecturas } from '../api-client/lecturas/consultas.js';
 // registro y actualizar
-import { registerLectura } from '../../register/lecturas.js'; // Importa la función registerLectura
-import { generarFacturasRuta } from '../../fetch/generarFacturasRuta.js';
+import { registerLectura } from '../api-client/lecturas/registro.js'; // Importa la función registerLectura
+import { generarFacturasRuta } from '../api-client/lecturas/generarFacturasRuta.js';
 import { runWithAppKeyFlow } from './appKeyFlow.js';
 
 export default function IpcHandlerLecturas () {

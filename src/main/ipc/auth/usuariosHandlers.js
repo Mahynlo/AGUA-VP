@@ -6,7 +6,7 @@ import { app, BrowserWindow } from 'electron';
 
 // NOTA: Funciones locales comentadas para usar exclusivamente API V2.
 
-import { leerToken, ensureAppToken, recuperarORegistrarTokenApp } from '../../appConfig/authApp';
+import { leerToken, ensureAppToken, recuperarORegistrarTokenApp } from '../auth/appKey.js';
 import { authHeaders, appKeyHeaders } from '../api-client/http.js';
 
 export default function IpcHandlerUsuario () {
