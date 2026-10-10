@@ -531,7 +531,20 @@ export function getTursoConfig() {
 /**
  * Guarda la configuración de Turso cifrada en api-secrets.enc.
  */
+/**
+ * Cambiar o quitar la conexión mientras se sube una copia (manual o del ciclo automático) dejaría
+ * el registro de cambios a medias: se rechaza hasta que termine.
+ */
+async function assertSinSincronizacionEnCurso() {
+    if (!apiServer?.isRunning) return;
+    const res = await getTursoSyncStatus();
+    if (res?.status?.inProgress) {
+        throw new Error('Hay una copia a la nube en curso. Espera a que termine e inténtalo de nuevo.');
+    }
+}
+
 export async function saveTursoConfig({ tursoUrl, tursoToken, autoSync }) {
+    await assertSinSincronizacionEnCurso();
     const secrets = loadOrCreateSecrets();
     if (tursoUrl !== undefined) secrets.tursoUrl = (tursoUrl || '').trim();
     if (tursoToken !== undefined && tursoToken.trim().length > 0) {
@@ -567,6 +580,7 @@ export async function saveTursoConfig({ tursoUrl, tursoToken, autoSync }) {
  * Elimina las credenciales de Turso regresando a modo local puro.
  */
 export async function clearTursoConfig() {
+    await assertSinSincronizacionEnCurso();
     const secrets = loadOrCreateSecrets();
     delete secrets.tursoUrl;
     delete secrets.tursoToken;
