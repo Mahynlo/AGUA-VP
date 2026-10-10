@@ -10,6 +10,7 @@ import {
   recuperarORegistrarTokenApp,
   recuperarORegistrarTokenForzado
 } from '../../appConfig/authApp'; // Ajusta la ruta si es necesario
+import { appKeyHeaders } from '../api-client/http.js';
 
 const URL_BASE_API_AGUAVP = (import.meta.env.VITE_URL_BASE_API_AGUAVP || 'http://localhost:3000').replace(/\/$/, '');
 
@@ -21,10 +22,7 @@ function isAppKeyErrorMessage(message = '') {
 async function requestServerStatusWithToken(token) {
   const response = await fetch(`${URL_BASE_API_AGUAVP}/api/v2/app/status`, {
     method: 'GET',
-    headers: {
-      'x-app-key': `AppKey ${token}`,
-      'Content-Type': 'application/json'
-    }
+    headers: appKeyHeaders(token)
   });
 
   const rawBody = await response.text();
