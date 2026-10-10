@@ -21,6 +21,9 @@
 - **Corrección:** esas referencias se escriben en un segundo paso, cuando todas las filas ya están en la nube. Aplica a la carga completa, al ciclo automático de cambios (p. ej. crear un convenio y asignarlo a facturas en el mismo ciclo) y a las reparaciones de la verificación diaria.
 - **Datos:** no se recalcula nada. Se suben los valores tal como están en la base local (saldos, totales, estados). Probado con una copia de la base real: 11 229 registros subidos a una nube vacía con llaves foráneas activas, contenido idéntico fila por fila y 0 referencias rotas.
 
+#### 💾 Limpieza de respaldos
+- Al eliminar respaldos antiguos por la retención se borran también sus archivos auxiliares `-wal` / `-shm`, que podían quedar sueltos en la carpeta `backups/`.
+
 ---
 
 ### 🔖 Trazabilidad de Versiones
