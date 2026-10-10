@@ -70,7 +70,7 @@ Los controles de la barra de título (`minimize`, `maximize`, `close`) se regist
 | `docsHandlers.js` | `list-documentation-files`, `load-documentation-file`, `load-documentation-image`, `open-help-window` | `docs/ayudaDocs.js`, `managers/helpWindowManager.js` |
 | `exportHandlers.js` | `save-file-dialog` | `export/excelExport.js` |
 | `brandingHandlers.js` | `select-logo`, `save-custom-logo`, `get-custom-logo`, `clear-custom-logo`, `get-default-logo`, `select-login-images` | `managers/logoManager.js` |
-| `systemHandlers.js` | `system:logs`, `system:log-stats`, `system:clear-logs`, `system:read-log-file`, `system:backup-create`, `system:backup-list`, `system:backup-restore`, `system:backup-config`, `system:db-info`, `system:migrations`, `system:server-status`, `system:turso-config-get`, `system:turso-config-save`, `system:turso-config-clear`, `system:turso-test`, `system:turso-sync-now`, `system:turso-sync-status`, `server:status`, `server:backup`, `server:list-backups` | `managers/apiManager.js`, `managers/logManager.js`, `auth/verifyToken.js` |
+| `systemHandlers.js` | `system:logs`, `system:log-stats`, `system:clear-logs`, `system:read-log-file`, `system:backup-create`, `system:backup-list`, `system:backup-restore`, `system:backup-config`, `system:db-info`, `system:migrations`, `system:server-status`, `system:turso-config-get`, `system:turso-config-save`, `system:turso-config-clear`, `system:turso-test`, `system:turso-sync-now`, `system:turso-sync-status`, `server:status`, `server:backup`, `server:list-backups` | `managers/apiManager.js` (incl. `verifySessionToken` for admin-only channels), `managers/logManager.js` |
 
 ### auth/
 

@@ -14,6 +14,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import Database from 'better-sqlite3';
+import jwt from 'jsonwebtoken';
 import logManager from './logManager.js';
 // AguaVPServer se carga con dynamic import para evitar que electron-vite
 // transforme el import ESM a require() (que falla con módulos ES puros).
@@ -430,6 +431,31 @@ export function getBackupConfig() {
 // ── Sincronización Turso Cloud ────────────────────────────────────────────────
 
 /**
+ * Headers para /api/v2/sync/*: la API acepta la clave interna (el mismo secretAppKey que
+ * esta app le entrega al arrancar) en lugar de una sesión de usuario.
+ */
+function syncHeaders() {
+    const secrets = loadOrCreateSecrets();
+    return {
+        'Content-Type': 'application/json',
+        'x-aguavp-internal-key': secrets.secretAppKey
+    };
+}
+
+/**
+ * Verifica un token de sesión con el secreto JWT real de la API embebida.
+ * @returns {Object|null} payload ({ rol, ... }) o null si es inválido o expiró.
+ */
+export function verifySessionToken(token) {
+    if (!token || typeof token !== 'string') return null;
+    try {
+        return jwt.verify(token, loadOrCreateSecrets().jwtSecret);
+    } catch {
+        return null;
+    }
+}
+
+/**
  * Obtiene la configuración de Turso (sin revelar el token completo).
  */
 export function getTursoConfig() {
@@ -462,7 +488,7 @@ export async function saveTursoConfig({ tursoUrl, tursoToken, autoSync }) {
         try {
             await fetch(`http://localhost:${API_PORT}/api/v2/sync/configure`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: syncHeaders(),
                 body: JSON.stringify({
                     tursoUrl: secrets.tursoUrl,
                     tursoToken: secrets.tursoToken,
@@ -493,7 +519,7 @@ export async function clearTursoConfig() {
         try {
             await fetch(`http://localhost:${API_PORT}/api/v2/sync/configure`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: syncHeaders(),
                 body: JSON.stringify({ tursoUrl: '', tursoToken: '', autoSync: false })
             });
         } catch (_) {}
@@ -517,7 +543,7 @@ export async function testTursoConnection(tursoUrl, tursoToken) {
     try {
         const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/test`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: syncHeaders(),
             body: JSON.stringify({ tursoUrl: url, tursoToken: token })
         });
         const data = await response.json();
@@ -529,13 +555,18 @@ export async function testTursoConnection(tursoUrl, tursoToken) {
 
 /**
  * Ejecuta sincronización inmediata (incremental o semilla).
+ * Si la API bloquea la carga semilla para proteger la nube, devuelve
+ * { success: false, conflict: true, motivos, comparacion }.
+ * @param {boolean} seed  - carga semilla completa
+ * @param {boolean} force - reemplazar la nube aunque haya conflicto (confirmado por el admin)
  */
-export async function triggerTursoSync(seed = false) {
+export async function triggerTursoSync(seed = false, force = false) {
     const endpoint = seed ? 'seed' : 'now';
     try {
         const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/${endpoint}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: syncHeaders(),
+            body: JSON.stringify(seed && force ? { force: true } : {})
         });
         const data = await response.json();
         if (data.success && data.data?.timestamp) {
@@ -554,7 +585,9 @@ export async function triggerTursoSync(seed = false) {
  */
 export async function getTursoSyncStatus() {
     try {
-        const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/status`);
+        const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/status`, {
+            headers: syncHeaders()
+        });
         const data = await response.json();
         return data;
     } catch (e) {
