@@ -168,7 +168,7 @@ export default function PanelBackups() {
             <button
               type="button"
               onClick={crearBackup}
-              disabled={creando}
+              disabled={creando || restaurando}
               className="w-full inline-flex items-center justify-center gap-2 font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60 rounded-xl px-5 h-10 text-sm shadow-sm transition-all active:scale-95"
             >
               {creando
@@ -288,7 +288,8 @@ export default function PanelBackups() {
                       type="button"
                       title="Reemplazar la base actual por este respaldo (antes se guarda un respaldo de la base actual)"
                       onClick={() => abrirRestauracion(backup)}
-                      className="inline-flex items-center gap-1.5 font-bold text-xs bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/20 rounded-lg px-3 h-7 transition-colors"
+                      disabled={creando || restaurando}
+                      className="inline-flex items-center gap-1.5 font-bold text-xs bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/20 rounded-lg px-3 h-7 transition-colors disabled:opacity-40"
                     >
                       <HiRefresh className="w-3.5 h-3.5" />
                       Restaurar
