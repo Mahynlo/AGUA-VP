@@ -278,6 +278,8 @@ const api = {
     syncTursoNow: (seed, userToken, force = false) =>
       ipcRenderer.invoke('system:turso-sync-now', seed, userToken, force),
     getTursoSyncStatus: () => ipcRenderer.invoke('system:turso-sync-status'),
+    previewCloudRestore: (userToken) => ipcRenderer.invoke('system:turso-restore-preview', userToken),
+    restoreFromCloud: (userToken) => ipcRenderer.invoke('system:turso-restore', userToken),
 
     // Estado del servidor
     getServerStatus: () => ipcRenderer.invoke('system:server-status'),

@@ -16,6 +16,7 @@ import crypto from 'crypto';
 import Database from 'better-sqlite3';
 import jwt from 'jsonwebtoken';
 import logManager from './logManager.js';
+import { snapshotDatabase, stageRestore, applyPendingRestore } from './dbFiles.js';
 // AguaVPServer se carga con dynamic import para evitar que electron-vite
 // transforme el import ESM a require() (que falla con módulos ES puros).
 
@@ -77,10 +78,13 @@ function saveSecrets(secrets) {
 
 /**
  * Crea una copia de seguridad de la base de datos.
- * Mantiene solo los MAX_BACKUPS backups más recientes.
+ * Usa VACUUM INTO (incluye los cambios que aún están en el WAL); copiar solo el archivo principal
+ * perdería los cambios recientes. Mantiene solo los `maxBackups` backups más recientes.
+ * @param {string} reason
+ * @param {{ strict?: boolean }} [options] - strict: lanza si VACUUM INTO falla (sin copia de respaldo simple)
  * @returns {string|null} Ruta del backup creado, o null si la BD no existe aún.
  */
-export function createBackup(reason = 'manual') {
+export function createBackup(reason = 'manual', { strict = false } = {}) {
     const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
 
     if (!fs.existsSync(dbPath)) {
@@ -94,8 +98,18 @@ export function createBackup(reason = 'manual') {
     }
 
     const ts   = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const dest = path.join(backupDir, `agua-vp-backup-${ts}.db`);
-    fs.copyFileSync(dbPath, dest);
+    let dest = path.join(backupDir, `agua-vp-backup-${ts}.db`);
+    for (let n = 1; fs.existsSync(dest); n++) {
+        dest = path.join(backupDir, `agua-vp-backup-${ts}-${n}.db`);
+    }
+    try {
+        snapshotDatabase(dbPath, dest);
+    } catch (err) {
+        fs.rmSync(dest, { force: true });
+        if (strict) throw new Error(`No se pudo crear el respaldo (${reason}): ${err.message}`);
+        logManager.warn(`VACUUM INTO falló (${err.message}) — copia simple del archivo (puede omitir cambios del WAL)`, 'backup');
+        fs.copyFileSync(dbPath, dest);
+    }
     logManager.info(`Backup creado (${reason}): ${dest}`, 'backup');
 
     // Limpiar backups viejos
@@ -158,6 +172,18 @@ export async function startApiServer() {
     const userDataPath = app.getPath('userData');
     const dbPath       = path.join(userDataPath, DB_FILENAME);
     const secrets      = loadOrCreateSecrets();
+
+    // Restauración pendiente (respaldo local o copia de la nube): se aplica antes de abrir la base
+    try {
+        const restore = applyPendingRestore(dbPath, () => createBackup('pre-restore', { strict: true }));
+        if (restore?.applied) {
+            logManager.warn(`Restauración aplicada. Respaldo de la base anterior: ${restore.backup || 'no había base'}`, 'backup');
+        } else if (restore?.error) {
+            logManager.error(restore.error, 'backup');
+        }
+    } catch (err) {
+        logManager.error(`No se pudo aplicar la restauración pendiente: ${err.message}. La base actual no se modificó.`, 'backup');
+    }
 
     // Backup antes de migraciones
     createBackup('pre-arranque');
@@ -229,10 +255,11 @@ export function getApiServerStatus() {
 
 /**
  * Restaura la base de datos desde un archivo de backup.
- * Proceso: detener server → copiar backup → integrity check → reiniciar server.
- * Si la integridad falla, revierte al archivo original.
+ * La base en uso tiene una conexión abierta en la API (modo WAL): copiar encima la corrompería o el WAL
+ * desharía la restauración. Por eso el respaldo se valida y se deja preparado; se aplica al reiniciar
+ * la app (`applyPendingRestore` en startApiServer), después de respaldar la base actual con su WAL.
  * @param {string} backupPath — Ruta absoluta al archivo de backup
- * @returns {Promise<{success: boolean, message: string}>}
+ * @returns {Promise<{success: boolean, message: string, restartRequired?: boolean}>}
  */
 export async function restoreBackup(backupPath) {
     const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
@@ -241,65 +268,29 @@ export async function restoreBackup(backupPath) {
         return { success: false, message: 'Archivo de backup no encontrado' };
     }
 
-    logManager.warn(`Iniciando restauración desde: ${path.basename(backupPath)}`, 'backup');
-
-    // 1. Crear backup de seguridad del estado actual antes de restaurar
-    const safetyBackup = createBackup('pre-restore');
-
-    // 2. Detener servidor
-    const wasRunning = apiServer?.isRunning;
-    if (wasRunning) {
-        await stopApiServer();
-    }
-
     try {
-        // 3. Verificar integridad del backup ANTES de copiar
-        const testDb = new Database(backupPath, { readonly: true });
-        const integrityResult = testDb.pragma('integrity_check');
-        testDb.close();
-
-        if (integrityResult[0]?.integrity_check !== 'ok') {
-            logManager.error('Backup corrupto — restauración abortada', 'backup');
-            // Reiniciar con la DB original
-            if (wasRunning) await startApiServer();
-            return { success: false, message: 'El archivo de backup está corrupto (integrity_check falló)' };
-        }
-
-        // 4. Copiar backup sobre la DB actual
-        fs.copyFileSync(backupPath, dbPath);
-        logManager.info('Archivo de base de datos restaurado', 'backup');
-
-        // 5. Verificar integridad de la DB restaurada
-        const verifyDb = new Database(dbPath, { readonly: true });
-        const verifyResult = verifyDb.pragma('integrity_check');
-        verifyDb.close();
-
-        if (verifyResult[0]?.integrity_check !== 'ok') {
-            // Revertir al backup de seguridad
-            logManager.error('DB restaurada corrupta — revirtiendo', 'backup');
-            if (safetyBackup) {
-                fs.copyFileSync(safetyBackup, dbPath);
-            }
-            if (wasRunning) await startApiServer();
-            return { success: false, message: 'La restauración corrompió la base de datos. Se revirtió al estado anterior.' };
-        }
-
-        // 6. Reiniciar servidor con la BD restaurada
-        if (wasRunning) {
-            await startApiServer();
-        }
-
-        logManager.info(`Restauración completada exitosamente desde: ${path.basename(backupPath)}`, 'backup');
-        return { success: true, message: `Base de datos restaurada exitosamente desde ${path.basename(backupPath)}` };
-
+        stageRestore(backupPath, dbPath, { requireFullSync: true });
+        logManager.warn(`Restauración preparada desde: ${path.basename(backupPath)} — se aplicará al reiniciar`, 'backup');
+        return {
+            success: true,
+            restartRequired: true,
+            message: `Respaldo ${path.basename(backupPath)} verificado. AguaVP se reiniciará para aplicarlo.`
+        };
     } catch (error) {
-        logManager.error(`Error en restauración: ${error.message}`, 'backup');
-        // Intentar reiniciar con lo que haya
-        if (wasRunning) {
-            try { await startApiServer(); } catch { /* silenciar */ }
-        }
-        return { success: false, message: `Error en restauración: ${error.message}` };
+        logManager.error(`Error preparando la restauración: ${error.message}`, 'backup');
+        return { success: false, message: error.message };
     }
+}
+
+/**
+ * Reinicia la app para aplicar una restauración preparada.
+ * En desarrollo (electron-vite) no se relanza: hay que volver a ejecutar `npm run dev`.
+ */
+export function restartAppForRestore(delayMs = 2000) {
+    setTimeout(() => {
+        if (app.isPackaged) app.relaunch();
+        app.exit(0);
+    }, delayMs);
 }
 
 // ── Información de la Base de Datos ────────────────────────────────────────────
@@ -576,6 +567,50 @@ export async function triggerTursoSync(seed = false, force = false) {
         }
         return data;
     } catch (e) {
+        return { success: false, error: e.message };
+    }
+}
+
+/**
+ * Resumen de la copia en la nube (fecha, registros) para confirmar una restauración.
+ */
+export async function previewCloudRestore() {
+    try {
+        const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/restore/preview`, {
+            headers: syncHeaders()
+        });
+        return await response.json();
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+}
+
+/**
+ * Restaura desde la nube: la API construye y valida una base nueva con el esquema actual y los datos de
+ * Turso (sin tocar la base en uso); aquí se deja preparada para aplicarse al reiniciar la app.
+ */
+export async function restoreFromCloud() {
+    const dbPath = path.join(app.getPath('userData'), DB_FILENAME);
+    try {
+        const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/restore/prepare`, {
+            method: 'POST',
+            headers: syncHeaders(),
+            body: '{}'
+        });
+        const data = await response.json();
+        if (!data.success) return data;
+
+        stageRestore(data.data.archivo, dbPath, { move: true });
+        logManager.warn(`Restauración desde la nube preparada (${data.data.totalRegistros} registros) — se aplicará al reiniciar`, 'backup');
+        const { archivo: _archivo, ...resumen } = data.data;
+        return {
+            success: true,
+            restartRequired: true,
+            message: `Copia de la nube verificada (${data.data.totalRegistros} registros). AguaVP se reiniciará para aplicarla.`,
+            data: resumen
+        };
+    } catch (e) {
+        logManager.error(`Error en restauración desde la nube: ${e.message}`, 'backup');
         return { success: false, error: e.message };
     }
 }

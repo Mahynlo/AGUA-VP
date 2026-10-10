@@ -106,11 +106,12 @@ export default function PanelBackups() {
       const userToken = localStorage.getItem("token");
       const result = await window.api.system.restoreBackup(backupSeleccionado.path, userToken);
       if (result?.success) {
-        setSuccess("Backup restaurado exitosamente", "Backups");
+        // La restauración se aplica al reiniciar la app (la base está abierta mientras la app corre)
+        setSuccess(result.message || "Respaldo verificado. AguaVP se reiniciará para aplicarlo.", "Backups");
         setIsModalOpen(false);
         cargarBackups();
       } else {
-        setError(result?.error || "Error al restaurar el backup", "Backups");
+        setError(result?.message || result?.error || "Error al restaurar el backup", "Backups");
       }
     } catch (err) {
       setError("Error inesperado al restaurar el backup", "Backups");

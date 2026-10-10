@@ -38,7 +38,10 @@ import {
     testTursoConnection,
     triggerTursoSync,
     getTursoSyncStatus,
-    verifySessionToken
+    verifySessionToken,
+    previewCloudRestore,
+    restoreFromCloud,
+    restartAppForRestore
 } from '../../managers/apiManager.js';
 
 const ADMIN_ROLES = ['administrador', 'superadmin'];
@@ -163,6 +166,8 @@ export default function IpcHandlersSystem() {
 
             logManager.info(`Restauración autorizada por usuario ${auth.decoded.correo || auth.decoded.username} (${auth.decoded.rol})`, 'backup');
             const result = await restoreBackup(backupPath);
+            // La restauración se aplica al reiniciar (la API tiene la base abierta)
+            if (result?.success && result.restartRequired) restartAppForRestore();
             return result;
         } catch (error) {
             logManager.error(`Error en restauración: ${error.message}`, 'backup');
@@ -294,6 +299,31 @@ export default function IpcHandlersSystem() {
         } catch (error) {
             return { success: false, error: error.message };
         }
+    });
+
+    /**
+     * Resumen de la copia en la nube para confirmar una restauración.
+     */
+    ipcMain.handle('system:turso-restore-preview', async (_event, userToken) => {
+        const auth = requireAdmin(userToken);
+        if (!auth.valid) return { success: false, error: auth.error };
+        return previewCloudRestore();
+    });
+
+    /**
+     * Restaurar la base local desde la copia de la nube.
+     * OPERACIÓN DESTRUCTIVA — requiere rol administrador + doble confirmación en UI.
+     * La base restaurada se construye y valida aparte; se aplica al reiniciar la app,
+     * después de respaldar la base actual.
+     */
+    ipcMain.handle('system:turso-restore', async (_event, userToken) => {
+        const auth = requireAdmin(userToken);
+        if (!auth.valid) return { success: false, error: auth.error };
+
+        logManager.warn(`Restauración desde la nube autorizada por ${auth.decoded.correo || auth.decoded.username} (${auth.decoded.rol})`, 'backup');
+        const result = await restoreFromCloud();
+        if (result?.success && result.restartRequired) restartAppForRestore();
+        return result;
     });
 
     /**
