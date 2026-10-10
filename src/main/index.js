@@ -8,6 +8,7 @@ import initUpdateManager from './managers/updateManager.js'
 
 import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
 import { startApiServer, stopApiServer } from './managers/apiManager.js'
+import { startSyncMonitor } from './managers/syncMonitor.js'
 import { setupWindowState } from './windowState.js'
 import { restoreZoom, getSavedZoom } from './managers/zoomManager.js'
 import contextMenu from 'electron-context-menu';
@@ -167,6 +168,7 @@ if (!gotTheLock) {
     }
 
     createWindow() // crea la ventana
+    startSyncMonitor() // vigila la copia en la nube y avisa si falla
 
     app.on('activate', function () {
       // On macOS it's common to re-create a window in the app when the

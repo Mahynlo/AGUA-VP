@@ -273,13 +273,18 @@ const api = {
     saveTursoConfig: (config, userToken) =>
       ipcRenderer.invoke('system:turso-config-save', config, userToken),
     clearTursoConfig: (userToken) => ipcRenderer.invoke('system:turso-config-clear', userToken),
-    testTursoConnection: (tursoUrl, tursoToken) =>
-      ipcRenderer.invoke('system:turso-test', tursoUrl, tursoToken),
+    testTursoConnection: (tursoUrl, tursoToken, userToken) =>
+      ipcRenderer.invoke('system:turso-test', tursoUrl, tursoToken, userToken),
     syncTursoNow: (seed, userToken, force = false) =>
       ipcRenderer.invoke('system:turso-sync-now', seed, userToken, force),
     getTursoSyncStatus: () => ipcRenderer.invoke('system:turso-sync-status'),
     previewCloudRestore: (userToken) => ipcRenderer.invoke('system:turso-restore-preview', userToken),
     restoreFromCloud: (userToken) => ipcRenderer.invoke('system:turso-restore', userToken),
+    onSyncAlerta: (callback) => {
+      const listener = (_event, alerta) => callback(alerta)
+      ipcRenderer.on('sync:alerta', listener)
+      return () => ipcRenderer.removeListener('sync:alerta', listener)
+    },
 
     // Estado del servidor
     getServerStatus: () => ipcRenderer.invoke('system:server-status'),

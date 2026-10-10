@@ -77,7 +77,7 @@ export default function PanelSincronizacionNube() {
 
     try {
       setProbandoConexion(true);
-      const res = await window.api.system.testTursoConnection(tursoUrl.trim(), tursoToken.trim());
+      const res = await window.api.system.testTursoConnection(tursoUrl.trim(), tursoToken.trim(), getUserToken());
       if (res?.success) {
         setSuccess(`Conexión exitosa con Turso Cloud (${res.latencyMs || 0} ms de latencia)`, "Nube");
       } else {
@@ -161,19 +161,28 @@ export default function PanelSincronizacionNube() {
     const tabla = (conflicto?.comparacion || [])
       .map((c) => `   ${c.tabla}: local ${c.local} / nube ${c.nube}`)
       .join("\n");
+    // Qué registros se eliminarían de la nube si se reemplaza (calculado por la API)
+    const eliminaria = conflicto?.eliminaria || [];
+    const totalEliminaria = eliminaria.reduce((s, e) => s + e.total, 0);
+    const detalleEliminaria = eliminaria.length
+      ? eliminaria
+          .map((e) => `   ${e.tabla}: ${e.total} (ids ${e.ids.join(", ")}${e.total > e.ids.length ? ", …" : ""})`)
+          .join("\n")
+      : "   Ninguno";
 
     setError("Sincronización bloqueada para proteger la copia en la nube", "Nube");
 
     const revisar = window.confirm(
       "⛔ La sincronización se detuvo para proteger tu copia en la nube.\n\n" +
         `${motivos}\n\nRegistros:\n${tabla}\n\n` +
-        "Si perdiste o restauraste la base local, NO reemplaces la nube: usa la copia de la nube para recuperar tus datos.\n\n" +
+        `Si reemplazas la nube se ELIMINARÁN de la copia en la nube ${totalEliminaria} registro(s):\n${detalleEliminaria}\n\n` +
+        "Si perdiste o restauraste la base local, NO reemplaces la nube: usa \"Restaurar desde la Nube\" para recuperar tus datos.\n\n" +
         "¿Quieres REEMPLAZAR la copia de la nube con la base local actual?"
     );
     if (!revisar) return;
 
     const confirmarReemplazo = window.confirm(
-      "Confirmación final: los datos que existen en la nube y no en esta base local se PERDERÁN de la copia en la nube.\n\n" +
+      `Confirmación final: ${totalEliminaria} registro(s) que existen en la nube y no en esta base local se PERDERÁN de la copia en la nube.\n\n` +
         "¿Reemplazar la copia en la nube?"
     );
     if (!confirmarReemplazo) return;
@@ -357,6 +366,22 @@ export default function PanelSincronizacionNube() {
                       : "Respaldo remoto"}
               {statusDetalle?.cambiosPendientes > 0 && ` · ${statusDetalle.cambiosPendientes} cambio(s) por subir`}
             </p>
+            {statusDetalle?.ultimaSincronizacionCorrecta && (
+              <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                Última sincronización correcta: {formatearFecha(statusDetalle.ultimaSincronizacionCorrecta)}
+                {statusDetalle?.verificacion?.tipo === "contenido" && " · contenido verificado"}
+              </p>
+            )}
+            {statusDetalle?.fallosConsecutivos > 0 && (
+              <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-0.5">
+                {statusDetalle.fallosConsecutivos} intento(s) fallido(s) seguidos: {statusDetalle.lastError}
+              </p>
+            )}
+            {statusDetalle?.fkViolaciones > 0 && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
+                {statusDetalle.fkViolaciones} referencia(s) huérfanas en la base local
+              </p>
+            )}
           </div>
         </div>
 

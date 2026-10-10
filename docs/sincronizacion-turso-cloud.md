@@ -2,7 +2,7 @@
 
 Este documento describe la arquitectura, configuración, medidas de seguridad y procedimientos operativos del sistema de sincronización y respaldo en la nube integrado en **AguaVP**.
 
-> Versión documentada: app con `@aguavp/api-server` **1.0.11**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md). Prueba real y pendientes: [turso-caso-prueba-restauracion.md](turso-caso-prueba-restauracion.md).
+> Versión documentada: app con `@aguavp/api-server` **1.0.12**. Especificación técnica del servicio: `api-AguaVP/docs/SINCRONIZACION_TURSO_CLOUD.md`. Plan de mejoras y estado: [plan-sincronizacion-turso.md](plan-sincronizacion-turso.md). Prueba real y pendientes: [turso-caso-prueba-restauracion.md](turso-caso-prueba-restauracion.md).
 
 ---
 
@@ -89,9 +89,14 @@ Antes de copiar, se compara la base local con la nube. La carga se **bloquea** s
 
 En ese caso la sincronización se detiene, **la nube conserva sus datos** y el panel muestra el aviso *"La sincronización está detenida para proteger la copia en la nube"* con la comparación de registros.
 
+### Otra computadora usando la misma copia
+La nube recuerda qué computadora escribió por última vez (identificador guardado fuera de la base de datos). Si otra computadora con la misma base intenta escribir, su sincronización se detiene con el aviso *"Otra computadora escribió en esta copia de la nube"*. Así dos equipos nunca mezclan sus datos en la nube.
+* **Cambio de computadora:** al usar **"Restaurar desde la Nube"** en la nueva, esta pasa a ser la que respalda y la anterior queda bloqueada.
+* Si la anterior ya no se usará, desvincúlala en su panel.
+
 ### Qué hacer ante el aviso
 * **Si la base local se perdió, se dañó o se restauró un respaldo antiguo:** NO reemplazar la nube. Recuperar los datos desde la nube (sección 8).
-* **Si los datos de la nube ya no sirven** (por ejemplo se borraron registros a propósito, o se quiere apuntar a esta base): botón **"Revisar"** ➔ dos confirmaciones ➔ la nube se reemplaza con la base local.
+* **Si los datos de la nube ya no sirven** (por ejemplo se borraron registros a propósito, o se quiere apuntar a esta base): botón **"Revisar"** ➔ el aviso **lista por tabla los registros (cantidad e ids) que se eliminarían de la nube** ➔ dos confirmaciones ➔ la nube se reemplaza con la base local.
 
 ### Sin vaciar la nube
 La carga completa inserta/actualiza todas las filas y **al final** borra en la nube solo los registros que ya no existen en local. Si se corta internet a mitad, la nube queda con sus datos anteriores más una parte de los nuevos; la siguiente sincronización la completa.
@@ -116,7 +121,7 @@ Luego se marcan como subidos y se eliminan del registro. Si internet falla a mit
 * Al **desvincular** la nube se quitan los triggers de registro; al volver a vincular se hace una carga completa.
 
 ### Verificación de la copia
-Después de subir cambios se comparan, en una sola consulta, la cantidad de registros y el id más alto de las tablas tocadas (una vez al día, de todas las tablas). Si una tabla no coincide, se vuelve a subir completa y se borran en la nube los registros sobrantes, **excepto** en clientes, medidores, lecturas, facturas, pagos, tarifas y usuarios: ahí los registros que solo existan en la nube se **conservan** y el panel lo indica ("⚠️ Diferencias en: …").
+Después de subir cambios se comparan, en una sola consulta, la cantidad de registros y el id más alto de las tablas tocadas. **Una vez al día** (y después de cada carga completa) se compara el **contenido de todas las tablas fila por fila**: así se detectan también campos cambiados o vaciados en la nube. Ese ciclo diario también revisa la integridad de la base local y no sube nada si está dañada. Si una tabla no coincide, se vuelve a subir completa y se borran en la nube los registros sobrantes, **excepto** en clientes, medidores, lecturas, facturas, pagos, tarifas y usuarios: ahí los registros que solo existan en la nube se **conservan** y el panel lo indica ("⚠️ Diferencias en: …").
 
 ### Qué no se sube
 `sesiones`, `refresh_tokens`, `tokens_revocados` y `password_recovery_tokens` (credenciales de sesión de vida corta). Las copias anteriores a 1.0.8 que las contenían se vacían en la siguiente carga completa. Tras restaurar desde la nube, los usuarios solo vuelven a iniciar sesión.
@@ -181,13 +186,14 @@ Una prueba automática (`api-AguaVP/src/test/unit/core-triggers.test.js`) garant
 
 ### Respaldos locales
 
-Además de la nube, la app guarda respaldos en `backups/` (al arrancar, antes de actualizar y antes de restaurar; 5 por defecto). Desde esta versión (API 1.0.9) se generan con `VACUUM INTO`, que incluye los cambios recientes que aún estaban en el archivo `-wal`; antes eran una copia del archivo principal y podían omitirlos. Restaurar un respaldo local también se aplica **al reiniciar** la app: copiar un archivo encima de la base abierta podía deshacer la restauración. Después de restaurar un respaldo local, la siguiente sincronización hace una **carga completa protegida**: si la nube tiene más datos que el respaldo, pide confirmación; si no, vuelve a subir todo y corrige la copia.
+Además de la nube, la app guarda respaldos en `backups/` (al arrancar, manuales, antes de actualizar y antes de restaurar). El motivo va en el nombre del archivo. Se conservan: los más recientes (5 por defecto, configurable en el panel y guardado entre reinicios), **uno por día de los últimos 14 días** y **los 10 últimos previos a restaurar y a actualizar**, que no se borran por más veces que se abra la app. Desde esta versión (API 1.0.9) se generan con `VACUUM INTO`, que incluye los cambios recientes que aún estaban en el archivo `-wal`; antes eran una copia del archivo principal y podían omitirlos. Restaurar un respaldo local también se aplica **al reiniciar** la app: copiar un archivo encima de la base abierta podía deshacer la restauración. Después de restaurar un respaldo local, la siguiente sincronización hace una **carga completa protegida**: si la nube tiene más datos que el respaldo, pide confirmación; si no, vuelve a subir todo y corrige la copia.
 
 ---
 
 ## 9. Diagnóstico
 
-* **Panel "Nube (Turso)":** fecha de la última copia, estado (verificado / diferencias en tablas / aviso de red / conflicto pendiente) y cambios por subir.
+* **Panel "Nube (Turso)":** fecha de la última copia, última sincronización correcta, estado (verificado / diferencias en tablas / aviso de red / conflicto pendiente), cambios por subir, intentos fallidos seguidos y referencias huérfanas.
+* **Avisos automáticos:** cada 30 minutos la app revisa la copia y avisa a los administradores si está detenida por un conflicto, si falló 3 veces seguidas, si no hay copia correcta en 24 horas o si la verificación encontró diferencias (como máximo un aviso igual cada 6 horas).
 * **Integridad:** la carga completa ejecuta `PRAGMA quick_check` sobre la base local; si falla, **no se sube** (ni siquiera con reemplazo forzado) y el error aparece en el panel. En ese caso, restaurar un respaldo local o la copia de la nube.
-* **Consola del proceso principal** (terminal de `npm run dev`): mensajes `[TursoSync]` con el inicio y resultado de cada carga y el motivo de cada bloqueo. Todavía no llegan al visor de Mantenimiento → Logs (Paso 4 del plan).
+* **Mantenimiento → Logs** (fuente `nube`): mensajes `[TursoSync]` con el inicio y resultado de cada carga, reparaciones, bloqueos y errores.
 * **Errores de red** no detienen la app: se reintenta en el siguiente ciclo.

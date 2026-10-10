@@ -175,6 +175,14 @@ export default function PanelBackups() {
           </button>
         </div>
 
+        <span
+          className="text-[11px] text-slate-500 dark:text-zinc-400"
+          title="Los respaldos previos a restaurar o actualizar no se cuentan en este límite"
+        >
+          Se conservan los {config.maxBackups} más recientes, uno por día de los últimos {config.diasDiarios || 14} días
+          y los {config.maxProtegidos || 10} últimos previos a restaurar o actualizar.
+        </span>
+
         <span className="ml-auto text-[11px] font-bold text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800 px-3 py-1 rounded-full">
           {backups.length} backup{backups.length !== 1 ? "s" : ""} almacenado{backups.length !== 1 ? "s" : ""}
         </span>

@@ -121,3 +121,75 @@ export function applyPendingRestore(dbPath, backupCurrent) {
     }
     return { applied: true, backup };
 }
+
+/**
+ * Elimina restos de restauraciones anteriores (llamar ANTES de abrir la base):
+ *  - `<db>.anterior` cuando la base ya está en su lugar (queda si se cortó la energía al reemplazar)
+ *  - `<db>.restaurar.tmp` (preparación interrumpida)
+ *  - archivos de `restauraciones/` con más de un día (bases preparadas que no se aplicaron)
+ * Los `*.restaurar.invalido` se conservan como evidencia.
+ * @returns {string[]} archivos eliminados
+ */
+export function cleanupRestoreLeftovers(dbPath, restoreDir, ahora = Date.now()) {
+    const eliminados = [];
+    const borrar = (f) => {
+        try {
+            fs.rmSync(f, { force: true });
+            eliminados.push(f);
+        } catch (_) { /* en uso: se intentará en el siguiente arranque */ }
+    };
+    if (fs.existsSync(dbPath) && fs.existsSync(`${dbPath}.anterior`)) borrar(`${dbPath}.anterior`);
+    if (fs.existsSync(`${pendingRestorePath(dbPath)}.tmp`)) borrar(`${pendingRestorePath(dbPath)}.tmp`);
+    if (restoreDir && fs.existsSync(restoreDir)) {
+        for (const f of fs.readdirSync(restoreDir)) {
+            const full = `${restoreDir}/${f}`;
+            if (ahora - fs.statSync(full).mtimeMs > 24 * 60 * 60 * 1000) borrar(full);
+        }
+    }
+    return eliminados;
+}
+
+// ── Retención de respaldos ────────────────────────────────────────────────────
+
+/** Motivos de respaldo que se guardan en el nombre del archivo. */
+export const BACKUP_REASONS = ['pre-arranque', 'manual', 'pre-update', 'pre-restore'];
+/** Respaldos previos a una operación riesgosa: se conservan aparte de la rotación general. */
+export const PROTECTED_REASONS = ['pre-update', 'pre-restore'];
+
+/** Motivo de un archivo `agua-vp-backup-<fecha>[-n]-<motivo>.db` (los nombres antiguos sin motivo → 'general'). */
+export function backupReason(name) {
+    const m = /-(pre-arranque|manual|pre-update|pre-restore)\.db$/.exec(name);
+    return m ? m[1] : 'general';
+}
+
+/**
+ * Decide qué respaldos eliminar (no borra nada).
+ *  - Protegidos (`pre-restore`, `pre-update`): se conservan los `maxProtegidos` más recientes de cada motivo.
+ *  - Generales (arranque, manual, antiguos): los `maxRecientes` más recientes + el más reciente de cada uno
+ *    de los últimos `diasDiarios` días.
+ * @param {{ name: string, mtimeMs: number }[]} files
+ * @returns {string[]} nombres a eliminar
+ */
+export function planBackupRotation(files, { maxRecientes = 5, diasDiarios = 14, maxProtegidos = 10, ahora = Date.now() } = {}) {
+    const dia = 24 * 60 * 60 * 1000;
+    const porReciente = [...files].sort((a, b) => b.mtimeMs - a.mtimeMs);
+    const conservar = new Set();
+
+    for (const motivo of PROTECTED_REASONS) {
+        porReciente.filter(f => backupReason(f.name) === motivo).slice(0, maxProtegidos).forEach(f => conservar.add(f.name));
+    }
+
+    const generales = porReciente.filter(f => !PROTECTED_REASONS.includes(backupReason(f.name)));
+    generales.slice(0, maxRecientes).forEach(f => conservar.add(f.name));
+    const diasVistos = new Set();
+    for (const f of generales) {
+        if (ahora - f.mtimeMs > diasDiarios * dia) continue;
+        const clave = new Date(f.mtimeMs).toISOString().slice(0, 10);
+        if (!diasVistos.has(clave)) {
+            diasVistos.add(clave);
+            conservar.add(f.name);
+        }
+    }
+
+    return files.map(f => f.name).filter(n => !conservar.has(n));
+}
