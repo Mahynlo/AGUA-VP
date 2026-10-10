@@ -38,6 +38,10 @@ export default function PanelSincronizacionNube() {
   const [mostrarToken, setMostrarToken] = useState(false);
   const [statusDetalle, setStatusDetalle] = useState(null);
 
+  // Una sola acción a la vez: mientras una está en curso, los demás botones quedan deshabilitados
+  const ocupado = probandoConexion || guardando || sincronizando || sembrando || restaurando;
+  const MENSAJE_EN_CURSO = "Ya hay una copia a la nube en curso (puede ser la sincronización automática). Espera a que termine.";
+
   // Cargar configuración actual de Turso desde safeStorage vía IPC
   const cargarConfiguracion = useCallback(async () => {
     try {
@@ -255,6 +259,10 @@ export default function PanelSincronizacionNube() {
       const res = await window.api.system.syncTursoNow(false, getUserToken());
       if (res?.conflict) {
         await resolverConflicto(res);
+      } else if (res?.success && res.data?.success === false) {
+        // La API respondió, pero no sincronizó (otra copia en curso o base local con problemas)
+        setError(res.data.reason === "already_running" ? MENSAJE_EN_CURSO : res.data.error || "No se pudo sincronizar", "Nube");
+        await cargarConfiguracion();
       } else if (res?.success) {
         setSuccess("Sincronización completada exitosamente", "Nube");
         await cargarConfiguracion();
@@ -424,7 +432,7 @@ export default function PanelSincronizacionNube() {
           </div>
           <button
             onClick={() => resolverConflicto(statusDetalle.conflicto)}
-            disabled={sembrando}
+            disabled={ocupado}
             className="h-[40px] px-4 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors disabled:opacity-50 shrink-0"
           >
             Revisar
@@ -513,7 +521,7 @@ export default function PanelSincronizacionNube() {
           <div className="flex flex-col gap-1.5">
             <button
               onClick={probarConexion}
-              disabled={probandoConexion || !tursoUrl}
+              disabled={ocupado || !tursoUrl}
               className="h-[44px] px-4 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <HiLightningBolt className="w-4 h-4" />
@@ -526,7 +534,7 @@ export default function PanelSincronizacionNube() {
           <div className="flex flex-col gap-1.5">
             <button
               onClick={guardarConfiguracion}
-              disabled={guardando || !tursoUrl}
+              disabled={ocupado || !tursoUrl}
               className="h-[44px] px-5 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <HiSave className="w-4 h-4" />
@@ -543,6 +551,12 @@ export default function PanelSincronizacionNube() {
 
       {/* ── 2. ACCIONES SOBRE LA COPIA ── */}
       <div className="flex flex-col gap-4">
+        {ocupado && (
+          <div className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
+            <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-500/30 border-t-blue-600 animate-spin shrink-0" />
+            Operación en curso. Los demás botones se habilitan cuando termine; no cierres la aplicación.
+          </div>
+        )}
         <EncabezadoSeccion
           numero="2"
           titulo="Acciones sobre la copia"
@@ -562,7 +576,7 @@ export default function PanelSincronizacionNube() {
             >
               <button
                 onClick={sincronizarAhora}
-                disabled={sincronizando}
+                disabled={ocupado}
                 className="w-full h-[42px] px-4 rounded-xl text-sm font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <HiRefresh className={`w-4 h-4 ${sincronizando ? "animate-spin" : ""}`} />
@@ -579,7 +593,7 @@ export default function PanelSincronizacionNube() {
             >
               <button
                 onClick={ejecutarCargaSemilla}
-                disabled={sembrando}
+                disabled={ocupado}
                 className="w-full h-[42px] px-4 rounded-xl text-sm font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <HiUpload className="w-4 h-4" />
@@ -596,7 +610,7 @@ export default function PanelSincronizacionNube() {
             >
               <button
                 onClick={restaurarDesdeNube}
-                disabled={restaurando || sembrando || sincronizando}
+                disabled={ocupado}
                 className="w-full h-[42px] px-4 rounded-xl text-sm font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <HiDownload className="w-4 h-4" />
@@ -621,7 +635,7 @@ export default function PanelSincronizacionNube() {
             </div>
             <button
               onClick={desvincularNube}
-              disabled={guardando}
+              disabled={ocupado}
               className="h-[42px] px-4 rounded-xl text-sm font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0"
             >
               <HiTrash className="w-4 h-4" />

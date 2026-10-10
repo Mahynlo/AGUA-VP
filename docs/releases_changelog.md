@@ -30,6 +30,11 @@
 - **Nube (Turso):** el panel se ordena en dos pasos: *1. Conexión con Turso* y *2. Acciones sobre la copia*. Cada acción (Sincronizar ahora, Subir base completa, Restaurar desde la nube) tiene una tarjeta que explica qué hace y cuándo usarla. *Desvincular* queda aparte y aclara que no borra datos locales ni la copia en la nube. Se agregó una explicación en lenguaje sencillo de cómo funciona la copia.
 - **Backups:** tarjetas con la explicación de *Crear respaldo ahora* y de la retención; guía de cómo funcionan los respaldos y cómo deshacer una restauración; descripción de cada tipo de respaldo al pasar el mouse; los avisos de la confirmación de restauración reflejan el funcionamiento actual (se aplica al reiniciar y se puede deshacer con el respaldo Pre-restauración).
 
+#### Una acción a la vez
+- En los paneles de Nube y Backups, mientras una operación está en curso los demás botones quedan deshabilitados y se muestra un aviso.
+- Guardar o desvincular la conexión con Turso se rechaza mientras se está subiendo una copia (incluida la sincronización automática), con un mensaje para intentarlo al terminar.
+- «Sincronizar ahora» ya no muestra «completada» cuando la sincronización automática estaba en curso: indica que hay que esperar.
+
 ---
 
 ### 🔖 Trazabilidad de Versiones
