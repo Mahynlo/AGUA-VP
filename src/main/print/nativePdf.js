@@ -1,11 +1,11 @@
 import fs from 'fs'
-import { generarRecibosPdf } from '../pdf/reciboPdfGenerator.js'
-import { generarReporteGeneralPdf } from '../pdf/reporteGeneralPdfGenerator.js'
-import { generarReporteFinancieroPdf } from '../pdf/reporteFinancieroPdfGenerator.js'
-import { generarReporteLecturasMetricasPdf } from '../pdf/reporteLecturasMetricasPdfGenerator.js'
-import { generarReporteLecturasPdf } from '../pdf/reporteLecturasPdfGenerator.js'
-import { generarReporteDeudoresMayoresPdf } from '../pdf/reporteDeudoresMayoresPdfGenerator.js'
-import { generarComprobantePagoPdf } from '../pdf/comprobantePagoPdfGenerator.js'
+import { generarRecibosPdf } from '../pdf/recibos/reciboPdfGenerator.js'
+import { generarComprobantePagoPdf } from '../pdf/recibos/comprobantePagoPdfGenerator.js'
+import { generarReporteGeneralPdf } from '../pdf/reportes/reporteGeneralPdfGenerator.js'
+import { generarReporteFinancieroPdf } from '../pdf/reportes/reporteFinancieroPdfGenerator.js'
+import { generarReporteLecturasMetricasPdf } from '../pdf/reportes/reporteLecturasMetricasPdfGenerator.js'
+import { generarReporteLecturasPdf } from '../pdf/reportes/reporteLecturasPdfGenerator.js'
+import { generarReporteDeudoresMayoresPdf } from '../pdf/reportes/reporteDeudoresMayoresPdfGenerator.js'
 import { getPrintDataPath, writeTempPdf, toFileUrl } from './printTempFiles.js'
 
 // ⚡ VÍA ULTRA-RÁPIDA (pdfmake): generación nativa directa en Node.js (<1.5s y <1MB).

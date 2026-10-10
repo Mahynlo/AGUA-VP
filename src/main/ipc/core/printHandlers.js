@@ -6,7 +6,7 @@ import { parsePrintUrl } from '../../print/printUrl.js'
 import { savePrintData, readPrintData } from '../../print/printTempFiles.js'
 import { esRutaRecibo, generarRecibosNativo, generarReporteNativo } from '../../print/nativePdf.js'
 import { generarPdfConChromium } from '../../print/chromiumPdf.js'
-import { resolveLocalPdfPath } from '../../pdf/pdfTools.js'
+import { resolveLocalPdfPath } from '../../pdf/tools/pdfTools.js'
 
 // Vista previa (generación de PDF temporal), impresión por diálogo de Chromium,
 // transferencia de datos de impresión y limpieza del PDF temporal.

@@ -2,7 +2,7 @@ import { app, nativeImage } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { DEFAULT_LOGO_BASE64 } from '../pdf/defaultLogoBase64.js'
+import { DEFAULT_LOGO_BASE64 } from '../pdf/shared/defaultLogoBase64.js'
 import logManager from './logManager.js'
 
 const __filename = fileURLToPath(import.meta.url)
