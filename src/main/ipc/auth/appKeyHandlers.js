@@ -1,4 +1,4 @@
-//file : ipcHandlersAuthApp.js
+//file : ipc/auth/appKeyHandlers.js
 // Este archivo se encarga de manejar los eventos IPC relacionados con la autenticación de la aplicación
 import { ipcMain } from 'electron';
 import {
@@ -9,8 +9,8 @@ import {
   ensureAppToken,
   recuperarORegistrarTokenApp,
   recuperarORegistrarTokenForzado
-} from '../auth/appKey.js'; // Ajusta la ruta si es necesario
-import { appKeyHeaders } from '../api-client/http.js';
+} from '../../auth/appKey.js'; // Ajusta la ruta si es necesario
+import { appKeyHeaders } from '../../api-client/http.js';
 
 const URL_BASE_API_AGUAVP = (import.meta.env.VITE_URL_BASE_API_AGUAVP || 'http://localhost:3000').replace(/\/$/, '');
 

@@ -1,5 +1,5 @@
 /**
- * ipcHandlersSystem.js — Handlers IPC para la Consola de Administración del Sistema.
+ * systemHandlers.js — Handlers IPC para la Consola de Administración del Sistema.
  *
  * Canales:
  *  - system:logs           → Obtener logs del buffer + archivo
@@ -22,8 +22,8 @@
  */
 
 import { ipcMain } from 'electron';
-import logManager from '../managers/logManager.js';
-import { verifyToken } from '../auth/verifyToken.js';
+import logManager from '../../managers/logManager.js';
+import { verifyToken } from '../../auth/verifyToken.js';
 import {
     getApiServerStatus,
     createBackup,
@@ -39,7 +39,7 @@ import {
     testTursoConnection,
     triggerTursoSync,
     getTursoSyncStatus
-} from '../managers/apiManager.js';
+} from '../../managers/apiManager.js';
 
 /**
  * Verifica que el token JWT pertenezca a un usuario con rol administrador.

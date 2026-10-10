@@ -1,32 +1,40 @@
-//este archivo es el que se encarga de importar todos los ipcHandlers y exportarlos para ser utilizados en el main.js
-import IpcHandlers from "./ipcHandlers.js"
-import IpcHandlerClientes from './ipcHandlersClientes.js'
-import IpcHandlerUsuario from './ipcHandlersUsuario.js'
-import IpcHandlersMedidores from './ipcHandlersMedidores.js'
-import IpcHandlersAuthApp from './ipcHandlersAuthApp.js'
-import IpcHandlersTarifas from './ipcHandlersTarifas.js'
-import IpcHandlersRutas from './ipcHandlersGRutas.js'
-import IpcHandlerFacturas from './ipcHandlersFacturas.js'
-import IpcHandlerLecturas from './ipcHandlersLecturas.js'
-import IpcHandlerPagos from './ipcHandlersPagos.js'
-import IpcHandlerDashboard from './ipcHandlersDashboard.js'
-import IpcHandlerReports from './ipcHandlersReports.js'
-import IpcHandlerDeudores from './ipcHandlersDeudores.js'
-import IpcHandlersSystem from './ipcHandlersSystem.js'
+// Punto único de registro de todos los handlers IPC (lo llama src/main/index.js).
+// Estructura y responsabilidades: ver ./README.md
 
-export  function AllIpcHandlers() {
-    IpcHandlers(); // Importa y ejecuta el archivo ipcHandlers.js
-    IpcHandlerClientes(); // Importa y ejecuta el archivo ipcHandlersClientes.js
-    IpcHandlerUsuario(); // Importa y ejecuta el archivo ipcHandlersUsuario.js
-    IpcHandlersMedidores(); // Importa y ejecuta el archivo ipcHandlersMedidores.js
-    IpcHandlersAuthApp(); // Importa y ejecuta el archivo ipcHandlersAuthApp.js
-    IpcHandlersTarifas(); // Importa y ejecuta el archivo ipcHandlersTarifas.js
-    IpcHandlersRutas(); // Importa y ejecuta el archivo ipcHandlersRutas.js
-    IpcHandlerFacturas(); // Importa y ejecuta el archivo ipcHandlersFacturas.js
-    IpcHandlerLecturas(); // Importa y ejecuta el archivo ipcHandlersLecturas.js
-    IpcHandlerPagos(); // Importa y ejecuta el archivo ipcHandlersPagos.js
-    IpcHandlerDashboard(); // Importa y ejecuta el archivo ipcHandlersDashboard.js
-    IpcHandlerReports(); // Importa y ejecuta el archivo ipcHandlersReports.js
-    IpcHandlerDeudores();
-    IpcHandlersSystem(); // Consola de administración del sistema
-} 
+// core/ — funciones de la aplicación (impresión, PDF, ayuda, exportación, logo, sistema)
+import registerCoreHandlers from './core/index.js'
+import registerSystemHandlers from './core/systemHandlers.js'
+
+// auth/ — sesión de usuario, gestión de usuarios y AppKey de la aplicación
+import registerUsuariosHandlers from './auth/usuariosHandlers.js'
+import registerAppKeyHandlers from './auth/appKeyHandlers.js'
+
+// dominios/ — módulos de negocio (llaman a la API vía src/main/api-client)
+import registerClientesHandlers from './dominios/clientesHandlers.js'
+import registerMedidoresHandlers from './dominios/medidoresHandlers.js'
+import registerTarifasHandlers from './dominios/tarifasHandlers.js'
+import registerRutasHandlers from './dominios/rutasHandlers.js'
+import registerFacturasHandlers from './dominios/facturasHandlers.js'
+import registerLecturasHandlers from './dominios/lecturasHandlers.js'
+import registerPagosHandlers from './dominios/pagosHandlers.js'
+import registerDashboardHandlers from './dominios/dashboardHandlers.js'
+import registerReportesHandlers from './dominios/reportesHandlers.js'
+import registerDeudoresHandlers from './dominios/deudoresHandlers.js'
+
+export function AllIpcHandlers() {
+  // Se conserva el orden de registro original
+  registerCoreHandlers()
+  registerClientesHandlers()
+  registerUsuariosHandlers()
+  registerMedidoresHandlers()
+  registerAppKeyHandlers()
+  registerTarifasHandlers()
+  registerRutasHandlers()
+  registerFacturasHandlers()
+  registerLecturasHandlers()
+  registerPagosHandlers()
+  registerDashboardHandlers()
+  registerReportesHandlers()
+  registerDeudoresHandlers()
+  registerSystemHandlers() // Consola de administración del sistema
+}

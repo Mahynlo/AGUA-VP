@@ -11,7 +11,7 @@ Componente React
 Preload (src/preload/index.js)
    │  ipcRenderer.invoke('fetch-medidores', …)
    ▼
-Handler IPC (src/main/ipc/ipcHandlersMedidores.js)
+Handler IPC (src/main/ipc/dominios/medidoresHandlers.js)
    │  runWithAppKeyFlow(() => fetchMedidores(…))     ← reintenta si el AppKey fue revocado
    ▼
 api-client (src/main/api-client/medidores/consultas.js)
@@ -131,7 +131,7 @@ Cada función conserva **su propia forma de responder ante errores**, porque el 
 2. Usa las funciones de `http.js`; **no** armes cabeceras a mano ni importes `node-fetch` (usa el `fetch` global).
 3. Lee el AppKey con `leerToken()` y valida los tokens al inicio, como las funciones vecinas.
 4. Define qué devuelve ante un error siguiendo la tabla anterior.
-5. Expórtala y úsala desde el handler IPC del dominio (`src/main/ipc/ipcHandlers<Dominio>.js`), envuelta en `runWithAppKeyFlow`.
+5. Expórtala y úsala desde el handler IPC del dominio (`src/main/ipc/dominios/<dominio>Handlers.js`), envuelta en `runWithAppKeyFlow`.
 6. Expón el canal en `src/preload/index.js`.
 
 Ejemplo de consulta (ilustrativo: `fetchMedidorPorId` y su endpoint no existen en el proyecto):
@@ -168,5 +168,5 @@ Las URLs salen de variables de entorno `VITE_API_*` y `VITE_URL_BASE_API_AGUAVP`
 | Archivo | Por qué está fuera |
 |---|---|
 | `src/main/auth/appKey.js` | Registro, recuperación y almacenamiento cifrado del AppKey (usa `appKeyHeaders`) |
-| `src/main/ipc/ipcHandlersUsuario.js` | Login, sesiones y administración de usuarios con su propio `apiRequest()`, que incluye la recuperación del AppKey y el reintento. Usa `authHeaders` / `appKeyHeaders` |
-| `src/main/ipc/ipcHandlersAuthApp.js` | Consulta del estado del servidor (`/api/v2/app/status`) |
+| `src/main/ipc/auth/usuariosHandlers.js` | Login, sesiones y administración de usuarios con su propio `apiRequest()`, que incluye la recuperación del AppKey y el reintento. Usa `authHeaders` / `appKeyHeaders` |
+| `src/main/ipc/auth/appKeyHandlers.js` | Consulta del estado del servidor (`/api/v2/app/status`) |
