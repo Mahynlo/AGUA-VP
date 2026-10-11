@@ -58,6 +58,36 @@ const createMenu = () => {
 
 let mainWindow = null;
 
+// Solo en desarrollo: la ventana carga cientos de módulos desde el servidor de Vite. Si el
+// proceso de red de Chromium se cae mientras tanto ("Network service crashed… restarting"),
+// las peticiones en curso se pierden y la ventana queda en blanco. Se recarga sola unos
+// intentos en vez de tener que reiniciar `npm run dev`. En producción se carga con loadFile.
+function recargarSiFallaLaCargaEnDev(win, url) {
+  const MAX_INTENTOS = 5;
+  let intentos = 0;
+  const recargar = (motivo) => {
+    if (win.isDestroyed() || intentos >= MAX_INTENTOS) return;
+    intentos++;
+    console.warn(`⚠️ Ventana en blanco (${motivo}); recargando (${intentos}/${MAX_INTENTOS})…`);
+    setTimeout(() => { if (!win.isDestroyed()) win.loadURL(url) }, 1000);
+  };
+
+  win.webContents.on('did-fail-load', (_e, code, desc, _url, isMainFrame) => {
+    if (isMainFrame && code !== -3 /* ERR_ABORTED: navegación reemplazada */) recargar(`${code} ${desc}`);
+  });
+
+  const alCaerseProceso = (_e, details) => {
+    if (details.type === 'Utility' && /network/i.test(details.serviceName || details.name || '')) {
+      recargar(`servicio de red: ${details.reason}`);
+    }
+  };
+  app.on('child-process-gone', alCaerseProceso);
+  win.once('closed', () => app.removeListener('child-process-gone', alCaerseProceso));
+
+  // Una vez que la interfaz cargó bien, se reinicia el contador
+  win.webContents.on('did-finish-load', () => { intentos = 0 });
+}
+
 function createWindow() {
   createMenu();
   
@@ -114,6 +144,7 @@ function createWindow() {
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    recargarSiFallaLaCargaEnDev(mainWindow, process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
