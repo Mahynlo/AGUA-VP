@@ -8,7 +8,7 @@
 **🚀 Versión:** `v1.3.1-rc.2` [Pre-release / Versión Candidata de Evaluación]
 **📌 Versión base anterior estable:** `v1.3.0`
 **🔖 Pre-release precedente:** `v1.3.1-rc.1`
-**🧩 Servidor embebido:** `@aguavp/api-server 1.0.17`
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.18`
 
 > ⚠️ **Aviso de Pre-release:** Corrección de la primera copia en la nube detectada al probar `v1.3.1-rc.1` instalada. Incluye todas las novedades de `v1.3.1-rc.1` (ver más abajo).
 
@@ -33,13 +33,27 @@
 - **Eliminar tarifas (nuevo):** botón en cada tarjeta de tarifa, con confirmación escribiendo su nombre. Solo se puede eliminar una tarifa **sin clientes asignados**, que **no se haya usado en ninguna factura** (protege recibos, reportes e historial de cobros) y que **no sea la única**. Se borran la tarifa, sus rangos y su historial de precios. Si no se puede, el botón aparece deshabilitado y explica el motivo. Requiere el permiso nuevo `tarifas.eliminar`, que se asigna a administradores y superadministradores al actualizar (migración `0023`).
 - **El cálculo no cambia:** cuota base fija en el primer rango y cobro progresivo por tramo. Verificado recalculando las 1 119 facturas existentes: todas coinciden al centavo.
 
+#### 📏 Lecturas: rectificación protegida
+- **Problema:** «Editar / Rectificar Lectura» seguía disponible aunque la factura ya estuviera cobrada o el medidor ya tuviera la lectura del mes siguiente. Al rectificar, la lectura cambiaba pero la factura pagada no (p. ej. 30 m³ con un cobro de 17 m³), y se podía romper la continuidad del medidor.
+- **Regla nueva:** solo se puede rectificar la **lectura más reciente del medidor** y solo si su factura **no tiene pagos** (ni abonos) ni está en convenio. En cuanto un medidor tiene la lectura de marzo, su febrero queda cerrado. La regla va por medidor: los que aún no se leen en marzo conservan su febrero abierto.
+- La misma regla aplica al **recálculo de facturas**: las de un período cerrado se reportan como no recalculadas, con el motivo.
+- La API rechaza el cambio aunque se intente por otra vía. En la pantalla, el botón aparece deshabilitado y muestra el motivo.
+- Rectificar en el mes en curso antes de cobrar funciona igual que antes (rectificar y después recalcular).
+
+#### 🕔 Fechas en hora de Sonora
+- **Problema:** la fecha propuesta en los formularios de pago (pago, pago rápido, pago distribuido y liquidación total) y la fecha que se guarda al tomar lecturas se calculaban en hora UTC. **Después de las 5:00 p. m. salía la fecha del día siguiente.**
+- **Corrección:** se usa la fecha de hoy en hora de Sonora (`America/Hermosillo`), la misma que usa la API.
+
+#### 🧾 Comprobante de pago
+- La **fecha de pago** se imprimía un día antes (un pago del 10/09 salía 09/09) y, al reimprimir desde el detalle del pago, la **hora de emisión** salía 7 horas adelantada. Solo cambia cómo se leen las fechas; el diseño del comprobante es el mismo.
+
 ### 🖥️ Mejoras de interfaz
 
 #### 🔎 Filtros de Clientes e Inventario de Medidores
 - **Clientes:** filtro por **situación de pago** (al corriente, con saldo pendiente, 1 / 2 / 3 o más facturas vencidas), **tarifa**, **con / sin medidor**, **ruta de lectura** y ciudad; nuevo orden **Mayor adeudo**. La tabla muestra bajo el estado el adeudo de cada cliente y sus facturas vencidas (o «Al corriente»).
 - **Medidores:** **ubicación agrupada** (ya no se repiten opciones por mayúsculas o espacios: «Medidor nuevo», «Medidor Nuevo » cuentan juntas), **asignado / disponible**, **marca** (ayuda a encontrar errores de captura), **ruta**, **con / sin coordenadas** y **año de instalación**.
 - Cada opción muestra cuántos registros tiene. Búsqueda y filtros principales a la vista; el resto en **«Más filtros»**. Los filtros activos aparecen como etiquetas que se quitan con su X.
-- **Pagos → Facturas:** se corrigió el filtro de estado: ofrecía «Vencido» y «En Convenio», que no coincidían con lo guardado («Vencida»), y no mostraba ninguna factura vencida. Nuevos filtros: **antigüedad del vencimiento** (más de 30, 60 o 90 días), **rango de consumo**, **ruta** y **tarifa**.
+- **Pagos → Facturas:** se corrigió el filtro de estado: ofrecía «Vencido», que no coincidía con lo guardado («Vencida»), y no mostraba ninguna factura vencida. Ahora ofrece los cinco estados: Pendiente, Parcial, Vencida, En Convenio y Pagado. Nuevos filtros: **antigüedad del vencimiento** (más de 30, 60 o 90 días), **rango de consumo**, **ruta** y **tarifa**.
 - **Pagos → Pagos:** filtro por **fecha de cobro** (hoy, ayer, esta semana, este mes, mes anterior o rango de fechas) con el **total cobrado** de todo el filtro, útil para el corte de caja; con fecha de cobro se incluyen pagos de todos los períodos facturados. Nuevos filtros **cobrado por** (usuario que registró el pago) y **tipo de pago** (completo, abono parcial, parcialidad de convenio). Se corrigió que «Limpiar» dejara la tabla vacía al restablecer el método de pago.
 - **Pagos → Cobranza:** filtros de **situación de pago** (con deuda, al corriente, 1 / 2 / 3 o más vencidas), **monto de la deuda** (desde $500, $1,000, $2,000), **ruta** y **tarifa**, además del orden que ya existía. La impresión de deudores y la exportación respetan los filtros.
 - **Exportar «Resultados del filtro»:** exporta todos los registros que cumplen los filtros, de todas las páginas (antes la opción de filtrados exportaba como máximo 60).

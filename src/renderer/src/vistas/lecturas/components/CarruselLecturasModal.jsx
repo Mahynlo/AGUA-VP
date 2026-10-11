@@ -1052,7 +1052,15 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
 
                                 {/* Botón rectificar */}
                                 <div className="pt-2 border-t border-emerald-200/50 dark:border-emerald-900/30">
+                                    {/* La API indica si aún se puede: solo la lectura más reciente del medidor y con factura sin pagos */}
+                                    {puntoActual?.rectificable === false && (
+                                        <p className="mb-2 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                                            {puntoActual.motivo_no_rectificable}
+                                        </p>
+                                    )}
                                     <button
+                                        disabled={puntoActual?.rectificable === false}
+                                        title={puntoActual?.rectificable === false ? puntoActual.motivo_no_rectificable : undefined}
                                         onClick={() => {
                                             const med = puntoActual.medidor_id;
                                             setModoRectificar(prev => ({ ...prev, [med]: true }));
@@ -1061,7 +1069,7 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
                                                 setLecturas(prev => ({ ...prev, [med]: String(lectActual) }));
                                             }
                                         }}
-                                        className="w-full font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 rounded-lg py-2 text-sm flex items-center justify-center gap-2"
+                                        className="w-full font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 rounded-lg py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <HiPencil className="text-lg" />
                                         Editar / Rectificar Lectura
