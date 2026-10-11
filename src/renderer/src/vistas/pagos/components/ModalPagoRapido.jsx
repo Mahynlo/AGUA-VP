@@ -3,6 +3,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiX, HiCreditCard, HiCash, HiExclamationCircle, HiArrowLeft, HiShieldCheck } from "react-icons/hi";
 import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { useFeedback } from "../../../context/FeedbackContext";
+import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
 
 const premiumModalTheme = {
   root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
@@ -93,7 +94,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
   const [confOrden, setConfOrden] = useState("predio"); // orden en la vista de revisión
   const [visibleCount, setVisibleCount] = useState(LIST_PAGE);
   const [metodoPagoRapido, setMetodoPagoRapido] = useState("Efectivo");
-  const [fechaPagoRapido, setFechaPagoRapido] = useState(new Date().toISOString().split("T")[0]);
+  const [fechaPagoRapido, setFechaPagoRapido] = useState(nowHermosilloDateStr());
   const [comentarioPagoRapido, setComentarioPagoRapido] = useState("Pago masivo desde modo rapido");
   const [mostrarErrores, setMostrarErrores] = useState(false);
 
@@ -247,7 +248,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
     setConfOrden("predio");
     setVisibleCount(LIST_PAGE);
     setMetodoPagoRapido("Efectivo");
-    setFechaPagoRapido(new Date().toISOString().split("T")[0]);
+    setFechaPagoRapido(nowHermosilloDateStr());
     setComentarioPagoRapido("Pago masivo desde modo rapido");
     setMostrarErrores(false);
   };

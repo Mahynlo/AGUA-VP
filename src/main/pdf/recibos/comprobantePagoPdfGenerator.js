@@ -32,10 +32,22 @@ const money = (val) =>
     maximumFractionDigits: 2
   })}`
 
+// 'YYYY-MM-DD' (fecha de pago) es un día del calendario: se arma en hora local, porque
+// new Date('YYYY-MM-DD') la toma como medianoche UTC y en Sonora mostraría el día anterior.
+// 'YYYY-MM-DD HH:MM:SS' sin zona viene de SQLite datetime('now'), que está en UTC.
+function parsearFecha(raw) {
+  if (typeof raw === 'string') {
+    const soloFecha = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (soloFecha) return new Date(+soloFecha[1], +soloFecha[2] - 1, +soloFecha[3])
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(raw)) return new Date(raw.replace(' ', 'T') + 'Z')
+  }
+  return new Date(raw)
+}
+
 function formatFechaCorta(raw) {
   if (!raw) return '—'
   try {
-    const d = new Date(raw)
+    const d = parsearFecha(raw)
     if (isNaN(d.getTime())) return String(raw)
     return d.toLocaleDateString('es-MX', {
       year: 'numeric',
@@ -50,7 +62,7 @@ function formatFechaCorta(raw) {
 function formatFechaHora(raw) {
   if (!raw) return '—'
   try {
-    const d = new Date(raw)
+    const d = parsearFecha(raw)
     if (isNaN(d.getTime())) return String(raw)
     return d.toLocaleString('es-MX', {
       year: 'numeric',
