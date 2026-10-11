@@ -64,28 +64,63 @@ let mainWindow = null;
 // intentos en vez de tener que reiniciar `npm run dev`. En producción se carga con loadFile.
 function recargarSiFallaLaCargaEnDev(win, url) {
   const MAX_INTENTOS = 5;
+  const ESPERA_CARGA_MS = 20000;
   let intentos = 0;
-  const recargar = (motivo) => {
-    if (win.isDestroyed() || intentos >= MAX_INTENTOS) return;
-    intentos++;
-    console.warn(`⚠️ Ventana en blanco (${motivo}); recargando (${intentos}/${MAX_INTENTOS})…`);
-    setTimeout(() => { if (!win.isDestroyed()) win.loadURL(url) }, 1000);
+  let cargada = false;
+  let vigilante = null;
+
+  // Si la interfaz no termina de cargar a tiempo (peticiones colgadas tras la caída del
+  // proceso de red), se muestra la ventana igual y se recarga: 'ready-to-show' nunca llegaría.
+  const vigilarCarga = () => {
+    clearTimeout(vigilante);
+    vigilante = setTimeout(() => {
+      if (win.isDestroyed() || cargada) return;
+      if (!win.isVisible()) win.show();
+      recargar(`la interfaz no terminó de cargar en ${ESPERA_CARGA_MS / 1000} s`);
+    }, ESPERA_CARGA_MS);
   };
 
-  win.webContents.on('did-fail-load', (_e, code, desc, _url, isMainFrame) => {
-    if (isMainFrame && code !== -3 /* ERR_ABORTED: navegación reemplazada */) recargar(`${code} ${desc}`);
+  const recargar = (motivo) => {
+    if (win.isDestroyed() || intentos >= MAX_INTENTOS) {
+      console.warn(`⚠️ [dev] ${motivo}; sin más reintentos automáticos (usa Ctrl+R)`);
+      return;
+    }
+    intentos++;
+    cargada = false;
+    console.warn(`⚠️ [dev] ${motivo}; recargando (${intentos}/${MAX_INTENTOS})…`);
+    setTimeout(() => {
+      if (win.isDestroyed()) return;
+      win.loadURL(url);
+      vigilarCarga();
+    }, 1000);
+  };
+
+  win.webContents.on('did-fail-load', (_e, code, desc, failedUrl, isMainFrame) => {
+    console.warn(`⚠️ [dev] did-fail-load ${code} ${desc} (${isMainFrame ? 'ventana' : 'subrecurso'}) ${failedUrl}`);
+    if (isMainFrame && code !== -3 /* ERR_ABORTED: navegación reemplazada */) recargar(`falló la carga: ${code} ${desc}`);
+  });
+  win.webContents.on('render-process-gone', (_e, details) => {
+    console.warn(`⚠️ [dev] render-process-gone ${JSON.stringify(details)}`);
+    recargar(`se cerró el proceso de la interfaz: ${details.reason}`);
   });
 
+  // Registro de cualquier proceso hijo que se cae, para diagnosticar ("Network service crashed")
   const alCaerseProceso = (_e, details) => {
-    if (details.type === 'Utility' && /network/i.test(details.serviceName || details.name || '')) {
-      recargar(`servicio de red: ${details.reason}`);
+    console.warn(`⚠️ [dev] child-process-gone ${JSON.stringify(details)}`);
+    if (/network/i.test(`${details.serviceName || ''} ${details.name || ''}`)) {
+      recargar(`se reinició el proceso de red: ${details.reason}`);
     }
   };
   app.on('child-process-gone', alCaerseProceso);
-  win.once('closed', () => app.removeListener('child-process-gone', alCaerseProceso));
+  win.once('closed', () => { clearTimeout(vigilante); app.removeListener('child-process-gone', alCaerseProceso) });
 
-  // Una vez que la interfaz cargó bien, se reinicia el contador
-  win.webContents.on('did-finish-load', () => { intentos = 0 });
+  win.webContents.on('did-finish-load', () => {
+    cargada = true;
+    clearTimeout(vigilante);
+    intentos = 0;
+    console.log('✅ [dev] interfaz cargada');
+  });
+  vigilarCarga();
 }
 
 function createWindow() {
