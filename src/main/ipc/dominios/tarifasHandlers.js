@@ -1,7 +1,7 @@
 import { ipcMain} from 'electron';
 import { registerTarifas,registrarRangosTarifa  } from '../../api-client/tarifas/registro.js'; // Importa las funciones registerTarifa y registrarRangosTarifa
 import  {fetchTarifas } from '../../api-client/tarifas/consultas.js'; // Importa la función fetchTarifas
-import  {updateTarifa,updateRangosTarifa } from '../../api-client/tarifas/actualizacion.js'; // Importa las funciones updateTarifa y updateRangosTarifa
+import  {updateTarifa,updateRangosTarifa, eliminarTarifa } from '../../api-client/tarifas/actualizacion.js'; // Importa las funciones updateTarifa y updateRangosTarifa
 import { runWithAppKeyFlow } from '../appKeyFlow.js';
 
 
@@ -79,6 +79,20 @@ export default function IpcHandlersTarifas () {
         } catch (error) {
             console.error("Error en ipcMain 'update-rangos-tarifa':", error);
             return { success: false, message: "Error inesperado en el proceso de actualización de rangos." };
+        }
+    });
+
+    // Elimina una tarifa sin clientes ni facturas
+    ipcMain.handle("eliminar-tarifa", async (event, data) => {
+        try {
+            const { id, token_session } = data;
+            if (!id || !token_session) {
+            return { success: false, message: "ID de tarifa y token de sesión son obligatorios." };
+            }
+            return await runWithAppKeyFlow(() => eliminarTarifa(id, token_session));
+        } catch (error) {
+            console.error("Error en ipcMain 'eliminar-tarifa':", error);
+            return { success: false, message: "Error inesperado al eliminar la tarifa." };
         }
     });
 
