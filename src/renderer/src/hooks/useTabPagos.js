@@ -3,9 +3,24 @@ import { usePagos } from "../context/PagosContext";
 import { useClientes } from "../context/ClientesContext";
 import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
+// Fecha local (YYYY-MM-DD) de esta computadora
+const fechaLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** Atajos del filtro "Fecha de cobro": devuelven [desde, hasta]. */
+export const RANGOS_FECHA_COBRO = {
+  hoy: { label: "Hoy", calcular: () => { const h = fechaLocal(new Date()); return [h, h]; } },
+  ayer: { label: "Ayer", calcular: () => { const d = new Date(); d.setDate(d.getDate() - 1); const a = fechaLocal(d); return [a, a]; } },
+  semana: { label: "Esta semana", calcular: () => { const d = new Date(); const lunes = new Date(d); lunes.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return [fechaLocal(lunes), fechaLocal(d)]; } },
+  mes: { label: "Este mes", calcular: () => { const d = new Date(); return [fechaLocal(new Date(d.getFullYear(), d.getMonth(), 1)), fechaLocal(d)]; } },
+  mes_anterior: { label: "Mes anterior", calcular: () => { const d = new Date(); return [fechaLocal(new Date(d.getFullYear(), d.getMonth() - 1, 1)), fechaLocal(new Date(d.getFullYear(), d.getMonth(), 0))]; } },
+  personalizado: { label: "Rango de fechas…", calcular: null }
+};
+
 export const useTabPagos = () => {
   // Consumir datos y funciones del contexto
-  const { pagos, pagination, loading, initialLoading, fetchPagos, resumen, actualizarPagos, filtros } = usePagos();
+  const { pagos, pagination, loading, initialLoading, fetchPagos, resumen, actualizarPagos, filtros, cobradores } = usePagos();
+  // Atajo elegido en "Fecha de cobro" (las fechas reales viven en los filtros del contexto)
+  const [rangoFecha, setRangoFecha] = useState(filtros?.fecha_desde || filtros?.fecha_hasta ? "personalizado" : "All");
   const { allClientes, fetchAllClientes } = useClientes();
 
   // Estados locales para UI (debounce y paginación visual)
@@ -93,6 +108,48 @@ export const useTabPagos = () => {
     setCurrentPage(1);
   };
 
+  // ── Fecha de cobro, cobrado por y tipo (se guardan en los filtros del contexto) ──
+  const handleRangoFechaChange = (clave) => {
+    setRangoFecha(clave);
+    setCurrentPage(1);
+    if (clave === "All") {
+      fetchPagos({ fecha_desde: "", fecha_hasta: "", page: 1 });
+    } else if (RANGOS_FECHA_COBRO[clave]?.calcular) {
+      const [desde, hasta] = RANGOS_FECHA_COBRO[clave].calcular();
+      fetchPagos({ fecha_desde: desde, fecha_hasta: hasta, page: 1 });
+    }
+    // "personalizado": se aplica al escribir las fechas (handleFechasChange)
+  };
+
+  const handleFechasChange = (desde, hasta) => {
+    setCurrentPage(1);
+    fetchPagos({ fecha_desde: desde || "", fecha_hasta: hasta || "", page: 1 });
+  };
+
+  const handleCobradoPorChange = (valor) => {
+    setCurrentPage(1);
+    fetchPagos({ cobrado_por: valor === "All" ? "" : valor, page: 1 });
+  };
+
+  const handleTipoChange = (valor) => {
+    setCurrentPage(1);
+    fetchPagos({ tipo: valor === "All" ? "" : valor, page: 1 });
+  };
+
+  const porFechaDeCobro = Boolean(filtros?.fecha_desde || filtros?.fecha_hasta);
+
+  // Parámetros actuales completos (para exportar todos los resultados del filtro)
+  const parametrosFiltro = {
+    periodo: porFechaDeCobro ? "" : (filtros?.periodo || obtenerPeriodoActual()),
+    search,
+    metodo_pago: filtros?.metodo_pago && filtros.metodo_pago !== "All" ? filtros.metodo_pago : "",
+    ciudad: cityFilter === "All" ? "" : cityFilter,
+    fecha_desde: filtros?.fecha_desde || "",
+    fecha_hasta: filtros?.fecha_hasta || "",
+    cobrado_por: filtros?.cobrado_por || "",
+    tipo: filtros?.tipo || ""
+  };
+
   // Manejar cambio de filas por página
   const handleRowsPerPageChange = (e) => {
     setRowsPerPage(Number(e.target.value));
@@ -158,6 +215,18 @@ export const useTabPagos = () => {
     totalPages,
     totalItems,
     resumen,
+    cobradores,
+    rangoFecha,
+    fechaDesde: filtros?.fecha_desde || "",
+    fechaHasta: filtros?.fecha_hasta || "",
+    filtroCobradoPor: filtros?.cobrado_por || "All",
+    filtroTipo: filtros?.tipo || "All",
+    porFechaDeCobro,
+    parametrosFiltro,
+    handleRangoFechaChange,
+    handleFechasChange,
+    handleCobradoPorChange,
+    handleTipoChange,
     handleSearch,
     handleMetodoFilterChange,
     handlePeriodoChange,

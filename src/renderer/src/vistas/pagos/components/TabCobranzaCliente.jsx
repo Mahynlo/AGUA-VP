@@ -5,7 +5,6 @@ import {
   HiDocumentText,
   HiCalculator,
   HiEye,
-  HiFilter,
   HiX,
   HiPrinter,
   HiSearch,
@@ -20,6 +19,9 @@ import {
 import { Modal, Button, ModalHeader, ModalBody } from "flowbite-react";
 import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
+import { useMedidores } from "../../../context/MedidoresContext";
+import { useTarifas } from "../../../context/TarifasContext";
+import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
 import { useFeedback } from "../../../context/FeedbackContext";
 import ModalPagoDistribuidoCliente from "./ModalPagoDistribuidoCliente";
 import ModalPagoRapido from "./ModalPagoRapido";
@@ -262,6 +264,13 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filtroRanking, setFiltroRanking] = useState("deuda_desc");
   const [cityFilter, setCityFilter] = useState("All");
+  // Filtros de la lista ("All" = sin filtro): se aplican sobre los datos ya calculados en pantalla
+  const FILTROS_COBRANZA = { situacion: "All", monto: "All", ruta_id: "All", tarifa_id: "All" };
+  const [filtrosCobranza, setFiltrosCobranza] = useState(FILTROS_COBRANZA);
+  const [masFiltrosAbierto, setMasFiltrosAbierto] = useState(false);
+  const setFiltroCobranza = (clave, valor) => setFiltrosCobranza((prev) => ({ ...prev, [clave]: valor || "All" }));
+  const { allMedidores } = useMedidores();
+  const { tarifas } = useTarifas();
 
   // Obtener la lista de ciudades de todos los clientes en memoria
   const ciudades = useMemo(() => {
@@ -460,7 +469,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, rowsPerPage, filtroRanking, cityFilter]);
+  }, [debouncedSearch, rowsPerPage, filtroRanking, cityFilter, filtrosCobranza]);
 
   const facturasPorCliente = useMemo(() => {
     const map = new Map();
@@ -503,6 +512,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         correo: cliente.correo || "-",
         ciudad: cliente.ciudad || "Sin Ciudad",
         estado_cliente: cliente.estado_cliente || "Activo",
+        tarifa_id: cliente.tarifa_id ?? null,
         deuda_total: deudaTotal,
         total_facturas: facturasCliente.length,
         facturas_pendientes: facturasPendientes,
@@ -530,6 +540,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         correo: cliente.correo || "-",
         ciudad: cliente.ciudad || "Sin Ciudad",
         estado_cliente: cliente.estado_cliente || "Activo",
+        tarifa_id: cliente.tarifa_id ?? null,
         deuda_total: deudaTotal,
         total_facturas: facturasCliente.length,
         facturas_pendientes: facturasPendientes,
@@ -541,8 +552,60 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
     });
   }, [allClientes, facturasPorCliente]);
 
+  // Rutas de lectura de cada cliente (por sus medidores)
+  const rutasPorCliente = useMemo(() => {
+    const mapa = new Map();
+    (allMedidores || []).forEach((m) => {
+      if (m.cliente_id == null || !m.ruta_id) return;
+      if (!mapa.has(m.cliente_id)) mapa.set(m.cliente_id, new Set());
+      mapa.get(m.cliente_id).add(String(m.ruta_id));
+    });
+    return mapa;
+  }, [allMedidores]);
+
+  const cumpleFiltrosCobranza = useCallback((c, ignorar = null) => {
+    const f = filtrosCobranza;
+    if (ignorar !== "situacion" && f.situacion !== "All") {
+      if (f.situacion === "con_deuda" && !(toMoney(c.deuda_total) > 0)) return false;
+      if (f.situacion === "al_corriente" && toMoney(c.deuda_total) > 0) return false;
+      const n = /^vencidas_(\d)$/.exec(f.situacion);
+      if (n && (c.facturas_vencidas || 0) < Number(n[1])) return false;
+    }
+    if (ignorar !== "monto" && f.monto !== "All" && toMoney(c.deuda_total) < Number(f.monto)) return false;
+    if (ignorar !== "ruta_id" && f.ruta_id !== "All") {
+      const rutas = rutasPorCliente.get(c.cliente_id);
+      if (f.ruta_id === "sin_ruta" ? rutas?.size > 0 : !rutas?.has(f.ruta_id)) return false;
+    }
+    if (ignorar !== "tarifa_id" && f.tarifa_id !== "All" && String(c.tarifa_id ?? "") !== f.tarifa_id) return false;
+    return true;
+  }, [filtrosCobranza, rutasPorCliente]);
+
+  // Opciones con su cantidad (contando con los demás filtros ya aplicados)
+  const opcionesCobranza = useMemo(() => {
+    const contar = (campo, prueba) => clientesTabla.filter((c) => cumpleFiltrosCobranza(c, campo) && prueba(c)).length;
+    const rutas = new Map();
+    (allMedidores || []).forEach((m) => { if (m.ruta_id) rutas.set(String(m.ruta_id), m.ruta_nombre || `Ruta ${m.ruta_id}`); });
+    return {
+      situacion: [
+        { value: "con_deuda", label: "Con deuda", count: contar("situacion", (c) => toMoney(c.deuda_total) > 0) },
+        { value: "al_corriente", label: "Al corriente", count: contar("situacion", (c) => !(toMoney(c.deuda_total) > 0)) },
+        ...[1, 2, 3].map((n) => ({ value: `vencidas_${n}`, label: `${n} o más facturas vencidas`, count: contar("situacion", (c) => (c.facturas_vencidas || 0) >= n) }))
+      ],
+      monto: [500, 1000, 2000].map((m) => ({
+        value: String(m), label: `Deben ${m.toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 })} o más`,
+        count: contar("monto", (c) => toMoney(c.deuda_total) >= m)
+      })),
+      ruta_id: [
+        ...[...rutas.entries()].sort((a, b) => a[1].localeCompare(b[1], "es"))
+          .map(([value, label]) => ({ value, label, count: contar("ruta_id", (c) => rutasPorCliente.get(c.cliente_id)?.has(value)) })),
+        { value: "sin_ruta", label: "Sin ruta", count: contar("ruta_id", (c) => !(rutasPorCliente.get(c.cliente_id)?.size > 0)) }
+      ],
+      tarifa_id: (tarifas || []).map((t) => ({ value: String(t.id), label: t.nombre, count: contar("tarifa_id", (c) => String(c.tarifa_id ?? "") === String(t.id)) }))
+    };
+  }, [clientesTabla, cumpleFiltrosCobranza, allMedidores, rutasPorCliente, tarifas]);
+
   const clientesTablaOrdenada = useMemo(() => {
-    const data = [...clientesTabla];
+    const data = clientesTabla.filter((c) => cumpleFiltrosCobranza(c));
 
     const parsePredio = (predio) => {
       const str = String(predio ?? "").trim();
@@ -586,7 +649,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
     }
 
     return data;
-  }, [clientesTabla, filtroRanking]);
+  }, [clientesTabla, filtroRanking, cumpleFiltrosCobranza]);
 
   const clientesTablaPaginada = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
@@ -1022,7 +1085,25 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
   };
 
   const isLoading = loadingClientes || loadingFacturas || loadingPagos || loadingPagosHistorial;
-  const hasActiveFilters = search || rowsPerPage !== 10 || filtroRanking !== "deuda_desc" || cityFilter !== "All";
+  const filtrosCobranzaActivos = Object.entries(filtrosCobranza).filter(([, v]) => v !== "All");
+  const hasActiveFilters = search || rowsPerPage !== 10 || filtroRanking !== "deuda_desc" || cityFilter !== "All" || filtrosCobranzaActivos.length > 0;
+  const limpiarFiltrosCobranza = () => {
+    setSearch("");
+    setRowsPerPage(10);
+    setFiltroRanking("deuda_desc");
+    setCityFilter("All");
+    setFiltrosCobranza(FILTROS_COBRANZA);
+  };
+  const NOMBRES_FILTRO_COBRANZA = { situacion: "Situación", monto: "Deuda", ruta_id: "Ruta", tarifa_id: "Tarifa" };
+  const chipsCobranza = [
+    cityFilter !== "All" && { clave: "ciudad", texto: `Ciudad: ${cityFilter}`, onQuitar: () => setCityFilter("All") },
+    ...filtrosCobranzaActivos.map(([clave, valor]) => ({
+      clave,
+      texto: `${NOMBRES_FILTRO_COBRANZA[clave]}: ${(opcionesCobranza[clave] || []).find((o) => o.value === valor)?.label ?? valor}`,
+      onQuitar: () => setFiltroCobranza(clave, "All")
+    }))
+  ].filter(Boolean);
+  const filtrosPanelCobranza = ["ruta_id", "tarifa_id"].filter((k) => filtrosCobranza[k] !== "All").length + (cityFilter !== "All" ? 1 : 0);
 
   return (
     <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500">
@@ -1113,7 +1194,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
         
         {/* Filtros */}
         <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
             {/* Buscador */}
             <div className="lg:col-span-4 relative w-full flex items-center">
               <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
@@ -1135,23 +1216,15 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
               )}
             </div>
 
-            {/* Filtro ciudad */}
-            <div className="lg:col-span-3">
-              <select
-                value={cityFilter}
-                onChange={(e) => setCityFilter(e.target.value)}
-                aria-label="Filtrar por ciudad"
-                className={SELECT_CLS}
-              >
-                <option value="All">Todas las ciudades</option>
-                {ciudades.map((ciudad) => (
-                  <option key={ciudad} value={ciudad}>{ciudad}</option>
-                ))}
-              </select>
+            <div className="lg:col-span-2">
+              <SelectFiltro value={filtrosCobranza.situacion} onChange={(v) => setFiltroCobranza("situacion", v)} opciones={opcionesCobranza.situacion} todos="Cualquier situación" />
+            </div>
+            <div className="lg:col-span-2">
+              <SelectFiltro value={filtrosCobranza.monto} onChange={(v) => setFiltroCobranza("monto", v)} opciones={opcionesCobranza.monto} todos="Cualquier monto" />
             </div>
 
-            {/* Filtro orden/ranking */}
-            <div className="lg:col-span-3">
+            {/* Orden */}
+            <div className="lg:col-span-2">
               <select
                 value={filtroRanking}
                 onChange={(e) => setFiltroRanking(e.target.value)}
@@ -1167,26 +1240,20 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
               </select>
             </div>
 
-            {/* Botón limpiar */}
-            <div className="lg:col-span-2 flex justify-end">
-              {hasActiveFilters ? (
-                <button
-                  onClick={() => {
-                    setSearch("");
-                    setRowsPerPage(10);
-                    setFiltroRanking("deuda_desc");
-                    setCityFilter("All");
-                  }}
-                  className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors"
-                >
-                  <HiFilter className="text-lg" />
-                  Limpiar
-                </button>
-              ) : (
-                <div className="w-full h-[52px]" />
-              )}
+            <div className="lg:col-span-2">
+              <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelCobranza} />
             </div>
           </div>
+
+          {masFiltrosAbierto && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
+              <SelectFiltro etiqueta="Ruta de lectura" value={filtrosCobranza.ruta_id} onChange={(v) => setFiltroCobranza("ruta_id", v)} opciones={opcionesCobranza.ruta_id} todos="Todas las rutas" />
+              <SelectFiltro etiqueta="Tarifa" value={filtrosCobranza.tarifa_id} onChange={(v) => setFiltroCobranza("tarifa_id", v)} opciones={opcionesCobranza.tarifa_id} todos="Todas las tarifas" />
+              <SelectFiltro etiqueta="Ciudad" value={cityFilter} onChange={setCityFilter} opciones={ciudades.map((c) => ({ value: c, label: c }))} todos="Todas las ciudades" />
+            </div>
+          )}
+
+          {hasActiveFilters && <ChipsFiltros chips={chipsCobranza} onLimpiar={limpiarFiltrosCobranza} total={clientesTablaOrdenada.length} nombre="clientes" />}
         </div>
 
         {/* Sub-header paginación */}

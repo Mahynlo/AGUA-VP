@@ -6,7 +6,6 @@ import {
   HiDownload,
   HiChevronDown,
   HiX,
-  HiFilter,
   HiRefresh,
   HiCash,
   HiSearch,
@@ -15,7 +14,8 @@ import {
   HiChevronRight
 } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
-import { useTabPagos } from "../../../hooks/useTabPagos";
+import { useTabPagos, RANGOS_FECHA_COBRO } from "../../../hooks/useTabPagos";
+import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
 import { useRutas } from "../../../context/RutasContext";
 import SelectorPeriodoAvanzado from "../../../components/ui/SelectorPeriodoAvanzado";
 import { formatearPeriodo } from "../../../utils/periodoUtils";
@@ -231,8 +231,6 @@ function MetodoBadge({ metodo, getMetodoColor }) {
 }
 
 // ── ESTILOS COMPARTIDOS ───────────────────────────────────────────────────────
-const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none appearance-none cursor-pointer";
-
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 const TabPagos = () => {
   const navigate = useNavigate();
@@ -260,8 +258,21 @@ const TabPagos = () => {
     setCurrentPage,
     getMetodoColor,
     actualizarPagos,
-    setCityFilter
+    setCityFilter,
+    cobradores,
+    rangoFecha,
+    fechaDesde,
+    fechaHasta,
+    filtroCobradoPor,
+    filtroTipo,
+    porFechaDeCobro,
+    parametrosFiltro,
+    handleRangoFechaChange,
+    handleFechasChange,
+    handleCobradoPorChange,
+    handleTipoChange
   } = useTabPagos();
+  const [masFiltrosAbierto, setMasFiltrosAbierto] = useState(false);
 
   const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
   const { setSuccess, setError } = useFeedback();
@@ -291,14 +302,8 @@ const TabPagos = () => {
       } else if (type === "filtered") {
         prefix = "Filtrados_";
         if (token && window.api?.fetchPagos) {
-          const resp = await window.api.fetchPagos(token, {
-            periodo: filtroPeriodo,
-            search: search,
-            metodo_pago: filtroMetodo === "All" ? "" : filtroMetodo,
-            ciudad: cityFilter === "All" ? "" : cityFilter,
-            page: 1,
-            limit: 10000
-          });
+          // Mismos filtros que la tabla (incluye fecha de cobro, cobrado por y tipo)
+          const resp = await window.api.fetchPagos(token, { ...parametrosFiltro, page: 1, limit: 10000 });
           rawData = Array.isArray(resp) ? resp : (resp?.pagos || pagos);
         } else {
           rawData = pagos;
@@ -374,13 +379,40 @@ const TabPagos = () => {
   }
 
   // Detectar si hay filtros activos para el botón de limpiar
-  const hasActiveFilters = search || filtroMetodo !== "All" || cityFilter !== "All" || filtroPeriodo !== new Date().toISOString().slice(0, 7);
+  const hasActiveFilters = search || filtroMetodo !== "All" || cityFilter !== "All" || porFechaDeCobro || filtroCobradoPor !== "All" || filtroTipo !== "All";
 
   const clearFilters = () => {
     handleSearch("");
-    handleMetodoFilterChange(["All"]);
+    handleMetodoFilterChange([""]);
     setCityFilter("All");
+    handleRangoFechaChange("All");
+    handleCobradoPorChange("All");
+    handleTipoChange("All");
   };
+
+  // Opciones de los filtros
+  const opcionesFechaCobro = Object.entries(RANGOS_FECHA_COBRO).map(([value, r]) => ({ value, label: r.label }));
+  const opcionesCobradoPor = (cobradores || []).map((u) => ({ value: String(u.id), label: u.username, count: u.pagos }));
+  const opcionesTipo = [
+    { value: "completo", label: "Pago completo de la factura" },
+    { value: "abono", label: "Abono parcial" },
+    { value: "parcialidad", label: "Parcialidad de convenio" }
+  ];
+  const opcionesMetodo = ["Efectivo", "Transferencia", "Tarjeta", "Cheque"].map((m) => ({ value: m, label: m }));
+  const opcionesCiudad = ciudades.map((c) => ({ value: c, label: c }));
+  const filtrosPanelActivos = [filtroTipo !== "All", filtroMetodo !== "All", cityFilter !== "All"].filter(Boolean).length;
+
+  const textoFecha = rangoFecha !== "All" && rangoFecha !== "personalizado"
+    ? RANGOS_FECHA_COBRO[rangoFecha]?.label
+    : fechaDesde === fechaHasta ? fechaDesde : `${fechaDesde || "…"} a ${fechaHasta || "…"}`;
+  const chipsFiltros = [
+    porFechaDeCobro && { clave: "fecha", texto: `Cobrado: ${textoFecha}`, onQuitar: () => handleRangoFechaChange("All") },
+    filtroCobradoPor !== "All" && { clave: "cobrado_por", texto: `Cobró: ${opcionesCobradoPor.find((o) => o.value === String(filtroCobradoPor))?.label ?? filtroCobradoPor}`, onQuitar: () => handleCobradoPorChange("All") },
+    filtroTipo !== "All" && { clave: "tipo", texto: `Tipo: ${opcionesTipo.find((o) => o.value === filtroTipo)?.label ?? filtroTipo}`, onQuitar: () => handleTipoChange("All") },
+    filtroMetodo !== "All" && { clave: "metodo", texto: `Método: ${filtroMetodo}`, onQuitar: () => handleMetodoFilterChange([""]) },
+    cityFilter !== "All" && { clave: "ciudad", texto: `Ciudad: ${cityFilter}`, onQuitar: () => handleCityFilterChange("All") }
+  ].filter(Boolean);
+  const totalCobrado = Number(resumen?.total_filtrado ?? 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -435,9 +467,9 @@ const TabPagos = () => {
       {/* ── CONTENEDOR PRINCIPAL ── */}
       <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-visible flex flex-col relative z-20">
 
-        {/* Filtros */}
+        {/* Filtros: búsqueda, período, fecha de cobro y cobrador; el resto en "Más filtros" */}
         <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 rounded-t-2xl relative z-30">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
 
             {/* Buscador */}
             <div className="lg:col-span-3 relative w-full flex items-center">
@@ -460,15 +492,15 @@ const TabPagos = () => {
               )}
             </div>
 
-            {/* Filtro por período */}
-            <div className="lg:col-span-3">
-              <div className="w-full h-[52px] flex items-center">
+            {/* Período facturado (no aplica cuando se filtra por fecha de cobro) */}
+            <div className="lg:col-span-3" title={porFechaDeCobro ? "Con fecha de cobro se muestran pagos de todos los períodos" : undefined}>
+              <div className={`w-full h-[52px] flex items-center ${porFechaDeCobro ? "opacity-50 pointer-events-none" : ""}`}>
                 <SelectorPeriodoAvanzado
                   value={filtroPeriodo}
                   onChange={handlePeriodoChange}
                   placeholder="Buscar y seleccionar período"
                   startYear={2020}
-                  isDisabled={loading}
+                  isDisabled={loading || porFechaDeCobro}
                   className="w-full h-full"
                   periodosInfo={periodosInfo}
                   siguientePeriodo={siguientePeriodo}
@@ -477,52 +509,49 @@ const TabPagos = () => {
               </div>
             </div>
 
-            {/* Filtro por método de pago */}
             <div className="lg:col-span-2">
-              <select
-                value={filtroMetodo}
-                onChange={(e) => handleMetodoFilterChange([e.target.value])}
-                aria-label="Filtrar por método"
-                className={SELECT_CLS}
-              >
-                <option value="All">Todos los métodos</option>
-                <option value="Efectivo">Efectivo</option>
-                <option value="Transferencia">Transferencia</option>
-                <option value="Tarjeta">Tarjeta</option>
-                <option value="Cheque">Cheque</option>
-              </select>
+              <SelectFiltro value={rangoFecha} onChange={handleRangoFechaChange} opciones={opcionesFechaCobro} todos="Cualquier fecha de cobro" />
             </div>
-
-            {/* Filtro por ciudad */}
             <div className="lg:col-span-2">
-              <select
-                value={cityFilter}
-                onChange={(e) => handleCityFilterChange(e.target.value)}
-                aria-label="Filtrar por ciudad"
-                className={SELECT_CLS}
-              >
-                <option value="All">Todas las ciudades</option>
-                {ciudades.map((ciudad) => (
-                  <option key={ciudad} value={ciudad}>{ciudad}</option>
-                ))}
-              </select>
+              <SelectFiltro value={String(filtroCobradoPor)} onChange={handleCobradoPorChange} opciones={opcionesCobradoPor} todos="Cobrado por cualquiera" />
             </div>
-
-            {/* Limpiar filtros */}
-            <div className="lg:col-span-2 flex justify-end">
-              {hasActiveFilters ? (
-                <button
-                  onClick={clearFilters}
-                  className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors"
-                >
-                  <HiFilter className="text-lg" />
-                  Limpiar
-                </button>
-              ) : (
-                <div className="w-full h-[52px]" />
-              )}
+            <div className="lg:col-span-2">
+              <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelActivos} />
             </div>
           </div>
+
+          {/* Rango de fechas propio */}
+          {rangoFecha === "personalizado" && (
+            <div className="flex flex-wrap items-end gap-4 mt-4">
+              {[["Desde", fechaDesde, (v) => handleFechasChange(v, fechaHasta)], ["Hasta", fechaHasta, (v) => handleFechasChange(fechaDesde, v)]].map(([etiqueta, valor, cambiar]) => (
+                <label key={etiqueta} className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">Cobrado {etiqueta.toLowerCase()}</span>
+                  <input
+                    type="date"
+                    value={valor}
+                    onChange={(e) => cambiar(e.target.value)}
+                    className="h-[44px] px-3 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  />
+                </label>
+              ))}
+            </div>
+          )}
+
+          {masFiltrosAbierto && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
+              <SelectFiltro etiqueta="Tipo de pago" value={filtroTipo} onChange={handleTipoChange} opciones={opcionesTipo} todos="Todos los tipos" />
+              <SelectFiltro etiqueta="Método de pago" value={filtroMetodo} onChange={(v) => handleMetodoFilterChange([v === "All" ? "" : v])} opciones={opcionesMetodo} todos="Todos los métodos" />
+              <SelectFiltro etiqueta="Ciudad" value={cityFilter} onChange={handleCityFilterChange} opciones={opcionesCiudad} todos="Todas las ciudades" />
+            </div>
+          )}
+
+          <ChipsFiltros chips={chipsFiltros} onLimpiar={clearFilters} total={totalItems} nombre="pagos" />
+          {hasActiveFilters && (
+            <p className="mt-2 text-xs font-semibold text-slate-600 dark:text-zinc-300">
+              Total cobrado con estos filtros: <span className="font-black text-emerald-600 dark:text-emerald-400">{totalCobrado}</span>
+              {porFechaDeCobro && <span className="text-slate-400 dark:text-zinc-500 font-medium"> · de todos los períodos facturados</span>}
+            </p>
+          )}
         </div>
 
         {/* Sub-header paginación */}
