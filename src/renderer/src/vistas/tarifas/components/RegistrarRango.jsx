@@ -144,6 +144,19 @@ export default function RegistrarRangoTarifa({ tarifaId }) {
       }
     }
 
+    // El primer rango es la cuota base y los consumos son m³ enteros (misma regla que la API)
+    if (sorted[0].consumo_min !== 0) {
+      setError(`El primer rango debe empezar en 0 m³ (es la cuota base); empieza en ${sorted[0].consumo_min}.`, "Registro de Rangos");
+      setIsSaving(false);
+      return;
+    }
+    const noEntero = sorted.find((r) => !Number.isInteger(r.consumo_min) || !Number.isInteger(r.consumo_max));
+    if (noEntero) {
+      setError(`Los consumos deben ser m³ enteros (rango ${noEntero.index}).`, "Registro de Rangos");
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const response = await window.tarifasApp.registrarRangosTarifa({

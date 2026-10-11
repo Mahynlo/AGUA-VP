@@ -115,7 +115,7 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
       actualizarTarifas();
       setTimeout(() => { handleCloseModal(); }, 1000);
     } catch (err) {
-      setError("Error al actualizar tarifa.", "Edición de Tarifa");
+      setError(err.message || "Error al actualizar tarifa.", "Edición de Tarifa");
       setIsSaving(false);
     }
   };
@@ -190,6 +190,19 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
       }
     }
 
+    // El primer rango es la cuota base y los consumos son m³ enteros (misma regla que la API)
+    if (ordenados[0].consumo_min !== 0) {
+      setError(`El primer rango debe empezar en 0 m³ (es la cuota base); empieza en ${ordenados[0].consumo_min}.`, "Edición de Rangos");
+      setIsSaving(false);
+      return;
+    }
+    const noEntero = ordenados.find((r) => !Number.isInteger(r.consumo_min) || !Number.isInteger(r.consumo_max));
+    if (noEntero) {
+      setError(`Los consumos deben ser m³ enteros (rango ${noEntero.index}).`, "Edición de Rangos");
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const response = await window.tarifasApp.updateRangosTarifa({
@@ -204,12 +217,17 @@ export default function EditarTarifaYRangos({ tarifa, rangosIniciales = [] }) {
       });
 
       if (!response.success) throw new Error(response.message);
-      setSuccess("Rangos actualizados correctamente.", "Edición de Rangos");
+      const c = response.cambios;
+      setSuccess(
+        c ? `Rangos guardados: ${c.actualizados} actualizado(s), ${c.agregados} agregado(s), ${c.eliminados} eliminado(s).` : "Rangos actualizados correctamente.",
+        "Edición de Rangos"
+      );
       actualizarTarifas();
       setTimeout(() => { handleCloseModal(); }, 1000);
     } catch (err) {
       console.error(err);
-      setError("Error al guardar los rangos.", "Edición de Rangos");
+      // Motivo real (p. ej. la validación de la API), no un mensaje genérico
+      setError(err.message || "Error al guardar los rangos.", "Edición de Rangos");
       setIsSaving(false);
     }
   };

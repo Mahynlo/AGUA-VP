@@ -8,7 +8,7 @@
 **🚀 Versión:** `v1.3.1-rc.2` [Pre-release / Versión Candidata de Evaluación]
 **📌 Versión base anterior estable:** `v1.3.0`
 **🔖 Pre-release precedente:** `v1.3.1-rc.1`
-**🧩 Servidor embebido:** `@aguavp/api-server 1.0.13`
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.14`
 
 > ⚠️ **Aviso de Pre-release:** Corrección de la primera copia en la nube detectada al probar `v1.3.1-rc.1` instalada. Incluye todas las novedades de `v1.3.1-rc.1` (ver más abajo).
 
@@ -23,6 +23,14 @@
 
 #### 💾 Limpieza de respaldos
 - Al eliminar respaldos antiguos por la retención se borran también sus archivos auxiliares `-wal` / `-shm`, que podían quedar sueltos en la carpeta `backups/`.
+
+#### 💧 Tarifas: edición de rangos
+- **Eliminar un rango ahora sí lo elimina.** Al editar una tarifa, el rango quitado con su botón seguía guardado y entraba en el cálculo. Ahora se borra al guardar, junto con los cambios del resto de la escala, todo o nada.
+- **Validación única en la API** para crear y editar, sobre la escala completa: el primer rango empieza en 0 m³ (cuota base), cada rango empieza justo después del anterior (sin huecos ni rangos encimados), los consumos son m³ enteros y solo el último puede quedar sin máximo. Los mensajes indican qué rango corregir y en qué número debe empezar.
+- **Protección al facturar:** si una tarifa tuviera rangos mal configurados, la factura de ese cliente se marca como fallida con el motivo, en lugar de generarse con un monto incorrecto.
+- **Historial de precios:** cada rango creado o modificado queda registrado con su precio anterior y el nuevo (la tabla existía pero no se llenaba).
+- La pantalla de edición muestra el motivo real cuando la API rechaza un cambio y, al guardar, cuántos rangos se actualizaron, agregaron y eliminaron.
+- **El cálculo no cambia:** cuota base fija en el primer rango y cobro progresivo por tramo. Verificado recalculando las 1 119 facturas existentes: todas coinciden al centavo.
 
 ### 🖥️ Mejoras de interfaz
 
@@ -41,7 +49,7 @@
 - **Versión actual:** `v1.3.1-rc.2` [Pre-release]
 - **Pre-release previo:** `v1.3.1-rc.1` (10/10/2026)
 - **Versión base estable previa:** `v1.3.0` (22/09/2026)
-- **Servidor embebido:** `@aguavp/api-server 1.0.13`
+- **Servidor embebido:** `@aguavp/api-server 1.0.14`
 
 ---
 
