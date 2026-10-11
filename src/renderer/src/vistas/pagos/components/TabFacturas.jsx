@@ -9,7 +9,6 @@ import {
   HiChevronLeft,
   HiChevronRight,
   HiX, 
-  HiFilter, 
   HiDocumentText, 
   HiRefresh, 
   HiCalculator,
@@ -18,6 +17,7 @@ import {
 } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { useTabFacturas } from "../../../hooks/useTabFacturas";
+import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
 import { usePagos } from "../../../context/PagosContext";
 import { useRutas } from "../../../context/RutasContext";
 import SelectorPeriodoAvanzado from "../../../components/ui/SelectorPeriodoAvanzado";
@@ -159,7 +159,6 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const SELECT_CLS = "w-full h-[52px] px-4 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none appearance-none cursor-pointer";
 
 const TabFacturas = () => {
   const navigate = useNavigate();
@@ -186,8 +185,14 @@ const TabFacturas = () => {
     handleRowsPerPageChange,
     setCurrentPage,
     actualizarFacturas,
-    setCityFilter
+    setCityFilter,
+    filtrosExtra,
+    extraActivos,
+    opcionesExtra,
+    setFiltroExtra,
+    limpiarFiltrosExtra
   } = useTabFacturas();
+  const [masFiltrosAbierto, setMasFiltrosAbierto] = useState(false);
 
   const { periodosInfo, siguientePeriodo, ultimoPeriodoRegistrado } = useRutas();
   const { registrarPago } = usePagos();
@@ -225,6 +230,7 @@ const TabFacturas = () => {
             search: search,
             estado: filtroEstado === "All" ? "" : filtroEstado,
             ciudad: cityFilter === "All" ? "" : cityFilter,
+            ...extraActivos,
             page: 1,
             limit: 10000
           });
@@ -319,14 +325,27 @@ const TabFacturas = () => {
     await actualizarFacturas();
   };
 
-  const hasActiveFilters = search || filtroEstado !== "All" || cityFilter !== "All" || filtroPeriodo !== new Date().toISOString().slice(0, 7);
+  const hasActiveFilters = search || filtroEstado !== "All" || cityFilter !== "All" || Object.keys(extraActivos).length > 0;
 
   const clearFilters = () => {
       handleSearch("");
       handleEstadoFilterChange("All");
       setCityFilter("All");
-      // Resetea el periodo al actual si es necesario (depende de tu hook)
+      limpiarFiltrosExtra();
   };
+
+  // Etiquetas de los filtros activos
+  const NOMBRES_EXTRA = { antiguedad: "Vencimiento", consumo: "Consumo", ruta_id: "Ruta", tarifa_id: "Tarifa" };
+  const chipsFiltros = [
+    filtroEstado !== "All" && { clave: "estado", texto: `Estado: ${filtroEstado}`, onQuitar: () => handleEstadoFilterChange("All") },
+    cityFilter !== "All" && { clave: "ciudad", texto: `Ciudad: ${cityFilter}`, onQuitar: () => handleCityFilterChange("All") },
+    ...Object.entries(extraActivos).map(([clave, valor]) => ({
+      clave,
+      texto: `${NOMBRES_EXTRA[clave]}: ${(opcionesExtra[clave] || []).find((o) => o.value === valor)?.label ?? valor}`,
+      onQuitar: () => setFiltroExtra(clave, "All")
+    }))
+  ].filter(Boolean);
+  const filtrosPanelActivos = ["consumo", "ruta_id", "tarifa_id"].filter((k) => filtrosExtra[k] !== "All").length + (cityFilter !== "All" ? 1 : 0);
 
   // Regla de Tintes Local para Estados
   const getEstadoBadge = (estado) => {
@@ -408,7 +427,7 @@ const TabFacturas = () => {
         
         {/* Filtros */}
         <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 rounded-t-2xl relative z-30">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
             
             {/* Buscador */}
             <div className="lg:col-span-3 relative w-full flex items-center">
@@ -448,51 +467,27 @@ const TabFacturas = () => {
                 </div>
             </div>
 
-            {/* Filtro por estado */}
             <div className="lg:col-span-2">
-                <select
-                    value={filtroEstado}
-                    onChange={(e) => handleEstadoFilterChange(e.target.value)}
-                    aria-label="Filtrar por estado"
-                    className={SELECT_CLS}
-                >
-                    <option value="All">Todos los estados</option>
-                    {estados.map(estado => (
-                        <option key={estado} value={estado}>{estado}</option>
-                    ))}
-                </select>
+              <SelectFiltro value={filtroEstado} onChange={handleEstadoFilterChange} opciones={estados.map((e) => ({ value: e, label: e }))} todos="Todos los estados" />
             </div>
-
-            {/* Filtro por ciudad */}
             <div className="lg:col-span-2">
-                <select
-                    value={cityFilter}
-                    onChange={(e) => handleCityFilterChange(e.target.value)}
-                    aria-label="Filtrar por ciudad"
-                    className={SELECT_CLS}
-                >
-                    <option value="All">Todas las ciudades</option>
-                    {ciudades.map(ciudad => (
-                        <option key={ciudad} value={ciudad}>{ciudad}</option>
-                    ))}
-                </select>
+              <SelectFiltro value={filtrosExtra.antiguedad} onChange={(v) => setFiltroExtra("antiguedad", v)} opciones={opcionesExtra.antiguedad} todos="Cualquier vencimiento" />
             </div>
-
-            {/* Botón Limpiar */}
-            <div className="lg:col-span-2 flex justify-end">
-                {hasActiveFilters ? (
-                    <button 
-                        onClick={clearFilters}
-                        className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors text-xs"
-                    >
-                        <HiFilter className="text-lg" />
-                        <span>Limpiar</span>
-                    </button>
-                ) : (
-                    <div className="w-full h-[52px]"></div> 
-                )}
+            <div className="lg:col-span-2">
+              <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelActivos} />
             </div>
           </div>
+
+          {masFiltrosAbierto && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
+              <SelectFiltro etiqueta="Consumo" value={filtrosExtra.consumo} onChange={(v) => setFiltroExtra("consumo", v)} opciones={opcionesExtra.consumo} todos="Cualquier consumo" />
+              <SelectFiltro etiqueta="Ruta de lectura" value={filtrosExtra.ruta_id} onChange={(v) => setFiltroExtra("ruta_id", v)} opciones={opcionesExtra.ruta_id} todos="Todas las rutas" />
+              <SelectFiltro etiqueta="Tarifa" value={filtrosExtra.tarifa_id} onChange={(v) => setFiltroExtra("tarifa_id", v)} opciones={opcionesExtra.tarifa_id} todos="Todas las tarifas" />
+              <SelectFiltro etiqueta="Ciudad" value={cityFilter} onChange={handleCityFilterChange} opciones={ciudades.map((c) => ({ value: c, label: c }))} todos="Todas las ciudades" />
+            </div>
+          )}
+
+          {hasActiveFilters && <ChipsFiltros chips={chipsFiltros} onLimpiar={clearFilters} total={totalItems} nombre="facturas" />}
         </div>
 
         {/* Sub-Header de Paginación */}

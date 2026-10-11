@@ -1,17 +1,23 @@
 import { useState, useMemo, useEffect } from "react";
 import { useFacturas } from "../context/FacturasContext";
 import { useClientes } from "../context/ClientesContext";
+import { useMedidores } from "../context/MedidoresContext";
+import { useTarifas } from "../context/TarifasContext";
 import { obtenerPeriodoActual } from "../utils/periodoUtils";
 
 export const useTabFacturas = () =>{
   const { facturas, pagination, loading, initialLoading, fetchFacturas, estadisticas, actualizarFacturas } = useFacturas();
   const { allClientes, fetchAllClientes } = useClientes();
+  const { allMedidores } = useMedidores();
+  const { tarifas } = useTarifas();
 
   // Estados de filtros y búsqueda
   const [search, setSearch] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("All");
   const [filtroPeriodo, setFiltroPeriodo] = useState(obtenerPeriodoActual());
   const [cityFilter, setCityFilter] = useState("All");
+  // Filtros adicionales ("All" = sin filtro); los valores van tal cual a la API (filtrosListado.js)
+  const [filtrosExtra, setFiltrosExtra] = useState({ antiguedad: "All", consumo: "All", ruta_id: "All", tarifa_id: "All" });
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -40,6 +46,12 @@ export const useTabFacturas = () =>{
       return () => clearTimeout(timer);
   }, [search]);
 
+  // Solo los filtros adicionales elegidos (objeto estable para el effect)
+  const extraActivos = useMemo(
+    () => Object.fromEntries(Object.entries(filtrosExtra).filter(([, v]) => v !== "All")),
+    [filtrosExtra]
+  );
+
   // Constante de buffer (Mínimo Común Múltiplo de 5, 10, 15, 20 para alineación perfecta)
   const FETCH_LIMIT = 60;
 
@@ -54,12 +66,38 @@ export const useTabFacturas = () =>{
           limit: FETCH_LIMIT,
           search: debouncedSearch,
           estado: filtroEstado === "All" ? "" : filtroEstado,
-          ciudad: cityFilter === "All" ? "" : cityFilter
+          ciudad: cityFilter === "All" ? "" : cityFilter,
+          ...extraActivos
       });
-  }, [debouncedSearch, filtroEstado, filtroPeriodo, cityFilter, apiPage, fetchFacturas]);
+  }, [debouncedSearch, filtroEstado, filtroPeriodo, cityFilter, extraActivos, apiPage, fetchFacturas]);
 
-  // Estados fijos para filtro
-  const estados = ["Pendiente", "Pagado", "Vencido", "En Convenio"];
+  // Estados que guarda el sistema (la API acepta también "Vencido" / "Pagada" como equivalentes)
+  const estados = ["Pendiente", "Vencida", "Pagado"];
+
+  // Opciones de los filtros adicionales
+  const opcionesExtra = useMemo(() => {
+    const rutas = new Map();
+    (allMedidores || []).forEach((m) => { if (m.ruta_id) rutas.set(String(m.ruta_id), m.ruta_nombre || `Ruta ${m.ruta_id}`); });
+    return {
+      antiguedad: [
+        { value: "vencida_1", label: "Vencidas (cualquier antigüedad)" },
+        { value: "vencida_30", label: "Vencidas hace más de 30 días" },
+        { value: "vencida_60", label: "Vencidas hace más de 60 días" },
+        { value: "vencida_90", label: "Vencidas hace más de 90 días" }
+      ],
+      consumo: [
+        { value: "0-15", label: "Hasta 15 m³" },
+        { value: "16-30", label: "16 a 30 m³" },
+        { value: "31-60", label: "31 a 60 m³" },
+        { value: "61+", label: "Más de 60 m³" }
+      ],
+      ruta_id: [
+        ...[...rutas.entries()].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label, "es")),
+        { value: "sin_ruta", label: "Sin ruta" }
+      ],
+      tarifa_id: (tarifas || []).map((t) => ({ value: String(t.id), label: t.nombre }))
+    };
+  }, [allMedidores, tarifas]);
 
   // Paginación: Cortar los datos del buffer (facturas) para mostrar solo la página actual
   const paginatedData = useMemo(() => {
@@ -106,11 +144,22 @@ export const useTabFacturas = () =>{
     setCurrentPage(1);
   };
 
+  const setFiltroExtra = (clave, valor) => {
+    setFiltrosExtra((prev) => ({ ...prev, [clave]: valor || "All" }));
+    setCurrentPage(1);
+  };
+
+  const limpiarFiltrosExtra = () => {
+    setFiltrosExtra({ antiguedad: "All", consumo: "All", ruta_id: "All", tarifa_id: "All" });
+    setCurrentPage(1);
+  };
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "pagado": return "success";
       case "pendiente": return "warning";
-      case "vencido": return "danger";
+      case "vencido":
+      case "vencida": return "danger";
       case "en convenio": return "primary";
       default: return "default";
     }
@@ -141,6 +190,11 @@ export const useTabFacturas = () =>{
     setCurrentPage,
     getStatusColor,
     actualizarFacturas,
-    setCityFilter
+    setCityFilter,
+    filtrosExtra,
+    extraActivos,
+    opcionesExtra,
+    setFiltroExtra,
+    limpiarFiltrosExtra
   };
 };
