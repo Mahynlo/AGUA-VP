@@ -8,7 +8,7 @@
 **🚀 Versión:** `v1.3.1-rc.2` [Pre-release / Versión Candidata de Evaluación]
 **📌 Versión base anterior estable:** `v1.3.0`
 **🔖 Pre-release precedente:** `v1.3.1-rc.1`
-**🧩 Servidor embebido:** `@aguavp/api-server 1.0.15`
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.16`
 
 > ⚠️ **Aviso de Pre-release:** Corrección de la primera copia en la nube detectada al probar `v1.3.1-rc.1` instalada. Incluye todas las novedades de `v1.3.1-rc.1` (ver más abajo).
 
@@ -35,6 +35,12 @@
 
 ### 🖥️ Mejoras de interfaz
 
+#### 🔎 Filtros de Clientes e Inventario de Medidores
+- **Clientes:** filtro por **situación de pago** (al corriente, con saldo pendiente, 1 / 2 / 3 o más facturas vencidas), **tarifa**, **con / sin medidor**, **ruta de lectura** y ciudad; nuevo orden **Mayor adeudo**. La tabla muestra bajo el estado el adeudo de cada cliente y sus facturas vencidas (o «Al corriente»).
+- **Medidores:** **ubicación agrupada** (ya no se repiten opciones por mayúsculas o espacios: «Medidor nuevo», «Medidor Nuevo » cuentan juntas), **asignado / disponible**, **marca** (ayuda a encontrar errores de captura), **ruta**, **con / sin coordenadas** y **año de instalación**.
+- Cada opción muestra cuántos registros tiene. Búsqueda y filtros principales a la vista; el resto en **«Más filtros»**. Los filtros activos aparecen como etiquetas que se quitan con su X.
+- **Exportar «Resultados del filtro»:** exporta todos los registros que cumplen los filtros, de todas las páginas (antes la opción de filtrados exportaba como máximo 60).
+
 #### Paneles de Nube y Backups explicados
 - **Nube (Turso):** el panel se ordena en dos pasos: *1. Conexión con Turso* y *2. Acciones sobre la copia*. Cada acción (Sincronizar ahora, Subir base completa, Restaurar desde la nube) tiene una tarjeta que explica qué hace y cuándo usarla. *Desvincular* queda aparte y aclara que no borra datos locales ni la copia en la nube. Se agregó una explicación en lenguaje sencillo de cómo funciona la copia.
 - **Backups:** tarjetas con la explicación de *Crear respaldo ahora* y de la retención; guía de cómo funcionan los respaldos y cómo deshacer una restauración; descripción de cada tipo de respaldo al pasar el mouse; los avisos de la confirmación de restauración reflejan el funcionamiento actual (se aplica al reiniciar y se puede deshacer con el respaldo Pre-restauración).
@@ -50,7 +56,7 @@
 - **Versión actual:** `v1.3.1-rc.2` [Pre-release]
 - **Pre-release previo:** `v1.3.1-rc.1` (10/10/2026)
 - **Versión base estable previa:** `v1.3.0` (22/09/2026)
-- **Servidor embebido:** `@aguavp/api-server 1.0.15`
+- **Servidor embebido:** `@aguavp/api-server 1.0.16`
 
 ---
 

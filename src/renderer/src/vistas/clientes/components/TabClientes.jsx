@@ -9,7 +9,6 @@ import {
     HiUsers,
     HiSearch,
     HiX,
-    HiFilter,
     HiPencil,
     HiChevronLeft,
     HiChevronRight,
@@ -27,6 +26,9 @@ import { useClientes } from "../../../context/ClientesContext";
 import { exportData } from "../../../utils/exportUtils";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { normalizarTexto } from "../../../utils/textUtils";
+import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
+
+const dinero = (n) => Number(n || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
 const premiumConfirmModalTheme = {
   root: {
@@ -53,7 +55,9 @@ const normalizarClientesParaExport = (lista) => {
         "Teléfono": c.telefono || "",
         "Correo": c.email || c.correo || "",
         "Tarifa": c.tarifa_nombre || c.tarifa || "Sin Tarifa",
-        "Estado": c.estado_cliente || c.estado || "Activo"
+        "Estado": c.estado_cliente || c.estado || "Activo",
+        "Adeudo": Number(c.adeudo_total || 0),
+        "Facturas Vencidas": Number(c.facturas_vencidas || 0)
     }));
 };
 
@@ -251,30 +255,39 @@ const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-semibold rounded-xl b
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 export function TabClientes() {
     const {
-        filteredData,
         paginatedData,
         initialLoading,
         loading,
         search,
-        cityFilter,
-        statusFilter,
-        ciudades,
-        estados,
+        filtros,
+        opciones,
+        setFiltro,
+        filtrosPanelActivos,
         currentPage,
         rowsPerPage,
         totalPages,
         totalItems,
         handleSearch,
-        handleCityFilterChange,
-        handleStatusFilterChange,
         handleOrderByChange,
         handleRowsPerPageChange,
         clearFilters,
         hasActiveFilters,
         setCurrentPage,
         getStatusColor,
-        orderBy
+        orderBy,
+        obtenerTodosFiltrados
     } = useTabClientes();
+    const [masFiltrosAbierto, setMasFiltrosAbierto] = useState(false);
+
+    // Etiquetas de los filtros activos (texto de la opción elegida)
+    const NOMBRES_FILTRO = { pago: "Pago", estado: "Estado", tarifa_id: "Tarifa", medidor: "Medidor", ruta_id: "Ruta", ciudad: "Ciudad" };
+    const chipsFiltros = Object.entries(filtros)
+        .filter(([, valor]) => valor !== "All")
+        .map(([clave, valor]) => ({
+            clave,
+            texto: `${NOMBRES_FILTRO[clave]}: ${(opciones[clave] || []).find(o => o.value === valor)?.label ?? valor}`,
+            onQuitar: () => setFiltro(clave, "All")
+        }));
 
     const { setSuccess, setError } = useFeedback();
     const { actualizarClientes, allClientes } = useClientes();
@@ -314,7 +327,8 @@ export function TabClientes() {
                 dataToExport = paginatedData;
                 prefix = "Pagina_";
             } else if (type === "filtered") {
-                dataToExport = filteredData;
+                // Todos los que cumplen los filtros, no solo el bloque cargado en la tabla
+                dataToExport = await obtenerTodosFiltrados();
                 prefix = "Filtrados_";
             } else {
                 dataToExport = allClientes;
@@ -621,12 +635,12 @@ export function TabClientes() {
                     </div>
                 ) : (
                     <>
-                        {/* Filtros */}
+                        {/* Filtros: búsqueda + principales; el resto en "Más filtros" */}
                 <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
 
                         {/* Buscador */}
-                        <div className="lg:col-span-5 relative w-full flex items-center">
+                        <div className="lg:col-span-4 relative w-full flex items-center">
                             <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
                                 <HiSearch className="w-5 h-5" />
                             </span>
@@ -646,64 +660,40 @@ export function TabClientes() {
                             )}
                         </div>
 
-                        {/* Filtro ciudad */}
-                        <div className="lg:col-span-2">
-                            <select
-                                value={cityFilter}
-                                onChange={(e) => handleCityFilterChange(e.target.value)}
-                                aria-label="Filtrar por ciudad"
-                                className={SELECT_CLS}
-                            >
-                                <option value="All">Todas las ciudades</option>
-                                {ciudades.map((ciudad) => (
-                                    <option key={ciudad} value={ciudad}>{ciudad}</option>
-                                ))}
-                            </select>
+                        <div className="lg:col-span-3">
+                            <SelectFiltro value={filtros.pago} onChange={(v) => setFiltro("pago", v)} opciones={opciones.pago} todos="Cualquier situación de pago" />
                         </div>
-
-                        {/* Filtro estado */}
                         <div className="lg:col-span-2">
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => handleStatusFilterChange(e.target.value)}
-                                aria-label="Filtrar por estado"
-                                className={SELECT_CLS}
-                            >
-                                <option value="All">Todos los estados</option>
-                                {estados.map((estado) => (
-                                    <option key={estado} value={estado}>{estado}</option>
-                                ))}
-                            </select>
+                            <SelectFiltro value={filtros.estado} onChange={(v) => setFiltro("estado", v)} opciones={opciones.estado} todos="Todos los estados" />
                         </div>
-
-                        {/* Ordenar */}
-                        <div className="lg:col-span-2">
-                            <select
-                                value={orderBy}
-                                onChange={(e) => handleOrderByChange(e.target.value)}
-                                aria-label="Ordenar clientes"
-                                className={SELECT_CLS}
-                            >
-                                <option value="numero_predio">N° de predio</option>
-                                <option value="nombre">Nombre (A-Z)</option>
-                            </select>
-                        </div>
-
-                        {/* Limpiar filtros */}
-                        <div className="lg:col-span-1 flex justify-end">
-                            {hasActiveFilters ? (
-                                <button
-                                    onClick={clearFilters}
-                                    className="w-full font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors"
-                                >
-                                    <HiFilter className="text-lg" />
-                                    Limpiar
-                                </button>
-                            ) : (
-                                <div className="w-full h-[52px]" />
-                            )}
+                        <div className="lg:col-span-3">
+                            <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto(v => !v)} activos={filtrosPanelActivos} />
                         </div>
                     </div>
+
+                    {masFiltrosAbierto && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
+                            <SelectFiltro etiqueta="Tarifa" value={filtros.tarifa_id} onChange={(v) => setFiltro("tarifa_id", v)} opciones={opciones.tarifa_id} todos="Todas las tarifas" />
+                            <SelectFiltro etiqueta="Medidor" value={filtros.medidor} onChange={(v) => setFiltro("medidor", v)} opciones={opciones.medidor} todos="Con y sin medidor" />
+                            <SelectFiltro etiqueta="Ruta de lectura" value={filtros.ruta_id} onChange={(v) => setFiltro("ruta_id", v)} opciones={opciones.ruta_id} todos="Todas las rutas" />
+                            <SelectFiltro etiqueta="Ciudad" value={filtros.ciudad} onChange={(v) => setFiltro("ciudad", v)} opciones={opciones.ciudad} todos="Todas las ciudades" />
+                            <div className="flex flex-col gap-1">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">Ordenar por</span>
+                                <select
+                                    value={orderBy}
+                                    onChange={(e) => handleOrderByChange(e.target.value)}
+                                    aria-label="Ordenar clientes"
+                                    className={SELECT_CLS}
+                                >
+                                    <option value="numero_predio">N° de predio</option>
+                                    <option value="nombre">Nombre (A-Z)</option>
+                                    <option value="adeudo">Mayor adeudo</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
+
+                    <ChipsFiltros chips={chipsFiltros} onLimpiar={clearFilters} total={totalItems} nombre="clientes" />
                 </div>
 
                 {/* Sub-header paginación */}
@@ -823,6 +813,16 @@ export function TabClientes() {
                                                 status={cliente.estado_cliente}
                                                 getStatusColor={getStatusColor}
                                             />
+                                            {cliente.adeudo_total > 0 ? (
+                                                <p className="mt-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400">
+                                                    Adeuda {dinero(cliente.adeudo_total)}
+                                                    {cliente.facturas_vencidas > 0 && (
+                                                        <span className="font-semibold text-slate-500 dark:text-zinc-400"> · {cliente.facturas_vencidas} vencida{cliente.facturas_vencidas !== 1 ? "s" : ""}</span>
+                                                    )}
+                                                </p>
+                                            ) : (
+                                                <p className="mt-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Al corriente</p>
+                                            )}
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center justify-end gap-2">
@@ -960,6 +960,25 @@ export function TabClientes() {
                                     Exporta únicamente los registros visibles actualmente en esta página de la tabla.
                                 </span>
                             </button>
+
+                            {/* Opción 2: Resultados del filtro (todas las páginas) */}
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleExecuteExport("filtered")}
+                                    className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-slate-50/50 hover:bg-blue-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                                >
+                                    <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                                        <span>Resultados del filtro</span>
+                                        <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md">
+                                            {totalItems} registros
+                                        </span>
+                                    </span>
+                                    <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                        Exporta todos los clientes que cumplen la búsqueda y los filtros actuales, de todas las páginas.
+                                    </span>
+                                </button>
+                            )}
 
                             {/* Opción 3: Todos */}
                             <button
