@@ -326,7 +326,8 @@ const tarifasApp = {
   registrarRangosTarifa: (data) => ipcRenderer.invoke('registrar-rangos-tarifa', data),
   fetchTarifas: (data) => ipcRenderer.invoke('fetch-tarifas', data), // data = { token_session, params }
   updateTarifa: (data) => ipcRenderer.invoke('update-tarifa', data),
-  updateRangosTarifa: (data) => ipcRenderer.invoke('update-rangos-tarifa', data)
+  updateRangosTarifa: (data) => ipcRenderer.invoke('update-rangos-tarifa', data),
+  eliminarTarifa: (data) => ipcRenderer.invoke('eliminar-tarifa', data) // data = { id, token_session }
 }
 
 // objeto para manejar la documentación de ayuda

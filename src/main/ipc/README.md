@@ -85,7 +85,7 @@ Los controles de la barra de título (`minimize`, `maximize`, `close`) se regist
 |---|---|---|
 | `clientesHandlers.js` | `fetch-clientes`, `fetch-clientes-estadisticas`, `fetch-clientes-eliminados`, `register-cliente`, `update-cliente`, `asignar-tarifa-cliente`, `delete-cliente`, `reactivate-cliente`, `purge-cliente` | `api-client/clientes/` |
 | `medidoresHandlers.js` | `fetch-medidores`, `fetch-medidores-eliminados`, `register-medidor`, `update-medidor`, `delete-medidor`, `reactivate-medidor`, `purge-medidor` | `api-client/medidores/` |
-| `tarifasHandlers.js` | `fetch-tarifas`, `register-tarifa`, `registrar-rangos-tarifa`, `update-tarifa`, `update-rangos-tarifa` | `api-client/tarifas/` |
+| `tarifasHandlers.js` | `fetch-tarifas`, `register-tarifa`, `registrar-rangos-tarifa`, `update-tarifa`, `update-rangos-tarifa`, `eliminar-tarifa` | `api-client/tarifas/` |
 | `rutasHandlers.js` | `listar-rutas`, `listar-rutas-info-medidores`, `registrar-ruta`, `modificar-ruta`, `calcular-ruta` | `api-client/rutas/`, `src/generador_rutas/` (cálculo de ruta con ruta-craft-osm) |
 | `lecturasHandlers.js` | `fetch-lecturas`, `listar-lecturas`, `obtener-estado-periodos-lecturas`, `register-lectura`, `modificar-lectura`, `generar-facturas-ruta`, `validar-cobranza-periodo` | `api-client/lecturas/` |
 | `facturasHandlers.js` | `fetch-facturas`, `register-factura` | `api-client/facturas/` |

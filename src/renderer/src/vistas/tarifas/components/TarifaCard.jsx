@@ -1,6 +1,7 @@
 import { HiCalendar, HiCurrencyDollar, HiExclamation } from "react-icons/hi";
 import RegistrarRangoTarifa from "./RegistrarRango";
 import EditarTarifaYRangos from "./EditarTarifaY_Rangos";
+import EliminarTarifa from "./EliminarTarifa";
 import { formatoFirstDay } from "../../../utils/formatFecha";
 
 export default function TarifaCard({ tarifa }) {
@@ -80,12 +81,13 @@ export default function TarifaCard({ tarifa }) {
             </div>
           </div>
 
-          <div className="flex shrink-0">
+          <div className="flex shrink-0 gap-2">
             {!tieneRangos ? (
               <RegistrarRangoTarifa tarifaId={tarifa.id} />
             ) : (
               <EditarTarifaYRangos tarifa={tarifa} rangosIniciales={tarifa.rangos} />
             )}
+            <EliminarTarifa tarifa={tarifa} />
           </div>
         </div>
       </div>
