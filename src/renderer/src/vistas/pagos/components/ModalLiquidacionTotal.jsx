@@ -5,6 +5,7 @@ import { SearchIcon } from "../../../IconsApp/IconsSidebar";
 import { useFeedback } from "../../../context/FeedbackContext";
 import { usePagos } from "../../../context/PagosContext";
 import { formatearPeriodo } from "../../../utils/periodoUtils";
+import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
 
 const premiumModalTheme = {
   root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
@@ -125,7 +126,7 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
   const [confOrden, setConfOrden] = useState("predio"); // orden en la vista de revisión
   const [visibleCount, setVisibleCount] = useState(LIST_PAGE);
   const [metodoPago, setMetodoPago] = useState("Efectivo");
-  const [fechaPago, setFechaPago] = useState(new Date().toISOString().split("T")[0]);
+  const [fechaPago, setFechaPago] = useState(nowHermosilloDateStr());
   const [comentario, setComentario] = useState("Liquidación total desde cobranza");
   const [mostrarErrores, setMostrarErrores] = useState(false);
   const [excluirMesActual, setExcluirMesActual] = useState(false);
@@ -154,7 +155,7 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
 
   const debeExcluirsePorDefecto = useMemo(() => {
     if (!ultimoPeriodoFacturadoStr) return false;
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = nowHermosilloDateStr();
     let algunaVencida = false;
     
     for (const c of (clientesConDeuda || [])) {
@@ -206,7 +207,7 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
     setConfOrden("predio");
     setVisibleCount(LIST_PAGE);
     setMetodoPago("Efectivo");
-    setFechaPago(new Date().toISOString().split("T")[0]);
+    setFechaPago(nowHermosilloDateStr());
     setComentario("Liquidación total desde cobranza");
     setMostrarErrores(false);
     setExcluirMesActual(debeExcluirsePorDefecto);

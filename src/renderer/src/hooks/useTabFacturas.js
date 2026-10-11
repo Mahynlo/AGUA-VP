@@ -72,7 +72,7 @@ export const useTabFacturas = () =>{
   }, [debouncedSearch, filtroEstado, filtroPeriodo, cityFilter, extraActivos, apiPage, fetchFacturas]);
 
   // Estados que guarda el sistema (la API acepta también "Vencido" / "Pagada" como equivalentes)
-  const estados = ["Pendiente", "Vencida", "Pagado"];
+  const estados = ["Pendiente", "Parcial", "Vencida", "En Convenio", "Pagado"];
 
   // Opciones de los filtros adicionales
   const opcionesExtra = useMemo(() => {

@@ -13,6 +13,7 @@ import {
   HiDocumentText,
   HiCalculator
 } from "react-icons/hi";
+import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
 
 const premiumModalTheme = {
   root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
@@ -51,7 +52,7 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
     cantidad_entregada: "",
     metodo_pago: "Efectivo",
     comentario: "",
-    fecha_pago: new Date().toISOString().split("T")[0]
+    fecha_pago: nowHermosilloDateStr()
   });
 
   const [erroresCampos, setErroresCampos] = useState({});
@@ -103,7 +104,7 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
       cantidad_entregada: "",
       metodo_pago: "Efectivo",
       comentario: "",
-      fecha_pago: new Date().toISOString().split("T")[0]
+      fecha_pago: nowHermosilloDateStr()
     });
     setErroresCampos({});
     setMostrarErrores(false);
@@ -138,7 +139,7 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
       cantidad_entregada: "",
       metodo_pago: "Efectivo",
       comentario: "",
-      fecha_pago: new Date().toISOString().split("T")[0]
+      fecha_pago: nowHermosilloDateStr()
     });
     setErroresCampos({});
     setMostrarErrores(false);

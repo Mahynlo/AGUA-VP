@@ -22,6 +22,7 @@ import { useFeedback } from "../../../context/FeedbackContext";
 import { useAuth } from "../../../context/AuthContext";
 import { usePermissions } from "../../../context/PermissionsContext";
 import { formatearPeriodo } from "../../../utils/periodoUtils";
+import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
 
 const largeModalTheme = {
     root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
@@ -383,8 +384,8 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
   }, [rutaId, periodoMostrado, isOpen, obtenerInfoRuta, setError]);
 
   const obtenerFechaActual = useCallback(() => {
-    const ahora = new Date();
-    return ahora.toISOString().split('T')[0];
+    // Fecha de hoy en hora de Sonora (toISOString da la de UTC: después de las 5 pm sería mañana)
+    return nowHermosilloDateStr();
   }, []);
 
   const hasValidData = ruta && ruta.puntos && ruta.puntos.length > 0;
