@@ -1,13 +1,14 @@
 import { useState } from "react";
 import {
     HiEye, HiTrash, HiLocationMarker, HiUser, HiCog,
-    HiDownload, HiSearch, HiX, HiFilter, HiChevronLeft, HiChevronRight, HiRefresh, HiFolder,
+    HiDownload, HiSearch, HiX, HiChevronLeft, HiChevronRight, HiRefresh, HiFolder,
     HiExclamationCircle
 } from "react-icons/hi";
 import { useTabMedidores } from "../../../hooks/useTabMedidores";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { Modal, Button, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { normalizarTexto } from "../../../utils/textUtils";
+import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
 
 const premiumModalTheme = {
     root: {
@@ -187,18 +188,25 @@ function StatusBadge({ status, getStatusColor }) {
     );
 }
 
-const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none appearance-none cursor-pointer";
-
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 const TabInventarioMedidores = () => {
     const {
         paginatedData, loading, initialLoading, search, handleSearch,
-        statusFilter, handleStatusFilterChange,
-        locationFilter, locationOptions, handleLocationFilterChange,
-        cityFilter, cityOptions, handleCityFilterChange,
+        filtros, opciones, setFiltro, filtrosPanelActivos,
         currentPage, setCurrentPage, rowsPerPage, handleRowsPerPageChange,
-        totalPages, totalItems, getStatusColor, medidores, clearFilters, hasActiveFilters
+        totalPages, totalItems, getStatusColor, clearFilters, hasActiveFilters, obtenerTodosFiltrados
     } = useTabMedidores();
+    const [masFiltrosAbierto, setMasFiltrosAbierto] = useState(false);
+
+    // Etiquetas de los filtros activos (texto de la opción elegida)
+    const NOMBRES_FILTRO = { estado: "Estado", ubicacion: "Ubicación", asignacion: "Vinculación", marca: "Marca", ruta_id: "Ruta", gps: "GPS", anio_instalacion: "Instalado en", ciudad: "Ciudad" };
+    const chipsFiltros = Object.entries(filtros)
+        .filter(([, valor]) => valor !== "All")
+        .map(([clave, valor]) => ({
+            clave,
+            texto: `${NOMBRES_FILTRO[clave]}: ${(opciones[clave] || []).find(o => o.value === valor)?.label ?? valor}`,
+            onQuitar: () => setFiltro(clave, "All")
+        }));
 
     const { setSuccess, setError } = useFeedback();
     const { can } = usePermissions();
@@ -254,7 +262,8 @@ const TabInventarioMedidores = () => {
                 rawData = paginatedData;
                 prefix = "Pagina_";
             } else if (type === "filtered") {
-                rawData = medidores || paginatedData;
+                // Todos los que cumplen los filtros, no solo el bloque cargado en la tabla
+                rawData = await obtenerTodosFiltrados();
                 prefix = "Filtrados_";
             } else {
                 rawData = allMedidores;
@@ -554,11 +563,11 @@ const TabInventarioMedidores = () => {
                     </div>
                 ) : (
                     <>
-                        {/* Filtros */}
+                        {/* Filtros: búsqueda + principales; el resto en "Más filtros" */}
                 <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
                         {/* Buscador */}
-                        <div className="lg:col-span-4 relative w-full flex items-center">
+                        <div className="lg:col-span-5 relative w-full flex items-center">
                             <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
                                 <HiSearch className="w-5 h-5" />
                             </span>
@@ -575,45 +584,29 @@ const TabInventarioMedidores = () => {
                             )}
                         </div>
 
-                        {/* Filtro estado */}
                         <div className="lg:col-span-2">
-                            <select value={statusFilter} onChange={(e) => handleStatusFilterChange(e.target.value)} aria-label="Filtrar por estado" className={SELECT_CLS}>
-                                <option value="All">Todos los estados</option>
-                                <option value="Activo">Activo</option>
-                                <option value="Inactivo">Inactivo</option>
-                                <option value="Mantenimiento">Mantenimiento</option>
-                                <option value="Cortado">Cortado</option>
-                                <option value="Retirado">Retirado</option>
-                            </select>
+                            <SelectFiltro value={filtros.estado} onChange={(v) => setFiltro("estado", v)} opciones={opciones.estado} todos="Todos los estados" />
                         </div>
-
-                        {/* Filtro ubicación */}
+                        <div className="lg:col-span-3">
+                            <SelectFiltro value={filtros.ubicacion} onChange={(v) => setFiltro("ubicacion", v)} opciones={opciones.ubicacion} todos="Todas las ubicaciones" />
+                        </div>
                         <div className="lg:col-span-2">
-                            <select value={locationFilter} onChange={(e) => handleLocationFilterChange(e.target.value)} aria-label="Filtrar por ubicación" className={SELECT_CLS}>
-                                <option value="All">Todas las ubicaciones</option>
-                                {locationOptions.map(u => <option key={u} value={u}>{u}</option>)}
-                            </select>
-                        </div>
-
-                        {/* Filtro ciudad */}
-                        <div className="lg:col-span-2">
-                            <select value={cityFilter} onChange={(e) => handleCityFilterChange(e.target.value)} aria-label="Filtrar por ciudad" className={SELECT_CLS}>
-                                <option value="All">Todas las ciudades</option>
-                                {cityOptions.map(ciudad => (
-                                    <option key={ciudad} value={ciudad}>{ciudad}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Limpiar */}
-                        <div className="lg:col-span-2 flex justify-end">
-                            {hasActiveFilters ? (
-                                <button onClick={clearFilters} className="w-full font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors">
-                                    <HiFilter className="text-lg" /> Limpiar
-                                </button>
-                            ) : <div className="w-full h-[52px]" />}
+                            <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto(v => !v)} activos={filtrosPanelActivos} />
                         </div>
                     </div>
+
+                    {masFiltrosAbierto && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
+                            <SelectFiltro etiqueta="Vinculación" value={filtros.asignacion} onChange={(v) => setFiltro("asignacion", v)} opciones={opciones.asignacion} todos="Asignados y disponibles" />
+                            <SelectFiltro etiqueta="Marca" value={filtros.marca} onChange={(v) => setFiltro("marca", v)} opciones={opciones.marca} todos="Todas las marcas" />
+                            <SelectFiltro etiqueta="Ruta de lectura" value={filtros.ruta_id} onChange={(v) => setFiltro("ruta_id", v)} opciones={opciones.ruta_id} todos="Todas las rutas" />
+                            <SelectFiltro etiqueta="Coordenadas (GPS)" value={filtros.gps} onChange={(v) => setFiltro("gps", v)} opciones={opciones.gps} todos="Con y sin coordenadas" />
+                            <SelectFiltro etiqueta="Año de instalación" value={filtros.anio_instalacion} onChange={(v) => setFiltro("anio_instalacion", v)} opciones={opciones.anio_instalacion} todos="Todos los años" />
+                            <SelectFiltro etiqueta="Ciudad del cliente" value={filtros.ciudad} onChange={(v) => setFiltro("ciudad", v)} opciones={opciones.ciudad} todos="Todas las ciudades" />
+                        </div>
+                    )}
+
+                    <ChipsFiltros chips={chipsFiltros} onLimpiar={clearFilters} total={totalItems} nombre="medidores" />
                 </div>
 
                 {/* Sub-header paginación */}
@@ -876,7 +869,26 @@ const TabInventarioMedidores = () => {
                                 </span>
                             </button>
 
-                            {/* Opción 2: Todos */}
+                            {/* Opción 2: Resultados del filtro (todas las páginas) */}
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleExecuteExport("filtered")}
+                                    className="flex flex-col text-left p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 bg-slate-50/50 hover:bg-blue-50/10 dark:bg-zinc-900/30 transition-all duration-200 w-full"
+                                >
+                                    <span className="text-xs font-black text-slate-800 dark:text-zinc-100 flex items-center justify-between w-full">
+                                        <span>Resultados del filtro</span>
+                                        <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-md">
+                                            {totalItems} registros
+                                        </span>
+                                    </span>
+                                    <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 mt-1">
+                                        Exporta todos los medidores que cumplen la búsqueda y los filtros actuales, de todas las páginas.
+                                    </span>
+                                </button>
+                            )}
+
+                            {/* Opción 3: Todos */}
                             <button
                                 type="button"
                                 onClick={() => handleExecuteExport("all")}
