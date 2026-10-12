@@ -35,6 +35,12 @@ export function FacturasProvider({ children }) {
   const filtrosRef = useRef(filtros);
   filtrosRef.current = filtros;
 
+  // Última consulta hecha (p. ej. la pestaña Facturas con su período, búsqueda y filtros).
+  // Al actualizar (tras un cobro o con "Recargar") se repite esa misma consulta; antes se usaban
+  // los filtros del contexto y la tabla saltaba al mes actual aunque el selector mostrara otro.
+  const ultimaConsultaRef = useRef(null);
+  const consultaParaActualizar = () => ({ ...(ultimaConsultaRef.current || filtrosRef.current), force: true });
+
   // Función para obtener las facturas
   const fetchFacturas = useCallback(async (params = {}) => {
     try {
@@ -54,6 +60,8 @@ export function FacturasProvider({ children }) {
         estado: params.estado || '',
         ...params
       };
+      ultimaConsultaRef.current = { ...queryParams };
+      delete ultimaConsultaRef.current.force;
 
       const response = await window.api.fetchFacturas(
         token_session,
@@ -102,7 +110,7 @@ export function FacturasProvider({ children }) {
   useEffect(() => {
     const handleUpdate = () => {
       console.log("🔄 Actualización detectada en FacturasContext, refrescando facturas...");
-      fetchFacturas({ ...filtrosRef.current, force: true });
+      fetchFacturas(consultaParaActualizar());
     };
 
     window.addEventListener('connection-restored', handleUpdate);
@@ -139,7 +147,7 @@ export function FacturasProvider({ children }) {
 
   // Función para actualizar facturas después de cambios
   const actualizarFacturas = useCallback(async () => {
-    await fetchFacturas({ ...filtrosRef.current, force: true });
+    await fetchFacturas(consultaParaActualizar());
   }, [fetchFacturas]);
 
   // Funciones de filtrado específicas

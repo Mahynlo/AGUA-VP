@@ -44,6 +44,12 @@
 - **Problema:** la fecha propuesta en los formularios de pago (pago, pago rápido, pago distribuido y liquidación total) y la fecha que se guarda al tomar lecturas se calculaban en hora UTC. **Después de las 5:00 p. m. salía la fecha del día siguiente.**
 - **Corrección:** se usa la fecha de hoy en hora de Sonora (`America/Hermosillo`), la misma que usa la API.
 
+#### 🔎 Filtros y listas de Pagos (detectado por las pruebas automatizadas)
+- **Pagos → Pagos:** los filtros de **fecha de cobro**, **cobrado por** y **tipo de pago** no llegaban al servidor: con «Cobrados hoy» se mostraban todos los pagos y el total cobrado de todo el historial. Ahora se aplican.
+- **Pagos → Facturas:** lo mismo con **antigüedad del vencimiento**, **consumo**, **ruta** y **tarifa**.
+- **Pagos → Facturas:** después de registrar un cobro (o con «Recargar»), la tabla volvía al mes actual aunque el selector siguiera mostrando otro período, y aparecía «No hay facturas en este período». Ahora conserva el período, la búsqueda y los filtros.
+- **Medidores:** al registrar un número de serie repetido se mostraba «Error al registrar medidor» sin el motivo. Ahora dice «El número de serie ya está registrado».
+
 #### 🧾 Comprobante de pago
 - La **fecha de pago** se imprimía un día antes (un pago del 10/09 salía 09/09) y, al reimprimir desde el detalle del pago, la **hora de emisión** salía 7 horas adelantada. Solo cambia cómo se leen las fechas; el diseño del comprobante es el mismo.
 

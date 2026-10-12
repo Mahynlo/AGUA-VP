@@ -23,6 +23,11 @@ export const fetchFacturas = async (token_session, params, isRetry = false) => {
     if (params.search) urlParams.append("search", params.search);
     if (params.estado) urlParams.append("estado", params.estado);
     if (params.ciudad) urlParams.append("ciudad", params.ciudad);
+    // Filtros de la pantalla (si faltan aquí, la API nunca los recibe)
+    if (params.antiguedad) urlParams.append("antiguedad", params.antiguedad);
+    if (params.consumo) urlParams.append("consumo", params.consumo);
+    if (params.ruta_id) urlParams.append("ruta_id", params.ruta_id);
+    if (params.tarifa_id) urlParams.append("tarifa_id", params.tarifa_id);
     // Evita respuesta cacheada en Electron/Chromium para datos de cobranza.
     urlParams.append("_t", String(Date.now()));
 

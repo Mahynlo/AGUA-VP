@@ -1,3 +1,4 @@
+import './e2eUserData.js' // primero: en pruebas E2E cambia la carpeta de datos antes de que otros módulos la lean
 import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'

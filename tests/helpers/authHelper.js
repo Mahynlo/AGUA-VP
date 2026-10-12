@@ -1,11 +1,13 @@
 const { expect } = require('@playwright/test');
 
+const { USUARIO_PRUEBA } = require('./baseDePrueba');
+
 /**
- * Credenciales por defecto del usuario Administrador del sistema AguaVP
+ * Usuario superadmin de prueba: se crea solo en la copia de la base (baseDePrueba.js)
  */
 const DEFAULT_ADMIN = {
-  email: 'admin@aguavp.com',
-  password: 'Admin123!'
+  email: USUARIO_PRUEBA.correo,
+  password: USUARIO_PRUEBA.password
 };
 
 /**
@@ -14,7 +16,7 @@ const DEFAULT_ADMIN = {
 async function dismissWelcomeModalIfNeeded(window) {
   try {
     const btnRegistrar = window.locator('button', { hasText: 'Registrar y Continuar' });
-    if (await btnRegistrar.isVisible({ timeout: 2500 })) {
+    if (await btnRegistrar.waitFor({ state: 'visible', timeout: 2500 }).then(() => true, () => false)) {
       await btnRegistrar.click();
       await window.waitForTimeout(1000);
     }
@@ -44,32 +46,32 @@ async function ensureLoggedOut(window) {
 async function loginAsAdmin(window, credentials = DEFAULT_ADMIN) {
   await dismissWelcomeModalIfNeeded(window);
 
-  // Verificar si ya estamos autenticados en el shell de la aplicación
-  const navBar = window.locator('nav').first();
-  const alreadyLoggedIn = await navBar.isVisible({ timeout: 2000 }).catch(() => false);
-  if (alreadyLoggedIn) {
+  // Ya autenticado: el menú lateral (enlace a Clientes) solo existe dentro de la app.
+  // Ojo: la barra de título es un <nav> que también está en el login, no sirve como indicador.
+  const menu = window.locator('a[href="#/clientes"]').first();
+  if (await menu.waitFor({ state: 'visible', timeout: 2000 }).then(() => true, () => false)) {
     return;
   }
 
-  // Esperar a que el formulario de inicio de sesión esté en pantalla
   const emailInput = window.locator('input[type="email"]');
-  await expect(emailInput).toBeVisible({ timeout: 15000 });
-
-  // Llenar correo y contraseña
+  await expect(emailInput).toBeVisible({ timeout: 20000 });
   await emailInput.fill(credentials.email);
-  const passwordInput = window.locator('input[type="password"]');
-  await passwordInput.fill(credentials.password);
+  await window.locator('input[type="password"]').fill(credentials.password);
+  await window.locator('button', { hasText: 'Ingresar al Panel' }).click();
 
-  // Hacer clic en Ingresar
-  const submitButton = window.locator('button[type="submit"]');
-  await submitButton.click();
+  await expect(menu).toBeVisible({ timeout: 30000 });
+  await dismissWelcomeModalIfNeeded(window);
+}
 
-  // Esperar a que aparezca la barra de navegación principal
-  await expect(navBar).toBeVisible({ timeout: 20000 });
+/** Navega a una sección por su hash (#/clientes, #/resibos/pagos, ...) y espera su título. */
+async function irA(window, hash, titulo) {
+  await window.evaluate((h) => { window.location.hash = h; }, hash);
+  if (titulo) await expect(window.locator('h1', { hasText: titulo }).first()).toBeVisible({ timeout: 20000 });
 }
 
 module.exports = {
   DEFAULT_ADMIN,
+  irA,
   dismissWelcomeModalIfNeeded,
   ensureLoggedOut,
   loginAsAdmin
