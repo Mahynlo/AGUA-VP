@@ -1,78 +1,41 @@
 const { test, expect } = require('@playwright/test');
-const { launchApp } = require('../../helpers/electronApp');
-const { DEFAULT_ADMIN, ensureLoggedOut, dismissWelcomeModalIfNeeded } = require('../../helpers/authHelper');
+const { usarApp } = require('../../helpers/sesion');
+const { DEFAULT_ADMIN, loginAsAdmin } = require('../../helpers/authHelper');
 
-test.describe('Módulo 01: Autenticación e Inicio de Sesión', () => {
-  let electronApp;
-  let window;
+test.describe('01 · Acceso al sistema', () => {
+  const ctx = usarApp(test, { iniciarSesion: false });
 
-  test.beforeAll(async () => {
-    const appData = await launchApp();
-    electronApp = appData.electronApp;
-    window = appData.window;
+  test('rechaza una contraseña incorrecta y no entra al sistema', async () => {
+    const { window } = ctx;
+    await window.locator('input[type="email"]').fill(DEFAULT_ADMIN.email);
+    await window.locator('input[type="password"]').fill('ContraseñaMala1!');
+    await window.locator('button', { hasText: 'Ingresar al Panel' }).click();
+
+    await expect(window.getByText(/credenciales|incorrect|inválid/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(window.locator('a[href="#/clientes"]')).toHaveCount(0);
   });
 
-  test.afterAll(async () => {
-    if (electronApp) {
-      await electronApp.close();
-    }
+  test('valida el formato del correo antes de enviar', async () => {
+    const { window } = ctx;
+    // el navegador acepta el formato; la app exige un dominio válido
+    await window.locator('input[type="email"]').fill('usuario@dominio.local');
+    await window.locator('input[type="password"]').fill('Cualquiera1!');
+    await window.locator('button', { hasText: 'Ingresar al Panel' }).click();
+    await expect(window.getByText('Ingresa un correo electrónico válido.')).toBeVisible();
   });
 
-  test('01.1 - Debe presentar el formulario de inicio de sesión con todos sus campos', async () => {
-    await ensureLoggedOut(window);
-
-    const heading = window.locator('h1', { hasText: 'Iniciar Sesión' });
-    await expect(heading).toBeVisible({ timeout: 15000 });
-
-    const emailInput = window.locator('input[type="email"]');
-    const passwordInput = window.locator('input[type="password"]');
-    const submitBtn = window.locator('button[type="submit"]');
-
-    await expect(emailInput).toBeVisible();
-    await expect(passwordInput).toBeVisible();
-    await expect(submitBtn).toBeVisible();
-    await expect(submitBtn).toHaveText(/Ingresar al Panel/i);
-
-    // Pausa demostrativa para observar la pantalla de login
-    await window.waitForTimeout(2000);
+  test('inicia sesión con un usuario válido y muestra el menú', async () => {
+    await loginAsAdmin(ctx.window);
+    await expect(ctx.window.locator('a[href="#/clientes"]').first()).toBeVisible();
   });
 
-  test('01.2 - Debe mostrar mensaje de error si las credenciales son incorrectas', async () => {
-    await dismissWelcomeModalIfNeeded(window);
+  test('cierra sesión y regresa al login', async () => {
+    const { window } = ctx;
+    await window.locator('button[aria-label="Menú de perfil"]').click();
+    await window.locator('button', { hasText: 'Cerrar Sesión' }).click();
+    await window.locator('button', { hasText: 'Sí, cerrar sesión' }).click();
 
-    const emailInput = window.locator('input[type="email"]');
-    const passwordInput = window.locator('input[type="password"]');
-    const submitBtn = window.locator('button[type="submit"]');
-
-    await emailInput.fill('usuario_invalido@aguavp.com');
-    await passwordInput.fill('PasswordIncorrecto123');
-    await submitBtn.click();
-
-    // Esperar mensaje o alerta de error visible
-    const errorMessage = window.locator('div.border-rose-500\\/20, [class*="text-rose-"]');
-    await expect(errorMessage.first()).toBeVisible({ timeout: 10000 });
-
-    // Pausa demostrativa para que el usuario aprecie el mensaje de error en rojo
-    await window.waitForTimeout(3000);
-  });
-
-  test('01.3 - Debe iniciar sesión exitosamente con la cuenta por defecto de Admin', async () => {
-    await dismissWelcomeModalIfNeeded(window);
-
-    const emailInput = window.locator('input[type="email"]');
-    const passwordInput = window.locator('input[type="password"]');
-    const submitBtn = window.locator('button[type="submit"]');
-
-    // Limpiar campos y llenar credenciales por defecto de admin
-    await emailInput.fill(DEFAULT_ADMIN.email);
-    await passwordInput.fill(DEFAULT_ADMIN.password);
-    await submitBtn.click();
-
-    // Debe acceder al sistema y visualizarse la barra de navegación principal
-    const navbar = window.locator('nav').first();
-    await expect(navbar).toBeVisible({ timeout: 20000 });
-
-    // Pausa demostrativa para ver el dashboard/panel tras iniciar sesión
-    await window.waitForTimeout(4000);
+    await expect(window.locator('input[type="email"]')).toBeVisible({ timeout: 15000 });
+    await expect(window.locator('a[href="#/clientes"]')).toHaveCount(0);
   });
 });

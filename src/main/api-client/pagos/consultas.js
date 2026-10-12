@@ -32,6 +32,11 @@ export const fetchPagos = async (token_session, params = {}, isRetry = false) =>
         if (params.search) urlParams.append('search', params.search);
         if (params.metodo_pago) urlParams.append('metodo_pago', params.metodo_pago);
         if (params.ciudad) urlParams.append('ciudad', params.ciudad);
+        // Filtros de la pantalla (si faltan aquí, la API nunca los recibe)
+        if (params.fecha_desde) urlParams.append('fecha_desde', params.fecha_desde);
+        if (params.fecha_hasta) urlParams.append('fecha_hasta', params.fecha_hasta);
+        if (params.cobrado_por) urlParams.append('cobrado_por', params.cobrado_por);
+        if (params.tipo) urlParams.append('tipo', params.tipo);
     }
     // Evita respuestas cacheadas justo después de registrar cobros.
     urlParams.append('_t', String(Date.now()));

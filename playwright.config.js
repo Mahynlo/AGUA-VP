@@ -9,6 +9,8 @@ const { defineConfig } = require('@playwright/test');
  */
 module.exports = defineConfig({
   testDir: './tests/e2e',
+  // Copia de la base real en una carpeta de prueba: la app de prueba nunca toca la base real
+  globalSetup: require.resolve('./tests/helpers/globalSetup.js'),
   timeout: 60000,
   expect: {
     timeout: 15000

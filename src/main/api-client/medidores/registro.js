@@ -28,7 +28,7 @@ const registerMedidor = async (medidor, token_session)  => {
     const data = await response.json();
 
     if (!response.ok) {
-      return { success: false, message: data.error || "Error al registrar medidor" };
+      return { success: false, message: data.error || data.message || "Error al registrar medidor" };
     }
 
     return { success: true, message: data.mensaje, medidorID: data.id };
