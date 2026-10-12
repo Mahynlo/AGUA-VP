@@ -4,13 +4,13 @@
 
 ## 🧪 Notas de la versión — v1.3.1-rc.2 [Release Candidate]
 
-**📅 Fecha de lanzamiento:** 10/10/2026
+**📅 Fecha de lanzamiento:** 11/10/2026
 **🚀 Versión:** `v1.3.1-rc.2` [Pre-release / Versión Candidata de Evaluación]
 **📌 Versión base anterior estable:** `v1.3.0`
 **🔖 Pre-release precedente:** `v1.3.1-rc.1`
 **🧩 Servidor embebido:** `@aguavp/api-server 1.0.18`
 
-> ⚠️ **Aviso de Pre-release:** Corrección de la primera copia en la nube detectada al probar `v1.3.1-rc.1` instalada. Incluye todas las novedades de `v1.3.1-rc.1` (ver más abajo).
+> ⚠️ **Aviso de Pre-release:** Corrección de la primera copia en la nube detectada al probar `v1.3.1-rc.1` instalada, regla de rectificación de lecturas, fechas en hora de Sonora y correcciones de filtros encontradas por las nuevas pruebas automatizadas. Incluye todas las novedades de `v1.3.1-rc.1` (ver más abajo).
 
 ---
 
@@ -73,13 +73,26 @@
 - Guardar o desvincular la conexión con Turso se rechaza mientras se está subiendo una copia (incluida la sincronización automática), con un mensaje para intentarlo al terminar.
 - «Sincronizar ahora» ya no muestra «completada» cuando la sincronización automática estaba en curso: indica que hay que esperar.
 
+### 📚 Ayuda
+- **Lecturas:** *Rectificar y Recalcular Lectura* y *Generar y Recalcular Facturación* explican la regla nueva: qué lecturas se pueden rectificar, por qué el botón aparece deshabilitado y qué pasa con las facturas de un período cerrado al recalcular.
+- **Facturas:** *Ciclo de Vida y Estados de Facturas* reescrito con los cinco estados reales (Pendiente, Parcial, Vencida, En Convenio y Pagado), un diagrama de cómo pasa una factura de uno a otro y el umbral de corte configurable (4 facturas vencidas por defecto). *Recálculo y Correcciones de Facturas* actualizado con la misma regla.
+
+### 🧪 Calidad y desarrollo
+- **Pruebas automatizadas por módulo (Playwright):** 48 pruebas que recorren la app real: inicio de sesión, navegación, clientes, medidores, rutas y lecturas, tarifas, pagos, impresión de recibos y reportes, y usuarios y permisos. Revisan en la base que cada acción guarde lo correcto (lecturas, facturas, montos, pagos y saldos).
+- **No tocan los datos reales:** trabajan sobre una copia de la base hecha en modo de solo lectura, en una carpeta temporal y sin credenciales de la nube. En la impresión solo se genera y revisa la vista previa, nunca se manda a la impresora.
+- **Modo desarrollo:** si la ventana se queda en blanco o no aparece al arrancar (falla del servicio de red de Electron), se recarga sola y deja el motivo en la consola. No afecta a la app instalada.
+
+### 💡 Recomendación: pasar la base a otra computadora
+- Use **Administrador ➔ Mantenimiento ➔ Backups ➔ «Crear respaldo ahora»** en el equipo de origen y **Restaurar** ese respaldo en el equipo destino. El respaldo junta en un solo archivo todos los cambios.
+- No copie solo `agua-vp.db`: los cambios más recientes pueden estar todavía en `agua-vp.db-wal`, y la copia quedaría incompleta (por ejemplo, con facturas de un período sin generar). Si copia a mano, cierre la app y copie los tres archivos (`.db`, `.db-wal` y `.db-shm`).
+
 ---
 
 ### 🔖 Trazabilidad de Versiones
 - **Versión actual:** `v1.3.1-rc.2` [Pre-release]
 - **Pre-release previo:** `v1.3.1-rc.1` (10/10/2026)
 - **Versión base estable previa:** `v1.3.0` (22/09/2026)
-- **Servidor embebido:** `@aguavp/api-server 1.0.17`
+- **Servidor embebido:** `@aguavp/api-server 1.0.18`
 
 ---
 
