@@ -450,14 +450,13 @@ export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInf
       lng: puntoActual.longitud,
       cliente: {
         id: puntoActual.medidor_id,
-        nombre: puntoActual.cliente_nombre || `Medidor ${puntoActual.numero_serie}`,
-        dirección: puntoActual.cliente_direccion || puntoActual.ubicacion,
-        medidor: puntoActual.numero_serie,
-        telefono: puntoActual.cliente_telefono,
-        ciudad: ruta?.nombre || ""
+        nombre: puntoActual.cliente_nombre,
+        predio: puntoActual.cliente_numero_predio,
+        direccion: puntoActual.cliente_direccion || puntoActual.ubicacion,
+        medidor: puntoActual.numero_serie
       }
     };
-  }, [puntoActual, ruta?.nombre]);
+  }, [puntoActual]);
 
   const handleLecturaChange = useCallback((e) => {
     if (!puntoActual) return;

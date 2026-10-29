@@ -5,10 +5,14 @@
 /** Coordenada central del municipio de Villa Pesqueira */
 export const MAP_DEFAULT_CENTER = [29.1180777, -109.9669819];
 
-/** TileLayer de OpenStreetMap */
+/** Zoom a partir del cual se muestran los números de orden de la ruta */
+export const ZOOM_NUMEROS = 16;
+
+/** TileLayer de OpenStreetMap (la clase permite oscurecer solo esta capa en modo oscuro) */
 export const TILE_LAYER = {
   url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution: '&copy; OpenStreetMap contributors',
+  className: 'aguavp-capa-calles',
   updateWhenIdle: true,
   updateWhenZooming: false,
   keepBuffer: 2,
@@ -53,9 +57,33 @@ export const MUNICIPIO_STYLE_NO_FILL = {
   dashArray: '5, 5',
 };
 
-/** URLs CDN de los iconos por defecto de Leaflet */
-export const LEAFLET_ICON_CDN = {
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+/**
+ * Colores de los puntos, iguales en todos los mapas (y en sus leyendas).
+ * Los puntos se dibujan en canvas (CircleMarker), mucho más ligeros que un icono por medidor.
+ */
+export const COLORES_PUNTO = {
+  asignado: '#2563eb',   // medidor activo con cliente
+  disponible: '#64748b', // sin cliente / fuera de la ruta
+  inactivo: '#dc2626',   // medidor inactivo o retirado
+  pendiente: '#f97316',  // en la ruta, sin lectura del período
+  leido: '#16a34a',      // en la ruta, con lectura del período
+};
+
+/** Color de la línea de la ruta y de las conexiones de cada punto con el camino */
+export const COLOR_RUTA = '#3b82f6';
+export const COLOR_CONEXION = '#10b981';
+
+/** Estilo de un punto (CircleMarker) según su color; `grande` para zoom cercano o el punto actual */
+export const estiloPunto = (color, grande = false) => ({
+  color: '#ffffff',
+  weight: grande ? 2 : 1.5,
+  fillColor: color,
+  fillOpacity: 1,
+});
+
+/** Convierte latitud/longitud (número o texto) en [lat, lng] válido, o null */
+export const coordenadas = (lat, lng) => {
+  const la = Number.parseFloat(lat);
+  const ln = Number.parseFloat(lng);
+  return Number.isFinite(la) && Number.isFinite(ln) ? [la, ln] : null;
 };
