@@ -4,28 +4,28 @@ import { Spinner } from "@heroui/react";
 import { LogoProvider } from './context/LogoContext';
 
 // Vista de navegación y rutas
-import NavbarApp from './components/menuElements/navbar';
-import SidebarApp from './components/menuElements/sidebar';
+import NavbarApp from './components/layout/navbar';
+import SidebarApp from './components/layout/sidebar';
 
 // Carga directa de la pantalla de inicio de sesión para arranque inmediato
-import LoginApp from './components/login/login';
+import LoginApp from './vistas/login/LoginVista';
 
 // Vistas y páginas principales con Carga Diferida (Lazy Loading / Code Splitting)
-const InicioVista = React.lazy(() => import('./components/vistas/InicioVista'));
-const Clientes = React.lazy(() => import('./components/vistas/clientes/ClientesVista'));
-const Historial = React.lazy(() => import('./components/vistas/HistorialVista'));
-const Ayuda = React.lazy(() => import('./components/vistas/AyudaVista'));
-const Resibos = React.lazy(() => import('./components/vistas/ResibosVista'));
-const Impresion = React.lazy(() => import('./components/vistas/ImpresionVista'));
-const PerfilPage = React.lazy(() => import('./components/perfil/perfilpage'));
-const NotFoundVista = React.lazy(() => import('./components/vistas/NotFoundVista'));
-const ActualizacionesVista = React.lazy(() => import('./components/vistas/ActualizacionesVista'));
+const InicioVista = React.lazy(() => import('./vistas/inicio/InicioVista'));
+const Clientes = React.lazy(() => import('./vistas/clientes/ClientesVista'));
+const Historial = React.lazy(() => import('./vistas/historial/HistorialVista'));
+const Ayuda = React.lazy(() => import('./vistas/ayuda/AyudaVista'));
+const Resibos = React.lazy(() => import('./vistas/recibos/ResibosVista'));
+const Impresion = React.lazy(() => import('./vistas/impresion/ImpresionVista'));
+const PerfilPage = React.lazy(() => import('./vistas/perfil/PerfilVista'));
+const NotFoundVista = React.lazy(() => import('./vistas/notFound/NotFoundVista'));
+const ActualizacionesVista = React.lazy(() => import('./vistas/actualizaciones/ActualizacionesVista'));
 
-const Medidores = React.lazy(() => import("./components/vistas/medidores/MedidoresVista"));
-const Administrador = React.lazy(() => import("./components/administrador/Administrador"));
-const Lecturas = React.lazy(() => import("./components/vistas/LecturasVista"));
-const Tarifas = React.lazy(() => import("./components/vistas/TarifasVista"));
-const Pagos = React.lazy(() => import("./components/vistas/PagosVista"));
+const Medidores = React.lazy(() => import("./vistas/medidores/MedidoresVista"));
+const Administrador = React.lazy(() => import("./vistas/administrador/AdministradorVista"));
+const Lecturas = React.lazy(() => import("./vistas/lecturas/LecturasVista"));
+const Tarifas = React.lazy(() => import("./vistas/tarifas/TarifasVista"));
+const Pagos = React.lazy(() => import("./vistas/pagos/PagosVista"));
 
 // Contextos de la aplicación para manejar el estado global
 import { useAuth } from "./context/AuthContext";
@@ -46,28 +46,30 @@ import { ReportesProvider } from "./context/ReportesContext";
 // Rutas protegidas
 import ProtectedRoute from "./ProtectedRoutes/ProtectedRoute";
 
-const RecuperarPassword = React.lazy(() => import("./components/AdministrarPassword/Recuperacion"));
+const RecuperarPassword = React.lazy(() => import("./vistas/recuperarPassword/RecuperacionVista"));
 
 // Impresión de recibos y reportes (Lazy Loading de módulos pesados)
-const Recibo = React.lazy(() => import("./components/recibo/Recibo"));
-const ReporteLecturas = React.lazy(() => import("./components/recibo/ReporteLecturas"));
-const ReporteLecturasMetricas = React.lazy(() => import("./components/recibo/ReporteLecturasMetricas"));
-const ReporteClientesCompleto = React.lazy(() => import("./components/recibo/ReporteClientes"));
-const ComprobantePago = React.lazy(() => import("./components/recibo/ComprobantePago"));
-const ReporteFinancieroPagos = React.lazy(() => import("./components/recibo/ReporteFinancieroPagos"));
-const ReporteDeudoresMayores = React.lazy(() => import("./components/recibo/ReporteDeudoresMayores"));
-const ReporteDocumentacion = React.lazy(() => import("./components/recibo/ReporteDocumentacion"));
+const Recibo = React.lazy(() => import("./vistas/documentos/Recibo"));
+const ReporteLecturas = React.lazy(() => import("./vistas/documentos/ReporteLecturas"));
+const ReporteLecturasMetricas = React.lazy(() => import("./vistas/documentos/ReporteLecturasMetricas"));
+const ReporteClientesCompleto = React.lazy(() => import("./vistas/documentos/ReporteClientes"));
+const ComprobantePago = React.lazy(() => import("./vistas/documentos/ComprobantePago"));
+const ReporteFinancieroPagos = React.lazy(() => import("./vistas/documentos/ReporteFinancieroPagos"));
+const ReporteDeudoresMayores = React.lazy(() => import("./vistas/documentos/ReporteDeudoresMayores"));
+const ReporteDocumentacion = React.lazy(() => import("./vistas/documentos/ReporteDocumentacion"));
+const ReporteGeneral = React.lazy(() => import("./vistas/documentos/ReporteGeneral"));
 
 // Pantalla de carga de la aplicación
-import PantallaCarga from "./components/pantalladecarga/PantallaCarga";
+import PantallaCarga from "./components/carga/PantallaCarga";
 
 // Modal de bienvenida a la aplicación
-import ModalBienvenida from "./components/appBienvenida/ModalBienvenida";
-import ModalActualizacionDisponible from "./components/administrador/sistema/ModalActualizacionDisponible";
+import ModalBienvenida from "./components/bienvenida/ModalBienvenida";
+import ModalActualizacionDisponible from "./components/actualizaciones/ModalActualizacionDisponible";
 //cargar datos al iniciar sección en la aplicacion 
 import InitDataLoader from "./context/InitDataLoader";
 
-import FeedbackMessages from "./components/toast/FeedbackMessages"; // Importar el componente de mensajes de feedback
+import FeedbackMessages from "./components/feedback/FeedbackMessages"; // Importar el componente de mensajes de feedback
+import AlertaSincronizacion from "./components/feedback/AlertaSincronizacion";
 
 function App() {
   return (
@@ -93,6 +95,7 @@ function App() {
                                 <MainApp /> {/* Aqui se cargan las rutas de la aplicacion */}
                                 {/* Componente global de mensajes */}
                                 <FeedbackMessages position="bottom-right" />
+                                <AlertaSincronizacion /> {/* Avisos de fallo de la copia en la nube (solo administradores) */}
 
                                 <ModalBienvenida /> {/* Modal de bienvenida para obtener token de aplicacion al iniciar */}
                                 <ModalActualizacionDisponible /> {/* Modal global para alertar actualizaciones disponibles */}
@@ -129,8 +132,8 @@ function ViewFallback() {
 
 function MainApp() {
   const location = useLocation();
-  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/ayuda'];
-  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/ayuda'];
+  const hideSidebarRoutes = ['/', '/registro', '/recuperarPassword', '/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/reporteGeneral', '/ayuda'];
+  const hideNavbarRoutes = ['/recibo', '/reporteLecturas', '/reporteLecturasMetricas', '/reporteClientes', '/comprobante-pago', '/reporteFinancieroPagos', '/reporteDeudoresMayores', '/reporteDocumentacion', '/reporteGeneral', '/ayuda'];
 
   const { loading } = useAuth();
 
@@ -225,6 +228,7 @@ function MainApp() {
           <Route path="/reporteFinancieroPagos" element={<ReporteFinancieroPagos />} />
           <Route path="/reporteDeudoresMayores" element={<ReporteDeudoresMayores />} />
           <Route path="/reporteDocumentacion" element={<ReporteDocumentacion />} />
+          <Route path="/reporteGeneral" element={<ReporteGeneral />} />
           {/* Rutas públicas */}
           <Route path='/' element={<LoginApp />} />
           <Route path='/actualizaciones' element={<ActualizacionesVista />} />

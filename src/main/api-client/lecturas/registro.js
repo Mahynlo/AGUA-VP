@@ -1,0 +1,46 @@
+import { leerToken } from '../../auth/appKey.js';
+import { apiFetch } from '../http.js';
+const URL_REGISTRAR_LECTURA = import.meta.env.VITE_API_REGISTRAR_LECTURAS; // URL del endpoint de registro de lecturas
+/**************************************************************************************************************
+ * registro de lectura
+ *
+ * ************************************************************************************************************
+*/
+//funcion para registrar lectura
+export const registerLectura = async (lectura, token_session) => {
+
+    try {
+        const token_app = leerToken();
+
+        if (!token_app) {
+          return { success: false, message: "Token de aplicación no disponible(ipcmain-lectura)" };
+        }
+
+        if (!token_session) {
+          return { success: false, message: "Token de sesión no disponible(ipcmain-lectura)" };
+        }
+
+        const response = await apiFetch(URL_REGISTRAR_LECTURA, {
+          method: "POST",
+          token_app,
+          token_session,
+          body: lectura
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Incluir detalles de validación Zod si existen
+          let msg = data.error || data.message || 'Error al registrar lectura';
+          if (data.detalles?.length) {
+            msg += ' — ' + data.detalles.map(d => `${d.campo}: ${d.mensaje}`).join('; ');
+          }
+          return { success: false, message: msg };
+        }
+
+        return { success: true, message: data.message, lecturaID: data.data?.lectura_id, detalles: data.data?.detalles ?? null };
+    } catch (error) {
+        console.error("Error al registrar lectura(ipcmain):", error);
+        return { success: false, message: "Hubo un error al registrar la lectura(ipcmain)." };
+    }
+}

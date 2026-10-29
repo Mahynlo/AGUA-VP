@@ -1,123 +1,165 @@
-# AGUA-VP
+<div align="center">
+  <img src="resources/icon.png" width="120" height="120" alt="AGUA-VP" style="border-radius: 24px;" />
 
-**AGUA-VP** es un sistema de escritorio para la gestión administrativa de comités o entidades locales de agua potable. Digitaliza el ciclo completo del servicio: desde registrar clientes y medidores, tomar lecturas en campo, generar facturas y cobrar pagos, hasta imprimir recibos y producir reportes financieros.
+  # AGUA-VP
+  ### Sistema de Gestión de Agua Potable
 
-La aplicación corre completamente en la computadora del usuario — no requiere internet para operar. Toda la información se guarda localmente en una base de datos SQLite embebida.
-
----
-
-## Módulos principales
-
-| Módulo | Qué hace |
-|---|---|
-| [Clientes](docs/modulo-clientes.md) | Registro y gestión de usuarios del servicio |
-| [Medidores](docs/modulo-medidores.md) | Inventario de medidores físicos y su ubicación |
-| [Lecturas y Rutas](docs/modulo-lecturas.md) | Captura de consumo mensual por rutas |
-| [Tarifas](docs/modulo-tarifas.md) | Configuración de precios por rangos de consumo |
-| [Pagos y Facturación](docs/modulo-pagos.md) | Cobros, convenios, cortes y deudores |
-| [Impresión y Reportes](docs/modulo-impresion.md) | Recibos individuales y reportes generales |
-| [Administración](docs/modulo-administracion.md) | Usuarios del sistema, permisos, respaldos y logs |
+  [![Versión](https://img.shields.io/badge/versión-1.3.0%20Estable-0078D6.svg)](docs/releases_changelog.md)
+  [![Pre-release](https://img.shields.io/badge/en%20pruebas-1.3.1--rc.2-F59E0B.svg)](docs/releases_changelog.md)
+  [![Plataforma](https://img.shields.io/badge/plataforma-Windows-0078D6.svg?logo=windows)]()
+  [![Modo](https://img.shields.io/badge/modo-Offline--First-10B981.svg)]()
+  [![Nube](https://img.shields.io/badge/respaldo-Turso%20Cloud%20(opcional)-6366F1.svg)](docs/sincronizacion-turso-cloud.md)
+</div>
 
 ---
 
-## Flujo de trabajo típico
+## 📌 ¿Qué es AGUA-VP?
+
+**AGUA-VP** es una aplicación de escritorio diseñada para la administración de comités y organismos locales de agua potable. Permite gestionar el ciclo operativo del servicio: padrón de clientes, control de medidores, captura de lecturas por rutas, cálculo de consumos, cobro de recibos y emisión de reportes.
+
+La aplicación funciona de forma **local (offline)**; no requiere conexión a internet para su operación diaria y almacena sus datos en una base de datos SQLite integrada en el equipo. De manera **opcional**, puede mantener una **copia de respaldo en la nube (Turso Cloud)** que se actualiza sola en segundo plano.
+
+---
+
+## 🏛️ Estructura general de la aplicación
+
+La aplicación está compuesta por tres partes principales:
+
+- **Interfaz de usuario (Frontend):** Desarrollada con React, Vite y Tailwind CSS, ofreciendo una navegación ágil y modular con soporte de modo oscuro.
+- **Proceso de escritorio (Electron):** Controla la ventana de la aplicación, el ciclo de vida del sistema, respaldos automáticos, la generación de PDF y la comunicación segura con el sistema operativo.
+- **Base de datos y lógica local (Backend embebido):** Servidor local interno (`@aguavp/api-server`) con Express y base de datos SQLite (Better-SQLite3) con migraciones automáticas. Aquí viven las reglas del negocio: tarifas, facturación, pagos, convenios y cortes.
 
 ```
-1. Registrar clientes y asignarles un medidor + tarifa
-        ↓
-2. Crear una ruta de lectura (agrupación de medidores)
-        ↓
-3. Capturar las lecturas del mes → el sistema calcula el consumo
-        ↓
-4. Generar los Recibos de la ruta
-        ↓
-5. Registrar los pagos cuando los clientes acuden a pagar
-        ↓
-6. Imprimir recibos de pago y reportes del período
+Interfaz (React) ──► Electron ──► Servidor local ──► SQLite (agua-vp.db)
+                                        │
+                                        └──► Copia en la nube (Turso, opcional)
 ```
 
 ---
 
-## Tecnologías
+## 📦 Módulos del sistema
 
-- **Electron** — empaqueta la app como programa de escritorio nativo
-- **React + Vite** — interfaz de usuario dinámica y rápida
-- **Tailwind CSS + Flowbite** — diseño visual moderno con modo oscuro
-- **SQLite** (vía API embebida) — base de datos local, sin servidor externo
-- **Node.js / Express** — lógica de negocio embebida en el proceso principal
+Si requieres conocer a detalle el funcionamiento de cada apartado, consulta su documentación:
+
+| Módulo | Descripción general | Documentación |
+|---|---|:---:|
+| **Clientes** | Registro de usuarios, asignación de predios, medidores y tarifas | [Ver guía](docs/modulo-clientes.md) |
+| **Medidores** | Inventario de equipos físicos, ubicación y estado | [Ver guía](docs/modulo-medidores.md) |
+| **Lecturas y Rutas** | Organización de recorridos, captura de consumo y rectificación de lecturas | [Ver guía](docs/modulo-lecturas.md) |
+| **Tarifas** | Configuración de precios por rangos de consumo | [Ver guía](docs/modulo-tarifas.md) |
+| **Pagos y Facturación** | Cobranza en ventanilla, abonos, convenios, cartera vencida y comprobantes | [Ver guía](docs/modulo-pagos.md) |
+| **Impresión y Reportes** | Emisión de recibos, reportes de lecturas, financieros y general ejecutivo | [Ver guía](docs/modulo-impresion.md) |
+| **Administración** | Usuarios, permisos, respaldos, logs y copia en la nube | [Ver guía](docs/modulo-administracion.md) |
+
+Dentro de la aplicación, el apartado **Ayuda** contiene guías paso a paso de cada módulo (carpeta [`ayuda/`](ayuda/)).
 
 ---
 
-## Configuración del proyecto
+## 🔄 Flujo de trabajo básico
 
-### Requisitos previos
+```
+1. Registrar clientes y vincularles su medidor y tarifa
+        ↓
+2. Organizar la ruta de recorrido
+        ↓
+3. Capturar las lecturas del período (el sistema calcula el consumo)
+        ↓
+4. Generar las facturas del mes
+        ↓
+5. Registrar los pagos en ventanilla
+        ↓
+6. Imprimir recibos y reportes
+```
 
-- Node.js 18 o superior
-- npm 9 o superior
+---
 
-### Instalar dependencias
+## 💾 Datos locales y copia en la nube
+
+### Funcionamiento local (siempre)
+- Toda la operación diaria (cobros, lecturas, impresión, reportes y consultas) se hace contra la base **local** `agua-vp.db`, guardada en `%APPDATA%\aguavp`. **Sin internet la app funciona igual.**
+- **Respaldos locales:** copias completas y consistentes de la base, automáticas y manuales, que se conservan por fecha y por motivo (antes de restaurar y antes de actualizar). Se crean y restauran desde **Administrador ➔ Mantenimiento ➔ Backups**. Una restauración se aplica al reiniciar la app y se puede deshacer con el respaldo *Pre-restauración*.
+
+### Copia en la nube (Turso Cloud, opcional)
+- **Un solo sentido:** la computadora es la única que escribe; la nube solo recibe una copia y nunca modifica la base local.
+- **Automática:** después de una carga completa inicial, cada 15 minutos se suben solo los registros que cambiaron. Si no hubo cambios no se usa la red; sin internet, los cambios esperan y se suben al reconectar.
+- **Protegida:** nunca se vacía la nube antes de copiar. Si la base local parece perdida, antigua o de otra computadora, la sincronización se detiene y avisa en lugar de sobrescribir la copia.
+- **Verificada:** después de cada subida se comparan los conteos, y una vez al día se compara el contenido completo tabla por tabla.
+- **Restaurable:** *Restaurar desde la Nube* descarga la copia, la valida y la aplica al reiniciar, dejando antes un respaldo local.
+- Se configura en **Administrador ➔ Mantenimiento ➔ Nube (Turso)**. Las credenciales se guardan cifradas en el equipo y solo un administrador puede operarla.
+
+> 💡 **Para pasar la base a otra computadora** use *Crear respaldo ahora* en el equipo de origen y *Restaurar* en el destino (o *Restaurar desde la Nube*). No copie solo `agua-vp.db`: los cambios más recientes pueden estar todavía en `agua-vp.db-wal` y la copia quedaría incompleta.
+
+Para saber más:
+- [Sincronización en la nube con Turso](docs/sincronizacion-turso-cloud.md): arquitectura, seguridad, protección de la copia y recuperación ante desastres.
+- [Plan y estado de la sincronización](docs/plan-sincronizacion-turso.md) y [prueba real de respaldo y restauración](docs/turso-caso-prueba-restauracion.md).
+- [Módulo de Administración](docs/modulo-administracion.md): respaldos, logs y usuarios.
+
+---
+
+## 💻 Requisitos del sistema
+
+- **Sistema operativo:** Windows 10 o Windows 11 (64 bits).
+- **Memoria RAM:** 4 GB mínimo (8 GB recomendado).
+- **Espacio en disco:** 500 MB libres.
+- **Internet:** solo para la copia en la nube y las actualizaciones (opcional).
+- **Para desarrollo:** Node.js 20.19+ (o 22.12+) y npm 9+.
+
+---
+
+## 🛠️ Comandos de desarrollo
 
 ```bash
+# Instalar dependencias
 npm install
-```
 
-### Correr en modo desarrollo
-
-```bash
+# Iniciar en modo desarrollo
 npm run dev
-```
 
-Abre la ventana de Electron con hot-reload para React y recarga automática del proceso principal.
-
-### Compilar para producción (Windows)
-
-```bash
+# Compilar instalador para Windows (.exe)
 npm run build:win
+
+# Pruebas automatizadas por módulo (Playwright)
+npm run test:e2e
+
+# Revisar formato y código
+npm run lint
+npm run format
 ```
 
-Genera un instalador `.exe` en la carpeta `dist/`.
+Los instaladores generados se guardan en la carpeta `dist/`.
 
-### Otros comandos
-
-```bash
-npm run lint       # Revisa y corrige el código con ESLint
-npm run format     # Formatea el código con Prettier
-```
+Las **pruebas automatizadas** (`tests/e2e/`) recorren la app real módulo por módulo (clientes, medidores, lecturas, tarifas, pagos, impresión y administración) sobre una **copia** de la base: nunca modifican los datos reales ni mandan nada a la impresora. Antes de correrlas, cierre AguaVP y `npm run dev`.
 
 ---
 
-## Publicar una nueva versión
-
-1. Editar el campo `"version"` en `package.json`
-2. Hacer commit y push del cambio
-3. Ejecutar `npm run release:push` — crea el tag y lo sube a GitHub
-4. GitHub Actions compila y publica el instalador automáticamente
-
-Ver más detalles en [docs/releases.md](docs/releases.md).
-
----
-
-## Estructura del proyecto
+## 📁 Estructura del proyecto
 
 ```
 AguaVP/
+├── ayuda/               # Guías de Ayuda que se muestran dentro de la app
+├── build/               # Recursos de empaquetado (iconos del instalador)
+├── docs/                # Documentación detallada por módulo y de la nube
+├── resources/           # Recursos estáticos de la aplicación
 ├── src/
-│   ├── main/           — Proceso principal de Electron (Node.js)
-│   │   ├── ipc/        — Comunicación con la interfaz (un archivo por módulo)
-│   │   └── managers/   — API embebida, logs, actualizaciones
-│   ├── preload/        — Puente seguro entre main y renderer
-│   └── renderer/       — Interfaz React (SPA)
+│   ├── main/            # Proceso principal de Electron (Node.js)
+│   │   ├── api-client/  # Cliente HTTP hacia el servidor local
+│   │   ├── ipc/         # Canales de comunicación por módulo
+│   │   ├── managers/    # Servidor embebido, respaldos, nube, logs y actualizaciones
+│   │   └── pdf/         # Generación de recibos y reportes en PDF
+│   ├── preload/         # Puente seguro entre el sistema y la interfaz
+│   └── renderer/        # Interfaz de usuario (React + Vite)
 │       └── src/
-│           ├── components/vistas/  — Páginas de cada módulo
-│           ├── context/            — Estado global por dominio
-│           ├── hooks/              — Lógica reutilizable
-│           └── utils/              — Funciones auxiliares
-├── docs/               — Documentación detallada por módulo
-└── package.json
+│           ├── vistas/      # Pantallas de cada módulo
+│           ├── components/  # Componentes compartidos
+│           ├── context/     # Estado global por dominio
+│           └── hooks/       # Lógica reutilizable
+├── tests/               # Pruebas automatizadas (Playwright)
+├── package.json         # Dependencias y scripts
+└── electron-builder.yml # Configuración de empaquetado para Windows
 ```
 
 ---
 
-## IDE recomendado
+## 📄 Notas de versión
 
-[Visual Studio Code](https://code.visualstudio.com/) con las extensiones **ESLint** y **Prettier**.
+El historial de cambios y notas de cada lanzamiento se encuentra en el [Registro de Versiones (Changelog)](docs/releases_changelog.md).

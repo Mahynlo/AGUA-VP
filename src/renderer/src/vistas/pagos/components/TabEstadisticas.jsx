@@ -1,0 +1,16 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import ReporteFinancieroEstado from "./ReporteFinancieroEstado";
+
+const TabEstadisticas = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="space-y-6 pb-6">
+      
+      <ReporteFinancieroEstado />
+    </div>
+  );
+};
+
+export default TabEstadisticas;

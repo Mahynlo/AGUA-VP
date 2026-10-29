@@ -23,9 +23,15 @@ export function PagosProvider({ children }) {
     search: "",
     metodo_pago: "",
     ciudad: "",
+    fecha_desde: "",
+    fecha_hasta: "",
+    cobrado_por: "",
+    tipo: "",
     page: 1,
     limit: 60
   });
+  // Usuarios que han registrado pagos (opciones del filtro "Cobrado por")
+  const [cobradores, setCobradores] = useState([]);
 
   const filtrosRef = useRef(filtros);
   filtrosRef.current = filtros;
@@ -59,13 +65,20 @@ export function PagosProvider({ children }) {
       setFiltros(prev => ({ ...prev, ...finalParams }));
 
       // Construir query params finales para el fetch
+      // Con fecha de cobro se buscan pagos de TODOS los períodos facturados (corte de caja);
+      // el período elegido se conserva para cuando se quite la fecha
+      const porFechaDeCobro = Boolean(finalParams.fecha_desde || finalParams.fecha_hasta);
       const queryParams = {
-        periodo: finalParams.periodo,
+        periodo: porFechaDeCobro ? "" : finalParams.periodo,
         page: finalParams.page,
         limit: finalParams.limit,
         search: finalParams.search,
         metodo_pago: finalParams.metodo_pago,
-        ciudad: finalParams.ciudad
+        ciudad: finalParams.ciudad,
+        fecha_desde: finalParams.fecha_desde,
+        fecha_hasta: finalParams.fecha_hasta,
+        cobrado_por: finalParams.cobrado_por,
+        tipo: finalParams.tipo
       };
 
       const data = await window.api.fetchPagos(token_session, queryParams);
@@ -85,6 +98,9 @@ export function PagosProvider({ children }) {
 
         if (data.resumen) {
           setResumen(data.resumen);
+        }
+        if (Array.isArray(data.cobradores)) {
+          setCobradores(data.cobradores);
         }
       } else {
         setPagos([]);
@@ -216,6 +232,7 @@ export function PagosProvider({ children }) {
     pagination,
     resumen,
     filtros, // Exponer filtros
+    cobradores,
     setFiltros,
     loading,
     initialLoading,
@@ -230,6 +247,7 @@ export function PagosProvider({ children }) {
     pagination,
     resumen,
     filtros,
+    cobradores,
     loading,
     initialLoading,
     error,

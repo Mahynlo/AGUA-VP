@@ -12,3 +12,9 @@ cache_rutas*
 claude.md
 CLAUDE.md
 .claude*
+test-results/
+playwright-report/
+# Logs de compilación locales
+build_out*.txt
+build_output*.txt
+exit_code.txt

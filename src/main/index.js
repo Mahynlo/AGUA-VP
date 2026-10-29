@@ -1,3 +1,4 @@
+import './e2eUserData.js' // primero: en pruebas E2E cambia la carpeta de datos antes de que otros módulos la lean
 import { app, shell, BrowserWindow, ipcMain, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -8,6 +9,7 @@ import initUpdateManager from './managers/updateManager.js'
 
 import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
 import { startApiServer, stopApiServer } from './managers/apiManager.js'
+import { startSyncMonitor } from './managers/syncMonitor.js'
 import { setupWindowState } from './windowState.js'
 import { restoreZoom, getSavedZoom } from './managers/zoomManager.js'
 import contextMenu from 'electron-context-menu';
@@ -56,6 +58,71 @@ const createMenu = () => {
 }
 
 let mainWindow = null;
+
+// Solo en desarrollo: la ventana carga cientos de módulos desde el servidor de Vite. Si el
+// proceso de red de Chromium se cae mientras tanto ("Network service crashed… restarting"),
+// las peticiones en curso se pierden y la ventana queda en blanco. Se recarga sola unos
+// intentos en vez de tener que reiniciar `npm run dev`. En producción se carga con loadFile.
+function recargarSiFallaLaCargaEnDev(win, url) {
+  const MAX_INTENTOS = 5;
+  const ESPERA_CARGA_MS = 20000;
+  let intentos = 0;
+  let cargada = false;
+  let vigilante = null;
+
+  // Si la interfaz no termina de cargar a tiempo (peticiones colgadas tras la caída del
+  // proceso de red), se muestra la ventana igual y se recarga: 'ready-to-show' nunca llegaría.
+  const vigilarCarga = () => {
+    clearTimeout(vigilante);
+    vigilante = setTimeout(() => {
+      if (win.isDestroyed() || cargada) return;
+      if (!win.isVisible()) win.show();
+      recargar(`la interfaz no terminó de cargar en ${ESPERA_CARGA_MS / 1000} s`);
+    }, ESPERA_CARGA_MS);
+  };
+
+  const recargar = (motivo) => {
+    if (win.isDestroyed() || intentos >= MAX_INTENTOS) {
+      console.warn(`⚠️ [dev] ${motivo}; sin más reintentos automáticos (usa Ctrl+R)`);
+      return;
+    }
+    intentos++;
+    cargada = false;
+    console.warn(`⚠️ [dev] ${motivo}; recargando (${intentos}/${MAX_INTENTOS})…`);
+    setTimeout(() => {
+      if (win.isDestroyed()) return;
+      win.loadURL(url);
+      vigilarCarga();
+    }, 1000);
+  };
+
+  win.webContents.on('did-fail-load', (_e, code, desc, failedUrl, isMainFrame) => {
+    console.warn(`⚠️ [dev] did-fail-load ${code} ${desc} (${isMainFrame ? 'ventana' : 'subrecurso'}) ${failedUrl}`);
+    if (isMainFrame && code !== -3 /* ERR_ABORTED: navegación reemplazada */) recargar(`falló la carga: ${code} ${desc}`);
+  });
+  win.webContents.on('render-process-gone', (_e, details) => {
+    console.warn(`⚠️ [dev] render-process-gone ${JSON.stringify(details)}`);
+    recargar(`se cerró el proceso de la interfaz: ${details.reason}`);
+  });
+
+  // Registro de cualquier proceso hijo que se cae, para diagnosticar ("Network service crashed")
+  const alCaerseProceso = (_e, details) => {
+    console.warn(`⚠️ [dev] child-process-gone ${JSON.stringify(details)}`);
+    if (/network/i.test(`${details.serviceName || ''} ${details.name || ''}`)) {
+      recargar(`se reinició el proceso de red: ${details.reason}`);
+    }
+  };
+  app.on('child-process-gone', alCaerseProceso);
+  win.once('closed', () => { clearTimeout(vigilante); app.removeListener('child-process-gone', alCaerseProceso) });
+
+  win.webContents.on('did-finish-load', () => {
+    cargada = true;
+    clearTimeout(vigilante);
+    intentos = 0;
+    console.log('✅ [dev] interfaz cargada');
+  });
+  vigilarCarga();
+}
 
 function createWindow() {
   createMenu();
@@ -113,6 +180,7 @@ function createWindow() {
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    recargarSiFallaLaCargaEnDev(mainWindow, process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -158,9 +226,6 @@ if (!gotTheLock) {
       optimizer.watchWindowShortcuts(window)
     })
 
-    // IPC test
-    ipcMain.on('ping', () => console.log('pong'))
-
     // Iniciar servidor API embebido (aplica migraciones y crea backup automáticamente)
     try {
       await startApiServer();
@@ -170,6 +235,7 @@ if (!gotTheLock) {
     }
 
     createWindow() // crea la ventana
+    startSyncMonitor() // vigila la copia en la nube y avisa si falla
 
     app.on('activate', function () {
       // On macOS it's common to re-create a window in the app when the

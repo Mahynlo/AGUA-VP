@@ -1,5 +1,4 @@
 const { calcularRuta } = require('ruta-craft-osm');
-const fs = require("fs");
 const path = require("path");
 const { app } = require("electron");
 
@@ -22,21 +21,12 @@ export const GenerarRutaLectura = async (puntos_gps) => {
         return [punto.lat, punto.lng];
     });
 
-    // Leer cache si existe
-    const usarCache = fs.existsSync(rutaCache)
-        ? JSON.parse(fs.readFileSync(rutaCache, 'utf-8'))
-        : undefined;
-
+    // El motor lee y actualiza el caché de tramos directamente en userData
     const resultado = await calcularRuta({
         puntos: puntos_validos,
-        cache: usarCache // ← Asumiendo que `calcularRuta` acepta el cache así
+        cachePath: rutaCache
     });
 
-    // Guardar el nuevo cache si viene en el resultado
-    if (resultado?.cache) {
-        fs.writeFileSync(rutaCache, JSON.stringify(resultado.cache, null, 2));
-    }
-
-    return resultado.resultado; // o return resultado si así lo necesitas
+    return resultado.resultado;
 };
 

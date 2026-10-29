@@ -14,7 +14,7 @@ Cuando se detecta un error de captura en las lecturas de campo, se realiza un ca
 
 ## 📋 Cuándo Procede un Recálculo de Facturas
 
-1. **Rectificación de Lecturas**: Tras corregir una lectura errónea en el módulo de Lecturas.
+1. **Rectificación de Lecturas**: Tras corregir una lectura errónea en el módulo de Lecturas. Hágalo en ese mismo momento, antes de que el cliente pague.
 2. **Ajuste Tarifario Retroactivo**: Modificación aprobada en los escalones de cobro municipal.
 3. **Corrección de Lectura Base de Medidor**: Reajuste de odómetro de arranque por sustitución de equipo.
 
@@ -25,7 +25,18 @@ Cuando se detecta un error de captura en las lecturas de campo, se realiza un ca
 > [!IMPORTANT]
 > **Inviolabilidad de Facturas con Pagos Aplicados**:  
 > El motor de recálculo procesa **exclusivamente facturas en estado Pendiente o Vencida sin pagos registrados**.  
-> Las facturas que ya cuentan con un folio de cobro en caja (`#P-...`) **se mantienen intactas** para no comprometer el arqueo diario ni la cuenta pública de la tesorería.
+> Las facturas que ya cuentan con un folio de cobro en caja (`#P-...`), incluidos los abonos parciales, **se mantienen intactas** para no comprometer el arqueo diario ni la cuenta pública de la tesorería.
+
+> [!IMPORTANT]
+> **Meses Cerrados por Medidor**:  
+> Tampoco se recalcula la factura de un medidor que **ya tiene la lectura del mes siguiente**. Para ese medidor, el mes quedó cerrado y su lectura tampoco se puede rectificar. El cierre es individual: los medidores que todavía no se leen en el mes siguiente conservan su mes abierto.
+
+Las facturas protegidas por estas reglas aparecen en el visualizador como *Fallidas* con su motivo; quedan exactamente como estaban.
+
+> [!NOTE]
+> Una factura recalculada vuelve al estado **Pendiente**. Si su fecha de vencimiento ya pasó, el proceso diario la marca nuevamente como **Vencida**.
+
+**¿Y si el error está en una factura ya cobrada o en un mes cerrado?** No se corrige recalculando el pasado: el ajuste se aplica en el mes en curso (por ejemplo, un descuento o un cargo en la siguiente factura), de modo que lo cobrado y los reportes anteriores sigan coincidiendo.
 
 ---
 

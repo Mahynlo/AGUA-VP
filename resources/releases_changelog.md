@@ -2,6 +2,183 @@
 
 ---
 
+## 🧪 Notas de la versión — v1.3.1-rc.2 [Release Candidate]
+
+**📅 Fecha de lanzamiento:** 11/10/2026
+**🚀 Versión:** `v1.3.1-rc.2` [Pre-release / Versión Candidata de Evaluación]
+**📌 Versión base anterior estable:** `v1.3.0`
+**🔖 Pre-release precedente:** `v1.3.1-rc.1`
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.18`
+
+> ⚠️ **Aviso de Pre-release:** Corrección de la primera copia en la nube detectada al probar `v1.3.1-rc.1` instalada, regla de rectificación de lecturas, fechas en hora de Sonora y correcciones de filtros encontradas por las nuevas pruebas automatizadas. Incluye todas las novedades de `v1.3.1-rc.1` (ver más abajo).
+
+---
+
+### 🐞 Correcciones
+
+#### ☁️ Primera copia en una nube vacía (`FOREIGN KEY constraint failed`)
+- **Problema:** al vincular una base de Turso **vacía**, la carga completa fallaba en cada intento con `SQLITE_CONSTRAINT: FOREIGN KEY constraint failed`: se creaba la estructura de las tablas pero no se subían los datos. Turso valida cada referencia al insertar la fila, y algunas apuntan a un registro que todavía no estaba en la nube: un usuario a otro con número mayor (`usuarios.eliminado_por`), o una factura o un pago a un convenio o una parcialidad, tablas que se suben después.
+- **Corrección:** esas referencias se escriben en un segundo paso, cuando todas las filas ya están en la nube. Aplica a la carga completa, al ciclo automático de cambios (p. ej. crear un convenio y asignarlo a facturas en el mismo ciclo) y a las reparaciones de la verificación diaria.
+- **Datos:** no se recalcula nada. Se suben los valores tal como están en la base local (saldos, totales, estados). Probado con una copia de la base real: 11 229 registros subidos a una nube vacía con llaves foráneas activas, contenido idéntico fila por fila y 0 referencias rotas.
+
+#### 💾 Limpieza de respaldos
+- Al eliminar respaldos antiguos por la retención se borran también sus archivos auxiliares `-wal` / `-shm`, que podían quedar sueltos en la carpeta `backups/`.
+
+#### 💧 Tarifas: edición de rangos
+- **Eliminar un rango ahora sí lo elimina.** Al editar una tarifa, el rango quitado con su botón seguía guardado y entraba en el cálculo. Ahora se borra al guardar, junto con los cambios del resto de la escala, todo o nada.
+- **Validación única en la API** para crear y editar, sobre la escala completa: el primer rango empieza en 0 m³ (cuota base), cada rango empieza justo después del anterior (sin huecos ni rangos encimados), los consumos son m³ enteros y solo el último puede quedar sin máximo. Los mensajes indican qué rango corregir y en qué número debe empezar.
+- **Protección al facturar:** si una tarifa tuviera rangos mal configurados, la factura de ese cliente se marca como fallida con el motivo, en lugar de generarse con un monto incorrecto.
+- **Historial de precios:** cada rango creado o modificado queda registrado con su precio anterior y el nuevo (la tabla existía pero no se llenaba).
+- La pantalla de edición muestra el motivo real cuando la API rechaza un cambio y, al guardar, cuántos rangos se actualizaron, agregaron y eliminaron.
+- **Eliminar tarifas (nuevo):** botón en cada tarjeta de tarifa, con confirmación escribiendo su nombre. Solo se puede eliminar una tarifa **sin clientes asignados**, que **no se haya usado en ninguna factura** (protege recibos, reportes e historial de cobros) y que **no sea la única**. Se borran la tarifa, sus rangos y su historial de precios. Si no se puede, el botón aparece deshabilitado y explica el motivo. Requiere el permiso nuevo `tarifas.eliminar`, que se asigna a administradores y superadministradores al actualizar (migración `0023`).
+- **El cálculo no cambia:** cuota base fija en el primer rango y cobro progresivo por tramo. Verificado recalculando las 1 119 facturas existentes: todas coinciden al centavo.
+
+#### 📏 Lecturas: rectificación protegida
+- **Problema:** «Editar / Rectificar Lectura» seguía disponible aunque la factura ya estuviera cobrada o el medidor ya tuviera la lectura del mes siguiente. Al rectificar, la lectura cambiaba pero la factura pagada no (p. ej. 30 m³ con un cobro de 17 m³), y se podía romper la continuidad del medidor.
+- **Regla nueva:** solo se puede rectificar la **lectura más reciente del medidor** y solo si su factura **no tiene pagos** (ni abonos) ni está en convenio. En cuanto un medidor tiene la lectura de marzo, su febrero queda cerrado. La regla va por medidor: los que aún no se leen en marzo conservan su febrero abierto.
+- La misma regla aplica al **recálculo de facturas**: las de un período cerrado se reportan como no recalculadas, con el motivo.
+- La API rechaza el cambio aunque se intente por otra vía. En la pantalla, el botón aparece deshabilitado y muestra el motivo.
+- Rectificar en el mes en curso antes de cobrar funciona igual que antes (rectificar y después recalcular).
+
+#### 🕔 Fechas en hora de Sonora
+- **Problema:** la fecha propuesta en los formularios de pago (pago, pago rápido, pago distribuido y liquidación total) y la fecha que se guarda al tomar lecturas se calculaban en hora UTC. **Después de las 5:00 p. m. salía la fecha del día siguiente.**
+- **Corrección:** se usa la fecha de hoy en hora de Sonora (`America/Hermosillo`), la misma que usa la API.
+
+#### 🔎 Filtros y listas de Pagos (detectado por las pruebas automatizadas)
+- **Pagos → Pagos:** los filtros de **fecha de cobro**, **cobrado por** y **tipo de pago** no llegaban al servidor: con «Cobrados hoy» se mostraban todos los pagos y el total cobrado de todo el historial. Ahora se aplican.
+- **Pagos → Facturas:** lo mismo con **antigüedad del vencimiento**, **consumo**, **ruta** y **tarifa**.
+- **Pagos → Facturas:** después de registrar un cobro (o con «Recargar»), la tabla volvía al mes actual aunque el selector siguiera mostrando otro período, y aparecía «No hay facturas en este período». Ahora conserva el período, la búsqueda y los filtros.
+- **Medidores:** al registrar un número de serie repetido se mostraba «Error al registrar medidor» sin el motivo. Ahora dice «El número de serie ya está registrado».
+
+#### 🧾 Comprobante de pago
+- La **fecha de pago** se imprimía un día antes (un pago del 10/09 salía 09/09) y, al reimprimir desde el detalle del pago, la **hora de emisión** salía 7 horas adelantada. Solo cambia cómo se leen las fechas; el diseño del comprobante es el mismo.
+
+### 🖥️ Mejoras de interfaz
+
+#### 🔎 Filtros de Clientes e Inventario de Medidores
+- **Clientes:** filtro por **situación de pago** (al corriente, con saldo pendiente, 1 / 2 / 3 o más facturas vencidas), **tarifa**, **con / sin medidor**, **ruta de lectura** y ciudad; nuevo orden **Mayor adeudo**. La tabla muestra bajo el estado el adeudo de cada cliente y sus facturas vencidas (o «Al corriente»).
+- **Medidores:** **ubicación agrupada** (ya no se repiten opciones por mayúsculas o espacios: «Medidor nuevo», «Medidor Nuevo » cuentan juntas), **asignado / disponible**, **marca** (ayuda a encontrar errores de captura), **ruta**, **con / sin coordenadas** y **año de instalación**.
+- Cada opción muestra cuántos registros tiene. Búsqueda y filtros principales a la vista; el resto en **«Más filtros»**. Los filtros activos aparecen como etiquetas que se quitan con su X.
+- **Pagos → Facturas:** se corrigió el filtro de estado: ofrecía «Vencido», que no coincidía con lo guardado («Vencida»), y no mostraba ninguna factura vencida. Ahora ofrece los cinco estados: Pendiente, Parcial, Vencida, En Convenio y Pagado. Nuevos filtros: **antigüedad del vencimiento** (más de 30, 60 o 90 días), **rango de consumo**, **ruta** y **tarifa**.
+- **Pagos → Pagos:** filtro por **fecha de cobro** (hoy, ayer, esta semana, este mes, mes anterior o rango de fechas) con el **total cobrado** de todo el filtro, útil para el corte de caja; con fecha de cobro se incluyen pagos de todos los períodos facturados. Nuevos filtros **cobrado por** (usuario que registró el pago) y **tipo de pago** (completo, abono parcial, parcialidad de convenio). Se corrigió que «Limpiar» dejara la tabla vacía al restablecer el método de pago.
+- **Pagos → Cobranza:** filtros de **situación de pago** (con deuda, al corriente, 1 / 2 / 3 o más vencidas), **monto de la deuda** (desde $500, $1,000, $2,000), **ruta** y **tarifa**, además del orden que ya existía. La impresión de deudores y la exportación respetan los filtros.
+- **Exportar «Resultados del filtro»:** exporta todos los registros que cumplen los filtros, de todas las páginas (antes la opción de filtrados exportaba como máximo 60).
+
+#### Paneles de Nube y Backups explicados
+- **Nube (Turso):** el panel se ordena en dos pasos: *1. Conexión con Turso* y *2. Acciones sobre la copia*. Cada acción (Sincronizar ahora, Subir base completa, Restaurar desde la nube) tiene una tarjeta que explica qué hace y cuándo usarla. *Desvincular* queda aparte y aclara que no borra datos locales ni la copia en la nube. Se agregó una explicación en lenguaje sencillo de cómo funciona la copia.
+- **Backups:** tarjetas con la explicación de *Crear respaldo ahora* y de la retención; guía de cómo funcionan los respaldos y cómo deshacer una restauración; descripción de cada tipo de respaldo al pasar el mouse; los avisos de la confirmación de restauración reflejan el funcionamiento actual (se aplica al reiniciar y se puede deshacer con el respaldo Pre-restauración).
+
+#### Una acción a la vez
+- En los paneles de Nube y Backups, mientras una operación está en curso los demás botones quedan deshabilitados y se muestra un aviso.
+- Guardar o desvincular la conexión con Turso se rechaza mientras se está subiendo una copia (incluida la sincronización automática), con un mensaje para intentarlo al terminar.
+- «Sincronizar ahora» ya no muestra «completada» cuando la sincronización automática estaba en curso: indica que hay que esperar.
+
+### 📚 Ayuda
+- **Lecturas:** *Rectificar y Recalcular Lectura* y *Generar y Recalcular Facturación* explican la regla nueva: qué lecturas se pueden rectificar, por qué el botón aparece deshabilitado y qué pasa con las facturas de un período cerrado al recalcular.
+- **Facturas:** *Ciclo de Vida y Estados de Facturas* reescrito con los cinco estados reales (Pendiente, Parcial, Vencida, En Convenio y Pagado), un diagrama de cómo pasa una factura de uno a otro y el umbral de corte configurable (4 facturas vencidas por defecto). *Recálculo y Correcciones de Facturas* actualizado con la misma regla.
+
+### 🧪 Calidad y desarrollo
+- **Pruebas automatizadas por módulo (Playwright):** 48 pruebas que recorren la app real: inicio de sesión, navegación, clientes, medidores, rutas y lecturas, tarifas, pagos, impresión de recibos y reportes, y usuarios y permisos. Revisan en la base que cada acción guarde lo correcto (lecturas, facturas, montos, pagos y saldos).
+- **No tocan los datos reales:** trabajan sobre una copia de la base hecha en modo de solo lectura, en una carpeta temporal y sin credenciales de la nube. En la impresión solo se genera y revisa la vista previa, nunca se manda a la impresora.
+- **Modo desarrollo:** si la ventana se queda en blanco o no aparece al arrancar (falla del servicio de red de Electron), se recarga sola y deja el motivo en la consola. No afecta a la app instalada.
+
+### 💡 Recomendación: pasar la base a otra computadora
+- Use **Administrador ➔ Mantenimiento ➔ Backups ➔ «Crear respaldo ahora»** en el equipo de origen y **Restaurar** ese respaldo en el equipo destino. El respaldo junta en un solo archivo todos los cambios.
+- No copie solo `agua-vp.db`: los cambios más recientes pueden estar todavía en `agua-vp.db-wal`, y la copia quedaría incompleta (por ejemplo, con facturas de un período sin generar). Si copia a mano, cierre la app y copie los tres archivos (`.db`, `.db-wal` y `.db-shm`).
+
+---
+
+### 🔖 Trazabilidad de Versiones
+- **Versión actual:** `v1.3.1-rc.2` [Pre-release]
+- **Pre-release previo:** `v1.3.1-rc.1` (10/10/2026)
+- **Versión base estable previa:** `v1.3.0` (22/09/2026)
+- **Servidor embebido:** `@aguavp/api-server 1.0.18`
+
+---
+
+## 🧪 Notas de la versión — v1.3.1-rc.1 [Release Candidate]
+
+**📅 Fecha de lanzamiento:** 10/10/2026  
+**🚀 Versión:** `v1.3.1-rc.1` [Pre-release / Versión Candidata de Evaluación]  
+**📌 Versión base anterior estable:** `v1.3.0`  
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.12` (antes `1.0.2`)
+
+> ⚠️ **Aviso de Pre-release:** Versión candidata de la línea `v1.3.x` para pruebas en producción. Incorpora el **respaldo opcional en la nube (Turso)** con restauración verificada, un sistema de **respaldos locales más seguro** (copias consistentes, restauración al reiniciar y retención por motivo), el nuevo **Reporte General Ejecutivo** y la generación nativa en PDF de todos los reportes. El diseño y los cálculos de recibos y reportes existentes no cambian. **La nube es opcional:** sin configurarla, la app funciona en modo local exactamente como antes.
+
+---
+
+### 🔥 Novedades y Mejoras Principales (Cambios desde v1.3.0)
+
+#### ☁️ 1. Respaldo Opcional en la Nube (Turso Cloud)
+- **Copia automática de un solo sentido (local ➔ nube):**
+  - Se configura desde **Administrador ➔ Mantenimiento ➔ Nube** (URL y token de Turso, guardados cifrados en el equipo). Sin configurar, la app trabaja en *modo local puro*.
+  - Tras una carga completa inicial, solo se suben los cambios registrados (altas, ediciones y bajas) cada 15 minutos; si no hay internet los cambios quedan pendientes y se suben al reconectar.
+  - Las tablas de sesiones y tokens no se suben a la nube.
+- **Protección de la copia en la nube:**
+  - Nunca se vacía la nube antes de copiar. La carga completa se **bloquea** si la nube pertenece a otra base de datos, si tiene más registros de negocio que la base local, si tiene columnas que la local no tiene o si la escribió **otra computadora**.
+  - Antes de un reemplazo forzado se muestra, por tabla, **cuántos registros e ids se eliminarían** de la nube, con doble confirmación.
+  - Cada computadora tiene un identificador propio: dos equipos no pueden mezclar sus datos en la misma copia.
+- **Verificación de la copia:**
+  - Después de cada subida se comparan conteos e ids de las tablas modificadas.
+  - Una vez al día (y tras cada carga completa) se compara el **contenido de todas las tablas fila por fila** y se reparan las diferencias; también se revisa la integridad de la base local y no se sube nada si está dañada.
+- **Restaurar desde la Nube:**
+  - Descarga la copia, la valida (integridad, conteos y contenido) y la aplica **al reiniciar la app**, después de un respaldo local automático `pre-restore`.
+  - Conserva columnas y tablas que el esquema actual no conoce, para no perder datos heredados.
+- **Avisos y bitácora:**
+  - Cada 30 minutos se revisa el estado de la copia; los administradores reciben un aviso si está detenida por un conflicto, si falló 3 veces seguidas, si no hay copia correcta en 24 horas o si la verificación encontró diferencias.
+  - Los mensajes de sincronización aparecen en **Mantenimiento ➔ Logs** (fuente `nube`).
+  - El panel muestra última copia, última sincronización correcta, cambios por subir, intentos fallidos y referencias huérfanas.
+  - Probar la conexión con Turso requiere sesión de administrador.
+
+---
+
+#### 💾 2. Respaldos Locales Más Seguros
+- **Copias consistentes:** los respaldos se generan con `VACUUM INTO`, incluyendo los cambios recientes que aún estaban en el archivo `-wal` (antes podían omitirse).
+- **Restauración segura:** restaurar un respaldo ya no copia el archivo encima de la base abierta; se prepara, se verifica y se aplica al reiniciar, antes de abrir la base, protegido ante cortes de energía.
+- **Retención por motivo:** el motivo va en el nombre del archivo (`agua-vp-backup-<fecha>-<motivo>.db`). Se conservan los más recientes (configurable y guardado entre reinicios), **uno por día de los últimos 14 días** y los **10 últimos previos a restaurar y a actualizar**, que ya no se pierden por abrir la app varias veces.
+- Limpieza automática al arrancar de restos de restauraciones anteriores.
+
+---
+
+#### 📊 3. Reportes e Impresión
+- **Nuevo Reporte General Ejecutivo (`TabReportes.jsx`):**
+  - Consolida consumo de agua y situación financiera con filtros por **período**, **últimos meses** o **año**.
+- **Generación nativa en PDF (pdfmake) de los reportes:** General, Financiero de Pagos, Lecturas, Lecturas con Métricas, Deudores Mayores y Comprobante de Pago se generan en el proceso principal, con mayor rapidez y fidelidad; la vista web queda como respaldo.
+- **Progreso real al generar recibos:** la barra de avance refleja el progreso efectivo de la generación del PDF.
+- **Impresión en escala de grises / blanco y negro** desde la vista previa, incluidas páginas sueltas.
+- Mejor carga de imágenes en el Reporte de Documentación y en la Ayuda.
+
+---
+
+#### 📋 4. Lecturas
+- **Indicadores de medidor en la toma de lecturas:** el reporte y el listado de lecturas marcan con **Cambio** o **Nuevo** los medidores sustituidos o recién instalados, y toman la lectura anterior correcta en esos casos (API: seguimiento de medidor en el reporte, con pruebas unitarias).
+
+---
+
+#### 🧱 5. Calidad Interna (sin cambios visibles)
+- Reorganización de los manejadores IPC por dominio (`ipc/core`, `ipc/auth`, `ipc/dominios`) y cliente HTTP unificado hacia la API (`api-client/http.js`).
+- Reorganización de vistas y componentes compartidos del renderer.
+- Generadores PDF con fuentes y formatos compartidos (`pdf/shared`), sin alterar el diseño de recibos ni reportes.
+- Limpieza del módulo de autenticación y del preload.
+- Pruebas E2E (Playwright) para autenticación, navegación, clientes, medidores, lecturas, tarifas, pagos y administración.
+- Se eliminó el desenfoque (`backdrop-blur`) del panel de configuración, que se veía negro en algunas tarjetas gráficas.
+
+---
+
+### ⚠️ Notas Importantes
+- **Haga un respaldo manual** antes de instalar esta versión en el equipo de producción.
+- Para usar la nube en producción, utilice **una base de Turso exclusiva** para ese equipo (no la de pruebas).
+- En la primera vinculación se realiza una carga completa protegida; si aparece un aviso de conflicto, revise la lista de registros antes de forzar cualquier reemplazo.
+
+---
+
+### 🔖 Trazabilidad de Versiones
+- **Versión actual:** `v1.3.1-rc.1` [Pre-release]
+- **Versión base estable previa:** `v1.3.0` (22/09/2026)
+- **Servidor embebido:** `@aguavp/api-server 1.0.12`
+
+---
+
 ## 🚀 Notas de la versión — v1.3.0 [Estable]
 
 **📅 Fecha de lanzamiento:** 22/09/2026  

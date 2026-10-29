@@ -1,0 +1,1189 @@
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
+import {
+  HiLocationMarker,
+  HiUser,
+  HiCalendar,
+  HiHashtag,
+  HiMap,
+  HiPhone,
+  HiCalculator,
+  HiArrowLeft,
+  HiArrowRight,
+  HiCheck,
+  HiSearch,
+  HiX,
+  HiPencil,
+  HiExclamation
+} from "react-icons/hi";
+import MapaLecturas from "../../../components/mapa/MapaLecturas";
+import { useRutas } from "../../../context/RutasContext";
+import { useFeedback } from "../../../context/FeedbackContext";
+import { useAuth } from "../../../context/AuthContext";
+import { usePermissions } from "../../../context/PermissionsContext";
+import { formatearPeriodo } from "../../../utils/periodoUtils";
+import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
+
+const largeModalTheme = {
+    root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
+    content: {
+        base: "relative h-full w-full p-1 sm:p-2 pt-16 sm:pt-20",
+        inner: "relative flex h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.25rem)] flex-col rounded-[2rem] bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-[1600px] w-full"
+    },
+    header: {
+        base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 pb-4 pt-6 px-8 shrink-0",
+        close: { base: "absolute top-4 right-4 inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors z-50", icon: "h-5 w-5" }
+    },
+    body: { base: "px-8 py-6 flex-1 min-h-0 overflow-y-auto custom-scrollbar" },
+    footer: { base: "flex items-center justify-between gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 shrink-0" }
+};
+
+// Componente separado para el input de lectura (UI Premium - Solo Enteros m³)
+const LecturaInput = React.memo(React.forwardRef(
+  ({ value, onChange, clienteId, onSave, isLoading, error, autoFocus, lecturaAnterior, capacidadMaxima = 99999, onConfirmarVueltaCero, onCorregirLectura, periodoTexto }, ref) => {
+
+  const consumoCalculado = useMemo(() => {
+    if (value === "" || isNaN(parseInt(value, 10))) return null;
+    const actual = parseInt(value, 10);
+    if (lecturaAnterior === null || lecturaAnterior === undefined) return 0;
+    const anterior = Math.round(Number(lecturaAnterior));
+    return Math.max(0, actual - anterior);
+  }, [value, lecturaAnterior]);
+
+  const consumoCalculadoRollover = useMemo(() => {
+    if (value === "" || isNaN(parseInt(value, 10)) || lecturaAnterior === null || lecturaAnterior === undefined) return null;
+    const actual = parseInt(value, 10);
+    const anterior = Math.round(Number(lecturaAnterior));
+    const cap = Math.round(Number(capacidadMaxima));
+    return Math.max(0, ((cap - anterior) + actual));
+  }, [value, lecturaAnterior, capacidadMaxima]);
+
+  const valorMenorQueAnterior =
+    lecturaAnterior !== null && lecturaAnterior !== undefined &&
+    value !== "" && !isNaN(parseInt(value, 10)) &&
+    parseInt(value, 10) < Math.round(Number(lecturaAnterior));
+
+  const fmtM3 = (v) => Number(v).toLocaleString('es-MX', { maximumFractionDigits: 0 });
+
+  return (
+    <div className="space-y-4">
+
+      {/* Lectura anterior de referencia */}
+      {lecturaAnterior !== null && lecturaAnterior !== undefined ? (
+        <div className="flex items-center justify-between bg-sky-500/10 rounded-2xl p-4 border border-sky-200/60 dark:border-sky-900/40">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-sky-700/70 dark:text-sky-400/80 mb-1">Lectura Anterior</p>
+            <p className="text-2xl font-black text-sky-700 dark:text-sky-300 tracking-tight">{fmtM3(lecturaAnterior)} <span className="text-sm opacity-70">m³</span></p>
+          </div>
+          {consumoCalculado !== null && !valorMenorQueAnterior && (
+            <div className="text-right border-l pl-4 border-sky-200 dark:border-sky-900/40">
+              <p className="text-[10px] font-bold text-emerald-700/70 dark:text-emerald-400/80 uppercase tracking-widest mb-1">Consumo (Resta)</p>
+              <p className={`text-2xl font-black tracking-tight ${consumoCalculado >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                +{fmtM3(consumoCalculado)} <span className="text-sm opacity-70">m³</span>
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-4 border border-amber-200/50 dark:border-amber-800/30">
+          <HiExclamation className="text-amber-500 text-xl shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-0.5">Primera lectura del medidor</p>
+            <p className="text-xs font-medium text-amber-700/70 dark:text-amber-400/70 leading-snug">
+              No hay un registro anterior. El valor que ingreses será el punto de partida oficial.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Input: lectura actual del medidor */}
+      <div className="pt-2">
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+            Ingresar Lectura Actual (m³)
+          </label>
+          {periodoTexto && (
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+              {periodoTexto}
+            </span>
+          )}
+        </div>
+        <div className="relative w-full flex shadow-none rounded-2xl group">
+          <span className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl transition-colors ${valorMenorQueAnterior ? 'text-orange-500' : 'text-slate-500 group-focus-within:text-slate-700 dark:group-focus-within:text-zinc-300'}`}>
+            <HiCalculator />
+            </span>
+            <input
+            ref={ref}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={value}
+            onChange={onChange}
+            placeholder={lecturaAnterior !== null && lecturaAnterior !== undefined ? String(Math.round(Number(lecturaAnterior))) : "0"}
+            disabled={isLoading}
+            autoFocus={autoFocus}
+            onKeyDown={(e) => {
+                if (e.key === '.' || e.key === ',' || e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                  e.preventDefault();
+                }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (!valorMenorQueAnterior) onSave();
+                }
+            }}
+            className={`
+                w-full pl-14 pr-16 py-4 text-3xl font-black rounded-2xl transition-all duration-200 focus:outline-none focus:ring-4
+                bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white placeholder-slate-300 dark:placeholder-zinc-600
+                ${error
+                    ? 'border-2 border-red-500 focus:ring-red-500/20 focus:border-red-500 bg-red-50 dark:bg-red-900/10'
+                    : valorMenorQueAnterior
+                        ? 'border-2 border-orange-400 focus:ring-orange-500/20 focus:border-orange-500 bg-orange-50 dark:bg-orange-900/10'
+                    : 'border-2 border-slate-200 dark:border-zinc-800 focus:ring-slate-400/20 focus:border-slate-300 hover:border-slate-300 dark:hover:border-zinc-700'
+                }
+            `}
+            />
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center">
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-slate-200/30 border-t-slate-400 rounded-full animate-spin" />
+                ) : (
+                    <span className="text-slate-400 font-bold">m³</span>
+                )}
+            </div>
+        </div>
+        <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 mt-2">
+          Máximo permitido por medidor: {Number(capacidadMaxima).toLocaleString('es-MX', { maximumFractionDigits: 4 })} m³
+        </p>
+        {error && <p className="text-xs font-bold text-red-500 mt-2 flex items-center gap-1"><HiExclamation /> {error}</p>}
+      </div>
+
+      {/* Panel de confirmación — aparece automáticamente cuando la lectura bajó */}
+      {valorMenorQueAnterior ? (
+        <div className="rounded-2xl border border-orange-200 dark:border-orange-800/50 bg-orange-50 dark:bg-orange-900/10 p-5 space-y-4 animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-orange-200/50 dark:bg-orange-800/50 rounded-full">
+                <HiExclamation className="text-orange-600 dark:text-orange-400 text-lg" />
+            </div>
+            <p className="font-bold text-orange-800 dark:text-orange-300 text-sm">Alerta: La lectura es menor que la anterior</p>
+          </div>
+
+          <div className="flex justify-between items-center bg-white dark:bg-zinc-900 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Mes Anterior</p>
+              <p className="font-black text-lg text-slate-700 dark:text-zinc-200">{fmtM3(lecturaAnterior)} <span className="text-xs opacity-60">m³</span></p>
+            </div>
+            <HiArrowRight className="text-slate-300" />
+            <div className="text-right">
+              <p className="text-[10px] text-orange-500 uppercase tracking-wider font-bold mb-0.5">Ingresaste</p>
+              <p className="font-black text-lg text-orange-600 dark:text-orange-400">{fmtM3(parseInt(value, 10))} <span className="text-xs opacity-60">m³</span></p>
+            </div>
+          </div>
+
+          <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-3 border border-indigo-100 dark:border-indigo-900/30 flex justify-between items-center">
+            <div>
+                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">Si el medidor dio vuelta a cero:</p>
+                <p className="text-xs text-indigo-500/70 dark:text-indigo-400/70 mt-0.5 font-medium">
+                ({fmtM3(capacidadMaxima)} − {fmtM3(lecturaAnterior)}) + {fmtM3(parseInt(value, 10))}
+                </p>
+            </div>
+            <div className="text-right">
+                <p className="text-xl font-black text-indigo-700 dark:text-indigo-300">
+                {consumoCalculadoRollover !== null ? fmtM3(consumoCalculadoRollover) : '—'} <span className="text-xs opacity-60">m³</span>
+                </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={onConfirmarVueltaCero}
+              disabled={isLoading}
+              className="flex-1 font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-11 flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <HiCheck />
+              )}
+              Confirmar Vuelta a Cero
+            </button>
+            <button
+              onClick={onCorregirLectura}
+              disabled={isLoading}
+              className="flex-1 font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl h-11 flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              Corregir Error
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="pt-2">
+          <button
+            onClick={onSave}
+            disabled={!value || String(value).trim() === "" || isLoading}
+            className="w-full font-bold text-base h-12 bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <HiArrowRight className="text-lg" />
+            )}
+            Guardar y Siguiente
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}));
+
+// Componente separado para el mapa
+const MapaContainer = React.memo(({ lat, lng, cliente, ciudad }) => {
+  return (
+    <div className="w-full h-full border border-slate-200 dark:border-zinc-800 shadow-none bg-slate-50 dark:bg-zinc-900/50 rounded-2xl overflow-hidden flex flex-col min-h-[350px] sm:min-h-[400px]">
+      <div className="pb-3 pt-4 px-5 flex items-center gap-3 border-b border-slate-200 dark:border-zinc-700/50 shrink-0">
+        <div className="p-2 bg-sky-500/10 rounded-xl text-sky-600 dark:text-sky-400">
+            <HiMap className="w-5 h-5" />
+        </div>
+        <h4 className="font-bold text-slate-800 dark:text-zinc-100 leading-none">Mapa de Ubicación</h4>
+      </div>
+      <div className="p-0 relative flex-1 min-h-0">
+          <MapaLecturas
+            lat={lat}
+            lng={lng}
+            cliente={cliente}
+          />
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.lat === nextProps.lat &&
+    prevProps.lng === nextProps.lng &&
+    prevProps.cliente?.id === nextProps.cliente?.id
+  );
+});
+
+const norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+// InfoRow (Premium UI)
+const InfoRow = ({ label, value, icon: Icon, colorClass, valueClass = "" }) => (
+  <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-zinc-800/50 last:border-0">
+    <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${colorClass}`}>
+      <Icon className="text-base shrink-0" />
+      {label}
+    </span>
+    <span className={`text-sm font-bold text-slate-800 dark:text-zinc-100 text-right ${valueClass}`}>
+      {value || "N/A"}
+    </span>
+  </div>
+);
+
+export default function CarruselLecturasModal({ rutaId, periodoMostrado, rutaInfo }) {
+  const { obtenerInfoRuta, actualizarRutas, rutas, loading } = useRutas();
+  const { setError, setSuccess } = useFeedback();
+  const { user } = useAuth();
+  const { can } = usePermissions();
+  const canTomarLecturas = can("lecturas.tomar");
+  const canModificarLecturas = can("lecturas.modificar");
+
+  const [isOpen, setIsOpen] = useState(false);
+  const handleClose = useCallback(() => setIsOpen(false), []);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [lecturas, setLecturas] = useState({});
+  const [ruta, setRuta] = useState(null);
+  const [lecturasGuardadas, setLecturasGuardadas] = useState(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [erroresLectura, setErroresLectura] = useState({});
+  const [showSearch, setShowSearch] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [vueltasCero, setVueltasCero] = useState({});
+  const [lecturasRegistradas, setLecturasRegistradas] = useState({});
+  const [modoRectificar, setModoRectificar] = useState({});
+
+  const periodoTexto = useMemo(() => {
+    return formatearPeriodo(periodoMostrado || ruta?.periodo) || "";
+  }, [periodoMostrado, ruta?.periodo]);
+
+  const lecturaInputRef = React.useRef(null);
+  const searchInputRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!rutaId) return;
+    obtenerInfoRuta(rutaId, periodoMostrado)
+      .then((rutaData) => {
+        if (!rutaData) {
+          setRuta(null);
+          setError("No se pudo cargar la ruta", "Toma de Lecturas");
+          return;
+        }
+
+        // Detectar si el periodo está cerrado / facturado
+        const esPeriodoCerrado = Boolean(
+          rutaInfo?.periodo_cerrado ||
+          rutaInfo?.tiene_facturacion_periodo ||
+          Number(rutaInfo?.facturas_generadas_periodo || 0) > 0 ||
+          rutaData?.periodo_cerrado ||
+          rutaData?.tiene_facturacion_periodo ||
+          Number(rutaData?.facturas_generadas_periodo || 0) > 0
+        );
+
+        // Si el periodo está cerrado para captura, mostrar únicamente los medidores que formaron parte de ese ciclo (que tienen lectura)
+        const puntosValidos = (rutaData.puntos || []).filter(p => {
+          if (!p.cliente_id) return false;
+          if (esPeriodoCerrado) {
+            return p.tiene_lectura === 1 || p.lectura_id || (p.lectura_actual !== null && p.lectura_actual !== undefined);
+          }
+          return true;
+        });
+
+        // Ordenamiento consistente por orden en ruta y número de predio
+        puntosValidos.sort((a, b) => {
+          const ordA = a.orden !== null && a.orden !== undefined ? Number(a.orden) : null;
+          const ordB = b.orden !== null && b.orden !== undefined ? Number(b.orden) : null;
+          if (ordA !== null && ordB !== null && ordA !== ordB) {
+            return ordA - ordB;
+          }
+          if (a.numero_predio && b.numero_predio) {
+            return String(a.numero_predio).localeCompare(String(b.numero_predio), undefined, { numeric: true });
+          }
+          return 0;
+        });
+
+        setRuta({
+          ...rutaData,
+          puntos: puntosValidos
+        });
+        setCurrentIndex(0);
+        setLecturas({});
+        setErroresLectura({});
+        setVueltasCero({});
+        setModoRectificar({});
+
+        // Inicializar lecturas registradas para este período directamente de la API
+        const guardadasSet = new Set();
+        const registradasObj = {};
+        puntosValidos.forEach(p => {
+          if (p.tiene_lectura === 1 || p.lectura_id || (p.lectura_actual !== null && p.lectura_actual !== undefined)) {
+            guardadasSet.add(p.medidor_id);
+            registradasObj[p.medidor_id] = {
+              lectura_anterior: p.lectura_anterior !== null && p.lectura_anterior !== undefined ? p.lectura_anterior : p.lectura_anterior_disponible,
+              lectura_actual: p.lectura_actual,
+              consumo_m3: p.consumo_m3 !== null && p.consumo_m3 !== undefined ? p.consumo_m3 : (p.lectura_actual !== null && p.lectura_anterior !== null ? Math.max(0, p.lectura_actual - p.lectura_anterior) : p.lectura_actual),
+              lecturaId: p.lectura_id,
+              vuelta_cero: p.vuelta_cero === true
+            };
+          }
+        });
+        setLecturasGuardadas(guardadasSet);
+        setLecturasRegistradas(registradasObj);
+      })
+      .catch((error) => {
+        console.error("Error al obtener la ruta:", error);
+        setRuta(null);
+        setError("Error al cargar la información de la ruta", "Toma de Lecturas");
+      });
+  }, [rutaId, periodoMostrado, isOpen, obtenerInfoRuta, setError]);
+
+  const obtenerFechaActual = useCallback(() => {
+    // Fecha de hoy en hora de Sonora (toISOString da la de UTC: después de las 5 pm sería mañana)
+    return nowHermosilloDateStr();
+  }, []);
+
+  const hasValidData = ruta && ruta.puntos && ruta.puntos.length > 0;
+  const total = hasValidData ? ruta.puntos.length : 0;
+  const puntoActual = hasValidData ? ruta.puntos[currentIndex] : null;
+  const lecturaActual = puntoActual ? (lecturas[puntoActual.medidor_id] || "") : "";
+  const errorLecturaActual = puntoActual ? (erroresLectura[puntoActual.medidor_id] || "") : "";
+  const lecturaAnteriorPunto = puntoActual ? (puntoActual.lectura_anterior_disponible ?? null) : null;
+  const capMaxPunto = puntoActual ? (puntoActual.capacidad_maxima ?? 99999) : 99999;
+  const capMaxPuntoNum = useMemo(() => {
+    const n = Number(capMaxPunto);
+    return Number.isFinite(n) && n > 0 ? n : 99999;
+  }, [capMaxPunto]);
+  const maxEnterosCapacidad = useMemo(() => String(Math.trunc(capMaxPuntoNum)).length, [capMaxPuntoNum]);
+
+  const isLecturaCompletada = useMemo(() => {
+    if (!puntoActual) return false;
+    return lecturasGuardadas.has(puntoActual.medidor_id);
+  }, [puntoActual, lecturasGuardadas]);
+
+  const resultadosBusqueda = useMemo(() => {
+    if (!hasValidData || !busqueda.trim()) return [];
+    const term = norm(busqueda);
+    return ruta.puntos
+      .map((p, idx) => ({ ...p, idx }))
+      .filter(
+        (p) =>
+          norm(p.cliente_nombre || "").includes(term) ||
+          norm(p.numero_serie || "").includes(term) ||
+          norm(p.numero_predio || "").includes(term) ||
+          String(p.orden ?? p.idx + 1).includes(term)
+      )
+      .slice(0, 10);
+  }, [busqueda, ruta, hasValidData]);
+
+  const handleJumpTo = useCallback((idx) => {
+    setCurrentIndex(idx);
+    setShowSearch(false);
+    setBusqueda("");
+    setTimeout(() => lecturaInputRef.current?.focus(), 150);
+  }, []);
+
+  const handleToggleSearch = useCallback(() => {
+    setShowSearch((v) => {
+      if (!v) setTimeout(() => searchInputRef.current?.focus(), 50);
+      return !v;
+    });
+    setBusqueda("");
+  }, []);
+
+  const handleCorregirLectura = useCallback(() => {
+    if (!puntoActual) return;
+    setLecturas(prev => ({ ...prev, [puntoActual.medidor_id]: "" }));
+    setErroresLectura(prev => ({ ...prev, [puntoActual.medidor_id]: "" }));
+    setTimeout(() => lecturaInputRef.current?.focus(), 50);
+  }, [puntoActual]);
+
+  const mapaProps = useMemo(() => {
+    if (!puntoActual) return null;
+    return {
+      lat: puntoActual.latitud,
+      lng: puntoActual.longitud,
+      cliente: {
+        id: puntoActual.medidor_id,
+        nombre: puntoActual.cliente_nombre || `Medidor ${puntoActual.numero_serie}`,
+        dirección: puntoActual.cliente_direccion || puntoActual.ubicacion,
+        medidor: puntoActual.numero_serie,
+        telefono: puntoActual.cliente_telefono,
+        ciudad: ruta?.nombre || ""
+      }
+    };
+  }, [puntoActual, ruta?.nombre]);
+
+  const handleLecturaChange = useCallback((e) => {
+    if (!puntoActual) return;
+    const medidorId = puntoActual.medidor_id;
+    let value = String(e.target.value || "");
+
+    // Permitir exclusivamente dígitos enteros (0-9)
+    value = value.replace(/\D/g, '');
+
+    if (value.length > maxEnterosCapacidad) {
+      value = value.slice(0, maxEnterosCapacidad);
+    }
+
+    if (value !== "" && !Number.isNaN(Number(value)) && Number(value) > capMaxPuntoNum) {
+      value = String(Math.floor(capMaxPuntoNum));
+    }
+
+    setLecturas(prev => ({ ...prev, [medidorId]: value }));
+    if (erroresLectura[medidorId]) {
+      setErroresLectura(prev => ({ ...prev, [medidorId]: "" }));
+    }
+  }, [puntoActual, erroresLectura, capMaxPuntoNum, maxEnterosCapacidad]);
+
+  const handleGuardarLectura = useCallback(async (forceVueltaCero = false) => {
+    if (!puntoActual) return;
+    if (!canTomarLecturas) {
+      setError("No tienes permisos para registrar lecturas.", "Toma de Lecturas");
+      return;
+    }
+
+    const medidorId = puntoActual.medidor_id;
+    const numeroSerieActual = puntoActual.numero_serie;
+    const lectura = lecturas[medidorId];
+    const lectAnterior = puntoActual.lectura_anterior_disponible ?? null;
+    const esVueltaCero = forceVueltaCero === true || vueltasCero[medidorId] === true;
+
+    if (!lectura || lectura.toString().trim() === "") {
+      setErroresLectura(prev => ({ ...prev, [medidorId]: "La lectura es obligatoria" }));
+      return;
+    }
+
+    const lecturaNum = parseInt(lectura, 10);
+    if (isNaN(lecturaNum) || lecturaNum < 0) {
+      setErroresLectura(prev => ({ ...prev, [medidorId]: "La lectura no puede ser negativa" }));
+      return;
+    }
+    if (lecturaNum > capMaxPuntoNum) {
+      setErroresLectura(prev => ({ ...prev, [medidorId]: `La lectura no puede exceder ${Math.floor(capMaxPuntoNum).toLocaleString('es-MX')} m³` }));
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const tokensession = localStorage.getItem("token");
+      const lecturaData = {
+        medidor_id: medidorId,
+        ruta_id: rutaId,
+        lectura_actual: lecturaNum,
+        vuelta_cero: esVueltaCero,
+        fecha_lectura: obtenerFechaActual(),
+        periodo: periodoMostrado,
+        modificado_por: user?.id || user?.id_usuario || 1,
+      };
+
+      const response = await window.api.registerLectura(lecturaData, tokensession);
+
+      if (response.success) {
+        setLecturasGuardadas(prevSet => {
+          const newSet = new Set(prevSet);
+          newSet.add(medidorId);
+          return newSet;
+        });
+        setVueltasCero(prev => { const n = { ...prev }; delete n[medidorId]; return n; });
+        const lectAnteriorReal = response.detalles?.lectura_anterior !== undefined
+            ? Math.round(Number(response.detalles.lectura_anterior))
+            : (lectAnterior !== null ? Math.round(Number(lectAnterior)) : null);
+        const consumoFinal = response.detalles?.consumo_m3 !== undefined
+            ? Math.round(Number(response.detalles.consumo_m3))
+            : (lectAnteriorReal !== null ? Math.max(0, lecturaNum - lectAnteriorReal) : lecturaNum);
+
+        setLecturasRegistradas(prev => ({
+          ...prev,
+          [medidorId]: {
+            lectura_anterior: lectAnteriorReal,
+            lectura_actual: response.detalles?.lectura_actual ?? lecturaNum,
+            consumo_m3: consumoFinal,
+            lecturaId: response.lecturaID,
+            vuelta_cero: esVueltaCero
+          }
+        }));
+        setModoRectificar(prev => { const n = { ...prev }; delete n[medidorId]; return n; });
+
+        setSuccess(`Lectura guardada exitosamente`, "Toma de Lecturas");
+        setErroresLectura(prev => ({ ...prev, [medidorId]: "" }));
+
+        window.dispatchEvent(new CustomEvent('lectura-guardada'));
+        window.dispatchEvent(new CustomEvent('rutas-changed'));
+
+        if (currentIndex < total - 1) {
+          setTimeout(() => setCurrentIndex(prev => prev + 1), 500);
+        } else {
+          setTimeout(() => {
+            setSuccess(`¡Ruta completada!`, "Toma de Lecturas");
+            actualizarRutas(periodoMostrado).catch(console.error);
+            window.dispatchEvent(new CustomEvent('lectura-guardada'));
+            window.dispatchEvent(new CustomEvent('rutas-changed'));
+          }, 500);
+        }
+      } else {
+        setErroresLectura(prev => ({ ...prev, [medidorId]: response.message }));
+        setError(response.message, "Toma de Lecturas");
+      }
+    } catch (err) {
+      const errorMsg = "Error al guardar la lectura.";
+      setErroresLectura(prev => ({ ...prev, [medidorId]: errorMsg }));
+      setError(errorMsg, "Toma de Lecturas");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [puntoActual, lecturas, vueltasCero, rutaId, periodoMostrado, user.id, obtenerFechaActual, setSuccess, setError, currentIndex, total, actualizarRutas, canTomarLecturas, capMaxPuntoNum]);
+
+  const handleConfirmarVueltaCero = useCallback(async () => {
+    if (!puntoActual) return;
+    setVueltasCero(prev => ({ ...prev, [puntoActual.medidor_id]: true }));
+    await handleGuardarLectura(true);
+  }, [puntoActual, handleGuardarLectura]);
+
+  const handleRectificarGuardar = useCallback(async () => {
+    if (!puntoActual) return;
+    if (!canModificarLecturas) {
+      setError("No tienes permisos para modificar lecturas.", "Toma de Lecturas");
+      return;
+    }
+
+    const medidorId = puntoActual.medidor_id;
+    const infoAnterior = lecturasRegistradas[medidorId];
+    const lecturaValue = lecturas[medidorId];
+
+    const lecturaId = infoAnterior?.lecturaId ?? puntoActual.lectura_id ?? puntoActual.ultima_lectura_id ?? null;
+    if (!lecturaValue || !lecturaId) return;
+
+    const nuevaLectura = parseInt(lecturaValue, 10);
+    if (isNaN(nuevaLectura) || nuevaLectura < 0) {
+      setErroresLectura(prev => ({ ...prev, [medidorId]: "La lectura no puede ser negativa" }));
+      return;
+    }
+    if (nuevaLectura > capMaxPuntoNum) {
+      setErroresLectura(prev => ({ ...prev, [medidorId]: `La lectura no puede exceder ${Math.floor(capMaxPuntoNum).toLocaleString('es-MX')} m³` }));
+      return;
+    }
+
+    const lecturaAnteriorCalculo = infoAnterior?.lectura_anterior ?? puntoActual.lectura_anterior ?? puntoActual.ultima_lectura_anterior ?? null;
+    const fuConRollover = infoAnterior?.vuelta_cero === true;
+
+    setIsSubmitting(true);
+    try {
+      const tokensession = localStorage.getItem("token");
+      let nuevoConsumo;
+      if (lecturaAnteriorCalculo !== null) {
+        const lectAntNum = Math.round(Number(lecturaAnteriorCalculo));
+        if (fuConRollover) {
+          nuevoConsumo = Math.max(0, (Math.round(capMaxPuntoNum) - lectAntNum) + nuevaLectura);
+        } else {
+          nuevoConsumo = Math.max(0, nuevaLectura - lectAntNum);
+        }
+      } else {
+        nuevoConsumo = nuevaLectura;
+      }
+
+      const response = await window.api.modificarLectura(
+        lecturaId,
+        { lectura_actual: nuevaLectura, consumo_m3: nuevoConsumo },
+        tokensession
+      );
+
+      if (response.success) {
+        setLecturasRegistradas(prev => ({
+          ...prev,
+          [medidorId]: {
+            ...(prev[medidorId] ?? { lectura_anterior: lecturaAnteriorCalculo !== null ? Math.round(Number(lecturaAnteriorCalculo)) : null, lecturaId }),
+            lectura_actual: nuevaLectura,
+            consumo_m3: nuevoConsumo
+          }
+        }));
+        setModoRectificar(prev => { const n = { ...prev }; delete n[medidorId]; return n; });
+        setSuccess("Lectura rectificada exitosamente", "Toma de Lecturas");
+        setErroresLectura(prev => ({ ...prev, [medidorId]: "" }));
+        window.dispatchEvent(new CustomEvent('lectura-guardada'));
+        window.dispatchEvent(new CustomEvent('rutas-changed'));
+        actualizarRutas(periodoMostrado).catch(console.error);
+      } else {
+        setErroresLectura(prev => ({ ...prev, [medidorId]: response.message }));
+        setError(response.message, "Toma de Lecturas");
+      }
+    } catch (err) {
+      const msg = "Error al rectificar la lectura.";
+      setErroresLectura(prev => ({ ...prev, [medidorId]: msg }));
+      setError(msg, "Toma de Lecturas");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [puntoActual, lecturas, lecturasRegistradas, setSuccess, setError, canModificarLecturas, capMaxPuntoNum, actualizarRutas, periodoMostrado]);
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < total - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setTimeout(() => {
+        const siguientePunto = ruta.puntos[currentIndex + 1];
+        if (siguientePunto && !lecturasGuardadas.has(siguientePunto.medidor_id) && lecturaInputRef.current) {
+          lecturaInputRef.current?.focus();
+        }
+      }, 100);
+    }
+  }, [currentIndex, total, ruta, lecturasGuardadas]);
+
+  const handlePrev = useCallback(() => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setTimeout(() => {
+        const anteriorPunto = ruta.puntos[currentIndex - 1];
+        if (anteriorPunto && !lecturasGuardadas.has(anteriorPunto.medidor_id) && lecturaInputRef.current) {
+          lecturaInputRef.current?.focus();
+        }
+      }, 100);
+    }
+  }, [currentIndex, ruta, lecturasGuardadas]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (showSearch) {
+          setShowSearch(false);
+          setBusqueda("");
+        } else {
+          handleClose();
+        }
+      } else if (e.key === 'ArrowRight' && !showSearch) {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === 'ArrowLeft' && !showSearch) {
+        e.preventDefault();
+        handlePrev();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleNext, handlePrev, handleClose, showSearch]);
+
+  const handleFinalizarRuta = useCallback(() => {
+    if (!hasValidData) return;
+    const lecturasNoGuardadas = ruta.puntos.filter(punto => !lecturasGuardadas.has(punto.medidor_id));
+
+    if (lecturasNoGuardadas.length > 0) {
+      setError(`Faltan ${lecturasNoGuardadas.length} lecturas por registrar.`, "Toma de Lecturas");
+      return;
+    }
+
+    setSuccess(`Ruta ${ruta.nombre} finalizada.`, "Toma de Lecturas");
+    window.dispatchEvent(new CustomEvent('lectura-guardada'));
+    window.dispatchEvent(new CustomEvent('rutas-changed'));
+    actualizarRutas(periodoMostrado).catch(console.error);
+    handleClose();
+  }, [hasValidData, ruta, lecturasGuardadas, setError, setSuccess, handleClose, actualizarRutas, periodoMostrado]);
+
+  if (!hasValidData) {
+    return (
+      <button
+        disabled
+        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11 flex items-center gap-2 opacity-50 cursor-not-allowed w-full justify-center"
+      >
+        <HiMap className="text-lg" />
+        {loading || ruta === null ? (
+          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Cargando...</>
+        ) : "Sin medidores"}
+      </button>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        disabled={!canTomarLecturas}
+        className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 shadow-sm h-11 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full justify-center"
+      >
+        <HiMap className="text-lg" />
+        Tomar Lecturas
+      </button>
+
+      <Modal
+        show={isOpen}
+        onClose={handleClose}
+        dismissible
+        theme={largeModalTheme}
+        size="7xl"
+        className="mt-0"
+      >
+        <ModalHeader>
+          <div className="flex gap-4 items-center overflow-visible w-full justify-between">
+            {/* Lado Izquierdo: Icono + Título del modal */}
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0 hidden sm:flex">
+                <HiLocationMarker className="w-6 h-6" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight truncate">
+                    Toma de Lecturas
+                  </h2>
+                  {periodoTexto && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-black tracking-tight bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 shrink-0 shadow-sm">
+                      <HiCalendar className="text-xs shrink-0" />
+                      {periodoTexto}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5 truncate" title={ruta.nombre}>
+                  {ruta.nombre}
+                </p>
+              </div>
+            </div>
+
+            {/* Centro: Buscador (si está activo, paralelo al título) */}
+            {showSearch && (
+              <div className="flex-1 min-w-[240px] sm:min-w-[380px] md:min-w-[480px] max-w-sm sm:max-w-xl lg:max-w-2xl relative animate-in fade-in zoom-in-95 duration-200 mx-2 sm:mx-4">
+                <div className="relative flex items-center">
+                  <HiSearch className="absolute left-4 w-5 h-5 text-slate-500 pointer-events-none" />
+                  <input
+                    ref={searchInputRef}
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    placeholder="Buscar cliente, medidor..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") { setShowSearch(false); setBusqueda(""); }
+                      if (e.key === "ArrowLeft" || e.key === "ArrowRight") e.stopPropagation();
+                    }}
+                    className="w-full pl-11 pr-4 py-2 text-sm font-medium border border-slate-200 dark:border-zinc-800 rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-white focus:outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-400/20 shadow-none transition-all h-10"
+                  />
+                </div>
+
+                {/* Dropdown de resultados */}
+                {busqueda.trim() && (
+                  <div className="absolute top-full left-0 right-0 mt-2 z-[9999] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-lg overflow-hidden w-full">
+                    {resultadosBusqueda.length > 0 ? (
+                      <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                        {resultadosBusqueda.map((punto) => {
+                          const hecho = lecturasGuardadas.has(punto.medidor_id);
+                          return (
+                            <button
+                              key={punto.medidor_id}
+                              onClick={() => handleJumpTo(punto.idx)}
+                              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-700/50 border-b border-slate-100 dark:border-zinc-700/50 last:border-0 text-left transition-colors"
+                            >
+                              <span className="text-xs font-black text-slate-400 dark:text-zinc-500 w-8 text-center shrink-0 bg-slate-100 dark:bg-zinc-800 py-1 rounded-md">
+                                #{punto.orden ?? punto.idx + 1}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                  <p className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-tight whitespace-normal break-words">
+                                    {punto.cliente_nombre || "Cliente"}
+                                  </p>
+                                  {punto.numero_predio && (
+                                    <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                                      Predio #{punto.numero_predio}
+                                    </span>
+                                  )}
+                                  {punto.es_retirado && (
+                                    <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                      Retirado
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 whitespace-normal break-words">
+                                  <span className="font-mono text-sky-700 dark:text-sky-400 mr-2">{punto.numero_serie}</span>
+                                  {punto.ubicacion ? ` ${punto.ubicacion}` : ""}
+                                </p>
+                              </div>
+                              {hecho ? (
+                                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md">
+                                  <HiCheck className="text-sm" /> Hecho
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-black uppercase tracking-wider text-orange-500 dark:text-orange-400 shrink-0 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
+                                    Pendiente
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center">
+                        <p className="text-sm font-bold text-slate-500 dark:text-zinc-400">Sin resultados</p>
+                        <p className="text-xs text-slate-400 mt-1">Verifica el nombre o número de serie.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Extremo Derecho: Botón lupa + Avance */}
+            <div className="flex items-center gap-3 shrink-0 ml-auto">
+              {/* Botón lupa */}
+              <button
+                onClick={handleToggleSearch}
+                title={showSearch ? "Cerrar búsqueda" : "Buscar cliente / medidor"}
+                className={`shrink-0 p-2.5 rounded-xl transition-all duration-200 ${
+                    showSearch
+                      ? 'bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100'
+                      : 'bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800'
+                }`}
+              >
+                {showSearch ? <HiX className="w-5 h-5" /> : <HiSearch className="w-5 h-5" />}
+              </button>
+
+              <div className="flex flex-col items-end justify-center shrink-0 w-24 sm:w-32 border-l border-slate-200 dark:border-zinc-700/50 pl-3">
+                <div className="flex justify-between w-full items-end mb-1">
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avance</span>
+                  <span className="text-xs sm:text-sm font-black text-slate-800 dark:text-zinc-100">
+                      {currentIndex + 1} <span className="text-[10px] sm:text-xs font-medium text-slate-400">/ {total}</span>
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all"
+                    style={{ width: `${(lecturasGuardadas.size / total) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalHeader>
+
+        <ModalBody>
+          <div className="bg-slate-50/40 dark:bg-zinc-950/40">
+            <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 lg:gap-8 lg:h-full">
+
+              {/* Columna Izquierda: Datos y Formulario */}
+              <div className="flex flex-col gap-4 sm:gap-6 lg:h-full lg:min-h-0">
+
+                {/* Tarjeta de Información Completa */}
+                <div className="border-none shadow-none bg-white dark:bg-zinc-900/50 rounded-2xl shrink-0 border border-slate-200 dark:border-zinc-800">
+                  <div className="pb-3 pt-4 sm:pt-5 px-4 sm:px-5 border-b border-slate-100 dark:border-zinc-800/50">
+                    <div className="flex justify-between w-full items-start">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                            <div className="p-1.5 sm:p-2 bg-sky-500/10 rounded-xl text-sky-600 dark:text-sky-400 hidden sm:block">
+                                <HiUser className="text-lg" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-base sm:text-lg text-slate-800 dark:text-zinc-100 leading-tight">Información del Cliente</h4>
+                                <span className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500">
+                                    Punto #{puntoActual?.orden ?? currentIndex + 1} en ruta {puntoActual?.numero_predio ? `• Predio #${puntoActual.numero_predio}` : ""}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                            {puntoActual?.estado_medidor === 'Retirado' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50">
+                                    Medidor Reemplazado
+                                </span>
+                            )}
+                            {isLecturaCompletada && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <HiCheck className="text-xs" />Registrado
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                  </div>
+                  <div className="p-4 sm:p-5">
+                    {puntoActual?.estado_medidor === 'Retirado' && (
+                      <div className="mb-3.5 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 rounded-xl flex items-start gap-2.5">
+                        <HiExclamation className="text-amber-500 text-lg shrink-0 mt-0.5" />
+                        <div className="text-xs">
+                          <p className="font-black text-amber-800 dark:text-amber-300">
+                            Medidor Histórico de este Período ({puntoActual.numero_serie})
+                          </p>
+                          <p className="font-medium text-amber-700 dark:text-amber-400/90 mt-0.5 leading-snug">
+                            Este equipo fue reemplazado o retirado{puntoActual.medidor_actual_reemplazo ? ` (actualmente el cliente tiene el medidor ${puntoActual.medidor_actual_reemplazo})` : ""}. La lectura de este período corresponde al medidor anterior.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1">
+                        <InfoRow label="Cliente Titular" value={puntoActual?.cliente_nombre} icon={HiUser} colorClass="text-sky-600 dark:text-sky-400" />
+                        <InfoRow label="No. de Predio" value={puntoActual?.numero_predio ? `#${puntoActual.numero_predio}` : "Sin predio"} icon={HiHashtag} colorClass="text-indigo-600 dark:text-indigo-400" valueClass="font-bold text-slate-700 dark:text-zinc-200 font-mono" />
+                        <InfoRow label="Dirección Física" value={puntoActual?.cliente_direccion} icon={HiLocationMarker} colorClass="text-violet-600 dark:text-violet-400" valueClass="truncate max-w-[180px] sm:max-w-[250px]" />
+                        <InfoRow label="Número Teléfono" value={puntoActual?.cliente_telefono} icon={HiPhone} colorClass="text-emerald-600 dark:text-emerald-400" />
+                        <InfoRow 
+                            label="Serie de Medidor" 
+                            value={puntoActual?.estado_medidor === 'Retirado' ? `${puntoActual?.numero_serie} (Retirado)` : puntoActual?.numero_serie} 
+                            icon={HiHashtag} 
+                            colorClass={puntoActual?.estado_medidor === 'Retirado' ? "text-amber-600 dark:text-amber-400" : "text-amber-600 dark:text-amber-400"} 
+                            valueClass={puntoActual?.estado_medidor === 'Retirado' 
+                                ? "font-mono text-amber-800 dark:text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800/60 font-bold" 
+                                : "font-mono text-sky-700 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-200/70 dark:border-sky-900/40"} 
+                        />
+                        <InfoRow label="Ubicación Medidor" value={puntoActual?.ubicacion} icon={HiMap} colorClass="text-indigo-600 dark:text-indigo-400" />
+                        {periodoTexto && (
+                          <InfoRow label="Período Facturado" value={periodoTexto} icon={HiCalendar} colorClass="text-blue-600 dark:text-blue-400" valueClass="font-black text-blue-600 dark:text-blue-400" />
+                        )}
+                        <InfoRow label="Fecha Lectura" value={new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })} icon={HiCalendar} colorClass="text-teal-600 dark:text-teal-400" valueClass="capitalize" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Área de Lectura (Formulario) */}
+                <div className="flex-1 flex flex-col justify-end mt-2 sm:mt-4">
+                    {isLecturaCompletada && !modoRectificar[puntoActual?.medidor_id] ? (
+                        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-2 border-emerald-200 dark:border-emerald-800/50 rounded-2xl animate-in zoom-in-95 duration-300">
+                            <div className="flex flex-col gap-4 p-4 sm:p-6">
+                                {/* Encabezado */}
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 sm:p-2.5 bg-emerald-500 text-white rounded-full shadow-md shadow-emerald-500/30">
+                                            <HiCheck className="text-lg sm:text-xl" />
+                                        </div>
+                                        <h4 className="text-lg sm:text-xl font-black text-emerald-800 dark:text-emerald-400 tracking-tight">Lectura Guardada</h4>
+                                    </div>
+                                    {periodoTexto && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/50">
+                                            <HiCalendar className="text-xs shrink-0" />
+                                            {periodoTexto}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Detalles numéricos */}
+                                {lecturasRegistradas[puntoActual?.medidor_id] ? (
+                                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
+                                            <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
+                                                {lecturasRegistradas[puntoActual.medidor_id].lectura_anterior !== null
+                                                    ? `${Number(lecturasRegistradas[puntoActual.medidor_id].lectura_anterior).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
+                                                    : '0'}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
+                                            <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
+                                                {Number(lecturasRegistradas[puntoActual.medidor_id].lectura_actual).toLocaleString('es-MX', { maximumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
+                                            <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
+                                                +{Number(lecturasRegistradas[puntoActual.medidor_id].consumo_m3 ?? 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                        {lecturasRegistradas[puntoActual.medidor_id].vuelta_cero && (
+                                            <div className="col-span-3 text-center text-[10px] sm:text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider bg-orange-100 dark:bg-orange-900/30 py-1.5 rounded-lg mt-1">
+                                                ⚠ Vuelta a cero aplicada
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // Lectura de sesión anterior o cargada del backend
+                                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-zinc-500 mb-1 uppercase tracking-wider text-center">Mes Anterior</span>
+                                            <span className="text-base sm:text-lg font-black text-slate-800 dark:text-zinc-100">
+                                                {puntoActual?.lectura_anterior !== null && puntoActual?.lectura_anterior !== undefined
+                                                    ? `${Number(puntoActual.lectura_anterior).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
+                                                    : puntoActual?.ultima_lectura_anterior !== null && puntoActual?.ultima_lectura_anterior !== undefined
+                                                        ? `${Number(puntoActual.ultima_lectura_anterior).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
+                                                        : '0'}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-center bg-white dark:bg-zinc-900 rounded-xl p-2 sm:p-3 border border-emerald-100 dark:border-emerald-900/30 shadow-sm ring-1 ring-emerald-500/20">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-500 mb-1 uppercase tracking-wider text-center">Mes Actual</span>
+                                            <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">
+                                                {puntoActual?.lectura_actual !== null && puntoActual?.lectura_actual !== undefined
+                                                    ? `${Number(puntoActual.lectura_actual).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
+                                                    : puntoActual?.lectura_anterior_disponible !== null && puntoActual?.lectura_anterior_disponible !== undefined
+                                                        ? `${Number(puntoActual.lectura_anterior_disponible).toLocaleString('es-MX', { maximumFractionDigits: 2 })}`
+                                                        : '0'}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2 sm:p-3 border border-blue-200 dark:border-blue-900/30 shadow-sm">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1 uppercase tracking-wider text-center">Consumo m³</span>
+                                            <span className="text-base sm:text-lg font-black text-blue-700 dark:text-blue-300">
+                                                +{Number(puntoActual?.consumo_m3 ?? 0).toLocaleString('es-MX', { maximumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Botón rectificar */}
+                                <div className="pt-2 border-t border-emerald-200/50 dark:border-emerald-900/30">
+                                    {/* La API indica si aún se puede: solo la lectura más reciente del medidor y con factura sin pagos */}
+                                    {puntoActual?.rectificable === false && (
+                                        <p className="mb-2 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                                            {puntoActual.motivo_no_rectificable}
+                                        </p>
+                                    )}
+                                    <button
+                                        disabled={puntoActual?.rectificable === false}
+                                        title={puntoActual?.rectificable === false ? puntoActual.motivo_no_rectificable : undefined}
+                                        onClick={() => {
+                                            const med = puntoActual.medidor_id;
+                                            setModoRectificar(prev => ({ ...prev, [med]: true }));
+                                            const lectActual = lecturasRegistradas[med]?.lectura_actual ?? puntoActual?.lectura_actual ?? puntoActual?.lectura_anterior_disponible;
+                                            if (lectActual !== undefined && lectActual !== null) {
+                                                setLecturas(prev => ({ ...prev, [med]: String(lectActual) }));
+                                            }
+                                        }}
+                                        className="w-full font-bold bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 rounded-lg py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <HiPencil className="text-lg" />
+                                        Editar / Rectificar Lectura
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {modoRectificar[puntoActual?.medidor_id] && (
+                                <div className="flex items-center justify-between bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-700/50 rounded-xl p-3 animate-in slide-in-from-top-2">
+                                    <div className="flex items-center gap-2">
+                                        <HiPencil className="text-orange-600 dark:text-orange-400 text-lg" />
+                                        <span className="text-xs sm:text-sm font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">Modo Edición Activado</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setModoRectificar(prev => { const n = { ...prev }; delete n[puntoActual.medidor_id]; return n; })}
+                                        className="bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 font-bold shadow-none rounded-lg px-3 py-1.5 text-sm flex items-center gap-1"
+                                    >
+                                        <HiX /> Cancelar
+                                    </button>
+                                </div>
+                            )}
+                            <LecturaInput
+                                ref={lecturaInputRef}
+                                value={lecturaActual}
+                                onChange={handleLecturaChange}
+                                clienteId={puntoActual?.medidor_id}
+                                onSave={modoRectificar[puntoActual?.medidor_id] ? handleRectificarGuardar : handleGuardarLectura}
+                                isLoading={isSubmitting}
+                                error={errorLecturaActual}
+                                autoFocus={true}
+                                lecturaAnterior={
+                                    modoRectificar[puntoActual?.medidor_id] && puntoActual?.medidor_id in lecturasRegistradas
+                                        ? lecturasRegistradas[puntoActual.medidor_id].lectura_anterior
+                                        : modoRectificar[puntoActual?.medidor_id]
+                                            ? (puntoActual?.ultima_lectura_anterior ?? null)
+                                            : lecturaAnteriorPunto
+                                }
+                                capacidadMaxima={capMaxPunto}
+                                onConfirmarVueltaCero={modoRectificar[puntoActual?.medidor_id] ? undefined : handleConfirmarVueltaCero}
+                                onCorregirLectura={modoRectificar[puntoActual?.medidor_id] ? undefined : handleCorregirLectura}
+                                periodoTexto={periodoTexto}
+                            />
+                        </div>
+                    )}
+                </div>
+              </div>
+
+              {/* Columna Derecha: Mapa */}
+              <div className="w-full min-h-[350px] sm:min-h-[400px] lg:h-full lg:min-h-0 pb-2">
+                {mapaProps && (
+                    <MapaContainer
+                        lat={mapaProps.lat}
+                        lng={mapaProps.lng}
+                        cliente={mapaProps.cliente}
+                        ciudad={ruta?.nombre || ""}
+                    />
+                )}
+              </div>
+            </div>
+          </div>
+        </ModalBody>
+
+        <ModalFooter>
+          <button
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
+            className="font-bold text-slate-600 dark:text-zinc-300 bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 disabled:opacity-50"
+          >
+            <HiArrowLeft className="text-lg" /><span className="hidden sm:inline">Anterior</span>
+          </button>
+
+          <div className="flex flex-col items-center justify-center">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 hidden sm:block">
+                Secuencia de Ruta
+            </span>
+            <div className="flex gap-1.5 self-center">
+              {Array.from({ length: Math.min(total, 7) }).map((_, i) => {
+                  let idx = i;
+                  if (total > 7 && currentIndex > 3) idx = currentIndex - 3 + i;
+                  if (idx >= total) return null;
+
+                  const isCurrent = idx === currentIndex;
+                  const isSaved = lecturasGuardadas.has(ruta.puntos[idx]?.medidor_id);
+
+                  return (
+                      <div key={idx} className={`h-2 rounded-full transition-all duration-300 ${
+                          isCurrent ? 'w-6 bg-blue-500 shadow-sm shadow-blue-500/50' :
+                          isSaved ? 'w-2 bg-emerald-400' : 'w-2 bg-slate-200 dark:bg-zinc-700'
+                      }`} />
+                  );
+              })}
+            </div>
+          </div>
+
+          {currentIndex < total - 1 ? (
+            <button
+              onClick={handleNext}
+              className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 shadow-sm"
+            >
+              <span className="hidden sm:inline">Siguiente</span><HiArrowRight className="text-lg" />
+            </button>
+          ) : (
+            <button
+              onClick={handleFinalizarRuta}
+              disabled={lecturasGuardadas.size !== total}
+              className="font-bold bg-emerald-600 text-white dark:bg-emerald-500 dark:text-zinc-950 rounded-xl px-4 sm:px-6 h-11 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="hidden sm:inline">Terminar Ruta</span><HiCheck className="text-lg" />
+            </button>
+          )}
+        </ModalFooter>
+      </Modal>
+    </>
+  );
+}

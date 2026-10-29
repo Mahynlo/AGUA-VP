@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
@@ -192,18 +191,6 @@ const api = {
     return await ipcRenderer.invoke('previewComponent', url, safeOptions)
   },
 
-  printReport: async (url, callback) => {
-    let response = await ipcRenderer.invoke('printReport', url)
-    callback(response) // Aquí pasas el resultado de la operación al callback
-  },
-  previewReport: async (url, callback) => {
-    let response = await ipcRenderer.invoke('previewReport', url)
-    callback(response) // Aquí pasas el resultado de la operación al callback
-  },
-
-  // NOTA: previewRecibohtml eliminado - no se usaba
-  // El sistema ahora usa solo componentes React para consistencia
-
   // Transferencia de datos segura (FileSystem)
   savePrintData: (data) => ipcRenderer.invoke('savePrintData', data),
   getPrintData: (id) => ipcRenderer.invoke('getPrintData', id),
@@ -244,6 +231,13 @@ const api = {
   // Limpieza del PDF temporal al cerrar el modal de impresión
   deleteTempPdf: (fileUrl) => ipcRenderer.invoke('delete-temp-pdf', fileUrl),
 
+  // Escuchar progreso en tiempo real de generación de PDFs
+  onImpresionProgreso: (callback) => {
+    const listener = (_event, data) => callback(data)
+    ipcRenderer.on('impresion:progreso-real', listener)
+    return () => ipcRenderer.removeListener('impresion:progreso-real', listener)
+  },
+
   // Servidor embebido (estado, backup manual)
   serverStatus: () => ipcRenderer.invoke('server:status'),
   serverBackup: () => ipcRenderer.invoke('server:backup'),
@@ -273,6 +267,24 @@ const api = {
     // Base de datos
     getDatabaseInfo: () => ipcRenderer.invoke('system:db-info'),
     getMigrations: () => ipcRenderer.invoke('system:migrations'),
+
+    // Sincronización Turso Cloud
+    getTursoConfig: () => ipcRenderer.invoke('system:turso-config-get'),
+    saveTursoConfig: (config, userToken) =>
+      ipcRenderer.invoke('system:turso-config-save', config, userToken),
+    clearTursoConfig: (userToken) => ipcRenderer.invoke('system:turso-config-clear', userToken),
+    testTursoConnection: (tursoUrl, tursoToken, userToken) =>
+      ipcRenderer.invoke('system:turso-test', tursoUrl, tursoToken, userToken),
+    syncTursoNow: (seed, userToken, force = false) =>
+      ipcRenderer.invoke('system:turso-sync-now', seed, userToken, force),
+    getTursoSyncStatus: () => ipcRenderer.invoke('system:turso-sync-status'),
+    previewCloudRestore: (userToken) => ipcRenderer.invoke('system:turso-restore-preview', userToken),
+    restoreFromCloud: (userToken) => ipcRenderer.invoke('system:turso-restore', userToken),
+    onSyncAlerta: (callback) => {
+      const listener = (_event, alerta) => callback(alerta)
+      ipcRenderer.on('sync:alerta', listener)
+      return () => ipcRenderer.removeListener('sync:alerta', listener)
+    },
 
     // Estado del servidor
     getServerStatus: () => ipcRenderer.invoke('system:server-status'),
@@ -314,7 +326,8 @@ const tarifasApp = {
   registrarRangosTarifa: (data) => ipcRenderer.invoke('registrar-rangos-tarifa', data),
   fetchTarifas: (data) => ipcRenderer.invoke('fetch-tarifas', data), // data = { token_session, params }
   updateTarifa: (data) => ipcRenderer.invoke('update-tarifa', data),
-  updateRangosTarifa: (data) => ipcRenderer.invoke('update-rangos-tarifa', data)
+  updateRangosTarifa: (data) => ipcRenderer.invoke('update-rangos-tarifa', data),
+  eliminarTarifa: (data) => ipcRenderer.invoke('eliminar-tarifa', data) // data = { id, token_session }
 }
 
 // objeto para manejar la documentación de ayuda
@@ -344,7 +357,6 @@ const electronWindowControls = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('api', api)
     contextBridge.exposeInMainWorld('authApp', authApp)
     contextBridge.exposeInMainWorld('tarifasApp', tarifasApp)
@@ -354,7 +366,6 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  window.electron = electronAPI
   window.api = api
   window.authApp = authApp
   window.tarifasApp = tarifasApp

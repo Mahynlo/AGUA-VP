@@ -52,6 +52,16 @@ Si después de haber generado las facturas de un período se rectificó la lectu
 > El motor de recálculo procesa **únicamente las facturas que NO tienen pagos registrados en caja**.  
 > Si un usuario ya acudió a ventanilla y liquidó su recibo del mes, el sistema **conservará intacta su factura y su folio de pago** para proteger la concordancia del arqueo de caja y auditoría municipal.
 
+> [!IMPORTANT]
+> **Protección de Meses Cerrados**:  
+> Tampoco se recalcula la factura de un medidor que **ya tiene la lectura del mes siguiente**: para ese medidor, el mes quedó cerrado. Ejemplo: al recalcular febrero, las facturas de los medidores que ya se leyeron en marzo se conservan; las de los que aún no se leen en marzo sí se recalculan (si no tienen pagos).
+
+Las facturas que no se recalculan por alguna de estas dos reglas aparecen en el visualizador como **Fallidas**, con el motivo:
+* *"No se puede recalcular: la factura ya tiene pagos registrados (…)."*
+* *"No se puede recalcular: el medidor ya tiene la lectura de 2026-03 y el período 2026-02 quedó cerrado."*
+
+Es el comportamiento esperado, no un error: esas facturas quedan exactamente como estaban.
+
 ---
 
 ## 📊 Visualizador de Resultados de Facturación
@@ -73,4 +83,7 @@ Al finalizar tanto una primera facturación como un recálculo, el sistema despl
 ## ⚡ Resumen de Buenas Prácticas
 
 > [!TIP]
-> **Revisión Inmediata**: Revise siempre el visualizador de resultados para confirmar que no haya quedado ninguna factura en estado *Fallida* debido a inconsistencias en las tarifas de los usuarios.
+> **Revisión Inmediata**: Revise siempre el visualizador de resultados. Una factura *Fallida* por pagos o por mes cerrado está protegida a propósito; cualquier otro motivo (por ejemplo, una tarifa mal configurada) sí requiere atención.
+
+> [!TIP]
+> **Recalcule justo después de rectificar**: si rectificó una lectura de una ruta ya facturada, presione **Recalcular Facturación** en ese momento, antes de que el cliente pague. Si paga antes, se cobra el importe anterior y la factura ya no se podrá recalcular.
