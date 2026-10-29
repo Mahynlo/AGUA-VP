@@ -3,20 +3,21 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { HiDocumentText, HiUser, HiCash, HiCog, HiChevronDown, HiX } from "react-icons/hi";
 
 const premiumModalTheme = {
-  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
   content: {
-    base: "relative h-full w-full p-4 md:h-auto",
-    inner: "relative flex flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-6xl w-full h-[calc(100dvh-4rem)]"
+    base: "relative h-full w-full p-1 sm:p-2 pt-16 sm:pt-20",
+    inner: "relative flex flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-[1400px] w-full h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.5rem)]"
   },
   header: {
-    base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-10 pt-8 pb-6 rounded-t-2xl shrink-0",
+    base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-6 py-4 rounded-t-2xl shrink-0",
+    title: "w-full min-w-0",
     close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
-  body: { base: "flex-1 overflow-y-auto min-h-0" },
-  footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-6 px-10 rounded-b-2xl shrink-0" }
+  body: { base: "flex-1 overflow-y-auto min-h-0 custom-scrollbar" },
+  footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-3 px-6 rounded-b-2xl shrink-0" }
 };
 
-const selectClasses = "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 h-11 text-sm font-bold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 transition-all w-full";
+const selectClasses = "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 h-10 text-sm font-bold text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 transition-all w-full";
 
 const getEstadoFacturaClass = (estado) => {
   const est = String(estado || "Pendiente").toLowerCase().trim();
@@ -76,49 +77,51 @@ const ModalDetalleCobranzaCliente = ({
   formatearPeriodo = (p) => (p ? String(p) : "-")
 }) => {
   return (
-    <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible size="6xl">
+    <Modal show={isOpen} onClose={onClose} theme={premiumModalTheme} dismissible size="7xl">
       <ModalHeader>
-        <div>
-          <h2 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
-            Detalle de Cobranza
-          </h2>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 mt-2">
-            <span className="text-emerald-600 dark:text-emerald-400">{clienteDetalle?.cliente_nombre}</span>
-            <span className="mx-2 text-slate-300 dark:text-zinc-700">•</span>
-            Predio #{clienteDetalle?.numero_predio}
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 w-full pr-2">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
+              Detalle de Cobranza
+            </h2>
+            <p className="text-sm font-bold text-slate-700 dark:text-zinc-200 mt-1.5 flex items-center flex-wrap gap-x-2 gap-y-1">
+              <span>{clienteDetalle?.cliente_nombre}</span>
+              <span className="text-slate-300 dark:text-zinc-700">•</span>
+              <span className="font-mono text-slate-500 dark:text-zinc-400">Predio #{clienteDetalle?.numero_predio}</span>
+              <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest ${String(clienteDetalle?.estado_cliente || "").toLowerCase() === "activo" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
+                {clienteDetalle?.estado_cliente || "Activo"}
+              </span>
+            </p>
+          </div>
+
+          {/* Resumen del cliente */}
+          <div className="grid grid-cols-3 gap-2 md:w-[480px] shrink-0">
+            <div className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Facturas</p>
+              <p className="text-xl font-black tracking-tight truncate text-slate-800 dark:text-zinc-100 mt-0.5">{clienteDetalle?.total_facturas || 0}</p>
+            </div>
+            <div className="px-3 py-2 rounded-xl bg-amber-500/5 dark:bg-amber-900/10 border border-amber-500/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Pendientes</p>
+              <p className="text-xl font-black tracking-tight truncate text-amber-600 dark:text-amber-400 mt-0.5">{clienteDetalle?.facturas_pendientes || 0}</p>
+            </div>
+            <div className="px-3 py-2 rounded-xl bg-rose-500/5 dark:bg-rose-900/10 border border-rose-500/20">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Deuda total</p>
+              <p className="text-xl font-black tracking-tight truncate text-rose-600 dark:text-rose-400 mt-0.5">${toMoney(clienteDetalle?.deuda_total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</p>
+            </div>
+          </div>
         </div>
       </ModalHeader>
 
       <ModalBody>
-        <div className="px-10 py-8 space-y-6">
-          {/* KPIs */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="px-4 py-2.5 rounded-xl bg-blue-500/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400">
-                Facturas Historial <span className="font-black ml-2 text-base">{clienteDetalle?.total_facturas || 0}</span>
-              </p>
-            </div>
-            <div className="px-4 py-2.5 rounded-xl bg-amber-500/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400">
-                Pendientes <span className="font-black ml-2 text-base">{clienteDetalle?.facturas_pendientes || 0}</span>
-              </p>
-            </div>
-            <div className="px-4 py-2.5 rounded-xl bg-rose-500/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-rose-700 dark:text-rose-400">
-                Deuda Total <span className="font-black ml-2 text-base">${toMoney(clienteDetalle?.deuda_total || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</span>
-              </p>
-            </div>
-          </div>
-
+        <div className="px-6 py-3 flex flex-col gap-3 lg:h-full lg:min-h-0">
           {/* Tab Bar */}
-          <div className="border-b border-slate-200 dark:border-zinc-800 flex gap-6">
+          <div className="border-b border-slate-200 dark:border-zinc-800 flex gap-6 shrink-0">
             {TABS.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setDetalleTab(key)}
-                className={`flex items-center gap-2 pb-3 h-12 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                className={`flex items-center gap-2 pb-2 h-10 text-sm font-medium transition-colors border-b-2 -mb-px ${
                   detalleTab === key
                     ? "border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold"
                     : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200"
@@ -132,11 +135,11 @@ const ModalDetalleCobranzaCliente = ({
 
           {/* ── TAB FACTURAS ── */}
           {detalleTab === "facturas" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-3 shrink-0">
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5 block">Año</label>
                   <select
+                    aria-label="Año"
                     value={anioFiltroDetalle}
                     onChange={(e) => {
                       setAnioFiltroDetalle(e.target.value);
@@ -153,8 +156,8 @@ const ModalDetalleCobranzaCliente = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5 block">Período del año</label>
                   <select
+                    aria-label="Período del año"
                     value={periodoFiltroDetalle}
                     disabled={anioFiltroDetalle === "all"}
                     onChange={(e) => {
@@ -178,19 +181,19 @@ const ModalDetalleCobranzaCliente = ({
                       setPeriodoFiltroDetalle("all");
                       setFacturaSeleccionadaDetalle(null);
                     }}
-                    className="w-full h-11 bg-red-500/10 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-500/20 transition-colors text-sm"
+                    className="w-full sm:w-auto h-10 px-5 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors text-sm whitespace-nowrap"
                   >
                     Limpiar filtros
                   </button>
                 </div>
               </div>
 
-              <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-x-auto bg-white dark:bg-zinc-950">
+              <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-auto custom-scrollbar bg-white dark:bg-zinc-950 min-h-[240px] lg:flex-1 lg:min-h-0">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-800">
                       {["FACTURA", "PERIODO", "ESTADO", "TOTAL A PAGAR", "SALDO PENDIENTE", "ULT. PAGO", "ACCIONES"].map((col, i) => (
-                        <th key={col} className={`px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-slate-50 dark:bg-zinc-900/50 whitespace-nowrap ${i === 6 ? "text-right" : ""}`}>
+                        <th key={col} className={`sticky top-0 z-10 px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-slate-50 dark:bg-zinc-900 whitespace-nowrap ${i === 6 ? "text-right" : ""}`}>
                           {col}
                         </th>
                       ))}
@@ -198,26 +201,26 @@ const ModalDetalleCobranzaCliente = ({
                   </thead>
                   <tbody>
                     {facturasDetalleFiltradas.length === 0 ? (
-                      <tr><td colSpan={7} className="px-6 py-8 text-center font-bold text-slate-400">No hay facturas para ese filtro</td></tr>
+                      <tr><td colSpan={7} className="px-5 py-8 text-center font-bold text-slate-400">No hay facturas para ese filtro</td></tr>
                     ) : (
                       facturasDetalleFiltradas.map((item) => {
                         const isSelected = String(facturaSeleccionadaDetalle) === String(item.id);
                         return (
                           <Fragment key={item.id}>
                             <tr className={`border-b border-slate-100 dark:border-zinc-800/50 transition-colors ${isSelected ? "bg-emerald-50/40 dark:bg-emerald-950/20" : "hover:bg-slate-50/80 dark:hover:bg-zinc-900/30"}`}>
-                              <td className="px-6 py-4 font-black text-slate-800 dark:text-zinc-100">#{item.id}</td>
-                              <td className="px-6 py-4 font-medium text-slate-600 dark:text-zinc-300" style={{ textTransform: 'capitalize' }}>{formatearPeriodo(item.periodo || item.mes_facturado)}</td>
-                              <td className="px-6 py-4">
+                              <td className="px-5 py-3 font-black text-slate-800 dark:text-zinc-100">#{item.id}</td>
+                              <td className="px-5 py-3 font-medium text-slate-600 dark:text-zinc-300" style={{ textTransform: 'capitalize' }}>{formatearPeriodo(item.periodo || item.mes_facturado)}</td>
+                              <td className="px-5 py-3">
                                 <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest ${getEstadoFacturaClass(item.estado)}`}>
                                   {item.estado || "Pendiente"}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 font-mono text-slate-800 dark:text-zinc-100">${toMoney(item.total).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
-                              <td className={`px-6 py-4 font-mono font-bold ${toMoney(item.saldo_pendiente) > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                              <td className="px-5 py-3 font-mono text-slate-800 dark:text-zinc-100">${toMoney(item.total).toLocaleString("es-MX", { minimumFractionDigits: 2 })}</td>
+                              <td className={`px-5 py-3 font-mono font-bold ${toMoney(item.saldo_pendiente) > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                                 ${toMoney(item.saldo_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                               </td>
-                              <td className="px-6 py-4 text-xs text-slate-500">{formatFecha(ultimoPagoPorFactura?.get ? ultimoPagoPorFactura.get(Number(item.id)) : null)}</td>
-                              <td className="px-6 py-4">
+                              <td className="px-5 py-3 text-xs text-slate-500">{formatFecha(ultimoPagoPorFactura?.get ? ultimoPagoPorFactura.get(Number(item.id)) : null)}</td>
+                              <td className="px-5 py-3">
                                 <div className="flex justify-end">
                                   <button
                                     type="button"
@@ -237,9 +240,9 @@ const ModalDetalleCobranzaCliente = ({
 
                             {isSelected && (
                               <tr className="bg-slate-50/60 dark:bg-zinc-900/40 border-b border-slate-200 dark:border-zinc-800">
-                                <td colSpan={7} className="p-4 sm:p-6">
-                                  <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
-                                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-zinc-800/80">
+                                <td colSpan={7} className="p-3 sm:p-4">
+                                  <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm space-y-4">
+                                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800/80">
                                       <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                                         <HiDocumentText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Resumen Factura #{item.id}
                                       </h4>
@@ -253,7 +256,7 @@ const ModalDetalleCobranzaCliente = ({
                                       </button>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-6 gap-y-4 gap-x-4">
                                       {[
                                         { label: "Estado", value: item.estado || "Pendiente" },
                                         { label: "Periodo facturado", value: formatearPeriodo(item.periodo || item.mes_facturado) },
@@ -275,11 +278,11 @@ const ModalDetalleCobranzaCliente = ({
                                       ))}
                                     </div>
 
-                                    <div className="pt-6 border-t border-slate-200 dark:border-zinc-800">
-                                      <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <div className="pt-4 border-t border-slate-200 dark:border-zinc-800">
+                                      <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                                         <HiCog className="w-4 h-4 text-slate-500" /> Datos del Servicio
                                       </h4>
-                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <div className="flex flex-col gap-1">
                                           <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Medidor</p>
                                           <p className="text-sm font-mono font-black text-slate-800 dark:text-zinc-100">{item.medidor?.numero_serie || "N/A"}</p>
@@ -308,7 +311,7 @@ const ModalDetalleCobranzaCliente = ({
                                       const fechaEmision = item.fecha_emision || item.fecha_creacion;
                                       
                                       return (
-                                        <div className="pt-6 border-t border-slate-200 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="pt-4 border-t border-slate-200 dark:border-zinc-800 grid grid-cols-1 md:grid-cols-2 gap-4">
                                           {/* Auditoría de Generación */}
                                           <div className="flex flex-col gap-3">
                                             <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
@@ -374,12 +377,12 @@ const ModalDetalleCobranzaCliente = ({
 
           {/* ── TAB CLIENTE ── */}
           {detalleTab === "cliente" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-8 flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-4">
                 <div className="border-b border-slate-200 dark:border-zinc-800 pb-3">
                   <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Identificación</h4>
                 </div>
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1">
                     <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Nombre Completo</p>
                     <p className="text-base font-black text-slate-800 dark:text-zinc-100">{clienteDetalle?.cliente_nombre || "-"}</p>
@@ -397,11 +400,11 @@ const ModalDetalleCobranzaCliente = ({
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-8 flex flex-col gap-6">
+              <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-4">
                 <div className="border-b border-slate-200 dark:border-zinc-800 pb-3">
                   <h4 className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest">Contacto y Ubicación</h4>
                 </div>
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1">
                     <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Teléfono</p>
                     <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">{clienteDetalle?.telefono || "No registrado"}</p>
@@ -421,11 +424,11 @@ const ModalDetalleCobranzaCliente = ({
 
           {/* ── TAB PAGOS ── */}
           {detalleTab === "pagos" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-3 lg:flex-1 lg:min-h-0">
+              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-3 shrink-0">
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5 block">Año</label>
                   <select
+                    aria-label="Año"
                     value={anioFiltroPagosDetalle}
                     onChange={(e) => {
                       setAnioFiltroPagosDetalle(e.target.value);
@@ -442,8 +445,8 @@ const ModalDetalleCobranzaCliente = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5 block">Período del año</label>
                   <select
+                    aria-label="Período del año"
                     value={periodoFiltroPagosDetalle}
                     disabled={anioFiltroPagosDetalle === "all"}
                     onChange={(e) => {
@@ -467,7 +470,7 @@ const ModalDetalleCobranzaCliente = ({
                       setPeriodoFiltroPagosDetalle("all");
                       setPagoSeleccionadoDetalle(null);
                     }}
-                    className="w-full h-11 bg-red-500/10 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-500/20 transition-colors text-sm"
+                    className="w-full sm:w-auto h-10 px-5 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors text-sm whitespace-nowrap"
                   >
                     Limpiar filtros
                   </button>
@@ -475,31 +478,31 @@ const ModalDetalleCobranzaCliente = ({
               </div>
 
               {/* Resumen Pagos */}
-              <div className="flex flex-wrap items-center gap-4 py-2 border-y border-slate-100 dark:border-zinc-800/80">
-                <div className="flex flex-col gap-0.5 pr-6 border-r border-slate-200 dark:border-zinc-800">
+              <div className="grid grid-cols-3 gap-3 shrink-0">
+                <div className="flex flex-col gap-0.5 px-4 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800">
                   <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Total de Pagos</p>
-                  <p className="text-xl font-black text-slate-700 dark:text-zinc-200">{resumenPagosClienteDetalle?.totalPagos ?? 0}</p>
+                  <p className="text-lg font-black text-slate-700 dark:text-zinc-200">{resumenPagosClienteDetalle?.totalPagos ?? 0}</p>
                 </div>
-                <div className="flex flex-col gap-0.5 px-6 border-r border-slate-200 dark:border-zinc-800">
+                <div className="flex flex-col gap-0.5 px-4 py-1.5 rounded-xl bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20">
                   <p className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-500/70 uppercase tracking-widest">Monto Total Pagado</p>
-                  <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                  <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">
                     ${toMoney(resumenPagosClienteDetalle?.montoTotal || 0).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="flex flex-col gap-0.5 pl-6">
+                <div className="flex flex-col gap-0.5 px-4 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800">
                   <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Último Pago Registrado</p>
-                  <p className="text-sm font-bold text-slate-700 dark:text-zinc-300 mt-1">
+                  <p className="text-sm font-bold text-slate-700 dark:text-zinc-300 mt-1.5">
                     {formatFecha(resumenPagosClienteDetalle?.ultimoPago?.fecha_pago || resumenPagosClienteDetalle?.ultimoPago?.fecha_creacion) || "N/A"}
                   </p>
                 </div>
               </div>
 
-              <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-x-auto bg-white dark:bg-zinc-950">
+              <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-auto custom-scrollbar bg-white dark:bg-zinc-950 min-h-[240px] lg:flex-1 lg:min-h-0">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-800">
                       {["PAGO ID", "FACTURA", "FECHA", "MÉTODO", "MONTO", "ACCIONES"].map((col, i) => (
-                        <th key={col} className={`px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-slate-50 dark:bg-zinc-900/50 whitespace-nowrap ${i === 5 ? "text-right" : ""}`}>
+                        <th key={col} className={`sticky top-0 z-10 px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-slate-50 dark:bg-zinc-900 whitespace-nowrap ${i === 5 ? "text-right" : ""}`}>
                           {col}
                         </th>
                       ))}
@@ -507,25 +510,25 @@ const ModalDetalleCobranzaCliente = ({
                   </thead>
                   <tbody>
                     {pagosClienteDetalleFiltrados.length === 0 ? (
-                      <tr><td colSpan={6} className="px-6 py-8 text-center font-bold text-slate-400">No hay pagos registrados para ese filtro</td></tr>
+                      <tr><td colSpan={6} className="px-5 py-8 text-center font-bold text-slate-400">No hay pagos registrados para ese filtro</td></tr>
                     ) : (
                       pagosClienteDetalleFiltrados.map((item) => {
                         const isSelected = String(pagoSeleccionadoDetalle) === String(item.id);
                         return (
                           <Fragment key={item.id}>
                             <tr className={`border-b border-slate-100 dark:border-zinc-800/50 transition-colors ${isSelected ? "bg-emerald-50/40 dark:bg-emerald-950/20" : "hover:bg-slate-50/80 dark:hover:bg-zinc-900/30"}`}>
-                              <td className="px-6 py-4 font-black text-slate-800 dark:text-zinc-100">#{item.id}</td>
-                              <td className="px-6 py-4 font-mono font-bold text-slate-700 dark:text-zinc-300">#{item.factura_id || "-"}</td>
-                              <td className="px-6 py-4 text-xs text-slate-500 dark:text-zinc-400">{formatFecha(item.fecha_pago || item.fecha_creacion)}</td>
-                              <td className="px-6 py-4">
+                              <td className="px-5 py-3 font-black text-slate-800 dark:text-zinc-100">#{item.id}</td>
+                              <td className="px-5 py-3 font-mono font-bold text-slate-700 dark:text-zinc-300">#{item.factura_id || "-"}</td>
+                              <td className="px-5 py-3 text-xs text-slate-500 dark:text-zinc-400">{formatFecha(item.fecha_pago || item.fecha_creacion)}</td>
+                              <td className="px-5 py-3">
                                 <span className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-600 dark:text-blue-400">
                                   {item.metodo_pago || "S/E"}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 font-mono font-black text-emerald-600 dark:text-emerald-400">
+                              <td className="px-5 py-3 font-mono font-black text-emerald-600 dark:text-emerald-400">
                                 ${toMoney(item.monto || item.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                               </td>
-                              <td className="px-6 py-4">
+                              <td className="px-5 py-3">
                                 <div className="flex justify-end">
                                   <button
                                     type="button"
@@ -545,9 +548,9 @@ const ModalDetalleCobranzaCliente = ({
 
                             {isSelected && (
                               <tr className="bg-slate-50/60 dark:bg-zinc-900/40 border-b border-slate-200 dark:border-zinc-800">
-                                <td colSpan={6} className="p-4 sm:p-6">
-                                  <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
-                                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-zinc-800/80">
+                                <td colSpan={6} className="p-3 sm:p-4">
+                                  <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm space-y-4">
+                                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800/80">
                                       <h4 className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                                         <HiCash className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Recibo de Pago #{item.id}
                                       </h4>
@@ -560,7 +563,7 @@ const ModalDetalleCobranzaCliente = ({
                                         <HiX className="w-4 h-4" />
                                       </button>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                       <div className="flex flex-col gap-1">
                                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Factura Relacionada</p>
                                         <p className="text-sm font-mono font-black text-slate-800 dark:text-zinc-100">#{item.factura_id || "-"}</p>
@@ -579,7 +582,7 @@ const ModalDetalleCobranzaCliente = ({
                                           ${toMoney(item.monto || item.cantidad_entregada).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
                                         </p>
                                       </div>
-                                      <div className="col-span-2 md:col-span-5 flex flex-col gap-1 mt-2 p-4 bg-slate-50 dark:bg-zinc-900/40 rounded-xl border border-slate-200 dark:border-zinc-800">
+                                      <div className="col-span-2 md:col-span-4 flex flex-col gap-1 p-3 bg-slate-50 dark:bg-zinc-900/40 rounded-xl border border-slate-200 dark:border-zinc-800">
                                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Comentarios / Notas</p>
                                         <p className="text-sm font-medium text-slate-600 dark:text-zinc-400 leading-relaxed italic">{item.comentario || "Sin comentarios."}</p>
                                       </div>
