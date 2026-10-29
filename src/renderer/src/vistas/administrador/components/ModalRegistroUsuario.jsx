@@ -155,7 +155,7 @@ export default function ModalRegistrarUsuario({ onUserRegistered }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[52px] shadow-sm transition-transform active:scale-95 hover:opacity-90"
+        className="inline-flex items-center gap-2 font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-5 h-11 text-xs shadow-sm transition-transform active:scale-95 hover:opacity-90"
       >
         <HiUser className="text-lg" />
         Nuevo Usuario
