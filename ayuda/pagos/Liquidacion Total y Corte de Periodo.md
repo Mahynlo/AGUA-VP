@@ -2,42 +2,81 @@
 titulo: "Liquidación Total y Corte de Período"
 seccion: "pagos"
 orden: 3
-descripcion: "Mecanismo de liquidación masiva de deudores, cierre del período mensual y seguro de detección de cobranza previa."
-tags: ["liquidación", "corte", "deudores", "cierre mensual", "seguro cobranza", "validación"]
+descripcion: "Liquidación masiva por cliente o por periodo marcando solo a quienes siguen debiendo, protección del mes nuevo y seguro de detección de cobranza previa."
+tags: ["liquidación", "corte", "deudores", "cierre mensual", "liquidación de periodo", "seguro cobranza", "validación"]
 ---
 
 # ⚡ Liquidación Total y Corte de Período
 
-En los municipios de AguaVP, la gran mayoría de los usuarios acude a liquidar puntualmente su recibo durante los días de corte mensual. Para evitar procesar cientos de pagos individuales en ventanilla, el sistema incorpora el mecanismo de **Liquidación Total Masiva** (`ModalLiquidacionTotal`).
+En los días de corte, la mayoría de los usuarios paga su recibo completo. Para no capturar cientos de pagos uno por uno, **Pagos > Cobranza por Cliente** tiene dos herramientas de liquidación masiva:
+
+| Herramienta | Qué liquida | Qué se marca |
+|---|---|---|
+| **Liquidación Total** | La deuda completa de cada cliente (todos sus meses pendientes). | Los **clientes** que siguen debiendo. |
+| **Liquidación de Periodo** | Solo las facturas de **un periodo** elegido. | Las **facturas** que no se pagaron. |
 
 ---
 
-## 🚀 El Flujo Rápido de Liquidación Total
+## 🚀 El principio: se marca a quien NO pagó
 
-El principio operativo de la Liquidación Total invierte la captura para ahorrar horas de trabajo:
+> **En lugar de registrar a todos los que pagaron, el cajero solo marca a los que "SIGUEN DEBIENDO".**
+> Al resto se le registra el pago completo automáticamente.
 
-> **En lugar de registrar a todos los que pagaron, el cajero solo marca a los clientes que "SIGUEN DEBIENDO".**  
-> El sistema da por liquidados automáticamente a todos los demás clientes del sector.
+```mermaid
+flowchart LR
+    A[Lista de deudores] --> B{¿Pagó?}
+    B -- Sí --> C[Se deja sin marcar<br/>Se liquida]
+    B -- No --> D[Se marca<br/>Sigue debiendo]
+    C --> E[Revisar y confirmar]
+    D --> E
+    E --> F[Se registran los pagos reales]
+```
 
-![Modal de Liquidación Total con lista rápida de deudores](../imagenes/pagos/modal_liquidacion_total.png)
+> [!TIP]
+> Tu selección **se guarda automáticamente**: si cierras la ventana o la aplicación a medio trabajo, al volver siguen marcados los mismos clientes. Solo se borra cuando la liquidación termina con éxito.
 
 ---
 
-## 📋 Pasos para Ejecutar la Liquidación Total
+## 📋 Liquidación Total por Cliente
 
-1. En la pestaña **Cobranza por Cliente**, presione el botón destacado **"Liquidación Total"**.
-2. Seleccione la **Localidad / Sector** a liquidar (*Nácori Grande*, *Mátape* o *Adivino*).
-3. En la lista desplegada, **marque con una casilla únicamente a los usuarios morosos que no acudieron a pagar**.
-4. Presione el botón **"Revisar y Confirmar"** en la parte inferior.
+1. En **Cobranza por Cliente**, presione **Liquidación Total**.
+2. La ventana se divide en dos columnas:
+
+![Liquidación Total: resumen y datos del pago a la izquierda, lista de clientes a la derecha](../imagenes/pagos/modal_liquidacion_total.png)
+
+**Columna izquierda — resumen y datos del pago**
+* Indicadores: **Total Deudores**, **Siguen Debiendo**, **Se Liquidan** y **Total a Aplicar**.
+* **Método de pago**, **Fecha de pago** y **Comentario** (nota interna).
+* Casilla **Excluir mes nuevo** (ver más abajo).
+
+**Columna derecha — lista de clientes**
+* Buscador por cliente o predio, y orden **por número de predio**, **mayor deuda** o **menor deuda**.
+* **Ver solo marcados**, **Marcar todos** y **Resetear** para trabajar más rápido.
+* Cada fila muestra predio, facturas pendientes y el monto que se liquidará. Marque la casilla para cambiarla de **Liquidar** a **Sigue debiendo**.
+
+3. Presione **Revisar y confirmar (N)**.
+4. Revise el resumen. Con **Volver** regresa a la lista sin perder lo marcado.
+5. Presione **Liquidar N cliente(s) · \$importe** y acepte el aviso final. Se registran los pagos y las cuentas quedan al corriente.
+
+### Saldos que se protegen solos
+* **Convenios**: las facturas en convenio **no** se liquidan con esta herramienta; aparecen como “+ \$… convenio” debajo del monto.
+* **Mes nuevo**: si el periodo más reciente todavía **no está vencido**, la casilla **Excluir mes nuevo** se activa sola (✨ *Autodetectado*) para no cobrarlo por adelantado. Si quiere quitarla, el sistema pide confirmación.
+
+---
+
+## 🗓️ Liquidación de Periodo
+
+Funciona igual, pero sobre las facturas de un solo mes.
+
+1. En **Cobranza por Cliente**, presione **Liquidación de Periodo** y elija el periodo.
+2. Indicadores: **Total Elegibles**, **Excluidas (No pagaron)**, **Se Cobrarán** y **Total a Cobrar**.
+3. En la lista, marque las facturas que **no** se pagaron (pasan de **Cobrar** a **Excluida**).
+4. Presione **Revisar y confirmar (N)** y después **Aplicar pago a N factura(s) · \$importe**.
 
 ![Resumen financiero y confirmación de liquidación en bloque](../imagenes/pagos/resumen_liquidacion_bloque.png)
 
-5. Se desplegará el **Resumen Financiero**:
-   * Total de cuentas en el sector.
-   * Cuentas marcadas con deuda pendiente.
-   * Cuentas a liquidar automáticamente en bloque.
-   * Importe total recaudado ($ MXN) a ingresar a caja.
-6. Presione **"Confirmar Liquidación"**. El sistema generará los folios de pago correspondientes y dejará las cuentas al corriente.
+> [!CAUTION]
+> Ambas herramientas **registran pagos reales**. Revise bien el resumen antes de confirmar: un cliente que se quedó sin marcar por error queda como pagado.
 
 ---
 
@@ -59,6 +98,6 @@ Este es uno de los **mecanismos de seguridad más importantes** de todo el siste
 
 > [!CAUTION]
 > **Secuencia Obligatoria**:  
-> **1.** Cerrar caja y ejecutar **Liquidación Total** del mes anterior.  
+> **1.** Cerrar caja y ejecutar **Liquidación Total** (o **de Periodo**) del mes anterior.  
 > **2.** Iniciar captura de **Lecturas** del nuevo período.  
 > **3.** **Generar Facturas** del nuevo mes.

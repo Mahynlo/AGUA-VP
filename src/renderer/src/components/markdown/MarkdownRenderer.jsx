@@ -104,7 +104,7 @@ const DocImage = ({ src, alt, ...props }) => {
             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-zinc-200 leading-snug">
               {alt || "Captura de pantalla ilustrativa del sistema"}
             </p>
-            <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 truncate">
+            <p className="placeholder-ruta text-[11px] font-medium text-slate-500 dark:text-zinc-400 truncate">
               Ruta destino: <span className="font-mono text-blue-600 dark:text-blue-400">{src}</span>
             </p>
           </div>
@@ -585,7 +585,8 @@ export const preprocessMarkdownForMath = (raw) => {
       sub = sub.replace(/\(\$\/m³\)/g, "(\\$/m³)");
 
       // Escapar montos de dinero aislados que tengan $ seguido de números (ej. ~$185.00~ o **$142.50** o $120.00)
-      sub = sub.replace(/(?<!\\|\$)\$(\d+(?:[.,]\d+)?)(?!\s*\\text|\s*m\^|\s*[+\-*/=<>])/g, "\\$$1");
+      // ("$$" en el reemplazo es un "$" literal y "$1" el monto capturado → "\$120.00")
+      sub = sub.replace(/(?<!\\|\$)\$(\d+(?:[.,]\d+)?)(?!\s*\\text|\s*m\^|\s*[+\-*/=<>])/g, "\\$$$1");
 
       mathParts[j] = sub;
     }
@@ -654,8 +655,9 @@ export const MarkdownRenderer = ({ content }) => {
         {children}
       </ul>
     ),
-    ol: ({ children }) => (
-      <ol className="list-decimal list-outside mb-5 space-y-1.5 ml-5 text-slate-600 dark:text-zinc-400 marker:font-bold marker:text-blue-600 dark:marker:text-blue-400 text-sm sm:text-[15px] font-medium">
+    // `start` conserva la numeración cuando una lista continúa después de un párrafo o una imagen
+    ol: ({ children, start }) => (
+      <ol start={start} className="list-decimal list-outside mb-5 space-y-1.5 ml-5 text-slate-600 dark:text-zinc-400 marker:font-bold marker:text-blue-600 dark:marker:text-blue-400 text-sm sm:text-[15px] font-medium">
         {children}
       </ol>
     ),
