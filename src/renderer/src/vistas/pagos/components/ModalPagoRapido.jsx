@@ -6,17 +6,17 @@ import { useFeedback } from "../../../context/FeedbackContext";
 import { nowHermosilloDateStr } from "../../../utils/diasHabiles";
 
 const premiumModalTheme = {
-  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
+  root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80", off: "hidden" } },
   content: {
-    base: "relative h-full w-full p-4 md:h-auto",
-    inner: "relative flex max-h-[90dvh] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-6xl w-full"
+    base: "relative h-full w-full p-1 sm:p-2 pt-16 sm:pt-20",
+    inner: "relative flex h-[calc(100dvh-4.25rem)] sm:h-[calc(100dvh-5.5rem)] flex-col rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 mx-auto max-w-[1500px] w-full"
   },
   header: {
-    base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-8 py-6 rounded-t-2xl shrink-0",
+    base: "flex items-start justify-between border-b border-slate-100 dark:border-zinc-800/50 px-6 py-4 rounded-t-2xl shrink-0",
     close: { base: "inline-flex items-center rounded-xl bg-transparent p-2 text-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors cursor-pointer", icon: "h-5 w-5" }
   },
-  body: { base: "px-8 py-6 flex-1 overflow-y-auto" },
-  footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
+  body: { base: "px-6 py-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar" },
+  footer: { base: "flex items-center justify-end gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-3 px-6 rounded-b-2xl shrink-0" }
 };
 
 const inputBaseClasses = "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:border-transparent transition-all font-medium text-slate-800 dark:text-zinc-100 h-[52px]";
@@ -470,7 +470,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
   return (
     <Modal
       show={isOpen}
-      size="6xl"
+      size="7xl"
       onClose={handleClose}
       theme={premiumModalTheme}
       dismissible={!procesandoPagoRapido}
@@ -497,29 +497,31 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
 
       <ModalBody>
         {fase === "seleccion" ? (
-          <div className="space-y-8">
+          <div className="flex flex-col lg:grid lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] gap-5 lg:gap-6 lg:h-full lg:min-h-0">
+            {/* Columna izquierda: resumen y datos del pago */}
+            <div className="flex flex-col gap-4 lg:min-h-0 lg:overflow-y-auto custom-scrollbar lg:pr-1">
             {/* KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Total Elegibles</p>
-                <p className="text-4xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{facturasElegiblesPagoRapido.length}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">Total Elegibles</p>
+                <p className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{facturasElegiblesPagoRapido.length}</p>
               </div>
-              <div className="bg-orange-500/5 dark:bg-orange-900/10 border border-orange-500/20 rounded-2xl p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/80 dark:text-orange-400/80 mb-2">Excluidas (No pagaron)</p>
-                <p className="text-4xl font-black tracking-tight text-orange-600 dark:text-orange-400">{facturasNoPagaronValidas.length}</p>
+              <div className="bg-orange-500/5 dark:bg-orange-900/10 border border-orange-500/20 rounded-2xl px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600/80 dark:text-orange-400/80 mb-1">Excluidas (No pagaron)</p>
+                <p className="text-3xl font-black tracking-tight text-orange-600 dark:text-orange-400">{facturasNoPagaronValidas.length}</p>
               </div>
-              <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Se Cobrarán</p>
-                <p className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{pagosRapidosAplicables.length}</p>
+              <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-1">Se Cobrarán</p>
+                <p className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{pagosRapidosAplicables.length}</p>
               </div>
-              <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-2">Total a Cobrar</p>
-                <p className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">${formatMoney(totalAplicar)}</p>
+              <div className="bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 rounded-2xl px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 dark:text-emerald-400/80 mb-1">Total a Cobrar</p>
+                <p className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 truncate" title={`$${formatMoney(totalAplicar)}`}>${formatMoney(totalAplicar)}</p>
               </div>
             </div>
 
             {/* Formulario */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
                   Método de pago*
@@ -552,7 +554,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                   <p className="text-[10px] font-bold text-rose-500 mt-1 uppercase tracking-wider">Fecha inválida</p>
                 )}
               </div>
-              <div>
+              <div className="col-span-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2 block">
                   Comentario
                 </label>
@@ -572,13 +574,14 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
               </div>
             </div>
 
-            <hr className="border-slate-100 dark:border-zinc-800/50" />
+            </div>
 
+            {/* Columna derecha: lista de facturas (ocupa todo el alto) */}
             {/* Área de selección */}
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                  <div className="relative w-full sm:w-[320px]">
+            <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
+              <div className="flex flex-wrap gap-3 justify-between items-center">
+                <div className="flex flex-wrap gap-3 flex-1 min-w-0">
+                  <div className="relative w-full sm:flex-1 sm:min-w-[220px] sm:max-w-[340px]">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                       <SearchIcon className="w-5 h-5" />
                     </span>
@@ -620,7 +623,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                   </label>
                 </div>
 
-                <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                <div className="flex items-center gap-2 shrink-0 ml-auto">
                   <button 
                     type="button" 
                     onClick={marcarTodasNoPagaron} 
@@ -644,8 +647,8 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
               </p>
 
               {/* Lista de facturas (scroll infinito / render incremental) */}
-              <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
-                <div ref={listRef} onScroll={handleListScroll} className="max-h-[400px] overflow-auto">
+              <div className="bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm lg:flex-1 lg:min-h-0 flex flex-col">
+                <div ref={listRef} onScroll={handleListScroll} className="max-h-[400px] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-auto custom-scrollbar">
                   {cargandoFacturasPagoRapido ? (
                     <div className="p-12 flex flex-col items-center justify-center gap-4 text-slate-500 dark:text-zinc-400">
                       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-600 dark:border-zinc-400" />
@@ -662,7 +665,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                         return (
                           <label
                             key={factura.id}
-                            className={`flex items-center justify-between gap-4 p-4 cursor-pointer transition-all ${isExcluded ? "bg-orange-50/50 dark:bg-orange-900/10 hover:bg-orange-50 dark:hover:bg-orange-900/20" : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"}`}
+                            className={`flex items-center justify-between gap-4 px-4 py-3 cursor-pointer transition-all ${isExcluded ? "bg-orange-50/50 dark:bg-orange-900/10 hover:bg-orange-50 dark:hover:bg-orange-900/20" : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"}`}
                           >
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 mb-1">
@@ -795,7 +798,7 @@ const ModalPagoRapido = ({ isOpen, onClose, periodo, onPagoRegistrado }) => {
                   </select>
                 </div>
               </div>
-              <div className="max-h-[280px] overflow-auto divide-y divide-slate-100 dark:divide-zinc-800/50">
+              <div className="max-h-[280px] lg:max-h-[calc(100dvh-36rem)] min-h-[160px] overflow-auto custom-scrollbar divide-y divide-slate-100 dark:divide-zinc-800/50">
                 {pagosRapidosAplicablesVista.length === 0 ? (
                   <div className="p-8 text-center text-sm font-medium text-slate-400 dark:text-zinc-500">
                     Sin coincidencias para la búsqueda.

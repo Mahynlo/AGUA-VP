@@ -12,6 +12,11 @@ const ClientesPorMesChart = ({
 }) => {
   const chartRef = useRef(null);
 
+  // Firmas del contenido: si el padre pasa un arreglo nuevo con los mismos datos, la gráfica no se
+  // destruye y vuelve a crear (eso repetía la animación de las barras en cada render)
+  const firmaData = JSON.stringify(data ?? null);
+  const firmaClientes = Array.isArray(clientes) ? clientes.map((c) => c?.fecha_creacion || "").join("|") : "";
+
   useEffect(() => {
     if (!chartRef.current) return;
     
@@ -86,8 +91,9 @@ const ClientesPorMesChart = ({
       ],
       chart: {
         type: "bar",
-        height: "100%", 
-        minHeight: 300,
+        // Alto fijo: con "100%" el alto dependía del contenedor, que a su vez crece con la gráfica,
+        // y ApexCharts se redibujaba en bucle al detectar el cambio de tamaño
+        height: 300,
         fontFamily: 'inherit', // Hereda la fuente de tu proyecto
         background: "transparent",
         toolbar: {
@@ -210,7 +216,7 @@ const ClientesPorMesChart = ({
     chart.render();
 
     return () => chart.destroy();
-  }, [clientes, data, esDataServidor, mostrarMesCompleto, titulo, colorPersonalizado, isDarkMode]);
+  }, [firmaClientes, firmaData, esDataServidor, mostrarMesCompleto, titulo, colorPersonalizado, isDarkMode]);
 
   return (
     <div className="w-full h-full min-h-[320px] bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-100 dark:border-zinc-800 p-4">

@@ -475,8 +475,10 @@ const AyudaVista = () => {
 
       const response = await window.api.previewComponent(url, { 
         landscape: false, 
-        pageNumbers: true, 
-        pageSize: 'Letter' 
+        pageNumbers: true,
+        pageSize: 'Letter',
+        // La página avisa (print-ready) cuando diagramas e imágenes terminaron; esto solo es el tope
+        readyTimeoutMs: 45000
       });
       if (response && response.success && response.path) {
         setPrintUrl(url);

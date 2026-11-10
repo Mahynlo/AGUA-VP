@@ -11,9 +11,19 @@ const ReporteDocumentacion = () => {
   const [data, setData] = useState(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isPrintReady, setIsPrintReady] = useState(false);
+  const [appVersion, setAppVersion] = useState("");
 
   // useNotifyPrintReady notifica a Electron cuando TODO (datos + Markdown + KaTeX + SVGs Mermaid) ha terminado de pintarse
   useNotifyPrintReady(isPrintReady, 400);
+
+  // Versión real de la app para la portada
+  useEffect(() => {
+    let isMounted = true;
+    Promise.resolve(window.api?.getAppVersion?.())
+      .then((v) => { if (isMounted && v) setAppVersion(String(v)); })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
 
   // 1. Cargar datos desde IPC
   useEffect(() => {
@@ -87,15 +97,19 @@ const ReporteDocumentacion = () => {
                           (status.rendered + status.failed >= totalExpectedDiagrams);
 
       // 4. Comprobación de que todas las imágenes <img> hayan terminado de cargar
+      // (una imagen rota también queda "complete"; así no bloquea hasta el timeout)
       const docImages = Array.from(document.querySelectorAll('.doc-print-root img'));
-      const pendingImages = docImages.filter(img => !img.complete || img.naturalWidth === 0);
+      const pendingImages = docImages.filter(img => !img.complete);
       const noPendingImages = pendingImages.length === 0;
 
       // 5. Comprobación de que no haya elementos cargando imágenes activamente
       const imageLoadingElements = document.querySelectorAll('[data-image-loading="true"]');
       const noLoadingImagesInDom = imageLoadingElements.length === 0;
 
-      const isReady = noPendingInCoordinator && noLoadingInDom && expectedMet && noPendingImages && noLoadingImagesInDom;
+      // 6. Fuentes cargadas (las etiquetas de los diagramas se miden con ellas)
+      const fontsReady = !document.fonts || document.fonts.status === 'loaded';
+
+      const isReady = noPendingInCoordinator && noLoadingInDom && expectedMet && noPendingImages && noLoadingImagesInDom && fontsReady;
 
       if (isReady) {
         readyTriggered = true;
@@ -118,11 +132,11 @@ const ReporteDocumentacion = () => {
       evaluateReadiness();
     }, 150);
 
-    // Timeout de seguridad máximo (20 segundos)
+    // Timeout de seguridad máximo (40 segundos; el proceso principal espera hasta 45 s)
     maxSafetyTimeout = setTimeout(() => {
       console.warn('Timeout de seguridad para impresión de documentación alcanzado');
       setIsPrintReady(true);
-    }, 20000);
+    }, 40000);
 
     // Evaluación inmediata inicial
     evaluateReadiness();
@@ -275,6 +289,9 @@ const ReporteDocumentacion = () => {
             height: auto !important;
             max-height: 180mm !important;
           }
+          .mermaid-diagram-figure {
+            border-radius: 6px !important;
+          }
           h1, h2, h3, h4, h5, h6 {
             break-after: avoid !important;
             page-break-after: avoid !important;
@@ -417,6 +434,24 @@ const ReporteDocumentacion = () => {
             padding-top: 3px !important;
             border-top: 1px solid #e2e8f0 !important;
           }
+
+          /* Etiquetas de diagramas Mermaid: Mermaid mide cada caja con los estilos de pantalla;
+             si aquí heredan el tamaño/márgenes de los párrafos impresos, el texto se sale o se corta. */
+          .mermaid-svg-container p,
+          .mermaid-svg-container li {
+            font-size: inherit !important;
+            line-height: inherit !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            orphans: auto !important;
+            widows: auto !important;
+            break-inside: auto !important;
+          }
+
+          /* Capturas aún no disponibles: aviso compacto, sin la ruta del archivo */
+          .placeholder-card .placeholder-ruta {
+            display: none !important;
+          }
         }
         @media screen {
           .portada-doc, .portada-modulo-doc {
@@ -472,7 +507,9 @@ const ReporteDocumentacion = () => {
           {/* Pie de Portada */}
           <div className="w-full border-t pt-4 border-slate-200 flex justify-between text-[11px] text-slate-500 avoid-break">
             <span>Fecha de Emisión: <strong className="text-slate-700">{fechaHoy}</strong></span>
-            <span>Versión del Software: <strong className="text-slate-700">1.2 Oficial</strong></span>
+            {appVersion && (
+              <span>Versión del Software: <strong className="text-slate-700">{appVersion}</strong></span>
+            )}
           </div>
         </div>
       )}

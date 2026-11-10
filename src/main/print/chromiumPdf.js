@@ -7,7 +7,12 @@ import { writeTempPdf, toFileUrl } from './printTempFiles.js'
 // reporteDocumentacion, …) o cuando el generador pdfmake falla.
 // Carga la ruta React en una ventana oculta, espera la señal 'print-ready' (useNotifyPrintReady)
 // o un fallback de 3.5s, y captura con printToPDF().
-export const generarPdfConChromium = (url, options = {}) => {
+// `readyTimeoutMs` amplía ese fallback para páginas que sí avisan cuando terminan pero tardan más
+// (el manual de ayuda: diagramas Mermaid e imágenes).
+export const generarPdfConChromium = (url, rawOptions = {}) => {
+  const { readyTimeoutMs, ...options } = rawOptions || {}
+  const fallbackMs = Number(readyTimeoutMs) > 0 ? Number(readyTimeoutMs) : 3500
+
   return new Promise((resolve, reject) => {
     let win = new BrowserWindow({
       title: 'Preview',
@@ -20,6 +25,8 @@ export const generarPdfConChromium = (url, options = {}) => {
         nodeIntegration: false,
         contextIsolation: true,
         cache: false,
+        // La ventana está oculta: sin esto Chromium puede frenar timers/rAF y retrasar el aviso print-ready
+        backgroundThrottling: false,
         plugins: true,
         webSecurity: false,
         allowRunningInsecureContent: true,
@@ -130,12 +137,12 @@ export const generarPdfConChromium = (url, options = {}) => {
         )
       } catch (e) {}
 
-      // Fallback de seguridad de 3.5s (en caso de páginas estáticas sin useNotifyPrintReady)
+      // Fallback de seguridad (3.5s por defecto, en caso de páginas estáticas sin useNotifyPrintReady)
       if (!captured) {
         fallbackTimer = setTimeout(() => {
-          console.log('Usando fallback timer (3.5s) para PDF')
+          console.log(`Usando fallback timer (${fallbackMs / 1000}s) para PDF`)
           capturePdf()
-        }, 3500)
+        }, fallbackMs)
       }
     })
 

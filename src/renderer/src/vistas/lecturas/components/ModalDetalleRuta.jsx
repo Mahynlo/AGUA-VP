@@ -119,7 +119,15 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
             longitud: parseFloat(p.longitud),
             numero_serie: p.numero_serie,
             ubicacion: p.ubicacion || p.cliente_direccion || "Sin ubicación registrada",
-            estado_medidor: p.estado_medidor || "Activo"
+            estado_medidor: p.estado_medidor || "Activo",
+            // Datos para la ficha del punto en el mapa
+            cliente_nombre: p.cliente_nombre,
+            numero_predio: p.cliente_numero_predio,
+            cliente_direccion: p.cliente_direccion,
+            tiene_lectura: p.tiene_lectura,
+            lectura_id: p.lectura_id,
+            lectura_actual: p.lectura_actual,
+            consumo_m3: p.consumo_m3
         }));
     }, [detalleRuta]);
 
@@ -317,6 +325,7 @@ const ModalDetalleRuta = ({ isOpen, onClose, ruta }) => {
                                     rutaCalculada={rutaFinal}
                                     dibujar={true}
                                     readOnly={true}
+                                    mostrarEstado={true}
                                     onAgregarMedidor={() => { }}
                                     onEliminarMedidor={() => { }}
                                 />

@@ -1,57 +1,29 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, GeoJSON, useMapEvents, useMap, LayersControl } from "react-leaflet";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { Marker } from "react-leaflet";
 import { HiLocationMarker, HiGlobeAlt, HiMap } from "react-icons/hi";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-
-// Importaciones de recursos
-import municipiojson from "../../../../public/VillaPesqueira.json";
 import ubicacionIcon from "../../assets/svgs/Markador_azul_Agua_VP.svg";
-import { MAP_DEFAULT_CENTER, TILE_LAYER, SATELLITE_LAYER, HYBRID_LAYER, MUNICIPIO_STYLE_NO_FILL } from './mapConfig';
-import OfflineTileLayer from './OfflineTileLayer';
+import MapaBase from "./MapaBase";
 
-// 1. Componente para corregir tamaño (Vital para Modals)
-const MapResizer = () => {
-  const map = useMap();
-  useEffect(() => {
-    const timer = setTimeout(() => map.invalidateSize(), 200);
-    return () => clearTimeout(timer);
-  }, [map]);
-  return null;
+/** [lat, lng] numérico o null si el texto todavía no es una coordenada válida */
+const aPosicion = ({ lat, lng } = {}) => {
+  const la = parseFloat(lat);
+  const ln = parseFloat(lng);
+  return !isNaN(la) && !isNaN(ln) ? [la, ln] : null;
 };
 
-// 2. Componente para manejar clicks en el mapa
-const LocationMarker = ({ position, onSelect, icon }) => {
-  useMapEvents({
-    click(e) {
-      const { lat, lng } = e.latlng;
-      // Actualizamos los inputs con 6 decimales
-      onSelect({
-        lat: lat.toFixed(6),
-        lng: lng.toFixed(6)
-      });
-    },
-  });
-
-  return position ? <Marker position={position} icon={icon} /> : null;
-};
-
-// 3. Componente para mover el mapa al cambiar coordenadas
-const MapUpdater = ({ center }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (center) {
-      map.setView(center, map.getZoom());
-    }
-  }, [center, map]);
-  return null;
-};
+const mismaPosicion = (a, b) => Math.abs(a[0] - b[0]) < 1e-6 && Math.abs(a[1] - b[1]) < 1e-6;
 
 export default function SelectorCoordenadas({
   valorInicial = { lat: "29.1180777", lng: "-109.9669819" },
   onChange,
 }) {
   const [coordenadas, setCoordenadas] = useState(valorInicial);
+  // Centro del mapa: solo cambia al escribir en los campos o si las coordenadas llegan de fuera.
+  // Al hacer clic o arrastrar el pin el mapa NO se mueve: el pin queda donde se eligió.
+  const [centroMapa, setCentroMapa] = useState(() => aPosicion(valorInicial));
+  const coordenadasRef = useRef(coordenadas);
+  coordenadasRef.current = coordenadas;
 
   // Icono memoizado
   const customIcon = useMemo(() => {
@@ -60,16 +32,17 @@ export default function SelectorCoordenadas({
       iconSize: [35, 35],
       iconAnchor: [17, 35],
       popupAnchor: [0, -30],
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-      shadowSize: [35, 35]
     });
   }, []);
 
-  // Sync internal state when prop changes
+  // Sincronizar con el valor del formulario solo si es otra ubicación: el padre devuelve en cada
+  // render la misma que se acaba de elegir (y eso no debe mover el mapa ni pisar lo que se escribe)
   useEffect(() => {
-    if (valorInicial) {
-      setCoordenadas(valorInicial);
-    }
+    const nueva = aPosicion(valorInicial);
+    const actual = aPosicion(coordenadasRef.current);
+    if (!nueva || !actual || mismaPosicion(nueva, actual)) return;
+    setCoordenadas(valorInicial);
+    setCentroMapa(nueva);
   }, [valorInicial]);
 
   // Notificar al padre solo si son válidas
@@ -84,57 +57,33 @@ export default function SelectorCoordenadas({
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     // Permitir escribir sin bloquear signos negativos o puntos
-    setCoordenadas((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const nuevas = { ...coordenadas, [name]: value };
+    setCoordenadas(nuevas);
+    // Al escribir sí se mueve el mapa para ver el punto
+    const posicion = aPosicion(nuevas);
+    if (posicion) setCentroMapa(posicion);
   };
 
   // Calcular posición válida para el mapa
-  const position = useMemo(() => {
-    const lat = parseFloat(coordenadas.lat);
-    const lng = parseFloat(coordenadas.lng);
-    return (!isNaN(lat) && !isNaN(lng)) ? [lat, lng] : null;
-  }, [coordenadas.lat, coordenadas.lng]);
+  const position = useMemo(() => aPosicion(coordenadas), [coordenadas]);
 
+  // Clic en el mapa o pin arrastrado: captura la ubicación con 6 decimales sin mover el mapa
+  const handleClickMapa = useCallback(({ lat, lng }) => {
+    setCoordenadas({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
+  }, []);
+
+  const eventosPin = useMemo(() => ({
+    dragend: (e) => handleClickMapa(e.target.getLatLng()),
+  }), [handleClickMapa]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
 
       {/* Columna Izquierda: Mapa */}
       <div className="lg:col-span-2 h-[300px] lg:h-full min-h-[300px] rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800 relative z-0">
-        <MapContainer
-          center={position || MAP_DEFAULT_CENTER}
-          zoom={15}
-          scrollWheelZoom={true}
-          preferCanvas={true}
-          className="h-full w-full bg-slate-100 dark:bg-zinc-900" // Fondo gris mientras carga
-          style={{ height: "100%", width: "100%", zIndex: 0 }}
-        >
-          <MapResizer />
-          <LayersControl position="bottomright">
-            <LayersControl.BaseLayer checked name="🌐 Mapa Calles">
-              <OfflineTileLayer {...TILE_LAYER} />
-            </LayersControl.BaseLayer>
-            <LayersControl.BaseLayer name="🛰️ Satélite">
-              <TileLayer {...SATELLITE_LAYER} />
-            </LayersControl.BaseLayer>
-            <LayersControl.BaseLayer name="🗺️ Híbrido">
-              <TileLayer {...HYBRID_LAYER} />
-            </LayersControl.BaseLayer>
-          </LayersControl>
-
-          {/* Capa del Municipio SIN RELLENO */}
-          <GeoJSON data={municipiojson} style={MUNICIPIO_STYLE_NO_FILL} interactive={false} />
-
-          <LocationMarker
-            position={position}
-            onSelect={setCoordenadas}
-            icon={customIcon}
-          />
-
-          <MapUpdater center={position} />
-        </MapContainer>
+        <MapaBase centro={centroMapa} zoom={15} rellenoMunicipio={false} onClick={handleClickMapa}>
+          {position && <Marker position={position} icon={customIcon} draggable eventHandlers={eventosPin} />}
+        </MapaBase>
 
         {/* Badge de coordenadas */}
         <div className="absolute top-3 right-3 z-[400] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-none px-3 py-1 rounded-xl text-xs font-mono font-bold text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 shadow-sm">
@@ -188,7 +137,7 @@ export default function SelectorCoordenadas({
         <div className="rounded-xl border border-blue-200/60 dark:border-blue-900/40 bg-blue-500/10 dark:bg-blue-950/20 p-3.5 flex gap-3 items-start mt-2">
           <HiMap className="text-blue-600 dark:text-blue-400 text-lg mt-0.5 shrink-0" />
           <p className="text-xs text-blue-800 dark:text-blue-300 font-medium leading-relaxed">
-            Haz clic en el mapa para capturar la ubicación exacta del medidor automáticamente.
+            Haz clic en el mapa para colocar el pin o arrástralo para ajustarlo; las coordenadas se capturan automáticamente.
           </p>
         </div>
 
@@ -196,7 +145,3 @@ export default function SelectorCoordenadas({
     </div>
   );
 }
-
-
-
-

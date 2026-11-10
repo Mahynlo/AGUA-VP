@@ -50,6 +50,8 @@ const LineChart = ({ data }) => {
   };
 
   const isDynamic = Array.isArray(data) && data.length > 0;
+  // Firma del contenido: un arreglo nuevo con los mismos datos no debe redibujar (ni re-animar) la gráfica
+  const firmaDatos = JSON.stringify(data ?? null);
 
   const series = useMemo(() => {
     if (isDynamic) {
@@ -72,18 +74,18 @@ const LineChart = ({ data }) => {
         data: [210, 240, 190, 280, 330, 250, 282, 286, 310, 260, 640, 720],
       },
     ];
-  }, [data, isDynamic]);
+  }, [firmaDatos]);
 
   const categories = useMemo(() => {
     if (isDynamic) {
       return data.map(item => formatearMes(item.mes || item.fecha || item.periodo || item.label || ''));
     }
     return ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  }, [data, isDynamic]);
+  }, [firmaDatos]);
 
-  const colors = isDarkMode
+  const colors = useMemo(() => (isDarkMode
     ? ["#60a5fa", "#34d399", "#a78bfa"]
-    : ["#2563eb", "#059669", "#7c3aed"];
+    : ["#2563eb", "#059669", "#7c3aed"]), [isDarkMode]);
 
   const options = useMemo(() => ({
     chart: {
@@ -203,7 +205,7 @@ const LineChart = ({ data }) => {
         },
       },
     ],
-  }), [isDarkMode, categories, colors, isDynamic, data]);
+  }), [isDarkMode, categories, colors, isDynamic, firmaDatos]);
 
   return (
     <div className="w-full h-full min-h-[320px] flex items-center justify-center">

@@ -58,9 +58,14 @@ El sistema requiere geolocalizar con precisión la toma de agua para el mapa sat
 
 ![Selector de coordenadas GPS con mapa interactivo Leaflet](../imagenes/medidores/selector_coordenadas_mapa.png)
 
-1. En el recuadro **Ubicación Geográfica**, observe el mapa interactivo basado en Leaflet.
-2. Arrastre el marcador (pin azul) o haga clic directamente sobre el predio o banqueta exacta de la propiedad.
-3. Los campos de **Latitud** y **Longitud** se actualizarán automáticamente con precisión a 6 decimales (ej. `29.118078, -109.966982`).
+1. En el recuadro **Ubicación Geográfica**, acerque el mapa con la rueda del ratón o los botones **+ / −** hasta ver el predio.
+2. **Haga clic** sobre el punto exacto de la toma: el pin se coloca ahí mismo y el mapa **no se mueve**, así puede seguir corrigiendo con más clics.
+3. Para un ajuste fino, **arrastre el pin** hasta la posición correcta.
+4. Los campos de **Latitud** y **Longitud** se llenan solos con 6 decimales (ej. `29.118078, -109.966982`). La etiqueta sobre el mapa muestra la posición actual.
+5. Si ya tiene las coordenadas (por ejemplo, tomadas con un GPS o con el celular), **escríbalas** en Latitud y Longitud: el mapa se centra en ese punto.
+
+> [!TIP]
+> Con el selector de capas del mapa puede cambiar entre **calles** y **satélite** para reconocer mejor techos, banquetas y tomas.
 
 ---
 

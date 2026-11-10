@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Chart from "react-apexcharts";
 
 const PieChart = ({ data, unit = "", type = "donut" }) => {
@@ -19,9 +19,11 @@ const PieChart = ({ data, unit = "", type = "donut" }) => {
     return () => observer.disconnect();
   }, []);
 
+  // Firma del contenido: un arreglo nuevo con los mismos datos no debe redibujar (ni re-animar) la gráfica
+  const firmaDatos = JSON.stringify(data ?? null);
+
   // Procesar datos dinámicos o usar defaults ilustrativos
-  const isDynamic = Array.isArray(data) && data.length > 0;
-  const chartData = isDynamic
+  const chartData = useMemo(() => (Array.isArray(data) && data.length > 0
     ? {
         series: data.map((item) => Number(item.cantidad ?? item.valor ?? item.total ?? item.consumo ?? 0)),
         labels: data.map((item) => String(item.estado ?? item.nombre ?? item.ruta ?? item.label ?? "Sin clasificar"))
@@ -29,7 +31,7 @@ const PieChart = ({ data, unit = "", type = "donut" }) => {
     : {
         series: [120, 180, 240],
         labels: ["Nácori Grande", "Matape", "Adivino"]
-      };
+      }), [firmaDatos]);
 
   const chartColors = [
     "#3B82F6", // Azul
@@ -43,7 +45,7 @@ const PieChart = ({ data, unit = "", type = "donut" }) => {
 
   const totalValue = chartData.series.reduce((acc, curr) => acc + curr, 0);
 
-  const options = {
+  const options = useMemo(() => ({
     chart: {
       type: type,
       background: "transparent",
@@ -150,7 +152,7 @@ const PieChart = ({ data, unit = "", type = "donut" }) => {
         },
       },
     ],
-  };
+  }), [chartData, totalValue, isDarkMode, type, unit]);
 
   const dynamicChartKey = `${isDarkMode ? "dark" : "light"}-${chartData.series.join('-')}-${chartData.labels.join('-')}`;
 

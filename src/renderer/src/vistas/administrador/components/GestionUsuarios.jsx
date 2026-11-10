@@ -39,25 +39,129 @@ const premiumConfirmModalTheme = {
   body: { base: "pt-10 pb-6 px-6 flex-1 overflow-y-auto bg-transparent" }
 };
 
+// Estilos compartidos (solo apariencia)
+const inputClasses = "w-full h-11 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all";
+const selectClasses = "w-full h-11 pl-3 pr-8 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none cursor-pointer";
+const thClasses = "sticky top-0 z-10 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-3 px-5 bg-slate-50 dark:bg-zinc-900 whitespace-nowrap";
+const accionBase = "inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-bold transition-colors";
+const formatoFecha = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+
+// Tarjeta de indicador compacta
+const Kpi = ({ icon: Icon, label, value, tint }) => (
+  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80">
+    <div className={`p-2 rounded-lg shrink-0 ${tint}`}><Icon className="w-4 h-4" /></div>
+    <div className="min-w-0">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 truncate">{label}</p>
+      <p className="text-xl font-black text-slate-800 dark:text-zinc-100 leading-tight">{value}</p>
+    </div>
+  </div>
+);
+
+// Selector de filas por página
+const FilasPorPagina = ({ value, onChange, label }) => (
+  <div className="flex items-center gap-2 shrink-0">
+    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">Filas</span>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={onChange}
+        aria-label={label}
+        className="h-11 pl-3 pr-7 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 appearance-none cursor-pointer"
+      >
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+        <option value="50">50</option>
+      </select>
+      <HiChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+    </div>
+  </div>
+);
+
+// Pie de tabla: conteo + paginación
+const PieTabla = ({ mostrando, total, sustantivo, page, totalPages, setPage }) => (
+  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/40">
+    <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+      Mostrando <b className="text-slate-700 dark:text-zinc-200">{mostrando}</b> de <b className="text-slate-700 dark:text-zinc-200">{total}</b> {sustantivo}
+      {totalPages > 1 && <span className="text-slate-400 dark:text-zinc-500"> · Página {page} de {totalPages}</span>}
+    </span>
+    {totalPages > 1 && (
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => setPage(p => Math.max(p - 1, 1))}
+          disabled={page === 1}
+          aria-label="Página anterior"
+          className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+        >
+          <HiChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-1">
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+            .map((p, idx, arr) => (
+              <div key={p} className="flex items-center">
+                {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-slate-400 text-xs">...</span>}
+                <button
+                  onClick={() => setPage(p)}
+                  className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                    page === p
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {p}
+                </button>
+              </div>
+            ))}
+        </div>
+        <button
+          onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+          disabled={page === totalPages}
+          aria-label="Página siguiente"
+          className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
+        >
+          <HiChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    )}
+  </div>
+);
+
+// Celda de identidad del usuario (avatar con el tinte de su rol)
+const CeldaUsuario = ({ usuario, avatarClass, destacado, sufijo }) => (
+  <div className="flex items-center gap-3 min-w-0">
+    <div className={`w-10 h-10 rounded-xl font-black text-sm flex items-center justify-center shrink-0 ${avatarClass}`}>
+      {(usuario.nombre || "U").charAt(0).toUpperCase()}
+    </div>
+    <div className="flex flex-col min-w-0">
+      <span className={`font-bold text-sm leading-tight truncate ${destacado ? 'text-purple-600 dark:text-purple-400' : 'text-slate-800 dark:text-zinc-100'}`}>
+        {usuario.nombre} {sufijo}
+      </span>
+      <span className="text-xs text-slate-500 dark:text-zinc-400 truncate">
+        <span className="font-bold">@{usuario.username}</span>
+        {usuario.correo && <span className="text-slate-400 dark:text-zinc-500"> · {usuario.correo}</span>}
+      </span>
+    </div>
+  </div>
+);
+
 // Componente LoadingSkeleton premium
 const LoadingSkeleton = () => (
-  <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 animate-in fade-in flex flex-col gap-8">
-    <div className="flex justify-between items-center border-b border-slate-100 dark:border-zinc-800/50 pb-6">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl animate-pulse bg-slate-200/50 dark:bg-zinc-800/50" />
-        <div className="space-y-2">
-          <div className="h-6 w-48 animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-md" />
-          <div className="h-3 w-32 animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-md" />
-        </div>
+  <div className="w-full bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+    <div className="flex items-center gap-4 px-6 py-5 border-b border-slate-100 dark:border-zinc-800/50">
+      <div className="w-11 h-11 rounded-xl animate-pulse bg-slate-200/50 dark:bg-zinc-800/50" />
+      <div className="space-y-2">
+        <div className="h-5 w-48 animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-md" />
+        <div className="h-3 w-32 animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-md" />
       </div>
     </div>
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-6 bg-slate-50/50 dark:bg-zinc-900/30">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-32 w-full animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-2xl" />
+        <div key={i} className="h-16 w-full animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-xl" />
       ))}
     </div>
-    <div className="space-y-4 mt-4">
-      <div className="h-14 w-full animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-xl" />
+    <div className="space-y-3 p-6">
+      <div className="h-11 w-full animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-xl" />
       <div className="h-64 w-full animate-pulse bg-slate-200/50 dark:bg-zinc-800/50 rounded-xl" />
     </div>
   </div>
@@ -267,6 +371,13 @@ const GestionUsuarios = () => {
     };
   }, [usuarios, currentUser]);
 
+  // Conteos para las pestañas (solo visual)
+  const conteoPestanas = useMemo(() => {
+    const visibles = usuarios.filter(u => !(currentUser?.rol === 'administrador' && u.rol === 'superadmin'));
+    const papelera = visibles.filter(u => u.estado_usuario === 'Eliminado').length;
+    return { directorio: visibles.length - papelera, papelera };
+  }, [usuarios, currentUser]);
+
   const hasActiveFilters = busqueda !== "" || filtroEstado !== "todos" || filtroRol !== "todos";
 
   const clearFilters = () => {
@@ -281,556 +392,403 @@ const GestionUsuarios = () => {
     return <LoadingSkeleton />;
   }
 
+  const tabClass = (activa) =>
+    `flex items-center gap-2 h-12 text-sm font-bold border-b-2 -mb-px transition-colors ${activa ? "border-purple-500 text-purple-600 dark:text-purple-400" : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200"}`;
+  const contadorClass = (activa) =>
+    `px-2 py-0.5 rounded-md text-[10px] font-black ${activa ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"}`;
+
   return (
-    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 space-y-6 animate-in fade-in duration-500">
-      
-      {/* ── SECCIÓN 1: HEADER Y KPIs ── */}
-      <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-950 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 pt-6 pb-4 border-b border-slate-100 dark:border-zinc-800/50">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-2xl shrink-0">
-              <HiUserGroup className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                  Gestión de Usuarios
-                </h3>
-                {loading && usuarios.length > 0 && (
-                  <div className="w-4 h-4 rounded-full border-2 border-purple-500 border-t-transparent animate-spin ml-1" />
-                )}
-              </div>
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">
-                Administración de accesos y roles del sistema
-              </p>
-            </div>
-          </div>
+    <div className="w-full bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-500">
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={() => navigate(-1)}
-              className="bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-[44px] px-4 min-w-0 flex-1 sm:flex-none shadow-sm flex items-center justify-center gap-2 transition-colors text-xs"
-            >
-              <HiArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Volver</span>
-            </button>
-            <div className="flex-1 sm:flex-none">
-              <ModalRegistrarUsuario />
+      {/* ── ENCABEZADO ── */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-6 py-5 border-b border-slate-100 dark:border-zinc-800/50">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="p-3 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl shrink-0">
+            <HiUserGroup className="w-6 h-6" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+                Gestión de Usuarios
+              </h3>
+              {loading && usuarios.length > 0 && (
+                <div className="w-4 h-4 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+              )}
             </div>
+            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
+              Administración de accesos y roles del sistema
+            </p>
           </div>
         </div>
 
-        <div className="p-6 bg-slate-50/50 dark:bg-zinc-900/30">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Tarjetas KPI */}
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full shadow-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total Usuarios</span>
-                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiUserGroup className="w-4 h-4" /></div>
-              </div>
-              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.total}</p>
-            </div>
-
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full shadow-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Activos</span>
-                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><HiCheck className="w-4 h-4" /></div>
-              </div>
-              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.activos}</p>
-            </div>
-
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full shadow-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Admin / Super</span>
-                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><HiShieldCheck className="w-4 h-4" /></div>
-              </div>
-              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.admins}</p>
-            </div>
-
-            <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full shadow-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Operadores</span>
-                <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400"><HiUserGroup className="w-4 h-4" /></div>
-              </div>
-              <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{estadisticas.operadores}</p>
-            </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 flex-1 sm:flex-none flex items-center justify-center gap-2 transition-colors text-xs"
+          >
+            <HiArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Volver</span>
+          </button>
+          <div className="flex-1 sm:flex-none">
+            <ModalRegistrarUsuario />
           </div>
         </div>
       </div>
 
-      {/* Pestañas de Navegación (Directorio / Papelera) */}
-      <div className="flex gap-6 border-b border-slate-200 dark:border-zinc-800 px-2 mt-4">
-        <button
-          onClick={() => setShowDeleted(false)}
-          className={`pb-4 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-purple-500 text-purple-600 dark:text-purple-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"}`}
-        >
-          Directorio Activo
+      {/* ── INDICADORES ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-6 py-4 bg-slate-50/50 dark:bg-zinc-900/30 border-b border-slate-100 dark:border-zinc-800/50">
+        <Kpi icon={HiUserGroup} label="Total Usuarios" value={estadisticas.total} tint="bg-blue-500/10 text-blue-600 dark:text-blue-400" />
+        <Kpi icon={HiCheck} label="Activos" value={estadisticas.activos} tint="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
+        <Kpi icon={HiShieldCheck} label="Admin / Super" value={estadisticas.admins} tint="bg-amber-500/10 text-amber-600 dark:text-amber-400" />
+        <Kpi icon={HiUserGroup} label="Operadores" value={estadisticas.operadores} tint="bg-sky-500/10 text-sky-600 dark:text-sky-400" />
+      </div>
+
+      {/* ── PESTAÑAS (Directorio / Papelera) ── */}
+      <div className="flex gap-6 px-6 border-b border-slate-200 dark:border-zinc-800">
+        <button onClick={() => setShowDeleted(false)} className={tabClass(!showDeleted)}>
+          <HiUserGroup className="w-4 h-4" /> Directorio Activo
+          <span className={contadorClass(!showDeleted)}>{conteoPestanas.directorio}</span>
         </button>
-        <button
-          onClick={() => setShowDeleted(true)}
-          className={`pb-4 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-purple-500 text-purple-600 dark:text-purple-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"} flex items-center gap-2`}
-        >
+        <button onClick={() => setShowDeleted(true)} className={tabClass(showDeleted)}>
           <HiFolder className="w-4 h-4" /> Papelera
+          <span className={contadorClass(showDeleted)}>{conteoPestanas.papelera}</span>
         </button>
       </div>
 
-      {/* ── SECCIÓN 2: FILTROS Y TABLA ── */}
-      <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-950 overflow-hidden shadow-sm">
-        
-        {!showDeleted ? (
-          <>
-            {/* Controles de Filtrado - Directorio Activo */}
-            <div className="p-6 border-b border-slate-100 dark:border-zinc-800/50 bg-white dark:bg-zinc-950">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
-                
-                {/* Buscador */}
-                <div className="lg:col-span-6 relative w-full flex items-center">
-                  <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
-                    <HiSearch className="w-5 h-5" />
-                  </span>
-                  <input
-                    placeholder="Buscar por nombre, usuario o correo..."
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full pl-10 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-none h-[52px]"
-                  />
-                  {busqueda && (
-                    <button
-                      onClick={() => setBusqueda("")}
-                      className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
-                    >
-                      <HiX className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Filtro Rol */}
-                <div className="lg:col-span-2 relative">
-                  <select
-                    value={filtroRol}
-                    onChange={(e) => setFiltroRol(e.target.value)}
-                    aria-label="Filtrar por Rol"
-                    className="w-full h-[52px] pl-3 pr-8 text-xs font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none cursor-pointer"
-                  >
-                    <option value="todos">Todos los roles</option>
-                    {currentUser?.rol === 'superadmin' && (
-                      <option value="superadmin">Superadmin</option>
-                    )}
-                    <option value="administrador">Administrador</option>
-                    <option value="operador">Operador</option>
-                  </select>
-                  <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-
-                {/* Filtro Estado */}
-                <div className="lg:col-span-2 relative">
-                  <select
-                    value={filtroEstado}
-                    onChange={(e) => setFiltroEstado(e.target.value)}
-                    aria-label="Filtrar por Estado"
-                    className="w-full h-[52px] pl-3 pr-8 text-xs font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none cursor-pointer"
-                  >
-                    <option value="todos">Todos los estados</option>
-                    <option value="Activo">Activos</option>
-                    <option value="Inactivo">Inactivos</option>
-                  </select>
-                  <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-
-                {/* Botón Limpiar Filtros */}
-                <div className="lg:col-span-2 flex justify-end">
-                  {hasActiveFilters ? (
-                    <button 
-                      onClick={clearFilters}
-                      className="w-full font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-transparent shadow-none h-[52px] rounded-xl flex items-center justify-center gap-2 transition-colors text-xs"
-                    >
-                      <HiFilter className="text-lg" />
-                      <span>Limpiar</span>
-                    </button>
-                  ) : (
-                    <div className="w-full h-[52px]"></div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Info Paginación Superior (Sub-Header) */}
-            <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                Mostrando <span className="text-slate-700 dark:text-zinc-200">{items.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{filteredUsers.length}</span> usuarios
+      {!showDeleted ? (
+        <>
+          {/* Barra de filtros - Directorio Activo */}
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3 px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50">
+            {/* Buscador */}
+            <div className="relative flex items-center flex-1 min-w-0">
+              <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+                <HiSearch className="w-5 h-5" />
               </span>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
-                  Filas por página:
-                </span>
-                <div className="relative">
-                  <select
-                    value={rowsPerPage}
-                    onChange={(e) => {
-                      setRowsPerPage(Number(e.target.value));
-                      setPage(1);
-                    }}
-                    aria-label="Por página"
-                    className="h-9 pl-3 pr-7 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 appearance-none cursor-pointer"
-                  >
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="50">50</option>
-                  </select>
-                  <HiChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
+              <input
+                placeholder="Buscar por nombre, usuario o correo..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className={`${inputClasses} pl-10 pr-10`}
+              />
+              {busqueda && (
+                <button
+                  onClick={() => setBusqueda("")}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                >
+                  <HiX className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
-            {/* Tabla Directorio Activo */}
-            <div className="w-full overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-zinc-800">
-                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">USUARIO</th>
-                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ROL</th>
-                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ESTADO</th>
-                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ÚLTIMO ACCESO</th>
-                    <th className="text-right text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ACCIONES</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
-                  {items.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="py-16 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
-                          <HiUserGroup className="w-12 h-12 opacity-20 mb-2" />
-                          <p className="font-bold text-sm">No se encontraron usuarios</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    items.map((usuario) => {
-                      const isSelf = currentUser?.id == usuario.id;
-                      return (
-                        <tr key={usuario.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-900/30 transition-colors">
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-purple-500/10 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 font-black text-xs flex items-center justify-center border border-purple-200/50 dark:border-purple-800/40 shadow-sm shrink-0">
-                                {(usuario.nombre || "U").charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className={`font-bold text-sm leading-tight ${isSelf ? 'text-purple-600 dark:text-purple-400' : 'text-slate-800 dark:text-zinc-100'}`}>
-                                  {usuario.nombre} {isSelf && "(Tú)"}
-                                </span>
-                                <div className="flex flex-col gap-0.5 mt-0.5">
-                                  <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">@{usuario.username}</span>
-                                  <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500">{usuario.correo}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          
-                          <td className="py-4 px-6">
-                            <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest ${getRolBadge(usuario.rol)}`}>
-                              {usuario.rol}
-                            </span>
-                          </td>
-                          
-                          <td className="py-4 px-6">
-                            <span className={`px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5 ${getEstadoBadge(usuario.estado_usuario)}`}>
-                              <div className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
-                              {usuario.estado_usuario}
-                            </span>
-                          </td>
-
-                          <td className="py-4 px-6">
-                            <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
-                              {usuario.ultimo_acceso ? new Date(usuario.ultimo_acceso).toLocaleString('es-MX', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : <span className="italic opacity-60">Nunca</span>}
-                            </span>
-                          </td>
-
-                          <td className="py-4 px-6">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                title="Gestionar permisos"
-                                onClick={() => handleOpenPermissions(usuario)}
-                                className="p-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 rounded-lg transition-colors"
-                              >
-                                <HiShieldCheck className="w-4 h-4" />
-                              </button>
-
-                              <button
-                                title="Ver sesiones activas"
-                                onClick={() => handleOpenSessions(usuario)}
-                                className="p-2 bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 rounded-lg transition-colors"
-                              >
-                                <HiDesktopComputer className="w-4 h-4" />
-                              </button>
-
-                              <button
-                                title={isSelf ? "No puedes desactivarte" : "Desactivar usuario"}
-                                disabled={isSelf}
-                                onClick={() => !isSelf && handleEliminar(usuario)}
-                                className={isSelf ? "p-2 bg-slate-100 text-slate-300 dark:bg-zinc-800/50 dark:text-zinc-600 rounded-lg cursor-not-allowed" : "p-2 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"}
-                              >
-                                <HiTrash className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+              {/* Filtro Rol */}
+              <div className="relative flex-1 sm:w-44 sm:flex-none">
+                <select
+                  value={filtroRol}
+                  onChange={(e) => setFiltroRol(e.target.value)}
+                  aria-label="Filtrar por Rol"
+                  className={selectClasses}
+                >
+                  <option value="todos">Todos los roles</option>
+                  {currentUser?.rol === 'superadmin' && (
+                    <option value="superadmin">Superadmin</option>
                   )}
-                </tbody>
-              </table>
-            </div>
+                  <option value="administrador">Administrador</option>
+                  <option value="operador">Operador</option>
+                </select>
+                <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
 
-            {/* Paginación Inferior */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50">
-                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
-                  Página {page} de {totalPages}
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setPage(p => Math.max(p - 1, 1))}
-                    disabled={page === 1}
-                    className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
-                  >
-                    <HiChevronLeft className="w-4 h-4" />
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
-                      .map((p, idx, arr) => (
-                        <div key={p} className="flex items-center">
-                          {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-slate-400 text-xs">...</span>}
-                          <button
-                            onClick={() => setPage(p)}
-                            className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
-                              page === p
-                                ? 'bg-purple-600 text-white shadow-sm'
-                                : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-                            }`}
-                          >
-                            {p}
+              {/* Filtro Estado */}
+              <div className="relative flex-1 sm:w-44 sm:flex-none">
+                <select
+                  value={filtroEstado}
+                  onChange={(e) => setFiltroEstado(e.target.value)}
+                  aria-label="Filtrar por Estado"
+                  className={selectClasses}
+                >
+                  <option value="todos">Todos los estados</option>
+                  <option value="Activo">Activos</option>
+                  <option value="Inactivo">Inactivos</option>
+                </select>
+                <HiChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+
+              {/* Limpiar filtros (solo cuando hay alguno activo) */}
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="h-11 px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors shrink-0"
+                >
+                  <HiFilter className="w-4 h-4" />
+                  <span>Limpiar</span>
+                </button>
+              )}
+
+              <FilasPorPagina
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setPage(1);
+                }}
+                label="Por página"
+              />
+            </div>
+          </div>
+
+          {/* Tabla Directorio Activo */}
+          <div className="w-full overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className={thClasses}>USUARIO</th>
+                  <th className={thClasses}>ROL</th>
+                  <th className={thClasses}>ESTADO</th>
+                  <th className={thClasses}>ÚLTIMO ACCESO</th>
+                  <th className={`${thClasses} text-right`}>ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="py-16 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
+                        <HiUserGroup className="w-12 h-12 opacity-20 mb-1" />
+                        <p className="font-bold text-sm">No se encontraron usuarios</p>
+                        {hasActiveFilters && (
+                          <button onClick={clearFilters} className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline">
+                            Quitar filtros
                           </button>
-                        </div>
-                      ))}
-                  </div>
-                  <button
-                    onClick={() => setPage(p => Math.min(p + 1, totalPages))}
-                    disabled={page === totalPages}
-                    className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
-                  >
-                    <HiChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            {/* Controles de Filtrado - Papelera */}
-            <div className="p-6 border-b border-slate-100 dark:border-zinc-800/50 bg-white dark:bg-zinc-950">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-center">
-                
-                {/* Info y botón de actualización */}
-                <div className="lg:col-span-6 flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                    Mostrando <span className="text-red-500 font-extrabold">{itemsDeleted.length}</span> de <span className="font-extrabold">{filteredDeletedUsers.length}</span> usuarios desactivados
-                  </span>
-                  <button 
-                    onClick={fetchUsuarios}
-                    className="text-left text-xs font-bold text-slate-600 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 flex items-center gap-1.5 outline-none"
-                    disabled={loading}
-                  >
-                    <HiRefresh className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-                    Actualizar papelera
-                  </button>
-                </div>
-
-                {/* Buscador de papelera */}
-                <div className="lg:col-span-6 relative w-full flex items-center">
-                  <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
-                    <HiSearch className="w-5 h-5" />
-                  </span>
-                  <input
-                    placeholder="Buscar en papelera..."
-                    value={searchDeleted}
-                    onChange={(e) => setSearchDeleted(e.target.value)}
-                    className="w-full pl-10 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-300 shadow-none h-[52px]"
-                  />
-                  {searchDeleted && (
-                    <button
-                      onClick={() => setSearchDeleted("")}
-                      className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
-                    >
-                      <HiX className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Info Paginación Superior Papelera */}
-            <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                Mostrando <span className="text-slate-700 dark:text-zinc-200">{itemsDeleted.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{filteredDeletedUsers.length}</span> usuarios en papelera
-              </span>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
-                  Filas por página:
-                </span>
-                <div className="relative">
-                  <select
-                    value={rowsPerPageDeleted}
-                    onChange={(e) => {
-                      setRowsPerPageDeleted(Number(e.target.value));
-                      setPageDeleted(1);
-                    }}
-                    aria-label="Por página papelera"
-                    className="h-9 pl-3 pr-7 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 appearance-none cursor-pointer"
-                  >
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="50">50</option>
-                  </select>
-                  <HiChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            {/* Tabla de Papelera */}
-            <div className="w-full overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">
-                <thead>
-                  <tr className="border-b border-slate-200 dark:border-zinc-800">
-                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">USUARIO</th>
-                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">FECHA ELIMINACIÓN</th>
-                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">MOTIVO DE ELIMINACIÓN</th>
-                    <th className="text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ELIMINADO POR</th>
-                    <th className="text-right text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 py-4 px-6">ACCIONES</th>
+                        )}
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
-                  {itemsDeleted.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="py-16 text-center">
-                        <div className="flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
-                          <HiFolder className="w-12 h-12 opacity-20 mb-2" />
-                          <p className="font-bold text-sm">La papelera está vacía</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    itemsDeleted.map((usuario) => (
-                      <tr key={usuario.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-900/30 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-black text-xs flex items-center justify-center border border-slate-300/50 dark:border-zinc-700/40 shadow-sm shrink-0">
-                              {(usuario.nombre || "U").charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="font-bold text-sm leading-tight text-slate-800 dark:text-zinc-100">{usuario.nombre}</span>
-                              <div className="flex flex-col gap-0.5 mt-0.5">
-                                <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">@{usuario.username}</span>
-                                <span className="text-[10px] font-medium text-slate-400 dark:text-zinc-500">{usuario.correo}</span>
-                              </div>
-                            </div>
-                          </div>
+                ) : (
+                  items.map((usuario) => {
+                    const isSelf = currentUser?.id == usuario.id;
+                    return (
+                      <tr key={usuario.id} className={`transition-colors ${isSelf ? "bg-purple-500/[0.03] dark:bg-purple-900/10" : ""} hover:bg-slate-50/70 dark:hover:bg-zinc-900/30`}>
+                        <td className="py-3 px-5 max-w-[320px]">
+                          <CeldaUsuario
+                            usuario={usuario}
+                            avatarClass={getRolBadge(usuario.rol)}
+                            destacado={isSelf}
+                            sufijo={isSelf && "(Tú)"}
+                          />
                         </td>
-                        
-                        <td className="py-4 px-6">
-                          <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
-                            {usuario.fecha_eliminacion ? new Date(usuario.fecha_eliminacion).toLocaleString('es-MX', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : <span className="italic opacity-60">No registrada</span>}
-                          </span>
-                        </td>
-                        
-                        <td className="py-4 px-6">
-                          <span className="text-xs font-bold text-red-500/80 uppercase tracking-widest max-w-[200px] truncate block" title={usuario.razon_eliminacion}>
-                            {usuario.razon_eliminacion || "Sin motivo registrado"}
+
+                        <td className="py-3 px-5">
+                          <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest whitespace-nowrap ${getRolBadge(usuario.rol)}`}>
+                            {usuario.rol}
                           </span>
                         </td>
 
-                        <td className="py-4 px-6">
-                          <span className="text-xs font-medium text-slate-600 dark:text-zinc-300">
-                            {usuario.eliminador_username ? `@${usuario.eliminador_username}` : <span className="italic opacity-60">Desconocido</span>}
+                        <td className="py-3 px-5">
+                          <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest inline-flex items-center gap-1.5 whitespace-nowrap ${getEstadoBadge(usuario.estado_usuario)}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
+                            {usuario.estado_usuario}
                           </span>
                         </td>
 
-                        <td className="py-4 px-6">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="py-3 px-5 whitespace-nowrap">
+                          <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
+                            {usuario.ultimo_acceso ? new Date(usuario.ultimo_acceso).toLocaleString('es-MX', formatoFecha) : <span className="italic opacity-60">Nunca</span>}
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-5">
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
-                              title="Restaurar usuario"
-                              onClick={() => handleReactivar(usuario)}
-                              className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
+                              title="Gestionar permisos"
+                              onClick={() => handleOpenPermissions(usuario)}
+                              className={`${accionBase} bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20`}
                             >
-                              <HiCheck className="w-4 h-4" />
+                              <HiShieldCheck className="w-4 h-4" />
+                              <span className="hidden xl:inline">Permisos</span>
                             </button>
 
                             <button
-                              title="Eliminar definitivamente"
-                              onClick={() => handlePurge(usuario)}
-                              className="p-2 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                              title="Ver sesiones activas"
+                              onClick={() => handleOpenSessions(usuario)}
+                              className={`${accionBase} bg-slate-500/10 text-slate-600 dark:text-slate-300 hover:bg-slate-500/20`}
+                            >
+                              <HiDesktopComputer className="w-4 h-4" />
+                              <span className="hidden xl:inline">Sesiones</span>
+                            </button>
+
+                            <button
+                              title={isSelf ? "No puedes desactivarte" : "Desactivar usuario"}
+                              disabled={isSelf}
+                              onClick={() => !isSelf && handleEliminar(usuario)}
+                              className={isSelf
+                                ? `${accionBase} bg-slate-100 text-slate-300 dark:bg-zinc-800/50 dark:text-zinc-600 cursor-not-allowed`
+                                : `${accionBase} bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20`}
                             >
                               <HiTrash className="w-4 h-4" />
+                              <span className="hidden xl:inline">Desactivar</span>
                             </button>
                           </div>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <PieTabla
+            mostrando={items.length}
+            total={filteredUsers.length}
+            sustantivo="usuarios"
+            page={page}
+            totalPages={totalPages}
+            setPage={setPage}
+          />
+        </>
+      ) : (
+        <>
+          {/* Barra de filtros - Papelera */}
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3 px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50">
+            <div className="relative flex items-center flex-1 min-w-0">
+              <span className="absolute left-3 text-slate-400 dark:text-zinc-500 pointer-events-none flex items-center justify-center">
+                <HiSearch className="w-5 h-5" />
+              </span>
+              <input
+                placeholder="Buscar en papelera..."
+                value={searchDeleted}
+                onChange={(e) => setSearchDeleted(e.target.value)}
+                className={`${inputClasses} pl-10 pr-10`}
+              />
+              {searchDeleted && (
+                <button
+                  onClick={() => setSearchDeleted("")}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors"
+                >
+                  <HiX className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
-            {/* Paginación Inferior Papelera */}
-            {totalPagesDeleted > 1 && (
-              <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/50">
-                <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
-                  Página {pageDeleted} de {totalPagesDeleted}
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setPageDeleted(p => Math.max(p - 1, 1))}
-                    disabled={pageDeleted === 1}
-                    className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
-                  >
-                    <HiChevronLeft className="w-4 h-4" />
-                  </button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPagesDeleted }, (_, i) => i + 1)
-                      .filter(p => p === 1 || p === totalPagesDeleted || Math.abs(p - pageDeleted) <= 1)
-                      .map((p, idx, arr) => (
-                        <div key={p} className="flex items-center">
-                          {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-slate-400 text-xs">...</span>}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={fetchUsuarios}
+                disabled={loading}
+                className="h-11 px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors disabled:opacity-60 flex-1 sm:flex-none"
+              >
+                <HiRefresh className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                Actualizar papelera
+              </button>
+
+              <FilasPorPagina
+                value={rowsPerPageDeleted}
+                onChange={(e) => {
+                  setRowsPerPageDeleted(Number(e.target.value));
+                  setPageDeleted(1);
+                }}
+                label="Por página papelera"
+              />
+            </div>
+          </div>
+
+          {/* Aviso de la papelera */}
+          <div className="flex items-start gap-2 px-6 py-2.5 border-b border-slate-100 dark:border-zinc-800/50 bg-amber-500/5 text-xs font-medium text-slate-600 dark:text-zinc-300">
+            <HiExclamationCircle className="w-4 h-4 mt-px text-amber-500 shrink-0" />
+            <span>
+              Estos usuarios no pueden entrar al sistema. <b>Restaurar</b> les devuelve el acceso; <b>Eliminar</b> borra la cuenta definitivamente.
+            </span>
+          </div>
+
+          {/* Tabla de Papelera */}
+          <div className="w-full overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className={thClasses}>USUARIO</th>
+                  <th className={thClasses}>FECHA ELIMINACIÓN</th>
+                  <th className={thClasses}>MOTIVO DE ELIMINACIÓN</th>
+                  <th className={thClasses}>ELIMINADO POR</th>
+                  <th className={`${thClasses} text-right`}>ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
+                {itemsDeleted.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="py-16 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
+                        <HiFolder className="w-12 h-12 opacity-20 mb-1" />
+                        <p className="font-bold text-sm">La papelera está vacía</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  itemsDeleted.map((usuario) => (
+                    <tr key={usuario.id} className="hover:bg-slate-50/70 dark:hover:bg-zinc-900/30 transition-colors">
+                      <td className="py-3 px-5 max-w-[320px]">
+                        <CeldaUsuario
+                          usuario={usuario}
+                          avatarClass="bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+                        />
+                      </td>
+
+                      <td className="py-3 px-5 whitespace-nowrap">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                          {usuario.fecha_eliminacion ? new Date(usuario.fecha_eliminacion).toLocaleString('es-MX', formatoFecha) : <span className="italic opacity-60">No registrada</span>}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-5">
+                        <span className="text-xs font-semibold text-red-600/90 dark:text-red-400/90 max-w-[240px] truncate block" title={usuario.razon_eliminacion}>
+                          {usuario.razon_eliminacion || "Sin motivo registrado"}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-5 whitespace-nowrap">
+                        <span className="text-xs font-medium text-slate-600 dark:text-zinc-300">
+                          {usuario.eliminador_username ? `@${usuario.eliminador_username}` : <span className="italic opacity-60">Desconocido</span>}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-5">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => setPageDeleted(p)}
-                            className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
-                              pageDeleted === p
-                                ? 'bg-purple-600 text-white shadow-sm'
-                                : 'bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-                            }`}
+                            title="Restaurar usuario"
+                            onClick={() => handleReactivar(usuario)}
+                            className={`${accionBase} bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20`}
                           >
-                            {p}
+                            <HiCheck className="w-4 h-4" />
+                            <span className="hidden xl:inline">Restaurar</span>
+                          </button>
+
+                          <button
+                            title="Eliminar definitivamente"
+                            onClick={() => handlePurge(usuario)}
+                            className={`${accionBase} bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20`}
+                          >
+                            <HiTrash className="w-4 h-4" />
+                            <span className="hidden xl:inline">Eliminar</span>
                           </button>
                         </div>
-                      ))}
-                  </div>
-                  <button
-                    onClick={() => setPageDeleted(p => Math.min(p + 1, totalPagesDeleted))}
-                    disabled={pageDeleted === totalPagesDeleted}
-                    className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 disabled:opacity-40 transition-colors"
-                  >
-                    <HiChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <PieTabla
+            mostrando={itemsDeleted.length}
+            total={filteredDeletedUsers.length}
+            sustantivo="usuarios en papelera"
+            page={pageDeleted}
+            totalPages={totalPagesDeleted}
+            setPage={setPageDeleted}
+          />
+        </>
+      )}
 
       {/* Modales */}
       <ModalSesionesUsuario
@@ -856,27 +814,29 @@ const GestionUsuarios = () => {
         <FlowbiteModalHeader />
         <FlowbiteModalBody>
           <div className="text-center p-2">
-            <HiExclamationCircle className={`mx-auto mb-4 h-14 w-14 ${confirmModal.color === "success" ? "text-emerald-500" : "text-red-500"}`} />
-            <h3 className="mb-4 text-base font-black text-slate-800 dark:text-zinc-100">
+            <div className={`mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center ${confirmModal.color === "success" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"}`}>
+              <HiExclamationCircle className="h-8 w-8" />
+            </div>
+            <h3 className="mb-3 text-base font-black text-slate-800 dark:text-zinc-100">
               {confirmModal.title}
             </h3>
-            <p className="mb-6 text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-relaxed">
+            <p className="mb-6 text-sm font-medium text-slate-500 dark:text-zinc-400 leading-relaxed">
               {confirmModal.message}
             </p>
             <div className="flex justify-center gap-3">
-              <FlowbiteButton
-                color={confirmModal.color === "success" ? "success" : "failure"}
-                onClick={confirmModal.onConfirm}
-                className="font-bold"
-              >
-                Sí, confirmar
-              </FlowbiteButton>
               <FlowbiteButton
                 color="gray"
                 onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
                 className="font-bold text-slate-500"
               >
                 Cancelar
+              </FlowbiteButton>
+              <FlowbiteButton
+                color={confirmModal.color === "success" ? "success" : "failure"}
+                onClick={confirmModal.onConfirm}
+                className="font-bold"
+              >
+                Sí, confirmar
               </FlowbiteButton>
             </div>
           </div>
