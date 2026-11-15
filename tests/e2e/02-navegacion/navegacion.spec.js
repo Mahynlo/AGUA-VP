@@ -4,7 +4,8 @@ const { irA } = require('../../helpers/authHelper');
 
 // Cada sección del menú abre y muestra su contenido principal (con los datos de la copia de la base)
 const SECCIONES = [
-  { hash: '#/clientes', titulo: 'Gestión de Clientes', contenido: 'Directorio de Clientes' },
+  // Clientes ya no repite un título bajo el encabezado: el directorio se reconoce por su pestaña
+  { hash: '#/clientes', titulo: 'Gestión de Clientes', contenido: 'Directorio Activo', rol: 'button' },
   { hash: '#/medidores', titulo: 'Gestión de Medidores', contenido: 'Lista de Medidores' },
   { hash: '#/resibos/lecturas', titulo: 'Sistema de Lecturas', contenido: 'Ruta Nacori Grande' },
   { hash: '#/resibos/tarifas', titulo: 'Gestión de Tarifas', contenido: 'Domestica' },
@@ -19,7 +20,7 @@ test.describe('02 · Navegación entre módulos', () => {
   for (const s of SECCIONES) {
     test(`abre ${s.titulo}`, async () => {
       await irA(ctx.window, s.hash, s.titulo);
-      await expect(ctx.window.getByRole('heading', { name: s.contenido }).first()).toBeVisible({ timeout: 20000 });
+      await expect(ctx.window.getByRole(s.rol || 'heading', { name: s.contenido }).first()).toBeVisible({ timeout: 20000 });
     });
   }
 

@@ -21,6 +21,7 @@ import { useClientes } from "../../../context/ClientesContext";
 import { usePagos } from "../../../context/PagosContext";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { useTarifas } from "../../../context/TarifasContext";
+import { EncabezadoSeccion, Indicador, IndicadoresVista } from "../../../components/ui/VistaModulo";
 import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
 import { useFeedback } from "../../../context/FeedbackContext";
 import ModalPagoDistribuidoCliente from "./ModalPagoDistribuidoCliente";
@@ -48,7 +49,7 @@ const sortFacturasFIFO = (facturas = []) => {
 };
 
 // ── ESTILOS COMPARTIDOS ───────────────────────────────────────────────────────
-const SELECT_CLS = "w-full h-[52px] pl-4 pr-8 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none appearance-none cursor-pointer";
+const SELECT_CLS = "w-full h-11 pl-4 pr-8 text-sm font-medium rounded-xl bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none appearance-none cursor-pointer";
 
 const premiumConfirmModalTheme = {
   root: {
@@ -170,7 +171,7 @@ function ExportDropdown({ onExportCSV, onExportExcel }) {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-[44px] px-5 shadow-sm flex items-center gap-2 transition-colors border border-emerald-500/10"
+        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-11 px-4 text-sm shadow-sm flex items-center gap-2 transition-colors border border-emerald-500/10"
       >
         <HiDownload className="text-lg" />
         Exportar
@@ -215,7 +216,7 @@ function ImprimirDeudoresDropdown({ onImprimir, loading }) {
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={loading}
-        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl px-5 h-[44px] shadow-sm flex items-center gap-2 transition-colors disabled:opacity-60"
+        className="font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-xl px-4 h-11 text-sm shadow-sm flex items-center gap-2 transition-colors disabled:opacity-60"
       >
         {loading ? <LoadingSpinner className="w-4 h-4" /> : <HiPrinter className="text-lg" />}
         Imprimir Deudores
@@ -1106,23 +1107,22 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
   const filtrosPanelCobranza = ["ruta_id", "tarifa_id"].filter((k) => filtrosCobranza[k] !== "All").length + (cityFilter !== "All" ? 1 : 0);
 
   return (
-    <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500">
+    <div className="w-full flex flex-col gap-4">
       
-      {/* ── 1. HEADER Y KPIs ── */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl p-3 shrink-0">
-            <HiCalculator className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100">Cobranza por Cliente</h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
-              Historial completo y cobro distribuido FIFO.
-            </p>
-          </div>
-        </div>
+      {/* ── 1. INDICADORES (junto al título del módulo) Y SUBTÍTULO ── */}
+      <IndicadoresVista>
+        <Indicador icon={HiUserGroup} tint="bg-blue-500/10 text-blue-600 dark:text-blue-400" label="Total de clientes" value={resumen.clientes_total.toLocaleString("es-MX")} />
+        <Indicador icon={HiCalculator} tint="bg-amber-500/10 text-amber-600 dark:text-amber-400" label="Con deuda" value={resumen.clientes_con_deuda.toLocaleString("es-MX")} valueClass="text-amber-600 dark:text-amber-400" />
+        <Indicador icon={HiDocumentText} tint="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" label="Fact. pendientes" value={resumen.facturas_pendientes.toLocaleString("es-MX")} />
+        <Indicador icon={HiCash} tint="bg-rose-500/10 text-rose-600 dark:text-rose-400" label="Deuda visible" value={`$${resumen.deuda.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`} valueClass="text-rose-600 dark:text-rose-400" detalle="Suma de la deuda de los clientes que muestra la tabla" />
+      </IndicadoresVista>
 
-        <div className="w-full md:w-auto flex items-center justify-end gap-3">
+      <EncabezadoSeccion
+        icon={HiCalculator}
+        titulo="Cobranza por cliente"
+        descripcion="Historial completo y cobro distribuido FIFO."
+      >
+        <div className="w-full md:w-auto flex flex-wrap items-center justify-end gap-2">
           <ExportDropdown
             onExportCSV={() => setExportModal({ isOpen: true, format: "csv" })}
             onExportExcel={() => setExportModal({ isOpen: true, format: "xlsx" })}
@@ -1136,7 +1136,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
           <button
             onClick={() => setModalLiquidacionTotalOpen(true)}
             disabled={allClientesConDeuda.length === 0}
-            className="font-bold bg-emerald-600 text-white rounded-xl px-6 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-bold bg-emerald-600 text-white rounded-xl px-4 h-11 text-sm shadow-sm flex items-center gap-2 transition-colors hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <HiCash className="text-lg" />
             Liquidación Total
@@ -1144,56 +1144,19 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
 
           <button
             onClick={abrirModalSeleccionPeriodoRapido}
-            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-6 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-800 dark:hover:bg-zinc-100"
+            className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-4 h-11 text-sm shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-800 dark:hover:bg-zinc-100"
           >
             <HiCalculator className="text-lg" />
             Liquidación de Periodo
           </button>
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Total Clientes</span>
-            <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiUserGroup className="w-4 h-4" /></div>
-          </div>
-          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{resumen.clientes_total.toLocaleString("es-MX")}</p>
-        </div>
-
-        <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Con Deuda</span>
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400"><HiCalculator className="w-4 h-4" /></div>
-          </div>
-          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{resumen.clientes_con_deuda.toLocaleString("es-MX")}</p>
-        </div>
-
-        <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Fact. Pendientes</span>
-            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"><HiDocumentText className="w-4 h-4" /></div>
-          </div>
-          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">{resumen.facturas_pendientes.toLocaleString("es-MX")}</p>
-        </div>
-
-        <div className="bg-slate-50 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-5 flex flex-col gap-3 transition-transform hover:-translate-y-1 w-full">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Deuda Visible</span>
-            <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400"><HiCash className="w-4 h-4" /></div>
-          </div>
-          <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none flex items-baseline gap-0.5">
-            <span className="text-lg font-bold text-slate-400">$</span>
-            {resumen.deuda.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-      </div>
+      </EncabezadoSeccion>
 
       {/* ── 2. FILTROS Y TABLA ── */}
-      <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-hidden flex flex-col">
+      <div className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden flex flex-col">
         
         {/* Filtros */}
-        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800/80">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
             {/* Buscador */}
             <div className="lg:col-span-4 relative w-full flex items-center">
@@ -1204,7 +1167,7 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
                 placeholder="Buscar nombre, predio, correo o teléfono..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none h-[52px]"
+                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none h-11"
               />
               {search && (
                 <button
@@ -1217,10 +1180,10 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
             </div>
 
             <div className="lg:col-span-2">
-              <SelectFiltro value={filtrosCobranza.situacion} onChange={(v) => setFiltroCobranza("situacion", v)} opciones={opcionesCobranza.situacion} todos="Cualquier situación" />
+              <SelectFiltro compacto value={filtrosCobranza.situacion} onChange={(v) => setFiltroCobranza("situacion", v)} opciones={opcionesCobranza.situacion} todos="Cualquier situación" />
             </div>
             <div className="lg:col-span-2">
-              <SelectFiltro value={filtrosCobranza.monto} onChange={(v) => setFiltroCobranza("monto", v)} opciones={opcionesCobranza.monto} todos="Cualquier monto" />
+              <SelectFiltro compacto value={filtrosCobranza.monto} onChange={(v) => setFiltroCobranza("monto", v)} opciones={opcionesCobranza.monto} todos="Cualquier monto" />
             </div>
 
             {/* Orden */}
@@ -1241,15 +1204,15 @@ const TabCobranzaCliente = ({ onCobranzaStatsChange }) => {
             </div>
 
             <div className="lg:col-span-2">
-              <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelCobranza} />
+              <BotonMasFiltros compacto abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelCobranza} />
             </div>
           </div>
 
           {masFiltrosAbierto && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
-              <SelectFiltro etiqueta="Ruta de lectura" value={filtrosCobranza.ruta_id} onChange={(v) => setFiltroCobranza("ruta_id", v)} opciones={opcionesCobranza.ruta_id} todos="Todas las rutas" />
-              <SelectFiltro etiqueta="Tarifa" value={filtrosCobranza.tarifa_id} onChange={(v) => setFiltroCobranza("tarifa_id", v)} opciones={opcionesCobranza.tarifa_id} todos="Todas las tarifas" />
-              <SelectFiltro etiqueta="Ciudad" value={cityFilter} onChange={setCityFilter} opciones={ciudades.map((c) => ({ value: c, label: c }))} todos="Todas las ciudades" />
+              <SelectFiltro compacto etiqueta="Ruta de lectura" value={filtrosCobranza.ruta_id} onChange={(v) => setFiltroCobranza("ruta_id", v)} opciones={opcionesCobranza.ruta_id} todos="Todas las rutas" />
+              <SelectFiltro compacto etiqueta="Tarifa" value={filtrosCobranza.tarifa_id} onChange={(v) => setFiltroCobranza("tarifa_id", v)} opciones={opcionesCobranza.tarifa_id} todos="Todas las tarifas" />
+              <SelectFiltro compacto etiqueta="Ciudad" value={cityFilter} onChange={setCityFilter} opciones={ciudades.map((c) => ({ value: c, label: c }))} todos="Todas las ciudades" />
             </div>
           )}
 

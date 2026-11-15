@@ -7,8 +7,11 @@ import {
   HiCalendar,
   HiUsers,
   HiPrinter,
-  HiChevronDown
+  HiChevronDown,
+  HiDocumentText,
+  HiExclamation
 } from "react-icons/hi";
+import { EncabezadoSeccion, Indicador, IndicadoresVista } from "../../../components/ui/VistaModulo";
 import SelectorPeriodoAvanzado from "../../../components/ui/SelectorPeriodoAvanzado";
 import { useReportes } from "../../../context/ReportesContext";
 import { useRutas } from "../../../context/RutasContext";
@@ -312,45 +315,54 @@ const ReporteFinancieroEstado = () => {
 
   // Token 4: Selects Invisibles (Adaptados)
   const selectClasses = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px] focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500",
+    trigger: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-11 focus:ring-2 focus:ring-slate-900/10 dark:focus:ring-zinc-100/10 focus:outline-none focus:border-slate-400 dark:focus:border-zinc-500",
     value: "font-medium text-slate-800 dark:text-zinc-100 text-sm",
   };
 
   return (
     /* Token 1: Contenedor Raíz Libre */
-    <div className="w-full bg-white dark:bg-zinc-950 rounded-[2rem] border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 lg:p-10 animate-in fade-in duration-500 print:shadow-none print:rounded-none print:bg-white print:border-none print:p-0">
+    <div className="w-full flex flex-col print:bg-white print:p-0">
       
-      {/* ── HEADER SECTION ── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8 print:mb-4">
-        <div className="flex items-center gap-4">
-          {/* Regla de Tintes */}
-          <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0 print:hidden">
-            <HiCurrencyDollar className="w-7 h-7" />
-          </div>
-          <div className="flex flex-col gap-0.5">
-            {/* Token 3: Textos Principales */}
-            <h3 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
-              Estado Financiero de Pagos
-            </h3>
-            <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">
-              Recaudación, cobranza y cartera por periodo
-            </p>
-          </div>
-        </div>
+      {/* ── INDICADORES (junto al título del módulo) ── */}
+      <IndicadoresVista>
+        <Indicador icon={HiDocumentText} tint="bg-blue-500/10 text-blue-600 dark:text-blue-400" label="Total esperado" value={moneda(resumen.total_esperado)} detalle="Importe facturado en el filtro elegido" />
+        <Indicador icon={HiCurrencyDollar} tint="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" label="Total recaudado" value={moneda(resumen.total_recaudado)} valueClass="text-emerald-600 dark:text-emerald-400" detalle={`Recaudado a hoy: ${moneda(resumen.recaudado_hasta_fecha_actual)}`} />
+        <Indicador icon={HiExclamation} tint="bg-orange-500/10 text-orange-600 dark:text-orange-400" label="Por cobrar" value={moneda(resumen.por_cobrar_estimado)} detalle="Pendiente estimado del filtro elegido" />
+        <Indicador
+          icon={eficienciaPositiva ? HiTrendingUp : HiTrendingDown}
+          tint={eficienciaPositiva ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}
+          label="Eficiencia"
+          value={porcentaje(resumen.eficiencia_recaudo_porcentaje)}
+          valueClass={eficienciaPositiva ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
+          detalle="Recaudado entre esperado"
+        />
+      </IndicadoresVista>
 
-        <div className="w-full sm:w-auto flex items-center gap-2 print:hidden">
-          <div className="border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-bold tracking-widest uppercase text-[10px] rounded-lg px-2.5 py-1 flex items-center gap-1.5 bg-slate-50 dark:bg-zinc-900/50">
-            <HiCalendar className="w-4 h-4" />
-            <span>{financiero?.filtro_aplicado?.etiqueta || "Sin filtro"}</span>
+      {/* ── SUBTÍTULO DE LA PESTAÑA ── */}
+      <div className="mb-4 print:hidden">
+        <EncabezadoSeccion
+          icon={HiCurrencyDollar}
+          titulo="Estado financiero de pagos"
+          descripcion="Recaudación, cobranza y cartera por periodo."
+          cargando={loadingFinanciero && !!financiero}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50 text-xs font-semibold text-slate-600 dark:text-zinc-300 inline-flex items-center gap-1.5">
+              <HiCalendar className="w-4 h-4" />
+              {financiero?.filtro_aplicado?.etiqueta || "Sin filtro"}
+            </span>
+            <span className="h-8 px-2.5 rounded-lg bg-teal-500/10 text-xs font-semibold text-teal-700 dark:text-teal-300 inline-flex items-center gap-1.5" title="Recaudado hasta la fecha actual">
+              Recaudado a hoy: <b>{moneda(resumen.recaudado_hasta_fecha_actual)}</b>
+            </span>
           </div>
-        </div>
+        </EncabezadoSeccion>
       </div>
 
       {/* ── FILTER CONTROLS ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-10 items-end print:hidden relative z-30">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-6 items-end print:hidden relative z-30 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30">
         
         <div className="lg:col-span-3 flex flex-col gap-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+          <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 ml-1">
             Vista del Reporte
           </label>
           <div className="relative">
@@ -358,7 +370,7 @@ const ReporteFinancieroEstado = () => {
               value={tipoFiltro}
               onChange={(e) => setTipoFiltro(e.target.value || "periodo")}
               aria-label="Tipo de filtro"
-              className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+              className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
             >
               <option value="periodo">Periodo puntual</option>
               <option value="ultimos_meses">Últimos meses</option>
@@ -371,14 +383,14 @@ const ReporteFinancieroEstado = () => {
         <div className="lg:col-span-6 flex flex-col gap-1.5">
           {tipoFiltro === "periodo" && (
             <>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+              <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 ml-1">
                 Seleccionar Periodo
               </label>
               <SelectorPeriodoAvanzado
                 value={periodo}
                 onChange={setPeriodo}
                 placeholder="Seleccionar periodo"
-                className="h-[52px] w-full"
+                className="h-11 w-full"
                 periodosInfo={periodosInfo}
                 siguientePeriodo={siguientePeriodo}
                 ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
@@ -388,7 +400,7 @@ const ReporteFinancieroEstado = () => {
 
           {tipoFiltro === "ultimos_meses" && (
             <>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+              <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 ml-1">
                 Rango de meses
               </label>
               <div className="relative">
@@ -396,7 +408,7 @@ const ReporteFinancieroEstado = () => {
                   value={ultimosMeses}
                   onChange={(e) => setUltimosMeses(e.target.value || "3")}
                   aria-label="Últimos meses"
-                  className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                  className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
                 >
                   <option value="3">Últimos 3 meses</option>
                   <option value="6">Últimos 6 meses</option>
@@ -409,7 +421,7 @@ const ReporteFinancieroEstado = () => {
 
           {tipoFiltro === "anio" && (
             <>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 ml-1">
+              <label className="text-xs font-semibold text-slate-500 dark:text-zinc-400 ml-1">
                 Año Fiscal
               </label>
               <div className="relative">
@@ -417,7 +429,7 @@ const ReporteFinancieroEstado = () => {
                   value={anioEspecifico}
                   onChange={(e) => setAnioEspecifico(e.target.value || String(new Date().getFullYear()))}
                   aria-label="Año específico"
-                  className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                  className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
                 >
                   {opcionesAnio.map((anio) => (
                     <option key={anio} value={anio}>{anio}</option>
@@ -429,10 +441,10 @@ const ReporteFinancieroEstado = () => {
           )}
         </div>
 
-        <div className="lg:col-span-3 flex items-end h-[52px]">
+        <div className="lg:col-span-3 flex items-end h-11">
           <button
             type="button"
-            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-full shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 text-xs disabled:opacity-50 cursor-pointer"
+            className="w-full font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl h-full shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer"
             onClick={handlePrint}
             disabled={!financiero || loadingFinanciero || loadingImprimir}
           >
@@ -454,40 +466,6 @@ const ReporteFinancieroEstado = () => {
           <p className="text-sm font-bold text-red-700 dark:text-red-400">{errorFinanciero}</p>
         </div>
       )}
-
-      {/* ── KPIs GRID (Token 5 adaptado) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-10 print:grid-cols-5 print:gap-2">
-        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Total Esperado</p>
-          <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(resumen.total_esperado)}</p>
-        </div>
-
-        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Total Recaudado</p>
-          <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(resumen.total_recaudado)}</p>
-        </div>
-
-        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Por cobrar</p>
-          <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(resumen.por_cobrar_estimado)}</p>
-        </div>
-
-        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Recaudado a hoy</p>
-          <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{moneda(resumen.recaudado_hasta_fecha_actual)}</p>
-        </div>
-
-        <div className="bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 dark:hover:border-zinc-700 print:border-none print:bg-transparent print:p-2 flex flex-col gap-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Eficiencia</p>
-          <div className="flex items-center gap-3">
-            <p className="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100">{porcentaje(resumen.eficiencia_recaudo_porcentaje)}</p>
-            {/* Regla de tintes pura */}
-            <div className={`p-2 rounded-xl shrink-0 print:hidden ${eficienciaPositiva ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
-              {eficienciaPositiva ? <HiTrendingUp className="w-5 h-5" /> : <HiTrendingDown className="w-5 h-5" />}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {loadingFinanciero && !financiero ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4 print:hidden">

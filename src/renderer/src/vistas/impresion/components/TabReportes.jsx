@@ -600,26 +600,26 @@ const TabReportes = () => {
 
   // Clases compartidas para los Selects (Token 4)
   const selectClassNames = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none focus:border-indigo-500 transition-all duration-200 shadow-none h-[52px]",
+    trigger: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none focus:border-indigo-500 transition-all duration-200 shadow-none h-11",
     value: "font-semibold text-slate-800 dark:text-zinc-100 text-sm"
   };
 
   return (
-    <div className="w-full flex flex-col gap-10 animate-in fade-in duration-300 print:p-0">
+    <div className="w-full flex flex-col gap-8 print:p-0">
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* SECCIÓN 1: REPORTE DE LECTURAS                                    */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-2xl shrink-0">
-            <HiDocumentReport className="w-6 h-6" />
+          <div className="p-2.5 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl shrink-0">
+            <HiDocumentReport className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+            <h3 className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
               Gestión e impresión de tomas para cobro
             </h3>
-            <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+            <p className="text-base font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
               Reporte de Lecturas Mensual
             </p>
           </div>
@@ -804,14 +804,14 @@ const TabReportes = () => {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl shrink-0">
-              <HiUsers className="w-6 h-6" />
+            <div className="p-2.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl shrink-0">
+              <HiUsers className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
                 Listado base para impresión institucional
               </h3>
-              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              <p className="text-base font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                 Padrón General de Clientes
               </p>
             </div>
@@ -842,7 +842,7 @@ const TabReportes = () => {
                 aria-label="Ordenar listado por:"
                 value={ordenPadron}
                 onChange={(e) => setOrdenPadron(e.target.value || "numero_predio")}
-                className="w-full h-[52px] pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
+                className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
               >
                 <option value="numero_predio">N° de Predio</option>
                 <option value="nombre">Nombre (A-Z)</option>
@@ -860,7 +860,7 @@ const TabReportes = () => {
                 aria-label="Agrupar registros por:"
                 value={agrupacion}
                 onChange={(e) => setAgrupacion(e.target.value || "ciudad")}
-                className="w-full h-[52px] pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
+                className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
               >
                 <option value="ciudad">Por Ciudad</option>
                 <option value="tarifa">Por Tarifa</option>
@@ -932,14 +932,14 @@ const TabReportes = () => {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl shrink-0">
-              <HiPresentationChartBar className="w-6 h-6" />
+            <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
+              <HiPresentationChartBar className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
                 Balance Integral del Organismo Operador
               </h3>
-              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              <p className="text-base font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                 Informe General Ejecutivo (Operación, Consumo y Finanzas)
               </p>
             </div>
@@ -970,7 +970,7 @@ const TabReportes = () => {
                 value={tipoFiltroGeneral}
                 onChange={(e) => setTipoFiltroGeneral(e.target.value || "periodo")}
                 aria-label="Tipo de filtro general"
-                className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
               >
                 <option value="periodo">Periodo puntual</option>
                 <option value="ultimos_meses">Últimos meses</option>
@@ -991,7 +991,7 @@ const TabReportes = () => {
                   value={periodoGeneral}
                   onChange={setPeriodoGeneral}
                   placeholder="Seleccionar periodo"
-                  className="h-[52px] w-full"
+                  className="h-11 w-full"
                   periodosInfo={periodosInfo}
                   siguientePeriodo={siguientePeriodo}
                   ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
@@ -1009,7 +1009,7 @@ const TabReportes = () => {
                     value={ultimosMesesGeneral}
                     onChange={(e) => setUltimosMesesGeneral(e.target.value || "3")}
                     aria-label="Últimos meses"
-                    className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                    className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
                   >
                     <option value="3">Últimos 3 meses</option>
                     <option value="6">Últimos 6 meses</option>
@@ -1030,7 +1030,7 @@ const TabReportes = () => {
                     value={anioEspecificoGeneral}
                     onChange={(e) => setAnioEspecificoGeneral(e.target.value || String(new Date().getFullYear()))}
                     aria-label="Año específico"
-                    className="w-full h-[52px] pl-4 pr-10 text-xs font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
+                    className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer"
                   >
                     {opcionesAnioGeneral.map((year) => (
                       <option key={year} value={year}>
@@ -1050,7 +1050,7 @@ const TabReportes = () => {
               Acción
             </label>
             <Button
-              className="w-full font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 shadow-sm h-[52px] transition-all active:scale-98 text-sm flex items-center justify-center gap-2"
+              className="w-full font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 shadow-sm h-11 transition-all active:scale-98 text-sm flex items-center justify-center gap-2"
               onPress={handleGenerarReporteGeneral}
               isLoading={accion === 'generar-general'}
               isDisabled={procesando}
@@ -1070,14 +1070,14 @@ const TabReportes = () => {
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0">
-            <HiDownload className="w-6 h-6" />
+          <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
+            <HiDownload className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+            <h3 className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
               Descarga en Excel o CSV
             </h3>
-            <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+            <p className="text-base font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
               Exportación de Base de Datos
             </p>
           </div>
@@ -1093,7 +1093,7 @@ const TabReportes = () => {
                 aria-label="Conjunto de datos a exportar:"
                 value={modoExport}
                 onChange={(e) => setModoExport(e.target.value || "clientes")}
-                className="w-full h-[52px] pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
+                className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
               >
                 <option value="clientes">Solo Padrón de Clientes</option>
                 <option value="medidores">Solo Equipos (Medidores)</option>
@@ -1113,7 +1113,7 @@ const TabReportes = () => {
                 aria-label="Formato de salida:"
                 value={formatoExport}
                 onChange={(e) => setFormatoExport(e.target.value || "xlsx")}
-                className="w-full h-[52px] pl-4 pr-10 text-sm font-semibold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
+                className="w-full h-11 pl-4 pr-10 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer"
               >
                 <option value="xlsx">Hoja de Cálculo Excel (.xlsx)</option>
                 <option value="csv">Archivo de Texto (.csv)</option>
@@ -1123,7 +1123,7 @@ const TabReportes = () => {
           </div>
 
           <Button
-            className="w-full font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 shadow-sm h-[52px] transition-all"
+            className="w-full font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 shadow-sm h-11 transition-all"
             onPress={handleExportar}
             isLoading={accion === 'export'}
             isDisabled={procesando}

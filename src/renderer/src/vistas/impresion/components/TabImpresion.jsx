@@ -4,6 +4,7 @@ import useImpresionRecibos from "../../../hooks/useImpresionRecibos";
 import ClientesList from "./ClientesList";
 import AccionesImpresion from "./AccionesImpresion";
 import ModalImprimir from "../../../components/impresion/ModalImprimir";
+import { EncabezadoSeccion } from "../../../components/ui/VistaModulo";
 
 /**
  * TabImpresion - Componente orquestador para impresión de recibos
@@ -53,11 +54,19 @@ const TabImpresion = () => {
   };
 
   return (
-    <div className="w-full flex flex-col gap-6 animate-in fade-in duration-300 print:p-0">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+    <div className="w-full flex flex-col gap-4 print:p-0">
+
+      {/* Subtítulo de la pestaña */}
+      <EncabezadoSeccion
+        icon={HiPrinter}
+        titulo="Emisión de recibos"
+        descripcion="Elige el período y los clientes; revisa el resumen y emite o prueba los recibos."
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
 
         {/* COLUMNA IZQUIERDA: Selección de Datos */}
-        <div className="lg:col-span-7 xl:col-span-7 flex flex-col gap-6">
+        <div className="lg:col-span-7 xl:col-span-7 flex flex-col gap-4 min-w-0">
 
           {/* Lista Unificada con Filtros */}
           <ClientesList

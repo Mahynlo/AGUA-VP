@@ -8,7 +8,8 @@ import {
   HiChartPie,
   HiSearch,
   HiLocationMarker,
-  HiRefresh
+  HiRefresh,
+  HiChevronDown
 } from "react-icons/hi";
 import ModalRegistrarRuta from "./RegistrarRuta";
 import RutaCard from "./RutaCard";
@@ -22,6 +23,7 @@ import { useRutas } from "../../../context/RutasContext";
 import { useTabRutas } from "../../../hooks/useTabRutas";
 import { prefijoDominante, imgPorPrefijo } from "../../../utils/rutaUtils";
 import SelectorPeriodoAvanzado from "../../../components/ui/SelectorPeriodoAvanzado";
+import { Indicador, IndicadoresVista, EncabezadoSeccion } from "../../../components/ui/VistaModulo";
 
 const SimplePagination = ({ total, page, onChange }) => {
   if (total <= 1) return null;
@@ -125,112 +127,75 @@ export default function TabRutas() {
   ];
 
   return (
-    <div className="h-full flex flex-col gap-6 w-full animate-in fade-in duration-300 pb-8">
+    <div className="h-full flex flex-col gap-5 w-full animate-in fade-in duration-300 pb-6">
 
-      {/* ── 1. TARJETAS DE ESTADÍSTICAS DEL CICLO ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* KPI 1: Total Rutas */}
-        <div className="bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm transition-transform hover:-translate-y-0.5 flex flex-col justify-between gap-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              Total Rutas
+      {/* ── 1. INDICADORES DEL PERIODO (se muestran junto al título del módulo) ── */}
+      <IndicadoresVista>
+        <Indicador
+          icon={HiMap}
+          tint="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          label="Total rutas"
+          value={estadisticas.totalRutas}
+          detalle="En el periodo seleccionado"
+        />
+        <Indicador
+          icon={HiCheckCircle}
+          tint="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          label="Completadas"
+          value={estadisticas.rutasCompletas}
+          valueClass="text-emerald-600 dark:text-emerald-400"
+          detalle={estadisticas.totalRutas > 0
+            ? `${Math.round((estadisticas.rutasCompletas / estadisticas.totalRutas) * 100)}% de las rutas`
+            : "Sin rutas registradas"}
+        />
+        <Indicador
+          icon={HiClock}
+          tint="bg-orange-500/10 text-orange-600 dark:text-orange-400"
+          label="Pendientes"
+          value={estadisticas.rutasPendientes}
+          valueClass="text-orange-600 dark:text-orange-400"
+          detalle="Rutas por terminar de leer"
+        />
+        {/* Avance global con barra */}
+        <Indicador
+          icon={HiChartPie}
+          tint="bg-purple-500/10 text-purple-600 dark:text-purple-400"
+          label="Avance global"
+          value={`${estadisticas.porcentajeProgreso}%`}
+          sufijo={
+            <span className="ml-auto text-xs font-semibold text-slate-400 dark:text-zinc-500 tabular-nums whitespace-nowrap" title="Lecturas capturadas / medidores de las rutas">
+              {estadisticas.lecturasCompletadas} / {estadisticas.totalLecturas}
             </span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <HiMap className="w-4 h-4" />
-            </div>
+          }
+        >
+          <div className="w-full h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-500 rounded-full transition-all duration-500"
+              style={{ width: `${estadisticas.porcentajeProgreso}%` }}
+            />
           </div>
-          <div>
-            <p className="text-3xl font-black text-slate-800 dark:text-zinc-100 leading-none">
-              {estadisticas.totalRutas}
-            </p>
-            <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1.5">
-              En este período activo
-            </p>
-          </div>
-        </div>
+        </Indicador>
+      </IndicadoresVista>
 
-        {/* KPI 2: Completadas */}
-        <div className="bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm transition-transform hover:-translate-y-0.5 flex flex-col justify-between gap-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              Completadas
-            </span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <HiCheckCircle className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 leading-none">
-              {estadisticas.rutasCompletas}
-            </p>
-            <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1.5">
-              {estadisticas.totalRutas > 0
-                ? `${Math.round((estadisticas.rutasCompletas / estadisticas.totalRutas) * 100)}% de las rutas`
-                : "Sin rutas registradas"}
-            </p>
-          </div>
-        </div>
-
-        {/* KPI 3: Pendientes */}
-        <div className="bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm transition-transform hover:-translate-y-0.5 flex flex-col justify-between gap-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              Pendientes
-            </span>
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <HiClock className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <p className="text-3xl font-black text-amber-600 dark:text-amber-400 leading-none">
-              {estadisticas.rutasPendientes}
-            </p>
-            <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 mt-1.5">
-              Rutas por finalizar lectura
-            </p>
-          </div>
-        </div>
-
-        {/* KPI 4: Avance Global de Lecturas */}
-        <div className="bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm transition-transform hover:-translate-y-0.5 flex flex-col justify-between gap-3">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-              Avance Global
-            </span>
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-              <HiChartPie className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between items-baseline mb-2">
-              <span className="text-3xl font-black text-slate-800 dark:text-zinc-100 leading-none">
-                {estadisticas.porcentajeProgreso}%
-              </span>
-              <span className="text-[11px] font-bold text-slate-400 dark:text-zinc-500">
-                {estadisticas.lecturasCompletadas} / {estadisticas.totalLecturas}
-              </span>
-            </div>
-            <div className="w-full h-2 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                style={{ width: `${estadisticas.porcentajeProgreso}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-      </div>
+      {/* ── SUBTÍTULO DE LA PESTAÑA ── */}
+      <EncabezadoSeccion
+        icon={HiMap}
+        titulo="Rutas de lectura"
+        descripcion="Elige una ruta para capturar sus lecturas, generar o recalcular sus facturas."
+        cargando={loading}
+      >
+        <ModalRegistrarRuta />
+      </EncabezadoSeccion>
 
       {/* ── 2. BARRA DE HERRAMIENTAS: BÚSQUEDA, PERÍODO, FILTROS Y ACCIÓN ── */}
-      <div className="bg-slate-50/50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-sm flex flex-col gap-4 relative z-30">
-        
+      <div className="bg-slate-50/60 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800 rounded-2xl p-4 flex flex-col gap-3 relative z-30">
+
         {/* Fila Principal de Filtros */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center">
-          
-          {/* Buscador Estándar */}
-          <div className="md:col-span-4 relative flex items-center">
-            <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+
+          {/* Buscador */}
+          <div className="relative flex items-center flex-1 min-w-0">
+            <span className="absolute left-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none">
               <HiSearch className="w-5 h-5" />
             </span>
             <input
@@ -238,12 +203,12 @@ export default function TabRutas() {
               placeholder="Buscar ruta por nombre o descripción..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all h-[52px] shadow-none"
+              className="w-full pl-11 pr-10 text-sm font-medium rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all h-11 shadow-none"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors"
+                className="absolute right-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 transition-colors"
                 title="Limpiar búsqueda"
               >
                 <HiX className="w-4 h-4" />
@@ -251,66 +216,66 @@ export default function TabRutas() {
             )}
           </div>
 
-          {/* Selector de Período */}
-          <div className="md:col-span-3 h-[52px] flex items-center">
-            <SelectorPeriodoAvanzado
-              value={periodoEfectivo}
-              onChange={setPeriodoSel}
-              placeholder="Período"
-              startYear={2020}
-              isDisabled={loading}
-              className="w-full h-full"
-              periodosInfo={periodosInfo}
-              siguientePeriodo={siguientePeriodo}
-              ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
-            />
-          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Selector de Período */}
+            <div className="h-11 flex items-center sm:w-72">
+              <SelectorPeriodoAvanzado
+                value={periodoEfectivo}
+                onChange={setPeriodoSel}
+                placeholder="Período"
+                startYear={2020}
+                isDisabled={loading}
+                className="w-full h-full"
+                periodosInfo={periodosInfo}
+                siguientePeriodo={siguientePeriodo}
+                ultimoPeriodoRegistrado={ultimoPeriodoRegistrado}
+              />
+            </div>
 
-          {/* Selector de Estado */}
-          <div className="md:col-span-3">
-            <select
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              aria-label="Filtrar por estado de lectura"
-              className="w-full h-[52px] pl-4 pr-8 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-none appearance-none cursor-pointer transition-all"
-            >
-              <option value="todos">Todos los Estados</option>
-              <option value="completas">Solo Completadas</option>
-              <option value="incompletas">Solo Pendientes</option>
-            </select>
+            {/* Selector de Estado */}
+            <div className="relative sm:w-48">
+              <select
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                aria-label="Filtrar por estado de lectura"
+                className="w-full h-11 pl-3.5 pr-8 text-sm font-semibold rounded-xl bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-none appearance-none cursor-pointer transition-all"
+              >
+                <option value="todos">Todos los estados</option>
+                <option value="completas">Solo completadas</option>
+                <option value="incompletas">Solo pendientes</option>
+              </select>
+              <HiChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           </div>
-
-          {/* Botón Nueva Ruta */}
-          <div className="md:col-span-2 flex justify-end">
-            <ModalRegistrarRuta />
-          </div>
-
         </div>
 
-        {/* Fila Secundaria: Filtros Rápidos por Sector / Pueblo y Limpiar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3 border-t border-slate-200/70 dark:border-zinc-800/70">
-          
-          {/* Píldoras de Pueblo */}
+        {/* Fila Secundaria: Sector, Limpiar y conteo */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+
+          {/* Control segmentado de sector */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mr-1 flex items-center gap-1">
-              <HiLocationMarker className="w-3.5 h-3.5" /> Sector:
+            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+              <HiLocationMarker className="w-3.5 h-3.5" /> Sector
             </span>
-            {pueblosConfig.map((p) => {
-              const isActive = filtroPueblo === p.key;
-              return (
-                <button
-                  key={p.key}
-                  onClick={() => setPueblo(p.key)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    isActive
-                      ? "bg-slate-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm scale-105"
-                      : "bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
+            <div className="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-200/50 dark:bg-zinc-800/60">
+              {pueblosConfig.map((p) => {
+                const isActive = filtroPueblo === p.key;
+                return (
+                  <button
+                    key={p.key}
+                    onClick={() => setPueblo(p.key)}
+                    aria-pressed={isActive}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      isActive
+                        ? "bg-white dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 shadow-sm"
+                        : "text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Resumen y Botón Limpiar */}
@@ -318,15 +283,15 @@ export default function TabRutas() {
             {hasActiveFilters && (
               <button
                 onClick={limpiarFiltros}
-                className="text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors"
+                className="text-xs font-bold text-slate-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
                 title="Restablecer todos los filtros"
               >
                 <HiFilter className="w-3.5 h-3.5" />
-                Limpiar Filtros
+                Limpiar filtros
               </button>
             )}
-            <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500">
-              Mostrando <strong>{rutasFiltradas.length}</strong> rutas
+            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+              {rutasFiltradas.length} {rutasFiltradas.length === 1 ? "ruta" : "rutas"}
             </span>
           </div>
 
@@ -336,8 +301,8 @@ export default function TabRutas() {
 
       {/* ── 3. CONTENEDOR DE TARJETAS DE RUTAS ── */}
       {rutasFiltradas.length > 0 ? (
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
             {rutasFiltradas.map((r) => {
               const pref = prefijoDominante(r.numeros_serie);
               return (
@@ -351,7 +316,7 @@ export default function TabRutas() {
 
           {/* Paginación Inferior */}
           {totalPaginas > 1 && (
-            <div className="flex justify-center mt-6 mb-2">
+            <div className="flex justify-center mt-2">
               <SimplePagination
                 total={totalPaginas}
                 page={paginaActual}
@@ -362,15 +327,15 @@ export default function TabRutas() {
         </div>
       ) : (
         /* Estado Vacío Canónico */
-        <div className="border border-dashed border-slate-200 dark:border-zinc-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center min-h-[320px] bg-slate-50/50 dark:bg-zinc-900/20">
-          <div className="w-16 h-16 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm flex items-center justify-center mb-4 text-slate-400 dark:text-zinc-500">
-            <HiMap className="w-8 h-8" />
+        <div className="border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center min-h-[280px] bg-slate-50/50 dark:bg-zinc-900/20">
+          <div className="w-14 h-14 rounded-xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 shadow-sm flex items-center justify-center mb-4 text-slate-400 dark:text-zinc-500">
+            <HiMap className="w-7 h-7" />
           </div>
-          <h3 className="text-lg font-black tracking-tight text-slate-800 dark:text-zinc-100 mb-1">
+          <h3 className="text-base font-black tracking-tight text-slate-800 dark:text-zinc-100 mb-1">
             No se encontraron rutas
           </h3>
-          <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mb-6">
-            Ajusta los filtros de búsqueda, selecciona otro sector o cambia el período del ciclo.
+          <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mb-5">
+            Ajusta la búsqueda, elige otro sector o cambia el periodo.
           </p>
           {hasActiveFilters && (
             <button

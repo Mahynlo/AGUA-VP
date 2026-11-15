@@ -2,13 +2,14 @@ import { useState } from "react";
 import {
     HiEye, HiTrash, HiLocationMarker, HiUser, HiCog,
     HiDownload, HiSearch, HiX, HiChevronLeft, HiChevronRight, HiRefresh, HiFolder,
-    HiExclamationCircle
+    HiExclamationCircle, HiTable, HiPencil
 } from "react-icons/hi";
 import { useTabMedidores } from "../../../hooks/useTabMedidores";
 import { useMedidores } from "../../../context/MedidoresContext";
 import { Modal, Button, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import { normalizarTexto } from "../../../utils/textUtils";
 import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
+import { EncabezadoSeccion } from "../../../components/ui/VistaModulo";
 
 const premiumModalTheme = {
     root: {
@@ -120,7 +121,7 @@ function ExportDropdown({ onExportCSV, onExportExcel }) {
         <div className="relative">
             <button
                 onClick={() => setOpen(v => !v)}
-                className="font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl h-[52px] px-5 shadow-sm flex items-center gap-2 transition-colors border border-slate-200 dark:border-zinc-800"
+                className="font-bold bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-xl h-11 px-4 text-sm flex items-center gap-2 transition-colors border border-slate-200 dark:border-zinc-800"
             >
                 <HiDownload className="text-lg text-blue-600 dark:text-blue-400" /> Exportar
             </button>
@@ -181,12 +182,17 @@ const STATUS_COLORS = {
 function StatusBadge({ status, getStatusColor }) {
     const color = STATUS_COLORS[getStatusColor(status)] ?? STATUS_COLORS.default;
     return (
-        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${color}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold ${color}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
             {status || "Sin estado"}
         </span>
     );
 }
+
+// ── ESTILOS COMPARTIDOS ───────────────────────────────────────────────────────
+const TH_CLS = "sticky top-0 z-10 py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-slate-50 dark:bg-zinc-900 whitespace-nowrap";
+const ACCION_CLS = "h-8 min-w-8 px-2 inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition-colors";
+const BUSCADOR_CLS = "w-full pl-11 pr-10 text-sm font-medium rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 shadow-none h-11";
 
 // ── COMPONENTE PRINCIPAL ──────────────────────────────────────────────────────
 const TabInventarioMedidores = () => {
@@ -392,104 +398,99 @@ const TabInventarioMedidores = () => {
     if (initialLoading) return <LoadingSkeleton />;
 
     return (
-        <div className="w-full flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-4">
 
-            {/* ── HEADER Y ACCIONES ── */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-500/10 dark:bg-blue-900/30 rounded-2xl shrink-0">
-                        <HiCog className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">Inventario de Medidores</h3>
-                            {loading && !initialLoading && <LoadingSpinner className="w-4 h-4 ml-1" />}
-                        </div>
-                        <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">Gestión técnica y ubicación</p>
-                    </div>
+            {/* ── SUBTÍTULO DE LA PESTAÑA Y ACCIONES ── */}
+            <EncabezadoSeccion
+                icon={HiTable}
+                titulo="Inventario de medidores"
+                descripcion="Busca, filtra y administra los equipos; los desactivados quedan en la papelera."
+                cargando={loading && !initialLoading}
+            >
+                <ExportDropdown
+                    onExportCSV={() => setExportModal({ isOpen: true, format: "csv" })}
+                    onExportExcel={() => setExportModal({ isOpen: true, format: "xlsx" })}
+                />
+                <div className="flex-1 sm:flex-none">
+                    <RegistrarMedidor />
                 </div>
-                <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
-                    <ExportDropdown
-                        onExportCSV={() => setExportModal({ isOpen: true, format: "csv" })}
-                        onExportExcel={() => setExportModal({ isOpen: true, format: "xlsx" })}
-                    />
-                    <div className="flex-1 sm:flex-none">
-                        <RegistrarMedidor />
-                    </div>
-                </div>
-            </div>
+            </EncabezadoSeccion>
 
-            {/* ── TAB SELECTOR ── */}
-            <div className="flex border-b border-slate-200 dark:border-zinc-800 gap-6 my-2">
-                <button
-                    onClick={() => setShowDeleted(false)}
-                    className={`pb-3 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"}`}
-                >
-                    Inventario Activo
-                </button>
-                <button
-                    onClick={() => {
-                        setShowDeleted(true);
-                        loadDeletedMedidores();
-                    }}
-                    className={`pb-3 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"} flex items-center gap-2`}
-                >
-                    <HiFolder className="w-4 h-4" /> Papelera
-                </button>
+            {/* ── SUB-PESTAÑAS (Inventario / Papelera) ── */}
+            <div className="flex border-b border-slate-200 dark:border-zinc-800">
+                <div className="flex gap-6 -mb-px">
+                    <button
+                        onClick={() => setShowDeleted(false)}
+                        className={`flex items-center gap-2 pb-3 text-sm font-bold border-b-2 transition-all ${!showDeleted ? "border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"}`}
+                    >
+                        <HiCog className="w-4 h-4" /> Inventario Activo
+                    </button>
+                    <button
+                        onClick={() => {
+                            setShowDeleted(true);
+                            loadDeletedMedidores();
+                        }}
+                        className={`pb-3 text-sm font-bold border-b-2 transition-all ${showDeleted ? "border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300"} flex items-center gap-2`}
+                    >
+                        <HiFolder className="w-4 h-4" /> Papelera
+                    </button>
+                </div>
             </div>
 
             {/* ── CONTENEDOR PRINCIPAL ── */}
-            <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-hidden flex flex-col col-span-12">
+            <div className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden flex flex-col">
 
                 {showDeleted ? (
                     <div className="flex flex-col flex-1">
-                        {/* Sub-header Papelera */}
-                        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                                        Mostrando <span className="text-rose-600 dark:text-rose-400 font-extrabold">{filteredDeletedMedidores.length}</span> de <span className="font-extrabold text-slate-700 dark:text-zinc-200">{deletedMedidores.length}</span> medidores desactivados
-                                    </span>
-                                    <button 
-                                        onClick={loadDeletedMedidores}
-                                        className="text-left text-xs font-bold text-slate-600 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 flex items-center gap-1.5 transition-colors"
-                                        disabled={loadingDeleted}
+                        {/* Barra de la Papelera */}
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-3 px-5 py-4 border-b border-slate-100 dark:border-zinc-800/80">
+                            <div className="relative flex items-center flex-1 min-w-0">
+                                <span className="absolute left-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none">
+                                    <HiSearch className="w-5 h-5" />
+                                </span>
+                                <input
+                                    placeholder="Buscar en papelera..."
+                                    value={searchDeleted}
+                                    onChange={(e) => setSearchDeleted(e.target.value)}
+                                    className={`${BUSCADOR_CLS} focus:ring-rose-500/20 focus:border-rose-500`}
+                                />
+                                {searchDeleted && (
+                                    <button
+                                        onClick={() => setSearchDeleted("")}
+                                        aria-label="Limpiar búsqueda"
+                                        className="absolute right-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"
                                     >
-                                        <HiRefresh className={`w-3.5 h-3.5 ${loadingDeleted ? "animate-spin" : ""}`} />
-                                        {loadingDeleted ? "Actualizando..." : "Actualizar papelera"}
+                                        <HiX className="w-4 h-4" />
                                     </button>
-                                </div>
-                                <div className="relative w-full md:w-80 flex items-center">
-                                    <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
-                                        <HiSearch className="w-5 h-5" />
-                                    </span>
-                                    <input
-                                        placeholder="Buscar en papelera..."
-                                        value={searchDeleted}
-                                        onChange={(e) => setSearchDeleted(e.target.value)}
-                                        className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 shadow-none h-[52px]"
-                                    />
-                                    {searchDeleted && (
-                                        <button
-                                            onClick={() => setSearchDeleted("")}
-                                            className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300"
-                                        >
-                                            <HiX className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
+                                )}
                             </div>
+                            <button
+                                onClick={loadDeletedMedidores}
+                                disabled={loadingDeleted}
+                                className="h-11 px-4 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors disabled:opacity-60 shrink-0"
+                            >
+                                <HiRefresh className={`w-4 h-4 ${loadingDeleted ? "animate-spin" : ""}`} />
+                                {loadingDeleted ? "Actualizando..." : "Actualizar papelera"}
+                            </button>
+                        </div>
+
+                        {/* Aviso de la papelera */}
+                        <div className="flex items-start gap-2 px-5 py-2.5 border-b border-slate-100 dark:border-zinc-800/50 bg-amber-500/5 text-xs font-medium text-slate-600 dark:text-zinc-300">
+                            <HiExclamationCircle className="w-4 h-4 mt-px text-amber-500 shrink-0" />
+                            <span>
+                                Medidores retirados: no se asignan ni aparecen en rutas. <b>Restaurar</b> los devuelve al inventario; <b>Eliminar definitivamente</b> borra su registro.
+                            </span>
                         </div>
 
                         {/* Tabla Papelera */}
-                        <div className="bg-white dark:bg-zinc-950 overflow-x-auto">
+                        <div className="overflow-x-auto">
                             <table className="min-w-full">
                                 <thead>
-                                    <tr className="border-b border-slate-200 dark:border-zinc-800">
+                                    <tr>
                                         {["MEDIDOR", "FECHA ELIMINACIÓN", "MOTIVO DE ELIMINACIÓN", "ELIMINADO POR", "ACCIONES"].map((col, i) => (
                                             <th
                                                 key={col}
-                                                className={`py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-transparent ${i === 4 ? "text-right" : "text-left"}`}
+                                                className={`${TH_CLS} ${i === 4 ? "text-right" : "text-left"}`}
                                             >
                                                 {col}
                                             </th>
@@ -508,28 +509,31 @@ const TabInventarioMedidores = () => {
                                     ) : filteredDeletedMedidores.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="py-16 text-center">
-                                                <p className="font-bold text-sm text-slate-500">No se encontraron medidores desactivados</p>
+                                                <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-zinc-500">
+                                                    <HiFolder className="w-12 h-12 opacity-20" />
+                                                    <p className="font-bold text-sm">No se encontraron medidores desactivados</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     ) : (
                                         filteredDeletedMedidores.map((medidor) => (
-                                            <tr key={medidor.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/50 dark:hover:bg-zinc-900/10 transition-colors">
-                                                <td className="py-4 px-6">
+                                            <tr key={medidor.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/70 dark:hover:bg-zinc-900/30 transition-colors">
+                                                <td className="py-3 px-5">
                                                     <div className="flex flex-col">
                                                         <span className="font-bold text-sm text-slate-800 dark:text-zinc-100 font-mono uppercase">{medidor.numero_serie}</span>
-                                                        <span className="text-[11px] text-slate-500">{medidor.marca} {medidor.modelo} · ID: {medidor.id}</span>
+                                                        <span className="text-[11px] text-slate-500 dark:text-zinc-400">{medidor.marca} {medidor.modelo} · ID: {medidor.id}</span>
                                                     </div>
                                                 </td>
-                                                <td className="py-4 px-6 text-xs text-slate-600 dark:text-zinc-300 font-medium">
+                                                <td className="py-3 px-5 text-xs text-slate-600 dark:text-zinc-300 font-medium whitespace-nowrap">
                                                     {medidor.fecha_eliminacion ? new Date(medidor.fecha_eliminacion).toLocaleString() : "N/A"}
                                                 </td>
-                                                <td className="py-4 px-6 text-xs text-slate-600 dark:text-zinc-300 max-w-[250px] truncate font-medium" title={medidor.razon_eliminacion}>
+                                                <td className="py-3 px-5 text-xs text-slate-600 dark:text-zinc-300 max-w-[250px] truncate font-medium" title={medidor.razon_eliminacion}>
                                                     {medidor.razon_eliminacion || "Sin razón"}
                                                 </td>
-                                                <td className="py-4 px-6 text-xs text-slate-600 dark:text-zinc-300 font-medium">
+                                                <td className="py-3 px-5 text-xs text-slate-600 dark:text-zinc-300 font-medium">
                                                     {medidor.eliminado_por_nombre || "Desconocido"}
                                                 </td>
-                                                <td className="py-4 px-6 text-right">
+                                                <td className="py-3 px-5 text-right">
                                                     <div className="flex justify-end gap-2">
                                                         <button
                                                             onClick={() => handleView(medidor)}
@@ -541,16 +545,18 @@ const TabInventarioMedidores = () => {
                                                         <button
                                                             onClick={() => handleRestoreMedidor(medidor)}
                                                             title="Restaurar Medidor"
-                                                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-600 dark:bg-zinc-800 dark:hover:bg-emerald-900/30 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors"
+                                                            className={`${ACCION_CLS} bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400`}
                                                         >
                                                             <HiRefresh className="w-4 h-4" />
+                                                            <span className="hidden xl:inline">Restaurar</span>
                                                         </button>
                                                         <button
                                                             onClick={() => handlePurgeMedidor(medidor)}
                                                             title="Eliminar Definitivamente"
-                                                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400 transition-colors"
+                                                            className={`${ACCION_CLS} bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400`}
                                                         >
                                                             <HiTrash className="w-4 h-4" />
+                                                            <span className="hidden xl:inline">Eliminar</span>
                                                         </button>
                                                     </div>
                                                 </td>
@@ -560,80 +566,89 @@ const TabInventarioMedidores = () => {
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Pie de la papelera */}
+                        <div className="px-5 py-3 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/40 text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                            Mostrando <b className="text-slate-700 dark:text-zinc-200">{filteredDeletedMedidores.length}</b> de <b className="text-slate-700 dark:text-zinc-200">{deletedMedidores.length}</b> medidores desactivados
+                        </div>
                     </div>
                 ) : (
                     <>
                         {/* Filtros: búsqueda + principales; el resto en "Más filtros" */}
-                <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+                <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800/80">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
                         {/* Buscador */}
                         <div className="lg:col-span-5 relative w-full flex items-center">
-                            <span className="absolute left-4 text-slate-400 dark:text-zinc-500 pointer-events-none">
+                            <span className="absolute left-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none">
                                 <HiSearch className="w-5 h-5" />
                             </span>
                             <input
                                 placeholder="Buscar por serie, marca, cliente o predio..."
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none h-[52px]"
+                                className={`${BUSCADOR_CLS} focus:ring-blue-500/20 focus:border-blue-500`}
                             />
                             {search && (
-                                <button onClick={() => handleSearch("")} className="absolute right-4 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">
+                                <button onClick={() => handleSearch("")} aria-label="Limpiar búsqueda" className="absolute right-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">
                                     <HiX className="w-4 h-4" />
                                 </button>
                             )}
                         </div>
 
                         <div className="lg:col-span-2">
-                            <SelectFiltro value={filtros.estado} onChange={(v) => setFiltro("estado", v)} opciones={opciones.estado} todos="Todos los estados" />
+                            <SelectFiltro compacto value={filtros.estado} onChange={(v) => setFiltro("estado", v)} opciones={opciones.estado} todos="Todos los estados" />
                         </div>
                         <div className="lg:col-span-3">
-                            <SelectFiltro value={filtros.ubicacion} onChange={(v) => setFiltro("ubicacion", v)} opciones={opciones.ubicacion} todos="Todas las ubicaciones" />
+                            <SelectFiltro compacto value={filtros.ubicacion} onChange={(v) => setFiltro("ubicacion", v)} opciones={opciones.ubicacion} todos="Todas las ubicaciones" />
                         </div>
                         <div className="lg:col-span-2">
-                            <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto(v => !v)} activos={filtrosPanelActivos} />
+                            <BotonMasFiltros compacto abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto(v => !v)} activos={filtrosPanelActivos} />
                         </div>
                     </div>
 
                     {masFiltrosAbierto && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
-                            <SelectFiltro etiqueta="Vinculación" value={filtros.asignacion} onChange={(v) => setFiltro("asignacion", v)} opciones={opciones.asignacion} todos="Asignados y disponibles" />
-                            <SelectFiltro etiqueta="Marca" value={filtros.marca} onChange={(v) => setFiltro("marca", v)} opciones={opciones.marca} todos="Todas las marcas" />
-                            <SelectFiltro etiqueta="Ruta de lectura" value={filtros.ruta_id} onChange={(v) => setFiltro("ruta_id", v)} opciones={opciones.ruta_id} todos="Todas las rutas" />
-                            <SelectFiltro etiqueta="Coordenadas (GPS)" value={filtros.gps} onChange={(v) => setFiltro("gps", v)} opciones={opciones.gps} todos="Con y sin coordenadas" />
-                            <SelectFiltro etiqueta="Año de instalación" value={filtros.anio_instalacion} onChange={(v) => setFiltro("anio_instalacion", v)} opciones={opciones.anio_instalacion} todos="Todos los años" />
-                            <SelectFiltro etiqueta="Ciudad del cliente" value={filtros.ciudad} onChange={(v) => setFiltro("ciudad", v)} opciones={opciones.ciudad} todos="Todas las ciudades" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3 p-4 rounded-xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
+                            <SelectFiltro compacto etiqueta="Vinculación" value={filtros.asignacion} onChange={(v) => setFiltro("asignacion", v)} opciones={opciones.asignacion} todos="Asignados y disponibles" />
+                            <SelectFiltro compacto etiqueta="Marca" value={filtros.marca} onChange={(v) => setFiltro("marca", v)} opciones={opciones.marca} todos="Todas las marcas" />
+                            <SelectFiltro compacto etiqueta="Ruta de lectura" value={filtros.ruta_id} onChange={(v) => setFiltro("ruta_id", v)} opciones={opciones.ruta_id} todos="Todas las rutas" />
+                            <SelectFiltro compacto etiqueta="Coordenadas (GPS)" value={filtros.gps} onChange={(v) => setFiltro("gps", v)} opciones={opciones.gps} todos="Con y sin coordenadas" />
+                            <SelectFiltro compacto etiqueta="Año de instalación" value={filtros.anio_instalacion} onChange={(v) => setFiltro("anio_instalacion", v)} opciones={opciones.anio_instalacion} todos="Todos los años" />
+                            <SelectFiltro compacto etiqueta="Ciudad del cliente" value={filtros.ciudad} onChange={(v) => setFiltro("ciudad", v)} opciones={opciones.ciudad} todos="Todas las ciudades" />
                         </div>
                     )}
 
                     <ChipsFiltros chips={chipsFiltros} onLimpiar={clearFilters} total={totalItems} nombre="medidores" />
                 </div>
 
-                {/* Sub-header paginación */}
-                <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-zinc-800/50 gap-4 bg-slate-50/40 dark:bg-zinc-900/30">
+                {/* Sub-header: conteo y filas por página (igual que en Cobranza) */}
+                <div className="flex flex-col sm:flex-row justify-between items-center px-5 py-3 border-b border-slate-100 dark:border-zinc-800/50 gap-3 bg-slate-50/40 dark:bg-zinc-900/30">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                        Mostrando <span className="text-blue-600 dark:text-blue-400 font-extrabold">{paginatedData.length}</span> de <span className="text-slate-700 dark:text-zinc-200 font-extrabold">{totalItems}</span> medidores
+                        Mostrando <span className="text-slate-700 dark:text-zinc-200">{paginatedData.length}</span> de <span className="text-slate-700 dark:text-zinc-200">{totalItems}</span> medidores
                     </span>
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">Filas por página:</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 hidden sm:block">
+                            Filas por página:
+                        </span>
                         <select
                             value={rowsPerPage.toString()}
                             onChange={(e) => handleRowsPerPageChange(e.target.value)}
                             aria-label="Filas por página"
-                            className="h-[36px] px-3 text-sm font-bold rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-none appearance-none cursor-pointer w-20"
+                            className="h-9 px-3 text-sm font-bold rounded-xl bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-none appearance-none cursor-pointer w-20"
                         >
-                            {["5", "10", "15", "20", "50"].map(n => <option key={n} value={n}>{n}</option>)}
+                            {["5", "10", "15", "20", "50"].map((n) => (
+                                <option key={n} value={n}>{n}</option>
+                            ))}
                         </select>
                     </div>
                 </div>
 
                 {/* Tabla nativa */}
-                <div className="bg-white dark:bg-zinc-950 overflow-x-auto">
+                <div className="overflow-x-auto">
                     <table className="min-w-full">
                         <thead>
-                            <tr className="border-b border-slate-200 dark:border-zinc-800">
+                            <tr>
                                 {["DATOS DEL EQUIPO", "UBICACIÓN", "ESTADO", "VINCULACIÓN", "ACCIONES"].map((col, i) => (
-                                    <th key={col} className={`py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 bg-transparent ${i === 4 ? "text-right" : "text-left"}`}>
+                                    <th key={col} className={`${TH_CLS} ${i === 4 ? "text-right" : "text-left"}`}>
                                         {col}
                                     </th>
                                 ))}
@@ -644,7 +659,7 @@ const TabInventarioMedidores = () => {
                                 <tr><td colSpan={5} className="py-16 text-center">
                                     <div className="flex flex-col items-center gap-3">
                                         <LoadingSpinner className="w-8 h-8" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 animate-pulse">Cargando inventario...</span>
+                                        <span className="text-sm font-semibold text-slate-500">Cargando inventario...</span>
                                     </div>
                                 </td></tr>
                             ) : paginatedData.length === 0 ? (
@@ -658,10 +673,10 @@ const TabInventarioMedidores = () => {
                             ) : paginatedData.map((medidor) => {
                                 const estadoVisual = medidor.estado_servicio === "Cortado" ? "Cortado" : medidor.estado_medidor;
                                 return (
-                                    <tr key={medidor.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/80 dark:hover:bg-zinc-900/30 transition-colors">
-                                        <td className="py-4 px-6">
+                                    <tr key={medidor.id} className="border-b border-slate-100 dark:border-zinc-800/50 hover:bg-slate-50/70 dark:hover:bg-zinc-900/30 transition-colors">
+                                        <td className="py-3 px-5">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2.5 bg-blue-500/10 dark:bg-blue-950/40 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/50 shadow-sm shrink-0">
+                                                <div className="w-9 h-9 flex items-center justify-center bg-blue-500/10 dark:bg-blue-950/40 rounded-xl text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/50 shrink-0">
                                                     <HiCog className="text-lg" />
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
@@ -670,7 +685,7 @@ const TabInventarioMedidores = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6">
+                                        <td className="py-3 px-5">
                                             <div className="flex flex-col space-y-1">
                                                 <div className="flex items-center gap-1.5">
                                                     <HiLocationMarker className="w-4 h-4 text-slate-400 shrink-0" />
@@ -685,15 +700,15 @@ const TabInventarioMedidores = () => {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6">
+                                        <td className="py-3 px-5">
                                             <StatusBadge status={estadoVisual} getStatusColor={getStatusColor} />
                                         </td>
-                                        <td className="py-4 px-6">
+                                        <td className="py-3 px-5">
                                             {medidor.cliente_id ? (
                                                 <div className="flex flex-col gap-1.5">
                                                     <div className="flex items-center gap-1.5">
                                                         <HiUser className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-                                                        <span className="text-[9px] font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md uppercase tracking-widest">Asignado</span>
+                                                        <span className="text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md">Asignado</span>
                                                     </div>
                                                     <span className="text-xs font-bold text-slate-700 dark:text-zinc-300 pl-5 truncate max-w-[200px]">
                                                         {medidor.cliente_nombre || "Cliente"}
@@ -701,20 +716,20 @@ const TabInventarioMedidores = () => {
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
+                                                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
                                                     Disponible
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => handleView(medidor)} title="Ver Detalle" className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors">
+                                        <td className="py-3 px-5">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <button onClick={() => handleView(medidor)} title="Ver Detalle" className={`${ACCION_CLS} bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 dark:bg-zinc-800 dark:hover:bg-blue-900/30 dark:text-zinc-400 dark:hover:text-blue-400`}>
                                                     <HiEye className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => handleEdit(medidor)} title="Editar Medidor" disabled={!canModificarMedidores} className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-                                                    <HiCog className="w-4 h-4" />
+                                                <button onClick={() => handleEdit(medidor)} title="Editar Medidor" disabled={!canModificarMedidores} className={`${ACCION_CLS} bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed`}>
+                                                    <HiPencil className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => handleDelete(medidor)} title="Eliminar" className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400 transition-colors">
+                                                <button onClick={() => handleDelete(medidor)} title="Eliminar" className={`${ACCION_CLS} bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400`}>
                                                     <HiTrash className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -728,7 +743,10 @@ const TabInventarioMedidores = () => {
 
                 {/* Paginación inferior */}
                 {totalPages > 1 && (
-                    <div className="flex justify-center p-4 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/60 dark:bg-zinc-900/40">
+                    <div className="flex justify-between items-center gap-3 px-5 py-3 border-t border-slate-100 dark:border-zinc-800/50 bg-slate-50/50 dark:bg-zinc-900/40">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+                            Página {currentPage} de {totalPages}
+                        </span>
                         <SimplePagination currentPage={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
                     </div>
                 )}

@@ -92,6 +92,13 @@ export default function RutaCard({ ruta }) {
 
   const faltantes = Math.max(0, (ruta.total_puntos || 0) - (ruta.completadas || 0));
 
+  // Texto del avance (solo visual): un decimal por debajo de 1 % y sin redondear hacia arriba (99.6 % no se muestra como 100 %)
+  const porcentajeTexto = porcentajeCompletado >= 100
+    ? "100"
+    : porcentajeCompletado > 0 && porcentajeCompletado < 1
+      ? porcentajeCompletado.toFixed(1)
+      : String(Math.floor(porcentajeCompletado));
+
   // Identificación del Sector / Pueblo
   const sectorInfo = useMemo(() => {
     const prefijo = prefijoDominante(ruta.numeros_serie || []);
@@ -303,7 +310,7 @@ export default function RutaCard({ ruta }) {
     <div className={`flex flex-col bg-white dark:bg-zinc-950 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm group hover:shadow-md transition-all duration-300 relative h-full ${dropdownOpen ? 'z-30' : 'z-0'}`}>
 
       {/* ── 1. HEADER (PORTADA + INSIGNIAS + MENÚ RÁPIDO) ── */}
-      <div className="relative h-44 w-full shrink-0 bg-slate-100 dark:bg-zinc-900 rounded-t-2xl">
+      <div className="relative h-36 w-full shrink-0 bg-slate-100 dark:bg-zinc-900 rounded-t-2xl">
         {/* Imagen de fondo con gradiente encapsulados con overflow-hidden */}
         <div className="absolute inset-0 overflow-hidden rounded-t-2xl">
           <img
@@ -317,7 +324,7 @@ export default function RutaCard({ ruta }) {
 
         {/* Fila Superior: Badge Sector + Menú de Opciones */}
         <div className="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-30">
-          <div className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm border ${sectorInfo.badgeBg}`}>
+          <div className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shadow-sm border ${sectorInfo.badgeBg}`}>
             <span className="flex items-center gap-1">
               <HiLocationMarker className="w-3 h-3" />
               {sectorInfo.nombre}
@@ -374,7 +381,7 @@ export default function RutaCard({ ruta }) {
         {/* Fila Inferior sobre la imagen: Estado de Avance y Período */}
         <div className="absolute bottom-3 inset-x-3.5 flex items-center justify-between z-10">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-black tracking-wider text-[10px] uppercase shadow-sm border ${
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-[11px] shadow-sm border ${
               porcentajeCompletado === 100
                 ? "bg-emerald-600/90 text-white border-emerald-400/40"
                 : "bg-amber-600/90 text-white border-amber-400/40"
@@ -387,20 +394,23 @@ export default function RutaCard({ ruta }) {
               ) : (
                 <>
                   <HiClock className="w-3.5 h-3.5" />
-                  {porcentajeCompletado.toFixed(0)}% En Progreso
+                  En progreso
                 </>
               )}
             </div>
 
             {missingMetersCount > 0 && (
-              <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-red-600/90 text-white border border-red-400/50 font-black tracking-wider text-[10px] uppercase shadow-sm animate-pulse">
+              <div
+                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-600/90 text-white border border-red-400/50 font-bold text-[11px] shadow-sm"
+                title="Medidores de la ruta sin cliente asignado"
+              >
                 <HiExclamation className="w-3.5 h-3.5" />
-                {missingMetersCount} Sin Asignar
+                {missingMetersCount} sin asignar
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-black/50 text-white border border-white/20 font-bold text-[10px] uppercase">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-black/50 text-white border border-white/20 font-bold text-[11px] tabular-nums">
             <HiCalendar className="w-3 h-3 text-slate-300" />
             <span>{ruta.periodo_mostrado}</span>
           </div>
@@ -408,15 +418,15 @@ export default function RutaCard({ ruta }) {
       </div>
 
       {/* ── 2. CUERPO DE LA TARJETA (TÍTULO, DETALLES Y PROGRESO) ── */}
-      <div className="p-5 flex-1 flex flex-col gap-4">
+      <div className="p-4 flex-1 flex flex-col gap-3">
 
         {/* Título y Descripción */}
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-0.5">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-snug line-clamp-1">
+            <h3 className="text-base font-black text-slate-800 dark:text-zinc-100 tracking-tight leading-snug line-clamp-1" title={ruta.nombre}>
               {ruta.nombre}
             </h3>
-            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 shrink-0 font-mono">
+            <span className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 shrink-0 tabular-nums">
               #{ruta.id}
             </span>
           </div>
@@ -426,12 +436,12 @@ export default function RutaCard({ ruta }) {
         </div>
 
         {/* Panel de Métricas y Progreso */}
-        <div className="bg-slate-50 dark:bg-zinc-900/60 rounded-2xl p-3.5 border border-slate-100 dark:border-zinc-800/80 flex flex-col gap-2.5 mt-auto">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-              Medidores Leídos
+        <div className="bg-slate-50 dark:bg-zinc-900/60 rounded-xl p-3 border border-slate-100 dark:border-zinc-800/80 flex flex-col gap-2 mt-auto">
+          <div className="flex justify-between items-baseline">
+            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+              Medidores leídos
             </span>
-            <span className="text-xs font-black text-slate-800 dark:text-zinc-100">
+            <span className="text-sm font-black text-slate-800 dark:text-zinc-100 tabular-nums">
               {ruta.completadas} <span className="text-slate-400 dark:text-zinc-500 font-semibold">/ {ruta.total_puntos}</span>
             </span>
           </div>
@@ -447,15 +457,15 @@ export default function RutaCard({ ruta }) {
           </div>
 
           {/* Resumen inferior del progreso */}
-          <div className="flex justify-between items-center pt-0.5">
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+          <div className="flex justify-between items-center">
+            <span className={`text-xs font-bold tabular-nums ${
               porcentajeCompletado === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
             }`}>
-              {porcentajeCompletado.toFixed(1)}% completado
+              {porcentajeTexto}% completado
             </span>
 
             {/* Badge de Facturación */}
-            <span className={`px-2 py-0.5 rounded-lg font-black tracking-wider text-[9px] uppercase ${estadoFacturacionChipClass}`}>
+            <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${estadoFacturacionChipClass}`}>
               {estadoFacturacionLabel}
             </span>
           </div>
@@ -464,7 +474,7 @@ export default function RutaCard({ ruta }) {
       </div>
 
       {/* ── 3. ACCIONES Y BOTONES (FOOTER) ── */}
-      <div className="p-5 pt-0 flex flex-col gap-2.5">
+      <div className="p-4 pt-0 flex flex-col gap-2">
 
         {/* Acción Primaria: Tomar Lecturas */}
         <div className="w-full">
@@ -520,7 +530,7 @@ export default function RutaCard({ ruta }) {
             {ultimoResultadoFacturacion && (
               <button
                 onClick={() => setModalResultadoOpen(true)}
-                className="text-blue-600 dark:text-blue-400 font-bold hover:underline text-[10px] uppercase tracking-wider"
+                className="text-blue-600 dark:text-blue-400 font-bold hover:underline text-[11px]"
               >
                 Ver Factura
               </button>

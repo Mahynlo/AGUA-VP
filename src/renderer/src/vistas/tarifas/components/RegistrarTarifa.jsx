@@ -140,7 +140,7 @@ export default function RegistrarTarifa({ onTarifaRegistrada }) {
       <button
         onClick={() => setIsOpen(true)}
         disabled={!canCrearTarifas}
-        className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 h-[52px] shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 h-11 w-full sm:w-auto justify-center shadow-sm flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <HiPlus className="text-lg" />
         Nueva Tarifa
