@@ -98,7 +98,7 @@ export default function RegistrarClientes({ onSuccess, onError }) {
                 onClick={() => setIsOpen(true)}
                 disabled={!canCrearClientes}
                 // Flowbite usa un <span> interno, por eso aplicamos el estilo contenedor aquí
-                className="font-bold bg-slate-900 border-transparent text-white dark:bg-white dark:text-zinc-950 rounded-xl !h-[52px] !px-2 shadow-sm transition-transform active:scale-95"
+                className="font-bold bg-slate-900 border-transparent text-white dark:bg-white dark:text-zinc-950 rounded-xl !h-11 !px-4 text-sm shadow-sm transition-transform active:scale-95"
             >
                 <div className="flex items-center gap-2">
                     <HiPlus className="text-lg" />

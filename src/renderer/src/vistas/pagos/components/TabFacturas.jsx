@@ -15,6 +15,7 @@ import {
   HiSearch,
   HiArrowLeft
 } from "react-icons/hi";
+import { EncabezadoSeccion } from "../../../components/ui/VistaModulo";
 import { useNavigate } from "react-router-dom";
 import { useTabFacturas } from "../../../hooks/useTabFacturas";
 import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
@@ -87,7 +88,7 @@ function ExportDropdown({ onExportCSV, onExportExcel }) {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-[44px] px-5 shadow-sm flex items-center gap-2 transition-colors border border-emerald-500/10"
+        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-11 px-4 text-sm shadow-sm flex items-center gap-2 transition-colors border border-emerald-500/10"
       >
         <HiDownload className="text-lg" />
         Exportar
@@ -137,10 +138,10 @@ const LoadingSkeleton = () => (
     <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
       <div className="p-6 border-b border-slate-100 dark:border-zinc-800">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Skeleton className="h-[52px] w-full rounded-xl" />
-          <Skeleton className="h-[52px] w-full rounded-xl" />
-          <Skeleton className="h-[52px] w-full rounded-xl" />
-          <Skeleton className="h-[52px] w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
+          <Skeleton className="h-11 w-full rounded-xl" />
         </div>
       </div>
       <div className="bg-white dark:bg-zinc-950">
@@ -359,38 +360,24 @@ const TabFacturas = () => {
 
   // Clases estandarizadas para Inputs Invisibles
   const selectClassNames = {
-    trigger: "bg-slate-100/70 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-[52px]",
+    trigger: "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 shadow-none h-11",
     value: "font-medium text-slate-700 dark:text-zinc-200 text-sm"
   };
 
   return (
-    <div className="w-full flex flex-col gap-6 animate-in fade-in duration-500">
+    <div className="w-full flex flex-col gap-4">
       
-      {/* ── 1. HEADER ── */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-blue-500/10 dark:bg-blue-900/30 rounded-2xl shrink-0">
-            <HiDocumentText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                  Facturas y Cobros
-              </h3>
-              {loading && !initialLoading && (
-                  <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-600 rounded-full animate-spin ml-1" />
-              )}
-            </div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">
-              Periodo actual: <span className="text-blue-600 dark:text-blue-400 font-black">{periodoLabel}</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+      {/* ── 1. SUBTÍTULO DE LA PESTAÑA Y ACCIONES ── */}
+      <EncabezadoSeccion
+        icon={HiDocumentText}
+        titulo="Facturas y cobros"
+        descripcion={<>Facturas emitidas y su estado de pago · Periodo actual: <b className="text-slate-700 dark:text-zinc-200">{periodoLabel}</b></>}
+        cargando={loading && !initialLoading}
+      >
+        <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
           <button 
               onClick={() => navigate(-1)}
-              className="bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 min-w-0 shadow-sm flex items-center gap-2 transition-colors text-xs"
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 min-w-0 shadow-sm flex items-center gap-2 transition-colors text-sm"
               title="Volver"
           >
             <HiArrowLeft className="w-4 h-4" />
@@ -398,7 +385,7 @@ const TabFacturas = () => {
           </button>
           
           <button
-              className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold rounded-xl h-11 px-5 shadow-sm flex items-center gap-2 transition-colors text-xs disabled:opacity-50"
+              className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold rounded-xl h-11 px-4 shadow-sm flex items-center gap-2 transition-colors text-sm disabled:opacity-50"
               onClick={() => actualizarFacturas()}
               disabled={loading}
           >
@@ -414,19 +401,19 @@ const TabFacturas = () => {
           {/* Botón Maestro */}
           <button
           onClick={() => setModalPagoRapido(true)}
-          className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-5 h-[44px] shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-800 dark:hover:bg-zinc-100"
+          className="font-bold bg-slate-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl px-4 h-11 text-sm shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-800 dark:hover:bg-zinc-100"
         >
           <HiCalculator className="text-lg" />
           Liquidación de Periodo
         </button>
         </div>
-      </div>
+      </EncabezadoSeccion>
 
       {/* ── 2. CONTENEDOR PRINCIPAL: Filtros y Tabla ── */}
       <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-visible flex flex-col relative z-20">
         
         {/* Filtros */}
-        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 rounded-t-2xl relative z-30">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800/80 rounded-t-2xl relative z-30">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
             
             {/* Buscador */}
@@ -438,7 +425,7 @@ const TabFacturas = () => {
                 placeholder="Buscar cliente o N° Factura..."
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none h-[52px]"
+                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-none h-11"
               />
               {search && (
                 <button
@@ -452,7 +439,7 @@ const TabFacturas = () => {
 
             {/* Filtro por período (Selector Avanzado) */}
             <div className="lg:col-span-3">
-                <div className="w-full h-[52px] flex items-center">
+                <div className="w-full h-11 flex items-center">
                   <SelectorPeriodoAvanzado
                       value={filtroPeriodo}
                       onChange={handlePeriodoChange}
@@ -468,22 +455,22 @@ const TabFacturas = () => {
             </div>
 
             <div className="lg:col-span-2">
-              <SelectFiltro value={filtroEstado} onChange={handleEstadoFilterChange} opciones={estados.map((e) => ({ value: e, label: e }))} todos="Todos los estados" />
+              <SelectFiltro compacto value={filtroEstado} onChange={handleEstadoFilterChange} opciones={estados.map((e) => ({ value: e, label: e }))} todos="Todos los estados" />
             </div>
             <div className="lg:col-span-2">
-              <SelectFiltro value={filtrosExtra.antiguedad} onChange={(v) => setFiltroExtra("antiguedad", v)} opciones={opcionesExtra.antiguedad} todos="Cualquier vencimiento" />
+              <SelectFiltro compacto value={filtrosExtra.antiguedad} onChange={(v) => setFiltroExtra("antiguedad", v)} opciones={opcionesExtra.antiguedad} todos="Cualquier vencimiento" />
             </div>
             <div className="lg:col-span-2">
-              <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelActivos} />
+              <BotonMasFiltros compacto abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelActivos} />
             </div>
           </div>
 
           {masFiltrosAbierto && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
-              <SelectFiltro etiqueta="Consumo" value={filtrosExtra.consumo} onChange={(v) => setFiltroExtra("consumo", v)} opciones={opcionesExtra.consumo} todos="Cualquier consumo" />
-              <SelectFiltro etiqueta="Ruta de lectura" value={filtrosExtra.ruta_id} onChange={(v) => setFiltroExtra("ruta_id", v)} opciones={opcionesExtra.ruta_id} todos="Todas las rutas" />
-              <SelectFiltro etiqueta="Tarifa" value={filtrosExtra.tarifa_id} onChange={(v) => setFiltroExtra("tarifa_id", v)} opciones={opcionesExtra.tarifa_id} todos="Todas las tarifas" />
-              <SelectFiltro etiqueta="Ciudad" value={cityFilter} onChange={handleCityFilterChange} opciones={ciudades.map((c) => ({ value: c, label: c }))} todos="Todas las ciudades" />
+              <SelectFiltro compacto etiqueta="Consumo" value={filtrosExtra.consumo} onChange={(v) => setFiltroExtra("consumo", v)} opciones={opcionesExtra.consumo} todos="Cualquier consumo" />
+              <SelectFiltro compacto etiqueta="Ruta de lectura" value={filtrosExtra.ruta_id} onChange={(v) => setFiltroExtra("ruta_id", v)} opciones={opcionesExtra.ruta_id} todos="Todas las rutas" />
+              <SelectFiltro compacto etiqueta="Tarifa" value={filtrosExtra.tarifa_id} onChange={(v) => setFiltroExtra("tarifa_id", v)} opciones={opcionesExtra.tarifa_id} todos="Todas las tarifas" />
+              <SelectFiltro compacto etiqueta="Ciudad" value={cityFilter} onChange={handleCityFilterChange} opciones={ciudades.map((c) => ({ value: c, label: c }))} todos="Todas las ciudades" />
             </div>
           )}
 

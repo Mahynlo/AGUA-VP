@@ -138,7 +138,7 @@ export default function RegistrarMedidor() {
                 color="dark"
                 onClick={() => setIsOpen(true)}
                 disabled={!canCrearMedidores}
-                className="font-bold bg-slate-900 border-transparent text-white dark:bg-white dark:text-zinc-950 rounded-xl !h-[52px] !px-2 shadow-sm transition-transform active:scale-95"
+                className="font-bold bg-slate-900 border-transparent text-white dark:bg-white dark:text-zinc-950 rounded-xl !h-11 !px-4 shadow-sm transition-transform active:scale-95"
             >
                 <div className="flex items-center gap-2"><HiPlus className="text-lg" /> Nuevo Medidor</div>
             </Button>

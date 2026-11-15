@@ -21,6 +21,15 @@ import { useFacturas } from "../../context/FacturasContext";
 import { usePagos } from "../../context/PagosContext";
 import { useDeudores } from "../../context/DeudoresContext";
 import { useReportes } from "../../context/ReportesContext";
+import { EncabezadoVista, PestanasVista, Indicador, IndicadoresVista, ProveedorIndicadores } from "../../components/ui/VistaModulo";
+
+// Pestañas de la vista (Cobranza y Estadísticas colocan sus propios indicadores junto al título)
+const TABS = [
+  { key: "cobranza", label: "Cobranza", icon: HiCalculator },
+  { key: "facturas", label: "Facturas", icon: HiDocumentText },
+  { key: "pagos", label: "Pagos", icon: HiCreditCard },
+  { key: "estadisticas", label: "Estadísticas", icon: HiChartBar }
+];
 
 const PagosVista = () => {
   // Estado para la pestaña activa
@@ -207,165 +216,80 @@ const PagosVista = () => {
     }
   }, [selectedTab, statsFacturas, statsPagos, statsDeudores, financiero, cobranzaStats]);
 
-  // Helper para renderizar card Premium SaaS
+  // Tintes de los indicadores
+  const colorStyles = {
+    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    orange: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+    rose: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    purple: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    teal: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
+    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+  };
+
   const KpiCard = ({ data }) => {
     if (!data) return null;
-    const Icon = data.icon;
-    
-    // Mapeo de tintes dinámicos
-    const colorStyles = {
-      blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-      emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-      orange: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-      rose: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-      purple: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-      teal: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
-      amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-    };
-
-    const tintClasses = colorStyles[data.color] || colorStyles.blue;
-
-    return (
-      <div className="flex flex-col justify-center p-5 bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl transition-transform hover:-translate-y-1 gap-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">{data.label}</span>
-          <div className={`p-1.5 rounded-lg ${tintClasses}`}>
-            {Icon && <Icon className="w-4 h-4" />}
-          </div>
-        </div>
-        <p className="text-2xl font-black text-slate-800 dark:text-zinc-100 leading-none">
-          {data.value}
-        </p>
-      </div>
-    );
+    return <Indicador icon={data.icon} tint={colorStyles[data.color] || colorStyles.blue} label={data.label} value={data.value} />;
   };
 
   return (
     // CONTENEDOR PRINCIPAL: Padding exterior fluido y fondo gris sutil
-    <div className="mt-16 h-[calc(100vh-4rem)] overflow-auto p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
+    <div className="mt-16 h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 sm:ml-24 bg-slate-50 dark:bg-black/20 scroll-smooth">
 
-      {/* CONTENEDOR DE LA VISTA: 'w-full min-h-full' para ocupar todo el espacio disponible */}
-      <div className="w-full min-h-full bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-6 sm:p-8 lg:p-10 flex flex-col gap-10">
+      {/* CONTENEDOR DE LA VISTA (las pestañas colocan sus indicadores junto al título) */}
+      <ProveedorIndicadores>
+      <div className="w-full min-h-full min-w-0 bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-[2rem] shadow-sm p-5 sm:p-6 lg:p-8 flex flex-col">
 
-        {/* ── 1. HEADER Y ESTADÍSTICAS ── */}
-        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8">
-          
-          {/* Título de la vista */}
-          <div className="flex gap-4 items-start shrink-0">
-            {/* Regla de Tintes (Esmeralda Corporativo para Pagos) */}
-            <div className="p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
-              <PagosIcon className="w-8 h-8" />
-            </div>
-            <div className="flex flex-col gap-1 pt-0.5">
-              {/* Token 3: Textos Principales */}
-              <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-none">
-                Gestión de Pagos
-              </h1>
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-lg mt-1 leading-relaxed">
-                Administra facturas, supervisa deudores, procesa cobros y analiza estadísticas financieras.
-              </p>
-            </div>
-          </div>
-
-          {/* Tarjetas de Estadísticas (KPIs) Dinámicas */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full xl:w-auto shrink-0">
-            <KpiCard data={kpis.card1} />
-            <KpiCard data={kpis.card2} />
-            <KpiCard data={kpis.card3} />
-            <KpiCard data={kpis.card4} />
-          </div>
-        </div>
+        {/* ── 1. ENCABEZADO ── */}
+        <EncabezadoVista
+          icon={PagosIcon}
+          acento="emerald"
+          titulo="Gestión de Pagos"
+          descripcion="Cobranza por cliente, facturas, pagos recibidos y estado financiero."
+        />
 
         {/* ── 2. NAVEGACIÓN (TABS) Y CONTENIDO ── */}
-        <div className="flex flex-col w-full flex-1 mt-2">
-          {/* Pestañas de Navegación SaaS - Tema Esmeralda */}
-          <div className="w-full border-b border-slate-200 dark:border-zinc-800 mb-6">
-            <nav className="flex gap-6 w-full -mb-px">
-              {/* TAB: COBRANZA */}
-              <button
-                type="button"
-                onClick={() => handleTabChange("cobranza")}
-                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
-                  selectedTab === "cobranza"
-                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
-                }`}
-              >
-                <HiCalculator className="text-lg" />
-                <span>Cobranza</span>
-              </button>
+        <div className="flex flex-col w-full flex-1 min-w-0 mt-6">
+          <PestanasVista tabs={TABS} activa={selectedTab} onChange={handleTabChange} acento="emerald" />
 
-              {/* TAB: FACTURAS */}
-              <button
-                type="button"
-                onClick={() => handleTabChange("facturas")}
-                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
-                  selectedTab === "facturas"
-                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
-                }`}
-              >
-                <HiDocumentText className="text-lg" />
-                <span>Facturas</span>
-              </button>
-
-              {/* TAB: PAGOS */}
-              <button
-                type="button"
-                onClick={() => handleTabChange("pagos")}
-                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
-                  selectedTab === "pagos"
-                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
-                }`}
-              >
-                <HiCreditCard className="text-lg" />
-                <span>Pagos</span>
-              </button>
-
-              {/* TAB: ESTADÍSTICAS */}
-              <button
-                type="button"
-                onClick={() => handleTabChange("estadisticas")}
-                className={`flex items-center gap-2.5 py-3 text-sm border-b-2 transition-colors cursor-pointer shrink-0 ${
-                  selectedTab === "estadisticas"
-                    ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-bold"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium"
-                }`}
-              >
-                <HiChartBar className="text-lg" />
-                <span>Estadísticas</span>
-              </button>
-            </nav>
-          </div>
+          {/* Indicadores de Facturas y Pagos (Cobranza y Estadísticas colocan los suyos) */}
+          {(selectedTab === "facturas" || selectedTab === "pagos") && (
+            <IndicadoresVista>
+              <KpiCard data={kpis.card1} />
+              <KpiCard data={kpis.card2} />
+              <KpiCard data={kpis.card3} />
+              <KpiCard data={kpis.card4} />
+            </IndicadoresVista>
+          )}
 
           {/* CONTENIDOS */}
           {selectedTab === "cobranza" && (
-            <div className="pt-2 h-full flex flex-col">
+            <div className="h-full flex flex-col min-w-0">
               <TabCobranzaCliente onCobranzaStatsChange={setCobranzaStats} />
             </div>
           )}
 
           {selectedTab === "facturas" && (
-            <div className="pt-2 h-full flex flex-col">
+            <div className="h-full flex flex-col min-w-0">
               <TabFacturas />
             </div>
           )}
 
           {selectedTab === "pagos" && (
-            <div className="pt-2 h-full flex flex-col">
+            <div className="h-full flex flex-col min-w-0">
               <TabPagos />
             </div>
           )}
 
           {selectedTab === "estadisticas" && (
-            <div className="pt-2 h-full flex flex-col">
+            <div className="h-full flex flex-col min-w-0">
               <TabEstadisticas />
             </div>
           )}
         </div>
 
       </div>
+      </ProveedorIndicadores>
     </div>
   );
 };

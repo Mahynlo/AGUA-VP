@@ -23,20 +23,20 @@ const TabConfiguracion = () => {
   };
 
   return (
-    <div className="w-full flex flex-col gap-10 animate-in fade-in duration-300">
+    <div className="w-full flex flex-col gap-8">
 
       {/* ── 1. ANUNCIO EN RECIBOS ── */}
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl shrink-0">
-              <HiSpeakerphone className="w-6 h-6" />
+            <div className="p-2.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl shrink-0">
+              <HiSpeakerphone className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
                 Mensaje global impreso en tickets
               </h3>
-              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              <p className="text-base font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                 Aviso / Anuncio Institucional
               </p>
             </div>
@@ -87,14 +87,14 @@ const TabConfiguracion = () => {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0">
-              <HiScale className="w-6 h-6" />
+            <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0">
+              <HiScale className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-0.5">
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
                 Datos didácticos impresos por rango de agua
               </h3>
-              <p className="text-xl font-black tracking-tight text-slate-800 dark:text-zinc-100">
+              <p className="text-base font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
                 Equivalencias de Consumo
               </p>
             </div>

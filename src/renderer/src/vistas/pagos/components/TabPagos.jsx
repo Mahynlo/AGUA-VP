@@ -13,6 +13,7 @@ import {
   HiChevronLeft,
   HiChevronRight
 } from "react-icons/hi";
+import { EncabezadoSeccion } from "../../../components/ui/VistaModulo";
 import { useNavigate } from "react-router-dom";
 import { useTabPagos, RANGOS_FECHA_COBRO } from "../../../hooks/useTabPagos";
 import { SelectFiltro, BotonMasFiltros, ChipsFiltros } from "../../../components/ui/FiltrosTabla";
@@ -92,9 +93,9 @@ const LoadingSkeleton = () => (
     <div className="border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden">
       <div className="p-6 border-b border-slate-100 dark:border-zinc-800">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="h-[52px] w-full rounded-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
-          <div className="h-[52px] w-full rounded-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
-          <div className="h-[52px] w-full rounded-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+          <div className="h-11 w-full rounded-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+          <div className="h-11 w-full rounded-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
+          <div className="h-11 w-full rounded-xl bg-slate-200 dark:bg-zinc-800 animate-pulse" />
         </div>
       </div>
       <div className="bg-white dark:bg-zinc-950">
@@ -126,7 +127,7 @@ function ExportDropdown({ onExportCSV, onExportExcel }) {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-11 px-5 shadow-sm flex items-center gap-2 transition-colors border border-emerald-500/10"
+        className="font-bold bg-emerald-500/10 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-xl h-11 px-4 text-sm shadow-sm flex items-center gap-2 transition-colors border border-emerald-500/10"
       >
         <HiDownload className="text-lg" />
         Exportar
@@ -415,34 +416,20 @@ const TabPagos = () => {
   const totalCobrado = Number(resumen?.total_filtrado ?? 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
   return (
-    <div className="w-full flex flex-col gap-6">
+    <div className="w-full flex flex-col gap-4">
 
-      {/* ── HEADER Y ACCIONES ── */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-emerald-500/10 dark:bg-emerald-900/30 rounded-2xl shrink-0">
-            <HiCurrencyDollar className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                Historial de Pagos
-              </h3>
-              {loading && !initialLoading && (
-                <LoadingSpinner className="w-4 h-4 ml-1" />
-              )}
-            </div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">
-              Periodo actual: <span className="text-emerald-600 dark:text-emerald-400 font-black">{periodoLabel}</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+      {/* ── SUBTÍTULO DE LA PESTAÑA Y ACCIONES ── */}
+      <EncabezadoSeccion
+        icon={HiCurrencyDollar}
+        titulo="Historial de pagos"
+        descripcion={<>Pagos recibidos y su detalle · Periodo actual: <b className="text-slate-700 dark:text-zinc-200">{periodoLabel}</b></>}
+        cargando={loading && !initialLoading}
+      >
+        <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
           <button
             onClick={() => navigate(-1)}
             title="Volver"
-            className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-200 dark:hover:bg-zinc-800"
+            className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 font-bold rounded-xl h-11 px-4 text-sm shadow-sm flex items-center gap-2 transition-colors hover:bg-slate-200 dark:hover:bg-zinc-800"
           >
             <HiArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Volver</span>
@@ -451,7 +438,7 @@ const TabPagos = () => {
           <button
             onClick={() => actualizarPagos()}
             disabled={loading}
-            className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold rounded-xl h-11 px-5 shadow-sm flex items-center gap-2 transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/40 disabled:opacity-60"
+            className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold rounded-xl h-11 px-4 text-sm shadow-sm flex items-center gap-2 transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/40 disabled:opacity-60"
           >
             {loading ? <LoadingSpinner className="w-4 h-4" /> : <HiRefresh className="text-lg" />}
             Recargar
@@ -462,13 +449,13 @@ const TabPagos = () => {
             onExportExcel={() => setExportModal({ isOpen: true, format: "xlsx" })}
           />
         </div>
-      </div>
+      </EncabezadoSeccion>
 
       {/* ── CONTENEDOR PRINCIPAL ── */}
-      <div className="border border-slate-200 dark:border-zinc-800 shadow-sm bg-transparent rounded-2xl overflow-visible flex flex-col relative z-20">
+      <div className="border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 rounded-2xl overflow-visible flex flex-col relative z-20">
 
         {/* Filtros: búsqueda, período, fecha de cobro y cobrador; el resto en "Más filtros" */}
-        <div className="p-6 border-b border-slate-100 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 rounded-t-2xl relative z-30">
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800/80 rounded-t-2xl relative z-30">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
 
             {/* Buscador */}
@@ -480,7 +467,7 @@ const TabPagos = () => {
                 placeholder="Buscar ID, factura, cliente o medidor..."
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none h-[52px]"
+                className="w-full pl-11 pr-10 py-3 text-sm font-medium rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-none h-11"
               />
               {search && (
                 <button
@@ -494,7 +481,7 @@ const TabPagos = () => {
 
             {/* Período facturado (no aplica cuando se filtra por fecha de cobro) */}
             <div className="lg:col-span-3" title={porFechaDeCobro ? "Con fecha de cobro se muestran pagos de todos los períodos" : undefined}>
-              <div className={`w-full h-[52px] flex items-center ${porFechaDeCobro ? "opacity-50 pointer-events-none" : ""}`}>
+              <div className={`w-full h-11 flex items-center ${porFechaDeCobro ? "opacity-50 pointer-events-none" : ""}`}>
                 <SelectorPeriodoAvanzado
                   value={filtroPeriodo}
                   onChange={handlePeriodoChange}
@@ -510,13 +497,13 @@ const TabPagos = () => {
             </div>
 
             <div className="lg:col-span-2">
-              <SelectFiltro value={rangoFecha} onChange={handleRangoFechaChange} opciones={opcionesFechaCobro} todos="Cualquier fecha de cobro" />
+              <SelectFiltro compacto value={rangoFecha} onChange={handleRangoFechaChange} opciones={opcionesFechaCobro} todos="Cualquier fecha de cobro" />
             </div>
             <div className="lg:col-span-2">
-              <SelectFiltro value={String(filtroCobradoPor)} onChange={handleCobradoPorChange} opciones={opcionesCobradoPor} todos="Cobrado por cualquiera" />
+              <SelectFiltro compacto value={String(filtroCobradoPor)} onChange={handleCobradoPorChange} opciones={opcionesCobradoPor} todos="Cobrado por cualquiera" />
             </div>
             <div className="lg:col-span-2">
-              <BotonMasFiltros abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelActivos} />
+              <BotonMasFiltros compacto abierto={masFiltrosAbierto} onToggle={() => setMasFiltrosAbierto((v) => !v)} activos={filtrosPanelActivos} />
             </div>
           </div>
 
@@ -539,9 +526,9 @@ const TabPagos = () => {
 
           {masFiltrosAbierto && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 p-4 rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800">
-              <SelectFiltro etiqueta="Tipo de pago" value={filtroTipo} onChange={handleTipoChange} opciones={opcionesTipo} todos="Todos los tipos" />
-              <SelectFiltro etiqueta="Método de pago" value={filtroMetodo} onChange={(v) => handleMetodoFilterChange([v === "All" ? "" : v])} opciones={opcionesMetodo} todos="Todos los métodos" />
-              <SelectFiltro etiqueta="Ciudad" value={cityFilter} onChange={handleCityFilterChange} opciones={opcionesCiudad} todos="Todas las ciudades" />
+              <SelectFiltro compacto etiqueta="Tipo de pago" value={filtroTipo} onChange={handleTipoChange} opciones={opcionesTipo} todos="Todos los tipos" />
+              <SelectFiltro compacto etiqueta="Método de pago" value={filtroMetodo} onChange={(v) => handleMetodoFilterChange([v === "All" ? "" : v])} opciones={opcionesMetodo} todos="Todos los métodos" />
+              <SelectFiltro compacto etiqueta="Ciudad" value={cityFilter} onChange={handleCityFilterChange} opciones={opcionesCiudad} todos="Todas las ciudades" />
             </div>
           )}
 

@@ -128,7 +128,7 @@ export default function ModalRegistrarRuta() {
       <button
         onClick={() => setIsOpen(true)}
         disabled={!canCrearRutas}
-        className="font-bold bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 rounded-xl px-5 shadow-sm h-[52px] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+        className="font-bold bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 rounded-xl px-4 text-sm shadow-sm h-11 flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
       >
         <HiPlus className="text-lg" />Nueva Ruta
       </button>

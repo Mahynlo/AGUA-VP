@@ -34,20 +34,23 @@ export function opcionesAgrupadas(lista, campo, etiquetaVacio = "Sin dato") {
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, "es"));
 }
 
-/** Lista desplegable de un filtro; muestra la cantidad de registros de cada opción cuando se conoce. */
-export function SelectFiltro({ etiqueta, value, onChange, opciones, todos }) {
+/** Lista desplegable de un filtro; muestra la cantidad de registros de cada opción cuando se conoce.
+ *  `compacto`: altura de 44px y etiqueta en texto normal (diseño unificado de las vistas rediseñadas). */
+export function SelectFiltro({ etiqueta, value, onChange, opciones, todos, compacto = false }) {
   const activo = value !== "All";
   return (
     <div className="flex flex-col gap-1">
       {etiqueta && (
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1">{etiqueta}</span>
+        <span className={compacto
+          ? "text-xs font-semibold text-slate-500 dark:text-zinc-400 ml-1"
+          : "text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 ml-1"}>{etiqueta}</span>
       )}
       <div className="relative">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-label={etiqueta || todos}
-          className={`${SELECT_FILTRO_CLS} ${activo ? "!border-blue-500 !bg-blue-500/5" : ""}`}
+          className={`${SELECT_FILTRO_CLS} ${compacto ? `!h-11 ${activo ? "" : "!bg-white dark:!bg-zinc-900"}` : ""} ${activo ? "!border-blue-500 !bg-blue-500/5" : ""}`}
         >
           <option value="All">{todos}</option>
           {opciones.map((o) => (
@@ -63,12 +66,13 @@ export function SelectFiltro({ etiqueta, value, onChange, opciones, todos }) {
 }
 
 /** Botón que abre / cierra el panel de filtros adicionales, con el número de filtros activos del panel. */
-export function BotonMasFiltros({ abierto, onToggle, activos }) {
+export function BotonMasFiltros({ abierto, onToggle, activos, compacto = false }) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      className={`w-full h-[52px] px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors border ${
+      aria-expanded={abierto}
+      className={`w-full ${compacto ? "h-11" : "h-[52px]"} px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors border ${
         abierto || activos > 0
           ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30"
           : "bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 border-slate-200 dark:border-zinc-800"

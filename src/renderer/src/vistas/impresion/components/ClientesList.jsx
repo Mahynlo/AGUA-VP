@@ -50,7 +50,7 @@ const ClientesList = ({
               <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 leading-tight">
                 Selección de Clientes para Impresión
               </h3>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5">
+              <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
                 Facturas del período
               </p>
             </div>
@@ -113,7 +113,7 @@ const ClientesList = ({
               placeholder="Buscar por nombre, número de predio o dirección..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-11 text-sm font-medium rounded-xl bg-slate-100/70 dark:bg-zinc-900/80 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-none h-[52px] transition-all"
+              className="w-full pl-11 pr-11 text-sm font-medium rounded-xl bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-none h-11 transition-all"
             />
             {searchTerm && (
               <button
