@@ -17,7 +17,7 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import logManager from './logManager.js';
-import { createBackup } from './apiManager.js';
+import { createBackup, flushCloudBeforeQuit } from './apiManager.js';
 
 // ── Estado ────────────────────────────────────────────────────────────────────
 
@@ -274,6 +274,9 @@ export async function installUpdate() {
             state.backupBeforeUpdate = backupPath;
             logManager.info(`Backup pre-update creado: ${backupPath}`, 'update');
         }
+
+        // La nube queda al día antes de que la versión nueva aplique sus migraciones
+        await flushCloudBeforeQuit();
 
         logManager.info(`Instalando actualización v${state.updateInfo?.version}...`, 'update');
 

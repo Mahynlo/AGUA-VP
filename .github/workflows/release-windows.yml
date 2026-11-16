@@ -166,8 +166,6 @@ jobs:
           Write-Host "event=${{ github.event_name }} ref=${{ github.ref }} repo=${{ github.repository }} actor=${{ github.actor }}"
           Write-Host "has VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL != '' }}"
           Write-Host "has VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY != '' }}"
-          Write-Host "has VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL != '' }}"
-          Write-Host "has VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN != '' }}"
           Write-Host "has var API_EXECUTION_MODE: ${{ vars.API_EXECUTION_MODE != '' }}"
           Write-Host "has var API_JWT_EXPIRES_IN: ${{ vars.API_JWT_EXPIRES_IN != '' }}"
 
@@ -177,8 +175,6 @@ jobs:
         env:
           SECRET_VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL }}
           SECRET_VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
-          SECRET_VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL }}
-          SECRET_VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN }}
           API_EXECUTION_MODE: ${{ vars.API_EXECUTION_MODE }}
           API_JWT_EXPIRES_IN: ${{ vars.API_JWT_EXPIRES_IN }}
         run: |
@@ -214,8 +210,6 @@ jobs:
           RELEASE_VERSION: ${{ steps.version_check.outputs.release_version }}
           SECRET_VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL }}
           SECRET_VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
-          SECRET_VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL }}
-          SECRET_VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN }}
           API_EXECUTION_MODE: ${{ steps.env_contract.outputs.api_execution_mode }}
           API_JWT_EXPIRES_IN: ${{ steps.env_contract.outputs.api_jwt_expires_in }}
         run: |
@@ -230,8 +224,6 @@ jobs:
             "VITE_APP_VERSION=$env:RELEASE_VERSION"
             "VITE_APPKEY_INICIAL=$env:SECRET_VITE_APPKEY_INICIAL"
             "VITE_SECRET_KEY=$env:SECRET_VITE_SECRET_KEY"
-            "VITE_TURSO_DATABASE_URL=$env:SECRET_VITE_TURSO_DATABASE_URL"
-            "VITE_TURSO_AUTH_TOKEN=$env:SECRET_VITE_TURSO_AUTH_TOKEN"
             "VITE_URL_BASE_API_AGUAVP=http://localhost:3000"
             "VITE_API_REGISTRAR_APP=http://localhost:3000/api/v2/app/registrarApp"
             "VITE_API_LOGIN=http://localhost:3000/api/v2/auth/login"

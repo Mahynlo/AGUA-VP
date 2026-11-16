@@ -8,7 +8,7 @@ import icon from '../../resources/icon.png?asset'
 import initUpdateManager from './managers/updateManager.js'
 
 import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
-import { startApiServer, stopApiServer } from './managers/apiManager.js'
+import { startApiServer, stopApiServer, debeSubirAlCerrar, flushCloudBeforeQuit } from './managers/apiManager.js'
 import { startSyncMonitor } from './managers/syncMonitor.js'
 import { setupWindowState } from './windowState.js'
 import { restoreZoom, getSavedZoom } from './managers/zoomManager.js'
@@ -58,6 +58,10 @@ const createMenu = () => {
 }
 
 let mainWindow = null;
+
+// Cierre: mientras se suben a la nube los cambios pendientes ya no hay ventanas, pero el proceso sigue vivo
+let subiendoAlCerrar = false;
+let relanzarAlCerrar = false;
 
 // Solo en desarrollo: la ventana carga cientos de módulos desde el servidor de Vite. Si el
 // proceso de red de Chromium se cae mientras tanto ("Network service crashed… restarting"),
@@ -205,10 +209,14 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', () => {
     // Si el usuario intenta abrir otra instancia, restaurar y enfocar la ventana existente
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       if (!mainWindow.isVisible()) mainWindow.show();
       mainWindow.focus();
+    } else if (subiendoAlCerrar && !relanzarAlCerrar && app.isPackaged) {
+      // El usuario volvió a abrir la app mientras terminaba de cerrarse: se abre de nuevo al terminar
+      relanzarAlCerrar = true;
+      app.relaunch();
     }
   });
 
@@ -248,10 +256,24 @@ if (!gotTheLock) {
   // for applications and their menu bar to stay active until the user quits
   // explicitly with Cmd + Q.
   app.on('window-all-closed', async () => {
+    if (debeSubirAlCerrar()) {
+      subiendoAlCerrar = true;
+      await flushCloudBeforeQuit();
+    }
     await stopApiServer();
     if (process.platform !== 'darwin') {
       app.quit()
     }
+  })
+
+  // Cierre con app.quit() (botón de cerrar del titleBar): las ventanas ya se cerraron. Si hay nube
+  // vinculada, se suben los cambios pendientes (unos segundos como máximo) y después termina el cierre.
+  // Sin nube vinculada no se interviene.
+  app.on('will-quit', (event) => {
+    if (!debeSubirAlCerrar()) return;
+    event.preventDefault();
+    subiendoAlCerrar = true;
+    flushCloudBeforeQuit().finally(() => app.quit());
   })
 
   // In this file you can include the rest of your app"s specific main process
