@@ -8,6 +8,11 @@ import { app, BrowserWindow } from 'electron';
 
 import { leerToken, ensureAppToken, recuperarORegistrarTokenApp } from '../../auth/appKey.js';
 import { authHeaders, appKeyHeaders } from '../../api-client/http.js';
+import { getAccessToken, getRefreshToken, guardarSesion, borrarSesion, sesionActual } from '../../auth/sessionStore.js';
+
+// Respuestas de /auth/refresh que significan "esta sesión ya no existe" (no un fallo pasajero)
+const CODIGOS_SESION_TERMINADA = ['INVALID_REFRESH_TOKEN', 'SESSION_EXPIRED', 'ACCOUNT_DISABLED'];
+const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function IpcHandlerUsuario () {
     // Definir URL Base y asegurar que no tenga slash final extra si se concatenan
@@ -90,7 +95,7 @@ export default function IpcHandlerUsuario () {
 
                     // Retornar 'message' también para compatibilidad con frontend
                     const msg = errorPayload.error || errorPayload.mensaje || response.statusText;
-                    return { success: false, error: msg, message: msg, ...errorPayload };
+                    return { success: false, error: msg, message: msg, httpStatus: response.status, ...errorPayload };
                 } catch (e) {
                     console.error("❌ API Error Text:", errorText);
 
@@ -102,7 +107,7 @@ export default function IpcHandlerUsuario () {
                         notifyAppTokenMissing();
                     }
 
-                    return { success: false, error: errorText || response.statusText, message: errorText || response.statusText };
+                    return { success: false, error: errorText || response.statusText, message: errorText || response.statusText, httpStatus: response.status };
                 }
             }
             return await response.json();
@@ -112,6 +117,91 @@ export default function IpcHandlerUsuario () {
             return { success: false, error: error.message, message: error.message };
         }
     };
+
+    // ── Sesión en el proceso principal ───────────────────────────────────────────
+    // Los tokens se quedan aquí (auth/sessionStore.js). Al renderer solo se le dice quién es el
+    // usuario y cuánto falta para renovar.
+
+    /** Lo que el renderer necesita saber de la sesión actual (sin tokens), o null si no hay. */
+    const respuestaSesion = () => {
+        const actual = sesionActual();
+        if (!actual) return null;
+        const segundos = Math.max(0, actual.segundosRestantes);
+        return {
+            success: true,
+            user: actual.user,
+            rol: actual.user.rol,
+            expiraEnSegundos: segundos,
+            expiresIn: `${Math.max(1, Math.ceil(segundos / 60))}m`
+        };
+    };
+
+    // Una sola renovación a la vez: el refresh token es de un solo uso y varias ventanas (la
+    // principal y las de impresión) pueden pedirla al mismo tiempo.
+    let renovacionEnCurso = null;
+    const renovarSesion = () => {
+        if (renovacionEnCurso) return renovacionEnCurso;
+
+        renovacionEnCurso = (async () => {
+            const actual = sesionActual();
+            // Otra ventana acaba de renovar: se entrega esa misma sesión sin gastar otro refresh token
+            if (actual && actual.segundosDesdeEmision < 60 && actual.segundosRestantes > 120) {
+                return respuestaSesion();
+            }
+
+            const refreshToken = getRefreshToken();
+            if (!refreshToken) {
+                return { success: false, code: 'NO_SESSION', message: 'No hay una sesión iniciada' };
+            }
+
+            const result = await apiRequest(`${AUTH_API_URL}/refresh`, "POST", null, { refreshToken });
+            if (result?.success && result.accessToken) {
+                guardarSesion({ accessToken: result.accessToken, refreshToken: result.refreshToken });
+                const respuesta = respuestaSesion();
+                if (respuesta) return respuesta;
+            }
+
+            if (CODIGOS_SESION_TERMINADA.includes(result?.code)) borrarSesion();
+            return {
+                success: false,
+                message: result?.message || result?.error || 'No se pudo renovar la sesión',
+                code: result?.code,
+                httpStatus: result?.httpStatus
+            };
+        })().finally(() => { renovacionEnCurso = null; });
+
+        return renovacionEnCurso;
+    };
+
+    // 📌 Estado de la sesión al abrir una ventana (sustituye a leer el token de localStorage)
+    ipcMain.handle("auth:estado-sesion", async (event, anterior) => {
+        // Versiones anteriores guardaban los tokens en localStorage: se adoptan una única vez para
+        // que actualizar la app no cierre la sesión abierta.
+        if (!getRefreshToken() && typeof anterior?.refreshToken === 'string' && anterior.refreshToken) {
+            guardarSesion({ accessToken: anterior.token, refreshToken: anterior.refreshToken });
+        }
+        if (!getRefreshToken()) return { activa: false };
+
+        const vigente = () => {
+            const actual = sesionActual();
+            return actual && actual.segundosRestantes > 120;
+        };
+
+        // Al arrancar puede que la API local aún no responda: se reintenta unos segundos antes de rendirse
+        let fallo = null;
+        for (let intento = 0; intento < 6 && !vigente(); intento++) {
+            if (intento > 0) await esperar(1500);
+            fallo = await renovarSesion();
+            if (fallo.success || fallo.httpStatus || fallo.code) break;
+        }
+
+        if (!vigente()) {
+            // `transitoria`: no se pudo comprobar (sin respuesta de la API); la sesión guardada se conserva
+            return { activa: false, transitoria: Boolean(getRefreshToken()), message: fallo?.message, code: fallo?.code };
+        }
+        const { user, expiraEnSegundos, expiresIn } = respuestaSesion();
+        return { activa: true, user, expiraEnSegundos, expiresIn };
+    });
 
     // 📌 Manejar autenticación login (API V2)
     ipcMain.handle("login", async (event, data) => {
@@ -138,26 +228,29 @@ export default function IpcHandlerUsuario () {
             dispositivo_info: dispositivoInfo
         });
         
-        // Adaptar respuesta para el frontend
-        if (result.success) {
-            return {
-                success: true,
-                accessToken: result.accessToken,
-                refreshToken: result.refreshToken,
-                expiresIn: result.expiresIn,
-                user: result.user,
-                rol: result.user?.rol,
-                requiere_cambio_password: !!result.requiere_cambio_password,
-                message: result.mensaje
-            };
+        // Los tokens se guardan aquí; al renderer solo le llegan los datos del usuario
+        if (result.success && result.accessToken) {
+            guardarSesion({ accessToken: result.accessToken, refreshToken: result.refreshToken });
+            const sesion = respuestaSesion();
+            if (sesion) {
+                return {
+                    ...sesion,
+                    requiere_cambio_password: !!result.requiere_cambio_password,
+                    message: result.mensaje
+                };
+            }
+            borrarSesion();
+            return { success: false, message: "Respuesta de inicio de sesión no válida" };
         }
-        
+
+        const fallo = { ...result };
+        delete fallo.accessToken;
+        delete fallo.refreshToken;
         return {
+            ...fallo,
             success: false,
             message: result.message || result.error || "Error desconocido en login",
-            intentos_restantes: result.intentos_restantes,
-            bloqueado_hasta: result.bloqueado_hasta,
-            ...result
+            bloqueado_hasta: result.bloqueado_hasta
         };
     });
     
@@ -175,10 +268,22 @@ export default function IpcHandlerUsuario () {
     });
     
     // 📌 cerrar session (API V2)
-    ipcMain.handle("logout", async (event, token) => {
-        // Enviar token tanto en el body (para lógica del controller) 
-        // como en el header Auth (para el middleware)
-        return await apiRequest(`${AUTH_API_URL}/logout`, "POST", token, { token });
+    ipcMain.handle("logout", async () => {
+        // Con el access token vencido la API no aceptaría el cierre: se renueva antes para que la
+        // sesión quede cerrada también en el servidor, no solo olvidada en este equipo.
+        const actual = sesionActual();
+        if (getRefreshToken() && (!actual || actual.segundosRestantes <= 5)) {
+            await renovarSesion().catch(() => null);
+        }
+
+        const token = getAccessToken();
+        let result = { success: true };
+        if (token) {
+            // Token en el body (para el controller) y en la cabecera (para el middleware)
+            result = await apiRequest(`${AUTH_API_URL}/logout`, "POST", token, { token });
+        }
+        borrarSesion();
+        return result;
     });
 
     // 📌 Manejar verificación de sesión (Local check still useful for speed, but ideally API)
@@ -208,7 +313,8 @@ export default function IpcHandlerUsuario () {
         
 
     // 📌 Verificar Sesión (Simplificado para API V2)
-    ipcMain.handle("verify-session", async (event, token) => {
+    ipcMain.handle("verify-session", async () => {
+        const token = getAccessToken();
         if (!token) {
             return { success: false, message: 'Token no proporcionado' };
         }
@@ -247,9 +353,8 @@ export default function IpcHandlerUsuario () {
     });
     
     // 📌 Renovar access token (API V2)
-    ipcMain.handle("refresh-token", async (event, refreshToken) => {
-        return await apiRequest(`${AUTH_API_URL}/refresh`, "POST", null, { refreshToken });
-    });
+    // El refresh token no sale del proceso principal: el renderer solo pide "renueva"
+    ipcMain.handle("refresh-token", async () => renovarSesion());
 
     // 📌 Cerrar sesión específica por ID (API V2)
     ipcMain.handle("close-specific-session", async (event, sesionId, token) => {

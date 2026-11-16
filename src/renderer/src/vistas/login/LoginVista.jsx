@@ -222,7 +222,7 @@ function LoginApp() {
                     setCorreosGuardados(actual);
                 }
 
-                login(response.accessToken, response.refreshToken, response.expiresIn);
+                login(response.user, response.expiraEnSegundos);
                 
                 if (response.requiere_cambio_password) {
                     navigate("/perfil");

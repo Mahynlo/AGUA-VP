@@ -44,16 +44,19 @@ import {
     restartAppForRestore
 } from '../../managers/apiManager.js';
 
+import { getAccessToken } from '../../auth/sessionStore.js';
+
 const ADMIN_ROLES = ['administrador', 'superadmin'];
 
 /**
  * Verifica que el token de sesión sea válido (firmado por la API embebida y vigente)
  * y pertenezca a un usuario con rol administrador o superadmin.
- * @param {string} userToken - Token JWT de la sesión del usuario
+ * El token es el de la sesión guardada en el proceso principal; lo que envíe el renderer no cuenta.
+ * @param {string} userToken - Valor enviado por el renderer (solo se usa si no hay sesión guardada)
  * @returns {{ valid: boolean, error?: string, decoded?: object }}
  */
 function requireAdmin(userToken) {
-    const decoded = verifySessionToken(userToken);
+    const decoded = verifySessionToken(getAccessToken() || userToken);
     if (!decoded) {
         return { valid: false, error: 'Sesión no válida o expirada. Vuelve a iniciar sesión e inténtalo de nuevo.' };
     }

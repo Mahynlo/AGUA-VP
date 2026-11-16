@@ -94,7 +94,7 @@ Es el **único** lugar donde se arman las cabeceras de la API. Todas las peticio
 ### Dos tipos de autenticación
 
 - **AppKey (`token_app`)** — identifica a *la instalación* de la aplicación. Se obtiene con `leerToken()` de `src/main/auth/appKey.js`, que lo registra, guarda cifrado y rota cuando hace falta.
-- **Sesión (`token_session`)** — identifica al *usuario* que inició sesión. Llega desde el renderer en cada llamada IPC.
+- **Sesión (`token_session`)** — identifica al *usuario* que inició sesión. El token real lo guarda el proceso principal (`src/main/auth/sessionStore.js`: access token en memoria, refresh token cifrado con `safeStorage` en `userData/session.enc`) y `authHeaders` lo pone en `Authorization`. El renderer no tiene los tokens: lo que envía como `token_session` en cada llamada IPC es un marcador sin valor (`localStorage "token"` = `sesion-en-proceso-principal`) que solo indica que hay sesión.
 
 ### Sesión expirada
 
