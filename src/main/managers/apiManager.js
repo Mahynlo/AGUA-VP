@@ -508,7 +508,7 @@ function syncHeaders() {
 export function verifySessionToken(token) {
     if (!token || typeof token !== 'string') return null;
     try {
-        return jwt.verify(token, loadOrCreateSecrets().jwtSecret);
+        return jwt.verify(token, loadOrCreateSecrets().jwtSecret, { algorithms: ['HS256'] });
     } catch {
         return null;
     }
