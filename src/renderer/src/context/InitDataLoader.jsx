@@ -1,41 +1,20 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "./AuthContext";
-import { useClientes } from "./ClientesContext";
-import { useMedidores } from "./MedidoresContext";
-import { useTarifas } from "./TarifasContext";
 import { preloadPdfViewer } from "../utils/pdfPreloader";
 
-// Componente para asegurar datos iniciales y precargar módulos pesados en tiempo inactivo
+// Precarga en tiempo inactivo los módulos pesados que se usarán después de iniciar sesión.
+//
+// Los datos (clientes, medidores, tarifas, etc.) NO se cargan aquí: cada contexto pide los suyos
+// cuando recibe al usuario autenticado. Antes este componente los volvía a pedir, y cada pantalla
+// hacía las mismas consultas dos o tres veces al iniciar sesión.
 const InitDataLoader = () => {
-  const { user, isAuthenticated } = useAuth();
-  const { actualizarClientes } = useClientes();
-  const { actualizarMedidores } = useMedidores();
-  const { actualizarTarifas } = useTarifas();
-
-  // Control en memoria por ciclo de vida de la sesión (no persiste zombis en disco)
-  const isInitializedRef = useRef(false);
+  const { user } = useAuth();
   const isPdfPreloadedRef = useRef(false);
 
   useEffect(() => {
-    // Si no hay usuario autenticado, reiniciar flags
-    if (!isAuthenticated() || !user) {
-      isInitializedRef.current = false;
+    if (!user) {
       isPdfPreloadedRef.current = false;
       return;
-    }
-
-    // Comprobar si ya se inicializó en esta sesión de RAM
-    if (!isInitializedRef.current) {
-      isInitializedRef.current = true;
-
-      // Asegurar carga inicial ordenada
-      Promise.allSettled([
-        actualizarClientes(),
-        actualizarMedidores(),
-        actualizarTarifas()
-      ]).catch((err) => {
-        console.warn("Aviso en carga coordinada inicial:", err);
-      });
     }
 
     // Precargar el visor PDF una sola vez tras la autenticación
@@ -43,7 +22,7 @@ const InitDataLoader = () => {
       isPdfPreloadedRef.current = true;
       preloadPdfViewer();
     }
-  }, [user, isAuthenticated, actualizarClientes, actualizarMedidores, actualizarTarifas]);
+  }, [user]);
 
   return null;
 };

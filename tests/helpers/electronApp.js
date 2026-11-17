@@ -19,13 +19,17 @@ async function launchApp(options = {}) {
     throw new Error(`No existe la base de prueba en ${carpeta}: corre las pruebas con "npm run test:e2e".`);
   }
 
+  // Sin pantalla de inicio (salvo que la prueba la pida): firstWindow() debe ser la ventana principal
   const env = { ...process.env, NODE_ENV: 'development', AGUAVP_E2E_USER_DATA: carpeta };
+  if (!options.conPantallaInicio) env.AGUAVP_SIN_PANTALLA_INICIO = '1';
   delete env.ELECTRON_RUN_AS_NODE; // si viene del entorno (p. ej. VS Code), Electron arrancaría como Node
 
   const electronApp = await electron.launch({ args: ['.'], cwd: rootDir, slowMo, env });
 
   // Espera a que se inicialice la primera ventana creada por Electron
-  const window = await electronApp.firstWindow();
+  // La ventana principal se crea cuando la API embebida ya cargó: en un arranque en frío (justo tras
+  // compilar, o con el antivirus revisando archivos) puede pasar de los 30 s por defecto.
+  const window = await electronApp.firstWindow({ timeout: 120000 });
   await window.waitForLoadState('domcontentloaded');
 
   // Comprobación de seguridad: la app debe estar usando la carpeta de prueba

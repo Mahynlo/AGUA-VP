@@ -256,9 +256,9 @@ export const AuthProvider = ({ children }) => {
                 fecha_creacion: usuario.fecha_creacion
             });
 
+            // Cada contexto carga sus datos al recibir al usuario: no hace falta avisarles aquí
             obtenerSesionesActivas(usuario.id);
             programarRenovacion(segundosRestantes);
-            window.dispatchEvent(new CustomEvent("dashboard-update"));
 
             navigate("/home");
         } catch (error) {

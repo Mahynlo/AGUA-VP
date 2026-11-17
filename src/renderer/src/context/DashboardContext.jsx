@@ -1,8 +1,10 @@
 import { createContext, useState, useContext, useEffect, useCallback, useMemo } from "react";
+import { useAuth } from "./AuthContext";
 
 const DashboardContext = createContext();
 
 export function DashboardProvider({ children }) {
+    const { user } = useAuth();
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -33,10 +35,18 @@ export function DashboardProvider({ children }) {
         }
     }, []);
 
-    // Cargar datos al montar y escuchar eventos de sincronización
+    // Carga inicial cuando hay usuario (igual que los demás contextos): antes de eso el proceso
+    // principal todavía no tiene la sesión lista y la petición fallaría. Sin usuario, se vacía.
     useEffect(() => {
-        fetchDashboardStats();
+        if (user) {
+            fetchDashboardStats();
+        } else {
+            setDashboardData(null);
+        }
+    }, [user, fetchDashboardStats]);
 
+    // Eventos de sincronización
+    useEffect(() => {
         const handleUpdate = () => {
             fetchDashboardStats();
         };
