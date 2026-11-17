@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   HiRefresh, HiDownload, HiLightningBolt, HiCheckCircle,
-  HiExclamationCircle, HiCalendar,
+  HiExclamationCircle, HiBell,
   HiChip, HiShieldCheck, HiDesktopComputer,
   HiClock, HiSparkles, HiInformationCircle,
   HiBookOpen
@@ -9,6 +9,44 @@ import {
 import { useFeedback } from "../../context/FeedbackContext";
 import { formatBytes } from "../../utils/formatSystem";
 import { MarkdownRenderer } from "../markdown/MarkdownRenderer";
+import { Indicador } from "../ui/VistaModulo";
+
+// Fondos tintados de los iconos de los indicadores (mismo patrón que las vistas de los módulos)
+const TINTES = {
+  blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+  slate: "bg-slate-200/70 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400"
+};
+
+// Colores de la tarjeta de estado según la fase (clases completas para que Tailwind las incluya)
+const TONOS = {
+  emerald: {
+    caja: "bg-emerald-500/[0.04] dark:bg-emerald-500/[0.06] border-emerald-500/20",
+    icono: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    chip: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    punto: "bg-emerald-500",
+    tinte: TINTES.emerald,
+    valor: "text-emerald-600 dark:text-emerald-400"
+  },
+  blue: {
+    caja: "bg-blue-500/[0.04] dark:bg-blue-500/[0.06] border-blue-500/20",
+    icono: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    chip: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
+    punto: "bg-blue-500",
+    tinte: TINTES.blue,
+    valor: "text-blue-600 dark:text-blue-400"
+  },
+  amber: {
+    caja: "bg-amber-500/[0.05] dark:bg-amber-500/[0.07] border-amber-500/25",
+    icono: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    chip: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    punto: "bg-amber-500",
+    tinte: TINTES.amber,
+    valor: "text-amber-600 dark:text-amber-400"
+  }
+};
 
 export default function PanelActualizaciones() {
   const { setError } = useFeedback();
@@ -284,10 +322,10 @@ export default function PanelActualizaciones() {
 
   if (cargando) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <div className="w-10 h-10 rounded-full border-4 border-blue-500/20 border-t-blue-600 animate-spin" />
-        <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-          Cargando estado de actualizaciones...
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <div className="w-8 h-8 rounded-full border-[3px] border-blue-500/20 border-t-blue-600 animate-spin" />
+        <span className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+          Cargando estado de actualizaciones…
         </span>
       </div>
     );
@@ -332,7 +370,8 @@ export default function PanelActualizaciones() {
   } else if (vistaEfectiva === "actual") {
     etiquetaVersionActiva = `v${versionActual}`;
     tipoBadgeActivo = "actual";
-    const releaseActual = releasesList.find(
+    const exacta = (r) => r.version === versionActual || r.tag === `v${versionActual}` || r.tag === versionActual;
+    const releaseActual = releasesList.find(exacta) || releasesList.find(
       (r) =>
         r.version === versionActual ||
         r.tag === `v${versionActual}` ||
@@ -391,451 +430,340 @@ export default function PanelActualizaciones() {
     }
   };
 
+  // ── Presentación ────────────────────────────────────────────────────────────
+  // Fase actual de la actualización: decide colores, icono, textos y la acción principal
+  const fase = isDownloaded ? "lista" : isDownloading ? "descargando" : isAvailable ? "disponible" : isChecking ? "buscando" : "aldia";
+  const versionNueva = status?.updateInfo?.version || "";
+  const FASES = {
+    aldia: {
+      tono: "emerald", icono: HiCheckCircle, etiqueta: "Al día",
+      titulo: "Agua-VP está actualizado",
+      texto: "Tienes instalada la versión más reciente del sistema."
+    },
+    buscando: {
+      tono: "blue", icono: HiRefresh, animIcono: "animate-spin", etiqueta: "Buscando",
+      titulo: "Buscando actualizaciones…",
+      texto: "Consultando el repositorio oficial para conocer la última versión publicada."
+    },
+    disponible: {
+      tono: "blue", icono: HiSparkles, etiqueta: "Nueva versión",
+      titulo: `Versión v${versionNueva} disponible`,
+      texto: "Hay una nueva versión con mejoras y correcciones. Revisa sus novedades abajo antes de descargarla."
+    },
+    descargando: {
+      tono: "blue", icono: HiDownload, animIcono: "animate-bounce", etiqueta: `Descargando ${pct}%`,
+      titulo: `Descargando v${versionNueva}`,
+      texto: "Puedes seguir usando el sistema con normalidad mientras termina la descarga."
+    },
+    lista: {
+      tono: "amber", icono: HiLightningBolt, etiqueta: "Lista para instalar",
+      titulo: "Actualización lista para instalar",
+      texto: "Al instalar, Agua-VP respalda la base de datos, se cierra y se abre de nuevo con la versión nueva."
+    }
+  };
+  const f = FASES[fase];
+  const t = TONOS[f.tono];
+  const IconoFase = f.icono;
+
+  const ultimaBusqueda = status?.lastCheck
+    ? new Date(status.lastCheck).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+    : "Sin buscar";
+
+  const progreso = status?.downloadProgress;
+  const BOTON_PRIMARIO =
+    "w-full md:w-auto inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-60 disabled:active:scale-100 cursor-pointer disabled:cursor-default";
+  const botonSegmento = (activo) =>
+    `px-3 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+      activo
+        ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm"
+        : "text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200"
+    }`;
+  const enHistorial = vistaEfectiva !== "nueva" && vistaEfectiva !== "actual";
+
   return (
-    <div className="space-y-6 w-full animate-in fade-in duration-300">
+    <div className="flex flex-col gap-6 w-full min-w-0 animate-in fade-in duration-300">
 
-      {/* ── 1. INFORMACIÓN DEL SISTEMA Y GARANTÍA DE RESPALDO ── */}
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* KPI 1: Versión Actual */}
-          <div className="flex flex-col gap-2.5 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm transition-transform hover:-translate-y-0.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Versión Instalada</span>
-              <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400"><HiChip className="w-4 h-4" /></div>
-            </div>
-            <p className="text-xl font-black text-slate-800 dark:text-zinc-100 leading-none font-mono">
-              v{status?.currentVersion || "1.0.0"}
-            </p>
-            <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">Compilación de escritorio</span>
-          </div>
-
-          {/* KPI 2: Canal de Actualización */}
-          <div className="flex flex-col gap-2.5 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm transition-transform hover:-translate-y-0.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Canal de Distribución</span>
-              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><HiShieldCheck className="w-4 h-4" /></div>
-            </div>
-            <p className="text-xl font-black text-slate-800 dark:text-zinc-100 leading-none">
-              Producción
-            </p>
-            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Canal Oficial Seguro</span>
-          </div>
-
-          {/* KPI 3: Última Verificación */}
-          <div className="flex flex-col gap-2.5 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm transition-transform hover:-translate-y-0.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Última Búsqueda</span>
-              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"><HiCalendar className="w-4 h-4" /></div>
-            </div>
-            <p className="text-sm font-black text-slate-800 dark:text-zinc-100 leading-tight truncate">
-              {status?.lastCheck ? new Date(status.lastCheck).toLocaleDateString("es-MX", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Hoy"}
-            </p>
-            <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 flex items-center gap-1">
-              <HiClock className="w-3.5 h-3.5" /> Automática
-            </span>
-          </div>
-
-          {/* KPI 4: Plataforma & Motor */}
-          <div className="flex flex-col gap-2.5 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm transition-transform hover:-translate-y-0.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Plataforma</span>
-              <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"><HiDesktopComputer className="w-4 h-4" /></div>
-            </div>
-            <p className="text-xl font-black text-slate-800 dark:text-zinc-100 leading-none">
-              Windows x64
-            </p>
-            <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">Electron & SQLite</span>
-          </div>
-
-        </div>
-
-        {/* Ficha de Seguridad & Garantía de Respaldo */}
-        <div className="flex items-start gap-4 p-5 rounded-2xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/20 shadow-sm">
-          <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl shrink-0 mt-0.5">
-            <HiShieldCheck className="w-5 h-5" />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Garantía de Respaldo Previo Automático
-            </h4>
-            <p className="text-xs font-medium text-slate-600 dark:text-zinc-400 mt-1 leading-relaxed">
-              Antes de aplicar cualquier actualización o reinicio, Agua-VP genera automáticamente un respaldo completo de tu base de datos SQLite y parámetros del sistema para asegurar la integridad total de tus datos fiscales, clientes y lecturas.
-            </p>
-          </div>
-        </div>
+      {/* ── 1. INDICADORES ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <Indicador icon={HiChip} tint={TINTES.blue} label="Versión instalada" value={`v${versionActual}`} detalle="Versión de Agua-VP en este equipo" />
+        <Indicador icon={IconoFase} tint={t.tinte} label="Estado" value={f.etiqueta} valueClass={t.valor} detalle={f.titulo} />
+        <Indicador icon={HiClock} tint={TINTES.slate} label="Última búsqueda" value={ultimaBusqueda} detalle={status?.lastCheck ? "Se busca sola al abrir la app" : "Aún no se ha buscado en esta sesión"} />
+        <Indicador icon={HiBookOpen} tint={TINTES.indigo} label="Versiones publicadas" value={releasesList.length || "—"} detalle="Versiones con notas en el historial" />
       </div>
 
-      {/* ── 2. NOTIFICACIONES DE ACTUALIZACIÓN (SWITCH) ── */}
-      <div className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex flex-col gap-0.5 pr-4">
-          <h4 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider">
-            Notificaciones Emergentes al Iniciar
-          </h4>
-          <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 leading-relaxed">
-            Avisar en pantalla automáticamente al arrancar la aplicación si se detecta una nueva versión disponible.
-          </p>
-        </div>
-        <div className="shrink-0 flex items-center">
-          <label className="relative inline-flex items-center cursor-pointer select-none">
-            <input 
-              type="checkbox" 
-              checked={alertasActivas} 
-              onChange={handleToggleAlertas}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-slate-200 dark:bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            <span className="ml-3 text-xs font-bold text-slate-700 dark:text-zinc-300 min-w-[70px]">
-              {alertasActivas ? "Activadas" : "Desactivadas"}
-            </span>
-          </label>
-        </div>
-      </div>
-
-      {/* ── 3. HERRAMIENTAS DE DESARROLLO (SIMULADOR) ── */}
-      {import.meta.env.DEV && (
-        <div className="p-5 rounded-2xl bg-slate-50 dark:bg-zinc-900/30 border border-slate-200 dark:border-zinc-800/80 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in">
-          <div className="flex flex-col gap-0.5">
-            <h4 className="text-xs font-bold text-slate-700 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-              Herramientas de Desarrollo (Simulador)
-            </h4>
-            <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 leading-relaxed">
-              Prueba la experiencia de usuario y las alertas visuales simulando la llegada de una nueva actualización.
-            </p>
+      {/* ── 2. ERROR ── */}
+      {status?.error && (
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-rose-500/5 dark:bg-rose-500/[0.07] border border-rose-500/20">
+          <div className="p-2 rounded-lg shrink-0 bg-rose-500/10 text-rose-600 dark:text-rose-400">
+            <HiExclamationCircle className="w-5 h-5" />
           </div>
-          <div className="shrink-0 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={restablecerSimulacion}
-              className="inline-flex items-center gap-1.5 font-bold bg-slate-200 dark:bg-zinc-800 hover:bg-slate-300 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 rounded-xl px-3.5 h-9 text-xs transition-all active:scale-95"
-            >
-              Restablecer
-            </button>
-            <button
-              type="button"
-              onClick={simularModalPrueba}
-              className="inline-flex items-center gap-1.5 font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-xl px-4 h-9 text-xs transition-all active:scale-95"
-            >
-              Simular Alerta v2.1.0
-            </button>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-rose-700 dark:text-rose-400">No se pudo completar la actualización</p>
+            <p className="text-sm font-medium text-rose-600/90 dark:text-rose-400/80 mt-0.5 leading-snug break-words">{status.error}</p>
           </div>
         </div>
       )}
 
-      {/* ── 4. ESTADO Y BOTÓN PARA INSTALAR / DESCARGAR / BUSCAR ACTUALIZACIÓN ── */}
-      <div className="space-y-4">
-        {/* Error Banner si ocurrió algún fallo */}
-        {status?.error && (
-          <div className="flex items-start gap-4 p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 animate-in fade-in">
-            <div className="p-2 bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl shrink-0">
-              <HiExclamationCircle className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-black text-rose-700 dark:text-rose-400">Error durante la actualización</p>
-              <p className="text-xs font-medium text-rose-600 dark:text-rose-400/90 mt-1 leading-relaxed">{status.error}</p>
-            </div>
+      {/* ── 3. ESTADO Y ACCIÓN PRINCIPAL ── */}
+      <div className={`rounded-2xl border p-5 sm:p-6 transition-colors ${t.caja}`}>
+        <div className="flex flex-col md:flex-row md:items-center gap-5">
+          <div className={`p-3.5 rounded-xl shrink-0 self-start md:self-center ${t.icono}`}>
+            <IconoFase className={`w-8 h-8 ${f.animIcono || ""}`} />
           </div>
-        )}
 
-        {/* Hero Status Card con Acción */}
-        <div className="relative overflow-hidden rounded-[2rem] bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 p-6 sm:p-8 transition-all">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            
-            {/* Lado izquierdo: Icono y texto de estado */}
-            <div className="flex items-start sm:items-center gap-5">
-              <div className={`p-4 sm:p-5 rounded-2xl shrink-0 flex items-center justify-center transition-all ${
-                isDownloaded
-                  ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 shadow-sm"
-                  : isDownloading
-                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 animate-pulse shadow-sm"
-                  : isAvailable
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm"
-                  : isChecking
-                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shadow-sm"
-                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm"
-              }`}>
-                {isDownloaded ? (
-                  <HiLightningBolt className="w-9 h-9" />
-                ) : isDownloading ? (
-                  <HiDownload className="w-9 h-9 animate-bounce" />
-                ) : isAvailable ? (
-                  <HiSparkles className="w-9 h-9" />
-                ) : isChecking ? (
-                  <HiRefresh className="w-9 h-9 animate-spin" />
-                ) : (
-                  <HiCheckCircle className="w-9 h-9" />
-                )}
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border ${
-                    isDownloaded
-                      ? "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-800"
-                      : isDownloading
-                      ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800"
-                      : isAvailable
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
-                      : "bg-slate-200/70 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border-slate-300 dark:border-zinc-700"
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      isDownloaded ? "bg-orange-500" : isDownloading ? "bg-blue-500" : isAvailable ? "bg-emerald-500" : "bg-emerald-500"
-                    }`} />
-                    {isDownloaded
-                      ? "Lista para instalar"
-                      : isDownloading
-                      ? `Descargando (${pct}%)`
-                      : isAvailable
-                      ? `Nueva versión v${status?.updateInfo?.version}`
-                      : isChecking
-                      ? "Comprobando..."
-                      : "Sistema al día"}
-                  </span>
-
-                  <span className="text-xs font-mono font-bold text-slate-400 dark:text-zinc-500">
-                    Instalada: v{status?.currentVersion || "1.0.0"}
-                  </span>
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
-                  {isDownloaded
-                    ? "Actualización descargada y lista"
-                    : isDownloading
-                    ? `Descargando versión v${status?.updateInfo?.version || ""}`
-                    : isAvailable
-                    ? `Versión v${status?.updateInfo?.version} disponible`
-                    : isChecking
-                    ? "Buscando actualizaciones..."
-                    : "Agua-VP está actualizado"}
-                </h2>
-
-                <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-zinc-400 max-w-xl leading-relaxed">
-                  {isDownloaded
-                    ? "La actualización se ha verificado. Haz clic en el botón para reiniciar el sistema y aplicar los cambios con respaldo seguro previo."
-                    : isDownloading
-                    ? "Se está descargando el paquete oficial. Puedes continuar usando el sistema con normalidad."
-                    : isAvailable
-                    ? "Se ha detectado una nueva versión con mejoras de rendimiento, correcciones y nuevas funciones."
-                    : isChecking
-                    ? "Conectando con el repositorio oficial para consultar la última versión disponible."
-                    : "Cuentas con la versión más reciente del sistema. Todo tu entorno operativo se encuentra optimizado."}
-                </p>
-              </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`inline-flex items-center gap-1.5 px-2 h-6 rounded-md text-[11px] font-bold ${t.chip}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${t.punto} ${fase === "buscando" || fase === "descargando" ? "animate-pulse" : ""}`} />
+                {f.etiqueta}
+              </span>
+              <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500 tabular-nums">
+                Instalada: v{versionActual}
+              </span>
             </div>
+            <h2 className="mt-1.5 text-xl sm:text-2xl font-black tracking-tight text-slate-800 dark:text-zinc-100 leading-tight">
+              {f.titulo}
+            </h2>
+            <p className="mt-1 text-sm font-medium text-slate-500 dark:text-zinc-400 leading-snug max-w-2xl">
+              {f.texto}
+            </p>
+          </div>
 
-            {/* Lado derecho: Botón principal de acción */}
-            <div className="flex items-center shrink-0">
-              {isDownloaded ? (
-                <button
-                  type="button"
-                  onClick={instalar}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 font-black bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-6 h-12 text-sm shadow-sm transition-all active:scale-95 uppercase tracking-wider"
-                >
-                  <HiLightningBolt className="w-5 h-5" />
-                  Instalar y Reiniciar
-                </button>
-              ) : isDownloading ? (
-                <div className="w-full sm:w-auto px-5 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-xs flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-600 rounded-full animate-spin" />
-                  <span>Descarga en progreso...</span>
-                </div>
-              ) : isAvailable ? (
-                <button
-                  type="button"
-                  onClick={descargar}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 font-black bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 h-12 text-sm shadow-sm transition-all active:scale-95 uppercase tracking-wider"
-                >
-                  <HiDownload className="w-5 h-5" />
-                  Descargar v{status?.updateInfo?.version}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={verificar}
-                  disabled={isChecking}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60 rounded-xl px-6 h-12 text-sm shadow-sm transition-all active:scale-95"
-                >
-                  <HiRefresh className={`w-5 h-5 ${isChecking ? "animate-spin" : ""}`} />
-                  {isChecking ? "Buscando..." : "Buscar Actualizaciones"}
-                </button>
-              )}
-            </div>
-
+          <div className="shrink-0">
+            {fase === "lista" ? (
+              <button type="button" onClick={instalar} className={BOTON_PRIMARIO}>
+                <HiLightningBolt className="w-5 h-5" />
+                Instalar y reiniciar
+              </button>
+            ) : fase === "descargando" ? (
+              <div className="w-full md:w-auto inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl text-sm font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin" />
+                Descargando…
+              </div>
+            ) : fase === "disponible" ? (
+              <button type="button" onClick={descargar} className={BOTON_PRIMARIO}>
+                <HiDownload className="w-5 h-5" />
+                Descargar v{versionNueva}
+              </button>
+            ) : (
+              <button type="button" onClick={verificar} disabled={isChecking} className={BOTON_PRIMARIO}>
+                <HiRefresh className={`w-5 h-5 ${isChecking ? "animate-spin" : ""}`} />
+                {isChecking ? "Buscando…" : "Buscar actualizaciones"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Progreso de descarga interactivo (cuando está descargando) */}
-        {isDownloading && status?.downloadProgress && (
-          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-900/50 shadow-sm space-y-5 animate-in fade-in">
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-                  <HiDownload className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-bounce" />
-                  Descarga del paquete de actualización
-                </h4>
-                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5">
-                  Obteniendo instalador oficial v{status?.updateInfo?.version || ""}
-                </p>
-              </div>
-              <span className="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono">
-                {pct}%
+        {/* Progreso de la descarga */}
+        {fase === "descargando" && (
+          <div className="mt-5 pt-5 border-t border-blue-500/15 flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+                {progreso ? "Descargando el instalador oficial" : "Preparando la descarga…"}
               </span>
+              <span className="text-lg font-black text-blue-600 dark:text-blue-400 tabular-nums">{pct}%</span>
             </div>
-
-            {/* Barra de progreso unificada */}
-            <div className="w-full h-3 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden p-0.5 border border-slate-200 dark:border-zinc-700">
+            <div className="w-full h-2.5 rounded-full bg-blue-500/10 overflow-hidden">
               <div
-                className="h-full bg-blue-600 dark:bg-blue-500 rounded-full transition-all duration-300"
+                className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-300"
                 style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
               />
             </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-              <div className="p-3 bg-slate-50 dark:bg-zinc-900/50 rounded-xl border border-slate-100 dark:border-zinc-800">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Transferido</span>
-                <span className="font-mono font-bold text-slate-700 dark:text-zinc-200">
-                  {formatBytes(status.downloadProgress.transferred)} / {formatBytes(status.downloadProgress.total)}
-                </span>
+            {progreso && (
+              <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs font-medium text-slate-500 dark:text-zinc-400 tabular-nums">
+                <span>Descargado: <b className="font-bold text-slate-700 dark:text-zinc-200">{formatBytes(progreso.transferred)} de {formatBytes(progreso.total)}</b></span>
+                <span>Velocidad: <b className="font-bold text-slate-700 dark:text-zinc-200">{formatBytes(progreso.bytesPerSecond)}/s</b></span>
               </div>
-
-              <div className="p-3 bg-slate-50 dark:bg-zinc-900/50 rounded-xl border border-slate-100 dark:border-zinc-800">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Velocidad</span>
-                <span className="font-mono font-bold text-slate-700 dark:text-zinc-200">
-                  {formatBytes(status.downloadProgress.bytesPerSecond)}/s
-                </span>
-              </div>
-
-              <div className="p-3 bg-slate-50 dark:bg-zinc-900/50 rounded-xl border border-slate-100 dark:border-zinc-800 col-span-2 sm:col-span-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Estado</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">
-                  En progreso
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* ── 5. DETALLES DE LA VERSIÓN (NOTAS DE LANZAMIENTO / CHANGELOG) ── */}
-      <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden animate-in fade-in">
-        
-        {/* Header de Notas con Selector y Pestañas */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4 bg-slate-50/70 dark:bg-zinc-900/60 border-b border-slate-200 dark:border-zinc-800">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="p-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
-              <HiBookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-black text-sm text-slate-800 dark:text-zinc-100 tracking-tight">
-                  Notas de Versión y Registro de Cambios
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold font-mono border border-blue-500/20">
-                  {etiquetaVersionActiva}
-                </span>
-                {esPreReleaseActiva && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">
-                    Pre-release / Beta
-                  </span>
-                )}
-                {tipoBadgeActivo === "actual" && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 text-[10px] font-bold uppercase tracking-wider border border-slate-200 dark:border-zinc-700">
-                    Instalada
-                  </span>
-                )}
-                {tipoBadgeActivo === "nueva" && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
-                    Nueva versión
-                  </span>
-                )}
+      {/* ── 4. NOTAS DE LA VERSIÓN + AJUSTES ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+
+        {/* Notas de la versión */}
+        <section className="xl:col-span-2 min-w-0 rounded-2xl bg-white dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-slate-200 dark:border-zinc-800">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 rounded-lg shrink-0 bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400">
+                <HiBookOpen className="w-5 h-5" />
               </div>
-              {formatearFechaLanzamiento(fechaLanzamientoActiva) && (
-                <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 block mt-0.5">
-                  Publicado el {formatearFechaLanzamiento(fechaLanzamientoActiva)}
-                </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base font-black tracking-tight text-slate-800 dark:text-zinc-100">Notas de la versión</h3>
+                  <span className="inline-flex items-center px-1.5 h-5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold tabular-nums">
+                    {etiquetaVersionActiva}
+                  </span>
+                  {tipoBadgeActivo === "actual" && (
+                    <span className="inline-flex items-center px-1.5 h-5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 text-[11px] font-bold">Instalada</span>
+                  )}
+                  {tipoBadgeActivo === "nueva" && (
+                    <span className="inline-flex items-center px-1.5 h-5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">Nueva</span>
+                  )}
+                  {esPreReleaseActiva && (
+                    <span className="inline-flex items-center px-1.5 h-5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-bold">Beta</span>
+                  )}
+                </div>
+                <p className="text-xs font-medium text-slate-400 dark:text-zinc-500 mt-0.5">
+                  {formatearFechaLanzamiento(fechaLanzamientoActiva)
+                    ? `Publicada el ${formatearFechaLanzamiento(fechaLanzamientoActiva)}`
+                    : "Novedades, mejoras y correcciones"}
+                </p>
+              </div>
+            </div>
+
+            {/* Qué versión mostrar */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Con versión nueva se elige entre sus notas y las de la instalada; sin ella, el botón
+                  "Instalada" solo aparece para volver desde una versión anterior */}
+              {(hayNuevaVersion || enHistorial) && (
+                <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
+                  {hayNuevaVersion && (
+                    <button type="button" onClick={() => setVistaNotas("nueva")} className={botonSegmento(vistaEfectiva === "nueva")}>
+                      Nueva v{versionNueva}
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setVistaNotas("actual")} className={botonSegmento(vistaEfectiva === "actual")}>
+                    Instalada
+                  </button>
+                </div>
+              )}
+
+              {otrasVersiones.length > 0 && (
+                <select
+                  value={enHistorial ? vistaEfectiva : ""}
+                  onChange={(e) => {
+                    if (e.target.value) setVistaNotas(e.target.value);
+                  }}
+                  aria-label="Ver notas de una versión anterior"
+                  className={`h-10 w-56 max-w-full pl-3 pr-8 rounded-xl text-xs font-semibold border truncate focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer ${
+                    enHistorial
+                      ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                      : "bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700"
+                  }`}
+                >
+                  <option value="" disabled className="text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900">
+                    Versiones anteriores…
+                  </option>
+                  {otrasVersiones.map((rel) => (
+                    <option key={rel.version || rel.tag} value={rel.version} className="text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900">
+                      {rel.tag || `v${rel.version}`}
+                      {(rel.releaseDate || rel.publishedAt) ? ` · ${formatearFechaLanzamiento(rel.releaseDate || rel.publishedAt)}` : ""}
+                      {rel.isPrerelease ? " (beta)" : ""}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
           </div>
 
-          {/* Botones de navegación / selector de notas */}
-          <div className="flex items-center gap-2 flex-wrap sm:ml-auto">
-            {hayNuevaVersion && (
-              <button
-                type="button"
-                onClick={() => setVistaNotas("nueva")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  vistaEfectiva === "nueva"
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
-                }`}
-              >
-                ✨ Nueva v{status?.updateInfo?.version}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setVistaNotas("actual")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                vistaEfectiva === "actual"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              📌 Instalada v{versionActual}
-            </button>
-
-            {otrasVersiones.length > 0 && (
-              <select
-                value={vistaEfectiva !== "nueva" && vistaEfectiva !== "actual" ? vistaEfectiva : ""}
-                onChange={(e) => {
-                  if (e.target.value) setVistaNotas(e.target.value);
-                }}
-                className={`text-xs font-semibold rounded-xl border px-2.5 py-1.5 focus:outline-none transition-all cursor-pointer ${
-                  vistaEfectiva !== "nueva" && vistaEfectiva !== "actual"
-                    ? "bg-blue-600 text-white border-blue-600 font-bold"
-                    : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600"
-                }`}
-              >
-                <option value="" disabled className="text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900">
-                  Historial de versiones...
-                </option>
-                {otrasVersiones.map((rel) => (
-                  <option
-                    key={rel.version || rel.tag}
-                    value={rel.version}
-                    className="text-slate-800 dark:text-zinc-200 bg-white dark:bg-zinc-900"
-                  >
-                    {rel.tag || `v${rel.version}`} {(rel.releaseDate || rel.publishedAt) ? `(${formatearFechaLanzamiento(rel.releaseDate || rel.publishedAt)})` : ""} {rel.isPrerelease ? "[Beta]" : ""}
-                  </option>
-                ))}
-              </select>
+          <div className="p-5 sm:p-6 max-h-[560px] overflow-y-auto custom-scrollbar">
+            {notasActivas ? (
+              <MarkdownRenderer content={notasActivas} />
+            ) : cargandoChangelog ? (
+              <div className="py-16 flex flex-col items-center justify-center gap-3 text-slate-400 dark:text-zinc-500">
+                <div className="w-7 h-7 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
+                <span className="text-sm font-medium">Cargando notas de la versión…</span>
+              </div>
+            ) : (
+              <div className="py-14 flex flex-col items-center justify-center gap-2 text-center">
+                <HiInformationCircle className="w-8 h-8 text-slate-300 dark:text-zinc-600" />
+                <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">No hay notas publicadas para esta versión.</p>
+              </div>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Cuerpo Markdown con scroll independiente */}
-        <div className="p-6 max-h-[500px] overflow-y-auto custom-scrollbar">
-          {notasActivas ? (
-            <MarkdownRenderer content={notasActivas} />
-          ) : cargandoChangelog ? (
-            <div className="py-16 flex flex-col items-center justify-center text-slate-400 dark:text-zinc-500 gap-3">
-              <div className="w-7 h-7 border-2 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
-              <span className="text-xs font-medium">Cargando notas de la versión...</span>
+        {/* Ajustes e información */}
+        <aside className="flex flex-col gap-4 min-w-0">
+          <div className="rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 p-5 flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="p-2 rounded-lg shrink-0 bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <HiBell className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black text-slate-800 dark:text-zinc-100">Avisar al iniciar</h3>
+                  <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                    Mostrar un aviso al abrir la app cuando haya una versión nueva.
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none shrink-0 mt-0.5" title={alertasActivas ? "Avisos activados" : "Avisos desactivados"}>
+                <input
+                  type="checkbox"
+                  checked={alertasActivas}
+                  onChange={handleToggleAlertas}
+                  aria-label="Avisar al iniciar cuando haya una versión nueva"
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 dark:bg-zinc-700 rounded-full peer-checked:bg-blue-600 dark:peer-checked:bg-blue-500 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/40 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:after:bg-white after:rounded-full after:h-5 after:w-5 after:shadow-sm after:transition-all peer-checked:after:translate-x-full" />
+              </label>
             </div>
-          ) : (
-            <div className="py-12 text-center">
-              <HiInformationCircle className="w-8 h-8 text-slate-400 dark:text-zinc-500 mx-auto mb-2" />
-              <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
-                No hay notas de lanzamiento disponibles para esta versión.
+            <span className={`self-start inline-flex items-center gap-1.5 px-2 h-6 rounded-md text-[11px] font-bold ${
+              alertasActivas ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-slate-200/70 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+            }`}>
+              {alertasActivas ? "Activados" : "Desactivados"}
+            </span>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 p-5 flex items-start gap-3">
+            <div className="p-2 rounded-lg shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <HiShieldCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-black text-slate-800 dark:text-zinc-100">Respaldo antes de instalar</h3>
+              <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                Antes de instalar una versión nueva, Agua-VP guarda una copia completa de la base de datos (clientes, lecturas, facturas y pagos).
               </p>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
+          <div className="rounded-2xl bg-slate-50/70 dark:bg-zinc-900/40 border border-slate-200 dark:border-zinc-800 p-5 flex items-start gap-3">
+            <div className="p-2 rounded-lg shrink-0 bg-slate-200/70 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
+              <HiDesktopComputer className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-black text-slate-800 dark:text-zinc-100">Cómo se actualiza</h3>
+              <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                La app busca versiones nuevas al abrirse. La descarga solo empieza cuando la pides y la instalación, cuando eliges reiniciar.
+              </p>
+            </div>
+          </div>
+
+          {/* Simulador: solo en desarrollo */}
+          {import.meta.env.DEV && (
+            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-zinc-700 p-5 flex flex-col gap-3">
+              <div>
+                <h3 className="text-sm font-black text-slate-800 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                  Simulador (desarrollo)
+                </h3>
+                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                  Simula la llegada de una versión nueva para probar avisos y pantallas.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={simularModalPrueba}
+                  className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 transition-all active:scale-95 cursor-pointer"
+                >
+                  Simular v2.1.0
+                </button>
+                <button
+                  type="button"
+                  onClick={restablecerSimulacion}
+                  className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 transition-all active:scale-95 cursor-pointer"
+                >
+                  Restablecer
+                </button>
+              </div>
+            </div>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }
