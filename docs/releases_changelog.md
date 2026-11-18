@@ -2,6 +2,45 @@
 
 ---
 
+## 🧪 Notas de la versión — v1.3.1-rc.3 [Release Candidate]
+
+**📅 Fecha de lanzamiento:** 17/11/2026  
+**🚀 Versión:** `v1.3.1-rc.3` [Pre-release / Versión Candidata de Evaluación]  
+**📌 Versión base anterior estable:** `v1.3.0`  
+**🔖 Pre-release precedente:** `v1.3.1-rc.2`  
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.18`
+
+> 📝 **BORRADOR** generado desde 15 commit(s) desde `v1.3.1-rc.2`. Reescribe cada punto pensando en quien usa la app (qué cambió y qué debe hacer), quita lo que no le afecte y borra esta línea. No se puede publicar mientras esta línea exista.
+
+> ⚠️ **Aviso de Pre-release:** _resume en una o dos líneas qué trae esta versión y qué conviene probar._
+
+---
+
+### ✨ Novedades
+- Implementar pantalla de inicio y mejorar la gestión de carga de la API
+- **auth:** Implementar la gestión de sesiones con tokens de acceso y de actualización en el proceso principal
+- **api:** Agregar algoritmo de verificación HS256 al validar el token de sesión
+- **api:** Implementar la sincronización en la nube antes de cerrar la aplicación y mejorar el manejo de errores
+- **tarifas:** Mejora de TarifasVista con nuevos componentes y ajustes de diseño
+- Optimizar los componentes de gráficos para evitar renderizados innecesarios mediante el uso de memorización para las firmas de datos
+
+### 🖥️ Mejoras de interfaz
+- Actualizar el estilo de los botones en el componente ModalRegistroUsuario para mejorar su apariencia
+
+### 🧹 Mantenimiento interno
+- Refactorizar el componente ActualizacionesVista: mejorar la disposición, actualizar el encabezado y potenciar la accesibilidad.
+- Eliminar el archivo Cliente.js para simplificar la gestión de la base de datos
+- Refactorización de ModalPagoDistribuidoCliente: mejora de la disposición, optimización de la visualización de la distribución de pagos y actualización de estilos
+- Ajustar estilos y espaciado en ModalLiquidacionTotal y ModalPagoRapido para mejorar la legibilidad y la consistencia visual
+- Ajustar estilos y espaciado en CarruselLecturasModal para mejorar la legibilidad y la consistencia visual
+- Refactorización de los componentes MapaRutas y SelectorCoordenadas para mejorar el rendimiento y la legibilidad
+- Eliminar la gestión de la caché del sistema de archivos de la función GenerarRutaLectura
+
+### 📚 Documentación y ayuda
+- Optimización de la documentación sobre el registro de pagos y del sistema de carga dinámica
+
+---
+
 ## 🧪 Notas de la versión — v1.3.1-rc.2 [Release Candidate]
 
 **📅 Fecha de lanzamiento:** 11/10/2026
