@@ -466,6 +466,25 @@ export async function getChangelog(forceRefresh = false) {
             seenTags.add(cleanVer);
             seenTags.add(tag);
 
+            // Releases publicados antes de scripts/changelog.cjs llevan como notas el changelog completo
+            // (todas las versiones). En ese caso se usa la sección de esta versión del changelog local.
+            const seccionesEnNotas = (String(gr.body || '').match(/^#{1,2}\s+.*Notas de la versi/gm) || []).length;
+            const local = seccionesEnNotas > 1
+                ? localReleases.find(lr => lr.version === cleanVer || lr.tag === tag)
+                : null;
+            if (local) {
+                unifiedReleases.push({
+                    ...local,
+                    tag,
+                    version: cleanVer,
+                    name: gr.name || local.name,
+                    publishedAt: gr.published_at || local.publishedAt,
+                    isPrerelease: Boolean(gr.prerelease),
+                    htmlUrl: gr.html_url || null
+                });
+                continue;
+            }
+
             unifiedReleases.push({
                 tag,
                 version: cleanVer,

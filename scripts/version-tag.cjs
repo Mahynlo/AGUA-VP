@@ -73,7 +73,20 @@ function createTag(tag) {
   console.log(`[version-tag] Tag creado: ${tag}`);
 }
 
+// Antes de subir un tag (lo que dispara el build y la publicación en CI), su versión debe tener
+// notas listas en docs/releases_changelog.md (ver scripts/changelog.cjs). El CI hace la misma revisión.
+function ensureChangelog(tag) {
+  const result = spawnSync(process.execPath, [path.join(__dirname, 'changelog.cjs'), 'verificar', tag], {
+    cwd: rootDir,
+    stdio: 'inherit'
+  });
+  if (result.status !== 0) {
+    fail(`No se sube ${tag}: primero completa sus notas en docs/releases_changelog.md (npm run changelog:nueva -- ${tag})`);
+  }
+}
+
 function pushTag(tag) {
+  ensureChangelog(tag);
   const localTag = gitOutput(['tag', '--list', tag]);
   if (localTag !== tag) {
     createTag(tag);
