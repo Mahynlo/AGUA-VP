@@ -8,36 +8,79 @@
 **🚀 Versión:** `v1.3.1-rc.3` [Pre-release / Versión Candidata de Evaluación]  
 **📌 Versión base anterior estable:** `v1.3.0`  
 **🔖 Pre-release precedente:** `v1.3.1-rc.2`  
-**🧩 Servidor embebido:** `@aguavp/api-server 1.0.18`
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.19` (antes `1.0.18`)
 
-> 📝 **BORRADOR** generado desde 15 commit(s) desde `v1.3.1-rc.2`. Reescribe cada punto pensando en quien usa la app (qué cambió y qué debe hacer), quita lo que no le afecte y borra esta línea. No se puede publicar mientras esta línea exista.
-
-> ⚠️ **Aviso de Pre-release:** _resume en una o dos líneas qué trae esta versión y qué conviene probar._
+> ⚠️ **Aviso de Pre-release:** sesiones e inicio de sesión más seguros, arranque mucho más rápido (la ventana aparece de inmediato), copia en la nube al cerrar la app y un Centro de Actualizaciones rediseñado. **Al actualizar no se cierra la sesión abierta.** Conviene probar: abrir y cerrar la app con sesión iniciada, dejarla abierta más de 15 minutos, imprimir recibos y cambiar la contraseña. Incluye todo lo de `v1.3.1-rc.2` (ver más abajo).
 
 ---
 
-### ✨ Novedades
-- Implementar pantalla de inicio y mejorar la gestión de carga de la API
-- **auth:** Implementar la gestión de sesiones con tokens de acceso y de actualización en el proceso principal
-- **api:** Agregar algoritmo de verificación HS256 al validar el token de sesión
-- **api:** Implementar la sincronización en la nube antes de cerrar la aplicación y mejorar el manejo de errores
-- **tarifas:** Mejora de TarifasVista con nuevos componentes y ajustes de diseño
-- Optimizar los componentes de gráficos para evitar renderizados innecesarios mediante el uso de memorización para las firmas de datos
+### 🔐 Sesiones e inicio de sesión
 
-### 🖥️ Mejoras de interfaz
-- Actualizar el estilo de los botones en el componente ModalRegistroUsuario para mejorar su apariencia
+#### En el equipo
+- **La sesión se guarda cifrada** con el cifrado de Windows, fuera de la interfaz. Antes quedaba en un almacenamiento interno que cualquier código de la interfaz podía leer.
+- **Al actualizar no hay que volver a iniciar sesión:** la primera vez que abre esta versión, la app recupera la sesión que estaba abierta.
+- **Cerrar sesión la cierra también en el servidor**, aunque la app haya estado inactiva un rato. Antes solo se olvidaba en el equipo.
 
-### 🧹 Mantenimiento interno
-- Refactorizar el componente ActualizacionesVista: mejorar la disposición, actualizar el encabezado y potenciar la accesibilidad.
-- Eliminar el archivo Cliente.js para simplificar la gestión de la base de datos
-- Refactorización de ModalPagoDistribuidoCliente: mejora de la disposición, optimización de la visualización de la distribución de pagos y actualización de estilos
-- Ajustar estilos y espaciado en ModalLiquidacionTotal y ModalPagoRapido para mejorar la legibilidad y la consistencia visual
-- Ajustar estilos y espaciado en CarruselLecturasModal para mejorar la legibilidad y la consistencia visual
-- Refactorización de los componentes MapaRutas y SelectorCoordenadas para mejorar el rendimiento y la legibilidad
-- Eliminar la gestión de la caché del sistema de archivos de la función GenerarRutaLectura
+#### En el servidor
+- **Cada equipo tiene su sesión:** cerrar sesión en uno ya no cierra las de los demás. Cerrar una sesión desde *Perfil* o *Administración* la termina de verdad: ese equipo ya no puede renovarla.
+- **Cambiar o restablecer una contraseña cierra las demás sesiones**, también cuando la restablece un administrador. Quien tuviera la contraseña anterior queda fuera.
+- **Contraseñas nuevas:** no se puede repetir la actual ni las últimas 5.
+- **Duración máxima:** una sesión puede renovarse durante 30 días; después pide la contraseña otra vez. Sin usar la app, la sesión vence a los 7 días, como antes.
+- **Intentos fallidos:** tras 5 contraseñas incorrectas la cuenta se bloquea 30 minutos, por cualquier vía de acceso. Los mensajes ya no indican cuántos intentos quedan ni si el correo existe.
+- **Detección de sesiones copiadas:** si alguien reutiliza los datos de una sesión ya renovada, esa sesión se cierra y queda registrado en la auditoría de seguridad.
+- **El servidor solo responde en el propio equipo:** otras computadoras de la red ya no pueden conectarse a él.
 
-### 📚 Documentación y ayuda
-- Optimización de la documentación sobre el registro de pagos y del sistema de carga dinámica
+#### 🐞 Correcciones
+- **Correos con mayúsculas:** un usuario registrado con mayúsculas en el correo no podía iniciar sesión.
+- **Dos inicios de sesión en el mismo segundo** daban un error del servidor.
+- **Renovar la sesión** podía actualizar otra sesión del mismo usuario cuando tenía más de una abierta.
+- **Errores internos** ya no se muestran al usuario con detalles técnicos.
+
+#### 🗄️ Base de datos
+- Migración `0024` (se aplica sola al abrir la app, con respaldo previo): liga cada token de renovación a su sesión. En la base solo se guardan huellas de los tokens, no los tokens. Las sesiones abiertas antes de actualizar siguen funcionando.
+
+---
+
+### ⚡ Arranque y rendimiento
+- **La ventana aparece de inmediato** con la pantalla *«Iniciando el sistema…»* mientras arranca el servidor. Antes no se veía nada hasta que terminaba, y el primer arranque del día podía tardar de 30 a 60 segundos. Mientras arranca no se puede cerrar, para no interrumpir el respaldo ni las migraciones.
+- **El servidor carga el doble de rápido:** abre la mitad de archivos al arrancar (unos 1,040 en lugar de 2,060).
+- **Menos consultas al iniciar sesión:** clientes, medidores y tarifas se pedían dos veces, y el panel de inicio una vez más antes de tener sesión.
+
+---
+
+### ☁️ Copia en la nube (Turso)
+- **Se suben los cambios al cerrar la app** y antes de instalar una actualización (como máximo 8 segundos; sin internet cierra igual y se suben la próxima vez).
+- **Sincronización al abrir:** un minuto después de iniciar la app se suben los cambios pendientes, sin esperar el ciclo de 15 minutos. Antes, en sesiones cortas podían no subirse nunca.
+- **Guardar la conexión** con Turso muestra un error si el servidor no pudo aplicarla, en lugar de decir que se guardó.
+
+---
+
+### 🖥️ Interfaz
+
+#### 🔄 Centro de Actualizaciones
+- **Rediseñado** con el mismo estilo que el resto de los módulos: indicadores arriba, una tarjeta de estado con la única acción disponible (*Buscar*, *Descargar* o *Instalar y reiniciar*) y la barra de descarga dentro de la misma tarjeta.
+- **Las notas de cada versión ya no muestran el historial completo**, solo los cambios de esa versión.
+- **«Última búsqueda»** muestra la fecha real (antes decía «Hoy» aunque no se hubiera buscado). Se quitaron datos fijos que no correspondían al equipo.
+- **El interruptor «Avisar al iniciar»** se veía apagado en el tema oscuro aunque estuviera activado.
+
+#### Otros módulos
+- **Tarifas:** vista reorganizada con el encabezado e indicadores comunes de los módulos.
+- **Pagos y Lecturas:** ajustes de espaciado y legibilidad en *Liquidación total*, *Pago rápido*, *Pago distribuido* y en la toma de lecturas.
+- **Gráficas del panel de inicio:** ya no se vuelven a dibujar cuando sus datos no cambian.
+
+---
+
+### 🧪 Calidad y desarrollo
+- **Notas de versión automatizadas:** cada versión empieza con un borrador generado desde los cambios, y no se puede publicar mientras siga siendo borrador. En GitHub se publica solo la sección de esa versión.
+- **Pruebas automatizadas:** se corrigió la prueba del cobro distribuido (hacía clic antes de que se aplicara la búsqueda) y se dio más tiempo al primer arranque.
+
+---
+
+### 🔖 Trazabilidad de Versiones
+- **Versión actual:** `v1.3.1-rc.3` [Pre-release]
+- **Pre-release previo:** `v1.3.1-rc.2` (11/10/2026)
+- **Versión base estable previa:** `v1.3.0` (22/09/2026)
+- **Servidor embebido:** `@aguavp/api-server 1.0.19`
 
 ---
 

@@ -81,7 +81,7 @@ function ensureChangelog(tag) {
     stdio: 'inherit'
   });
   if (result.status !== 0) {
-    fail(`No se sube ${tag}: primero completa sus notas en docs/releases_changelog.md (npm run changelog:nueva -- ${tag})`);
+    fail(`No se sube ${tag}: corrige lo indicado arriba en docs/releases_changelog.md y vuelve a intentarlo`);
   }
 }
 
