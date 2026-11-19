@@ -50,10 +50,13 @@ const api = {
     ipcRenderer.invoke('update-user-permissions', id, overrides, token),
 
   //sesiones (cerrar sesión, verificar sesión, obtener sesiones activas, renovar token)
-  verifySession: (token) => ipcRenderer.invoke('verify-session', token),
-  logout: (token) => ipcRenderer.invoke('logout', token),
+  // Los tokens de sesión viven en el proceso principal (src/main/auth/sessionStore.js): aquí solo
+  // se pregunta por el estado de la sesión o se pide renovarla / cerrarla.
+  sessionState: (anterior) => ipcRenderer.invoke('auth:estado-sesion', anterior),
+  verifySession: () => ipcRenderer.invoke('verify-session'),
+  logout: () => ipcRenderer.invoke('logout'),
   getSession: (usuario_id, token) => ipcRenderer.invoke('active-sessions-user', usuario_id, token),
-  refreshToken: (refreshToken) => ipcRenderer.invoke('refresh-token', refreshToken),
+  refreshToken: () => ipcRenderer.invoke('refresh-token'),
   closeSpecificSession: (sesionId, token) =>
     ipcRenderer.invoke('close-specific-session', sesionId, token),
   closeAllUserSessions: (usuarioId, token) =>

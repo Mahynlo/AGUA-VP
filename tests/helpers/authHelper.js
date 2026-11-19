@@ -29,7 +29,9 @@ async function dismissWelcomeModalIfNeeded(window) {
  * Asegura que la sesión esté cerrada y la pantalla esté en el Login
  */
 async function ensureLoggedOut(window) {
-  await window.evaluate(() => {
+  await window.evaluate(async () => {
+    // La sesión vive en el proceso principal: hay que cerrarla ahí, no basta con limpiar localStorage
+    await window.api.logout().catch(() => null);
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('app_last_route');

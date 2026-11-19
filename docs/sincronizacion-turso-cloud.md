@@ -70,7 +70,7 @@ flowchart TD
 
 * **Registro local de cambios:** cada alta, edición o borrado se anota en la tabla local `sync_cambios`. Antes de cualquier petición de red se revisa ese registro.
 * **Cero red en reposo:** si no hubo cambios desde la última sincronización, no se hace ninguna llamada a Turso. Las tablas de sesiones y tokens no se registran (cambian en cada renovación de sesión).
-* **Ciclo cada 15 minutos**, más una **verificación completa** de la copia una vez al día (pocas consultas de conteo).
+* **Ciclo cada 15 minutos**, con un **primer ciclo un minuto después de arrancar** (API 1.0.19) y una **subida de los cambios pendientes al cerrar la app** (espera como máximo 8 segundos; si no alcanza, se suben en la siguiente sesión). Así las sesiones cortas también quedan copiadas. Además, una **verificación completa** de la copia una vez al día (pocas consultas de conteo).
 * **Estado persistente:** la última sincronización y el punto de avance del registro se guardan en la base local (`sync_estado`). La carga completa **no se repite en cada arranque**; solo se ejecuta la primera vez, al vincular otra base, cuando la nube no corresponde a esta base, o cuando la app activa el registro de cambios por primera vez (al actualizar a 1.0.8) o en una tabla nueva.
 
 Estimación: carga completa de una base típica = unos cientos de KB a pocos MB; operación mensual = pocos MB (solo se suben los registros modificados).

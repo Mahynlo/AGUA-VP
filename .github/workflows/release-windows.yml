@@ -85,6 +85,20 @@ jobs:
           "release_version=$releaseVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           "release_type=$releaseType" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      - name: Release notes from changelog
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ steps.version_check.outputs.release_version }}
+        run: |
+          # Solo la sección de esta versión de docs/releases_changelog.md (ver scripts/changelog.cjs).
+          # Falla aquí, antes de compilar, si la versión no tiene notas o si siguen siendo un borrador.
+          $tag = if ("${{ github.event_name }}" -eq "push") { $env:TAG } else { "v$env:RELEASE_VERSION" }
+          node scripts/changelog.cjs verificar $tag
+          if ($LASTEXITCODE -ne 0) { throw "Las notas de $tag no están listas en docs/releases_changelog.md" }
+          node scripts/changelog.cjs extraer $tag "$env:RUNNER_TEMP/release-notes.md"
+          if ($LASTEXITCODE -ne 0) { throw "No se pudieron extraer las notas de $tag" }
+
       - name: Pack API tgz
         id: pack_api
         working-directory: api-AguaVP-src
@@ -166,8 +180,6 @@ jobs:
           Write-Host "event=${{ github.event_name }} ref=${{ github.ref }} repo=${{ github.repository }} actor=${{ github.actor }}"
           Write-Host "has VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL != '' }}"
           Write-Host "has VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY != '' }}"
-          Write-Host "has VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL != '' }}"
-          Write-Host "has VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN != '' }}"
           Write-Host "has var API_EXECUTION_MODE: ${{ vars.API_EXECUTION_MODE != '' }}"
           Write-Host "has var API_JWT_EXPIRES_IN: ${{ vars.API_JWT_EXPIRES_IN != '' }}"
 
@@ -177,8 +189,6 @@ jobs:
         env:
           SECRET_VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL }}
           SECRET_VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
-          SECRET_VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL }}
-          SECRET_VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN }}
           API_EXECUTION_MODE: ${{ vars.API_EXECUTION_MODE }}
           API_JWT_EXPIRES_IN: ${{ vars.API_JWT_EXPIRES_IN }}
         run: |
@@ -214,8 +224,6 @@ jobs:
           RELEASE_VERSION: ${{ steps.version_check.outputs.release_version }}
           SECRET_VITE_APPKEY_INICIAL: ${{ secrets.VITE_APPKEY_INICIAL }}
           SECRET_VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
-          SECRET_VITE_TURSO_DATABASE_URL: ${{ secrets.VITE_TURSO_DATABASE_URL }}
-          SECRET_VITE_TURSO_AUTH_TOKEN: ${{ secrets.VITE_TURSO_AUTH_TOKEN }}
           API_EXECUTION_MODE: ${{ steps.env_contract.outputs.api_execution_mode }}
           API_JWT_EXPIRES_IN: ${{ steps.env_contract.outputs.api_jwt_expires_in }}
         run: |
@@ -230,8 +238,6 @@ jobs:
             "VITE_APP_VERSION=$env:RELEASE_VERSION"
             "VITE_APPKEY_INICIAL=$env:SECRET_VITE_APPKEY_INICIAL"
             "VITE_SECRET_KEY=$env:SECRET_VITE_SECRET_KEY"
-            "VITE_TURSO_DATABASE_URL=$env:SECRET_VITE_TURSO_DATABASE_URL"
-            "VITE_TURSO_AUTH_TOKEN=$env:SECRET_VITE_TURSO_AUTH_TOKEN"
             "VITE_URL_BASE_API_AGUAVP=http://localhost:3000"
             "VITE_API_REGISTRAR_APP=http://localhost:3000/api/v2/app/registrarApp"
             "VITE_API_LOGIN=http://localhost:3000/api/v2/auth/login"
@@ -312,17 +318,15 @@ jobs:
             if ($env:RELEASE_TYPE -eq 'prerelease') {
               $extraArgs += '--prerelease'
             }
-            if (Test-Path "docs/releases_changelog.md") {
-              $extraArgs += '--notes-file'
-              $extraArgs += 'docs/releases_changelog.md'
-            }
+            # Notas: solo la sección de esta versión (paso "Release notes from changelog"). Antes se
+            # adjuntaba el changelog completo y la app mostraba todas las versiones en cada release.
+            $extraArgs += '--notes-file'
+            $extraArgs += "$env:RUNNER_TEMP/release-notes.md"
             gh release create $tag @filePaths --title "$tag" @extraArgs
           } else {
             Write-Host "El release $tag ya existe. Subiendo archivos con --clobber..."
             gh release upload $tag @filePaths --clobber
-            if (Test-Path "docs/releases_changelog.md") {
-              gh release edit $tag --notes-file "docs/releases_changelog.md"
-            }
+            gh release edit $tag --notes-file "$env:RUNNER_TEMP/release-notes.md"
           }
 
       - name: Upload build outputs

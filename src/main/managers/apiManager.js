@@ -508,7 +508,7 @@ function syncHeaders() {
 export function verifySessionToken(token) {
     if (!token || typeof token !== 'string') return null;
     try {
-        return jwt.verify(token, loadOrCreateSecrets().jwtSecret);
+        return jwt.verify(token, loadOrCreateSecrets().jwtSecret, { algorithms: ['HS256'] });
     } catch {
         return null;
     }
@@ -557,23 +557,38 @@ export async function saveTursoConfig({ tursoUrl, tursoToken, autoSync }) {
 
     // Notificar al servidor en caliente si está corriendo
     if (apiServer?.isRunning) {
-        try {
-            await fetch(`http://localhost:${API_PORT}/api/v2/sync/configure`, {
-                method: 'POST',
-                headers: syncHeaders(),
-                body: JSON.stringify({
-                    tursoUrl: secrets.tursoUrl,
-                    tursoToken: secrets.tursoToken,
-                    autoSync: secrets.autoSync,
-                    equipoId: getEquipoId()
-                })
-            });
-        } catch (e) {
-            logManager.warn(`No se pudo notificar a la API sobre Turso: ${e.message}`, 'system');
+        const motivo = await aplicarConfigEnApi({
+            tursoUrl: secrets.tursoUrl,
+            tursoToken: secrets.tursoToken,
+            autoSync: secrets.autoSync,
+            equipoId: getEquipoId()
+        });
+        if (motivo) {
+            logManager.warn(`No se pudo notificar a la API sobre Turso: ${motivo}`, 'system');
+            throw new Error(`La configuración se guardó, pero no se pudo aplicar ahora (${motivo}). Reinicia AguaVP para aplicarla.`);
         }
     }
 
     return getTursoConfig();
+}
+
+/**
+ * Envía la configuración de la nube a la API en ejecución.
+ * @returns {Promise<string|null>} null si se aplicó; si no, el motivo.
+ */
+async function aplicarConfigEnApi(config) {
+    try {
+        const response = await fetch(`http://localhost:${API_PORT}/api/v2/sync/configure`, {
+            method: 'POST',
+            headers: syncHeaders(),
+            body: JSON.stringify(config)
+        });
+        const data = await response.json().catch(() => null);
+        if (response.ok && data?.success) return null;
+        return data?.error || `la API respondió ${response.status}`;
+    } catch (e) {
+        return e.message;
+    }
 }
 
 /**
@@ -590,13 +605,11 @@ export async function clearTursoConfig() {
     logManager.info('Credenciales de Turso eliminadas. Modo local puro activo.', 'system');
 
     if (apiServer?.isRunning) {
-        try {
-            await fetch(`http://localhost:${API_PORT}/api/v2/sync/configure`, {
-                method: 'POST',
-                headers: syncHeaders(),
-                body: JSON.stringify({ tursoUrl: '', tursoToken: '', autoSync: false })
-            });
-        } catch (_) {}
+        const motivo = await aplicarConfigEnApi({ tursoUrl: '', tursoToken: '', autoSync: false });
+        if (motivo) {
+            logManager.warn(`No se pudo notificar a la API sobre Turso: ${motivo}`, 'system');
+            throw new Error(`Las credenciales se eliminaron, pero la copia en la nube sigue activa hasta reiniciar (${motivo}). Reinicia AguaVP.`);
+        }
     }
 
     return getTursoConfig();
@@ -695,6 +708,72 @@ export async function restoreFromCloud() {
     } catch (e) {
         logManager.error(`Error en restauración desde la nube: ${e.message}`, 'backup');
         return { success: false, error: e.message };
+    }
+}
+
+// ── Subida de cambios pendientes al cerrar ────────────────────────────────────
+
+const SUBIDA_AL_CERRAR_MAX_MS = 8000;
+let subidaAlCerrar = null;
+
+/**
+ * true si al cerrar conviene esperar una subida a la nube: hay nube vinculada con copia automática,
+ * la API está corriendo y todavía no se intentó. Es síncrono: sin nube, el cierre no cambia en nada.
+ */
+export function debeSubirAlCerrar() {
+    if (subidaAlCerrar || !apiServer?.isRunning) return false;
+    try {
+        const config = getTursoConfig();
+        return config.configured && config.autoSync;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Sube a la nube los cambios pendientes antes de cerrar la app (el ciclo automático corre cada
+ * 15 minutos: sin esto, lo capturado justo antes de cerrar esperaría a la siguiente sesión).
+ * Solo sube cambios ya registrados: si hace falta una carga completa, hay un conflicto o hay una copia
+ * en curso, no hace nada. Nunca lanza y termina como máximo en SUBIDA_AL_CERRAR_MAX_MS; si se
+ * interrumpe, los cambios siguen en el registro local y se suben en la siguiente sesión.
+ * Se intenta una sola vez por sesión.
+ */
+export function flushCloudBeforeQuit() {
+    if (subidaAlCerrar) return subidaAlCerrar;
+    if (!debeSubirAlCerrar()) return Promise.resolve();
+
+    const controller = new AbortController();
+    let limite;
+    const tope = new Promise(resolve => {
+        limite = setTimeout(() => {
+            controller.abort();
+            logManager.warn('La subida de cambios al cerrar tardó demasiado; se completará en la siguiente sesión', 'nube');
+            resolve();
+        }, SUBIDA_AL_CERRAR_MAX_MS);
+    });
+
+    subidaAlCerrar = Promise.race([subirCambiosPendientes(controller.signal), tope])
+        .catch(err => {
+            if (!controller.signal.aborted) {
+                logManager.warn(`No se pudieron subir los cambios al cerrar: ${err.message}`, 'nube');
+            }
+        })
+        .finally(() => clearTimeout(limite));
+    return subidaAlCerrar;
+}
+
+async function subirCambiosPendientes(signal) {
+    const base = `http://localhost:${API_PORT}/api/v2/sync`;
+    const estado = (await (await fetch(`${base}/status`, { headers: syncHeaders(), signal })).json())?.status;
+    if (!estado?.configured || estado.inProgress || estado.conflicto || !estado.lastSync) return;
+    if (!(estado.cambiosPendientes > 0)) return;
+
+    logManager.info(`Subiendo ${estado.cambiosPendientes} cambio(s) pendiente(s) a la nube antes de cerrar`, 'nube');
+    const response = await fetch(`${base}/now`, { method: 'POST', headers: syncHeaders(), body: '{}', signal });
+    const data = await response.json();
+    if (!data?.success || data.data?.success === false) {
+        const motivo = data?.error || data?.data?.error || data?.data?.reason || 'sin detalle';
+        logManager.warn(`La subida al cerrar no se completó: ${motivo}`, 'nube');
     }
 }
 

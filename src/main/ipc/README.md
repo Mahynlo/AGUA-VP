@@ -76,7 +76,7 @@ Los controles de la barra de título (`minimize`, `maximize`, `close`) se regist
 
 | Archivo | Canales | Delega en |
 |---|---|---|
-| `usuariosHandlers.js` | `login`, `register`, `logout`, `verify-session`, `refresh-token`, `active-sessions-user`, `close-specific-session`, `close-all-user-sessions`, `change-password`, `request-password-recovery`, `reset-password-recovery`, `fetch-usuarios`, `create-user`, `update-user`, `delete-user`, `reactivate-user`, `purge-user`, `fetch-permissions-catalog`, `fetch-user-permissions`, `fetch-my-permissions`, `update-user-permissions` | Su propio `apiRequest()` (con recuperación del AppKey) + `api-client/http.js` |
+| `usuariosHandlers.js` | `auth:estado-sesion`, `login`, `register`, `logout`, `verify-session`, `refresh-token`, `active-sessions-user`, `close-specific-session`, `close-all-user-sessions`, `change-password`, `request-password-recovery`, `reset-password-recovery`, `fetch-usuarios`, `create-user`, `update-user`, `delete-user`, `reactivate-user`, `purge-user`, `fetch-permissions-catalog`, `fetch-user-permissions`, `fetch-my-permissions`, `update-user-permissions` | Su propio `apiRequest()` (con recuperación del AppKey) + `api-client/http.js` + `auth/sessionStore.js` (los tokens de sesión se quedan en el proceso principal: `login`, `refresh-token` y `auth:estado-sesion` devuelven solo el usuario) |
 | `appKeyHandlers.js` | `auth-app:leer-token`, `auth-app:leer-id`, `auth-app:registrar-app`, `auth-app:ensure-token`, `auth-app:recover-or-register`, `auth-app:borrar-token`, `check-server-status` | `auth/appKey.js` |
 
 ### dominios/

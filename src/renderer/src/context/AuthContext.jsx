@@ -8,24 +8,20 @@ import { useFeedback } from "./FeedbackContext";
 export const AuthContext = createContext();
 
 // =====================================================
-// Helper: decodificar JWT de forma segura
+// Sesión
 // =====================================================
-const decodeToken = (token) => {
-    try {
-        const base64Url = token.split(".")[1];
-        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-        // atob devuelve una cadena binaria (Latin-1); reinterpretar los bytes
-        // como UTF-8 para no corromper acentos (p. ej. "Córdova" → "CÃ³rdova").
-        const json = decodeURIComponent(
-            atob(base64)
-                .split("")
-                .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-                .join("")
-        );
-        return JSON.parse(json);
-    } catch {
-        return null;
-    }
+// Los tokens de sesión viven en el proceso principal (src/main/auth/sessionStore.js), cifrados en
+// disco; aquí solo se conoce al usuario. Las pantallas siguen leyendo localStorage "token" para
+// saber si hay sesión y pasarlo por IPC, pero su valor es este marcador, que no autentica nada:
+// el proceso principal pone el token real en cada petición.
+const MARCADOR_SESION = "sesion-en-proceso-principal";
+
+const marcarSesion = () => localStorage.setItem("token", MARCADOR_SESION);
+
+const limpiarSesionLocal = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken"); // lo dejaban versiones anteriores
+    localStorage.removeItem("datosInicializados");
 };
 
 // =====================================================
@@ -65,50 +61,38 @@ export const AuthProvider = ({ children }) => {
     // =====================================================
     // Token: programación y renovación
     // =====================================================
-    const programarRenovacion = (expiresIn = "15m") => {
+    const programarRenovacion = (segundosRestantes = 15 * 60) => {
         if (renovacionTimerRef.current) {
             clearTimeout(renovacionTimerRef.current);
         }
 
-        const duracionMs = expiresIn.includes("m")
-            ? parseInt(expiresIn) * 60 * 1000
-            : parseInt(expiresIn) * 1000;
-
-        const renovarEn = duracionMs - 2 * 60 * 1000;
+        // Dos minutos antes de que venza el access token (nunca de inmediato, para no encadenar renovaciones)
+        const segundos = Number(segundosRestantes) > 0 ? Number(segundosRestantes) : 15 * 60;
+        const renovarEn = Math.max(segundos - 2 * 60, 5) * 1000;
 
         renovacionTimerRef.current = setTimeout(async () => {
-            console.log("🔄 Renovación automática del token");
+            console.log("🔄 Renovación automática de la sesión");
             await renovarAccessToken();
         }, renovarEn);
     };
 
+    // Pide al proceso principal que renueve la sesión. Devuelve true si quedó renovada.
     const renovarAccessToken = async () => {
-        // Mutex: si ya hay un refresh en curso, esperar su resultado
+        // Mutex: si ya hay una renovación en curso, esperar su resultado
         if (refreshPromiseRef.current) {
-            console.log("🔒 Refresh en curso, esperando resultado...");
+            console.log("🔒 Renovación en curso, esperando resultado...");
             return refreshPromiseRef.current;
         }
 
         const refreshPromise = (async () => {
-            const refreshToken = localStorage.getItem("refreshToken");
-
-            if (!refreshToken) {
-                logout();
-                return null;
-            }
-
             try {
-                const response = await window.api.refreshToken(refreshToken);
+                const response = await window.api.refreshToken();
 
-                if (response?.success && response.accessToken) {
-                    localStorage.setItem("token", response.accessToken);
-                    // Rotación: guardar el nuevo refreshToken si se devolvió
-                    if (response.refreshToken) {
-                        localStorage.setItem("refreshToken", response.refreshToken);
-                    }
-                    programarRenovacion(response.expiresIn || "15m");
+                if (response?.success) {
+                    marcarSesion();
+                    programarRenovacion(response.expiraEnSegundos);
                     window.dispatchEvent(new CustomEvent("token-refreshed"));
-                    return response.accessToken;
+                    return true;
                 }
 
                 const servidorActivo = await verificarEstadoServidor();
@@ -145,7 +129,7 @@ export const AuthProvider = ({ children }) => {
         if (isFetchingSesionesRef.current) return;
         isFetchingSesionesRef.current = true;
         try {
-            // Obtener token (puede ser del state o localStorage para asegurar)
+            // Marcador de sesión (el token real lo pone el proceso principal)
             const token = localStorage.getItem("token");
             if (!token) return;
 
@@ -172,62 +156,42 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const isPrintMode = urlParams.get("print") === "true";
+        let cancelado = false;
 
-        const storedToken = localStorage.getItem("token");
-        if (!storedToken) {
-            setLoading(false);
-            return;
-        }
+        (async () => {
+            // Versiones anteriores guardaban los tokens aquí: se entregan una vez al proceso principal
+            // (para no cerrar la sesión al actualizar la app) y se borran de localStorage.
+            const refreshAnterior = localStorage.getItem("refreshToken");
+            const anterior = refreshAnterior
+                ? { token: localStorage.getItem("token"), refreshToken: refreshAnterior }
+                : undefined;
 
-        const decoded = decodeToken(storedToken);
-        if (!decoded?.id || !decoded?.correo || !decoded?.rol) {
-            logout();
-            setLoading(false);
-            return;
-        }
-
-        // Verificar si el token está expirado o próximo a expirar (< 2 min)
-        const now = Math.floor(Date.now() / 1000);
-        const tokenExpirado = decoded.exp && (decoded.exp - now) <= 120;
-
-        const inicializarUsuario = (tokenDecoded) => {
-            setUser({
-                id: tokenDecoded.id,
-                nombre: tokenDecoded.nombre,
-                username: tokenDecoded.username,
-                correo: tokenDecoded.correo,
-                rol: tokenDecoded.rol,
-                fecha_creacion: tokenDecoded.fecha_creacion
-            });
-            if (!isPrintMode) {
-                obtenerSesionesActivas(tokenDecoded.id);
+            let estado = null;
+            try {
+                estado = await window.api.sessionState(anterior);
+            } catch (error) {
+                console.error("❌ Error al consultar la sesión:", error);
             }
-            setLoading(false);
-        };
+            localStorage.removeItem("refreshToken");
+            if (cancelado) return;
 
-        if (tokenExpirado) {
-            // Token expirado o por expirar: renovar ANTES de exponer al usuario
-            console.log("🔄 Token expirado/próximo a expirar en bootstrap, renovando...");
-            renovarAccessToken().then((newToken) => {
-                if (newToken) {
-                    const newDecoded = decodeToken(newToken);
-                    if (newDecoded?.id) {
-                        inicializarUsuario(newDecoded);
-                        return;
-                    }
+            if (estado?.activa && estado.user?.id) {
+                marcarSesion();
+                setUser(estado.user);
+                if (!isPrintMode) {
+                    obtenerSesionesActivas(estado.user.id);
                 }
-                // Si la renovación falló, logout
-                logout();
-                setLoading(false);
-            });
-        } else {
-            // Token válido: inicializar normalmente y programar renovación
-            inicializarUsuario(decoded);
-            if (decoded.exp) {
-                const restante = decoded.exp - now;
-                programarRenovacion(`${Math.ceil(restante / 60)}m`);
+                programarRenovacion(estado.expiraEnSegundos);
+            } else {
+                // Sin sesión (o no se pudo comprobar): las rutas protegidas llevan al inicio de sesión
+                limpiarSesionLocal();
             }
-        }
+            setLoading(false);
+        })();
+
+        return () => {
+            cancelado = true;
+        };
     }, []);
 
     // =====================================================
@@ -275,28 +239,26 @@ export const AuthProvider = ({ children }) => {
     // =====================================================
     // Login / Logout
     // =====================================================
-    const login = useCallback((token, refreshToken, expiresIn = "15m") => {
+    // El proceso principal ya guardó los tokens al iniciar sesión; aquí llegan solo los datos del usuario
+    const login = useCallback((usuario, segundosRestantes) => {
         try {
-            localStorage.setItem("token", token);
-            if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-
-            const decoded = decodeToken(token);
-            if (!decoded?.id || !decoded?.correo || !decoded?.rol) {
-                throw new Error("Token inválido");
+            if (!usuario?.id || !usuario?.correo || !usuario?.rol) {
+                throw new Error("Sesión inválida");
             }
 
+            marcarSesion();
             setUser({
-                id: decoded.id,
-                nombre: decoded.nombre,
-                username: decoded.username,
-                correo: decoded.correo,
-                rol: decoded.rol,
-                fecha_creacion: decoded.fecha_creacion
+                id: usuario.id,
+                nombre: usuario.nombre,
+                username: usuario.username,
+                correo: usuario.correo,
+                rol: usuario.rol,
+                fecha_creacion: usuario.fecha_creacion
             });
 
-            obtenerSesionesActivas(decoded.id);
-            programarRenovacion(expiresIn);
-            window.dispatchEvent(new CustomEvent("dashboard-update"));
+            // Cada contexto carga sus datos al recibir al usuario: no hace falta avisarles aquí
+            obtenerSesionesActivas(usuario.id);
+            programarRenovacion(segundosRestantes);
 
             navigate("/home");
         } catch (error) {
@@ -311,19 +273,14 @@ export const AuthProvider = ({ children }) => {
             renovacionTimerRef.current = null;
         }
 
-        const token = localStorage.getItem("token");
-
-        if (token) {
-            try {
-                await window.api.logout(token);
-            } catch (error) {
-                console.error("❌ Error en logout backend:", error);
-            }
+        // Cierra la sesión en la API y borra los tokens guardados en el proceso principal
+        try {
+            await window.api.logout();
+        } catch (error) {
+            console.error("❌ Error en logout backend:", error);
         }
 
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("datosInicializados");
+        limpiarSesionLocal();
 
         setUser(null);
         setSesiones([]);

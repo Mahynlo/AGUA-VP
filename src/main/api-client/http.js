@@ -1,13 +1,16 @@
 import { notifyTokenExpired } from './tokenExpiredHelper.js'
+import { getAccessToken } from '../auth/sessionStore.js'
 
 // Cliente HTTP común para la API local (@aguavp/api-server).
 // Centraliza cabeceras, envío y manejo de respuestas no-OK. Cada módulo de src/fetch,
 // src/register y src/update conserva sus propias validaciones, mensajes y valores de retorno.
 
-// Cabeceras de una petición autenticada: AppKey de la aplicación + token de sesión del usuario
+// Cabeceras de una petición autenticada: AppKey de la aplicación + token de sesión del usuario.
+// El token de sesión lo pone el proceso principal (auth/sessionStore.js): el renderer no lo tiene y
+// lo que envíe en `token_session` es solo un marcador. Único punto donde se arma `Authorization`.
 export const authHeaders = (token_app, token_session) => ({
   'x-app-key': `AppKey ${token_app}`,
-  Authorization: `Bearer ${token_session}`,
+  Authorization: `Bearer ${getAccessToken() || token_session}`,
   'Content-Type': 'application/json'
 })
 

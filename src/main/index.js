@@ -8,10 +8,12 @@ import icon from '../../resources/icon.png?asset'
 import initUpdateManager from './managers/updateManager.js'
 
 import { AllIpcHandlers } from './ipc/index.js' // se exportan los IpcMain de la app
-import { startApiServer, stopApiServer } from './managers/apiManager.js'
+import { startApiServer, stopApiServer, debeSubirAlCerrar, flushCloudBeforeQuit } from './managers/apiManager.js'
 import { startSyncMonitor } from './managers/syncMonitor.js'
 import { setupWindowState } from './windowState.js'
 import { restoreZoom, getSavedZoom } from './managers/zoomManager.js'
+import { urlPantallaInicio, esperarVisible } from './pantallaInicio.js'
+import logManager from './managers/logManager.js'
 import contextMenu from 'electron-context-menu';
 
 // Configurar menú contextual en Español
@@ -58,6 +60,13 @@ const createMenu = () => {
 }
 
 let mainWindow = null;
+
+// true mientras la ventana principal muestra la pantalla de inicio y la API arranca (ver pantallaInicio.js)
+let arrancando = false;
+
+// Cierre: mientras se suben a la nube los cambios pendientes ya no hay ventanas, pero el proceso sigue vivo
+let subiendoAlCerrar = false;
+let relanzarAlCerrar = false;
 
 // Solo en desarrollo: la ventana carga cientos de módulos desde el servidor de Vite. Si el
 // proceso de red de Chromium se cae mientras tanto ("Network service crashed… restarting"),
@@ -124,7 +133,13 @@ function recargarSiFallaLaCargaEnDev(win, url) {
   vigilarCarga();
 }
 
-function createWindow() {
+/**
+ * Crea la ventana principal.
+ * @param {{ conPantallaInicio?: boolean }} [opciones] - con `conPantallaInicio` la ventana muestra
+ *   primero la pantalla de inicio y la interfaz se carga después con cargarInterfaz(); sin ella se
+ *   carga la interfaz directamente.
+ */
+function createWindow({ conPantallaInicio = false } = {}) {
   createMenu();
   
   // Setup Window Persistence
@@ -160,9 +175,17 @@ function createWindow() {
   mainWindow.webContents.session.setSpellCheckerLanguages(['es']);
 
 
-  mainWindow.on('ready-to-show', () => { // Mostrar la ventana cuando esté lista 
+  mainWindow.on('ready-to-show', () => { // Mostrar la ventana cuando esté lista
     restoreZoom(mainWindow);
     mainWindow.show();      // Muestra la app
+  })
+
+  // Mientras arranca la API no se puede cerrar (Alt+F4): se detendría el servidor a medio arrancar,
+  // quizá durante las migraciones. El bloqueo va en la propia ventana (setClosable) porque el hilo
+  // principal está ocupado cargando la API: un evento 'close' quedaría en cola y se atendería después,
+  // cuando el arranque ya terminó, cerrando la app. En cuanto carga la interfaz se cierra con normalidad.
+  mainWindow.on('close', (event) => {
+    if (arrancando) event.preventDefault();
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -176,22 +199,38 @@ function createWindow() {
     restoreZoom(mainWindow);
   })
 
+  if (conPantallaInicio) {
+    arrancando = true;
+    mainWindow.setClosable(false);
+    mainWindow.loadURL(urlPantallaInicio(icon));
+  } else {
+    cargarInterfaz(mainWindow);
+  }
+}
+
+/** Carga la interfaz (React) en la ventana; si mostraba la pantalla de inicio, la reemplaza. */
+function cargarInterfaz(win) {
+  arrancando = false;
+  if (!win || win.isDestroyed()) return;
+  win.setClosable(true);
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-    recargarSiFallaLaCargaEnDev(mainWindow, process.env['ELECTRON_RENDERER_URL'])
+    win.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    recargarSiFallaLaCargaEnDev(win, process.env['ELECTRON_RENDERER_URL'])
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    win.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
   // Abrir las herramientas de desarrollo
   // if (is.dev) {
-  //   mainWindow.webContents.openDevTools();
+  //   win.webContents.openDevTools();
   // }
 
-  // Inicializar el gestor de actualizaciones
-  initUpdateManager(mainWindow);
+  // Inicializar el gestor de actualizaciones (aquí y no al crear la ventana: sus avisos van a la
+  // interfaz, y durante la pantalla de inicio no habría quién los recibiera)
+  initUpdateManager(win);
 }
 
 
@@ -205,10 +244,14 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', () => {
     // Si el usuario intenta abrir otra instancia, restaurar y enfocar la ventana existente
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       if (!mainWindow.isVisible()) mainWindow.show();
       mainWindow.focus();
+    } else if (subiendoAlCerrar && !relanzarAlCerrar && app.isPackaged) {
+      // El usuario volvió a abrir la app mientras terminaba de cerrarse: se abre de nuevo al terminar
+      relanzarAlCerrar = true;
+      app.relaunch();
     }
   });
 
@@ -226,6 +269,18 @@ if (!gotTheLock) {
       optimizer.watchWindowShortcuts(window)
     })
 
+    // La ventana aparece de inmediato con la pantalla de inicio; la interfaz se carga en ella cuando
+    // la API ya responde (arrancarla puede tardar varios segundos). Las pruebas E2E la desactivan
+    // (AGUAVP_SIN_PANTALLA_INICIO=1): Playwright espera que la ventana cargue ya la interfaz.
+    const conPantallaInicio = process.env.AGUAVP_SIN_PANTALLA_INICIO !== '1';
+    if (conPantallaInicio) {
+      createWindow({ conPantallaInicio: true });
+      // Hay que esperar a que se vea: cargar la API ocupa el hilo principal y, mientras tanto,
+      // la ventana no llega a pintarse.
+      await esperarVisible(mainWindow);
+      logManager.info('Pantalla de inicio visible', 'system');
+    }
+
     // Iniciar servidor API embebido (aplica migraciones y crea backup automáticamente)
     try {
       await startApiServer();
@@ -234,7 +289,11 @@ if (!gotTheLock) {
       // La app continúa — el renderer mostrará error de conexión
     }
 
-    createWindow() // crea la ventana
+    if (conPantallaInicio) {
+      cargarInterfaz(mainWindow) // reemplaza la pantalla de inicio por la interfaz
+    } else {
+      createWindow() // crea la ventana ya con la interfaz
+    }
     startSyncMonitor() // vigila la copia en la nube y avisa si falla
 
     app.on('activate', function () {
@@ -248,10 +307,24 @@ if (!gotTheLock) {
   // for applications and their menu bar to stay active until the user quits
   // explicitly with Cmd + Q.
   app.on('window-all-closed', async () => {
+    if (debeSubirAlCerrar()) {
+      subiendoAlCerrar = true;
+      await flushCloudBeforeQuit();
+    }
     await stopApiServer();
     if (process.platform !== 'darwin') {
       app.quit()
     }
+  })
+
+  // Cierre con app.quit() (botón de cerrar del titleBar): las ventanas ya se cerraron. Si hay nube
+  // vinculada, se suben los cambios pendientes (unos segundos como máximo) y después termina el cierre.
+  // Sin nube vinculada no se interviene.
+  app.on('will-quit', (event) => {
+    if (!debeSubirAlCerrar()) return;
+    event.preventDefault();
+    subiendoAlCerrar = true;
+    flushCloudBeforeQuit().finally(() => app.quit());
   })
 
   // In this file you can include the rest of your app"s specific main process

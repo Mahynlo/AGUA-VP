@@ -92,8 +92,13 @@ test.describe('07 · Pagos y cobranza', () => {
     await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
     await window.locator('button', { hasText: /^Cobranza$/ }).click();
     await window.locator('input[placeholder^="Buscar nombre, predio"]').fill(deudor.numero_predio);
-    await expect(window.getByText(deudor.nombre).first()).toBeVisible({ timeout: 15000 });
-    await window.locator('button', { hasText: /^Cobrar$/ }).first().click();
+    // El botón "Cobrar" de la fila de ESE cliente: la lista se ordena por deuda y, mientras la búsqueda
+    // no se aplica, la primera fila es otro cliente (el cobro se registraba al cliente equivocado).
+    const etiqueta = `Predio #${deudor.numero_predio} · ID: ${deudor.id}`;
+    const filaDeudor = window.locator('tr').filter({ has: window.getByText(etiqueta, { exact: true }) });
+    await expect(filaDeudor).toHaveCount(1, { timeout: 15000 });
+    await filaDeudor.locator('button', { hasText: /^Cobrar$/ }).click();
+    await expect(dialogo().getByText(deudor.nombre).first()).toBeVisible({ timeout: 15000 });
 
     await dialogo().locator('input[type="number"]').fill(String(monto));
     await dialogo().locator('button', { hasText: 'Revisar y Cobrar' }).click();
