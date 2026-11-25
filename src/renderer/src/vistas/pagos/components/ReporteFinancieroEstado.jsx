@@ -9,7 +9,8 @@ import {
   HiPrinter,
   HiChevronDown,
   HiDocumentText,
-  HiExclamation
+  HiExclamation,
+  HiBan
 } from "react-icons/hi";
 import { EncabezadoSeccion, Indicador, IndicadoresVista } from "../../../components/ui/VistaModulo";
 import SelectorPeriodoAvanzado from "../../../components/ui/SelectorPeriodoAvanzado";
@@ -95,6 +96,7 @@ const ReporteFinancieroEstado = () => {
 
   const resumen = financiero?.resumen || {};
   const series = financiero?.series || {};
+  const anulaciones = financiero?.anulaciones || null;
   const listados = financiero?.listados || {};
 
   const isDark = useMemo(() => {
@@ -477,6 +479,9 @@ const ReporteFinancieroEstado = () => {
       ) : (
         <div className="space-y-6">
           
+          {/* ── ANULACIONES: explican por qué un total bajó después de reportarlo ── */}
+          {anulaciones && <PanelAnulaciones anulaciones={anulaciones} />}
+
           {/* ── CHARTS SECTION ── */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 print:block">
             {/* Gráfico 1: Tendencia Mensual */}
@@ -623,5 +628,55 @@ const ReporteFinancieroEstado = () => {
     </div>
   );
 };
+
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+const monedaMx = (valor) => Number(valor || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+
+/**
+ * Anulaciones del reporte financiero (solo totales):
+ * - de los cobros de este filtro: ya están descontadas del recaudado; explican por qué bajó.
+ * - hechas en estas fechas: incluye las que corrigieron periodos ya cerrados (fuera de plazo).
+ */
+function PanelAnulaciones({ anulaciones }) {
+  const delRango = anulaciones.de_cobros_del_rango || { cantidad: 0, monto: 0 };
+  const hechas = anulaciones.hechas_en_el_rango || { cantidad: 0, monto: 0, periodos_cerrados: { cantidad: 0, monto: 0 } };
+  const cerradas = hechas.periodos_cerrados || { cantidad: 0, monto: 0 };
+  const hay = delRango.cantidad > 0 || hechas.cantidad > 0;
+  const caja = hay
+    ? "border-rose-200 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/20"
+    : "border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50";
+  const valor = hay ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-zinc-400";
+
+  return (
+    <section aria-label="Anulaciones" className={`rounded-2xl border p-5 sm:p-6 print:border-none print:bg-transparent print:p-0 ${caja}`}>
+      <div className="flex items-center gap-2 mb-4">
+        <HiBan className={`w-4 h-4 ${valor}`} />
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Cobros anulados</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">De los cobros de este filtro</p>
+          <p className={`text-2xl font-black tracking-tight ${valor}`}>{monedaMx(delRango.monto)}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">
+            {delRango.cantidad > 0
+              ? <>{plural(delRango.cantidad, "cobro anulado", "cobros anulados")}. Ya están descontados del total recaudado.</>
+              : "Ningún cobro de este filtro se ha anulado."}
+          </p>
+        </div>
+        <div>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">Anulaciones hechas en estas fechas</p>
+          <p className={`text-2xl font-black tracking-tight ${valor}`}>{monedaMx(hechas.monto)}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">
+            {hechas.cantidad > 0 ? plural(hechas.cantidad, "anulación", "anulaciones") : "No se hicieron anulaciones en estas fechas"}
+            {cerradas.cantidad > 0
+              ? <>; <b className="text-rose-600 dark:text-rose-400">{plural(cerradas.cantidad, "corrigió", "corrigieron")} {cerradas.cantidad === 1 ? "un periodo ya cerrado" : "periodos ya cerrados"} por {monedaMx(cerradas.monto)}</b>, cuyos reportes anteriores ya no coinciden.</>
+              : "."}
+          </p>
+        </div>
+      </div>
+      <p className="mt-4 text-[11px] text-slate-400 dark:text-zinc-500">El detalle de cada anulación está en Pagos, con el filtro «Tipo de pago → Pagos anulados».</p>
+    </section>
+  );
+}
 
 export default ReporteFinancieroEstado;

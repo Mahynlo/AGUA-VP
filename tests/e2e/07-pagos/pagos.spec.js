@@ -300,6 +300,8 @@ test.describe('07 · Pagos y cobranza', () => {
     // Ya no aparece en el listado normal…
     await window.locator('input[placeholder^="Buscar ID, factura"]').fill(String(pagoId));
     await expect(window.locator('tr').filter({ hasText: new RegExp(`#P-\\s*${pagoId}(?!\\d)`) })).toHaveCount(0, { timeout: 15000 });
+    // …y junto al total se avisa que quedó fuera
+    await expect(window.getByTestId('nota-anulados')).toContainText('No incluye 1 cobro anulado por $25.00', { timeout: 15000 });
 
     // …pero sí con el filtro "Pagos anulados" (en "Más filtros"), con su motivo
     const masFiltros = window.locator('button[aria-expanded]', { hasText: 'Más filtros' });
@@ -320,5 +322,16 @@ test.describe('07 · Pagos y cobranza', () => {
     await window.locator('button', { hasText: /^Cancelar$/ }).last().click();
     await window.keyboard.press('Escape');
     await window.locator('select[aria-label="Tipo de pago"]').selectOption('All').catch(() => {});
+  });
+
+  test('Estadísticas: el reporte financiero dice cuánto se anuló', async () => {
+    const { window } = ctx;
+    await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
+    await window.locator('button', { hasText: /^Estadísticas$/ }).click();
+    const panel = window.getByRole('region', { name: 'Anulaciones' });
+    await expect(panel).toBeVisible({ timeout: 20000 });
+    await expect(panel.getByText('De los cobros de este filtro')).toBeVisible();
+    // La prueba anterior anuló un cobro hoy: el filtro por defecto (periodo actual) incluye hoy
+    await expect(panel.getByText(/\d+ anulaci(ón|ones)/)).toBeVisible();
   });
 });

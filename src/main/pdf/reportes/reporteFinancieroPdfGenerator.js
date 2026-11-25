@@ -276,6 +276,8 @@ export async function generarReporteFinancieroPdf(reporteData, options = {}) {
   const recaudacionMensual = series.recaudacion_mensual || []
   const recaudacionCaja = series.recaudacion_por_mes_pago || []
   const metodosPago = series.metodos_pago || []
+  // Anulaciones (API 1.0.21+): explican por qué un total bajó después de haberse reportado
+  const anulaciones = reporteData?.anulaciones || reporteData?.financiero?.anulaciones || null
 
   const totalFacturado = Number(resumen.total_esperado || 0)
   const totalRecaudado = Number(resumen.total_recaudado || 0)
@@ -764,6 +766,58 @@ export async function generarReporteFinancieroPdf(reporteData, options = {}) {
     ],
     margin: [0, 0, 0, 10]
   })
+
+  // F2. COBROS ANULADOS (solo totales; el detalle está en Pagos → Pagos anulados)
+  if (anulaciones) {
+    const delRango = anulaciones.de_cobros_del_rango || {}
+    const hechas = anulaciones.hechas_en_el_rango || {}
+    const cerradas = hechas.periodos_cerrados || {}
+    const hayCerradas = Number(cerradas.cantidad || 0) > 0
+    const fila = (concepto, cantidad, monto, { color = THEME.textDark, fillColor = '#ffffff', sangria = false } = {}) => [
+      { text: concepto, bold: !sangria, fontSize: 7, color: sangria ? THEME.textMuted : THEME.textDark, margin: [sangria ? 10 : 0, 0, 0, 0], fillColor },
+      { text: fmt(Number(cantidad || 0)), fontSize: 7, alignment: 'right', fillColor },
+      { text: money(Number(monto || 0)), bold: true, fontSize: 7, color, alignment: 'right', fillColor }
+    ]
+    content.push({
+      stack: [
+        { text: 'COBROS ANULADOS', bold: true, fontSize: 8, color: THEME.textDark, margin: [0, 0, 0, 3] },
+        {
+          table: {
+            headerRows: 1,
+            dontBreakRows: true,
+            widths: ['*', 130, 150],
+            body: [
+              [
+                { text: 'Concepto', bold: true, fontSize: 7, color: '#ffffff', fillColor: THEME.tableHeaderBg },
+                { text: 'Cobros', bold: true, fontSize: 7, color: '#ffffff', fillColor: THEME.tableHeaderBg, alignment: 'right' },
+                { text: 'Monto ($ MXN)', bold: true, fontSize: 7, color: '#ffffff', fillColor: THEME.tableHeaderBg, alignment: 'right' }
+              ],
+              fila('Cobros de este período que fueron anulados (ya descontados de la recaudación)', delRango.cantidad, delRango.monto, { color: THEME.chartRed }),
+              fila('Anulaciones realizadas en estas fechas', hechas.cantidad, hechas.monto, { fillColor: THEME.cardBgAlt }),
+              fila('De ellas, correcciones a períodos ya cerrados', cerradas.cantidad, cerradas.monto, { sangria: true, fillColor: THEME.cardBgAlt, color: hayCerradas ? THEME.chartRed : THEME.textDark })
+            ]
+          },
+          layout: {
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => THEME.border,
+            vLineColor: () => THEME.border,
+            paddingLeft: () => 6,
+            paddingRight: () => 6,
+            paddingTop: () => 3.5,
+            paddingBottom: () => 3.5
+          }
+        },
+        {
+          text: hayCerradas
+            ? 'Las correcciones a períodos ya cerrados cambian los totales de reportes emitidos antes; esos reportes ya no coinciden con este.'
+            : 'Un cobro anulado no se borra: queda en el historial con quién lo anuló, cuándo y por qué.',
+          fontSize: 6.5, color: THEME.textLight, italics: true, margin: [0, 3, 0, 0]
+        }
+      ],
+      margin: [0, 0, 0, 10]
+    })
+  }
 
   // G. TABLA 3: CLASIFICACIÓN DE INGRESOS POR MEDIO DE PAGO
   if (metodosPago.length > 0) {

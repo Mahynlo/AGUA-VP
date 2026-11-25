@@ -540,6 +540,19 @@ const TabPagos = () => {
               {porFechaDeCobro && <span className="text-slate-400 dark:text-zinc-500 font-medium"> · de todos los períodos facturados</span>}
             </p>
           )}
+          {/* Anulados con los mismos filtros: no aparecen ni suman, pero se dice cuántos son */}
+          {resumen?.anulados?.cantidad > 0 && (
+            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400" data-testid="nota-anulados">
+              No incluye {resumen.anulados.cantidad === 1 ? "1 cobro anulado" : `${resumen.anulados.cantidad} cobros anulados`} por{" "}
+              <span className="font-bold text-rose-600 dark:text-rose-400">
+                {Number(resumen.anulados.monto).toLocaleString("es-MX", { style: "currency", currency: "MXN" })}
+              </span>
+              {" · "}
+              <button type="button" onClick={() => handleTipoChange("anulados")} className="font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                Ver anulados
+              </button>
+            </p>
+          )}
         </div>
 
         {/* Sub-header paginación */}

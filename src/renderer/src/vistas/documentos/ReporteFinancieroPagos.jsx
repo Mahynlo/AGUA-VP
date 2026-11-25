@@ -79,6 +79,7 @@ const ReporteFinancieroPagos = () => {
   const resumen = data?.resumen || {};
   const filtro = data?.filtro_aplicado || {};
   const series = data?.series || {};
+  const anulaciones = data?.anulaciones || null;
 
   // Series financieras
   const recaudacionMensual = useMemo(() => series.recaudacion_mensual || [], [series]);
@@ -1006,6 +1007,54 @@ const ReporteFinancieroPagos = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {/* 4b. COBROS ANULADOS (igual que el PDF nativo; solo totales) */}
+                {anulaciones && (() => {
+                  const delRango = anulaciones.de_cobros_del_rango || {};
+                  const hechas = anulaciones.hechas_en_el_rango || {};
+                  const cerradas = hechas.periodos_cerrados || {};
+                  const hayCerradas = Number(cerradas.cantidad || 0) > 0;
+                  const td = { border: "1px solid #e2e8f0", padding: "5px 8px" };
+                  const num = { ...td, textAlign: "right", fontFamily: "monospace" };
+                  return (
+                    <div className="no-break" style={{ marginBottom: "14px" }}>
+                      <div style={{ fontSize: "9.5px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.04em" }}>
+                        Cobros anulados
+                      </div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px", background: "white", border: "1px solid #cbd5e1", borderRadius: "6px", overflow: "hidden" }}>
+                        <thead>
+                          <tr>
+                            <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "left" }}>Concepto</th>
+                            <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Cobros</th>
+                            <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Monto ($ MXN)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td style={{ ...td, fontWeight: 700 }}>Cobros de este período que fueron anulados (ya descontados de la recaudación)</td>
+                            <td style={num}>{fmt(Number(delRango.cantidad || 0))}</td>
+                            <td style={{ ...num, fontWeight: 700, color: "#dc2626" }}>{money(Number(delRango.monto || 0))}</td>
+                          </tr>
+                          <tr style={{ background: "#f8fafc" }}>
+                            <td style={{ ...td, fontWeight: 700 }}>Anulaciones realizadas en estas fechas</td>
+                            <td style={num}>{fmt(Number(hechas.cantidad || 0))}</td>
+                            <td style={{ ...num, fontWeight: 700 }}>{money(Number(hechas.monto || 0))}</td>
+                          </tr>
+                          <tr style={{ background: "#f8fafc" }}>
+                            <td style={{ ...td, paddingLeft: "18px", color: "#475569" }}>De ellas, correcciones a períodos ya cerrados</td>
+                            <td style={num}>{fmt(Number(cerradas.cantidad || 0))}</td>
+                            <td style={{ ...num, fontWeight: 700, color: hayCerradas ? "#dc2626" : "#0f172a" }}>{money(Number(cerradas.monto || 0))}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <div style={{ fontSize: "8px", color: "#64748b", fontStyle: "italic", marginTop: "3px" }}>
+                        {hayCerradas
+                          ? "Las correcciones a períodos ya cerrados cambian los totales de reportes emitidos antes; esos reportes ya no coinciden con este."
+                          : "Un cobro anulado no se borra: queda en el historial con quién lo anuló, cuándo y por qué."}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* 5. CLASIFICACIÓN DE INGRESOS POR MEDIO DE PAGO */}
                 {metodosPagoTabla.length > 0 && (
