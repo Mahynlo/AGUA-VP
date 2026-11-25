@@ -24,7 +24,7 @@
 #### 🧩 Servidor de pagos
 - **Solo administradores corrigen pagos:** modificar un pago ya registrado queda reservado a superadmin y administrador. Registrar y cobrar sigue igual para todos los roles.
 - **Fechas de pago válidas:** se rechazan fechas que no existen en el calendario (por ejemplo, 31 de febrero).
-- **Al corregir el monto de un pago,** la factura vuelve a quedar como *Parcial* si recupera saldo, y el comentario de la corrección se guarda.
+- **Los montos de un pago registrado ya no se pueden cambiar** (lo cobrado, lo entregado y el cambio), para conservar el historial financiero. Al corregir un pago solo se pueden ajustar la fecha, el método y el comentario, y el comentario ahora sí se guarda.
 - **La cantidad entregada se guarda en centavos** (máximo dos decimales).
 
 ---

@@ -115,6 +115,43 @@ test.describe('07 · Pagos y cobranza', () => {
     expect(fila('SELECT saldo_pendiente FROM facturas WHERE id = ?', otra.id).saldo_pendiente).toBe(r2(otra.saldo_pendiente - 40));
   });
 
+  test('la cantidad entregada se guarda en centavos aunque se capturen más decimales', async () => {
+    const f = fila(`SELECT f.id, f.saldo_pendiente FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
+      WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 61 AND f.convenio_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM pagos p WHERE p.factura_id = f.id) ORDER BY f.id LIMIT 1`);
+    expect(f, 'debe haber otra factura de agosto sin pagos en la copia').toBeTruthy();
+
+    await abrirPagoDeFactura(f.id);
+    await cobrar('60.129');
+    await ctx.window.locator('button', { hasText: /^Finalizar$/ }).click();
+
+    const pago = fila('SELECT monto, cantidad_entregada, cambio FROM pagos WHERE factura_id = ?', f.id);
+    expect(pago).toMatchObject({ monto: 60.13, cantidad_entregada: 60.13, cambio: 0 });
+    expect(fila('SELECT saldo_pendiente FROM facturas WHERE id = ?', f.id).saldo_pendiente).toBe(r2(f.saldo_pendiente - 60.13));
+  });
+
+  test('el servidor rechaza una fecha de pago que no existe (31 de febrero)', async () => {
+    // El selector de fecha de la pantalla no permite capturarla: se envía por el mismo canal
+    // IPC que usa la pantalla de cobro, que llega al servidor instalado.
+    const f = fila(`SELECT f.id FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
+      WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 10 AND f.convenio_id IS NULL ORDER BY f.id DESC LIMIT 1`);
+    const contarPagos = () => fila('SELECT COUNT(*) AS n FROM pagos WHERE factura_id = ?', f.id).n;
+    const enviar = (fecha_pago) => ctx.window.evaluate(({ factura_id, fecha_pago }) => window.api.registerPago(
+      { factura_id, fecha_pago, cantidad_entregada: 5, metodo_pago: 'Efectivo', modificado_por: 1 },
+      localStorage.getItem('token')
+    ), { factura_id: f.id, fecha_pago });
+    const antes = contarPagos();
+
+    const invalida = await enviar('2026-02-31');
+    expect(invalida, JSON.stringify(invalida)).toMatchObject({ success: false, message: 'Validación fallida' });
+    expect(contarPagos(), 'no se registró el pago').toBe(antes);
+
+    // Control: por el mismo canal, con una fecha real, el pago sí se registra
+    const valida = await enviar(hoySonora());
+    expect(valida.success, JSON.stringify(valida)).toBe(true);
+    expect(contarPagos()).toBe(antes + 1);
+  });
+
   test('el cobro distribuido aplica primero a la factura más antigua', async () => {
     const { window } = ctx;
     const deudor = fila(`SELECT c.id, c.numero_predio, c.nombre FROM clientes c
