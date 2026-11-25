@@ -30,6 +30,20 @@ test.describe('07 · Pagos y cobranza', () => {
     await expect(dialogo().getByText(`Factura #${id}`).first()).toBeVisible({ timeout: 15000 });
   }
 
+  /** Abre el cobro distribuido del cliente `deudor` desde Pagos → Cobranza. */
+  async function abrirCobroDistribuido(window, deudor) {
+    await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
+    await window.locator('button', { hasText: /^Cobranza$/ }).click();
+    await window.locator('input[placeholder^="Buscar nombre, predio"]').fill(deudor.numero_predio);
+    // El botón "Cobrar" de la fila de ESE cliente: la lista se ordena por deuda y, mientras la búsqueda
+    // no se aplica, la primera fila es otro cliente (el cobro se registraba al cliente equivocado).
+    const etiqueta = `Predio #${deudor.numero_predio} · ID: ${deudor.id}`;
+    const filaDeudor = window.locator('tr').filter({ has: window.getByText(etiqueta, { exact: true }) });
+    await expect(filaDeudor).toHaveCount(1, { timeout: 15000 });
+    await filaDeudor.locator('button', { hasText: /^Cobrar$/ }).click();
+    await expect(dialogo().getByText(deudor.nombre).first()).toBeVisible({ timeout: 15000 });
+  }
+
   async function cobrar(cantidad) {
     await dialogo().locator('input[type="number"]').fill(String(cantidad));
     await dialogo().locator('button', { hasText: /^Cobrar$/ }).click();
@@ -80,6 +94,27 @@ test.describe('07 · Pagos y cobranza', () => {
     expect(pago).toMatchObject({ monto: saldo, cantidad_entregada: 500, cambio: r2(500 - saldo) });
   });
 
+  test('doble clic en "Confirmar y Procesar Pago" registra un solo cobro', async () => {
+    const otra = fila(`SELECT f.id, f.saldo_pendiente FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
+      WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 60 AND f.convenio_id IS NULL AND f.id != ?
+        AND NOT EXISTS (SELECT 1 FROM pagos p WHERE p.factura_id = f.id) ORDER BY f.id LIMIT 1`, factura.id);
+    expect(otra, 'debe haber otra factura de agosto sin pagos en la copia').toBeTruthy();
+
+    await abrirPagoDeFactura(otra.id);
+    await dialogo().locator('input[type="number"]').fill('40');
+    await dialogo().locator('button', { hasText: /^Cobrar$/ }).click();
+    const confirmar = dialogo().locator('button', { hasText: 'Confirmar y Procesar Pago' });
+    await expect(confirmar).toBeVisible();
+    // Dos clics en la misma tarea del navegador: React aún no ha ocultado el botón
+    // (el peor caso de un doble clic rápido; sin candado se registraban dos cobros).
+    await confirmar.evaluate((boton) => { boton.click(); boton.click(); });
+    await expect(dialogo().getByText('Pago Realizado con Éxito').first()).toBeVisible({ timeout: 20000 });
+    await ctx.window.locator('button', { hasText: /^Finalizar$/ }).click();
+
+    expect(fila('SELECT COUNT(*) AS n FROM pagos WHERE factura_id = ?', otra.id).n, 'un solo pago').toBe(1);
+    expect(fila('SELECT saldo_pendiente FROM facturas WHERE id = ?', otra.id).saldo_pendiente).toBe(r2(otra.saldo_pendiente - 40));
+  });
+
   test('el cobro distribuido aplica primero a la factura más antigua', async () => {
     const { window } = ctx;
     const deudor = fila(`SELECT c.id, c.numero_predio, c.nombre FROM clientes c
@@ -89,17 +124,7 @@ test.describe('07 · Pagos y cobranza', () => {
       WHERE f.cliente_id = ? AND f.saldo_pendiente > 0 ORDER BY l.periodo, f.id`, deudor.id);
     const monto = r2(antes[0].saldo_pendiente + 10);
 
-    await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
-    await window.locator('button', { hasText: /^Cobranza$/ }).click();
-    await window.locator('input[placeholder^="Buscar nombre, predio"]').fill(deudor.numero_predio);
-    // El botón "Cobrar" de la fila de ESE cliente: la lista se ordena por deuda y, mientras la búsqueda
-    // no se aplica, la primera fila es otro cliente (el cobro se registraba al cliente equivocado).
-    const etiqueta = `Predio #${deudor.numero_predio} · ID: ${deudor.id}`;
-    const filaDeudor = window.locator('tr').filter({ has: window.getByText(etiqueta, { exact: true }) });
-    await expect(filaDeudor).toHaveCount(1, { timeout: 15000 });
-    await filaDeudor.locator('button', { hasText: /^Cobrar$/ }).click();
-    await expect(dialogo().getByText(deudor.nombre).first()).toBeVisible({ timeout: 15000 });
-
+    await abrirCobroDistribuido(window, deudor);
     await dialogo().locator('input[type="number"]').fill(String(monto));
     await dialogo().locator('button', { hasText: 'Revisar y Cobrar' }).click();
     await dialogo().locator('button', { hasText: 'Confirmar Pago' }).click();
@@ -110,6 +135,28 @@ test.describe('07 · Pagos y cobranza', () => {
     expect(despues[0]).toMatchObject({ estado: 'Pagado', saldo_pendiente: 0 });
     expect(despues[1].saldo_pendiente).toBe(r2(antes[1].saldo_pendiente - 10));
     for (let i = 2; i < antes.length; i++) expect(despues[i].saldo_pendiente).toBe(antes[i].saldo_pendiente);
+  });
+
+  test('doble clic en "Confirmar Pago" del cobro distribuido registra un solo cobro', async () => {
+    const { window } = ctx;
+    const deudor = fila(`SELECT c.id, c.numero_predio, c.nombre FROM clientes c
+      WHERE (SELECT COUNT(*) FROM facturas f WHERE f.cliente_id = c.id AND f.saldo_pendiente > 10 AND f.convenio_id IS NULL) >= 2
+        AND c.numero_predio IS NOT NULL ORDER BY c.id DESC LIMIT 1`);
+    expect(deudor, 'debe haber un cliente con 2 o más facturas pendientes en la copia').toBeTruthy();
+    const pagosAntes = fila('SELECT COUNT(*) AS n FROM pagos p JOIN facturas f ON f.id = p.factura_id WHERE f.cliente_id = ?', deudor.id).n;
+
+    await abrirCobroDistribuido(window, deudor);
+    await dialogo().locator('input[type="number"]').fill('10');
+    await dialogo().locator('button', { hasText: 'Revisar y Cobrar' }).click();
+    const confirmar = dialogo().locator('button', { hasText: 'Confirmar Pago' });
+    await expect(confirmar).toBeVisible();
+    // Dos clics en la misma tarea del navegador, antes de que React oculte el botón
+    await confirmar.evaluate((boton) => { boton.click(); boton.click(); });
+    await expect(dialogo().getByText('Cobro Exitoso').first()).toBeVisible({ timeout: 20000 });
+    await dialogo().locator('button', { hasText: 'Finalizar y Cerrar' }).click();
+
+    const pagosDespues = fila('SELECT COUNT(*) AS n FROM pagos p JOIN facturas f ON f.id = p.factura_id WHERE f.cliente_id = ?', deudor.id).n;
+    expect(pagosDespues - pagosAntes, '$10 cubren parte de una sola factura: un solo pago').toBe(1);
   });
 
   test('Facturas → el filtro de antigüedad del vencimiento llega a la API y cuenta bien', async () => {

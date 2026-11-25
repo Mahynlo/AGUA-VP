@@ -1,5 +1,5 @@
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import ModalVistaPrevia from "../../../components/impresion/ModalVistaPrevia";
 import ModalPagoIntegradoConvenio from "./ModalPagoIntegradoConvenio";
 import {
@@ -67,6 +67,8 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
   const [resumenCobro, setResumenCobro] = useState(null);
   const [loadingResumen, setLoadingResumen] = useState(false);
   const [modalIntegradoOpen, setModalIntegradoOpen] = useState(false);
+  // Candado síncrono: un doble clic llega antes de que React oculte el botón
+  const cobrandoRef = useRef(false);
 
   const sugerenciasPago = useMemo(() => {
     if (!factura?.saldo_pendiente) return [];
@@ -191,6 +193,8 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
       return;
     }
 
+    if (cobrandoRef.current) return;
+    cobrandoRef.current = true;
     setEstadoPago("procesando");
     try {
       const resultado = await onConfirmarPago(formPago);
@@ -199,6 +203,8 @@ const ModalPago = ({ isOpen, onClose, factura, onConfirmarPago, onPagoRegistrado
     } catch (error) {
       setResultadoPago({ exito: false, mensaje: error.message || "Error al procesar pago" });
       setEstadoPago("error");
+    } finally {
+      cobrandoRef.current = false;
     }
   };
 

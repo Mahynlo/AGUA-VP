@@ -1,5 +1,5 @@
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   HiCurrencyDollar,
   HiCalculator,
@@ -47,6 +47,8 @@ const ModalPagoIntegradoConvenio = ({ isOpen, onClose, resumenCobro, convenioId,
   const [comentario, setComentario] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Candado síncrono: un doble clic llega antes de que React deshabilite el botón
+  const cobrandoRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -81,6 +83,8 @@ const ModalPagoIntegradoConvenio = ({ isOpen, onClose, resumenCobro, convenioId,
     if (totales.facturaNum > saldoFacturaDisponible) { setError(`El monto a factura no puede exceder ${formatearMoneda(saldoFacturaDisponible)}`); return; }
     if (totales.entregado <= 0 || totales.entregado < totales.aplicado) { setError("La cantidad entregada debe cubrir el total aplicado"); return; }
 
+    if (cobrandoRef.current) return;
+    cobrandoRef.current = true;
     setLoading(true);
     try {
       const payload = {
@@ -101,6 +105,7 @@ const ModalPagoIntegradoConvenio = ({ isOpen, onClose, resumenCobro, convenioId,
       console.error("Error en pago integrado:", err);
       setError(err.message || "Error procesando pago integrado");
     } finally {
+      cobrandoRef.current = false;
       setLoading(false);
     }
   };

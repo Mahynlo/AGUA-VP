@@ -1,5 +1,5 @@
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   HiCurrencyDollar,
   HiCreditCard,
@@ -44,6 +44,8 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
   const [mostrarErrores, setMostrarErrores] = useState(false);
   const [estadoPago, setEstadoPago] = useState("formulario");
   const [resultadoPago, setResultadoPago] = useState(null);
+  // Candado síncrono: un doble clic llega antes de que React oculte el botón
+  const cobrandoRef = useRef(false);
 
   const sugerenciasPago = useMemo(() => {
     if (!parcialidad?.monto_esperado) return [];
@@ -87,6 +89,8 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
     }
     if (Object.keys(nuevosErrores).length > 0) { setErroresCampos(nuevosErrores); return; }
 
+    if (cobrandoRef.current) return;
+    cobrandoRef.current = true;
     setEstadoPago("procesando");
     try {
       const dataPago = {
@@ -106,6 +110,8 @@ const ModalPagoParcialidad = ({ isOpen, onClose, parcialidad, convenio, onConfir
       console.error("Error al pagar parcialidad:", error);
       setEstadoPago("error");
       setResultadoPago({ error: error.message || "Error al procesar el pago" });
+    } finally {
+      cobrandoRef.current = false;
     }
   };
 

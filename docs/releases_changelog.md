@@ -2,6 +2,33 @@
 
 ---
 
+## 🧪 Notas de la versión — v1.3.1-rc.4 [Release Candidate]
+
+**📅 Fecha de lanzamiento:** 24/11/2026  
+**🚀 Versión:** `v1.3.1-rc.4` [Pre-release / Versión Candidata de Evaluación]  
+**📌 Versión base anterior estable:** `v1.3.0`  
+**🔖 Pre-release precedente:** `v1.3.1-rc.3`  
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.18`
+
+> 📝 **BORRADOR** generado desde 0 commit(s) desde `v1.3.1-rc.3`. Reescribe cada punto pensando en quien usa la app (qué cambió y qué debe hacer), quita lo que no le afecte y borra esta línea. No se puede publicar mientras esta línea exista.
+
+> ⚠️ **Aviso de Pre-release:** un doble clic al confirmar un cobro ya no registra el pago dos veces. Conviene probar: cobrar una factura, un cobro distribuido y una parcialidad de convenio.
+
+---
+
+### 💵 Pagos y cobranza
+
+#### 🐞 Correcciones
+- **Cobros duplicados por doble clic:** al confirmar un cobro, un doble clic rápido podía registrar el pago dos veces. Ahora solo se registra uno. Aplica al cobro de una factura, al cobro distribuido, a la liquidación total y a los cobros de convenios (parcialidad y pago integrado).
+
+#### 🧩 Servidor de pagos
+- **Solo administradores corrigen pagos:** modificar un pago ya registrado queda reservado a superadmin y administrador. Registrar y cobrar sigue igual para todos los roles.
+- **Fechas de pago válidas:** se rechazan fechas que no existen en el calendario (por ejemplo, 31 de febrero).
+- **Al corregir el monto de un pago,** la factura vuelve a quedar como *Parcial* si recupera saldo, y el comentario de la corrección se guarda.
+- **La cantidad entregada se guarda en centavos** (máximo dos decimales).
+
+---
+
 ## 🧪 Notas de la versión — v1.3.1-rc.3 [Release Candidate]
 
 **📅 Fecha de lanzamiento:** 17/11/2026  
