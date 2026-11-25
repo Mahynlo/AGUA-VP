@@ -87,8 +87,11 @@ const URL_ANULAR_PAGOS = URL_REGISTRAR_PAGOS?.includes('/registrar')
     ? URL_REGISTRAR_PAGOS.replace('/registrar', '/anular')
     : undefined;
 
-/** Anula un pago (solo administradores). Devuelve { success, message, data? }. */
-const anularPago = async (pagoId, motivo, token_session) => {
+/**
+ * Anula un pago (solo administradores). `password` solo hace falta fuera del plazo de corrección
+ * (superadmin). Devuelve { success, message, data?, tipo_error? }.
+ */
+const anularPago = async (pagoId, motivo, token_session, password) => {
     try {
         const token_app = leerToken();
         if (!token_app) return { success: false, message: "Token de aplicación no disponible(ipcmain-anular-pago)" };
@@ -99,12 +102,12 @@ const anularPago = async (pagoId, motivo, token_session) => {
             method: "POST",
             token_app,
             token_session,
-            body: { motivo }
+            body: password ? { motivo, password } : { motivo }
         });
         const data = await response.json();
         if (!response.ok) {
             const detalle = data.detalles?.[0]?.mensaje;
-            return { success: false, message: detalle || data.error || "No se pudo anular el pago" };
+            return { success: false, message: detalle || data.error || "No se pudo anular el pago", tipo_error: data.tipo_error };
         }
         return { success: true, message: data.message, data };
     } catch (error) {

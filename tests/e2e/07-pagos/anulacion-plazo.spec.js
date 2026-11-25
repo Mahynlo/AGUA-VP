@@ -1,13 +1,14 @@
 const { test, expect } = require('@playwright/test');
 const bcrypt = require('bcryptjs');
 const { usarApp } = require('../../helpers/sesion');
-const { irA, loginAsAdmin, ensureLoggedOut } = require('../../helpers/authHelper');
+const { irA, loginAsAdmin, ensureLoggedOut, DEFAULT_ADMIN } = require('../../helpers/authHelper');
 const { conBase, fila } = require('../../helpers/datos');
 const { elegirPeriodo, hoySonora } = require('../../helpers/ui');
 
 /**
  * Plazo para anular un cobro: mes en curso + 5 días (por la fecha en que se registró).
- * Fuera de plazo el administrador no puede; el superadmin sí, con un aviso.
+ * Fuera de plazo el administrador no puede (no ve el botón); el superadmin sí, con un aviso y
+ * volviendo a escribir su contraseña.
  * Usa un administrador que existe solo en la copia de la base.
  */
 const ADMIN = { email: 'e2e.administrador@aguavp.com', password: 'AdminE2E123!' };
@@ -49,14 +50,14 @@ test.describe('07 · Plazo para anular pagos', () => {
     await expect(ctx.window.getByRole('dialog')).toHaveCount(0, { timeout: 10000 });
   };
 
-  test('administrador: un cobro de hace 3 meses no se puede anular y se explica por qué', async () => {
+  test('administrador: un cobro de hace 3 meses no muestra el botón y se explica por qué', async () => {
     // La app puede arrancar con la sesión que dejó otro archivo de pruebas (superadmin):
     // loginAsAdmin no cambia de usuario si ya hay sesión, así que primero se cierra.
     await ensureLoggedOut(ctx.window);
     await loginAsAdmin(ctx.window, ADMIN);
     await abrirDetalle(pagoViejo);
-    await expect(botonAnular()).toBeDisabled();
     await expect(dialogo().getByText(/No se puede anular:/).first()).toBeVisible();
+    await expect(botonAnular()).toHaveCount(0);
     await expect(dialogo().getByText(/ese periodo cerró el \d{2}\/\d{2}\/\d{4}\. Solo un superadmin puede corregirlo\./).first()).toBeVisible();
     await cerrarDetalle();
   });
@@ -76,11 +77,12 @@ test.describe('07 · Plazo para anular pagos', () => {
     await expect(dialogo().getByText(/No se puede anular:/)).toHaveCount(0);
     await botonAnular().click();
     await expect(dialogo().getByText(/El periodo de este cobro ya cerró/)).toHaveCount(0);
+    await expect(dialogo().locator('#password-anulacion')).toHaveCount(0);
     await dialogo().locator('button', { hasText: /^Cancelar$/ }).click();
     await cerrarDetalle();
   });
 
-  test('superadmin: puede anular un cobro fuera de plazo, con aviso', async () => {
+  test('superadmin: anula un cobro fuera de plazo solo con su contraseña correcta', async () => {
     await ensureLoggedOut(ctx.window);
     await loginAsAdmin(ctx.window); // superadmin de prueba
     await abrirDetalle(pagoViejo);
@@ -88,9 +90,22 @@ test.describe('07 · Plazo para anular pagos', () => {
     await botonAnular().click();
     await expect(dialogo().getByText(/El periodo de este cobro ya cerró/).first()).toBeVisible();
 
+    const confirmar = dialogo().locator('button', { hasText: 'Confirmar anulación' });
+    const password = dialogo().locator('#password-anulacion');
+    const anulado = () => fila('SELECT fecha_anulacion IS NOT NULL AS anulado FROM pagos WHERE id = ?', pagoViejo).anulado;
+
     await dialogo().locator('#motivo-anulacion').fill('Prueba E2E: anulación fuera de plazo por superadmin');
-    await dialogo().locator('button', { hasText: 'Confirmar anulación' }).click();
+    await expect(confirmar).toBeDisabled(); // falta la contraseña
+
+    await password.fill('NoEsLaClave123!');
+    await confirmar.click();
+    await expect(dialogo().getByText('La contraseña no es correcta')).toBeVisible({ timeout: 15000 });
+    await expect(password).toHaveValue(''); // no se conserva lo escrito
+    expect(anulado()).toBe(0);
+
+    await password.fill(DEFAULT_ADMIN.password);
+    await confirmar.click();
     await expect(ctx.window.getByRole('dialog')).toHaveCount(0, { timeout: 15000 });
-    expect(fila('SELECT fecha_anulacion IS NOT NULL AS anulado FROM pagos WHERE id = ?', pagoViejo).anulado).toBe(1);
+    expect(anulado()).toBe(1);
   });
 });

@@ -122,8 +122,9 @@ const api = {
   },
 
   // Anulación de un pago (solo administradores; el servidor lo valida)
-  anularPago: async (pagoId, motivo, token_session) => {
-    return await ipcRenderer.invoke('anular-pago', pagoId, motivo, token_session)
+  // `password` solo fuera del plazo de corrección (superadmin)
+  anularPago: async (pagoId, motivo, token_session, password) => {
+    return await ipcRenderer.invoke('anular-pago', pagoId, motivo, token_session, password)
   },
 
   // Registro de pago distribuido por cliente (FIFO)

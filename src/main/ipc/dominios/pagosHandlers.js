@@ -41,7 +41,8 @@ export default function IpcHandlerPagos () {
     });
 
     // Anular un pago: el servidor valida el rol (solo administradores) y el resto de las reglas
-    ipcMain.handle("anular-pago", async (event, pagoId, motivo, token_session) => {
+    // `password`: solo fuera del plazo de corrección (superadmin); el servidor la verifica
+    ipcMain.handle("anular-pago", async (event, pagoId, motivo, token_session, password) => {
         const id = Number(pagoId);
         const texto = typeof motivo === "string" ? motivo.trim() : "";
         if (!Number.isInteger(id) || id <= 0) {
@@ -50,6 +51,9 @@ export default function IpcHandlerPagos () {
         if (texto.length < 10 || texto.length > 300) {
             return { success: false, message: "El motivo debe tener entre 10 y 300 caracteres." };
         }
-        return await runWithAppKeyFlow(() => anularPago(id, texto, token_session));
+        if (password !== undefined && password !== null && (typeof password !== "string" || password.length < 1 || password.length > 200)) {
+            return { success: false, message: "Contraseña inválida." };
+        }
+        return await runWithAppKeyFlow(() => anularPago(id, texto, token_session, password || undefined));
     });
 }
