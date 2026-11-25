@@ -7,8 +7,8 @@ const { elegirPeriodo, hoySonora } = require('../../helpers/ui');
 
 /**
  * Plazo para anular un cobro: mes en curso + 5 días (por la fecha en que se registró).
- * Fuera de plazo el administrador no puede (no ve el botón); el superadmin sí, con un aviso y
- * volviendo a escribir su contraseña.
+ * Fuera de plazo el administrador no puede (no ve el botón); el superadmin sí, con un aviso.
+ * Toda anulación se confirma con la contraseña del usuario.
  * Usa un administrador que existe solo en la copia de la base.
  */
 const ADMIN = { email: 'e2e.administrador@aguavp.com', password: 'AdminE2E123!' };
@@ -62,7 +62,7 @@ test.describe('07 · Plazo para anular pagos', () => {
     await cerrarDetalle();
   });
 
-  test('administrador: un cobro de hoy sí se puede anular', async () => {
+  test('administrador: un cobro de hoy sí se puede anular, con su contraseña', async () => {
     const f = fila(`SELECT f.id FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
       WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 30 AND f.convenio_id IS NULL
         AND NOT EXISTS (SELECT 1 FROM pagos p WHERE p.factura_id = f.id) ORDER BY f.id DESC LIMIT 1`);
@@ -77,9 +77,13 @@ test.describe('07 · Plazo para anular pagos', () => {
     await expect(dialogo().getByText(/No se puede anular:/)).toHaveCount(0);
     await botonAnular().click();
     await expect(dialogo().getByText(/El periodo de este cobro ya cerró/)).toHaveCount(0);
-    await expect(dialogo().locator('#password-anulacion')).toHaveCount(0);
-    await dialogo().locator('button', { hasText: /^Cancelar$/ }).click();
-    await cerrarDetalle();
+    const confirmar = dialogo().locator('button', { hasText: 'Confirmar anulación' });
+    await dialogo().locator('#motivo-anulacion').fill('Prueba E2E: anulación por administrador en plazo');
+    await expect(confirmar).toBeDisabled(); // falta la contraseña
+    await dialogo().locator('#password-anulacion').fill(ADMIN.password);
+    await confirmar.click();
+    await expect(ctx.window.getByRole('dialog')).toHaveCount(0, { timeout: 15000 });
+    expect(fila('SELECT anulado_por FROM pagos WHERE id = ?', cobro.pagoID).anulado_por).toBe(adminId);
   });
 
   test('superadmin: anula un cobro fuera de plazo solo con su contraseña correcta', async () => {

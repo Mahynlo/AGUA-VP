@@ -88,8 +88,8 @@ const URL_ANULAR_PAGOS = URL_REGISTRAR_PAGOS?.includes('/registrar')
     : undefined;
 
 /**
- * Anula un pago (solo administradores). `password` solo hace falta fuera del plazo de corrección
- * (superadmin). Devuelve { success, message, data?, tipo_error? }.
+ * Anula un pago (solo administradores). `password`: la contraseña del usuario, que el servidor exige
+ * en toda anulación. Devuelve { success, message, data?, tipo_error? }.
  */
 const anularPago = async (pagoId, motivo, token_session, password) => {
     try {

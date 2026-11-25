@@ -45,7 +45,7 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
   // Anulación (solo administradores; el servidor vuelve a validar el rol)
   const [mostrarAnular, setMostrarAnular] = useState(false);
   const [motivo, setMotivo] = useState("");
-  // Fuera de plazo el superadmin confirma con su contraseña (el servidor la verifica)
+  // Toda anulación se confirma con la contraseña del usuario (el servidor la verifica)
   const [password, setPassword] = useState("");
   const [anulando, setAnulando] = useState(false);
   const [errorAnular, setErrorAnular] = useState(null);
@@ -61,8 +61,7 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
   useEffect(limpiarAnulacion, [pago?.id, isOpen]);
 
   const motivoValido = motivo.trim().length >= MOTIVO_MIN && motivo.trim().length <= MOTIVO_MAX;
-  const pidePassword = pago?.plazo_correccion?.abierto === false;
-  const puedeConfirmar = motivoValido && (!pidePassword || password.length > 0);
+  const puedeConfirmar = motivoValido && password.length > 0;
 
   const handleAnular = async () => {
     if (!pago || !puedeConfirmar || anulandoRef.current) return;
@@ -71,7 +70,7 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
     setErrorAnular(null);
     try {
       const token = localStorage.getItem("token");
-      const r = await window.api.anularPago(pago.id, motivo.trim(), token, pidePassword ? password : undefined);
+      const r = await window.api.anularPago(pago.id, motivo.trim(), token, password);
       setPassword(""); // no se conserva la contraseña escrita, ni si falló
       if (!r?.success) {
         setErrorAnular(r?.message || "No se pudo anular el pago");
@@ -143,9 +142,9 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
   const infoPagosFactura = obtenerInfoPagosPorFactura ? obtenerInfoPagosPorFactura(pago.factura_id) : null;
   const esAnulado = Boolean(pago.fecha_anulacion);
   const puedeAnular = ROLES_ANULAR.includes(user?.rol) && !esAnulado && !pago.parcialidad_id;
-  // Plazo de corrección (mes en curso + 5 días). Fuera de plazo solo el superadmin, con su contraseña;
+  // Plazo de corrección (mes en curso + 5 días). Fuera de plazo solo el superadmin, con un aviso;
   // los demás no ven el botón. El servidor lo vuelve a validar.
-  const fueraDePlazo = pidePassword;
+  const fueraDePlazo = pago.plazo_correccion?.abierto === false;
   const bloqueadoPorPlazo = fueraDePlazo && user?.rol !== "superadmin";
 
   const metodoColor = getMetodoColor ? getMetodoColor(pago.metodo_pago) : "default";
@@ -371,7 +370,7 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
                 </h4>
                 {fueraDePlazo && (
                   <p role="alert" className="text-sm font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl px-3 py-2">
-                    El periodo de este cobro ya cerró. Como superadmin puede anularlo, pero cambiará los totales de un periodo ya reportado. Para confirmar, escriba su contraseña.
+                    El periodo de este cobro ya cerró. Como superadmin puede anularlo, pero cambiará los totales de un periodo ya reportado.
                   </p>
                 )}
                 <p className="text-sm text-slate-600 dark:text-zinc-300">
@@ -395,23 +394,21 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
                   </span>
                   <span className="text-slate-400">{motivo.trim().length}/{MOTIVO_MAX}</span>
                 </div>
-                {pidePassword && (
-                  <div>
-                    <label htmlFor="password-anulacion" className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block mb-1">
-                      Su contraseña
-                    </label>
-                    <input
-                      id="password-anulacion"
-                      type="password"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      maxLength={200}
-                      className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-slate-800 dark:text-zinc-100 p-3 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-                    />
-                    <span className="text-xs text-slate-400">Si se equivoca 5 veces, su cuenta se bloquea 30 minutos.</span>
-                  </div>
-                )}
+                <div>
+                  <label htmlFor="password-anulacion" className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block mb-1">
+                    Su contraseña (para confirmar)
+                  </label>
+                  <input
+                    id="password-anulacion"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    maxLength={200}
+                    className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-slate-800 dark:text-zinc-100 p-3 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                  />
+                  <span className="text-xs text-slate-400">Si se equivoca 5 veces, su cuenta se bloquea 30 minutos.</span>
+                </div>
                 {errorAnular && <p role="alert" className="text-sm font-semibold text-rose-600 dark:text-rose-400">{errorAnular}</p>}
                 <div className="flex justify-end gap-2">
                   <button type="button" onClick={limpiarAnulacion} disabled={anulando}

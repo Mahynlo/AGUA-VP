@@ -41,7 +41,7 @@ export default function IpcHandlerPagos () {
     });
 
     // Anular un pago: el servidor valida el rol (solo administradores) y el resto de las reglas
-    // `password`: solo fuera del plazo de corrección (superadmin); el servidor la verifica
+    // `password`: contraseña del usuario para confirmar la anulación; el servidor la exige y la verifica
     ipcMain.handle("anular-pago", async (event, pagoId, motivo, token_session, password) => {
         const id = Number(pagoId);
         const texto = typeof motivo === "string" ? motivo.trim() : "";

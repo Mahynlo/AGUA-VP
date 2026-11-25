@@ -122,7 +122,7 @@ const api = {
   },
 
   // Anulación de un pago (solo administradores; el servidor lo valida)
-  // `password` solo fuera del plazo de corrección (superadmin)
+  // `password`: contraseña del usuario para confirmar (el servidor la exige)
   anularPago: async (pagoId, motivo, token_session, password) => {
     return await ipcRenderer.invoke('anular-pago', pagoId, motivo, token_session, password)
   },

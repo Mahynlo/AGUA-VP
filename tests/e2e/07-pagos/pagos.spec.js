@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { usarApp } = require('../../helpers/sesion');
-const { irA } = require('../../helpers/authHelper');
+const { irA, DEFAULT_ADMIN } = require('../../helpers/authHelper');
 const { fila, filas, contarListado } = require('../../helpers/datos');
 const { esperarAviso, elegirPeriodo, hoySonora, esperarPdfNuevo } = require('../../helpers/ui');
 
@@ -279,12 +279,16 @@ test.describe('07 · Pagos y cobranza', () => {
     await elegirPeriodo(window, 'Ago');
     await abrirDetalle();
 
-    // Anular con motivo (el botón exige al menos 10 caracteres)
+    // Anular con motivo (al menos 10 caracteres) y la contraseña del usuario
     await dialogo().locator('button', { hasText: 'Anular pago' }).click();
     const confirmar = dialogo().locator('button', { hasText: 'Confirmar anulación' });
     await dialogo().locator('#motivo-anulacion').fill('corto');
+    await dialogo().locator('#password-anulacion').fill(DEFAULT_ADMIN.password);
     await expect(confirmar).toBeDisabled();
     await dialogo().locator('#motivo-anulacion').fill(MOTIVO);
+    await dialogo().locator('#password-anulacion').fill('');
+    await expect(confirmar).toBeDisabled(); // sin contraseña no se puede confirmar
+    await dialogo().locator('#password-anulacion').fill(DEFAULT_ADMIN.password);
     await confirmar.click();
     await expect(window.getByRole('dialog')).toHaveCount(0, { timeout: 15000 });
 
