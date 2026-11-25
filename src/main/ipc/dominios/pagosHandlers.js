@@ -1,6 +1,6 @@
 import { ipcMain} from 'electron';
 import {fetchPagos } from "../../api-client/pagos/consultas.js"; // Importa la función fetchPagos
-import {registerPagos, registerPagoDistribuido } from "../../api-client/pagos/registro.js"; // Importa funciones de registro de pagos
+import {registerPagos, registerPagoDistribuido, anularPago } from "../../api-client/pagos/registro.js"; // Importa funciones de registro de pagos
 import { runWithAppKeyFlow } from '../appKeyFlow.js';
 export default function IpcHandlerPagos () {
     /**************************************************************************************************************
@@ -38,5 +38,18 @@ export default function IpcHandlerPagos () {
         }
 
         return await runWithAppKeyFlow(() => registerPagoDistribuido(pagoDistribuido, token_session));
+    });
+
+    // Anular un pago: el servidor valida el rol (solo administradores) y el resto de las reglas
+    ipcMain.handle("anular-pago", async (event, pagoId, motivo, token_session) => {
+        const id = Number(pagoId);
+        const texto = typeof motivo === "string" ? motivo.trim() : "";
+        if (!Number.isInteger(id) || id <= 0) {
+            return { success: false, message: "Pago inválido.(ipcmain-anular-pago)" };
+        }
+        if (texto.length < 10 || texto.length > 300) {
+            return { success: false, message: "El motivo debe tener entre 10 y 300 caracteres." };
+        }
+        return await runWithAppKeyFlow(() => anularPago(id, texto, token_session));
     });
 }

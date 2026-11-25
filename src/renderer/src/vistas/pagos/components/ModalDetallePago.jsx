@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
 import {
   HiCurrencyDollar,
@@ -9,9 +9,17 @@ import {
   HiCog,
   HiLocationMarker,
   HiDocumentText,
-  HiMap
+  HiMap,
+  HiBan
 } from "react-icons/hi";
 import ModalImprimir from "../../../components/impresion/ModalImprimir";
+import { useAuth } from "../../../context/AuthContext";
+
+const ROLES_ANULAR = ["superadmin", "administrador"];
+// fecha_anulacion viene de SQLite datetime('now'): 'YYYY-MM-DD HH:MM:SS' en UTC → ISO con Z
+const utcAIso = (fecha) => (typeof fecha === "string" && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(fecha) ? `${fecha.replace(" ", "T")}Z` : fecha);
+const MOTIVO_MIN = 10;
+const MOTIVO_MAX = 300;
 
 const premiumModalTheme = {
   root: { show: { on: "flex bg-slate-900/60 dark:bg-black/80 mt-10", off: "hidden" } },
@@ -27,11 +35,48 @@ const premiumModalTheme = {
   footer: { base: "flex items-center justify-between gap-3 border-t border-slate-100 dark:border-zinc-800/50 py-4 px-8 rounded-b-2xl shrink-0" }
 };
 
-const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, getMetodoColor }) => {
+const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, getMetodoColor, onPagoAnulado }) => {
+  const { user } = useAuth() || {};
   const [comprobanteUrl, setComprobanteUrl] = useState(null);
   const [comprobantePrintUrl, setComprobantePrintUrl] = useState(null);
   const [modoPdf, setModoPdf] = useState(null);
   const [generandoComprobante, setGenerandoComprobante] = useState(false);
+
+  // Anulación (solo administradores; el servidor vuelve a validar el rol)
+  const [mostrarAnular, setMostrarAnular] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const [anulando, setAnulando] = useState(false);
+  const [errorAnular, setErrorAnular] = useState(null);
+  const anulandoRef = useRef(false); // candado síncrono contra doble clic
+
+  useEffect(() => {
+    setMostrarAnular(false);
+    setMotivo("");
+    setErrorAnular(null);
+  }, [pago?.id, isOpen]);
+
+  const motivoValido = motivo.trim().length >= MOTIVO_MIN && motivo.trim().length <= MOTIVO_MAX;
+
+  const handleAnular = async () => {
+    if (!pago || !motivoValido || anulandoRef.current) return;
+    anulandoRef.current = true;
+    setAnulando(true);
+    setErrorAnular(null);
+    try {
+      const token = localStorage.getItem("token");
+      const r = await window.api.anularPago(pago.id, motivo.trim(), token);
+      if (!r?.success) {
+        setErrorAnular(r?.message || "No se pudo anular el pago");
+        return;
+      }
+      if (onPagoAnulado) await onPagoAnulado(r.data);
+    } catch (err) {
+      setErrorAnular(err?.message || "No se pudo anular el pago");
+    } finally {
+      anulandoRef.current = false;
+      setAnulando(false);
+    }
+  };
 
   const handleImprimirComprobante = async () => {
     if (!pago || generandoComprobante) return;
@@ -51,7 +96,10 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
         pago: { monto: pago.monto, cantidad_entregada: pago.cantidad_entregada, metodo_pago: pago.metodo_pago, comentario: pago.comentario || "", fecha_pago: pago.fecha_pago },
         cambio: pago.cambio || 0, es_pago_parcial: esPagoParcial, operador,
         fecha_hora_emision: pago.fecha_creacion || pago.fecha_pago,
-        historial_pagos: obtenerInfoPagosPorFactura ? (obtenerInfoPagosPorFactura(pago.factura_id)?.pagosOrdenados || []) : []
+        historial_pagos: obtenerInfoPagosPorFactura ? (obtenerInfoPagosPorFactura(pago.factura_id)?.pagosOrdenados || []) : [],
+        anulacion: pago.fecha_anulacion
+          ? { fecha: utcAIso(pago.fecha_anulacion), motivo: pago.motivo_anulacion || "", anulado_por: pago.anulado_por_nombre || "" }
+          : null
       };
       const dataKey = await window.api.savePrintData(JSON.stringify(datos));
       const { protocol, origin, href } = window.location;
@@ -85,6 +133,8 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
   };
 
   const infoPagosFactura = obtenerInfoPagosPorFactura ? obtenerInfoPagosPorFactura(pago.factura_id) : null;
+  const esAnulado = Boolean(pago.fecha_anulacion);
+  const puedeAnular = ROLES_ANULAR.includes(user?.rol) && !esAnulado && !pago.parcialidad_id;
 
   const metodoColor = getMetodoColor ? getMetodoColor(pago.metodo_pago) : "default";
   const metodoBadgeClass = {
@@ -119,6 +169,20 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
         {/* BODY */}
         <ModalBody>
           <div className="space-y-6">
+            {esAnulado && (
+              <div role="alert" className="rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 p-5">
+                <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-black uppercase tracking-wider text-sm">
+                  <HiBan className="w-5 h-5" /> Pago anulado
+                </div>
+                <p className="mt-2 text-sm text-slate-700 dark:text-zinc-300">
+                  <span className="font-bold">Motivo:</span> {pago.motivo_anulacion}
+                </p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+                  Anulado por {pago.anulado_por_nombre || "—"} el {formatFechaHora(utcAIso(pago.fecha_anulacion))}. Este pago no suma en totales ni reportes.
+                </p>
+              </div>
+            )}
+
             {/* 1. Resumen Financiero */}
             <div className="bg-green-50/50 dark:bg-green-900/10 rounded-2xl p-5">
               <h4 className="text-xs font-bold text-green-700/70 dark:text-green-500/70 mb-4 uppercase tracking-wider flex items-center gap-2">
@@ -281,11 +345,54 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
                 </div>
               </div>
             </div>
+
+            {/* 4. Anulación */}
+            {puedeAnular && mostrarAnular && (
+              <div className="rounded-2xl border border-rose-200 dark:border-rose-900/50 p-5 space-y-3">
+                <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider flex items-center gap-2">
+                  <HiBan className="w-4 h-4" /> Anular este pago
+                </h4>
+                <p className="text-sm text-slate-600 dark:text-zinc-300">
+                  El pago no se borra: queda en el historial como anulado y ${pago.monto?.toLocaleString("es-MX", { minimumFractionDigits: 2 })} vuelven al saldo de la factura #{pago.factura_id}. Si el cobro era correcto pero con datos equivocados, regístrelo de nuevo después de anularlo.
+                </p>
+                <label htmlFor="motivo-anulacion" className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider block">
+                  Motivo de la anulación
+                </label>
+                <textarea
+                  id="motivo-anulacion"
+                  value={motivo}
+                  onChange={(e) => setMotivo(e.target.value)}
+                  maxLength={MOTIVO_MAX}
+                  rows={3}
+                  placeholder="Ej.: Se registró en la factura equivocada"
+                  className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-slate-800 dark:text-zinc-100 p-3 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                />
+                <div className="flex items-center justify-between text-xs">
+                  <span className={motivoValido || !motivo ? "text-slate-400" : "text-rose-600"}>
+                    Mínimo {MOTIVO_MIN} caracteres
+                  </span>
+                  <span className="text-slate-400">{motivo.trim().length}/{MOTIVO_MAX}</span>
+                </div>
+                {errorAnular && <p role="alert" className="text-sm font-semibold text-rose-600 dark:text-rose-400">{errorAnular}</p>}
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={() => { setMostrarAnular(false); setMotivo(""); setErrorAnular(null); }} disabled={anulando}
+                    className="font-bold text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl px-5 h-10">
+                    Cancelar
+                  </button>
+                  <button type="button" onClick={handleAnular} disabled={!motivoValido || anulando}
+                    className="font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-5 h-10 disabled:opacity-50 flex items-center gap-2">
+                    {anulando && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                    Confirmar anulación
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </ModalBody>
 
         {/* FOOTER */}
         <ModalFooter>
+          <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleImprimirComprobante}
@@ -296,6 +403,16 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
               ? <><div className="w-4 h-4 border-2 border-slate-400/30 border-t-slate-600 rounded-full animate-spin" /> Procesando...</>
               : <><HiDocumentText className="w-5 h-5 text-slate-500" /> Ver / Imprimir Recibo</>}
           </button>
+          {puedeAnular && !mostrarAnular && (
+            <button
+              type="button"
+              onClick={() => setMostrarAnular(true)}
+              className="font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl px-5 h-11 flex items-center gap-2"
+            >
+              <HiBan className="w-5 h-5" /> Anular pago
+            </button>
+          )}
+          </div>
           <button
             type="button"
             onClick={onClose}

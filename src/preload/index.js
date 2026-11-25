@@ -121,6 +121,11 @@ const api = {
     return await ipcRenderer.invoke('register-pago', pago, token_session)
   },
 
+  // Anulación de un pago (solo administradores; el servidor lo valida)
+  anularPago: async (pagoId, motivo, token_session) => {
+    return await ipcRenderer.invoke('anular-pago', pagoId, motivo, token_session)
+  },
+
   // Registro de pago distribuido por cliente (FIFO)
   registerPagoDistribuido: async (pagoDistribuido, token_session) => {
     return await ipcRenderer.invoke('register-pago-distribuido', pagoDistribuido, token_session)

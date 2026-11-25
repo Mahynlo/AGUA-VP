@@ -12,11 +12,18 @@
 
 > 📝 **BORRADOR** generado desde 0 commit(s) desde `v1.3.1-rc.3`. Reescribe cada punto pensando en quien usa la app (qué cambió y qué debe hacer), quita lo que no le afecte y borra esta línea. No se puede publicar mientras esta línea exista.
 
-> ⚠️ **Aviso de Pre-release:** un doble clic al confirmar un cobro ya no registra el pago dos veces. Conviene probar: cobrar una factura, un cobro distribuido y una parcialidad de convenio.
+> ⚠️ **Aviso de Pre-release:** los administradores ya pueden anular un pago equivocado, y un doble clic al confirmar un cobro ya no registra el pago dos veces. Conviene probar: cobrar una factura, anular ese pago y volver a cobrarla; un cobro distribuido y una parcialidad de convenio.
 
 ---
 
 ### 💵 Pagos y cobranza
+
+#### ✨ Anulación de pagos
+- **Un cobro equivocado ahora se anula** desde *Pagos → Detalle del pago → Anular pago* (solo superadmin y administrador), indicando el motivo. El pago **no se borra**: queda en el historial con quién lo anuló, cuándo y por qué, y su monto vuelve al saldo de la factura, que queda otra vez *Pendiente*, *Parcial* o *Vencida* según corresponda. Después se puede cobrar de nuevo correctamente.
+- **Los pagos anulados no suman** en el listado de pagos, el panel principal, el reporte financiero ni la regla de rectificación de lecturas: si se anulan todos los pagos de una factura, su lectura vuelve a poder rectificarse.
+- **Para consultarlos**, use el filtro *Tipo de pago → Pagos anulados*. Su comprobante se puede reimprimir y sale con la marca **ANULADO** y el motivo.
+- En un cobro distribuido se anula cada pago por separado. Los pagos de parcialidades de convenio todavía no se pueden anular.
+- Al actualizar, la base de datos se ajusta sola (migración `0025`, con respaldo previo); los pagos existentes no cambian.
 
 #### 🐞 Correcciones
 - **Cobros duplicados por doble clic:** al confirmar un cobro, un doble clic rápido podía registrar el pago dos veces. Ahora solo se registra uno. Aplica al cobro de una factura, al cobro distribuido, a la liquidación total y a los cobros de convenios (parcialidad y pago integrado).

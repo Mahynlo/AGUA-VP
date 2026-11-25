@@ -397,7 +397,8 @@ const TabPagos = () => {
   const opcionesTipo = [
     { value: "completo", label: "Pago completo de la factura" },
     { value: "abono", label: "Abono parcial" },
-    { value: "parcialidad", label: "Parcialidad de convenio" }
+    { value: "parcialidad", label: "Parcialidad de convenio" },
+    { value: "anulados", label: "Pagos anulados" }
   ];
   const opcionesMetodo = ["Efectivo", "Transferencia", "Tarjeta", "Cheque"].map((m) => ({ value: m, label: m }));
   const opcionesCiudad = ciudades.map((c) => ({ value: c, label: c }));
@@ -624,6 +625,11 @@ const TabPagos = () => {
                           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded w-fit">
                             Fact: #{pago.factura_id}
                           </div>
+                          {pago.fecha_anulacion && (
+                            <div className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest bg-rose-500/10 px-2 py-0.5 rounded w-fit">
+                              Anulado
+                            </div>
+                          )}
                         </div>
                       </td>
 
@@ -734,6 +740,11 @@ const TabPagos = () => {
         pago={pagoSeleccionado}
         obtenerInfoPagosPorFactura={obtenerInfoPagosPorFactura}
         getMetodoColor={getMetodoColor}
+        onPagoAnulado={async () => {
+          setModalDetalle(false);
+          await actualizarPagos();
+          window.dispatchEvent(new CustomEvent("dashboard-update"));
+        }}
       />
 
       {/* Modal de Configuración de Exportación */}

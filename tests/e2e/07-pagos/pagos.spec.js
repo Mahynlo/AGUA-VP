@@ -215,7 +215,8 @@ test.describe('07 · Pagos y cobranza', () => {
     await window.locator('button', { hasText: /^Pagos$/ }).click();
     await window.locator('select[aria-label="Cualquier fecha de cobro"]').selectOption('hoy');
 
-    const { n, total } = fila(`SELECT COUNT(*) AS n, ROUND(COALESCE(SUM(monto), 0), 2) AS total FROM pagos WHERE substr(fecha_pago, 1, 10) = ?`, hoySonora());
+    const { n, total } = fila(`SELECT COUNT(*) AS n, ROUND(COALESCE(SUM(monto), 0), 2) AS total FROM pagos
+      WHERE substr(fecha_pago, 1, 10) = ? AND fecha_anulacion IS NULL`, hoySonora());
     expect(n, 'en esta prueba se registraron al menos 3 cobros hoy').toBeGreaterThanOrEqual(3);
     const totalTexto = total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
     await expect(window.getByText('Total cobrado con estos filtros:').locator('xpath=..')).toContainText(totalTexto, { timeout: 15000 });
@@ -244,5 +245,76 @@ test.describe('07 · Pagos y cobranza', () => {
     await expect(carrusel.locator('button', { hasText: 'Editar / Rectificar Lectura' })).toBeDisabled();
     await expect(carrusel.getByText(/ya tiene pagos registrados/).first()).toBeVisible();
     await carrusel.locator('button[aria-label="Close"]').click();
+  });
+
+  test('anular un pago: queda en el historial, devuelve el saldo y el comprobante sale con la marca ANULADO', async () => {
+    const { window } = ctx;
+    const MOTIVO = 'Prueba E2E: cobro registrado en la factura equivocada';
+    const f = fila(`SELECT f.id, f.saldo_pendiente, f.total FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
+      WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 30 AND f.convenio_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM pagos p WHERE p.factura_id = f.id) ORDER BY f.id LIMIT 1`);
+    expect(f, 'debe haber otra factura de agosto sin pagos en la copia').toBeTruthy();
+
+    // Un cobro de $25 registrado por el mismo canal que usa la pantalla de cobro
+    const cobro = await window.evaluate(({ factura_id, fecha_pago }) => window.api.registerPago(
+      { factura_id, fecha_pago, cantidad_entregada: 25, metodo_pago: 'Efectivo', modificado_por: 1 },
+      localStorage.getItem('token')
+    ), { factura_id: f.id, fecha_pago: hoySonora() });
+    expect(cobro.success, JSON.stringify(cobro)).toBe(true);
+    const pagoId = cobro.pagoID;
+
+    // Abrir su detalle en Pagos → Pagos (agosto)
+    const abrirDetalle = async () => {
+      await window.locator('input[placeholder^="Buscar ID, factura"]').fill('');
+      await window.locator('input[placeholder^="Buscar ID, factura"]').fill(String(pagoId));
+      const filaPago = window.locator('tr').filter({ hasText: new RegExp(`#P-\\s*${pagoId}(?!\\d)`) });
+      await expect(filaPago).toHaveCount(1, { timeout: 15000 });
+      await filaPago.locator('button[title="Ver Detalle del Pago"]').click();
+      await expect(dialogo().getByText('Detalle del Pago').first()).toBeVisible({ timeout: 15000 });
+    };
+    await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
+    await window.locator('button', { hasText: /^Pagos$/ }).click();
+    // Las pruebas anteriores pueden dejar filtros activos (p. ej. "Cobrados hoy", que deshabilita el período)
+    await window.locator('select[aria-label="Cualquier fecha de cobro"]').selectOption('All');
+    await elegirPeriodo(window, 'Ago');
+    await abrirDetalle();
+
+    // Anular con motivo (el botón exige al menos 10 caracteres)
+    await dialogo().locator('button', { hasText: 'Anular pago' }).click();
+    const confirmar = dialogo().locator('button', { hasText: 'Confirmar anulación' });
+    await dialogo().locator('#motivo-anulacion').fill('corto');
+    await expect(confirmar).toBeDisabled();
+    await dialogo().locator('#motivo-anulacion').fill(MOTIVO);
+    await confirmar.click();
+    await expect(window.getByRole('dialog')).toHaveCount(0, { timeout: 15000 });
+
+    // En la base: el pago sigue ahí (no se borra) y la factura recupera su saldo
+    expect(fila('SELECT monto, motivo_anulacion, fecha_anulacion IS NOT NULL AS anulado FROM pagos WHERE id = ?', pagoId))
+      .toMatchObject({ monto: 25, motivo_anulacion: MOTIVO, anulado: 1 });
+    expect(fila('SELECT saldo_pendiente FROM facturas WHERE id = ?', f.id).saldo_pendiente).toBe(f.saldo_pendiente);
+
+    // Ya no aparece en el listado normal…
+    await window.locator('input[placeholder^="Buscar ID, factura"]').fill(String(pagoId));
+    await expect(window.locator('tr').filter({ hasText: new RegExp(`#P-\\s*${pagoId}(?!\\d)`) })).toHaveCount(0, { timeout: 15000 });
+
+    // …pero sí con el filtro "Pagos anulados" (en "Más filtros"), con su motivo
+    const masFiltros = window.locator('button[aria-expanded]', { hasText: 'Más filtros' });
+    if ((await masFiltros.getAttribute('aria-expanded')) !== 'true') await masFiltros.click();
+    await window.locator('select[aria-label="Tipo de pago"]').selectOption('anulados');
+    await abrirDetalle();
+    await expect(dialogo().getByText('Pago anulado').first()).toBeVisible();
+    await expect(dialogo().getByText(MOTIVO).first()).toBeVisible();
+    await expect(dialogo().locator('button', { hasText: 'Anular pago' })).toHaveCount(0);
+
+    // El comprobante se puede reimprimir con la marca ANULADO
+    const desde = Date.now();
+    await dialogo().locator('button', { hasText: 'Ver / Imprimir Recibo' }).click();
+    const pdf = await esperarPdfNuevo(desde);
+    expect(pdf.paginas).toBe(1);
+    // Para revisarlo a mano: AGUAVP_E2E_GUARDAR_PDF=<ruta.pdf> (la app borra el temporal al cerrar)
+    if (process.env.AGUAVP_E2E_GUARDAR_PDF) require('fs').copyFileSync(pdf.ruta, process.env.AGUAVP_E2E_GUARDAR_PDF);
+    await window.locator('button', { hasText: /^Cancelar$/ }).last().click();
+    await window.keyboard.press('Escape');
+    await window.locator('select[aria-label="Tipo de pago"]').selectOption('All').catch(() => {});
   });
 });
