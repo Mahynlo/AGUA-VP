@@ -135,6 +135,9 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
   const infoPagosFactura = obtenerInfoPagosPorFactura ? obtenerInfoPagosPorFactura(pago.factura_id) : null;
   const esAnulado = Boolean(pago.fecha_anulacion);
   const puedeAnular = ROLES_ANULAR.includes(user?.rol) && !esAnulado && !pago.parcialidad_id;
+  // Plazo de corrección (mes en curso + 5 días). Fuera de plazo solo el superadmin; el servidor lo vuelve a validar.
+  const fueraDePlazo = pago.plazo_correccion?.abierto === false;
+  const bloqueadoPorPlazo = fueraDePlazo && user?.rol !== "superadmin";
 
   const metodoColor = getMetodoColor ? getMetodoColor(pago.metodo_pago) : "default";
   const metodoBadgeClass = {
@@ -347,11 +350,21 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
             </div>
 
             {/* 4. Anulación */}
+            {puedeAnular && bloqueadoPorPlazo && (
+              <p role="note" className="text-xs text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800/50 rounded-xl px-4 py-3">
+                <span className="font-bold">No se puede anular:</span> {pago.plazo_correccion.motivo}
+              </p>
+            )}
             {puedeAnular && mostrarAnular && (
               <div className="rounded-2xl border border-rose-200 dark:border-rose-900/50 p-5 space-y-3">
                 <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider flex items-center gap-2">
                   <HiBan className="w-4 h-4" /> Anular este pago
                 </h4>
+                {fueraDePlazo && (
+                  <p role="alert" className="text-sm font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl px-3 py-2">
+                    El periodo de este cobro ya cerró. Como superadmin puede anularlo, pero cambiará los totales de un periodo ya reportado.
+                  </p>
+                )}
                 <p className="text-sm text-slate-600 dark:text-zinc-300">
                   El pago no se borra: queda en el historial como anulado y ${pago.monto?.toLocaleString("es-MX", { minimumFractionDigits: 2 })} vuelven al saldo de la factura #{pago.factura_id}. Si el cobro era correcto pero con datos equivocados, regístrelo de nuevo después de anularlo.
                 </p>
@@ -407,7 +420,9 @@ const ModalDetallePago = ({ isOpen, onClose, pago, obtenerInfoPagosPorFactura, g
             <button
               type="button"
               onClick={() => setMostrarAnular(true)}
-              className="font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl px-5 h-11 flex items-center gap-2"
+              disabled={bloqueadoPorPlazo}
+              title={bloqueadoPorPlazo ? pago.plazo_correccion.motivo : undefined}
+              className="font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl px-5 h-11 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             >
               <HiBan className="w-5 h-5" /> Anular pago
             </button>
