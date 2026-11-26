@@ -122,5 +122,9 @@ test.describe('07 · Plazo para anular pagos', () => {
     // El panel principal usa la misma regla: muestra el ajuste y el neto a entregar del mes
     await irA(ctx.window, '#/home');
     await expect(ctx.window.getByTestId('ajustes-recaudacion')).toContainText('Neto a entregar', { timeout: 20000 });
+    // La tarjeta muestra el cambio contra el mes anterior con su número (antes salía solo "% vs ant.")
+    // Las tarjetas Consumo y Recaudación muestran su porcentaje y Clientes sus nuevos del mes (antes salían sin número)
+    await expect(ctx.window.getByText(/[+-]?\d+(\.\d+)?% vs ant\./)).toHaveCount(2);
+    await expect(ctx.window.getByText(/\+\d+ nuevos/)).toBeVisible();
   });
 });
