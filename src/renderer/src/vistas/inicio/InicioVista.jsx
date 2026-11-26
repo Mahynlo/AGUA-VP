@@ -20,10 +20,12 @@ const InicioVista = () => {
 
   // Extraer datos o usar valores por defecto/seguros
   const stats = dashboardData?.tarjetas || {};
-  const consumo = stats.consumo || { actual: 0, variacion: 0 };
-  const clientes = stats.clientes || { total: 0, nuevos: 0, crecimiento: 0 };
+  // Nombres de la API (dashboardService): el cambio contra el mes anterior llega como `crecimiento` (%)
+  // y los clientes nuevos del mes como `nuevos_este_mes`
+  const consumo = { actual: 0, ...stats.consumo, variacion: stats.consumo?.crecimiento ?? stats.consumo?.variacion ?? 0 };
+  const clientes = { total: 0, ...stats.clientes, nuevos: stats.clientes?.nuevos_este_mes ?? stats.clientes?.nuevos ?? 0 };
   const medidores = stats.medidores || { total: 0, nuevos_este_mes: 0, crecimiento_nuevos: 0 };
-  const recaudo = stats.pagos || { actual: 0, variacion: 0 }; 
+  const recaudo = { actual: 0, ...stats.pagos, variacion: stats.pagos?.crecimiento ?? stats.pagos?.variacion ?? 0 };
 
   // Datos para gráficos
   const graficosAPI = dashboardData?.graficos || {};
@@ -226,6 +228,14 @@ const InicioVista = () => {
                 {recaudo.variacion > 0 ? '+' : ''}{recaudo.variacion}% vs ant.
               </Chip>
             </div>
+            {/* Anulaciones de periodos cerrados hechas este mes: se restan aquí, igual que en la caja del reporte */}
+            {Number(recaudo.ajustes_anulaciones || 0) > 0 && (
+              <p className="text-[11px] leading-snug text-slate-500 dark:text-zinc-400" data-testid="ajustes-recaudacion">
+                Ajustes por anulaciones: <b className="text-rose-600 dark:text-rose-400">−${Number(recaudo.ajustes_anulaciones).toLocaleString('es-MX')}</b>
+                <br />
+                Neto a entregar: <b className="text-emerald-600 dark:text-emerald-400">${Number(recaudo.neto_a_entregar || 0).toLocaleString('es-MX')}</b>
+              </p>
+            )}
           </div>
 
         </div>

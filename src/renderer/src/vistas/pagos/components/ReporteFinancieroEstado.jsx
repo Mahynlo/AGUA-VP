@@ -9,7 +9,8 @@ import {
   HiPrinter,
   HiChevronDown,
   HiDocumentText,
-  HiExclamation
+  HiExclamation,
+  HiBan
 } from "react-icons/hi";
 import { EncabezadoSeccion, Indicador, IndicadoresVista } from "../../../components/ui/VistaModulo";
 import SelectorPeriodoAvanzado from "../../../components/ui/SelectorPeriodoAvanzado";
@@ -95,6 +96,7 @@ const ReporteFinancieroEstado = () => {
 
   const resumen = financiero?.resumen || {};
   const series = financiero?.series || {};
+  const anulaciones = financiero?.anulaciones || null;
   const listados = financiero?.listados || {};
 
   const isDark = useMemo(() => {
@@ -201,14 +203,18 @@ const ReporteFinancieroEstado = () => {
     };
   }, [series, isDark]);
 
+  // Caja por mes de pago. Si hubo anulaciones de periodos cerrados, la barra se apila: neto a entregar
+  // (verde) + ajuste por anulaciones (rojo); la altura total es lo cobrado en el mes.
   const chartCaja = useMemo(() => {
     const caja = series.recaudacion_por_mes_pago || [];
     const categories = caja.map((m) => formatearMesCorto(m.periodo));
+    const conAjustes = caja.some((m) => Number(m.ajuste_anulaciones || 0) > 0);
 
     return {
       options: {
         chart: {
           type: "bar",
+          stacked: conAjustes,
           toolbar: { show: false },
           background: "transparent",
           fontFamily: "inherit",
@@ -220,7 +226,7 @@ const ReporteFinancieroEstado = () => {
           strokeDashArray: 4,
         },
         plotOptions: {
-          bar: { horizontal: false, borderRadius: 4, columnWidth: "45%" },
+          bar: { horizontal: false, borderRadius: 4, borderRadiusApplication: "end", borderRadiusWhenStacked: "last", columnWidth: "45%" },
         },
         dataLabels: { enabled: false },
         xaxis: {
@@ -242,20 +248,33 @@ const ReporteFinancieroEstado = () => {
             formatter: (val) => `$${Number(val).toLocaleString("es-MX")}`,
           },
         },
-        legend: { show: false },
+        legend: { show: conAjustes, position: "bottom", fontWeight: 600, labels: { colors: isDark ? "#d4d4d8" : "#334155" } },
         tooltip: {
           theme: isDark ? "dark" : "light",
+          shared: conAjustes,
+          intersect: !conAjustes,
           y: {
             formatter: (val, opts) => {
               const idx = opts?.dataPointIndex;
-              const trx = caja[idx]?.transacciones;
-              return `${moneda(val)}${trx != null ? ` · ${trx} recibo(s) pagado(s)` : ""}`;
+              const mes = caja[idx] || {};
+              if (opts?.seriesIndex === 1) {
+                const n = Number(mes.anulaciones_ajustadas || 0);
+                return val > 0 ? `−${moneda(val)} · ${n} anulación(es) de periodos cerrados` : "—";
+              }
+              const trx = mes.transacciones;
+              const cobrado = conAjustes && Number(mes.ajuste_anulaciones || 0) > 0 ? ` · cobrado ${moneda(mes.cobrado)}` : "";
+              return `${moneda(val)}${trx != null ? ` · ${trx} recibo(s) pagado(s)` : ""}${cobrado}`;
             },
           },
         },
-        colors: ["#14b8a6"],
+        colors: conAjustes ? ["#14b8a6", "#f43f5e"] : ["#14b8a6"],
       },
-      series: [{ name: "Recaudado (caja)", data: caja.map((m) => Number(m.recaudado || 0)) }],
+      series: conAjustes
+        ? [
+            { name: "Neto a entregar", data: caja.map((m) => Number(m.recaudado || 0)) },
+            { name: "Ajuste por anulaciones", data: caja.map((m) => Number(m.ajuste_anulaciones || 0)) },
+          ]
+        : [{ name: "Recaudado (caja)", data: caja.map((m) => Number(m.recaudado || 0)) }],
     };
   }, [series, isDark]);
 
@@ -477,6 +496,9 @@ const ReporteFinancieroEstado = () => {
       ) : (
         <div className="space-y-6">
           
+          {/* ── ANULACIONES: explican por qué un total bajó después de reportarlo ── */}
+          {anulaciones && <PanelAnulaciones anulaciones={anulaciones} filtro={financiero?.filtro_aplicado} />}
+
           {/* ── CHARTS SECTION ── */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 print:block">
             {/* Gráfico 1: Tendencia Mensual */}
@@ -513,6 +535,11 @@ const ReporteFinancieroEstado = () => {
                 <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">
                   Dinero que entró cada mes según la fecha de pago, sin importar de qué periodo era la deuda. Muestra el año completo, independiente del filtro.
                 </p>
+                {Number(resumen.ajustes_anulaciones_caja || 0) > 0 && (
+                  <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400" data-testid="nota-ajustes-caja">
+                    Incluye −{moneda(resumen.ajustes_anulaciones_caja)} de anulaciones de periodos ya cerrados: el mes del cobro queda como se entregó y el ajuste se resta en el mes en que se anuló.
+                  </p>
+                )}
               </div>
               <div className="text-right shrink-0">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Total en caja (año)</p>
@@ -623,5 +650,61 @@ const ReporteFinancieroEstado = () => {
     </div>
   );
 };
+
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+const monedaMx = (valor) => Number(valor || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+
+/**
+ * Anulaciones del reporte financiero (solo totales):
+ * - de los cobros de este filtro: ya están descontadas del recaudado; explican por qué bajó.
+ * - hechas en estas fechas: incluye las que corrigieron periodos ya cerrados (fuera de plazo).
+ */
+const fechaCorta = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || "") ? iso.split("-").reverse().join("/") : null);
+
+function PanelAnulaciones({ anulaciones, filtro }) {
+  // "Hechas en estas fechas" se cuenta por la fecha de anulación dentro del rango del filtro: se muestra cuál es
+  const desde = fechaCorta(filtro?.fecha_inicio);
+  const hasta = fechaCorta(filtro?.fecha_fin);
+  const rango = desde && hasta ? (desde === hasta ? `el ${desde}` : `del ${desde} al ${hasta}`) : "en estas fechas";
+  const delRango = anulaciones.de_cobros_del_rango || { cantidad: 0, monto: 0 };
+  const hechas = anulaciones.hechas_en_el_rango || { cantidad: 0, monto: 0, periodos_cerrados: { cantidad: 0, monto: 0 } };
+  const cerradas = hechas.periodos_cerrados || { cantidad: 0, monto: 0 };
+  const hay = delRango.cantidad > 0 || hechas.cantidad > 0;
+  const caja = hay
+    ? "border-rose-200 dark:border-rose-900/50 bg-rose-50/60 dark:bg-rose-950/20"
+    : "border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/50";
+  const valor = hay ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-zinc-400";
+
+  return (
+    <section aria-label="Anulaciones" className={`rounded-2xl border p-5 sm:p-6 print:border-none print:bg-transparent print:p-0 ${caja}`}>
+      <div className="flex items-center gap-2 mb-4">
+        <HiBan className={`w-4 h-4 ${valor}`} />
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Cobros anulados</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">De los cobros de este filtro</p>
+          <p className={`text-2xl font-black tracking-tight ${valor}`}>{monedaMx(delRango.monto)}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">
+            {delRango.cantidad > 0
+              ? <>{plural(delRango.cantidad, "cobro anulado", "cobros anulados")}. Ya están descontados del total recaudado.</>
+              : "Ningún cobro de este filtro se ha anulado."}
+          </p>
+        </div>
+        <div>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">Anulaciones hechas {rango}</p>
+          <p className={`text-2xl font-black tracking-tight ${valor}`}>{monedaMx(hechas.monto)}</p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">
+            {hechas.cantidad > 0 ? plural(hechas.cantidad, "anulación", "anulaciones") : `No se hicieron anulaciones ${rango}`}
+            {cerradas.cantidad > 0
+              ? <>; <b className="text-rose-600 dark:text-rose-400">{plural(cerradas.cantidad, "corrigió", "corrigieron")} {cerradas.cantidad === 1 ? "un periodo ya cerrado" : "periodos ya cerrados"} por {monedaMx(cerradas.monto)}</b>: cambia la recaudación de esos periodos; en la caja se resta como ajuste en el mes en que se anuló.</>
+              : "."}
+          </p>
+        </div>
+      </div>
+      <p className="mt-4 text-[11px] text-slate-400 dark:text-zinc-500">El detalle de cada anulación está en Pagos, con el filtro «Tipo de pago → Pagos anulados».</p>
+    </section>
+  );
+}
 
 export default ReporteFinancieroEstado;

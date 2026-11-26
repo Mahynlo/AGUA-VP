@@ -1,5 +1,5 @@
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "flowbite-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   HiCreditCard,
   HiExclamation,
@@ -99,6 +99,8 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
   const [resultadoPago, setResultadoPago] = useState(null);
   const [formPago, setFormPago] = useState(() => buildInitialFormPago(cliente));
   const [mostrarErrores, setMostrarErrores] = useState(false);
+  // Candado síncrono: un doble clic llega antes de que React oculte el botón
+  const cobrandoRef = useRef(false);
 
   const preview = useMemo(() => {
     if (!cliente) return { aplicaciones: [], montoAplicado: 0, cambio: 0 };
@@ -164,6 +166,8 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
       return;
     }
 
+    if (cobrandoRef.current) return;
+    cobrandoRef.current = true;
     setEstadoPago("procesando");
     try {
       const result = await onConfirmarPago({
@@ -178,6 +182,8 @@ const ModalPagoDistribuidoCliente = ({ isOpen, onClose, cliente, onConfirmarPago
     } catch (error) {
       setResultadoPago({ mensaje: error?.message || "No se pudo registrar el pago distribuido" });
       setEstadoPago("error");
+    } finally {
+      cobrandoRef.current = false;
     }
   };
 

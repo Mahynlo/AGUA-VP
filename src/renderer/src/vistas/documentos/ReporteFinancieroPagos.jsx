@@ -79,10 +79,15 @@ const ReporteFinancieroPagos = () => {
   const resumen = data?.resumen || {};
   const filtro = data?.filtro_aplicado || {};
   const series = data?.series || {};
+  const anulaciones = data?.anulaciones || null;
 
   // Series financieras
   const recaudacionMensual = useMemo(() => series.recaudacion_mensual || [], [series]);
   const recaudacionCaja = useMemo(() => series.recaudacion_por_mes_pago || [], [series]);
+  // Anulaciones de periodos cerrados restadas en el mes en que se hicieron (recaudado = neto)
+  const totalAjustesCaja = recaudacionCaja.reduce((acc, row) => acc + Number(row.ajuste_anulaciones || 0), 0);
+  const totalCobradoCaja = recaudacionCaja.reduce((acc, row) => acc + Number(row.cobrado ?? row.recaudado ?? 0), 0);
+  const conAjustesCaja = totalAjustesCaja > 0;
   const metodosPago = useMemo(() => series.metodos_pago || [], [series]);
 
   // Métricas financieras principales
@@ -902,6 +907,7 @@ const ReporteFinancieroPagos = () => {
                 )}
 
                 {/* 3. DETALLE DE FLUJO EFECTIVO PERCIBIDO EN CAJA POR MES DE COBRO - DEBAJO DE LA GRÁFICA DE CAJA REAL */}
+                {/* Con anulaciones de periodos cerrados: columnas Cobrado y Ajustes (igual que el PDF nativo) */}
                 {recaudacionCaja.length > 0 && (
                   <div className="no-break" style={{ marginBottom: "14px" }}>
                     <div style={{ fontSize: "9.5px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.04em" }}>
@@ -912,7 +918,9 @@ const ReporteFinancieroPagos = () => {
                         <tr>
                           <th style={{ background: "#0d9488", color: "white", padding: "6px 8px", textAlign: "left" }}>Mes de Operación (Fecha de Cobro)</th>
                           <th style={{ background: "#0d9488", color: "white", padding: "6px 8px", textAlign: "right" }}>Recibos Cobrados en Ventanilla</th>
-                          <th style={{ background: "#0d9488", color: "white", padding: "6px 8px", textAlign: "right" }}>Flujo Percibido en Caja ($ MXN)</th>
+                          {conAjustesCaja && <th style={{ background: "#0d9488", color: "white", padding: "6px 8px", textAlign: "right" }}>Cobrado ($ MXN)</th>}
+                          {conAjustesCaja && <th style={{ background: "#0d9488", color: "white", padding: "6px 8px", textAlign: "right" }}>Ajustes por Anulaciones</th>}
+                          <th style={{ background: "#0d9488", color: "white", padding: "6px 8px", textAlign: "right" }}>{conAjustesCaja ? "Neto a Entregar ($ MXN)" : "Flujo Percibido en Caja ($ MXN)"}</th>
                           <th style={{ background: "#0d9488", color: "white", padding: "6px 8px", textAlign: "right" }}>% del Flujo Total</th>
                         </tr>
                       </thead>
@@ -924,6 +932,12 @@ const ReporteFinancieroPagos = () => {
                             <tr key={`caja-row-${row.periodo}-${idx}`}>
                               <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", fontWeight: 700 }}>{formatMonthYearLong(row.periodo)}</td>
                               <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontFamily: "monospace" }}>{fmt(row.transacciones || 0)}</td>
+                              {conAjustesCaja && <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontFamily: "monospace" }}>{money(Number(row.cobrado ?? cobrado))}</td>}
+                              {conAjustesCaja && (
+                                <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontFamily: "monospace", color: Number(row.ajuste_anulaciones || 0) > 0 ? "#dc2626" : "#64748b" }}>
+                                  {Number(row.ajuste_anulaciones || 0) > 0 ? `−${money(Number(row.ajuste_anulaciones))}` : "—"}
+                                </td>
+                              )}
                               <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontFamily: "monospace", fontWeight: 700, color: "#0d9488" }}>{money(cobrado)}</td>
                               <td style={{ border: "1px solid #e2e8f0", padding: "5px 8px", textAlign: "right", fontFamily: "monospace", fontWeight: 700, color: "#0f172a" }}>{percent(pct)}</td>
                             </tr>
@@ -932,11 +946,18 @@ const ReporteFinancieroPagos = () => {
                         <tr style={{ background: "#f0fdfa" }}>
                           <td style={{ border: "1px solid #ccfbf1", padding: "6px 8px", fontWeight: 800, textTransform: "uppercase" }}>Total Ingresado en Caja</td>
                           <td style={{ border: "1px solid #ccfbf1", padding: "6px 8px", textAlign: "right", fontWeight: 800, fontFamily: "monospace" }}>{fmt(totalTransaccionesCaja)}</td>
+                          {conAjustesCaja && <td style={{ border: "1px solid #ccfbf1", padding: "6px 8px", textAlign: "right", fontWeight: 800, fontFamily: "monospace" }}>{money(totalCobradoCaja)}</td>}
+                          {conAjustesCaja && <td style={{ border: "1px solid #ccfbf1", padding: "6px 8px", textAlign: "right", fontWeight: 800, fontFamily: "monospace", color: "#dc2626" }}>−{money(totalAjustesCaja)}</td>}
                           <td style={{ border: "1px solid #ccfbf1", padding: "6px 8px", textAlign: "right", fontWeight: 800, fontFamily: "monospace", color: "#0d9488" }}>{money(totalRecaudadoCaja)}</td>
                           <td style={{ border: "1px solid #ccfbf1", padding: "6px 8px", textAlign: "right", fontWeight: 800, fontFamily: "monospace" }}>100.0%</td>
                         </tr>
                       </tbody>
                     </table>
+                    {conAjustesCaja && (
+                      <div style={{ fontSize: "8px", color: "#64748b", fontStyle: "italic", marginTop: "3px" }}>
+                        Las anulaciones de períodos ya cerrados no cambian el mes del cobro (ese dinero ya se entregó): se restan como ajuste en el mes en que se anularon.
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1006,6 +1027,54 @@ const ReporteFinancieroPagos = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {/* 4b. COBROS ANULADOS (igual que el PDF nativo; solo totales) */}
+                {anulaciones && (() => {
+                  const delRango = anulaciones.de_cobros_del_rango || {};
+                  const hechas = anulaciones.hechas_en_el_rango || {};
+                  const cerradas = hechas.periodos_cerrados || {};
+                  const hayCerradas = Number(cerradas.cantidad || 0) > 0;
+                  const td = { border: "1px solid #e2e8f0", padding: "5px 8px" };
+                  const num = { ...td, textAlign: "right", fontFamily: "monospace" };
+                  return (
+                    <div className="no-break" style={{ marginBottom: "14px" }}>
+                      <div style={{ fontSize: "9.5px", fontWeight: 800, color: "#0f172a", textTransform: "uppercase", marginBottom: "4px", letterSpacing: "0.04em" }}>
+                        Cobros anulados
+                      </div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px", background: "white", border: "1px solid #cbd5e1", borderRadius: "6px", overflow: "hidden" }}>
+                        <thead>
+                          <tr>
+                            <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "left" }}>Concepto</th>
+                            <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Cobros</th>
+                            <th style={{ background: "#1e293b", color: "white", padding: "6px 8px", textAlign: "right" }}>Monto ($ MXN)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td style={{ ...td, fontWeight: 700 }}>Cobros de este período que fueron anulados (ya descontados de la recaudación)</td>
+                            <td style={num}>{fmt(Number(delRango.cantidad || 0))}</td>
+                            <td style={{ ...num, fontWeight: 700, color: "#dc2626" }}>{money(Number(delRango.monto || 0))}</td>
+                          </tr>
+                          <tr style={{ background: "#f8fafc" }}>
+                            <td style={{ ...td, fontWeight: 700 }}>Anulaciones realizadas en estas fechas</td>
+                            <td style={num}>{fmt(Number(hechas.cantidad || 0))}</td>
+                            <td style={{ ...num, fontWeight: 700 }}>{money(Number(hechas.monto || 0))}</td>
+                          </tr>
+                          <tr style={{ background: "#f8fafc" }}>
+                            <td style={{ ...td, paddingLeft: "18px", color: "#475569" }}>De ellas, correcciones a períodos ya cerrados</td>
+                            <td style={num}>{fmt(Number(cerradas.cantidad || 0))}</td>
+                            <td style={{ ...num, fontWeight: 700, color: hayCerradas ? "#dc2626" : "#0f172a" }}>{money(Number(cerradas.monto || 0))}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <div style={{ fontSize: "8px", color: "#64748b", fontStyle: "italic", marginTop: "3px" }}>
+                        {hayCerradas
+                          ? "Las correcciones a períodos ya cerrados cambian la recaudación de esos períodos en reportes emitidos antes. La caja de esos meses no cambia: se ajusta en el mes en que se anuló."
+                          : "Un cobro anulado no se borra: queda en el historial con quién lo anuló, cuándo y por qué."}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* 5. CLASIFICACIÓN DE INGRESOS POR MEDIO DE PAGO */}
                 {metodosPagoTabla.length > 0 && (

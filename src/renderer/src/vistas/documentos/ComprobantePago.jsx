@@ -112,9 +112,12 @@ const Comprobante = ({ data }) => {
     const fechaPago = pago.fecha_pago || data.fecha_pago || fechaEmision;
     const historialPagos = Array.isArray(data.historial_pagos) ? data.historial_pagos : [];
 
-    const estadoColor = esPagoParcial ? '#b45309' : '#15803d';
-    const estadoBg = esPagoParcial ? '#fffbeb' : '#f0fdf4';
-    const estadoBorder = esPagoParcial ? '#fde68a' : '#bbf7d0';
+    // Pago anulado: el comprobante se puede reimprimir, siempre con la marca ANULADO
+    const anulacion = data.anulacion || null;
+
+    const estadoColor = anulacion ? '#be123c' : (esPagoParcial ? '#b45309' : '#15803d');
+    const estadoBg = anulacion ? '#fff1f2' : (esPagoParcial ? '#fffbeb' : '#f0fdf4');
+    const estadoBorder = anulacion ? '#fecdd3' : (esPagoParcial ? '#fde68a' : '#bbf7d0');
 
     return (
         <div
@@ -123,8 +126,23 @@ const Comprobante = ({ data }) => {
                 fontFamily: "'Segoe UI', Arial, sans-serif",
                 color: '#0f172a',
                 pageBreakInside: 'avoid',
+                ...(anulacion ? { position: 'relative' } : {}),
             }}
         >
+            {anulacion && (
+                <div aria-hidden="true" style={{
+                    position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    pointerEvents: 'none', zIndex: 10,
+                }}>
+                    <span style={{
+                        transform: 'rotate(-28deg)', fontSize: '120px', fontWeight: 900, letterSpacing: '0.12em',
+                        color: 'rgba(190, 18, 60, 0.16)', border: '10px solid rgba(190, 18, 60, 0.16)',
+                        borderRadius: '24px', padding: '0 36px', lineHeight: 1.15,
+                    }}>
+                        ANULADO
+                    </span>
+                </div>
+            )}
             {/* ── Header azul institucional ── */}
             <div style={{
                 display: 'flex',
@@ -184,11 +202,24 @@ const Comprobante = ({ data }) => {
                         fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
                         padding: '2px 9px', borderRadius: '999px',
                     }}>
-                        {esPagoParcial ? '● Abono / Pago parcial' : '● Pagado en su totalidad'}
+                        {anulacion ? '● Pago anulado' : (esPagoParcial ? '● Abono / Pago parcial' : '● Pagado en su totalidad')}
                     </span>
                     <span style={{ color: '#64748b', fontSize: '10px', fontWeight: 600 }}>Emisión: {fmtFechaHora(fechaEmision)}</span>
                 </div>
             </div>
+
+            {anulacion && (
+                <div style={{
+                    margin: '10px 20px 0', padding: '8px 12px', borderRadius: '8px',
+                    background: '#fff1f2', border: '1px solid #fecdd3', color: '#881337', fontSize: '11px', lineHeight: 1.5,
+                }}>
+                    <div style={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Pago anulado el {fmtFechaHora(anulacion.fecha)}{anulacion.anulado_por ? ` por ${anulacion.anulado_por}` : ''}
+                    </div>
+                    <div><span style={{ fontWeight: 700 }}>Motivo:</span> {anulacion.motivo || '—'}</div>
+                    <div style={{ color: '#9f1239' }}>Este comprobante no ampara ningún pago vigente.</div>
+                </div>
+            )}
 
             {/* ── Datos cliente / comprobante ── */}
             <div style={{ padding: '14px 20px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>

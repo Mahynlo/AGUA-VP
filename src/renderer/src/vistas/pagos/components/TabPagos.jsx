@@ -397,7 +397,8 @@ const TabPagos = () => {
   const opcionesTipo = [
     { value: "completo", label: "Pago completo de la factura" },
     { value: "abono", label: "Abono parcial" },
-    { value: "parcialidad", label: "Parcialidad de convenio" }
+    { value: "parcialidad", label: "Parcialidad de convenio" },
+    { value: "anulados", label: "Pagos anulados" }
   ];
   const opcionesMetodo = ["Efectivo", "Transferencia", "Tarjeta", "Cheque"].map((m) => ({ value: m, label: m }));
   const opcionesCiudad = ciudades.map((c) => ({ value: c, label: c }));
@@ -539,6 +540,26 @@ const TabPagos = () => {
               {porFechaDeCobro && <span className="text-slate-400 dark:text-zinc-500 font-medium"> · de todos los períodos facturados</span>}
             </p>
           )}
+          {/* Anulados con los mismos filtros: no aparecen ni suman, pero se dice cuántos son */}
+          {resumen?.anulados?.cantidad > 0 && (
+            <p className="mt-1 text-xs font-medium text-slate-500 dark:text-zinc-400" data-testid="nota-anulados">
+              No incluye {resumen.anulados.cantidad === 1 ? "1 cobro anulado" : `${resumen.anulados.cantidad} cobros anulados`} por{" "}
+              <span className="font-bold text-rose-600 dark:text-rose-400">
+                {Number(resumen.anulados.monto).toLocaleString("es-MX", { style: "currency", currency: "MXN" })}
+              </span>
+              {" · "}
+              <button type="button" onClick={() => handleTipoChange("anulados")} className="font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                Ver anulados
+              </button>
+              {resumen.anulados.periodo_cerrado?.cantidad > 0 && (
+                <span className="block mt-0.5" data-testid="nota-anulados-periodo-cerrado">
+                  {resumen.anulados.periodo_cerrado.cantidad === 1
+                    ? "1 de ellos se anuló con su periodo ya cerrado: en la caja se sigue contando en su mes (ya se entregó) y se resta como ajuste en el mes en que se anuló."
+                    : `${resumen.anulados.periodo_cerrado.cantidad} de ellos se anularon con su periodo ya cerrado: en la caja se siguen contando en su mes (ya se entregaron) y se restan como ajuste en el mes en que se anularon.`}
+                </span>
+              )}
+            </p>
+          )}
         </div>
 
         {/* Sub-header paginación */}
@@ -624,6 +645,11 @@ const TabPagos = () => {
                           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded w-fit">
                             Fact: #{pago.factura_id}
                           </div>
+                          {pago.fecha_anulacion && (
+                            <div className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest bg-rose-500/10 px-2 py-0.5 rounded w-fit">
+                              Anulado
+                            </div>
+                          )}
                         </div>
                       </td>
 
@@ -734,6 +760,11 @@ const TabPagos = () => {
         pago={pagoSeleccionado}
         obtenerInfoPagosPorFactura={obtenerInfoPagosPorFactura}
         getMetodoColor={getMetodoColor}
+        onPagoAnulado={async () => {
+          setModalDetalle(false);
+          await actualizarPagos();
+          window.dispatchEvent(new CustomEvent("dashboard-update"));
+        }}
       />
 
       {/* Modal de Configuración de Exportación */}

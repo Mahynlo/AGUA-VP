@@ -22,7 +22,12 @@ const THEME = {
   // Pago Parcial (Ámbar)
   amber: '#b45309',          // Amber 700
   amberBg: '#fffbeb',        // Amber 50
-  amberBorder: '#fde68a'     // Amber 200
+  amberBorder: '#fde68a',    // Amber 200
+  // Pago anulado (Rojo)
+  voidRed: '#be123c',        // Rose 700
+  voidRedBg: '#fff1f2',      // Rose 50
+  voidRedBorder: '#fecdd3',  // Rose 200
+  voidRedText: '#881337'     // Rose 900
 }
 
 // ─── FORMATEADORES AUXILIARES ──────────────────────────────────────────────
@@ -205,7 +210,11 @@ function normalizeData(payload) {
     ? data.historial_pagos
     : []
 
+  // { fecha, motivo, anulado_por } cuando el pago está anulado; null si está vigente
+  const anulacion = data.anulacion && data.anulacion.fecha ? data.anulacion : null
+
   return {
+    anulacion,
     folioPago,
     facturaId,
     clienteNombre,
@@ -320,10 +329,10 @@ export async function generarComprobantePagoPdf(rawData, options = {}) {
   })
 
   // ── 2. BANDA DE ESTATUS Y METADATOS ───────────────────────────────────────
-  const badgeText = info.esPagoParcial ? '● ABONO / PAGO PARCIAL' : '● PAGADO EN SU TOTALIDAD'
-  const badgeColor = info.esPagoParcial ? THEME.amber : THEME.paidGreen
-  const badgeBg = info.esPagoParcial ? THEME.amberBg : THEME.paidGreenBg
-  const badgeBorder = info.esPagoParcial ? THEME.amberBorder : THEME.paidGreenBorder
+  const badgeText = info.anulacion ? '● PAGO ANULADO' : (info.esPagoParcial ? '● ABONO / PAGO PARCIAL' : '● PAGADO EN SU TOTALIDAD')
+  const badgeColor = info.anulacion ? THEME.voidRed : (info.esPagoParcial ? THEME.amber : THEME.paidGreen)
+  const badgeBg = info.anulacion ? THEME.voidRedBg : (info.esPagoParcial ? THEME.amberBg : THEME.paidGreenBg)
+  const badgeBorder = info.anulacion ? THEME.voidRedBorder : (info.esPagoParcial ? THEME.amberBorder : THEME.paidGreenBorder)
 
   content.push({
     table: {
@@ -390,6 +399,38 @@ export async function generarComprobantePagoPdf(rawData, options = {}) {
     },
     margin: [0, 0, 0, 10]
   })
+
+  // ── 2b. AVISO DE ANULACIÓN (solo si el pago fue anulado) ──────────────────
+  if (info.anulacion) {
+    const a = info.anulacion
+    content.push({
+      table: {
+        widths: ['*'],
+        body: [[{
+          stack: [
+            {
+              text: `PAGO ANULADO EL ${formatFechaHora(a.fecha).toUpperCase()}${a.anulado_por ? ` POR ${String(a.anulado_por).toUpperCase()}` : ''}`,
+              bold: true, fontSize: 8, color: THEME.voidRedText
+            },
+            { text: [{ text: 'Motivo: ', bold: true }, a.motivo || '—'], fontSize: 7.5, color: THEME.voidRedText, margin: [0, 2, 0, 0] },
+            { text: 'Este comprobante no ampara ningún pago vigente.', fontSize: 7.5, color: THEME.voidRed, margin: [0, 2, 0, 0] }
+          ]
+        }]]
+      },
+      layout: {
+        fillColor: () => THEME.voidRedBg,
+        hLineWidth: () => 0.8,
+        vLineWidth: () => 0.8,
+        hLineColor: () => THEME.voidRedBorder,
+        vLineColor: () => THEME.voidRedBorder,
+        paddingLeft: () => 8,
+        paddingRight: () => 8,
+        paddingTop: () => 5,
+        paddingBottom: () => 5
+      },
+      margin: [0, 0, 0, 10]
+    })
+  }
 
   // ── 3. DOS TARJETAS: CLIENTE Y DETALLES DEL COMPROBANTE ───────────────────
   const tarjetaWidth = (ANCHO_UTIL - 12) / 2 // 270 pt cada una
@@ -934,7 +975,11 @@ export async function generarComprobantePagoPdf(rawData, options = {}) {
       fontSize: 7.5,
       color: THEME.textDark
     },
-    content
+    content,
+    // Pago anulado: se puede reimprimir, siempre con la marca de agua
+    ...(info.anulacion
+      ? { watermark: { text: 'ANULADO', color: THEME.voidRed, opacity: 0.15, bold: true, angle: -30 } }
+      : {})
   }
 
   const pdfDoc = pdfmake.createPdf(docDefinition)

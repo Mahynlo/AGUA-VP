@@ -118,6 +118,8 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
   const [fase, setFase] = useState("seleccion"); // "seleccion" | "confirmacion"
   const [confirmacionFinal, setConfirmacionFinal] = useState(false); // gate "¿completamente seguro?"
   const [procesando, setProcesando] = useState(false);
+  // Candado síncrono: un doble clic llega antes de que React deshabilite el botón
+  const liquidandoRef = useRef(false);
   const [clientesSiguenDebiendo, setClientesSiguenDebiendo] = useState(cargarSeleccionGuardada);
   const [search, setSearch] = useState("");
   const [soloExcluidos, setSoloExcluidos] = useState(false);
@@ -393,6 +395,8 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
     }
     const modificadoPor = usuario.id || 1;
 
+    if (liquidandoRef.current) return;
+    liquidandoRef.current = true;
     setProcesando(true);
 
     let exitos = 0;
@@ -431,6 +435,7 @@ const ModalLiquidacionTotal = ({ isOpen, onClose, clientesConDeuda = [], onLiqui
     }
 
     setProcesando(false);
+    liquidandoRef.current = false;
 
     if (onLiquidacionRegistrada) {
       await onLiquidacionRegistrada();

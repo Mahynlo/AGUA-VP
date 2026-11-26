@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { usarApp } = require('../../helpers/sesion');
-const { irA } = require('../../helpers/authHelper');
+const { irA, DEFAULT_ADMIN } = require('../../helpers/authHelper');
 const { fila, filas, contarListado } = require('../../helpers/datos');
 const { esperarAviso, elegirPeriodo, hoySonora, esperarPdfNuevo } = require('../../helpers/ui');
 
@@ -28,6 +28,20 @@ test.describe('07 · Pagos y cobranza', () => {
     }).toPass({ timeout: 30000 });
     await fila.locator('button[title="Registrar Pago"]').click();
     await expect(dialogo().getByText(`Factura #${id}`).first()).toBeVisible({ timeout: 15000 });
+  }
+
+  /** Abre el cobro distribuido del cliente `deudor` desde Pagos → Cobranza. */
+  async function abrirCobroDistribuido(window, deudor) {
+    await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
+    await window.locator('button', { hasText: /^Cobranza$/ }).click();
+    await window.locator('input[placeholder^="Buscar nombre, predio"]').fill(deudor.numero_predio);
+    // El botón "Cobrar" de la fila de ESE cliente: la lista se ordena por deuda y, mientras la búsqueda
+    // no se aplica, la primera fila es otro cliente (el cobro se registraba al cliente equivocado).
+    const etiqueta = `Predio #${deudor.numero_predio} · ID: ${deudor.id}`;
+    const filaDeudor = window.locator('tr').filter({ has: window.getByText(etiqueta, { exact: true }) });
+    await expect(filaDeudor).toHaveCount(1, { timeout: 15000 });
+    await filaDeudor.locator('button', { hasText: /^Cobrar$/ }).click();
+    await expect(dialogo().getByText(deudor.nombre).first()).toBeVisible({ timeout: 15000 });
   }
 
   async function cobrar(cantidad) {
@@ -80,6 +94,64 @@ test.describe('07 · Pagos y cobranza', () => {
     expect(pago).toMatchObject({ monto: saldo, cantidad_entregada: 500, cambio: r2(500 - saldo) });
   });
 
+  test('doble clic en "Confirmar y Procesar Pago" registra un solo cobro', async () => {
+    const otra = fila(`SELECT f.id, f.saldo_pendiente FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
+      WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 60 AND f.convenio_id IS NULL AND f.id != ?
+        AND NOT EXISTS (SELECT 1 FROM pagos p WHERE p.factura_id = f.id) ORDER BY f.id LIMIT 1`, factura.id);
+    expect(otra, 'debe haber otra factura de agosto sin pagos en la copia').toBeTruthy();
+
+    await abrirPagoDeFactura(otra.id);
+    await dialogo().locator('input[type="number"]').fill('40');
+    await dialogo().locator('button', { hasText: /^Cobrar$/ }).click();
+    const confirmar = dialogo().locator('button', { hasText: 'Confirmar y Procesar Pago' });
+    await expect(confirmar).toBeVisible();
+    // Dos clics en la misma tarea del navegador: React aún no ha ocultado el botón
+    // (el peor caso de un doble clic rápido; sin candado se registraban dos cobros).
+    await confirmar.evaluate((boton) => { boton.click(); boton.click(); });
+    await expect(dialogo().getByText('Pago Realizado con Éxito').first()).toBeVisible({ timeout: 20000 });
+    await ctx.window.locator('button', { hasText: /^Finalizar$/ }).click();
+
+    expect(fila('SELECT COUNT(*) AS n FROM pagos WHERE factura_id = ?', otra.id).n, 'un solo pago').toBe(1);
+    expect(fila('SELECT saldo_pendiente FROM facturas WHERE id = ?', otra.id).saldo_pendiente).toBe(r2(otra.saldo_pendiente - 40));
+  });
+
+  test('la cantidad entregada se guarda en centavos aunque se capturen más decimales', async () => {
+    const f = fila(`SELECT f.id, f.saldo_pendiente FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
+      WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 61 AND f.convenio_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM pagos p WHERE p.factura_id = f.id) ORDER BY f.id LIMIT 1`);
+    expect(f, 'debe haber otra factura de agosto sin pagos en la copia').toBeTruthy();
+
+    await abrirPagoDeFactura(f.id);
+    await cobrar('60.129');
+    await ctx.window.locator('button', { hasText: /^Finalizar$/ }).click();
+
+    const pago = fila('SELECT monto, cantidad_entregada, cambio FROM pagos WHERE factura_id = ?', f.id);
+    expect(pago).toMatchObject({ monto: 60.13, cantidad_entregada: 60.13, cambio: 0 });
+    expect(fila('SELECT saldo_pendiente FROM facturas WHERE id = ?', f.id).saldo_pendiente).toBe(r2(f.saldo_pendiente - 60.13));
+  });
+
+  test('el servidor rechaza una fecha de pago que no existe (31 de febrero)', async () => {
+    // El selector de fecha de la pantalla no permite capturarla: se envía por el mismo canal
+    // IPC que usa la pantalla de cobro, que llega al servidor instalado.
+    const f = fila(`SELECT f.id FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
+      WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 10 AND f.convenio_id IS NULL ORDER BY f.id DESC LIMIT 1`);
+    const contarPagos = () => fila('SELECT COUNT(*) AS n FROM pagos WHERE factura_id = ?', f.id).n;
+    const enviar = (fecha_pago) => ctx.window.evaluate(({ factura_id, fecha_pago }) => window.api.registerPago(
+      { factura_id, fecha_pago, cantidad_entregada: 5, metodo_pago: 'Efectivo', modificado_por: 1 },
+      localStorage.getItem('token')
+    ), { factura_id: f.id, fecha_pago });
+    const antes = contarPagos();
+
+    const invalida = await enviar('2026-02-31');
+    expect(invalida, JSON.stringify(invalida)).toMatchObject({ success: false, message: 'Validación fallida' });
+    expect(contarPagos(), 'no se registró el pago').toBe(antes);
+
+    // Control: por el mismo canal, con una fecha real, el pago sí se registra
+    const valida = await enviar(hoySonora());
+    expect(valida.success, JSON.stringify(valida)).toBe(true);
+    expect(contarPagos()).toBe(antes + 1);
+  });
+
   test('el cobro distribuido aplica primero a la factura más antigua', async () => {
     const { window } = ctx;
     const deudor = fila(`SELECT c.id, c.numero_predio, c.nombre FROM clientes c
@@ -89,17 +161,7 @@ test.describe('07 · Pagos y cobranza', () => {
       WHERE f.cliente_id = ? AND f.saldo_pendiente > 0 ORDER BY l.periodo, f.id`, deudor.id);
     const monto = r2(antes[0].saldo_pendiente + 10);
 
-    await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
-    await window.locator('button', { hasText: /^Cobranza$/ }).click();
-    await window.locator('input[placeholder^="Buscar nombre, predio"]').fill(deudor.numero_predio);
-    // El botón "Cobrar" de la fila de ESE cliente: la lista se ordena por deuda y, mientras la búsqueda
-    // no se aplica, la primera fila es otro cliente (el cobro se registraba al cliente equivocado).
-    const etiqueta = `Predio #${deudor.numero_predio} · ID: ${deudor.id}`;
-    const filaDeudor = window.locator('tr').filter({ has: window.getByText(etiqueta, { exact: true }) });
-    await expect(filaDeudor).toHaveCount(1, { timeout: 15000 });
-    await filaDeudor.locator('button', { hasText: /^Cobrar$/ }).click();
-    await expect(dialogo().getByText(deudor.nombre).first()).toBeVisible({ timeout: 15000 });
-
+    await abrirCobroDistribuido(window, deudor);
     await dialogo().locator('input[type="number"]').fill(String(monto));
     await dialogo().locator('button', { hasText: 'Revisar y Cobrar' }).click();
     await dialogo().locator('button', { hasText: 'Confirmar Pago' }).click();
@@ -110,6 +172,28 @@ test.describe('07 · Pagos y cobranza', () => {
     expect(despues[0]).toMatchObject({ estado: 'Pagado', saldo_pendiente: 0 });
     expect(despues[1].saldo_pendiente).toBe(r2(antes[1].saldo_pendiente - 10));
     for (let i = 2; i < antes.length; i++) expect(despues[i].saldo_pendiente).toBe(antes[i].saldo_pendiente);
+  });
+
+  test('doble clic en "Confirmar Pago" del cobro distribuido registra un solo cobro', async () => {
+    const { window } = ctx;
+    const deudor = fila(`SELECT c.id, c.numero_predio, c.nombre FROM clientes c
+      WHERE (SELECT COUNT(*) FROM facturas f WHERE f.cliente_id = c.id AND f.saldo_pendiente > 10 AND f.convenio_id IS NULL) >= 2
+        AND c.numero_predio IS NOT NULL ORDER BY c.id DESC LIMIT 1`);
+    expect(deudor, 'debe haber un cliente con 2 o más facturas pendientes en la copia').toBeTruthy();
+    const pagosAntes = fila('SELECT COUNT(*) AS n FROM pagos p JOIN facturas f ON f.id = p.factura_id WHERE f.cliente_id = ?', deudor.id).n;
+
+    await abrirCobroDistribuido(window, deudor);
+    await dialogo().locator('input[type="number"]').fill('10');
+    await dialogo().locator('button', { hasText: 'Revisar y Cobrar' }).click();
+    const confirmar = dialogo().locator('button', { hasText: 'Confirmar Pago' });
+    await expect(confirmar).toBeVisible();
+    // Dos clics en la misma tarea del navegador, antes de que React oculte el botón
+    await confirmar.evaluate((boton) => { boton.click(); boton.click(); });
+    await expect(dialogo().getByText('Cobro Exitoso').first()).toBeVisible({ timeout: 20000 });
+    await dialogo().locator('button', { hasText: 'Finalizar y Cerrar' }).click();
+
+    const pagosDespues = fila('SELECT COUNT(*) AS n FROM pagos p JOIN facturas f ON f.id = p.factura_id WHERE f.cliente_id = ?', deudor.id).n;
+    expect(pagosDespues - pagosAntes, '$10 cubren parte de una sola factura: un solo pago').toBe(1);
   });
 
   test('Facturas → el filtro de antigüedad del vencimiento llega a la API y cuenta bien', async () => {
@@ -131,7 +215,8 @@ test.describe('07 · Pagos y cobranza', () => {
     await window.locator('button', { hasText: /^Pagos$/ }).click();
     await window.locator('select[aria-label="Cualquier fecha de cobro"]').selectOption('hoy');
 
-    const { n, total } = fila(`SELECT COUNT(*) AS n, ROUND(COALESCE(SUM(monto), 0), 2) AS total FROM pagos WHERE substr(fecha_pago, 1, 10) = ?`, hoySonora());
+    const { n, total } = fila(`SELECT COUNT(*) AS n, ROUND(COALESCE(SUM(monto), 0), 2) AS total FROM pagos
+      WHERE substr(fecha_pago, 1, 10) = ? AND fecha_anulacion IS NULL`, hoySonora());
     expect(n, 'en esta prueba se registraron al menos 3 cobros hoy').toBeGreaterThanOrEqual(3);
     const totalTexto = total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
     await expect(window.getByText('Total cobrado con estos filtros:').locator('xpath=..')).toContainText(totalTexto, { timeout: 15000 });
@@ -160,5 +245,98 @@ test.describe('07 · Pagos y cobranza', () => {
     await expect(carrusel.locator('button', { hasText: 'Editar / Rectificar Lectura' })).toBeDisabled();
     await expect(carrusel.getByText(/ya tiene pagos registrados/).first()).toBeVisible();
     await carrusel.locator('button[aria-label="Close"]').click();
+  });
+
+  test('anular un pago: queda en el historial, devuelve el saldo y el comprobante sale con la marca ANULADO', async () => {
+    const { window } = ctx;
+    const MOTIVO = 'Prueba E2E: cobro registrado en la factura equivocada';
+    const f = fila(`SELECT f.id, f.saldo_pendiente, f.total FROM facturas f JOIN lecturas l ON l.id = f.lectura_id
+      WHERE l.periodo = '2026-08' AND f.saldo_pendiente > 30 AND f.convenio_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM pagos p WHERE p.factura_id = f.id) ORDER BY f.id LIMIT 1`);
+    expect(f, 'debe haber otra factura de agosto sin pagos en la copia').toBeTruthy();
+
+    // Un cobro de $25 registrado por el mismo canal que usa la pantalla de cobro
+    const cobro = await window.evaluate(({ factura_id, fecha_pago }) => window.api.registerPago(
+      { factura_id, fecha_pago, cantidad_entregada: 25, metodo_pago: 'Efectivo', modificado_por: 1 },
+      localStorage.getItem('token')
+    ), { factura_id: f.id, fecha_pago: hoySonora() });
+    expect(cobro.success, JSON.stringify(cobro)).toBe(true);
+    const pagoId = cobro.pagoID;
+
+    // Abrir su detalle en Pagos → Pagos (agosto)
+    const abrirDetalle = async () => {
+      await window.locator('input[placeholder^="Buscar ID, factura"]').fill('');
+      await window.locator('input[placeholder^="Buscar ID, factura"]').fill(String(pagoId));
+      const filaPago = window.locator('tr').filter({ hasText: new RegExp(`#P-\\s*${pagoId}(?!\\d)`) });
+      await expect(filaPago).toHaveCount(1, { timeout: 15000 });
+      await filaPago.locator('button[title="Ver Detalle del Pago"]').click();
+      await expect(dialogo().getByText('Detalle del Pago').first()).toBeVisible({ timeout: 15000 });
+    };
+    await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
+    await window.locator('button', { hasText: /^Pagos$/ }).click();
+    // Las pruebas anteriores pueden dejar filtros activos (p. ej. "Cobrados hoy", que deshabilita el período)
+    await window.locator('select[aria-label="Cualquier fecha de cobro"]').selectOption('All');
+    await elegirPeriodo(window, 'Ago');
+    await abrirDetalle();
+
+    // Anular con motivo (al menos 10 caracteres) y la contraseña del usuario
+    await dialogo().locator('button', { hasText: 'Anular pago' }).click();
+    const confirmar = dialogo().locator('button', { hasText: 'Confirmar anulación' });
+    await dialogo().locator('#motivo-anulacion').fill('corto');
+    await dialogo().locator('#password-anulacion').fill(DEFAULT_ADMIN.password);
+    await expect(confirmar).toBeDisabled();
+    await dialogo().locator('#motivo-anulacion').fill(MOTIVO);
+    await dialogo().locator('#password-anulacion').fill('');
+    await expect(confirmar).toBeDisabled(); // sin contraseña no se puede confirmar
+    await dialogo().locator('#password-anulacion').fill(DEFAULT_ADMIN.password);
+    await confirmar.click();
+    await expect(window.getByRole('dialog')).toHaveCount(0, { timeout: 15000 });
+
+    // En la base: el pago sigue ahí (no se borra) y la factura recupera su saldo
+    expect(fila('SELECT monto, motivo_anulacion, fecha_anulacion IS NOT NULL AS anulado FROM pagos WHERE id = ?', pagoId))
+      .toMatchObject({ monto: 25, motivo_anulacion: MOTIVO, anulado: 1 });
+    expect(fila('SELECT saldo_pendiente FROM facturas WHERE id = ?', f.id).saldo_pendiente).toBe(f.saldo_pendiente);
+
+    // Ya no aparece en el listado normal…
+    await window.locator('input[placeholder^="Buscar ID, factura"]').fill(String(pagoId));
+    await expect(window.locator('tr').filter({ hasText: new RegExp(`#P-\\s*${pagoId}(?!\\d)`) })).toHaveCount(0, { timeout: 15000 });
+    // …y junto al total se avisa que quedó fuera
+    await expect(window.getByTestId('nota-anulados')).toContainText('No incluye 1 cobro anulado por $25.00', { timeout: 15000 });
+
+    // …pero sí con el filtro "Pagos anulados" (en "Más filtros"), con su motivo
+    const masFiltros = window.locator('button[aria-expanded]', { hasText: 'Más filtros' });
+    if ((await masFiltros.getAttribute('aria-expanded')) !== 'true') await masFiltros.click();
+    await window.locator('select[aria-label="Tipo de pago"]').selectOption('anulados');
+    await abrirDetalle();
+    await expect(dialogo().getByText('Pago anulado').first()).toBeVisible();
+    await expect(dialogo().getByText(MOTIVO).first()).toBeVisible();
+    await expect(dialogo().locator('button', { hasText: 'Anular pago' })).toHaveCount(0);
+
+    // El comprobante se puede reimprimir con la marca ANULADO
+    const desde = Date.now();
+    await dialogo().locator('button', { hasText: 'Ver / Imprimir Recibo' }).click();
+    const pdf = await esperarPdfNuevo(desde);
+    expect(pdf.paginas).toBe(1);
+    // Para revisarlo a mano: AGUAVP_E2E_GUARDAR_PDF=<ruta.pdf> (la app borra el temporal al cerrar)
+    if (process.env.AGUAVP_E2E_GUARDAR_PDF) require('fs').copyFileSync(pdf.ruta, process.env.AGUAVP_E2E_GUARDAR_PDF);
+    await window.locator('button', { hasText: /^Cancelar$/ }).last().click();
+    await window.keyboard.press('Escape');
+    await window.locator('select[aria-label="Tipo de pago"]').selectOption('All').catch(() => {});
+  });
+
+  test('Estadísticas: el reporte financiero dice cuánto se anuló', async () => {
+    const { window } = ctx;
+    await irA(window, '#/resibos/pagos', 'Gestión de Pagos');
+    await window.locator('button', { hasText: /^Estadísticas$/ }).click();
+    const panel = window.getByRole('region', { name: 'Anulaciones' });
+    await expect(panel).toBeVisible({ timeout: 20000 });
+    await expect(panel.getByText('De los cobros de este filtro')).toBeVisible();
+    // El filtro por defecto es el último periodo facturado; el recuadro dice qué fechas cuenta
+    await expect(panel.getByText(/Anulaciones hechas del \d{2}\/\d{2}\/\d{4} al \d{2}\/\d{2}\/\d{4}/)).toBeVisible();
+    // Con el año actual entra hoy, cuando la prueba anterior anuló un cobro
+    await window.locator('select[aria-label="Tipo de filtro"]').selectOption('anio');
+    await expect(panel.getByText(/Anulaciones hechas del 01\/01\/\d{4} al 31\/12\/\d{4}/)).toBeVisible({ timeout: 20000 });
+    await expect(panel.getByText(/\d+ anulaci(ón|ones)/)).toBeVisible();
+    await window.locator('select[aria-label="Tipo de filtro"]').selectOption('periodo');
   });
 });

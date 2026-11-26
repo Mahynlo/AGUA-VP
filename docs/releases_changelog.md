@@ -2,6 +2,45 @@
 
 ---
 
+## 🧪 Notas de la versión — v1.3.1-rc.4 [Release Candidate]
+
+**📅 Fecha de lanzamiento:** 24/11/2026  
+**🚀 Versión:** `v1.3.1-rc.4` [Pre-release / Versión Candidata de Evaluación]  
+**📌 Versión base anterior estable:** `v1.3.0`  
+**🔖 Pre-release precedente:** `v1.3.1-rc.3`  
+**🧩 Servidor embebido:** `@aguavp/api-server 1.0.18`
+
+> 📝 **BORRADOR** generado desde 0 commit(s) desde `v1.3.1-rc.3`. Reescribe cada punto pensando en quien usa la app (qué cambió y qué debe hacer), quita lo que no le afecte y borra esta línea. No se puede publicar mientras esta línea exista.
+
+> ⚠️ **Aviso de Pre-release:** los administradores ya pueden anular un pago equivocado, y un doble clic al confirmar un cobro ya no registra el pago dos veces. Conviene probar: cobrar una factura, anular ese pago y volver a cobrarla; un cobro distribuido y una parcialidad de convenio.
+
+---
+
+### 💵 Pagos y cobranza
+
+#### ✨ Anulación de pagos
+- **Un cobro equivocado ahora se anula** desde *Pagos → Detalle del pago → Anular pago* (solo superadmin y administrador), indicando el motivo y **confirmando con su contraseña**. El pago **no se borra**: queda en el historial con quién lo anuló, cuándo y por qué, y su monto vuelve al saldo de la factura, que queda otra vez *Pendiente*, *Parcial* o *Vencida* según corresponda. Después se puede cobrar de nuevo correctamente.
+- **Los pagos anulados no suman** en el listado de pagos, el panel principal, el reporte financiero ni la regla de rectificación de lecturas: si se anulan todos los pagos de una factura, su lectura vuelve a poder rectificarse.
+- **Para consultarlos**, use el filtro *Tipo de pago → Pagos anulados*. Su comprobante se puede reimprimir y sale con la marca **ANULADO** y el motivo.
+- **Plazo para anular (cierre mensual):** un administrador solo puede anular cobros registrados en el mes en curso, o los del mes anterior durante los primeros 5 días del mes. Pasado ese plazo el periodo queda cerrado: el administrador ya no ve el botón (se muestra el motivo), y solo el superadmin puede anularlo, con un aviso de que cambiará los totales de un periodo ya reportado. El plazo se cuenta desde que se registró el cobro, no desde la fecha de pago capturada. La misma regla de plazo aplica a cambiar la fecha o el método de un cobro (sin pedir contraseña); el comentario se puede agregar siempre.
+- **Contraseña para anular:** toda anulación, de cualquier rol y dentro o fuera del plazo, se confirma escribiendo la contraseña de quien anula. Así queda claro que la hizo esa persona y no alguien que usó una sesión abierta. Una contraseña equivocada cuenta como intento fallido de inicio de sesión: al quinto, la cuenta se bloquea 30 minutos.
+- **Las anulaciones se ven en los reportes:** el reporte financiero (pantalla *Estadísticas* y PDF) agrega el recuadro *Cobros anulados* con dos cifras separadas. La primera es lo anulado de los cobros del periodo elegido, que ya está descontado de la recaudación y explica por qué un total bajó después de reportarlo. La segunda son las anulaciones hechas en esas fechas, indicando cuántas corrigieron periodos ya cerrados, cuyos reportes anteriores ya no coinciden. En *Pagos*, junto al total aparece «No incluye N cobros anulados por $X», con un enlace para verlos.
+- **La caja de un mes cerrado ya no cambia:** *Recaudación por mes de pago* es el corte de caja, lo que se cobró y entregó cada mes. Si se anula un cobro de un periodo ya cerrado (por ejemplo, uno de julio anulado en noviembre), julio queda como se entregó y la anulación se resta como *ajuste por anulaciones* en noviembre. La tabla de caja del PDF muestra entonces *Cobrado*, *Ajustes por anulaciones* y *Neto a entregar*. Las anulaciones dentro del plazo se siguen descontando del mes del cobro, porque se corrigen antes del cierre.
+- **Mismo criterio en todo el sistema:** la gráfica de caja en *Estadísticas* apila en rojo el ajuste por anulaciones sobre el neto a entregar. La tarjeta *Recaudación* del inicio muestra, cuando los hay, los *ajustes por anulaciones* del mes y el *neto a entregar*, con la misma cifra que la caja del reporte. En *Pagos*, la nota de anulados aclara cuáles se anularon con su periodo ya cerrado y por eso siguen contando en la caja de su mes.
+- En un cobro distribuido se anula cada pago por separado. Los pagos de parcialidades de convenio todavía no se pueden anular.
+- Al actualizar, la base de datos se ajusta sola (migración `0025`, con respaldo previo); los pagos existentes no cambian.
+
+#### 🐞 Correcciones
+- **Cobros duplicados por doble clic:** al confirmar un cobro, un doble clic rápido podía registrar el pago dos veces. Ahora solo se registra uno. Aplica al cobro de una factura, al cobro distribuido, a la liquidación total y a los cobros de convenios (parcialidad y pago integrado).
+
+#### 🧩 Servidor de pagos
+- **Solo administradores corrigen pagos:** modificar un pago ya registrado queda reservado a superadmin y administrador. Registrar y cobrar sigue igual para todos los roles.
+- **Fechas de pago válidas:** se rechazan fechas que no existen en el calendario (por ejemplo, 31 de febrero).
+- **Los montos de un pago registrado ya no se pueden cambiar** (lo cobrado, lo entregado y el cambio), para conservar el historial financiero. Al corregir un pago solo se pueden ajustar la fecha, el método y el comentario, y el comentario ahora sí se guarda.
+- **La cantidad entregada se guarda en centavos** (máximo dos decimales).
+
+---
+
 ## 🧪 Notas de la versión — v1.3.1-rc.3 [Release Candidate]
 
 **📅 Fecha de lanzamiento:** 17/11/2026  
