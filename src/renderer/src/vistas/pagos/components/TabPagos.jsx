@@ -551,6 +551,13 @@ const TabPagos = () => {
               <button type="button" onClick={() => handleTipoChange("anulados")} className="font-bold text-blue-600 dark:text-blue-400 hover:underline">
                 Ver anulados
               </button>
+              {resumen.anulados.periodo_cerrado?.cantidad > 0 && (
+                <span className="block mt-0.5" data-testid="nota-anulados-periodo-cerrado">
+                  {resumen.anulados.periodo_cerrado.cantidad === 1
+                    ? "1 de ellos se anuló con su periodo ya cerrado: en la caja se sigue contando en su mes (ya se entregó) y se resta como ajuste en el mes en que se anuló."
+                    : `${resumen.anulados.periodo_cerrado.cantidad} de ellos se anularon con su periodo ya cerrado: en la caja se siguen contando en su mes (ya se entregaron) y se restan como ajuste en el mes en que se anularon.`}
+                </span>
+              )}
             </p>
           )}
         </div>

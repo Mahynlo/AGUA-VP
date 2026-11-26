@@ -226,6 +226,14 @@ const InicioVista = () => {
                 {recaudo.variacion > 0 ? '+' : ''}{recaudo.variacion}% vs ant.
               </Chip>
             </div>
+            {/* Anulaciones de periodos cerrados hechas este mes: se restan aquí, igual que en la caja del reporte */}
+            {Number(recaudo.ajustes_anulaciones || 0) > 0 && (
+              <p className="text-[11px] leading-snug text-slate-500 dark:text-zinc-400" data-testid="ajustes-recaudacion">
+                Ajustes por anulaciones: <b className="text-rose-600 dark:text-rose-400">−${Number(recaudo.ajustes_anulaciones).toLocaleString('es-MX')}</b>
+                <br />
+                Neto a entregar: <b className="text-emerald-600 dark:text-emerald-400">${Number(recaudo.neto_a_entregar || 0).toLocaleString('es-MX')}</b>
+              </p>
+            )}
           </div>
 
         </div>

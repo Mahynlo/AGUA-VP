@@ -497,7 +497,7 @@ const ReporteFinancieroEstado = () => {
         <div className="space-y-6">
           
           {/* ── ANULACIONES: explican por qué un total bajó después de reportarlo ── */}
-          {anulaciones && <PanelAnulaciones anulaciones={anulaciones} />}
+          {anulaciones && <PanelAnulaciones anulaciones={anulaciones} filtro={financiero?.filtro_aplicado} />}
 
           {/* ── CHARTS SECTION ── */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 print:block">
@@ -659,7 +659,13 @@ const monedaMx = (valor) => Number(valor || 0).toLocaleString("es-MX", { style: 
  * - de los cobros de este filtro: ya están descontadas del recaudado; explican por qué bajó.
  * - hechas en estas fechas: incluye las que corrigieron periodos ya cerrados (fuera de plazo).
  */
-function PanelAnulaciones({ anulaciones }) {
+const fechaCorta = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || "") ? iso.split("-").reverse().join("/") : null);
+
+function PanelAnulaciones({ anulaciones, filtro }) {
+  // "Hechas en estas fechas" se cuenta por la fecha de anulación dentro del rango del filtro: se muestra cuál es
+  const desde = fechaCorta(filtro?.fecha_inicio);
+  const hasta = fechaCorta(filtro?.fecha_fin);
+  const rango = desde && hasta ? (desde === hasta ? `el ${desde}` : `del ${desde} al ${hasta}`) : "en estas fechas";
   const delRango = anulaciones.de_cobros_del_rango || { cantidad: 0, monto: 0 };
   const hechas = anulaciones.hechas_en_el_rango || { cantidad: 0, monto: 0, periodos_cerrados: { cantidad: 0, monto: 0 } };
   const cerradas = hechas.periodos_cerrados || { cantidad: 0, monto: 0 };
@@ -686,10 +692,10 @@ function PanelAnulaciones({ anulaciones }) {
           </p>
         </div>
         <div>
-          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">Anulaciones hechas en estas fechas</p>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-zinc-400">Anulaciones hechas {rango}</p>
           <p className={`text-2xl font-black tracking-tight ${valor}`}>{monedaMx(hechas.monto)}</p>
           <p className="text-xs text-slate-500 dark:text-zinc-400">
-            {hechas.cantidad > 0 ? plural(hechas.cantidad, "anulación", "anulaciones") : "No se hicieron anulaciones en estas fechas"}
+            {hechas.cantidad > 0 ? plural(hechas.cantidad, "anulación", "anulaciones") : `No se hicieron anulaciones ${rango}`}
             {cerradas.cantidad > 0
               ? <>; <b className="text-rose-600 dark:text-rose-400">{plural(cerradas.cantidad, "corrigió", "corrigieron")} {cerradas.cantidad === 1 ? "un periodo ya cerrado" : "periodos ya cerrados"} por {monedaMx(cerradas.monto)}</b>: cambia la recaudación de esos periodos; en la caja se resta como ajuste en el mes en que se anuló.</>
               : "."}

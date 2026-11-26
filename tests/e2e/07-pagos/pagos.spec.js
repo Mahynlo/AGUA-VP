@@ -331,7 +331,12 @@ test.describe('07 · Pagos y cobranza', () => {
     const panel = window.getByRole('region', { name: 'Anulaciones' });
     await expect(panel).toBeVisible({ timeout: 20000 });
     await expect(panel.getByText('De los cobros de este filtro')).toBeVisible();
-    // La prueba anterior anuló un cobro hoy: el filtro por defecto (periodo actual) incluye hoy
+    // El filtro por defecto es el último periodo facturado; el recuadro dice qué fechas cuenta
+    await expect(panel.getByText(/Anulaciones hechas del \d{2}\/\d{2}\/\d{4} al \d{2}\/\d{2}\/\d{4}/)).toBeVisible();
+    // Con el año actual entra hoy, cuando la prueba anterior anuló un cobro
+    await window.locator('select[aria-label="Tipo de filtro"]').selectOption('anio');
+    await expect(panel.getByText(/Anulaciones hechas del 01\/01\/\d{4} al 31\/12\/\d{4}/)).toBeVisible({ timeout: 20000 });
     await expect(panel.getByText(/\d+ anulaci(ón|ones)/)).toBeVisible();
+    await window.locator('select[aria-label="Tipo de filtro"]').selectOption('periodo');
   });
 });

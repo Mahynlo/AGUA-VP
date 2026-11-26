@@ -118,5 +118,9 @@ test.describe('07 · Plazo para anular pagos', () => {
     await expect(ctx.window.getByTestId('nota-ajustes-caja')).toBeVisible({ timeout: 20000 });
     // La gráfica apila el ajuste (rojo) sobre el neto a entregar
     await expect(ctx.window.locator('.apexcharts-legend-text', { hasText: 'Ajuste por anulaciones' })).toBeVisible();
+
+    // El panel principal usa la misma regla: muestra el ajuste y el neto a entregar del mes
+    await irA(ctx.window, '#/home');
+    await expect(ctx.window.getByTestId('ajustes-recaudacion')).toContainText('Neto a entregar', { timeout: 20000 });
   });
 });
