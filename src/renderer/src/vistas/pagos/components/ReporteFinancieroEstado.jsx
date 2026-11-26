@@ -203,14 +203,18 @@ const ReporteFinancieroEstado = () => {
     };
   }, [series, isDark]);
 
+  // Caja por mes de pago. Si hubo anulaciones de periodos cerrados, la barra se apila: neto a entregar
+  // (verde) + ajuste por anulaciones (rojo); la altura total es lo cobrado en el mes.
   const chartCaja = useMemo(() => {
     const caja = series.recaudacion_por_mes_pago || [];
     const categories = caja.map((m) => formatearMesCorto(m.periodo));
+    const conAjustes = caja.some((m) => Number(m.ajuste_anulaciones || 0) > 0);
 
     return {
       options: {
         chart: {
           type: "bar",
+          stacked: conAjustes,
           toolbar: { show: false },
           background: "transparent",
           fontFamily: "inherit",
@@ -222,7 +226,7 @@ const ReporteFinancieroEstado = () => {
           strokeDashArray: 4,
         },
         plotOptions: {
-          bar: { horizontal: false, borderRadius: 4, columnWidth: "45%" },
+          bar: { horizontal: false, borderRadius: 4, borderRadiusApplication: "end", borderRadiusWhenStacked: "last", columnWidth: "45%" },
         },
         dataLabels: { enabled: false },
         xaxis: {
@@ -244,20 +248,33 @@ const ReporteFinancieroEstado = () => {
             formatter: (val) => `$${Number(val).toLocaleString("es-MX")}`,
           },
         },
-        legend: { show: false },
+        legend: { show: conAjustes, position: "bottom", fontWeight: 600, labels: { colors: isDark ? "#d4d4d8" : "#334155" } },
         tooltip: {
           theme: isDark ? "dark" : "light",
+          shared: conAjustes,
+          intersect: !conAjustes,
           y: {
             formatter: (val, opts) => {
               const idx = opts?.dataPointIndex;
-              const trx = caja[idx]?.transacciones;
-              return `${moneda(val)}${trx != null ? ` · ${trx} recibo(s) pagado(s)` : ""}`;
+              const mes = caja[idx] || {};
+              if (opts?.seriesIndex === 1) {
+                const n = Number(mes.anulaciones_ajustadas || 0);
+                return val > 0 ? `−${moneda(val)} · ${n} anulación(es) de periodos cerrados` : "—";
+              }
+              const trx = mes.transacciones;
+              const cobrado = conAjustes && Number(mes.ajuste_anulaciones || 0) > 0 ? ` · cobrado ${moneda(mes.cobrado)}` : "";
+              return `${moneda(val)}${trx != null ? ` · ${trx} recibo(s) pagado(s)` : ""}${cobrado}`;
             },
           },
         },
-        colors: ["#14b8a6"],
+        colors: conAjustes ? ["#14b8a6", "#f43f5e"] : ["#14b8a6"],
       },
-      series: [{ name: "Recaudado (caja)", data: caja.map((m) => Number(m.recaudado || 0)) }],
+      series: conAjustes
+        ? [
+            { name: "Neto a entregar", data: caja.map((m) => Number(m.recaudado || 0)) },
+            { name: "Ajuste por anulaciones", data: caja.map((m) => Number(m.ajuste_anulaciones || 0)) },
+          ]
+        : [{ name: "Recaudado (caja)", data: caja.map((m) => Number(m.recaudado || 0)) }],
     };
   }, [series, isDark]);
 

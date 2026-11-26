@@ -116,5 +116,7 @@ test.describe('07 · Plazo para anular pagos', () => {
     await irA(ctx.window, '#/resibos/pagos', 'Gestión de Pagos');
     await ctx.window.locator('button', { hasText: /^Estadísticas$/ }).click();
     await expect(ctx.window.getByTestId('nota-ajustes-caja')).toBeVisible({ timeout: 20000 });
+    // La gráfica apila el ajuste (rojo) sobre el neto a entregar
+    await expect(ctx.window.locator('.apexcharts-legend-text', { hasText: 'Ajuste por anulaciones' })).toBeVisible();
   });
 });
