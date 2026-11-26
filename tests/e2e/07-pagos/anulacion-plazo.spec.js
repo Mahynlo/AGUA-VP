@@ -111,5 +111,10 @@ test.describe('07 · Plazo para anular pagos', () => {
     await confirmar.click();
     await expect(ctx.window.getByRole('dialog')).toHaveCount(0, { timeout: 15000 });
     expect(anulado()).toBe(1);
+
+    // En la caja, el mes del cobro no cambia: la anulación se resta como ajuste en el mes actual
+    await irA(ctx.window, '#/resibos/pagos', 'Gestión de Pagos');
+    await ctx.window.locator('button', { hasText: /^Estadísticas$/ }).click();
+    await expect(ctx.window.getByTestId('nota-ajustes-caja')).toBeVisible({ timeout: 20000 });
   });
 });

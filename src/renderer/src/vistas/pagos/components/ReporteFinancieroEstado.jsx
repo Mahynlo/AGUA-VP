@@ -518,6 +518,11 @@ const ReporteFinancieroEstado = () => {
                 <p className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">
                   Dinero que entró cada mes según la fecha de pago, sin importar de qué periodo era la deuda. Muestra el año completo, independiente del filtro.
                 </p>
+                {Number(resumen.ajustes_anulaciones_caja || 0) > 0 && (
+                  <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400" data-testid="nota-ajustes-caja">
+                    Incluye −{moneda(resumen.ajustes_anulaciones_caja)} de anulaciones de periodos ya cerrados: el mes del cobro queda como se entregó y el ajuste se resta en el mes en que se anuló.
+                  </p>
+                )}
               </div>
               <div className="text-right shrink-0">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500">Total en caja (año)</p>
@@ -669,7 +674,7 @@ function PanelAnulaciones({ anulaciones }) {
           <p className="text-xs text-slate-500 dark:text-zinc-400">
             {hechas.cantidad > 0 ? plural(hechas.cantidad, "anulación", "anulaciones") : "No se hicieron anulaciones en estas fechas"}
             {cerradas.cantidad > 0
-              ? <>; <b className="text-rose-600 dark:text-rose-400">{plural(cerradas.cantidad, "corrigió", "corrigieron")} {cerradas.cantidad === 1 ? "un periodo ya cerrado" : "periodos ya cerrados"} por {monedaMx(cerradas.monto)}</b>, cuyos reportes anteriores ya no coinciden.</>
+              ? <>; <b className="text-rose-600 dark:text-rose-400">{plural(cerradas.cantidad, "corrigió", "corrigieron")} {cerradas.cantidad === 1 ? "un periodo ya cerrado" : "periodos ya cerrados"} por {monedaMx(cerradas.monto)}</b>: cambia la recaudación de esos periodos; en la caja se resta como ajuste en el mes en que se anuló.</>
               : "."}
           </p>
         </div>

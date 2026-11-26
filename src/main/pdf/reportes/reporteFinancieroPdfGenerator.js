@@ -649,31 +649,47 @@ export async function generarReporteFinancieroPdf(reporteData, options = {}) {
   }
 
   // E. TABLA 4: DETALLE DE CAJA REAL POR MES DE COBRO - DEBAJO DE LA GRÁFICA DE CAJA REAL
+  // Si hubo anulaciones de periodos cerrados, se agregan las columnas Cobrado y Ajustes: el mes del
+  // cobro queda como se entregó y la anulación se resta en el mes en que se hizo (row.recaudado = neto).
   if (recaudacionCaja.length > 0) {
+    const totalAjustesCaja = recaudacionCaja.reduce((acc, row) => acc + Number(row.ajuste_anulaciones || 0), 0)
+    const conAjustes = totalAjustesCaja > 0
+    const encabezado = (text, alignment = 'right') => ({ text, bold: true, fontSize: 7, color: '#ffffff', fillColor: '#0d9488', alignment })
     const cajaBody = [
       [
-        { text: 'Mes de Operación (Fecha de Cobro)', bold: true, fontSize: 7, color: '#ffffff', fillColor: '#0d9488' },
-        { text: 'Recibos Cobrados en Ventanilla', bold: true, fontSize: 7, color: '#ffffff', fillColor: '#0d9488', alignment: 'right' },
-        { text: 'Flujo Percibido en Caja ($ MXN)', bold: true, fontSize: 7, color: '#ffffff', fillColor: '#0d9488', alignment: 'right' },
-        { text: '% del Flujo Total', bold: true, fontSize: 7, color: '#ffffff', fillColor: '#0d9488', alignment: 'right' }
+        encabezado('Mes de Operación (Fecha de Cobro)', 'left'),
+        encabezado('Recibos Cobrados en Ventanilla'),
+        ...(conAjustes ? [encabezado('Cobrado ($ MXN)'), encabezado('Ajustes por Anulaciones')] : []),
+        encabezado(conAjustes ? 'Neto a Entregar ($ MXN)' : 'Flujo Percibido en Caja ($ MXN)'),
+        encabezado('% del Flujo Total')
       ]
     ]
 
     recaudacionCaja.forEach((row, idx) => {
-      const cobrado = Number(row.recaudado || 0)
-      const pct = totalRecaudadoCaja > 0 ? (cobrado / totalRecaudadoCaja) * 100 : 0
-      const isEven = idx % 2 === 0
+      const neto = Number(row.recaudado || 0)
+      const ajuste = Number(row.ajuste_anulaciones || 0)
+      const pct = totalRecaudadoCaja > 0 ? (neto / totalRecaudadoCaja) * 100 : 0
+      const fillColor = idx % 2 === 0 ? THEME.cardBgAlt : '#ffffff'
       cajaBody.push([
-        { text: formatMonthYearLong(row.periodo), bold: true, fontSize: 7, fillColor: isEven ? THEME.cardBgAlt : '#ffffff' },
-        { text: fmt(row.transacciones || 0), fontSize: 7, alignment: 'right', fillColor: isEven ? THEME.cardBgAlt : '#ffffff' },
-        { text: money(cobrado), bold: true, fontSize: 7, color: THEME.chartTeal, alignment: 'right', fillColor: isEven ? THEME.cardBgAlt : '#ffffff' },
-        { text: percent(pct), bold: true, fontSize: 7, alignment: 'right', fillColor: isEven ? THEME.cardBgAlt : '#ffffff' }
+        { text: formatMonthYearLong(row.periodo), bold: true, fontSize: 7, fillColor },
+        { text: fmt(row.transacciones || 0), fontSize: 7, alignment: 'right', fillColor },
+        ...(conAjustes ? [
+          { text: money(Number(row.cobrado ?? neto)), fontSize: 7, alignment: 'right', fillColor },
+          { text: ajuste > 0 ? `−${money(ajuste)}` : '—', fontSize: 7, color: ajuste > 0 ? THEME.chartRed : THEME.textLight, alignment: 'right', fillColor }
+        ] : []),
+        { text: money(neto), bold: true, fontSize: 7, color: THEME.chartTeal, alignment: 'right', fillColor },
+        { text: percent(pct), bold: true, fontSize: 7, alignment: 'right', fillColor }
       ])
     })
 
+    const totalCobradoCaja = recaudacionCaja.reduce((acc, row) => acc + Number(row.cobrado ?? row.recaudado ?? 0), 0)
     cajaBody.push([
       { text: 'TOTAL INGRESADO EN CAJA', bold: true, fontSize: 7, fillColor: '#f0fdfa' },
       { text: fmt(totalTransaccionesCaja), bold: true, fontSize: 7, alignment: 'right', fillColor: '#f0fdfa' },
+      ...(conAjustes ? [
+        { text: money(totalCobradoCaja), bold: true, fontSize: 7, alignment: 'right', fillColor: '#f0fdfa' },
+        { text: `−${money(totalAjustesCaja)}`, bold: true, fontSize: 7, color: THEME.chartRed, alignment: 'right', fillColor: '#f0fdfa' }
+      ] : []),
       { text: money(totalRecaudadoCaja), bold: true, fontSize: 7, color: THEME.chartTeal, alignment: 'right', fillColor: '#f0fdfa' },
       { text: '100.0%', bold: true, fontSize: 7, alignment: 'right', fillColor: '#f0fdfa' }
     ])
@@ -685,7 +701,7 @@ export async function generarReporteFinancieroPdf(reporteData, options = {}) {
           table: {
             headerRows: 1,
             dontBreakRows: true,
-            widths: ['*', 120, 130, 90],
+            widths: conAjustes ? ['*', 70, 85, 85, 95, 60] : ['*', 120, 130, 90],
             body: cajaBody
           },
           layout: {
@@ -698,7 +714,11 @@ export async function generarReporteFinancieroPdf(reporteData, options = {}) {
             paddingTop: () => 3,
             paddingBottom: () => 3
           }
-        }
+        },
+        ...(conAjustes ? [{
+          text: 'Las anulaciones de períodos ya cerrados no cambian el mes del cobro (ese dinero ya se entregó): se restan como ajuste en el mes en que se anularon.',
+          fontSize: 6.5, color: THEME.textLight, italics: true, margin: [0, 3, 0, 0]
+        }] : [])
       ],
       margin: [0, 0, 0, 10]
     })
@@ -810,7 +830,7 @@ export async function generarReporteFinancieroPdf(reporteData, options = {}) {
         },
         {
           text: hayCerradas
-            ? 'Las correcciones a períodos ya cerrados cambian los totales de reportes emitidos antes; esos reportes ya no coinciden con este.'
+            ? 'Las correcciones a períodos ya cerrados cambian la recaudación de esos períodos en reportes emitidos antes. La caja de esos meses no cambia: se ajusta en el mes en que se anuló.'
             : 'Un cobro anulado no se borra: queda en el historial con quién lo anuló, cuándo y por qué.',
           fontSize: 6.5, color: THEME.textLight, italics: true, margin: [0, 3, 0, 0]
         }
